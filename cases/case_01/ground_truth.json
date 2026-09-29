@@ -1,0 +1,61 @@
+{
+  "entities": [
+    {
+      "id": "person_001",
+      "type": "person",
+      "name": "Alice Chen"
+    },
+    {
+      "id": "person_002",
+      "type": "person",
+      "name": "David Chen"
+    },
+    {
+      "id": "person_003",
+      "type": "person",
+      "name": "Bob Chen"
+    },
+    {
+      "id": "person_004",
+      "type": "person",
+      "name": "Carol Wong"
+    },
+    {
+      "id": "trust_001",
+      "type": "trust",
+      "name": "Evergreen Family Trust"
+    }
+  ],
+  "relationships": [
+    {
+      "source": "person_001",
+      "type": "settlor_of",
+      "target": "trust_001"
+    },
+    {
+      "source": "person_001",
+      "type": "spouse_of",
+      "target": "person_002"
+    },
+    {
+      "source": "person_001",
+      "type": "parent_of",
+      "target": "person_003"
+    },
+    {
+      "source": "person_002",
+      "type": "parent_of",
+      "target": "person_003"
+    },
+    {
+      "source": "person_003",
+      "type": "beneficiary_of",
+      "target": "trust_001"
+    },
+    {
+      "source": "person_004",
+      "type": "beneficiary_of",
+      "target": "trust_001"
+    }
+  ]
+}
