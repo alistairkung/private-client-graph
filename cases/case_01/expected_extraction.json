@@ -1,0 +1,94 @@
+{
+  "entities": [
+    {
+      "id": "entity_001",
+      "type": "person",
+      "name": "Alice Chen"
+    },
+    {
+      "id": "entity_002",
+      "type": "person",
+      "name": "David Chen"
+    },
+    {
+      "id": "entity_003",
+      "type": "person",
+      "name": "Bob Chen"
+    },
+    {
+      "id": "entity_004",
+      "type": "person",
+      "name": "Carol Wong"
+    },
+    {
+      "id": "entity_005",
+      "type": "trust",
+      "name": "Evergreen Family Trust"
+    }
+  ],
+  "evidence": [
+    {
+      "id": "evidence_001",
+      "document": "source.txt",
+      "supporting_text": "She confirmed that she is the settlor of the Evergreen Family Trust."
+    },
+    {
+      "id": "evidence_002",
+      "document": "source.txt",
+      "supporting_text": "Alice Chen confirmed that she and David Chen are spouses."
+    },
+    {
+      "id": "evidence_003",
+      "document": "source.txt",
+      "supporting_text": "Alice Chen confirmed that Alice Chen and David Chen are the parents of Bob Chen."
+    },
+    {
+      "id": "evidence_004",
+      "document": "source.txt",
+      "supporting_text": "Alice Chen confirmed that Bob Chen is a beneficiary of the Evergreen Family Trust."
+    },
+    {
+      "id": "evidence_005",
+      "document": "source.txt",
+      "supporting_text": "Alice Chen also confirmed that Carol Wong is a beneficiary of the Evergreen Family Trust."
+    }
+  ],
+  "relationships": [
+    {
+      "source": "entity_001",
+      "type": "settlor_of",
+      "target": "entity_005",
+      "evidence": ["evidence_001"]
+    },
+    {
+      "source": "entity_001",
+      "type": "spouse_of",
+      "target": "entity_002",
+      "evidence": ["evidence_002"]
+    },
+    {
+      "source": "entity_001",
+      "type": "parent_of",
+      "target": "entity_003",
+      "evidence": ["evidence_003"]
+    },
+    {
+      "source": "entity_002",
+      "type": "parent_of",
+      "target": "entity_003",
+      "evidence": ["evidence_003"]
+    },
+    {
+      "source": "entity_003",
+      "type": "beneficiary_of",
+      "target": "entity_005",
+      "evidence": ["evidence_004"]
+    },
+    {
+      "source": "entity_004",
+      "type": "beneficiary_of",
+      "target": "entity_005",
+      "evidence": ["evidence_005"]
+    }
+  ]
+}
