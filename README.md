@@ -19,6 +19,28 @@ flowchart LR
 
 The LLM is responsible for semantic interpretation. Mechanically checkable work such as validation, entity construction, IDs, deduplication, canonicalisation, reference resolution, and scoring remains deterministic.
 
+## Example generated graph
+
+A canonical graph contains entities, relationships, and first-class evidence supporting those relationships:
+
+```json
+{
+  "entities": [
+    {"id": "entity_001", "type": "person", "name": "Alice Example"},
+    {"id": "entity_002", "type": "person", "name": "Bob Example"},
+    {"id": "entity_003", "type": "trust", "name": "Example Family Trust"}
+  ],
+  "relationships": [
+    {"source": "entity_001", "type": "parent_of", "target": "entity_002", "evidence_ids": ["evidence_001"]},
+    {"source": "entity_002", "type": "beneficiary_of", "target": "entity_003", "evidence_ids": ["evidence_002"]}
+  ],
+  "evidence": [
+    {"id": "evidence_001", "document": "source.txt", "supporting_text": "Alice Example confirmed that she is Bob Example's parent."},
+    {"id": "evidence_002", "document": "source.txt", "supporting_text": "Bob Example is a beneficiary of the Example Family Trust."}
+  ]
+}
+```
+
 ## Current scope
 
 Current entity types:
@@ -58,19 +80,45 @@ uv run python -m private_client_graph.extract
 
 Successful runs are saved under the Git-ignored `runs/` directory.
 
-## Evaluate a run
+## Run unit tests
+
+```bash
+uv run pytest
+```
+
+The test suite covers deterministic graph construction, evaluation behaviour, reference integrity, extraction integration boundaries, and Case 01 end-to-end fixtures. CI runs the same suite on pull requests to `main`.
+
+## Evaluation
 
 ```bash
 uv run python -m private_client_graph.evaluate runs/case_01/<run>.json
 ```
 
-Evaluation compares normalized semantic relationships against the hidden ground truth and reports:
+The benchmark evaluates two dimensions: **relationship quality** and **provenance quality**.
 
-- true positives, false positives, and false negatives;
-- precision, recall, and F1;
-- provenance passes and failures.
+```mermaid
+flowchart LR
+    P["Predicted graph"] --> E["Evaluation"]
+    G["Ground truth"] --> E
+    E --> R["Relationship quality"]
+    E --> V["Provenance quality"]
+    R --> M["Precision / Recall / F1"]
+    V --> A["Provenance accuracy"]
+```
 
-Generated graph IDs are implementation details and are not used as semantic evaluation targets.
+| Metric | Meaning |
+|---|---|
+| **TP** | Correct relationship recovered |
+| **FP** | Unsupported relationship predicted |
+| **FN** | Ground-truth relationship missed |
+| **Precision** | Of predicted relationships, how many were correct |
+| **Recall** | Of expected relationships, how many were recovered |
+| **F1** | Balance of precision and recall |
+| **Provenance accuracy** | Of correct relationships, how many included at least one approved evidence span |
+
+Relationship scoring compares semantic graph edges rather than generated graph IDs. Symmetric relationships such as `spouse_of` and `sibling_of` are treated equivalently in either direction. True negatives are not enumerated because the possible universe of non-existent relationships is open-ended.
+
+Provenance is evaluated separately on true-positive relationships. Each ground-truth edge contains one or more human-approved exact evidence spans, and an edge passes provenance when at least one attached predicted evidence span matches one approved span.
 
 ## Repository layout
 
