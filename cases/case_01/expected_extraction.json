@@ -1,0 +1,40 @@
+{
+  "relationships": [
+    {
+      "source_name": "Alice Chen",
+      "relationship_type": "settlor_of",
+      "target_name": "Evergreen Family Trust",
+      "supporting_text": "She confirmed that she is the settlor of the Evergreen Family Trust."
+    },
+    {
+      "source_name": "Alice Chen",
+      "relationship_type": "spouse_of",
+      "target_name": "David Chen",
+      "supporting_text": "Alice Chen confirmed that she and David Chen are spouses."
+    },
+    {
+      "source_name": "Alice Chen",
+      "relationship_type": "parent_of",
+      "target_name": "Bob Chen",
+      "supporting_text": "Alice Chen confirmed that Alice Chen and David Chen are the parents of Bob Chen."
+    },
+    {
+      "source_name": "David Chen",
+      "relationship_type": "parent_of",
+      "target_name": "Bob Chen",
+      "supporting_text": "Alice Chen confirmed that Alice Chen and David Chen are the parents of Bob Chen."
+    },
+    {
+      "source_name": "Bob Chen",
+      "relationship_type": "beneficiary_of",
+      "target_name": "Evergreen Family Trust",
+      "supporting_text": "Alice Chen confirmed that Bob Chen is a beneficiary of the Evergreen Family Trust."
+    },
+    {
+      "source_name": "Carol Wong",
+      "relationship_type": "beneficiary_of",
+      "target_name": "Evergreen Family Trust",
+      "supporting_text": "Alice Chen also confirmed that Carol Wong is a beneficiary of the Evergreen Family Trust."
+    }
+  ]
+}
