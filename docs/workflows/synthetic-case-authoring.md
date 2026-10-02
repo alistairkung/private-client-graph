@@ -1,408 +1,615 @@
 # Synthetic Case Authoring Workflow
 
-This document describes a repeatable process for creating synthetic benchmark cases for **Private Client Graph**.
+This is the canonical case-authoring workflow for **Private Client Graph**.
 
-The goal is not to generate lots of documents quickly. The goal is to create cases where:
+## Purpose
 
-- the correct graph answer is known in advance;
-- the source document is realistic enough to be meaningful;
-- the source does not accidentally change the answer key;
-- expected extraction is derived from the evidence rather than written backwards from the desired output;
-- provenance can be evaluated;
-- each new case introduces difficulty deliberately.
+Synthetic benchmark cases should be authored in a way that preserves a trustworthy answer key.
 
-## Core separation
+The core rule is:
 
-Keep three artifacts conceptually separate:
+> Define the graph answer key first, then write realistic source material that expresses that answer key.
 
-```text
-ground_truth.json
-    = the graph answer key
+Do not write a document first and infer the intended ground truth afterwards.
 
-source.txt
-    = evidence presented to the extractor
+This workflow exists to reduce accidental label leakage, incomplete ground truth, unsupported relationships, and inconsistent provenance annotation.
 
-expected_extraction.json
-    = what a perfect extractor is justified in returning
-      from that evidence
-```
+## Case design principle
 
-The ground truth is not intended to record every true statement in the fictional scenario.
-
-It is the complete answer key for the graph task being evaluated.
-
-For example, a source document may truthfully state that a meeting lasted approximately one hour or that the client requested a follow-up. Those facts do not belong in the graph answer key if the extractor is only being asked to reconstruct people, trusts, and supported relationship types.
-
-## 1. Decide what the case is testing
-
-Give every case one primary purpose.
+Each case should introduce **one intended new difficulty** wherever practical.
 
 Examples might include:
 
-- explicit happy-path relationships;
-- facts distributed across documents;
-- indirect wording;
-- aliases;
+- repeated valid evidence spans;
+- a different supported relationship primitive;
 - irrelevant named people;
-- conflicting evidence;
-- uncertain/proposed relationships;
-- historical relationships.
+- a locally resolvable pronoun;
+- multiple relationships asserted in one sentence;
+- longer realistic contextual prose.
 
-Do not combine several new difficulties merely to make a case feel realistic.
+Do not combine several new benchmark difficulties into one case unless the case is deliberately intended as a later composite stress test.
 
-A case should make it possible to answer:
+The purpose of this constraint is to make failures interpretable.
 
-> What new behaviour or failure mode is this case intended to test?
+If a case fails, we should be able to say what changed relative to earlier cases.
 
-If there is no clear answer, simplify the case.
+---
 
-## 2. Define the supported graph vocabulary
-
-Before writing the fictional scenario, state which entity and relationship types count as valid graph output for the case.
-
-Case 01 begins with:
-
-### Entity types
+## Core artifact separation
 
 ```text
-person
-trust
-```
-
-### Family relationships
-
-```text
-parent_of
-sibling_of
-spouse_of
-```
-
-### Trust relationships
-
-```text
-settlor_of
-trustee_of
-beneficiary_of
-```
-
-Later cases may expand this vocabulary, but additions should be driven by domain requirements or observed benchmark failures rather than speculation.
-
-## 3. Define the fictional graph in plain English first
-
-Before writing JSON, describe a small fictional world in ordinary language.
-
-For example:
-
-- Alice Chen is the settlor of the Evergreen Family Trust.
-- Alice Chen and David Chen are spouses.
-- Alice Chen and David Chen are parents of Bob Chen.
-- Bob Chen and Carol Wong are beneficiaries of the Evergreen Family Trust.
-
-Challenge every proposed relationship:
-
-- Is it necessary for this case?
-- Is it within the relationship types currently being tested?
-- Does it introduce legal/domain complexity we do not need?
-- Can an ordinary source document state it clearly?
-- Would evaluating it require another capability that is meant to be deferred?
-
-Do not add relationships simply because they are common in real private-client structures.
-
-## 4. Encode the graph answer key
-
-Once the fictional graph is agreed, create `ground_truth.json`.
-
-Ground-truth entities should contain only the information needed to identify them for the benchmark, currently:
-
-- stable ID;
-- type;
-- canonical name.
-
-Ground-truth relationships should contain:
-
-- source entity ID;
-- relationship type;
-- target entity ID.
-
-Do not put document evidence into ground truth.
-
-A relationship is true in the fictional graph independently of which document later provides evidence for it.
-
-## 5. Keep the answer key hidden from the extractor
-
-The ground-truth fixture may be supplied to tools or agents involved in **authoring the benchmark source**, but it must not be supplied to the extraction pipeline being evaluated.
-
-The intended separation is:
-
-```text
-BENCHMARK AUTHORING
-
 ground_truth.json
-       ↓
-source authoring / domain review
-       ↓
-source.txt
-
-
-EXTRACTION EXPERIMENT
+    = complete supported-relationship answer key
+      + approved exact provenance alternatives
 
 source.txt
-       ↓
-extractor
-       ↓
-extracted result
+    = documentary evidence presented to the extractor
 
-ground_truth.json ──X──> extractor
+expected_extraction.json
+    = one ideal raw semantic extraction from the final source
 ```
 
-Ground-truth IDs must also not be exposed to the extractor.
+The ground truth is not an exhaustive database of every true fact in the fictional
+world. Meeting duration and procedural follow-up, for example, may remain outside
+the graph answer key.
 
-Extracted entities should have identities independent of the hidden answer key.
+Keep the answer key hidden from the extractor. Source-authoring tools or agents
+may receive it to help draft the fixture; the extraction pipeline must receive
+neither ground truth, its IDs, nor expected extraction. Extracted identities are
+assigned independently by deterministic graph construction.
 
-## 6. Choose a plausible document situation
+## 1. Declare the case purpose
 
-Before asking an agent to generate prose, decide why the document exists.
+Before writing the source document, record:
 
-The situation should naturally allow the target relationships to arise without requiring unrelated facts.
+```text
+case_id
+purpose
+new difficulty
+supported relationship types used
+```
 
-For Case 01, the useful framing was:
+The purpose should be specific enough that the reason for creating the case is clear.
 
-> An approximately one-hour initial fact-finding and review meeting concerning an existing family trust, where the client wants the professional to have an accurate understanding of the current family and beneficiary position before further review or substantive advice.
+Example:
 
-This framing creates room for realistic discussion without requiring new trustees, assets, tax facts, distributions, ownership structures, or family members.
+```text
+Case 02
 
-Avoid meeting purposes that naturally demand facts outside the intended case.
+Purpose:
+Test whether extraction remains correct when one relationship
+has multiple independently valid evidence spans.
 
-For example, a tax-planning or trust-restructuring meeting may make silence about assets, office-holders and tax status feel artificial.
+New difficulty:
+Repeated / alternative provenance.
+```
 
-## 7. Use domain expertise to author realistic evidence
+Do not begin source drafting until the intended difficulty is explicit. Record
+this declaration in the case's authoring notes, for example `cases/case_XX/README.md`.
 
-A domain-expert agent can be used as a **source author**, not as the benchmark designer.
+### Supported vocabulary
 
-Give the agent:
+The current entity types are `person` and `trust`. Supported relationships are:
 
-- the immutable graph answer key;
-- the meeting/document framing;
-- explicit constraints on facts it may not invent;
-- the desired level of realism;
-- the requirement that every target relationship has explicit textual support.
+- Family: `parent_of`, `sibling_of`, `spouse_of`.
+- Trust roles: `settlor_of`, `trustee_of`, `beneficiary_of`.
 
-The source-authoring agent may know the hidden answer key because it is helping create the fixture.
+`parent_of` runs from parent to child; trust roles run from person to trust.
+`spouse_of` and `sibling_of` are symmetric and represent one semantic edge.
 
-The extraction agent later must not.
+Later challenges might involve aliases, multiple documents, conflicting evidence,
+or historical relationships. These remain separate design decisions, not permission
+to silently expand the current contract. Vocabulary and capability changes should
+follow domain requirements or observed failures.
 
-Do not ask the source-authoring agent to design the expected extraction.
+---
 
-## 8. Allow graph-neutral context
+## 2. Define the complete graph answer key
 
-A realistic professional document can be substantially longer than the graph-bearing evidence inside it.
+Start with a small fictional graph in plain English before encoding it as JSON.
+For Case 01, Alice is the settlor, Alice and David are spouses and parents of Bob,
+and Bob and Carol are beneficiaries of Evergreen Family Trust.
 
-Useful graph-neutral material may include:
+Challenge each proposed relationship: is it necessary, supported by the current
+vocabulary, plausible to state in an ordinary document, and free of unintended
+domain complexity or deferred capabilities?
 
-- purpose and scope of the meeting;
-- the client's objectives;
-- questions asked to establish the factual position;
-- explanations of the review process;
-- clarification;
-- repetition;
-- recap;
+Define every supported graph relationship that the completed source document is intended to assert.
+
+For each relationship record:
+
+```text
+source
+type
+target
+```
+
+Example:
+
+```json
+{
+  "source": "Alice Chen",
+  "type": "parent_of",
+  "target": "Bob Chen"
+}
+```
+
+The name-based example above illustrates semantic content. In the current stored
+`ground_truth.json`, preserve the existing `entities` list (`id`, `type`, `name`)
+and use entity IDs for relationship `source` and `target`. Each relationship gains
+an `approved_evidence` list after source drafting and review. Do not confuse those
+answer-key IDs with IDs later generated by graph construction.
+
+The ground truth is the **complete answer key for supported graph relationships in the case**.
+
+It is not merely a list of relationships we happen to care about.
+
+If the final source clearly asserts an additional supported relationship, either:
+
+1. add it to the ground truth, or
+2. revise the source so that relationship is no longer asserted.
+
+Do not knowingly leave supported relationships outside the answer key, because that would make precision and recall misleading.
+
+Graph-neutral contextual facts may remain outside the graph answer key.
+
+---
+
+## 3. Draft the realistic source document from the answer key
+
+Write or generate a realistic professional source document using the fixed graph answer key as a constraint.
+
+The source should feel like a plausible document in its own right, not a prose serialization of graph triples.
+
+### Choose why the document exists
+
+Case 01 uses an approximately one-hour initial fact-finding and review meeting
+about an existing family trust, establishing family and beneficiary facts before
+substantive advice. This allows realistic discussion without inventing assets,
+trustees, distributions, tax facts, or additional family members.
+
+Avoid a framing that demands out-of-scope facts. A tax-planning or trust-restructuring
+meeting, for example, can make silence about assets and office-holders artificial.
+
+### Use domain expertise within the authoring boundary
+
+A domain-expert agent may help author the source, but does not silently own the
+benchmark design. Give it the fixed graph answer key, document framing, explicit
+limits on invented facts, desired realism, and the requirement for textual support
+for every intended edge. Do not ask the source-authoring agent to also design the
+expected extraction. Human review remains necessary.
+
+Realistic non-graph content may include:
+
+- purpose and scope;
+- factual clarification;
+- questions and responses;
+- repetition and recap;
+- procedural next steps;
 - limitations on what has been reviewed;
-- questions about next steps;
-- procedural next steps.
+- explanations of process;
+- other context that does not introduce additional supported graph relationships.
 
-This context is valuable because the extractor must distinguish relevant graph evidence from ordinary professional prose.
+Do not introduce new family or trust relationships merely to make the document feel richer.
 
-However, do not use "outside today's schema" as permission to invent arbitrary facts.
+Realism should come primarily from professional context, structure, clarification, repetition and process.
+
+---
+
+## 4. Audit the source against the answer key
+
+After the source is drafted, audit it manually before creating expected extraction or evaluation fixtures.
+
+Check both directions.
+
+### Ground truth -> source
+
+For every ground-truth relationship:
+
+> Is there at least one source passage that actually supports this edge?
+
+If not, either revise the source or remove the unsupported relationship from the answer key.
+
+### Source -> ground truth
+
+Read the completed source for every relationship expressible in the supported ontology.
 
 Ask:
 
-> Does this sentence assert another durable fact about the fictional world?
+> Does the source assert any additional supported relationship that is missing from the answer key?
 
-If yes, decide deliberately whether the fixture needs that fact.
+If yes, either:
 
-## 9. Guard against accidental answer-key changes
+- add the relationship to ground truth; or
+- revise the source.
 
-Private-client documents can be relationship-dense.
+This audit is mandatory. Also check for contradictions and unintended assumptions.
+Apparently harmless details can introduce extra parents, children, siblings,
+spouses, beneficiaries, trustees, settlors, trusts, or organisations. Mentions of
+partners, protectors, advisers, historical or proposed relationships, assets,
+ownership, powers, tax status, and succession may introduce unintended difficulty
+even when they fall outside today's ontology.
 
-Apparently harmless detail can introduce new graph facts.
+Do not treat “outside the schema” as permission to invent arbitrary durable facts.
+Decide deliberately whether each such fact belongs in the case.
 
-Review generated source material for accidental mentions of:
+---
 
-- additional parents, children or siblings;
-- additional spouses or partners;
-- additional beneficiaries;
-- trustees or protectors;
-- other settlors;
-- advisers or professionals;
-- other trusts or organisations;
-- historical or proposed relationships.
+## 5. Annotate approved provenance
 
-For the current benchmark, also be cautious about assets, ownership, distributions, powers, tax status and succession arrangements because they may create future graph-relevant facts or force additional domain assumptions.
-
-The practical rule is:
-
-> If the source introduces another true relationship of a type the benchmark is currently testing, update the answer key deliberately or remove the statement.
-
-Never leave the source and ground truth inconsistent.
-
-## 10. Audit the generated source before accepting it
-
-Do not immediately save generated prose as `source.txt`.
-
-Perform at least two manual checks.
-
-### Answer-key integrity
-
-For every supported relationship stated or implied by the source:
-
-- Is it present in `ground_truth.json`?
-- Has the source accidentally introduced an additional supported relationship?
-- Has it contradicted an existing relationship?
-
-### Evidence coverage
-
-For every relationship in `ground_truth.json` that the source is intended to expose:
-
-- Is there at least one clear passage that supports it?
-- Is that passage sufficiently self-contained to serve as provenance?
-- Does extracting the relationship require an assumption that the benchmark did not intend to test?
-
-Only accept the source when both checks pass.
-
-## 11. Prefer realistic language over artificial explicitness
-
-Happy path does not need to mean unnatural prose.
-
-Simple local pronouns are acceptable when their referent is obvious:
-
-> Alice Chen confirmed that she is the settlor...
-
-Avoiding every pronoun can make a source document unrealistic without meaningfully improving the benchmark.
-
-The early cases should defer difficult alias/entity-resolution problems, not ordinary language itself.
-
-## 12. Derive expected extraction from the accepted source
-
-Only after `source.txt` is frozen should `expected_extraction.json` be created.
-
-Read the source as though you were the extractor.
-
-For each justified relationship:
-
-1. identify the source entity;
-2. identify the canonical relationship type;
-3. identify the target entity;
-4. select at least one exact supporting passage;
-5. create/reference an evidence object.
-
-Do not simply copy the relationships from `ground_truth.json` and attach convenient quotes.
-
-The purpose of this step is to independently verify:
-
-> What is the source actually sufficient to conclude?
-
-For easy cases, expected extraction may contain the same relationship set as ground truth.
-
-Later cases may intentionally differ.
-
-## 13. Provenance rules
-
-Every expected extracted relationship requires provenance.
-
-Evidence should contain:
-
-- stable evidence ID;
-- source document;
-- exact supporting text selected from that document.
-
-Relationships reference evidence IDs.
-
-Evidence does not need a duplicate back-reference to relationships; reverse views can be derived.
-
-### Minimum sufficient evidence
-
-A perfect extractor needs to provide **at least one sufficient supporting passage per relationship**.
-
-It is not required to find every occurrence of the same fact.
-
-For example, if a relationship is stated during fact-finding and repeated during the final recap, either sufficiently clear passage may justify the edge.
-
-This keeps the benchmark focused on grounded graph reconstruction rather than exhaustive mention detection.
-
-## 14. Validate the three artifacts together
-
-Before considering a case complete, inspect:
+Each ground-truth relationship must include:
 
 ```text
-ground_truth.json
-source.txt
+approved_evidence: [...]
+```
+
+An approved evidence span is:
+
+> Any exact source span that, read in its permitted local context, provides sufficient textual support for the semantic edge.
+
+Approved evidence is not restricted to one grammatical form.
+
+Valid approved evidence may include:
+
+- a direct factual assertion;
+- a later recap or repetition;
+- a sentence asserting multiple relationships;
+- an equivalent linguistic direction, such as `Bob is a child of Alice` supporting `Alice parent_of Bob`;
+- a locally resolvable pronoun span;
+- a documentary restatement that still entails the relationship.
+
+Example:
+
+```json
+{
+  "source": "Alice Chen",
+  "type": "parent_of",
+  "target": "Bob Chen",
+  "approved_evidence": [
+    "Alice Chen confirmed that Alice Chen and David Chen are the parents of Bob Chen.",
+    "In particular, the fact that Bob Chen is a child of Alice Chen and David Chen was recorded separately from the fact that Bob Chen is a beneficiary of the Evergreen Family Trust."
+  ]
+}
+```
+
+### Local context
+
+A span may rely on immediately local context where the referent is unambiguous.
+
+For example:
+
+```text
+Alice Chen was asked first to confirm her own connection with the trust.
+She confirmed that she is the settlor.
+```
+
+The second sentence may be approved even though `She` requires local resolution.
+
+Do not approve evidence where the referent is genuinely ambiguous. Happy-path
+language need not avoid ordinary pronouns or become artificially repetitive;
+difficult alias resolution is distinct from unambiguous local reference.
+
+### Do not approve
+
+Do not mark a span as approved merely because it:
+
+- contains the same names;
+- occurs near a relevant statement;
+- makes the relationship plausible;
+- describes a hypothetical relationship;
+- discusses a proposed relationship;
+- negates the relationship;
+- requires inventing unstated intermediate facts;
+- is a model-generated paraphrase rather than exact source text.
+
+Every approved span must occur verbatim in the final source document.
+
+---
+
+## 6. Finalise ground truth only after the source is stable
+
+Once the source has passed the relationship audit:
+
+1. freeze the intended graph answer key;
+2. populate all approved evidence spans from exact source text;
+3. verify every approved evidence string occurs verbatim;
+4. verify every ground-truth relationship has at least one approved evidence span.
+
+If the source changes after this point, re-audit both the relationships and approved evidence.
+
+Do not assume previous annotations remain valid after source edits.
+
+---
+
+## 7. Derive expected extraction from the final source
+
+Only after the source and ground truth are stable should `expected_extraction.json` be created or updated.
+
+`expected_extraction.json` represents:
+
+> One ideal raw semantic extraction from the final source.
+
+For the current Case 01-style contract it contains:
+
+```text
+RelationshipCandidate[]
+```
+
+with:
+
+```text
+source_name
+relationship_type
+target_name
+supporting_text
+```
+
+In the stored JSON, the candidates are wrapped in the existing `ExtractionResult`
+object: `{"relationships": [...]}`. Do not add entity lists, entity types, entity
+IDs, evidence IDs, evidence objects, or normalized graph references to this raw
+extraction fixture. Those belong to deterministic graph construction.
+
+Read the source independently as though you were the extractor: identify each
+justified source, relationship type, and target, then select exact supporting text.
+Do not copy ground-truth edges and attach convenient quotes without this check.
+
+It does not need to enumerate every approved evidence alternative. At least one
+sufficient passage per edge is enough; this is grounded relationship reconstruction,
+not exhaustive mention detection.
+
+The distinction is:
+
+```text
 expected_extraction.json
+= one ideal raw LLM extraction
+
+ground_truth.json
+= complete semantic benchmark answer key
+  + all approved provenance alternatives
 ```
 
-Check that:
+Do not derive ground truth from expected extraction.
 
-- every ground-truth entity needed by the case is coherent;
-- every expected relationship is supported by source evidence;
-- every expected relationship maps to the intended graph truth;
-- every evidence quote actually appears in the source;
-- no supported source relationship is missing from the answer key;
-- no expected edge depends on information hidden only in ground truth;
-- no ground-truth IDs have leaked into the source or extraction fixture.
+Ground truth is authoritative.
 
-## 15. Keep case difficulty incremental
+---
 
-Do not make future cases "more realistic" by turning on every difficult feature at once.
+## 8. Run deterministic fixture checks
 
-A useful progression might be:
+Before using the case for model evaluation, validate mechanically checkable properties.
+
+At minimum:
+
+- every supported relationship type is valid;
+- all ground-truth entity references resolve;
+- every relationship has at least one approved evidence span;
+- every approved evidence span occurs verbatim in the source;
+- no duplicate IDs exist where IDs are used;
+- expected extraction conforms to the structured extraction schema.
+
+Also confirm that every expected relationship maps to the intended graph truth,
+each expected supporting quote occurs verbatim, and no hidden ground-truth IDs or
+facts have leaked into the source or raw extraction fixture.
+
+These checks do not replace the semantic human audit.
+
+A substring check can prove that evidence occurs in the source.
+
+It cannot prove that the evidence genuinely supports the relationship.
+
+---
+
+## 9. Run extraction
+
+Run the standard extraction pipeline against the completed source.
+
+Persist the raw extraction result as a run artifact.
+
+For the implemented Case 01 CLI, run from the repository root with the project
+dependencies installed and `DEEPSEEK_API_KEY` in the local `.env` file:
+
+```bash
+python -m private_client_graph.extract
+```
+
+The command reads `cases/case_01/source.txt` and saves
+`runs/case_01/YYYY-MM-DDTHHMMSS.json` using UTC completion time. `.env` and `runs/`
+are Git-ignored; keep secrets and run artifacts local. Never paste credentials
+into fixtures, authoring notes, or run reports.
+
+The current extraction and evaluation CLIs are fixed to Case 01. They do not yet
+accept a case selector. Do not run them unchanged and label the output as another
+case: future-case execution must explicitly supply that case's source and answer
+key through appropriate calling code.
+
+Do not modify the source or ground truth in response to a poor model result unless the benchmark itself is found to be incorrectly authored.
+
+A model failure is data.
+
+Do not repair the test case merely to make the model pass.
+
+---
+
+## 10. Run deterministic graph construction
+
+Convert the extracted relationship candidates into the canonical graph using the deterministic graph-construction boundary.
+
+Validation / normalization includes the existing deterministic rules such as:
+
+- exact evidence occurrence;
+- self-relationship rejection;
+- endpoint type inference;
+- entity-type conflict detection;
+- entity construction;
+- evidence deduplication;
+- symmetric-edge canonicalisation;
+- duplicate-edge handling.
+
+Do not duplicate this logic inside case authoring. The boundary is
+`build_graph(candidates, document=..., source_text=...)`, returning `CanonicalGraph`.
+It also rejects blank names/evidence and assigns graph-local entity and evidence
+IDs. Relationships reference evidence IDs; evidence needs no reverse relationship
+list. If construction fails, preserve the raw run and record the failure rather
+than silently dropping invalid candidates.
+
+---
+
+## 11. Run evaluation
+
+Evaluate the predicted canonical graph against the case ground truth.
+
+Relationship evaluation compares normalized semantic edges rather than generated IDs.
+Resolve IDs to names and compare `(source_name, relationship_type, target_name)`.
+Sort endpoint names for `spouse_of` and `sibling_of`; preserve direction for the
+other relationship types.
+
+Report:
 
 ```text
-Case 01
-explicit happy path
-
-Case 02
-one additional controlled difficulty
-
-Case 03
-another controlled difficulty
-...
+TP
+FP
+FN
+precision
+recall
+F1
 ```
 
-The exact sequence should be chosen based on what the earlier extraction experiments reveal.
+Provenance evaluation is performed only for true-positive edges.
 
-Complexity should be earned by observed failures.
+A true-positive edge passes provenance when:
 
-## 16. Record domain feedback and design changes
+> At least one predicted attached evidence span exactly matches at least one approved evidence span for that edge.
 
-If a lawyer, domain-expert agent, evaluator result or implementation failure reveals that a fixture is unrealistic or underspecified:
+Also preserve the diagnostic sets:
 
-1. record what was learned;
-2. decide whether it changes the graph answer key, source-authoring rules, extraction contract or evaluation;
-3. update the relevant decision note;
-4. regenerate/revise the fixture deliberately.
+```text
+true_positive_edges
+false_positive_edges
+false_negative_edges
+provenance_passes
+provenance_failures
+```
 
-Do not silently patch the source document while leaving the benchmark assumptions undocumented.
+Also report provenance passed/failed counts and `provenance_accuracy`, calculated
+as provenance passes divided by TP. Extra unapproved evidence does not fail a TP
+edge if at least one attached span is approved. FP and FN are not penalized again
+through provenance. Current zero-denominator behavior is `0.0`, including no TP.
 
-## Case author checklist
+These diagnostics are essential for understanding why a case failed.
 
-Before implementation/testing:
+Persist the `EvaluationResult` as a run artifact. For a saved Case 01 extraction:
 
-- [ ] What single behaviour is this case testing?
-- [ ] What entity types are in scope?
-- [ ] What relationship types are in scope?
-- [ ] Has the fictional graph been agreed in plain English?
-- [ ] Is `ground_truth.json` complete for the graph task?
-- [ ] Is the document situation plausible?
-- [ ] Has domain realism been sanity-checked?
-- [ ] Does the source avoid accidental extra graph relationships?
-- [ ] Does every intended edge have at least one sufficient supporting passage?
-- [ ] Has `expected_extraction.json` been derived from the source rather than copied from ground truth?
-- [ ] Does every expected edge reference provenance?
-- [ ] Do all evidence quotes occur verbatim in the source?
-- [ ] Is the extractor kept blind to ground truth?
-- [ ] Is this case adding only the intended new difficulty?
+```bash
+python -m private_client_graph.evaluate "runs/case_01/<timestamp>.json"
+```
+
+Replace `<timestamp>` with the actual run filename stem. This command performs
+steps 10 and 11 using the current Case 01 source and ground truth, then saves
+`runs/case_01/<timestamp>.evaluation.json` beside the extraction. It makes no LLM
+calls and does not overwrite existing evaluation files. A graph-construction
+failure prevents scoring; record that failure explicitly instead of treating it
+as a scored graph.
+
+Record which fixture version or Git commit was used, especially if evaluating an
+older saved run against current fixtures. Evaluation compares semantic edge names,
+not generated IDs; exact approved support is distinct from the graph builder's
+verbatim-occurrence check.
+
+---
+
+## 12. Record the observed failure
+
+For cases created to introduce a new difficulty, record what actually happened.
+
+Examples:
+
+```text
+Expected difficulty:
+local pronoun resolution
+
+Observed result:
+relationship recovered correctly but provenance failed
+```
+
+or:
+
+```text
+Expected difficulty:
+irrelevant named person
+
+Observed result:
+model emitted one unsupported parent_of edge
+```
+
+Do not immediately add retries, verifier agents or additional architecture.
+
+First determine whether the observed failure is:
+
+- extraction;
+- graph construction;
+- benchmark annotation;
+- provenance;
+- evaluation;
+- or merely representation.
+
+Record the outcome in the case's authoring notes with the run artifact paths,
+fixture version, expected difficulty, and observed diagnostics. These links refer
+to local artifacts; shared notes should summarize the outcome so contributors do
+not depend on another person's ignored files.
+
+If domain review or a failure reveals a genuinely flawed fixture, record what was
+learned, identify whether it changes the answer key, source, extraction contract,
+or evaluation, and update the relevant decision note. Revise the fixture
+deliberately, repeat the audit, and recheck all evidence. Do not silently patch
+source text while leaving benchmark assumptions undocumented.
+
+Architecture changes should be earned by observed failure.
+
+---
+
+## Case acceptance checklist
+
+A case is not ready for use until all applicable items are satisfied.
+
+```text
+[ ] Case purpose is explicit.
+[ ] Exactly one intended new difficulty is identified, unless deliberately composite.
+[ ] Complete supported-relationship answer key is defined.
+[ ] Source was written from the answer key, not vice versa.
+[ ] Source reads as a plausible professional document.
+[ ] Domain realism and document framing have been reviewed.
+[ ] The extractor receives neither answer-key fixtures nor ground-truth IDs.
+[ ] Every ground-truth edge is actually supported by the source.
+[ ] No accidental supported relationship is omitted from ground truth.
+[ ] Every ground-truth edge has at least one approved evidence span.
+[ ] Every approved evidence span occurs verbatim in the source.
+[ ] Every approved evidence span semantically supports its specific edge.
+[ ] Ambiguous pronoun spans are not approved.
+[ ] expected_extraction.json was derived only after the source was final.
+[ ] Expected extraction passes its schema.
+[ ] Deterministic fixture/reference checks pass.
+[ ] Extraction run is persisted.
+[ ] Graph construction succeeds or its deterministic failure is understood.
+[ ] Evaluation result is persisted.
+[ ] Observed failure/success is recorded.
+```
+
+## Human-review boundary
+
+The following decisions require human review and should not be delegated silently to a coding agent:
+
+- whether the case's intended difficulty is appropriate;
+- whether the graph answer key is complete;
+- whether source text accidentally asserts another supported relationship;
+- whether an evidence span genuinely supports a particular relationship;
+- whether a case introduces more than one meaningful new difficulty.
+
+Automation may check syntax, exact-string occurrence, references and schemas.
+
+It must not be treated as proving the semantic correctness of the benchmark.
 
 ## Working principle
 
 > Define the answer key first, generate realistic evidence from it, audit the evidence, and only then define what a perfect extractor should return.
 
-The benchmark should become more difficult because we deliberately introduce a meaningful new challenge, not because fixture generation accidentally made the fictional world more complicated.
+Increase benchmark difficulty deliberately, not through accidental fixture complexity.

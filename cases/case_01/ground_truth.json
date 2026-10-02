@@ -30,32 +30,63 @@
     {
       "source": "person_001",
       "type": "settlor_of",
-      "target": "trust_001"
+      "target": "trust_001",
+      "approved_evidence": [
+        "She confirmed that she is the settlor of the Evergreen Family Trust.",
+        "Alice Chen was asked first to confirm her own connection with the Evergreen Family Trust. She confirmed that she is the settlor of the Evergreen Family Trust.",
+        "Alice Chen confirmed that she is the settlor of the Evergreen Family Trust."
+      ]
     },
     {
       "source": "person_001",
       "type": "spouse_of",
-      "target": "person_002"
+      "target": "person_002",
+      "approved_evidence": [
+        "Alice Chen confirmed that she and David Chen are spouses.",
+        "She confirmed that she and David Chen are spouses and that Alice Chen and David Chen are the parents of Bob Chen."
+      ]
     },
     {
       "source": "person_001",
       "type": "parent_of",
-      "target": "person_003"
+      "target": "person_003",
+      "approved_evidence": [
+        "Alice Chen confirmed that Alice Chen and David Chen are the parents of Bob Chen.",
+        "She confirmed that she and David Chen are spouses and that Alice Chen and David Chen are the parents of Bob Chen.",
+        "In particular, the fact that Bob Chen is a child of Alice Chen and David Chen was recorded separately from the fact that Bob Chen is a beneficiary of the Evergreen Family Trust."
+      ]
     },
     {
       "source": "person_002",
       "type": "parent_of",
-      "target": "person_003"
+      "target": "person_003",
+      "approved_evidence": [
+        "Alice Chen confirmed that Alice Chen and David Chen are the parents of Bob Chen.",
+        "She confirmed that she and David Chen are spouses and that Alice Chen and David Chen are the parents of Bob Chen.",
+        "In particular, the fact that Bob Chen is a child of Alice Chen and David Chen was recorded separately from the fact that Bob Chen is a beneficiary of the Evergreen Family Trust."
+      ]
     },
     {
       "source": "person_003",
       "type": "beneficiary_of",
-      "target": "trust_001"
+      "target": "trust_001",
+      "approved_evidence": [
+        "Alice Chen confirmed that Bob Chen is a beneficiary of the Evergreen Family Trust.",
+        "Alice Chen confirmed that the factual position to be recorded for the purposes of the initial review was that Bob Chen and Carol Wong are beneficiaries of the Evergreen Family Trust.",
+        "She also confirmed that Bob Chen and Carol Wong are beneficiaries of the Evergreen Family Trust.",
+        "In particular, the fact that Bob Chen is a child of Alice Chen and David Chen was recorded separately from the fact that Bob Chen is a beneficiary of the Evergreen Family Trust."
+      ]
     },
     {
       "source": "person_004",
       "type": "beneficiary_of",
-      "target": "trust_001"
+      "target": "trust_001",
+      "approved_evidence": [
+        "Alice Chen also confirmed that Carol Wong is a beneficiary of the Evergreen Family Trust.",
+        "Alice Chen confirmed that the factual position to be recorded for the purposes of the initial review was that Bob Chen and Carol Wong are beneficiaries of the Evergreen Family Trust.",
+        "She also confirmed that Bob Chen and Carol Wong are beneficiaries of the Evergreen Family Trust.",
+        "Carol Wong's inclusion in the discussion was confined to Carol Wong's status as a beneficiary of the Evergreen Family Trust."
+      ]
     }
   ]
 }
