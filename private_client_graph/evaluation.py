@@ -18,6 +18,23 @@ def evaluate_graph(prediction: CanonicalGraph, ground_truth: GroundTruth) -> Eva
     count once and pool their evidence. Every zero denominator yields 0.0,
     including provenance accuracy when there are no true-positive edges.
     """
+    predicted_names, truth_names, evidence = _validated_lookups(prediction, ground_truth)
+    predicted = _resolve_prediction(prediction, predicted_names, evidence)
+    approved = _resolve_ground_truth(ground_truth, truth_names)
+
+    predicted_edges, truth_edges = set(predicted), set(approved)
+    true_positives = predicted_edges & truth_edges
+    false_positives = predicted_edges - truth_edges
+    false_negatives = truth_edges - predicted_edges
+    passes = _score_provenance(true_positives, predicted, approved)
+
+    return _build_evaluation_result(true_positives, false_positives, false_negatives, passes)
+
+
+def _validated_lookups(
+    prediction: CanonicalGraph, ground_truth: GroundTruth
+) -> tuple[dict[str, str], dict[str, str], dict[str, str]]:
+    # Check all duplicate IDs before resolving either graph's relationships.
     predicted_names = {entity.id: entity.name for entity in prediction.entities}
     truth_names = {entity.id: entity.name for entity in ground_truth.entities}
     evidence = {item.id: item.supporting_text for item in prediction.evidence}
@@ -29,6 +46,12 @@ def evaluate_graph(prediction: CanonicalGraph, ground_truth: GroundTruth) -> Eva
         if len(lookup) != len(items):
             raise ValueError(f"Duplicate {label} ID")
 
+    return predicted_names, truth_names, evidence
+
+
+def _resolve_prediction(
+    prediction: CanonicalGraph, predicted_names: dict[str, str], evidence: dict[str, str]
+) -> dict[SemanticEdge, set[str]]:
     predicted: dict[SemanticEdge, set[str]] = {}
     for relationship in prediction.relationships:
         try:
@@ -42,6 +65,12 @@ def evaluate_graph(prediction: CanonicalGraph, ground_truth: GroundTruth) -> Eva
             raise ValueError(f"Unresolved predicted evidence reference: {error.args[0]!r}") from error
         predicted.setdefault(_edge(source, relationship.type, target), set()).update(quotes)
 
+    return predicted
+
+
+def _resolve_ground_truth(
+    ground_truth: GroundTruth, truth_names: dict[str, str]
+) -> dict[SemanticEdge, set[str]]:
     approved: dict[SemanticEdge, set[str]] = {}
     for relationship in ground_truth.relationships:
         try:
@@ -53,11 +82,23 @@ def evaluate_graph(prediction: CanonicalGraph, ground_truth: GroundTruth) -> Eva
             relationship.approved_evidence
         )
 
-    predicted_edges, truth_edges = set(predicted), set(approved)
-    true_positives = predicted_edges & truth_edges
-    false_positives = predicted_edges - truth_edges
-    false_negatives = truth_edges - predicted_edges
-    passes = {edge for edge in true_positives if predicted[edge] & approved[edge]}
+    return approved
+
+
+def _score_provenance(
+    true_positives: set[SemanticEdge],
+    predicted: dict[SemanticEdge, set[str]],
+    approved: dict[SemanticEdge, set[str]],
+) -> set[SemanticEdge]:
+    return {edge for edge in true_positives if predicted[edge] & approved[edge]}
+
+
+def _build_evaluation_result(
+    true_positives: set[SemanticEdge],
+    false_positives: set[SemanticEdge],
+    false_negatives: set[SemanticEdge],
+    passes: set[SemanticEdge],
+) -> EvaluationResult:
     failures = true_positives - passes
     tp, fp, fn = len(true_positives), len(false_positives), len(false_negatives)
     return EvaluationResult(

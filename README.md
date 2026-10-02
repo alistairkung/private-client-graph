@@ -18,6 +18,8 @@ The emphasis is on a measurable technical experiment rather than a polished appl
 
 The extractor will operate on synthetic material only.
 
+Contributors: read [the code-style guide](docs/CODE_STYLE.md) before changing the pipeline.
+
 ## Run the Case 01 extraction slice
 
 From the repository root, with Python 3.11+:

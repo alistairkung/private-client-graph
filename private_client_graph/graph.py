@@ -32,7 +32,21 @@ def build_graph(
     candidate raises ValueError; no partial graph is returned. Verbatim matching
     checks quote occurrence, not whether the quote semantically supports an edge.
     """
-    # Validation: reject invalid claims and collect consistent endpoint types.
+    entity_types = _validate_candidates(candidates, source_text)
+    entities = _build_entities(entity_types)
+    evidence = _build_evidence(candidates, document)
+    relationships = _build_relationships(candidates, entities, evidence)
+
+    return CanonicalGraph(
+        entities=list(entities.values()),
+        relationships=relationships,
+        evidence=list(evidence.values()),
+    )
+
+
+def _validate_candidates(
+    candidates: Sequence[RelationshipCandidate], source_text: str
+) -> dict[str, EntityType]:
     entity_types: dict[str, EntityType] = {}
     for index, candidate in enumerate(candidates):
         for field in ("source_name", "target_name", "supporting_text"):
@@ -51,17 +65,32 @@ def build_graph(
                 raise ValueError(f"Candidate {index}: conflicting entity types for {name!r}")
             entity_types[name] = entity_type
 
-    # Normalization: construct unique entities and evidence in a stable order.
-    entities = {
+    return entity_types
+
+
+def _build_entities(entity_types: dict[str, EntityType]) -> dict[str, Entity]:
+    return {
         name: Entity(id=f"entity_{index:03d}", type=entity_types[name], name=name)
         for index, name in enumerate(sorted(entity_types), start=1)
     }
-    evidence = {
+
+
+def _build_evidence(
+    candidates: Sequence[RelationshipCandidate], document: str
+) -> dict[str, Evidence]:
+    return {
         quote: Evidence(id=f"evidence_{index:03d}", document=document, supporting_text=quote)
         for index, quote in enumerate(
             sorted({candidate.supporting_text for candidate in candidates}), start=1
         )
     }
+
+
+def _build_relationships(
+    candidates: Sequence[RelationshipCandidate],
+    entities: dict[str, Entity],
+    evidence: dict[str, Evidence],
+) -> list[Relationship]:
     edges: dict[tuple[str, RelationshipType, str], set[str]] = {}
     for candidate in candidates:
         source, target = candidate.source_name, candidate.target_name
@@ -70,7 +99,7 @@ def build_graph(
         key = (source, candidate.relationship_type, target)
         edges.setdefault(key, set()).add(evidence[candidate.supporting_text].id)
 
-    relationships = [
+    return [
         Relationship(
             source=entities[source].id,
             type=relationship_type,
@@ -79,8 +108,3 @@ def build_graph(
         )
         for source, relationship_type, target in sorted(edges)
     ]
-    return CanonicalGraph(
-        entities=list(entities.values()),
-        relationships=relationships,
-        evidence=list(evidence.values()),
-    )
