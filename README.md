@@ -18,6 +18,41 @@ The emphasis is on a measurable technical experiment rather than a polished appl
 
 The extractor will operate on synthetic material only.
 
+## Run the Case 01 extraction slice
+
+From the repository root, with Python 3.11+:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install -e '.[dev]'
+# Add DEEPSEEK_API_KEY to the local .env file before running.
+python -m private_client_graph.extract
+python -m pytest
+```
+
+The command reads only `cases/case_01/source.txt` and prints an
+`ExtractionResult` JSON object containing relationship candidates to stdout.
+It does not read either answer-key fixture or save the result.
+
+The default model is `deepseek-flash`; override with `--model MODEL_NAME`.
+The CLI loads `.env` using `python-dotenv` (existing environment values take
+precedence). `.env` is ignored by Git. Like the receipt-agent coursework,
+extraction uses a `ChatPromptTemplate` and an LCEL chain:
+`prompt | llm.with_structured_output(ExtractionResult)`.
+
+`ChatDeepSeek` uses function calling to request the existing Pydantic schema;
+LangChain parses the returned tool arguments into `ExtractionResult` and raises
+on schema failures. This is not a server-side strict JSON-schema guarantee.
+No manual JSON parser or deterministic evidence checks are added. A missing
+structured result or API error fails the run, and `max_retries=0` disables client
+retries. Thinking is disabled, following receipt-agent's configuration.
+
+Names are assumed unambiguous for Case 01. Supporting quotes may rely on local
+pronoun context; the open evidence-span decision remains deferred. Tests use a
+stubbed HTTP response to check the integration, not to measure model extraction
+quality. A live run requires a DeepSeek API key and network access.
+
 ## Proposed first vertical slice
 
 The smallest credible end-to-end slice is:
