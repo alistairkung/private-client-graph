@@ -1,14 +1,15 @@
 """Deterministic construction of a single-document relationship graph."""
 
 from collections.abc import Sequence
-from typing import Literal
-
-from pydantic import BaseModel
-
-from private_client_graph.models import RelationshipCandidate, RelationshipType
-
-
-EntityType = Literal["person", "trust"]
+from private_client_graph.models import (
+    CanonicalGraph,
+    Entity,
+    EntityType,
+    Evidence,
+    Relationship,
+    RelationshipCandidate,
+    RelationshipType,
+)
 
 ENDPOINT_TYPES: dict[RelationshipType, tuple[EntityType, EntityType]] = {
     "parent_of": ("person", "person"),
@@ -19,31 +20,6 @@ ENDPOINT_TYPES: dict[RelationshipType, tuple[EntityType, EntityType]] = {
     "beneficiary_of": ("person", "trust"),
 }
 SYMMETRIC_TYPES = {"spouse_of", "sibling_of"}
-
-
-class Entity(BaseModel):
-    id: str
-    type: EntityType
-    name: str
-
-
-class Relationship(BaseModel):
-    source: str
-    type: RelationshipType
-    target: str
-    evidence_ids: list[str]
-
-
-class Evidence(BaseModel):
-    id: str
-    document: str
-    supporting_text: str
-
-
-class CanonicalGraph(BaseModel):
-    entities: list[Entity]
-    relationships: list[Relationship]
-    evidence: list[Evidence]
 
 
 def build_graph(
@@ -59,6 +35,9 @@ def build_graph(
     # Validation: reject invalid claims and collect consistent endpoint types.
     entity_types: dict[str, EntityType] = {}
     for index, candidate in enumerate(candidates):
+        for field in ("source_name", "target_name", "supporting_text"):
+            if not getattr(candidate, field).strip():
+                raise ValueError(f"Candidate {index}: {field} must not be empty or whitespace-only")
         relationship_type = candidate.relationship_type
         if relationship_type not in ENDPOINT_TYPES:
             raise ValueError(f"Candidate {index}: unsupported relationship type {relationship_type!r}")

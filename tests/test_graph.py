@@ -27,6 +27,34 @@ def test_verbatim_evidence_is_accepted_and_document_is_preserved():
     assert graph.evidence[0].document == "source.txt"
 
 
+@pytest.mark.parametrize("field", ["source_name", "target_name", "supporting_text"])
+@pytest.mark.parametrize("value", [" ", "\t\n\r", "\u00a0"])
+def test_whitespace_only_fields_are_rejected(field, value):
+    fields = candidate().model_dump()
+    fields[field] = value
+    item = RelationshipCandidate(**fields)
+    with pytest.raises(ValueError, match=f"{field} must not be empty or whitespace-only"):
+        build(item, source_text=QUOTE + value)
+
+
+@pytest.mark.parametrize("field", ["source_name", "target_name", "supporting_text"])
+def test_empty_fields_are_rejected_if_schema_validation_was_bypassed(field):
+    item = candidate().model_copy(update={field: ""})
+    with pytest.raises(ValueError, match=f"{field} must not be empty or whitespace-only"):
+        build(item)
+
+
+def test_nonblank_values_are_preserved_without_trimming():
+    quote = f"  {QUOTE}\n"
+    item = candidate(source=" Alice ", target=" Bob ", quote=quote)
+    graph = build(item, source_text=quote)
+    assert {entity.name for entity in graph.entities} == {" Alice ", " Bob "}
+    assert graph.evidence[0].supporting_text == quote
+    assert item.source_name == " Alice "
+    assert item.target_name == " Bob "
+    assert item.supporting_text == quote
+
+
 @pytest.mark.parametrize("quote", ["Alice is Bob's parent.", QUOTE.lower()])
 def test_non_verbatim_evidence_is_rejected(quote):
     with pytest.raises(ValueError, match="verbatim"):

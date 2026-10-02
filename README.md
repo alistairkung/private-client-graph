@@ -72,9 +72,11 @@ graph = build_graph(
 )
 ```
 
-The caller supplies an `ExtractionResult` as `result` and the document content as
+The caller supplies a sequence of `RelationshipCandidate` objects (such as
+`result.relationships`), the document identity as `document`, and its content as
 `source_text`. The builder performs no file I/O or model calls. It first rejects
-non-verbatim evidence, self-relationships, unsupported types, and conflicting
+empty or whitespace-only names/evidence, non-verbatim evidence,
+self-relationships, unsupported types, and conflicting
 endpoint types with `ValueError`; it never returns a partial graph.
 
 It then constructs `CanonicalGraph` with lean entities, relationships, and evidence.
