@@ -80,6 +80,14 @@ uv run python -m private_client_graph.extract
 
 Successful runs are saved under the Git-ignored `runs/` directory.
 
+## Run unit tests
+
+```bash
+uv run pytest
+```
+
+The test suite covers deterministic graph construction, evaluation behaviour, reference integrity, extraction integration boundaries, and Case 01 end-to-end fixtures. CI runs the same suite on pull requests to `main`.
+
 ## Evaluation
 
 ```bash
