@@ -8,13 +8,13 @@ The project is deliberately benchmark-driven: start with a known answer key, gen
 
 ```mermaid
 flowchart LR
-    A[Synthetic source document] --> B[LLM semantic extraction]
-    B --> C[RelationshipCandidate[]]
-    C --> D[Deterministic validation + graph construction]
-    D --> E[CanonicalGraph]
-    E --> F[Deterministic evaluation]
-    G[Ground truth + approved evidence] --> F
-    F --> H[Precision / Recall / F1 + provenance diagnostics]
+    A["Synthetic source document"] --> B["LLM semantic extraction"]
+    B --> C["RelationshipCandidate list"]
+    C --> D["Deterministic validation + graph construction"]
+    D --> E["CanonicalGraph"]
+    E --> F["Deterministic evaluation"]
+    G["Ground truth + approved evidence"] --> F
+    F --> H["Precision, recall, F1 + provenance diagnostics"]
 ```
 
 The LLM is responsible for semantic interpretation. Mechanically checkable work such as validation, entity construction, IDs, deduplication, canonicalisation, reference resolution, and scoring remains deterministic.
