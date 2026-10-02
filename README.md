@@ -90,6 +90,51 @@ Verbatim matching only checks that a quote occurs in the source; it does not
 establish semantic support. The extraction CLI and its output contract remain
 independent of graph construction.
 
+## Deterministic Case 01 evaluation
+
+`private_client_graph.evaluation.evaluate_graph(graph, ground_truth)` accepts an
+already constructed `CanonicalGraph` and a `GroundTruth` model. It performs no
+model calls or file I/O and does not depend on the extraction or graph builder.
+
+```python
+from pathlib import Path
+from private_client_graph.evaluation import evaluate_graph
+from private_client_graph.models import GroundTruth
+
+ground_truth = GroundTruth.model_validate_json(
+    Path("cases/case_01/ground_truth.json").read_text(encoding="utf-8")
+)
+evaluation = evaluate_graph(graph, ground_truth)
+```
+
+Both inputs resolve their own entity IDs to exact names. The evaluator compares
+sets of `(source_name, relationship_type, target_name)` tuples, sorting endpoints
+only for `spouse_of` and `sibling_of`. TP is the intersection; FP and FN are the
+respective set differences. Precision is `TP / (TP + FP)`, recall is
+`TP / (TP + FN)`, and F1 is `2 * TP / (2 * TP + FP + FN)`.
+
+Ground-truth relationships retain their entity ID references and now include
+`approved_evidence`: the benchmark's explicit list of acceptable exact spans.
+These annotations extend the earlier truth-only fixture for provenance evaluation.
+They include alternatives from the source's summaries and recap, including spans
+that resolve pronouns through local context. `expected_extraction.json` remains
+one ideal extraction, not the exhaustive list of approved evidence. Arbitrary
+longer quotes or paraphrases are not automatically approved.
+
+Provenance passes for a true-positive edge when at least one attached quote
+exactly matches one approved span. Extra unapproved quotes do not fail that edge.
+Provenance accuracy divides passes by TP; FP and FN do not enter this metric.
+All zero denominators return `0.0`, including an empty-vs-empty comparison and
+provenance accuracy with no TP. Counts and sorted semantic-edge diagnostic lists
+in `EvaluationResult` distinguish these cases from measured successes.
+
+Duplicate semantic edges count once and pool their evidence. Missing entity or
+evidence references and duplicate IDs raise `ValueError` before scoring, including
+broken evidence references on FP edges. Empty attached evidence lists produce a
+provenance failure for TP edges. Source-text occurrence validation remains solely
+the graph builder's responsibility; evaluation checks approved support by exact
+text, not document IDs or semantic similarity.
+
 ## Proposed first vertical slice
 
 The smallest credible end-to-end slice is:
