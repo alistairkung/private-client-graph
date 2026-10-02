@@ -57,6 +57,37 @@ pronoun context; the open evidence-span decision remains deferred. Tests use a
 stubbed HTTP response to check the integration, not to measure model extraction
 quality. A live run requires a DeepSeek API key and network access.
 
+## Deterministic graph construction
+
+`private_client_graph.graph.build_graph` accepts structured candidates independently
+of the extraction chain:
+
+```python
+from private_client_graph.graph import build_graph
+
+graph = build_graph(
+    result.relationships,
+    document="cases/case_01/source.txt",
+    source_text=source_text,
+)
+```
+
+The caller supplies an `ExtractionResult` as `result` and the document content as
+`source_text`. The builder performs no file I/O or model calls. It first rejects
+non-verbatim evidence, self-relationships, unsupported types, and conflicting
+endpoint types with `ValueError`; it never returns a partial graph.
+
+It then constructs `CanonicalGraph` with lean entities, relationships, and evidence.
+Names are exact, case-sensitive identity keys for Case 01. Sorted names and quotes
+receive graph-local sequential IDs. Symmetric endpoints use alphabetical name
+order; directed edges retain their direction. Duplicate edges retain all distinct
+evidence references, and identical quotes share one evidence object within the
+supplied document. Output ordering is independent of candidate ordering.
+
+Verbatim matching only checks that a quote occurs in the source; it does not
+establish semantic support. The extraction CLI and its output contract remain
+independent of graph construction.
+
 ## Proposed first vertical slice
 
 The smallest credible end-to-end slice is:
