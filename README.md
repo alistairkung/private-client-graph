@@ -35,7 +35,8 @@ The command reads only `cases/case_01/source.txt` and prints an
 `ExtractionResult` JSON object containing relationship candidates to stdout.
 It also saves each successful result to `runs/case_01/YYYY-MM-DDTHHMMSS.json`,
 using the UTC completion time. Files contain only the existing `ExtractionResult`
-JSON. Existing files are never overwritten; a same-second filename collision
+JSON. The `runs/` folder is local-only and ignored by Git.
+Existing files are never overwritten; a same-second filename collision
 raises an error. Neither answer-key fixture is read by the extractor.
 
 The default model is `deepseek-flash`; override with `--model MODEL_NAME`.
