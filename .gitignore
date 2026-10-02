@@ -1,3 +1,4 @@
 /decision_context/
 /.env
 /runs/
+/.venv/
