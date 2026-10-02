@@ -33,7 +33,10 @@ python -m pytest
 
 The command reads only `cases/case_01/source.txt` and prints an
 `ExtractionResult` JSON object containing relationship candidates to stdout.
-It does not read either answer-key fixture or save the result.
+It also saves each successful result to `runs/case_01/YYYY-MM-DDTHHMMSS.json`,
+using the UTC completion time. Files contain only the existing `ExtractionResult`
+JSON. Existing files are never overwritten; a same-second filename collision
+raises an error. Neither answer-key fixture is read by the extractor.
 
 The default model is `deepseek-flash`; override with `--model MODEL_NAME`.
 The CLI loads `.env` using `python-dotenv` (existing environment values take

@@ -2,6 +2,7 @@
 
 import argparse
 import os
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import get_args
 
@@ -89,7 +90,13 @@ def main() -> None:
         extra_body={"thinking": {"type": "disabled"}},
     )
     result = extract_relationships(Path("cases/case_01/source.txt"), llm=llm)
-    print(result.model_dump_json(indent=2))
+    output = result.model_dump_json(indent=2)
+    run_dir = Path("runs/case_01")
+    run_dir.mkdir(parents=True, exist_ok=True)
+    timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H%M%S")
+    with (run_dir / f"{timestamp}.json").open("x", encoding="utf-8") as run_file:
+        run_file.write(output + "\n")
+    print(output)
 
 
 if __name__ == "__main__":

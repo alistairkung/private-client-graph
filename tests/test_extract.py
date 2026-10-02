@@ -93,3 +93,6 @@ def test_cli_loads_dotenv_without_exposing_key(tmp_path, monkeypatch, capsys):
     captured = capsys.readouterr()
     assert json.loads(captured.out) == {"relationships": []}
     assert "test-local-secret" not in captured.out + captured.err
+    saved_runs = list((tmp_path / "runs" / "case_01").glob("*.json"))
+    assert len(saved_runs) == 1
+    assert saved_runs[0].read_text(encoding="utf-8") == captured.out
