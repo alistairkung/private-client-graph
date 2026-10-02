@@ -92,6 +92,18 @@ independent of graph construction.
 
 ## Deterministic Case 01 evaluation
 
+To evaluate a saved extraction and save its metrics and diagnostics alongside it:
+
+```bash
+python -m private_client_graph.evaluate runs/case_01/2026-10-02T075056.json
+```
+
+This creates `runs/case_01/2026-10-02T075056.evaluation.json` and prints the same
+`EvaluationResult` JSON. It uses the current Case 01 source and ground-truth
+fixtures, makes no model calls, and leaves the extraction file unchanged.
+Existing evaluation files are never overwritten. Both files remain local-only
+under the Git-ignored `runs/` directory.
+
 `private_client_graph.evaluation.evaluate_graph(graph, ground_truth)` accepts an
 already constructed `CanonicalGraph` and a `GroundTruth` model. It performs no
 model calls or file I/O and does not depend on the extraction or graph builder.
