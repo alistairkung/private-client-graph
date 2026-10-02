@@ -22,16 +22,24 @@ Contributors: read [the code-style guide](docs/CODE_STYLE.md) before changing th
 
 ## Run the Case 01 extraction slice
 
-From the repository root, with Python 3.11+:
+From the repository root, install [uv](https://docs.astral.sh/uv/) and sync the committed environment:
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate
-python -m pip install -e '.[dev]'
+uv sync --locked
 # Add DEEPSEEK_API_KEY to the local .env file before running.
-python -m private_client_graph.extract
-python -m pytest
+uv run python -m private_client_graph.extract
+uv run pytest
 ```
+
+Dependency management is intentionally centralized in `pyproject.toml` and `uv.lock`:
+
+- runtime dependencies belong in `[project].dependencies`;
+- development-only dependencies belong in `[dependency-groups].dev`;
+- `.python-version` pins the project interpreter to Python 3.11;
+- `uv.lock` pins the resolved transitive environment and is committed to Git;
+- CI uses `uv sync --locked`, so dependency changes must update the lockfile.
+
+Use `uv add PACKAGE` for runtime dependencies and `uv add --dev PACKAGE` for development dependencies. Commit both `pyproject.toml` and the resulting `uv.lock` change.
 
 The command reads only `cases/case_01/source.txt` and prints an
 `ExtractionResult` JSON object containing relationship candidates to stdout.
