@@ -2,10 +2,12 @@ import { useEffect, useRef } from "react";
 
 export function SourcePanel({
   source,
+  title = "Attendance note",
   span,
   activation,
 }: {
   source: string;
+  title?: string;
   activation?: number;
   span?: { start: number; end: number };
 }) {
@@ -18,7 +20,7 @@ export function SourcePanel({
       <div className="panel-heading">
         <div>
           <p className="eyebrow">THE SOURCE</p>
-          <h2>Attendance note</h2>
+          <h2>{title}</h2>
         </div>
         <span className="pill">Read-only</span>
       </div>

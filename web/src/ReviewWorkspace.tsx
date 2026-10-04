@@ -8,8 +8,12 @@ import type { CanonicalGraph } from "./types";
 export function ReviewWorkspace({
   source,
   graph,
+  sourceTitle,
+  practitioner = false,
 }: {
   source: string;
+  sourceTitle?: string;
+  practitioner?: boolean;
   graph: CanonicalGraph;
 }) {
   const [selected, setSelected] = useState<number | null>(null);
@@ -68,6 +72,7 @@ export function ReviewWorkspace({
         </div>
         <GraphView
           graph={graph}
+          practitioner={practitioner}
           selected={selected}
           onSelect={selectRelationship}
         />
@@ -82,7 +87,7 @@ export function ReviewWorkspace({
           onSelect={setActiveId}
         />
       </section>
-      <SourcePanel source={source} span={span} activation={activation} />
+      <SourcePanel title={sourceTitle} source={source} span={span} activation={activation} />
     </div>
   );
 }

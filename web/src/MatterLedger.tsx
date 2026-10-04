@@ -8,7 +8,6 @@ type CollectionState =
 
 export function MatterLedger() {
   const [state, setState] = useState<CollectionState>({ status: "loading" });
-  const [selectedId, setSelectedId] = useState<string | null>(null);
   useEffect(() => {
     let active = true;
     getMatters().then(
@@ -28,15 +27,13 @@ export function MatterLedger() {
           ? state.matters.map(matter => (
             <tr key={matter.id}>
               <td colSpan={2}>
-                <button
-                  type="button"
+                <a
+                  href={`/app/matters/${matter.id}`}
                   className="matter-row"
-                  aria-pressed={selectedId === matter.id}
-                  onClick={() => setSelectedId(selectedId === matter.id ? null : matter.id)}
                 >
                   <span className="matter-reference">{matter.external_reference}</span>
                   <span className="matter-title">{matter.title}</span>
-                </button>
+                </a>
               </td>
             </tr>
           ))

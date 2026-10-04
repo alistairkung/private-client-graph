@@ -1,3 +1,4 @@
+import { centralTrustLayout } from "./trust-layout";
 import dagre from "@dagrejs/dagre";
 import { MarkerType, Position, type Edge, type Node } from "@xyflow/react";
 import type { CanonicalGraph, RelationshipType } from "./types";
@@ -11,7 +12,7 @@ const labels: Record<RelationshipType, string> = {
   beneficiary_of: "Beneficiary of",
 };
 
-export function toGraphView(graph: CanonicalGraph): {
+export function toGraphView(graph: CanonicalGraph, practitioner = false): {
   nodes: Node[];
   edges: Edge[];
   bounds: { x: number; y: number; width: number; height: number };
@@ -37,8 +38,9 @@ export function toGraphView(graph: CanonicalGraph): {
     ),
   );
   dagre.layout(layout);
+  const anchored = practitioner ? centralTrustLayout(graph) : null;
   return {
-    bounds: {
+    bounds: anchored?.bounds ?? {
       x: 0,
       y: 0,
       width: layout.graph().width!,
@@ -46,15 +48,16 @@ export function toGraphView(graph: CanonicalGraph): {
     },
     nodes: graph.entities.map((entity) => ({
       id: entity.id,
+      type: practitioner && entity.type === "trust" ? "trust" : undefined,
       position: {
-        x: layout.node(entity.id).x - 85,
-        y: layout.node(entity.id).y - 28,
+        x: (anchored?.positions.get(entity.id)?.x ?? layout.node(entity.id).x) - 85,
+        y: (anchored?.positions.get(entity.id)?.y ?? layout.node(entity.id).y) - (practitioner && entity.type === "trust" ? 48 : 28),
       },
       data: { label: entity.name, kind: entity.type },
       className: `entity-${entity.type}`,
       sourcePosition: Position.Bottom,
       targetPosition: Position.Top,
-      style: { width: 170, height: 56 },
+      style: { width: 170, height: practitioner && entity.type === "trust" ? 96 : 56 },
     })),
     edges: graph.relationships.map((edge, index) => ({
       id: String(index),
@@ -64,7 +67,7 @@ export function toGraphView(graph: CanonicalGraph): {
       type: "routed",
       ariaRole: "button",
       data: {
-        route: layout.edge({
+        route: anchored?.routes[index] ?? layout.edge({
           v: edge.source,
           w: edge.target,
           name: String(index),

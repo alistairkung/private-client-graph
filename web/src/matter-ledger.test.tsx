@@ -1,5 +1,4 @@
 import { render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import { expect, test, vi } from "vitest";
 import { PractitionerApp } from "./PractitionerApp";
 
@@ -9,20 +8,14 @@ const matter = {
   title: "Evergreen Family Trust",
 };
 
-test("loads persisted summaries and selects a Matter without leaving the ledger", async () => {
+test("loads persisted summaries with a direct Matter route", async () => {
   let finish!: (value: Response) => void;
   const fetcher = vi.spyOn(globalThis, "fetch").mockImplementation(() => new Promise(resolve => { finish = resolve; }));
-  const user = userEvent.setup();
   render(<PractitionerApp />);
   expect(screen.getByRole("status")).toHaveTextContent("Loading Matters…");
   finish(new Response(JSON.stringify([matter])));
-  const row = await screen.findByRole("button", { name: "PC/2026/0142 Evergreen Family Trust" });
-  expect(row).toHaveAttribute("aria-pressed", "false");
-  await user.click(row);
-  expect(row).toHaveAttribute("aria-pressed", "true");
-  row.focus();
-  await user.keyboard("{Enter}");
-  expect(row).toHaveAttribute("aria-pressed", "false");
+  const row = await screen.findByRole("link", { name: "PC/2026/0142 Evergreen Family Trust" });
+  expect(row).toHaveAttribute("href", `/app/matters/${matter.id}`);
   expect(fetcher).toHaveBeenCalledExactlyOnceWith("/api/matters");
   expect(screen.queryByText(matter.id)).not.toBeInTheDocument();
 });
