@@ -1,6 +1,8 @@
 import subprocess
 import sys
 
+import pytest
+
 from fastapi.testclient import TestClient
 
 from private_client_graph.api.app import create_app
@@ -127,3 +129,73 @@ def test_concurrent_seed_commands_insert_only_one_matter(database):
         "Evergreen already exists; unchanged.", "Evergreen inserted.",
     ]
     assert len(TestClient(create_app()).get("/api/matters").json()) == 1
+
+
+def test_matter_detail_returns_complete_persisted_state(database):
+    from private_client_graph.seed_evergreen import seed_evergreen
+
+    seed_evergreen()
+    response = TestClient(create_app()).get("/api/matters/ff985caf-60c5-4e65-a238-f3c26381c369")
+    assert response.status_code == 200
+    detail = response.json()
+    assert set(detail) == {"id", "external_reference", "title", "authoritative_source", "current_graph"}
+    assert detail["external_reference"] == "PC/2026/0142"
+    assert detail["title"] == "Evergreen Family Trust"
+    assert set(detail["authoritative_source"]) == {"title", "text"}
+    assert detail["authoritative_source"]["title"] == "Attendance Note – Meeting with Alice Chen"
+    assert len(detail["current_graph"]["relationships"]) == 6
+    assert all(item["supporting_text"] in detail["authoritative_source"]["text"]
+               for item in detail["current_graph"]["evidence"])
+
+
+def test_missing_and_invalid_matter_uuid(database):
+    client = TestClient(create_app())
+    assert client.get("/api/matters/00000000-0000-0000-0000-000000000000").status_code == 404
+    response = client.get("/api/matters/not-a-uuid")
+    assert response.status_code == 422
+    assert response.json() == {"error": {"message": "Invalid Matter UUID."}}
+
+
+@pytest.mark.parametrize("values", [
+    {"source_text": "Inconsistent synthetic source"},
+    {"current_graph": {"entities": "invalid"}},
+])
+def test_invalid_persisted_state_never_reaches_browser(database, values):
+    from sqlalchemy import create_engine, update
+    from private_client_graph.persistence.matters import matters
+    from private_client_graph.seed_evergreen import seed_evergreen
+
+    seed_evergreen()
+    engine = create_engine(database)
+    client = TestClient(create_app())
+    with engine.begin() as connection:
+        connection.execute(update(matters).values(**values))
+    response = client.get("/api/matters/ff985caf-60c5-4e65-a238-f3c26381c369")
+    assert response.status_code == 503
+    assert response.json() == {"error": {"message": "Matter could not be loaded."}}
+    engine.dispose()
+
+
+def test_detail_reads_only_persisted_state(database, monkeypatch):
+    from pathlib import Path
+    from sqlalchemy import create_engine, update
+    from private_client_graph.persistence.matters import matters
+    from private_client_graph.seed_evergreen import seed_evergreen
+    from langchain_deepseek import ChatDeepSeek
+
+    seed_evergreen()
+    engine = create_engine(database)
+    with engine.begin() as connection:
+        connection.execute(update(matters).values(source_title="Persisted note", source_text="Persisted text",
+            current_graph={"entities": [], "relationships": [], "evidence": []}))
+    engine.dispose()
+
+    def forbidden(*args, **kwargs):
+        raise AssertionError("Matter reads must not load fixtures or invoke a provider")
+
+    monkeypatch.setattr(Path, "read_text", forbidden)
+    monkeypatch.setattr(ChatDeepSeek, "invoke", forbidden)
+    response = TestClient(create_app()).get("/api/matters/ff985caf-60c5-4e65-a238-f3c26381c369")
+    assert response.status_code == 200
+    assert response.json()["authoritative_source"] == {"title": "Persisted note", "text": "Persisted text"}
+    assert response.json()["current_graph"] == {"entities": [], "relationships": [], "evidence": []}

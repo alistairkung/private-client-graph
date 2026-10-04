@@ -1,7 +1,8 @@
 import "./practitioner.css";
+import { MatterWorkspace } from "./MatterWorkspace";
 import { MatterLedger } from "./MatterLedger";
 
-export function PractitionerApp() {
+export function PractitionerApp({ matterId }: { matterId?: string }) {
   return (
     <div className="practitioner-shell">
       <header className="ledger-header">
@@ -19,11 +20,13 @@ export function PractitionerApp() {
         </div>
       </header>
       <main className="ledger-content ledger-width">
+        {matterId ? <MatterWorkspace key={matterId} id={matterId} /> : <>
         <h1>Matters</h1>
         <p className="ledger-intro">
-          Select a Matter in the register.
+          Open a Matter to review relationships and the source evidence supporting them.
         </p>
         <MatterLedger />
+        </>}
       </main>
       <footer className="ledger-footer ledger-width">
         <span>Private Client Graph</span>

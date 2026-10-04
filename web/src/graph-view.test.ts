@@ -79,3 +79,46 @@ test.each([
     expect(view.edges[0].target).toBe("b");
   },
 );
+
+test("practitioner presentation centers the single Trust and preserves graph semantics", () => {
+  const original = structuredClone(graph);
+  const view = toGraphView(graph, true);
+  const trust = view.nodes.find(node => node.id === "t")!;
+  expect(trust.type).toBe("trust");
+  expect(trust.position.x + Number(trust.style!.width) / 2).toBe(view.bounds.width / 2);
+  expect(trust.position.y + Number(trust.style!.height) / 2).toBe(view.bounds.height / 2);
+  expect(view.nodes.filter(node => node.id !== "t").every(node => node.type !== "trust")).toBe(true);
+  expect(view.edges.map(({ source, target, markerEnd }) => ({ source, target, directed: !!markerEnd })))
+    .toEqual([{ source: "a", target: "b", directed: false }, { source: "b", target: "t", directed: true }]);
+  expect(toGraphView(graph, true)).toEqual(view);
+  expect(graph).toEqual(original);
+  expect(toGraphView(graph).nodes.find(node => node.id === "t")?.type).not.toBe("trust");
+});
+
+test("central Trust layout is independent of entity input order and has distinct node positions", () => {
+  const view = toGraphView(graph, true);
+  const reordered = toGraphView({ ...graph, entities: [...graph.entities].reverse() }, true);
+  for (const node of view.nodes) {
+    expect(reordered.nodes.find(other => other.id === node.id)?.position).toEqual(node.position);
+  }
+  expect(new Set(view.nodes.map(node => JSON.stringify(node.position))).size).toBe(graph.entities.length);
+});
+
+test("practitioner graphs without a single Trust retain the general layout", () => {
+  const people = { ...graph, entities: graph.entities.map(entity => ({ ...entity, type: "person" as const })) };
+  expect(toGraphView(people, true)).toEqual(toGraphView(people));
+});
+
+test("multiple Trusts remain triangles with routes meeting their visible boundary", () => {
+  const multiple = { ...graph, entities: graph.entities.map(entity => entity.id === "b" ? { ...entity, type: "trust" as const } : entity) };
+  const view = toGraphView(multiple, true);
+  const trust = view.nodes.find(node => node.id === "t")!;
+  expect(view.nodes.filter(node => node.type === "trust")).toHaveLength(2);
+  const route = view.edges[1].data!.route as { points: { x: number; y: number }[] };
+  const end = route.points.at(-1)!;
+  // A directed arrow touches one of the triangle's three sides, not its interior.
+  const x = (end.x - trust.position.x) / Number(trust.style!.width);
+  const y = (end.y - trust.position.y) / Number(trust.style!.height);
+  expect(Math.min(Math.abs(y - 1), Math.abs(x - y / 2 - 0.5), Math.abs(x + y / 2 - 0.5))).toBeLessThan(0.001);
+  expect(toGraphView(multiple, true)).toEqual(view);
+});

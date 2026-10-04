@@ -301,7 +301,29 @@ Evidence. It inserts UUID `ff985caf-60c5-4e65-a238-f3c26381c369` only if absent.
 A PostgreSQL conflict guard also protects concurrent seeds. An existing row is
 left wholly unchanged, even if seed inputs later change or disappear. Fixture
 files are never consulted by Matter listing; the list API selects only the three
-summary columns. No Matter source/graph read endpoint is introduced here.
+summary columns. `GET /api/matters/{internal_uuid}` returns Matter identity, the embedded
+Authoritative Source (`title`, `text`), and `current_graph`. The application
+validates stored JSONB through `CanonicalGraph` and rejects Evidence absent from
+the persisted source with a safe 503 response; missing Matters return 404 and
+invalid UUIDs return 422. Reads never consult fixtures or invoke extraction.
+
+Opening a ledger row navigates directly to `/app/matters/{internal_uuid}`, which
+also supports direct entry and refresh in the combined deployment. The shared
+review workspace consumes the persisted source and graph, preserving relationship
+selection and exact Evidence highlighting. In the practitioner presentation,
+Trust entities are triangles. A single Trust anchors a deterministic circular
+layout; remaining entities are ordered by ID, with no legal significance assigned
+to their positions. Richer domain-specific positioning and multiple-Trust
+anchoring remain open to practitioner validation. The Public Showcase keeps its
+existing presentation.
+
+For the #23 deployment, no new Railway service, variable, or migration is needed.
+Confirm the new deployment uses the committed pre-deploy command above. The first
+#22 deployment may predate Railway detecting that command; the new deployment
+must run the normal idempotent seed before startup. After deployment, verify
+`/app` → Evergreen → relationship selection → source Evidence, refresh the Matter
+route, and check the Public Showcase sample journey. Do not seed through request
+handlers or use fixture fallbacks.
 
 For the complete test suite, use a disposable server with a role allowed to create
 databases:

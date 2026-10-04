@@ -1,12 +1,13 @@
 """Thin HTTP boundary for the fixed synthetic professional-review workspace."""
 
 from pathlib import Path
+from uuid import UUID
 
 from fastapi import FastAPI, Request
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
-from private_client_graph.application.matters import MatterSummary, list_matters
+from private_client_graph.application.matters import MatterDetail, MatterSummary, get_matter, list_matters
 from private_client_graph.persistence.database import database_engine
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse, JSONResponse
@@ -43,6 +44,18 @@ def matter_collection() -> list[MatterSummary] | JSONResponse:
         }})
 
 
+def matter_detail(internal_id: UUID) -> MatterDetail | JSONResponse:
+    try:
+        matter = get_matter(internal_id)
+    except (SQLAlchemyError, ValueError):
+        return JSONResponse(status_code=503, content={"error": {
+            "message": "Matter could not be loaded.",
+        }})
+    if matter is None:
+        return JSONResponse(status_code=404, content={"error": {"message": "Matter not found"}})
+    return matter
+
+
 def case_detail() -> CaseDetail:
     return get_case()
 
@@ -62,6 +75,8 @@ async def invalid_request(
     request: Request, exc: Exception
 ) -> JSONResponse:
     assert isinstance(exc, RequestValidationError)
+    if request.url.path.startswith("/api/matters/"):
+        return JSONResponse(status_code=422, content={"error": {"message": "Invalid Matter UUID."}})
     error = AnalysisError(
         stage="request", message="Choose live or sample analysis only."
     )
@@ -73,6 +88,9 @@ def create_app(web_dist: Path = WEB_DIST) -> FastAPI:
     application.add_api_route("/health", health, methods=["GET"])
     application.add_api_route(
         "/api/matters", matter_collection, methods=["GET"], response_model=list[MatterSummary]
+    )
+    application.add_api_route(
+        "/api/matters/{internal_id}", matter_detail, methods=["GET"], response_model=MatterDetail
     )
     application.add_api_route(
         "/api/showcase/case-01", case_detail, methods=["GET"], response_model=CaseDetail
@@ -91,6 +109,9 @@ def create_app(web_dist: Path = WEB_DIST) -> FastAPI:
 
         application.add_api_route("/app", practitioner_shell, include_in_schema=False)
         application.add_api_route("/app/", practitioner_shell, include_in_schema=False)
+        application.add_api_route(
+            "/app/matters/{internal_id}", practitioner_shell, include_in_schema=False
+        )
         application.mount(
             "/", StaticFiles(directory=web_dist, html=True), name="frontend"
         )

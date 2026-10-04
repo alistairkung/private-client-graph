@@ -1,6 +1,10 @@
+import { NODE_WIDTH, TRUST_HEIGHT } from "./node-geometry";
 import { useCallback, useEffect, useMemo } from "react";
 import {
   Background,
+  Handle,
+  Position,
+  type NodeProps,
   BaseEdge,
   Controls,
   ReactFlow,
@@ -46,6 +50,18 @@ function RoutedEdge({
   );
 }
 
+function TrustNode({ data }: NodeProps) {
+  return <div className="trust-node" aria-label={`${data.label} · Trust`}>
+    <svg viewBox={`0 0 ${NODE_WIDTH} ${TRUST_HEIGHT}`} role="img" aria-label="Triangular Trust node">
+      <polygon points={`${NODE_WIDTH / 2},0 ${NODE_WIDTH},${TRUST_HEIGHT} 0,${TRUST_HEIGHT}`} />
+    </svg>
+    <span>{String(data.label)}</span>
+    <Handle type="target" position={Position.Top} />
+    <Handle type="source" position={Position.Bottom} />
+  </div>;
+}
+
+const nodeTypes = { trust: TrustNode };
 const edgeTypes = { routed: RoutedEdge };
 
 function FitGraph({
@@ -65,14 +81,16 @@ function FitGraph({
 
 export function GraphView({
   graph,
+  practitioner = false,
   selected,
   onSelect,
 }: {
   graph: CanonicalGraph;
+  practitioner?: boolean;
   selected: number | null;
   onSelect: (index: number) => void;
 }) {
-  const view = useMemo(() => toGraphView(graph), [graph]);
+  const view = useMemo(() => toGraphView(graph, practitioner), [graph, practitioner]);
   const selectEdge = useCallback(
     (changes: EdgeChange[]) => {
       const selection = changes.find(
@@ -109,6 +127,7 @@ export function GraphView({
     <div className="graph-canvas" aria-label="Relationship graph">
       <ReactFlow
         edgeTypes={edgeTypes}
+        nodeTypes={nodeTypes}
         nodes={view.nodes}
         edges={edges}
         minZoom={0.25}
