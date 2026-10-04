@@ -132,8 +132,11 @@ test("presentation anchors the single Trust below people and preserves graph sem
   const original = structuredClone(graph);
   const view = toGraphView(graph);
   const trust = view.nodes.find(node => node.id === "t")!;
+  const people = view.nodes.filter(node => node.id !== "t");
+  const personCenters = people.map(node => node.position.x + Number(node.style!.width) / 2);
   expect(trust.type).toBe("trust");
-  expect(trust.position.x + Number(trust.style!.width) / 2).toBe(view.bounds.width / 2);
+  expect(trust.position.x + Number(trust.style!.width) / 2)
+    .toBe((Math.min(...personCenters) + Math.max(...personCenters)) / 2);
   expect(trust.position.y).toBeGreaterThan(Math.max(...view.nodes
     .filter(node => node.id !== "t")
     .map(node => node.position.y + Number(node.style!.height))));
@@ -234,7 +237,25 @@ test("Person relationships use separate lanes around intervening entities", () =
       expect(samples.some(point => point.x > bob.left && point.x < bob.right
         && point.y > bob.top && point.y < bob.bottom)).toBe(false);
     }
+    expect(route.points.every(point => point.x >= view.bounds.x
+      && point.x <= view.bounds.x + view.bounds.width
+      && point.y >= view.bounds.y
+      && point.y <= view.bounds.y + view.bounds.height)).toBe(true);
+    expect(route.labelBounds.left).toBeGreaterThanOrEqual(view.bounds.x);
+    expect(route.labelBounds.right).toBeLessThanOrEqual(view.bounds.x + view.bounds.width);
+    expect(route.labelBounds.top).toBeGreaterThanOrEqual(view.bounds.y);
+    expect(route.labelBounds.bottom).toBeLessThanOrEqual(view.bounds.y + view.bounds.height);
   }
+});
+
+test("equivalent relationship order retains geometry for each semantic claim", () => {
+  const original = toGraphView(caseGraph);
+  const reordered = toGraphView({ ...caseGraph, relationships: [...caseGraph.relationships].reverse() });
+  const geometry = (view: ReturnType<typeof toGraphView>) => new Map(view.edges.map(edge => [
+    `${edge.source}:${edge.label}:${edge.target}`,
+    edge.data!.route,
+  ]));
+  expect(geometry(reordered)).toEqual(geometry(original));
 });
 
 test("central Trust layout is independent of entity input order and has distinct node positions", () => {

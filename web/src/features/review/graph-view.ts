@@ -3,8 +3,10 @@ import {
   PERSON_HEIGHT,
   TRUST_HEIGHT,
   nodeBoundary,
+  nodeRectangle,
   relationshipRoute,
   type Rectangle,
+  type RelationshipRoute,
 } from "./node-geometry";
 import { centralTrustLayout } from "./trust-layout";
 import dagre from "@dagrejs/dagre";
@@ -19,6 +21,9 @@ const labels: Record<RelationshipType, string> = {
   trustee_of: "Trustee of",
   beneficiary_of: "Beneficiary of",
 };
+
+const relationshipKey = (relationship: CanonicalGraph["relationships"][number]) =>
+  `${relationship.source}:${relationship.type}:${relationship.target}`;
 
 export function toGraphView(graph: CanonicalGraph): {
   nodes: Node[];
@@ -58,24 +63,19 @@ export function toGraphView(graph: CanonicalGraph): {
       );
     });
   }
-  const labelObstacles: Rectangle[] = anchored ? [] : graph.entities.map(entity => {
-    const center = layout.node(entity.id);
-    const clearance = 8;
-    return {
-      left: center.x - NODE_WIDTH / 2 - clearance,
-      top: center.y - nodeHeight(entity.id) / 2 - clearance,
-      right: center.x + NODE_WIDTH / 2 + clearance,
-      bottom: center.y + nodeHeight(entity.id) / 2 + clearance,
-    };
-  });
-  const generalRoutes = anchored ? [] : graph.relationships.map((edge, index) => {
+  const labelObstacles: Rectangle[] = anchored ? [] : graph.entities.map(entity =>
+    nodeRectangle(layout.node(entity.id), nodeHeight(entity.id), 8));
+  const generalRoutes: RelationshipRoute[] = new Array(graph.relationships.length);
+  const orderedRelationships = graph.relationships.map((edge, index) => ({ edge, index }))
+    .sort((first, second) => relationshipKey(first.edge).localeCompare(relationshipKey(second.edge)));
+  if (!anchored) orderedRelationships.forEach(({ edge, index }) => {
     const route = relationshipRoute(
       layout.edge({ v: edge.source, w: edge.target, name: String(index) }).points,
       labels[edge.type],
       { obstacles: labelObstacles },
     );
     labelObstacles.push(route.labelBounds);
-    return route;
+    generalRoutes[index] = route;
   });
   return {
     bounds: anchored?.bounds ?? {

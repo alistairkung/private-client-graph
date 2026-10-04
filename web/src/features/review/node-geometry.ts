@@ -28,6 +28,15 @@ export function nodeBoundary(from: Point, toward: Point, triangle: boolean): Poi
   return { x: from.x + dx * scale, y: from.y + dy * scale };
 }
 
+export function nodeRectangle(center: Point, height: number, clearance = 0): Rectangle {
+  return {
+    left: center.x - NODE_WIDTH / 2 - clearance,
+    top: center.y - height / 2 - clearance,
+    right: center.x + NODE_WIDTH / 2 + clearance,
+    bottom: center.y + height / 2 + clearance,
+  };
+}
+
 export function relationshipRoute(
   points: Point[],
   label: string,
