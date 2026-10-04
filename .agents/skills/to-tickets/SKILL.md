@@ -30,6 +30,8 @@ Break the work into **tracer bullet** tickets.
 
 - Each slice cuts a narrow but COMPLETE path through every layer (schema, API, UI, tests): vertical, NOT a horizontal slice of one layer
 - A completed slice is demoable or verifiable on its own
+- Where possible, a completed slice is individually deployable after its blockers are complete and leaves the normal deployment path working. Include the migrations, configuration, compatibility steps, and operational changes needed by the earliest ticket that introduces them rather than deferring deployability to a final infrastructure ticket.
+- If an individually deployable slice is genuinely impossible, call out the exception and its reason during the quiz instead of silently creating a non-deployable intermediate state.
 - Each slice is sized to fit in a single fresh context window
 - Any prefactoring should be done first
 
@@ -46,11 +48,13 @@ Present the proposed breakdown as a numbered list. For each ticket, show:
 - **Title**: short descriptive name
 - **Blocked by**: which other tickets (if any) must complete first
 - **What it delivers**: the end-to-end behaviour this ticket makes work
+- **Deployability**: how the ticket can be deployed safely after its blockers, or the explicit reason it cannot be
 
 Ask the user:
 
 - Does the granularity feel right? (too coarse / too fine)
 - Are the blocking edges correct: does each ticket only depend on tickets that genuinely gate it?
+- Is each ticket individually deployable after its blockers wherever possible?
 - Should any tickets be merged or split further?
 
 Iterate until the user approves the breakdown.
@@ -73,6 +77,8 @@ Do NOT close or modify any parent issue.
 **What to build:** the end-to-end behaviour this ticket makes work, from the user's perspective, not a layer-by-layer implementation list.
 
 **Blocked by:** the numbers/titles of the tickets that gate this one, or "None (can start immediately)".
+
+**Deployability:** how this ticket can ship safely after its blockers, or the approved reason it cannot.
 
 **Status:** ready-for-agent
 
@@ -99,6 +105,10 @@ The end-to-end behaviour this ticket makes work, from the user's perspective, no
 ## Blocked by
 
 - A reference to each blocking ticket, or "None (can start immediately)".
+
+## Deployability
+
+How this ticket can ship safely after its blockers, or the approved reason it cannot.
 
 </issue-template>
 
