@@ -17,7 +17,7 @@ import base64
 import json
 import time
 import pytest
-from google_boundary import GoogleBoundary, sign_in
+from google_boundary import make_google_boundary, sign_in
 from private_client_graph.api.auth import SESSION_COOKIE, CSRF_COOKIE
 
 
@@ -25,7 +25,7 @@ from private_client_graph.api.auth import SESSION_COOKIE, CSRF_COOKIE
 def google_client(tmp_path):
     (tmp_path / "index.html").write_text("private shell")
     app = create_app(tmp_path)
-    google = GoogleBoundary()
+    google = make_google_boundary()
     google.install(app)
     return TestClient(app, base_url="https://testserver", follow_redirects=False), google
 

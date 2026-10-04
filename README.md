@@ -152,7 +152,45 @@ runs/                   Local extraction/evaluation outputs (Git ignored)
 
 Experimental MSc/hackathon research prototype. The current baseline covers a complete source → extraction → canonical graph → evaluation loop for Case 01, with additional cases intended to grow the benchmark and expose the next required capabilities.
 
-## Local professional-review app
+## Protected local development
+
+Docker is the only prerequisite for the normal protected-development workflow.
+From a clean checkout, run:
+
+```bash
+docker compose up --build
+```
+
+Open [https://localhost:8443/app](https://localhost:8443/app) and accept the
+expected warning for the temporary self-signed development certificate. Follow
+the normal sign-in journey; the local environment substitutes a synthetic
+allowlisted Google identity while retaining the real callback, secure session,
+authorization, application, and PostgreSQL paths. Proposal analysis also uses a
+deterministic local model substitute, so Google, DeepSeek, Railway, and external
+PostgreSQL credentials are not required.
+
+PostgreSQL 16 is health-checked before the application starts. Startup applies
+the Alembic migrations and runs the idempotent Evergreen seed before serving the
+built frontend. Database state is stored in the named Compose volume and survives
+ordinary stops and restarts. Stop the environment without deleting its data with:
+
+```bash
+docker compose down
+```
+
+Reset to a clean database by removing the volume:
+
+```bash
+docker compose down -v
+```
+
+This development-only, synthetically authenticated environment is strictly for
+synthetic or fictional material. Never enter real client or personal data. The
+synthetic providers live
+only in the development image and cannot be enabled through production application
+configuration.
+
+## Lower-level local professional-review setup
 
 Requires Python 3.11+, uv, and Node.js 22.12+ (or 24+). Run from the repository root:
 
