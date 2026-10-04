@@ -114,7 +114,6 @@ export function GraphView({
   const edges = view.edges.map((edge, index) => ({
     ...edge,
     selected: selected === index,
-    className: "relationship-edge",
     style: {
       stroke: selected === index ? "#b15a27" : "#607775",
       strokeWidth: selected === index ? 3 : 1.5,

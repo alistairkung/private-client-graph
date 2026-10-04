@@ -74,7 +74,7 @@ function expectGeneralLayout(view: ReturnType<typeof toGraphView>) {
   );
 }
 
-test("presentation preserves canonical endpoints and shows direction only for directed edges", () => {
+test("presentation preserves canonical endpoints without implying flow through Trust roles", () => {
   const view = toGraphView(graph);
   expect(view.edges).toHaveLength(2);
   expect(view.edges[0]).toMatchObject({
@@ -83,12 +83,14 @@ test("presentation preserves canonical endpoints and shows direction only for di
     label: "Spouse of",
   });
   expect(view.edges[0].markerEnd).toBeUndefined();
+  expect(view.edges[0].className).toContain("relationship-family");
   expect(view.edges[1]).toMatchObject({
     source: "b",
     target: "t",
-    label: "Beneficiary of",
+    label: "Beneficiary",
   });
-  expect(view.edges[1].markerEnd).toBeDefined();
+  expect(view.edges[1].markerEnd).toBeUndefined();
+  expect(view.edges[1].className).toContain("relationship-trust-role");
   expect(view.nodes.find((node) => node.id === "t")?.data.kind).toBe("trust");
   expect(
     new Set(view.nodes.map((node) => JSON.stringify(node.position))).size,
@@ -111,40 +113,47 @@ test.each([
   ["parent_of", "Parent of", true],
   ["spouse_of", "Spouse of", false],
   ["sibling_of", "Sibling of", false],
-  ["settlor_of", "Settlor of", true],
-  ["trustee_of", "Trustee of", true],
-  ["beneficiary_of", "Beneficiary of", true],
+  ["settlor_of", "Settlor", false],
+  ["trustee_of", "Trustee", false],
+  ["beneficiary_of", "Beneficiary", false],
 ] as const)(
   "%s has readable presentation without changing direction",
   (type, label, directed) => {
+    const target = ["settlor_of", "trustee_of", "beneficiary_of"].includes(type) ? "t" : "b";
     const view = toGraphView({
       ...graph,
-      relationships: [{ ...graph.relationships[0], type }],
+      relationships: [{ ...graph.relationships[0], type, target }],
     });
     expect(view.edges[0].label).toBe(label);
     expect(!!view.edges[0].markerEnd).toBe(directed);
     expect(view.edges[0].source).toBe("a");
-    expect(view.edges[0].target).toBe("b");
+    expect(view.edges[0].target).toBe(target);
   },
 );
 
-test("presentation anchors the single Trust below people and preserves graph semantics", () => {
-  const original = structuredClone(graph);
-  const view = toGraphView(graph);
-  const trust = view.nodes.find(node => node.id === "t")!;
-  const people = view.nodes.filter(node => node.id !== "t");
-  const personCenters = people.map(node => node.position.x + Number(node.style!.width) / 2);
-  expect(trust.type).toBe("trust");
-  expect(trust.position.x + Number(trust.style!.width) / 2)
-    .toBe((Math.min(...personCenters) + Math.max(...personCenters)) / 2);
-  expect(trust.position.y).toBeGreaterThan(Math.max(...view.nodes
-    .filter(node => node.id !== "t")
-    .map(node => node.position.y + Number(node.style!.height))));
-  expect(view.nodes.filter(node => node.id !== "t").every(node => node.type !== "trust")).toBe(true);
-  expect(view.edges.map(({ source, target, markerEnd }) => ({ source, target, directed: !!markerEnd })))
-    .toEqual([{ source: "a", target: "b", directed: false }, { source: "b", target: "t", directed: true }]);
-  expect(toGraphView(graph)).toEqual(view);
-  expect(graph).toEqual(original);
+test("single-Trust presentation places explicit roles around the anchor without changing the graph", () => {
+  const roles: CanonicalGraph = {
+    ...caseGraph,
+    entities: [...caseGraph.entities, { id: "trustee", name: "Taylor", type: "person" }],
+    relationships: [...caseGraph.relationships,
+      { source: "trustee", target: "trust", type: "trustee_of", evidence_ids: [] }],
+  };
+  const original = structuredClone(roles);
+  const view = toGraphView(roles);
+  const trust = nodeBounds(view, "trust");
+  expect(nodeBounds(view, "alice").bottom).toBeLessThan(trust.top);
+  expect(nodeBounds(view, "bob").top).toBeGreaterThan(trust.bottom);
+  expect(nodeBounds(view, "carol").top).toBeGreaterThan(trust.bottom);
+  const trustee = nodeBounds(view, "trustee");
+  expect((trustee.top + trustee.bottom) / 2).toBe((trust.top + trust.bottom) / 2);
+  expect(trustee.left).toBeGreaterThan(trust.right);
+  expect(view.nodes.filter(node => node.type === "trust").map(node => node.id)).toEqual(["trust"]);
+  expect(view.nodes.map(node => node.id)).toEqual(roles.entities.map(entity => entity.id));
+  expect(view.edges.map(edge => [edge.source, edge.target])).toEqual(
+    roles.relationships.map(relationship => [relationship.source, relationship.target]),
+  );
+  expect(toGraphView(roles)).toEqual(view);
+  expect(roles).toEqual(original);
 });
 
 test("single-Trust presentation keeps family claims local and Trust approaches separate", () => {
@@ -192,11 +201,11 @@ test("relationship label geometry clears every entity", () => {
         `${caseGraph.relationships[index].type} label overlaps ${entity.name}`).toBe(false);
     }
   }
-  const beneficiary = view.edges.find(edge => edge.label === "Beneficiary of")!;
+  const beneficiary = view.edges.find(edge => edge.label === "Beneficiary")!;
   const labelBounds = (beneficiary.data!.route as {
     labelBounds: { left: number; right: number };
   }).labelBounds;
-  expect(labelBounds.right - labelBounds.left).toBeGreaterThanOrEqual(100);
+  expect(labelBounds.right - labelBounds.left).toBeGreaterThanOrEqual(80);
   const labelBoxes = view.edges.map(edge => (edge.data!.route as {
     labelBounds: { left: number; top: number; right: number; bottom: number };
   }).labelBounds);
@@ -267,25 +276,46 @@ test("central Trust layout is independent of entity input order and has distinct
   expect(new Set(view.nodes.map(node => JSON.stringify(node.position))).size).toBe(graph.entities.length);
 });
 
-test("graphs without a single Trust retain the general layout", () => {
-  const people = { ...graph, entities: graph.entities.map(entity => ({ ...entity, type: "person" as const })) };
+test("graphs without a Trust retain the general layout", () => {
+  const people: CanonicalGraph = {
+    ...graph,
+    entities: graph.entities.map(entity => ({ ...entity, type: "person" as const })),
+    relationships: [
+      { source: "a", target: "b", type: "parent_of", evidence_ids: [] },
+      { source: "b", target: "t", type: "parent_of", evidence_ids: [] },
+    ],
+  };
   const view = toGraphView(people);
   expect(view.nodes.every(node => node.type !== "trust")).toBe(true);
   expectGeneralLayout(view);
 });
 
-test("multiple Trusts remain triangles with routes meeting their visible boundary", () => {
-  const multiple = { ...graph, entities: graph.entities.map(entity => entity.id === "b" ? { ...entity, type: "trust" as const } : entity) };
+test("multiple Trusts keep canonical role connectors and triangle boundary routes in the general layout", () => {
+  const multiple: CanonicalGraph = {
+    entities: [graph.entities[0], graph.entities[2], { id: "u", name: "Other Trust", type: "trust" }],
+    relationships: [
+      { source: "a", target: "t", type: "settlor_of", evidence_ids: [] },
+      { source: "a", target: "u", type: "beneficiary_of", evidence_ids: [] },
+    ],
+    evidence: [],
+  };
+  const original = structuredClone(multiple);
   const view = toGraphView(multiple);
-  const trust = view.nodes.find(node => node.id === "t")!;
   expect(view.nodes.filter(node => node.type === "trust")).toHaveLength(2);
-  expectGeneralLayout(view);
-  const route = view.edges[1].data!.route as { points: { x: number; y: number }[] };
-  const end = route.points.at(-1)!;
-  // A directed arrow touches one of the triangle's three sides, not its interior.
-  const x = (end.x - trust.position.x) / Number(trust.style!.width);
-  const y = (end.y - trust.position.y) / Number(trust.style!.height);
-  expect(Math.min(Math.abs(y - 1), Math.abs(x - y / 2 - 0.5), Math.abs(x + y / 2 - 0.5))).toBeLessThan(0.001);
+  expect(view.nodes.filter(node => node.id === "a")).toHaveLength(1);
+  expect(view.edges.map(edge => edge.label)).toEqual(["Settlor", "Beneficiary"]);
+  expect(view.edges.every(edge => !edge.markerEnd)).toBe(true);
+  for (const edge of view.edges) {
+    const trust = view.nodes.find(node => node.id === edge.target)!;
+    // Generic canonical topology leaves even a beneficiary above its target Trust.
+    expect(nodeBounds(view, "a").bottom).toBeLessThan(trust.position.y);
+    const route = edge.data!.route as { points: { x: number; y: number }[] };
+    const end = route.points.at(-1)!;
+    const x = (end.x - trust.position.x) / Number(trust.style!.width);
+    const y = (end.y - trust.position.y) / Number(trust.style!.height);
+    expect(Math.min(Math.abs(y - 1), Math.abs(x - y / 2 - 0.5), Math.abs(x + y / 2 - 0.5))).toBeLessThan(0.001);
+  }
+  expect(multiple).toEqual(original);
   expect(toGraphView(multiple)).toEqual(view);
 });
 
@@ -319,4 +349,88 @@ test("general fallback geometry is stable for equivalent input order", () => {
   );
   expect(positions(reordered)).toEqual(positions(original));
   expect(routes(reordered)).toEqual(routes(original));
+});
+
+test("a multiple-role person appears once outside single-role groups with separately mapped connectors", () => {
+  const multipleRoles: CanonicalGraph = {
+    ...caseGraph,
+    entities: [...caseGraph.entities, { id: "m", name: "Morgan", type: "person" }],
+    relationships: [...caseGraph.relationships,
+      { source: "m", target: "trust", type: "settlor_of", evidence_ids: ["settlement"] },
+      { source: "m", target: "trust", type: "beneficiary_of", evidence_ids: ["benefit"] },
+      { source: "m", target: "trust", type: "trustee_of", evidence_ids: ["appointment"] }],
+    evidence: [
+      { id: "settlement", document: "source", supporting_text: "Morgan settled the Trust." },
+      { id: "benefit", document: "source", supporting_text: "Morgan is a beneficiary." },
+      { id: "appointment", document: "source", supporting_text: "Morgan is a trustee." },
+    ],
+  };
+  const view = toGraphView(multipleRoles);
+  expect(view.nodes.filter(node => node.id === "m")).toHaveLength(1);
+  const person = nodeBounds(view, "m");
+  expect(person.right).toBeLessThan(nodeBounds(view, "alice").left);
+  expect(person.right).toBeLessThan(nodeBounds(view, "bob").left);
+  const roles = view.edges.filter(edge => edge.source === "m");
+  expect(roles.map(edge => edge.label)).toEqual(["Settlor", "Beneficiary", "Trustee"]);
+  expect(roles.map(edge => multipleRoles.relationships[Number(edge.id)].evidence_ids))
+    .toEqual([["settlement"], ["benefit"], ["appointment"]]);
+  expect(new Set(roles.map(edge => JSON.stringify(edge.data!.route))).size).toBe(3);
+  expect(roles.every(edge => edge.target === "trust" && !edge.markerEnd)).toBe(true);
+  const labels = roles.map(edge => (edge.data!.route as {
+    labelBounds: { left: number; top: number; right: number; bottom: number };
+  }).labelBounds);
+  labels.forEach((label, index) => labels.slice(index + 1).forEach(other =>
+    expect(boxesOverlap(label, other)).toBe(false)));
+
+});
+
+test("family-only relatives stay near connected role holders and disconnected families occupy a separate area", () => {
+  const families: CanonicalGraph = {
+    ...caseGraph,
+    entities: [...caseGraph.entities,
+      { id: "ann", name: "Ann", type: "person" },
+      { id: "alex", name: "Alex", type: "person" },
+      { id: "x", name: "Xavier", type: "person" },
+      { id: "y", name: "Yvonne", type: "person" }],
+    relationships: [...caseGraph.relationships,
+      { source: "ann", target: "bob", type: "spouse_of", evidence_ids: [] },
+      { source: "alex", target: "ann", type: "parent_of", evidence_ids: [] },
+      { source: "x", target: "y", type: "parent_of", evidence_ids: [] }],
+  };
+  const original = structuredClone(families);
+  const view = toGraphView(families);
+  const bob = nodeBounds(view, "bob");
+  const ann = nodeBounds(view, "ann");
+  expect(ann.right).toBeLessThan(bob.left);
+  expect(ann.top).toBe(bob.top);
+  expect(nodeBounds(view, "david").top).toBe(nodeBounds(view, "alice").top);
+  const connectedBottom = Math.max(...["alice", "bob", "carol", "david", "ann", "alex", "trust"]
+    .map(id => nodeBounds(view, id).bottom));
+  expect(nodeBounds(view, "x").top).toBeGreaterThan(connectedBottom);
+  expect(nodeBounds(view, "y").top).toBeGreaterThan(connectedBottom);
+  view.nodes.forEach((node, index) => view.nodes.slice(index + 1).forEach(other =>
+    expect(boxesOverlap(nodeBounds(view, node.id), nodeBounds(view, other.id))).toBe(false)));
+  expect(view.edges).toHaveLength(families.relationships.length);
+  expect(families).toEqual(original);
+});
+
+test("family connectors do not pass through the Trust or unrelated people", () => {
+  const view = toGraphView(caseGraph);
+  for (const edge of view.edges.filter(edge => edge.className?.includes("relationship-family"))) {
+    const points = (edge.data!.route as { points: { x: number; y: number }[] }).points;
+    const obstacles = view.nodes.filter(node => node.id !== edge.source && node.id !== edge.target);
+    for (let index = 1; index < points.length; index++) {
+      const start = points[index - 1];
+      const end = points[index];
+      for (const node of obstacles) {
+        const bounds = nodeBounds(view, node.id);
+        const crosses = Array.from({ length: 101 }, (_, sample) => ({
+          x: start.x + (end.x - start.x) * sample / 100,
+          y: start.y + (end.y - start.y) * sample / 100,
+        })).some(point => point.x > bounds.left && point.x < bounds.right
+          && point.y > bounds.top && point.y < bounds.bottom);
+        expect(crosses, `${edge.ariaLabel} crosses ${node.data.label}`).toBe(false);
+      }
+    }
+  }
 });

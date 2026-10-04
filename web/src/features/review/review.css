@@ -63,6 +63,7 @@
   border: 1px solid #577f78;
   width: 13px !important;
 }
+.role-key::before,
 .directed-key::before,
 .symmetric-key::before {
   content: "";
@@ -71,6 +72,13 @@
   left: 0;
   right: 1px;
   border-top: 1.5px solid #607775;
+}
+.directed-key::before,
+.symmetric-key::before {
+  border-top-style: dashed;
+}
+.role-key::before {
+  border-top-width: 2px;
 }
 .directed-key::after {
   content: "";
@@ -157,8 +165,8 @@
   stroke: #405c58 !important;
   stroke-width: 2 !important;
 }
-.react-flow__edge.selected .react-flow__edge-path {
-  stroke-dasharray: 7 3;
+.relationship-family .react-flow__edge-path {
+  stroke-dasharray: 6 4;
 }
 .react-flow__edge.selected:hover .react-flow__edge-path,
 .react-flow__edge.selected:focus-visible .react-flow__edge-path {

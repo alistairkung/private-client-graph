@@ -1,6 +1,6 @@
 # Trust-structure relationship presentation
 
-> **Status:** Agreed product design; implementation pending. Professional visual
+> **Status:** Implemented for issue #55. Professional visual
 > conventions are provisional and await practitioner validation.
 >
 > **Scope:** Presentation in the shared relationship-review workspace. No

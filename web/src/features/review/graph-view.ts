@@ -8,19 +8,11 @@ import {
   type Rectangle,
   type RelationshipRoute,
 } from "./node-geometry";
+import { presentRelationships } from "./relationship-presentation";
 import { centralTrustLayout } from "./trust-layout";
 import dagre from "@dagrejs/dagre";
 import { MarkerType, Position, type Edge, type Node } from "@xyflow/react";
-import type { CanonicalGraph, RelationshipType } from "../../shared/canonical-graph";
-
-const labels: Record<RelationshipType, string> = {
-  parent_of: "Parent of",
-  spouse_of: "Spouse of",
-  sibling_of: "Sibling of",
-  settlor_of: "Settlor of",
-  trustee_of: "Trustee of",
-  beneficiary_of: "Beneficiary of",
-};
+import type { CanonicalGraph } from "../../shared/canonical-graph";
 
 const relationshipKey = (relationship: CanonicalGraph["relationships"][number]) =>
   `${relationship.source}:${relationship.type}:${relationship.target}`;
@@ -30,6 +22,7 @@ export function toGraphView(graph: CanonicalGraph): {
   edges: Edge[];
   bounds: { x: number; y: number; width: number; height: number };
 } {
+  const presentation = presentRelationships(graph);
   const isTrust = (id: string) => graph.entities.some(entity => entity.id === id && entity.type === "trust");
   const nodeHeight = (id: string) => isTrust(id) ? TRUST_HEIGHT : PERSON_HEIGHT;
   const layout = new dagre.graphlib.Graph({ multigraph: true });
@@ -42,7 +35,7 @@ export function toGraphView(graph: CanonicalGraph): {
   });
   layout.setDefaultEdgeLabel(() => ({}));
   const orderedEntities = [...graph.entities].sort((first, second) => first.id.localeCompare(second.id));
-  const orderedRelationships = graph.relationships.map((edge, index) => ({ edge, index }))
+  const orderedRelationships = presentation.relationships.map((edge, index) => ({ edge, index }))
     .sort((first, second) => relationshipKey(first.edge).localeCompare(relationshipKey(second.edge)));
   orderedEntities.forEach((entity) =>
     layout.setNode(entity.id, { width: NODE_WIDTH, height: nodeHeight(entity.id) }),
@@ -56,7 +49,7 @@ export function toGraphView(graph: CanonicalGraph): {
     ),
   );
   dagre.layout(layout);
-  const anchored = centralTrustLayout(graph, labels);
+  const anchored = centralTrustLayout(presentation);
   if (!anchored) {
     graph.relationships.forEach((edge) => {
       const route = layout.edge({ v: edge.source, w: edge.target, name: relationshipKey(edge) });
@@ -72,7 +65,7 @@ export function toGraphView(graph: CanonicalGraph): {
   if (!anchored) orderedRelationships.forEach(({ edge, index }) => {
     const route = relationshipRoute(
       layout.edge({ v: edge.source, w: edge.target, name: relationshipKey(edge) }).points,
-      labels[edge.type],
+      edge.label,
       { obstacles: labelObstacles },
     );
     labelObstacles.push(route.labelBounds);
@@ -98,21 +91,22 @@ export function toGraphView(graph: CanonicalGraph): {
       targetPosition: Position.Top,
       style: { width: NODE_WIDTH, height: nodeHeight(entity.id) },
     })),
-    edges: graph.relationships.map((edge, index) => ({
+    edges: presentation.relationships.map((edge, index) => ({
       id: String(index),
       source: edge.source,
       target: edge.target,
-      label: labels[edge.type],
+      label: edge.label,
       type: "routed",
+      className: `relationship-edge relationship-${edge.kind}`,
       ariaRole: "button",
       data: {
         route: anchored?.routes[index] ?? generalRoutes[index],
       },
       markerEnd:
-        edge.type === "spouse_of" || edge.type === "sibling_of"
+        !edge.arrow
           ? undefined
           : { type: MarkerType.ArrowClosed, color: "#607775", width: 18, height: 18 },
-      ariaLabel: `${graph.entities.find((entity) => entity.id === edge.source)?.name} — ${labels[edge.type]} — ${graph.entities.find((entity) => entity.id === edge.target)?.name}`,
+      ariaLabel: edge.description,
     })),
   };
 }
