@@ -89,6 +89,9 @@ Do not weaken or delete tests merely to make a change pass.
 
 ## Git
 
+- For each new implementation task, fast-forward local `main` from `origin/main`
+  and create a fresh feature branch from that updated `main`, unless the user
+  explicitly requests a different base or an existing branch.
 - Work on a feature branch.
 - Never commit directly to `main`.
 - Keep changes scoped to the requested task.

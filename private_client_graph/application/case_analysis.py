@@ -12,7 +12,7 @@ from openai import APIConnectionError, APIStatusError
 from private_client_graph.extract import build_relationship_extraction_chain
 
 from private_client_graph.graph import build_graph
-from private_client_graph.models import ExtractionResult
+from private_client_graph.models import CanonicalGraph, ExtractionResult
 
 from .contracts import AnalysisError, AnalysisMode, CaseAnalysis, CaseDetail, Execution
 from .errors import AnalysisFailure
@@ -41,49 +41,67 @@ def get_case() -> CaseDetail:
 
 def analyse_case(mode: AnalysisMode, live_config: LiveConfig) -> CaseAnalysis:
     source = get_case().source_text
-    run_id = None
     if mode == "live":
-        require_live(live_config)
-        try:
-            extraction = extract_live(source, live_config)
-        except AnalysisFailure:
-            raise
-        except Exception as exc:
-            retryable = isinstance(exc, APIConnectionError) or (
-                isinstance(exc, APIStatusError)
-                and (exc.status_code in (408, 429) or exc.status_code >= 500)
-            )
-            raise AnalysisFailure(
-                AnalysisError(
-                    stage="provider",
-                    message="Live analysis could not be completed.",
-                    retryable=retryable,
-                ),
-                502,
-            ) from exc
-        try:
-            run_id = _persist_extraction(extraction)
-        except OSError as exc:
-            raise AnalysisFailure(
-                AnalysisError(
-                    stage="persistence",
-                    message="Live analysis could not be saved. No analysis was produced.",
-                )
-            ) from exc
+        extraction, run_id = _run_live_analysis(source, live_config)
     else:
-        try:
-            extraction = ExtractionResult.model_validate_json(
-                (CASE / "expected_extraction.json").read_text(encoding="utf-8")
-            )
-        except (OSError, ValueError) as exc:
-            raise AnalysisFailure(
-                AnalysisError(
-                    stage="sample",
-                    message="The sample analysis could not be loaded.",
-                )
-            ) from exc
+        extraction = _load_sample_extraction()
+        run_id = None
+
+    graph = _build_canonical_graph(extraction, source, run_id)
+    return CaseAnalysis(
+        execution=Execution(mode=mode, run_artifact_id=run_id), graph=graph
+    )
+
+
+def _run_live_analysis(
+    source: str, live_config: LiveConfig
+) -> tuple[ExtractionResult, str]:
+    require_live(live_config)
     try:
-        graph = build_graph(
+        extraction = extract_live(source, live_config)
+    except AnalysisFailure:
+        raise
+    except Exception as exc:
+        raise AnalysisFailure(
+            AnalysisError(
+                stage="provider",
+                message="Live analysis could not be completed.",
+                retryable=_is_retryable_provider_failure(exc),
+            ),
+            502,
+        ) from exc
+
+    try:
+        run_id = _persist_extraction(extraction)
+    except OSError as exc:
+        raise AnalysisFailure(
+            AnalysisError(
+                stage="persistence",
+                message="Live analysis could not be saved. No analysis was produced.",
+            )
+        ) from exc
+    return extraction, run_id
+
+
+def _load_sample_extraction() -> ExtractionResult:
+    try:
+        return ExtractionResult.model_validate_json(
+            (CASE / "expected_extraction.json").read_text(encoding="utf-8")
+        )
+    except (OSError, ValueError) as exc:
+        raise AnalysisFailure(
+            AnalysisError(
+                stage="sample",
+                message="The sample analysis could not be loaded.",
+            )
+        ) from exc
+
+
+def _build_canonical_graph(
+    extraction: ExtractionResult, source: str, run_id: str | None
+) -> CanonicalGraph:
+    try:
+        return build_graph(
             extraction.relationships, document="source.txt", source_text=source
         )
     except ValueError as exc:
@@ -95,8 +113,12 @@ def analyse_case(mode: AnalysisMode, live_config: LiveConfig) -> CaseAnalysis:
             ),
             422,
         ) from exc
-    return CaseAnalysis(
-        execution=Execution(mode=mode, run_artifact_id=run_id), graph=graph
+
+
+def _is_retryable_provider_failure(exc: Exception) -> bool:
+    return isinstance(exc, APIConnectionError) or (
+        isinstance(exc, APIStatusError)
+        and (exc.status_code in (408, 429) or exc.status_code >= 500)
     )
 
 

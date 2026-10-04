@@ -22,13 +22,18 @@ Public entry points should read top-down at a useful abstraction level.
 `build_graph()` validates candidates, builds entities and evidence, constructs
 relationships, and assembles the graph. `evaluate_graph()` validates lookups,
 resolves both graphs, compares edges, scores provenance, and builds the result.
+Application workflows should tell the same kind of high-level story: load their
+inputs, obtain the relevant domain result, perform deterministic construction,
+and return the public contract.
 
 Use underscore-prefixed module helpers for named conceptual responsibilities:
 `_validate_candidates`, `_build_relationships`, and `_resolve_prediction` are
-examples. Avoid extracting helpers according to line count or splitting every
-small operation. The three set operations comparing edges remain inline because
-they already communicate the evaluation policy clearly. Appropriately sized
-extraction functions and procedural CLI orchestration need no extra fragmentation.
+examples. A helper should hide a meaningful lower-level responsibility or
+failure boundary; extraction is justified by that abstraction boundary, not by
+function length. Avoid splitting every small operation. The three set operations
+comparing edges remain inline because they already communicate the evaluation
+policy clearly. Appropriately sized extraction functions and procedural CLI
+orchestration need no extra fragmentation.
 
 ## Determinism and validation
 
