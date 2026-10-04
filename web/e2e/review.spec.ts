@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { selectSpouseRelationship } from "./review-helpers";
 
 test("sample journey uses real API and graph construction, then highlights exact evidence", async ({
   page,
@@ -26,11 +27,7 @@ test("sample journey uses real API and graph construction, then highlights exact
       })
       .toBe(true);
   }
-  const edge = page.getByRole("button", {
-    name: "Alice Chen — Spouse of — David Chen",
-    exact: true,
-  });
-  await edge.getByText("Spouse of", { exact: true }).click();
+  const edge = await selectSpouseRelationship(page);
   await expect(edge).toHaveClass(/selected/);
   const highlight = page.locator("mark");
   await expect(highlight).toHaveCount(1);
