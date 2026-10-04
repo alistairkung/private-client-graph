@@ -74,10 +74,13 @@ export function ReviewWorkspace({
             <i className="trust-key" /> Trust
           </span>
           <span>
-            <i className="directed-key" /> Arrow points to target
+            <i className="role-key" /> Trust role · no flow implied
           </span>
           <span>
-            <i className="symmetric-key" /> Symmetric relationship
+            <i className="directed-key" /> Parent → child
+          </span>
+          <span>
+            <i className="symmetric-key" /> Spouse / sibling
           </span>
         </div>
         <GraphView

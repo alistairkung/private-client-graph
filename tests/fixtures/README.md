@@ -6,6 +6,9 @@ They contain no real client material and are not benchmark ground truth.
 - `synthetic-proposal.pdf` is a one-page Helvetica document containing exactly
   `Alice Example is the parent of Ben Example.` It also drives the browser and
   API intake journeys.
+- `multiple-role-proposal.pdf` is a synthetic one-page Helvetica document stating
+  that Morgan Example is settlor, beneficiary, and trustee of the Fictional Trust.
+  It exercises separate connector selection through the real browser intake path.
 - `normalization.pdf` has two pages with Unicode, repeated spaces, a tab,
   CRLF/CR/LF line endings, wrapped-word punctuation, and invalid controls. Its
   explicit ToUnicode map preserves these extraction inputs without mocking the

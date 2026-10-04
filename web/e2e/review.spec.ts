@@ -15,8 +15,9 @@ test("sample journey uses real API and graph construction, then highlights exact
     page.getByText("Sample analysis · Demonstration fixture"),
   ).toBeVisible();
   await expect(page.getByRole("img", { name: "Triangular Trust node" })).toBeVisible();
-  await expect(page.getByLabel("Graph legend")).toContainText("Arrow points to target");
-  await expect(page.getByLabel("Graph legend")).toContainText("Symmetric relationship");
+  await expect(page.getByLabel("Graph legend")).toContainText("Parent → child");
+  await expect(page.getByLabel("Graph legend")).toContainText("Spouse / sibling");
+  await expect(page.getByLabel("Graph legend")).toContainText("Trust role · no flow implied");
   await expect(page.locator(".react-flow__background")).toHaveCount(0);
   const canvas = await page.getByLabel("Relationship graph").boundingBox();
   for (const node of await page.locator(".react-flow__node").all()) {
@@ -34,21 +35,30 @@ test("sample journey uses real API and graph construction, then highlights exact
     name: "Bob Chen — Beneficiary of — Evergreen Family Trust",
     exact: true,
   });
-  const beneficiaryLabel = await beneficiary.locator(".react-flow__edge-text").boundingBox();
+  const beneficiaryLabel = await beneficiary.boundingBox();
   const bob = await page.locator(".react-flow__node", { hasText: "Bob Chen" }).boundingBox();
   const trust = await page.locator(".react-flow__node", { hasText: "Evergreen Family Trust" }).boundingBox();
+  const alice = await page.locator(".react-flow__node", { hasText: "Alice Chen" }).boundingBox();
+  const david = await page.locator(".react-flow__node", { hasText: "David Chen" }).boundingBox();
+  expect(alice!.y + alice!.height).toBeLessThan(trust!.y);
+  expect(bob!.y).toBeGreaterThan(trust!.y + trust!.height);
+  expect(david!.x + david!.width).toBeLessThan(alice!.x);
   const overlaps = (first: typeof beneficiaryLabel, second: typeof bob) => first!.x < second!.x + second!.width
     && first!.x + first!.width > second!.x && first!.y < second!.y + second!.height
     && first!.y + first!.height > second!.y;
   expect(overlaps(beneficiaryLabel, bob)).toBe(false);
   expect(overlaps(beneficiaryLabel, trust)).toBe(false);
-  await beneficiary.getByText("Beneficiary of", { exact: true }).click();
+  await expect(beneficiary).toHaveClass(/relationship-trust-role/);
+  await expect(page.locator(".react-flow__edge.relationship-trust-role .react-flow__edge-path").first()).not.toHaveAttribute("marker-end");
+  await beneficiary.getByText("Beneficiary", { exact: true }).click();
   await expect(beneficiary).toHaveClass(/selected/);
   await expect(page.locator("mark")).toHaveText(
     "Alice Chen confirmed that Bob Chen is a beneficiary of the Evergreen Family Trust.",
   );
   const edge = await selectSpouseRelationship(page);
   await expect(edge).toHaveClass(/selected/);
+  await expect(edge).toHaveClass(/relationship-family/);
+  await expect(page.locator(".react-flow__edge.relationship-family .react-flow__edge-path").first()).toHaveCSS("stroke-dasharray", "6px, 4px");
   const highlight = page.locator("mark");
   await expect(highlight).toHaveCount(1);
   await expect(highlight).toHaveText(
@@ -72,6 +82,8 @@ test("sample journey uses real API and graph construction, then highlights exact
     name: "Alice Chen — Parent of — Bob Chen",
     exact: true,
   });
+  const parentId = await parentEdge.getAttribute("data-edge-id");
+  await expect(page.locator(`.react-flow__edge[data-id="${parentId}"] .react-flow__edge-path`)).toHaveAttribute("marker-end", /url/);
   await parentEdge.focus();
   await parentEdge.press("Enter");
   await expect(parentEdge).toHaveClass(/selected/);
