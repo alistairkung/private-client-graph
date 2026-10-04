@@ -81,16 +81,14 @@ function FitGraph({
 
 export function GraphView({
   graph,
-  practitioner = false,
   selected,
   onSelect,
 }: {
   graph: CanonicalGraph;
-  practitioner?: boolean;
   selected: number | null;
   onSelect: (index: number) => void;
 }) {
-  const view = useMemo(() => toGraphView(graph, practitioner), [graph, practitioner]);
+  const view = useMemo(() => toGraphView(graph), [graph]);
   const selectEdge = useCallback(
     (changes: EdgeChange[]) => {
       const selection = changes.find(

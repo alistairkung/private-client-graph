@@ -5,10 +5,12 @@ import { ReviewWorkspace } from "./ReviewWorkspace";
 import type { CanonicalGraph } from "./types";
 
 // Replace canvas rendering only; selection and evidence behavior remain real.
+const graphViewProps = vi.fn();
 vi.mock("./GraphView", () => ({
-  GraphView: ({ onSelect }: { onSelect: (index: number) => void }) => (
-    <button onClick={() => onSelect(0)}>Select spouse relationship</button>
-  ),
+  GraphView: (props: { onSelect: (index: number) => void }) => {
+    graphViewProps(props);
+    return <button onClick={() => props.onSelect(0)}>Select spouse relationship</button>;
+  },
 }));
 const graph: CanonicalGraph = {
   entities: [
@@ -86,4 +88,16 @@ test("selecting an edge again returns to its evidence even when the quote is unc
   expect(HTMLElement.prototype.scrollIntoView).toHaveBeenCalledTimes(
     scrolls + 1,
   );
+});
+
+test("showcase and practitioner modes delegate the same graph presentation", () => {
+  render(<ReviewWorkspace source={source} graph={graph} />);
+  const showcaseProps = graphViewProps.mock.lastCall?.[0];
+  render(<ReviewWorkspace source={source} graph={graph} practitioner />);
+  const practitionerProps = graphViewProps.mock.lastCall?.[0];
+
+  expect(showcaseProps.graph).toBe(graph);
+  expect(practitionerProps.graph).toBe(graph);
+  expect(showcaseProps).not.toHaveProperty("practitioner");
+  expect(practitionerProps).not.toHaveProperty("practitioner");
 });

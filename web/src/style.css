@@ -259,10 +259,36 @@ button.primary:hover:not(:disabled) {
   color: #354d2d;
 }
 .react-flow__node.entity-trust {
-  background: #e0eeea;
-  border-radius: 5px;
-  border-color: #88a9a1;
+  background: none;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  box-shadow: none;
+}
+.trust-node {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+.trust-node svg {
+  width: 100%;
+  height: 100%;
+  fill: #e0eeea;
+  stroke: #88a9a1;
+}
+.trust-node span {
+  position: absolute;
+  top: 50px;
+  left: 30px;
+  right: 30px;
+  text-align: center;
+  font-size: 13px;
+  line-height: 16px;
   color: #284e47;
+}
+.trust-key {
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+  border-radius: 0;
 }
 .react-flow__handle {
   opacity: 0;

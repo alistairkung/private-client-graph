@@ -72,7 +72,6 @@ export function ReviewWorkspace({
         </div>
         <GraphView
           graph={graph}
-          practitioner={practitioner}
           selected={selected}
           onSelect={selectRelationship}
         />

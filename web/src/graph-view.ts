@@ -13,12 +13,12 @@ const labels: Record<RelationshipType, string> = {
   beneficiary_of: "Beneficiary of",
 };
 
-export function toGraphView(graph: CanonicalGraph, practitioner = false): {
+export function toGraphView(graph: CanonicalGraph): {
   nodes: Node[];
   edges: Edge[];
   bounds: { x: number; y: number; width: number; height: number };
 } {
-  const triangle = (id: string) => practitioner && graph.entities.some(entity => entity.id === id && entity.type === "trust");
+  const triangle = (id: string) => graph.entities.some(entity => entity.id === id && entity.type === "trust");
   const height = (id: string) => triangle(id) ? TRUST_HEIGHT : PERSON_HEIGHT;
   const layout = new dagre.graphlib.Graph({ multigraph: true });
   layout.setGraph({
@@ -41,8 +41,8 @@ export function toGraphView(graph: CanonicalGraph, practitioner = false): {
     ),
   );
   dagre.layout(layout);
-  const anchored = practitioner ? centralTrustLayout(graph) : null;
-  if (practitioner && !anchored) {
+  const anchored = centralTrustLayout(graph);
+  if (!anchored) {
     graph.relationships.forEach((edge, index) => {
       const route = layout.edge({ v: edge.source, w: edge.target, name: String(index) });
       if (triangle(edge.source)) route.points[0] = nodeBoundary(layout.node(edge.source), route.points[1], true);
