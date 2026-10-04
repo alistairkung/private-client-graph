@@ -1,4 +1,5 @@
 import "./practitioner.css";
+import { SignOut } from "./SignOut";
 import { MatterWorkspace } from "./MatterWorkspace";
 import { MatterLedger } from "./MatterLedger";
 
@@ -20,6 +21,10 @@ export function PractitionerApp({ matterId }: { matterId?: string }) {
         </div>
       </header>
       <main className="ledger-content ledger-width">
+        <div className="practitioner-access">
+          <p>This prototype accepts synthetic or fictional material only. It is not suitable for real confidential client information.</p>
+          <SignOut />
+        </div>
         {matterId ? <MatterWorkspace key={matterId} id={matterId} /> : <>
         <h1>Matters</h1>
         <p className="ledger-intro">

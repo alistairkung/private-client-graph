@@ -22,9 +22,17 @@ test.each(["/app", "/app/"])(
       "href",
       "/",
     );
-    expect(screen.queryByRole("button")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Sign out" })).toBeVisible();
     expect(fetcher).toHaveBeenCalledOnce();
     expect(fetcher.mock.calls[0][0]).toBe("/api/matters");
     expect(document.title).toBe("Matters · Private Client Graph");
   },
 );
+
+test("practitioner notice and logout protect the synthetic session", async () => {
+  window.history.replaceState(null, "", "/app");
+  vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify([])));
+  render(<App />);
+  expect(screen.getByText(/not suitable for real confidential client information/i)).toBeVisible();
+  expect(screen.getByRole("button", { name: "Sign out" })).toBeVisible();
+});

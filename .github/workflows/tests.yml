@@ -33,6 +33,11 @@ jobs:
     env:
       TEST_DATABASE_URL: postgresql://pcg:test-only@127.0.0.1:5432/pcg_e2e
       DATABASE_URL: postgresql://pcg:test-only@127.0.0.1:5432/pcg_e2e
+      PCG_GOOGLE_CLIENT_ID: test-client.apps.googleusercontent.com
+      PCG_GOOGLE_CLIENT_SECRET: test-google-secret
+      PCG_SESSION_SECRET: test-session-secret-with-at-least-32-characters
+      PCG_GOOGLE_SUB_ALLOWLIST: test-subject
+      PCG_TRUSTED_ORIGIN: https://127.0.0.1:8000
     steps:
       - uses: actions/checkout@v4
       - name: Install uv
@@ -77,11 +82,14 @@ jobs:
           export DATABASE_URL='postgresql://pcg:test-only@127.0.0.1:5432/pcg_image'
           docker run --rm --network host -e DATABASE_URL pcg-test sh -c 'alembic upgrade head && python -m private_client_graph.seed_evergreen'
           docker run --rm --network host -e DATABASE_URL pcg-test sh -c 'alembic upgrade head && python -m private_client_graph.seed_evergreen'
-          docker run --rm -d --name pcg-app --network host -e DATABASE_URL pcg-test
+          docker run --rm -d --name pcg-app --network host -e DATABASE_URL \
+            -e PCG_GOOGLE_CLIENT_ID -e PCG_GOOGLE_CLIENT_SECRET -e PCG_SESSION_SECRET \
+            -e PCG_GOOGLE_SUB_ALLOWLIST -e PCG_TRUSTED_ORIGIN pcg-test
           trap 'docker logs pcg-app; docker stop pcg-app' EXIT
           curl --fail --retry 15 --retry-connrefused --retry-delay 1 http://127.0.0.1:8000/health
-          curl --fail http://127.0.0.1:8000/api/matters
-          curl --fail http://127.0.0.1:8000/app > /dev/null
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8000/api/matters)" = 401
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8000/app)" = 303
+          curl --fail http://127.0.0.1:8000/api/showcase/case-01 > /dev/null
       - uses: actions/upload-artifact@v4
         if: failure()
         with:

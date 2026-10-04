@@ -8,6 +8,7 @@ from fastapi import FastAPI, Request, Response
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
+from private_client_graph.api.auth import AuthConfig, configure_auth
 from private_client_graph.application.matters import MatterDetail, MatterSummary, get_matter, list_matters
 from private_client_graph.persistence.database import database_engine
 from fastapi.exceptions import RequestValidationError
@@ -28,8 +29,11 @@ ROOT = Path(__file__).resolve().parents[2]
 WEB_DIST = ROOT / "web" / "dist"
 
 
-def health() -> JSONResponse:
+def health(request: Request) -> JSONResponse:
+    if request.app.state.auth_config is None:
+        return JSONResponse(status_code=503, content={"status": "unavailable"})
     try:
+        AuthConfig.from_environment()
         with database_engine().connect() as connection:
             connection.execute(text("SELECT 1"))
     except (SQLAlchemyError, ValueError):
@@ -91,6 +95,7 @@ async def invalid_request(
 def create_app(web_dist: Path = WEB_DIST) -> FastAPI:
     load_dotenv(ROOT / ".env")
     application = FastAPI(title="Private Client Graph")
+    configure_auth(application)
     application.state.showcase_live = LiveConfig.from_environment()
     application.add_api_route("/health", health, methods=["GET"])
     application.add_api_route(

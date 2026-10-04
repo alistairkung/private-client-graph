@@ -54,3 +54,46 @@ test("unknown Matter direct route stays in the practitioner shell", async ({ pag
   await page.getByRole("link", { name: "Back to Matters" }).click();
   await expect(page.getByRole("heading", { name: "Matters", exact: true })).toBeVisible();
 });
+
+
+test("direct navigation requires Google sign-in and logout removes access", async ({ page, context }) => {
+  const googleRequests: string[] = [];
+  page.on("request", request => {
+    if (new URL(request.url()).pathname === "/_test/google") googleRequests.push(request.url());
+  });
+  expect((await context.request.get("/api/matters")).status()).toBe(401);
+  await page.goto(matterPath);
+  await expect(page.getByRole("heading", { name: "Evergreen Family Trust", exact: true })).toBeVisible();
+  expect(googleRequests).toHaveLength(1);
+  await page.reload();
+  expect(googleRequests).toHaveLength(1);
+  await expect(page.getByText(/not suitable for real confidential client information/)).toBeVisible();
+  const session = (await context.cookies()).find(cookie => cookie.name === "__Host-pcg-session")!;
+  expect(session.httpOnly).toBe(true);
+  expect(session.secure).toBe(true);
+  await page.getByRole("button", { name: "Sign out" }).click();
+  await expect(page).toHaveURL("/");
+  expect((await context.request.get("/api/matters")).status()).toBe(401);
+  await page.goto(matterPath);
+  await expect(page.getByRole("heading", { name: "Evergreen Family Trust", exact: true })).toBeVisible();
+  expect(googleRequests).toHaveLength(2);
+});
+
+for (const failure of ["network", "server"] as const) {
+  test(`sign-out ${failure} failure keeps the session and permits retry`, async ({ page, context }) => {
+    await page.goto("/app");
+    const signOut = page.getByRole("button", { name: "Sign out" });
+    await expect(signOut).toBeEnabled();
+    await page.route("**/auth/logout", async route => {
+      if (failure === "network") await route.abort();
+      else await route.fulfill({ status: 503, body: "Unavailable" });
+    }, { times: 1 });
+    await signOut.click();
+    await expect(page.getByRole("alert")).toHaveText("Could not sign out. Please try again.");
+    await expect(signOut).toBeEnabled();
+    expect((await context.request.get("/api/matters")).status()).toBe(200);
+    await signOut.click();
+    await expect(page).toHaveURL("/");
+    expect((await context.request.get("/api/matters")).status()).toBe(401);
+  });
+}

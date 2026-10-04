@@ -8,8 +8,8 @@ from fastapi.testclient import TestClient
 from private_client_graph.api.app import create_app
 
 
-def test_migration_seed_and_collection(database):
-    client = TestClient(create_app())
+def test_migration_seed_and_collection(database, authenticated_client):
+    client = authenticated_client(create_app())
     assert client.get("/api/matters").json() == []
     subprocess.run([sys.executable, "-m", "private_client_graph.seed_evergreen"], check=True)
     response = client.get("/api/matters")
@@ -21,7 +21,7 @@ def test_migration_seed_and_collection(database):
     }]
 
 
-def test_repeat_seed_preserves_complete_existing_snapshot(database, monkeypatch, tmp_path):
+def test_repeat_seed_preserves_complete_existing_snapshot(database, monkeypatch, tmp_path, authenticated_client):
     from sqlalchemy import create_engine, text
     from private_client_graph.seed_evergreen import seed_evergreen
     from private_client_graph import seed_evergreen as seed_module
@@ -50,12 +50,12 @@ def test_repeat_seed_preserves_complete_existing_snapshot(database, monkeypatch,
     with engine.connect() as connection:
         assert dict(connection.execute(text("SELECT * FROM matters")).mappings().one()) == existing
     engine.dispose()
-    response = TestClient(create_app()).get("/api/matters")
+    response = authenticated_client(create_app()).get("/api/matters")
     assert response.json()[0]["title"] == "Evergreen succession advice"
     assert response.json()[0]["external_reference"] == "PC/2026/0999"
 
 
-def test_reads_do_not_consult_fixtures_or_extract(database, monkeypatch):
+def test_reads_do_not_consult_fixtures_or_extract(database, monkeypatch, authenticated_client):
     from pathlib import Path
     from private_client_graph.seed_evergreen import seed_evergreen
 
@@ -65,12 +65,12 @@ def test_reads_do_not_consult_fixtures_or_extract(database, monkeypatch):
         raise AssertionError("Matter listing must not read benchmark fixtures")
 
     monkeypatch.setattr(Path, "read_text", unavailable)
-    client = TestClient(create_app())
+    client = authenticated_client(create_app())
     assert client.get("/api/matters").json()[0]["title"] == "Evergreen Family Trust"
 
 
-def test_readiness_without_seed_and_unavailable_database(database, monkeypatch):
-    client = TestClient(create_app())
+def test_readiness_without_seed_and_unavailable_database(database, monkeypatch, authenticated_client):
+    client = authenticated_client(create_app())
     response = client.get("/health")
     assert response.status_code == 200
     assert response.json() == {"status": "ok"}
@@ -104,7 +104,7 @@ def test_seed_contains_domain_valid_graph_and_verbatim_source_evidence(database)
     assert all(item.supporting_text in snapshot["source_text"] for item in graph.evidence)
 
 
-def test_invalid_seed_input_does_not_insert_partial_matter(database, monkeypatch, tmp_path):
+def test_invalid_seed_input_does_not_insert_partial_matter(database, monkeypatch, tmp_path, authenticated_client):
     import pytest
     from private_client_graph import seed_evergreen as seed_module
 
@@ -115,10 +115,10 @@ def test_invalid_seed_input_does_not_insert_partial_matter(database, monkeypatch
     monkeypatch.setattr(seed_module, "CASE", tmp_path)
     with pytest.raises(ValueError):
         seed_module.seed_evergreen()
-    assert TestClient(create_app()).get("/api/matters").json() == []
+    assert authenticated_client(create_app()).get("/api/matters").json() == []
 
 
-def test_concurrent_seed_commands_insert_only_one_matter(database):
+def test_concurrent_seed_commands_insert_only_one_matter(database, authenticated_client):
     commands = [subprocess.Popen(
         [sys.executable, "-m", "private_client_graph.seed_evergreen"],
         stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
@@ -128,14 +128,14 @@ def test_concurrent_seed_commands_insert_only_one_matter(database):
     assert sorted(output[0].strip() for output in outputs) == [
         "Evergreen already exists; unchanged.", "Evergreen inserted.",
     ]
-    assert len(TestClient(create_app()).get("/api/matters").json()) == 1
+    assert len(authenticated_client(create_app()).get("/api/matters").json()) == 1
 
 
-def test_matter_detail_returns_complete_persisted_state(database):
+def test_matter_detail_returns_complete_persisted_state(database, authenticated_client):
     from private_client_graph.seed_evergreen import seed_evergreen
 
     seed_evergreen()
-    response = TestClient(create_app()).get("/api/matters/ff985caf-60c5-4e65-a238-f3c26381c369")
+    response = authenticated_client(create_app()).get("/api/matters/ff985caf-60c5-4e65-a238-f3c26381c369")
     assert response.status_code == 200
     detail = response.json()
     assert set(detail) == {"id", "external_reference", "title", "authoritative_source", "current_graph"}
@@ -148,8 +148,8 @@ def test_matter_detail_returns_complete_persisted_state(database):
                for item in detail["current_graph"]["evidence"])
 
 
-def test_missing_and_invalid_matter_uuid(database):
-    client = TestClient(create_app())
+def test_missing_and_invalid_matter_uuid(database, authenticated_client):
+    client = authenticated_client(create_app())
     assert client.get("/api/matters/00000000-0000-0000-0000-000000000000").status_code == 404
     response = client.get("/api/matters/not-a-uuid")
     assert response.status_code == 422
@@ -160,14 +160,14 @@ def test_missing_and_invalid_matter_uuid(database):
     {"source_text": "Inconsistent synthetic source"},
     {"current_graph": {"entities": "invalid"}},
 ])
-def test_invalid_persisted_state_never_reaches_browser(database, values):
+def test_invalid_persisted_state_never_reaches_browser(database, values, authenticated_client):
     from sqlalchemy import create_engine, update
     from private_client_graph.persistence.matters import matters
     from private_client_graph.seed_evergreen import seed_evergreen
 
     seed_evergreen()
     engine = create_engine(database)
-    client = TestClient(create_app())
+    client = authenticated_client(create_app())
     with engine.begin() as connection:
         connection.execute(update(matters).values(**values))
     response = client.get("/api/matters/ff985caf-60c5-4e65-a238-f3c26381c369")
@@ -176,7 +176,7 @@ def test_invalid_persisted_state_never_reaches_browser(database, values):
     engine.dispose()
 
 
-def test_detail_reads_only_persisted_state(database, monkeypatch):
+def test_detail_reads_only_persisted_state(database, monkeypatch, authenticated_client):
     from pathlib import Path
     from sqlalchemy import create_engine, update
     from private_client_graph.persistence.matters import matters
@@ -195,7 +195,7 @@ def test_detail_reads_only_persisted_state(database, monkeypatch):
 
     monkeypatch.setattr(Path, "read_text", forbidden)
     monkeypatch.setattr(ChatDeepSeek, "invoke", forbidden)
-    response = TestClient(create_app()).get("/api/matters/ff985caf-60c5-4e65-a238-f3c26381c369")
+    response = authenticated_client(create_app()).get("/api/matters/ff985caf-60c5-4e65-a238-f3c26381c369")
     assert response.status_code == 200
     assert response.json()["authoritative_source"] == {"title": "Persisted note", "text": "Persisted text"}
     assert response.json()["current_graph"] == {"entities": [], "relationships": [], "evidence": []}

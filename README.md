@@ -175,11 +175,11 @@ the model; **Load sample analysis** explicitly loads the ideal-extraction fixtur
 Both use the existing graph builder. Select a relationship (by click or keyboard)
 to highlight its exact evidence in the persistent source panel.
 
-The practitioner application at `/app` lists the persisted synthetic Evergreen
-Matter from PostgreSQL. Rows support local mouse/keyboard selection; this ticket
-ends at the ledger, with no Matter-detail route or persisted review interaction.
-Selection is ephemeral UI state, not a saved review status. Configure and initialize
-PostgreSQL as described below before using the practitioner application.
+The practitioner application at `/app` requires an allowlisted Google identity and
+opens persisted synthetic Matters from PostgreSQL. Configure authentication and
+initialize PostgreSQL as described below before using the practitioner application.
+The plain HTTP Vite server above is for the Public Showcase; practitioner use
+requires the combined build behind HTTPS at the configured trusted origin.
 Both journeys link to each other; direct entry and refresh at `/app` are supported
 by the combined deployment. The previous `/api/case-01` routes are removed.
 
@@ -406,3 +406,62 @@ and an explicitly migrated/seeded disposable database; CI initializes a separate
 `pcg_e2e` database before running the real PostgreSQL → API → ledger journey and
 the existing showcase journey at desktop and phone widths. No live model calls
 are made by CI.
+
+
+## Google authentication for the synthetic prototype (#47)
+
+One deployment is one synthetic Prototype Tenant: every allowlisted Google subject
+can read every Matter. Google OIDC is the only identity provider. No user or
+session records are persisted, and no schema migration is needed for this feature.
+The application remains unsuitable for real confidential client information.
+
+Before deploying, configure a Google OAuth **Web application** client and register
+exactly `https://YOUR_HOST/auth/callback` as an authorized redirect URI. Set these
+backend variables in Railway (or your local environment); never commit credentials:
+
+| Variable | Required value |
+| --- | --- |
+| `PCG_GOOGLE_CLIENT_ID` | Google web client ID ending in `.apps.googleusercontent.com` |
+| `PCG_GOOGLE_CLIENT_SECRET` | Secret for that Google client |
+| `PCG_GOOGLE_SUB_ALLOWLIST` | Non-empty comma-separated stable Google `sub` identifiers, not email addresses |
+| `PCG_SESSION_SECRET` | Independently generated random secret, at least 32 characters; for example generate locally with `openssl rand -hex 32` |
+| `PCG_TRUSTED_ORIGIN` | Exact public HTTPS origin, e.g. `https://YOUR_HOST`, without a trailing slash or path |
+| `PCG_SESSION_SECONDS` | Optional absolute session lifetime, 60–3600 seconds; default 1800 |
+
+Obtain each subject from a Google-validated identity through your deployment's
+controlled enrollment process. There is no public enrollment or email-based access
+fallback. The service validates configuration before reporting ready: missing or
+invalid values return `/health` 503 and cannot open private paths. Google validates
+the actual client credentials during the authorization-code exchange; configure
+and verify a real allowlisted sign-in before release. The combined deployment's
+readiness check also requires PostgreSQL connectivity. Public routes remain public,
+but a misconfigured combined service must not be released as healthy.
+
+Use the combined frontend build behind HTTPS for practitioner development and
+production. `/app` and its entire subtree redirect unauthenticated navigation to
+Google; all `/api/matters*` and `/api/matter-proposals*` routes enforce authentication
+independently. API clients receive 401 for missing/expired sessions and 403 for a
+subject removed from the allowlist. The current environment allowlist is checked on
+every private request; applying deployment environment changes may require the
+platform to restart the process. Email never grants access.
+
+Authlib validates Google identity signature, issuer, audience, expiry and nonce;
+OAuth state and PKCE protect the code flow. Google tokens are discarded after the
+callback. The backend signs a Secure, HTTP-only, SameSite=Lax `__Host-pcg-session`
+cookie containing only the subject and an absolute expiry. Activity cannot extend
+that deadline. Sign out clears the browser session; without a session store it
+does not revoke a separately copied cookie before expiry. Removing a subject from
+the allowlist or rotating the session secret invalidates its access.
+
+Practitioner writes, including `POST /auth/logout`, require the exact configured
+`Origin` and the signed double-submit CSRF cookie in the `x-csrftoken` header.
+The readable `__Host-pcg-csrf` cookie is a CSRF value, never an identity token.
+The Public Showcase and sample/live showcase POST behavior remain public and
+unchanged. Google login/callback use the OIDC state/nonce mechanisms.
+
+Deterministic tests use synthetic settings and replace only Google's HTTP boundary
+with generated signed identities; they do not introduce a production bypass.
+Browser servers generate temporary self-signed HTTPS certificates so secure cookies
+are exercised on desktop and phone widths. Browser tests keep the real callback,
+session, PostgreSQL, graph, and review flows. Their Google authorization endpoint is
+mounted only by test code, which is not copied into the deployment image.

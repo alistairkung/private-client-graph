@@ -1,0 +1,25 @@
+import { useState } from "react";
+
+export function SignOut() {
+  const [error, setError] = useState(false);
+  const [pending, setPending] = useState(false);
+  async function signOut() {
+    setPending(true);
+    setError(false);
+    try {
+      const csrf = document.cookie.split("; ").find(value => value.startsWith("__Host-pcg-csrf="))?.split("=")[1] ?? "";
+      const response = await fetch("/auth/logout", {
+        method: "POST", headers: { "x-csrftoken": csrf },
+      });
+      if (!response.ok) throw new Error("Sign out failed");
+      window.location.assign("/");
+    } catch {
+      setError(true);
+      setPending(false);
+    }
+  }
+  return <div className="sign-out">
+    <button type="button" onClick={signOut} disabled={pending}>{pending ? "Signing out…" : "Sign out"}</button>
+    {error && <span role="alert">Could not sign out. Please try again.</span>}
+  </div>;
+}
