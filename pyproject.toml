@@ -21,6 +21,8 @@ dependencies = [
   "starlette-csrf>=3,<4",
   "httpx2>=2.13,<3",
   "joserfc>=1.7,<2",
+  "pypdf>=6,<7",
+  "python-multipart>=0.0.20,<1",
 ]
 
 [dependency-groups]

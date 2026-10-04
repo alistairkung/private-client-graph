@@ -8,6 +8,9 @@ os.environ.update({
     "PCG_TRUSTED_ORIGIN": "https://testserver",
     "PCG_GOOGLE_SUB_ALLOWLIST": "test-subject",
     "PCG_SESSION_SECONDS": "900",
+    "PCG_PROPOSAL_ANALYSIS_LIMIT": "100",
+    "PCG_PROPOSAL_ANALYSIS_WINDOW_SECONDS": "86400",
+    "DEEPSEEK_API_KEY": "test-only",
 })
 
 import pytest
@@ -23,3 +26,23 @@ def authenticated_client():
         assert sign_in(client).status_code == 303
         return client
     return make
+
+
+from tempfile import SpooledTemporaryFile
+from starlette import formparsers
+
+
+@pytest.fixture
+def tracked_upload_files(monkeypatch):
+    files = []
+
+    def temporary_file(*args, **kwargs):
+        file = SpooledTemporaryFile(*args, **kwargs)
+        files.append(file)
+        return file
+
+    # Observe real filesystem resources, leaving multipart and PDF parsing real.
+    monkeypatch.setattr(formparsers, "SpooledTemporaryFile", temporary_file)
+    yield files
+    for file in files:
+        file.close()

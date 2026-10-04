@@ -220,7 +220,7 @@ def test_post_rechecks_advisory_get_and_preserves_sample_and_matter_access(
 ):
     from private_client_graph.application import case_analysis
     from private_client_graph.models import ExtractionResult
-    from private_client_graph.seed_evergreen import seed_evergreen
+    from private_client_graph.persistence.seeds.evergreen import seed_evergreen
 
     seed_evergreen()
     monkeypatch.setenv("PCG_RUN_DIR", str(tmp_path))

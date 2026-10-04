@@ -24,6 +24,9 @@ def configure_browser_auth(port):
         "PCG_TRUSTED_ORIGIN": f"https://127.0.0.1:{port}",
         "PCG_GOOGLE_SUB_ALLOWLIST": "test-subject",
         "PCG_SESSION_SECONDS": "900",
+        "PCG_PROPOSAL_ANALYSIS_LIMIT": "100",
+        "PCG_PROPOSAL_ANALYSIS_WINDOW_SECONDS": "86400",
+        "DEEPSEEK_API_KEY": "test-only",
     })
 
 

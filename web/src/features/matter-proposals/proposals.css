@@ -1,0 +1,70 @@
+.practitioner-shell .ledger-title-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 20px;
+}
+.practitioner-shell .intake-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 10px 18px;
+  border: 1px solid #173e38;
+  border-radius: 3px;
+  background: #173e38;
+  color: #fff;
+  font: 600 14px/22px "Public Sans", Arial, sans-serif;
+  text-align: center;
+  cursor: pointer;
+}
+.practitioner-shell .intake-button:hover { background: #28544b; text-decoration: none; }
+.practitioner-shell .intake-button:focus-visible,
+.practitioner-shell .intake-form input:focus-visible { outline: 3px solid #773b46; outline-offset: 3px; }
+.practitioner-shell .intake-button:disabled { cursor: default; opacity: 0.55; }
+.practitioner-shell .intake-button.secondary { color: #173e38; background: transparent; border-color: #738a7e; }
+.practitioner-shell .intake-button.secondary:hover { background: #e8ece8; }
+.practitioner-shell .intake-button.destructive { color: #fff; background: #773b46; border-color: #773b46; }
+.practitioner-shell .proposal-collection { margin-top: 48px; }
+.practitioner-shell .proposal-collection h2,
+.practitioner-shell .discard-confirmation h2 { margin: 0 0 8px; font: 500 25px/32px "Newsreader", Georgia, serif; }
+.practitioner-shell .proposal-collection > p { margin: 0; }
+.practitioner-shell .proposal-collection .matter-register { margin-top: 20px; }
+.practitioner-shell .intake-intro { max-width: 660px; margin: 0 0 28px; }
+.practitioner-shell .intake-form { max-width: 660px; }
+.practitioner-shell .intake-form fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+.practitioner-shell .intake-form label { display: block; margin-bottom: 20px; font-weight: 600; }
+.practitioner-shell .intake-form input:not([type="checkbox"]) {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  margin-top: 7px;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid #738a7e;
+  border-radius: 3px;
+  background: #fff;
+  color: #173e38;
+  font: inherit;
+  font-weight: 400;
+}
+.practitioner-shell .intake-form input[type="file"] { padding: 10px; font-size: 13px; }
+.practitioner-shell .field-guidance { margin: -10px 0 24px; color: #59655f; font-size: 13px; line-height: 20px; }
+.practitioner-shell .intake-form .synthetic-confirmation { display: flex; gap: 12px; align-items: flex-start; font-weight: 400; }
+.practitioner-shell .synthetic-confirmation input { flex: 0 0 20px; width: 20px; height: 20px; margin: 2px 0 0; accent-color: #173e38; }
+.practitioner-shell .intake-error { max-width: 660px; margin: 20px 0; padding: 16px; background: #f8eeed; border-left: 3px solid #773b46; }
+.practitioner-shell .intake-error p { margin: 0; }
+.practitioner-shell .intake-error p + p { margin-top: 8px; }
+.practitioner-shell .intake-error a { text-decoration: underline; }
+.practitioner-shell .proposal-explanation { margin-top: 12px; max-width: 660px; }
+.practitioner-shell .discard-intake { margin-top: 28px; }
+.practitioner-shell .discard-confirmation { max-width: 660px; padding: 20px; border: 1px solid #773b46; }
+.practitioner-shell .discard-confirmation p { margin: 0 0 16px; }
+.practitioner-shell .intake-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+.practitioner-shell .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+@media (max-width: 639px) {
+  .practitioner-shell .ledger-title-row { align-items: center; }
+  .practitioner-shell .ledger-title-row h1 { margin: 0; }
+  .practitioner-shell .ledger-intro { margin-top: 12px; }
+  .practitioner-shell .discard-confirmation { padding: 16px; }
+}

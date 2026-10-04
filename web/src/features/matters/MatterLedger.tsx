@@ -56,6 +56,6 @@ function CollectionMessage({ state }: { state: CollectionState }) {
   }
   return <div className="ledger-empty">
     <p>No Matters available</p>
-    <p>This read-only application does not currently contain any Matters.</p>
+    <p>Accepted Matters will appear here.</p>
   </div>;
 }

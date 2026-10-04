@@ -11,7 +11,7 @@ from private_client_graph.api.app import create_app
 def test_migration_seed_and_collection(database, authenticated_client):
     client = authenticated_client(create_app())
     assert client.get("/api/matters").json() == []
-    subprocess.run([sys.executable, "-m", "private_client_graph.seed_evergreen"], check=True)
+    subprocess.run([sys.executable, "-m", "private_client_graph.persistence.seeds.evergreen"], check=True)
     response = client.get("/api/matters")
     assert response.status_code == 200
     assert response.json() == [{
@@ -23,8 +23,8 @@ def test_migration_seed_and_collection(database, authenticated_client):
 
 def test_repeat_seed_preserves_complete_existing_snapshot(database, monkeypatch, tmp_path, authenticated_client):
     from sqlalchemy import create_engine, text
-    from private_client_graph.seed_evergreen import seed_evergreen
-    from private_client_graph import seed_evergreen as seed_module
+    from private_client_graph.persistence.seeds.evergreen import seed_evergreen
+    from private_client_graph.persistence.seeds import evergreen as seed_module
 
     assert seed_evergreen() is True
     engine = create_engine(database)
@@ -57,7 +57,7 @@ def test_repeat_seed_preserves_complete_existing_snapshot(database, monkeypatch,
 
 def test_reads_do_not_consult_fixtures_or_extract(database, monkeypatch, authenticated_client):
     from pathlib import Path
-    from private_client_graph.seed_evergreen import seed_evergreen
+    from private_client_graph.persistence.seeds.evergreen import seed_evergreen
 
     seed_evergreen()
 
@@ -90,7 +90,7 @@ def test_readiness_without_seed_and_unavailable_database(database, monkeypatch, 
 def test_seed_contains_domain_valid_graph_and_verbatim_source_evidence(database):
     from sqlalchemy import create_engine, text
     from private_client_graph.models import CanonicalGraph
-    from private_client_graph.seed_evergreen import seed_evergreen
+    from private_client_graph.persistence.seeds.evergreen import seed_evergreen
 
     seed_evergreen()
     engine = create_engine(database)
@@ -106,7 +106,7 @@ def test_seed_contains_domain_valid_graph_and_verbatim_source_evidence(database)
 
 def test_invalid_seed_input_does_not_insert_partial_matter(database, monkeypatch, tmp_path, authenticated_client):
     import pytest
-    from private_client_graph import seed_evergreen as seed_module
+    from private_client_graph.persistence.seeds import evergreen as seed_module
 
     (tmp_path / "source.txt").write_text("This note contains no fixture evidence.")
     (tmp_path / "expected_extraction.json").write_text(
@@ -120,7 +120,7 @@ def test_invalid_seed_input_does_not_insert_partial_matter(database, monkeypatch
 
 def test_concurrent_seed_commands_insert_only_one_matter(database, authenticated_client):
     commands = [subprocess.Popen(
-        [sys.executable, "-m", "private_client_graph.seed_evergreen"],
+        [sys.executable, "-m", "private_client_graph.persistence.seeds.evergreen"],
         stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
     ) for _ in range(2)]
     outputs = [command.communicate(timeout=20) for command in commands]
@@ -132,7 +132,7 @@ def test_concurrent_seed_commands_insert_only_one_matter(database, authenticated
 
 
 def test_matter_detail_returns_complete_persisted_state(database, authenticated_client):
-    from private_client_graph.seed_evergreen import seed_evergreen
+    from private_client_graph.persistence.seeds.evergreen import seed_evergreen
 
     seed_evergreen()
     response = authenticated_client(create_app()).get("/api/matters/ff985caf-60c5-4e65-a238-f3c26381c369")
@@ -163,7 +163,7 @@ def test_missing_and_invalid_matter_uuid(database, authenticated_client):
 def test_invalid_persisted_state_never_reaches_browser(database, values, authenticated_client):
     from sqlalchemy import create_engine, update
     from private_client_graph.persistence.matters import matters
-    from private_client_graph.seed_evergreen import seed_evergreen
+    from private_client_graph.persistence.seeds.evergreen import seed_evergreen
 
     seed_evergreen()
     engine = create_engine(database)
@@ -180,7 +180,7 @@ def test_detail_reads_only_persisted_state(database, monkeypatch, authenticated_
     from pathlib import Path
     from sqlalchemy import create_engine, update
     from private_client_graph.persistence.matters import matters
-    from private_client_graph.seed_evergreen import seed_evergreen
+    from private_client_graph.persistence.seeds.evergreen import seed_evergreen
     from langchain_deepseek import ChatDeepSeek
 
     seed_evergreen()

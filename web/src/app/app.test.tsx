@@ -8,7 +8,7 @@ test.each(["/app", "/app/"])(
     window.history.replaceState(null, "", path);
     const fetcher = vi
       .spyOn(globalThis, "fetch")
-      .mockResolvedValue(new Response(JSON.stringify([])));
+      .mockImplementation(async () => new Response(JSON.stringify([])));
 
     render(<App />);
 
@@ -23,16 +23,40 @@ test.each(["/app", "/app/"])(
       "/",
     );
     expect(screen.getByRole("button", { name: "Sign out" })).toBeVisible();
-    expect(fetcher).toHaveBeenCalledOnce();
-    expect(fetcher.mock.calls[0][0]).toBe("/api/matters");
+    expect(fetcher.mock.calls.map(call => call[0]).sort()).toEqual(["/api/matter-proposals", "/api/matters"]);
     expect(document.title).toBe("Matters · Private Client Graph");
   },
 );
 
 test("practitioner notice and logout protect the synthetic session", async () => {
   window.history.replaceState(null, "", "/app");
-  vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify([])));
+  vi.spyOn(globalThis, "fetch").mockImplementation(async () => new Response(JSON.stringify([])));
   render(<App />);
   expect(screen.getByText(/not suitable for real confidential client information/i)).toBeVisible();
   expect(screen.getByRole("button", { name: "Sign out" })).toBeVisible();
+});
+
+test("creation direct entry stays in the practitioner shell and does not load analysis", () => {
+  window.history.replaceState(null, "", "/app/matter-proposals/new");
+  const fetcher = vi.spyOn(globalThis, "fetch");
+  render(<App />);
+  expect(screen.getByRole("heading", { name: "Create Matter" })).toBeVisible();
+  expect(screen.getByRole("checkbox", { name: /synthetic or fictional/ })).toBeVisible();
+  expect(fetcher).not.toHaveBeenCalled();
+  expect(document.title).toBe("Create Matter · Private Client Graph");
+});
+
+test("proposal direct entry reads its persisted source and graph without reanalysis", async () => {
+  window.history.replaceState(null, "", "/app/matter-proposals/proposal-42");
+  const fetcher = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify({
+    id: "proposal-42", external_reference: "Firm/42", matter_title: "Saved proposal",
+    authoritative_source: { title: "Source title", text: "Saved source" },
+    proposed_graph: { entities: [], relationships: [], evidence: [] },
+  })));
+  render(<App />);
+  expect(await screen.findByRole("heading", { name: "Saved proposal" })).toBeVisible();
+  expect(screen.getByRole("heading", { name: "Proposed relationships" })).toBeVisible();
+  expect(fetcher).toHaveBeenCalledOnce();
+  expect(fetcher.mock.calls[0][0]).toBe("/api/matter-proposals/proposal-42");
+  expect(document.title).toBe("Saved proposal · Private Client Graph");
 });

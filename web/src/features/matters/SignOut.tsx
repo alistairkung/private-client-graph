@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { csrfHeaders } from "../../shared/csrf";
 
 export function SignOut() {
   const [error, setError] = useState(false);
@@ -7,9 +8,8 @@ export function SignOut() {
     setPending(true);
     setError(false);
     try {
-      const csrf = document.cookie.split("; ").find(value => value.startsWith("__Host-pcg-csrf="))?.split("=")[1] ?? "";
       const response = await fetch("/auth/logout", {
-        method: "POST", headers: { "x-csrftoken": csrf },
+        method: "POST", headers: csrfHeaders(),
       });
       if (!response.ok) throw new Error("Sign out failed");
       window.location.assign("/");

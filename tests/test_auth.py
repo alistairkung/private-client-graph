@@ -94,7 +94,7 @@ def test_csrf_and_origin_are_independent_gates(google_client):
         assert client.post(path, headers={"x-csrftoken": token}).status_code == 403
     assert client.post("/api/matter-proposals", headers={
         "origin": "https://testserver", "x-csrftoken": token,
-    }).status_code in (404, 405)  # passed security; intake is a later issue
+    }).status_code == 422  # passed security; required multipart form is missing
     assert client.post("/api/showcase/case-01/analysis", json={"mode": "sample"}).status_code == 200
     assert client.get("/app", headers={"host": "evil.example"}).status_code == 400
 

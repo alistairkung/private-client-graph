@@ -214,7 +214,7 @@ to the professional workspace.
 
 ```bash
 uv run pytest
-uv run mypy private_client_graph/application private_client_graph/api private_client_graph/persistence private_client_graph/seed_evergreen.py --follow-imports=silent
+uv run mypy private_client_graph/application private_client_graph/api private_client_graph/persistence --follow-imports=silent
 cd web
 npm run typecheck
 npm test
@@ -243,7 +243,7 @@ Keep the existing GitHub → Railway service and repository root. The committed
 pre-deploy command:
 
 ```bash
-alembic upgrade head && python -m private_client_graph.seed_evergreen
+alembic upgrade head && python -m private_client_graph.persistence.seeds.evergreen
 ```
 
 The image includes Alembic, migrations, the PostgreSQL driver, and seed inputs.
@@ -343,7 +343,7 @@ docker run --rm --name pcg-postgres -e POSTGRES_USER=pcg \
   -p 5432:5432 -d postgres:16
 export DATABASE_URL='postgresql://pcg:test-only@127.0.0.1:5432/pcg_e2e'
 uv run alembic upgrade head
-uv run python -m private_client_graph.seed_evergreen
+uv run python -m private_client_graph.persistence.seeds.evergreen
 ```
 
 The ordinary commands also work with any explicitly configured PostgreSQL server.
@@ -389,7 +389,7 @@ databases:
 ```bash
 export TEST_DATABASE_URL="$DATABASE_URL"
 uv run pytest
-uv run mypy private_client_graph/application private_client_graph/api private_client_graph/persistence private_client_graph/seed_evergreen.py --follow-imports=silent
+uv run mypy private_client_graph/application private_client_graph/api private_client_graph/persistence --follow-imports=silent
 cd web
 npm run typecheck
 npm test
@@ -465,3 +465,66 @@ Browser servers generate temporary self-signed HTTPS certificates so secure cook
 are exercised on desktop and phone widths. Browser tests keep the real callback,
 session, PostgreSQL, graph, and review flows. Their Google authorization endpoint is
 mounted only by test code, which is not copied into the deployment image.
+
+## Synthetic Matter Proposals (#48)
+
+The authenticated `/app` entry offers **Create Matter** and a separate **Awaiting
+confirmation** collection. Upload and analyse produces a durable machine-proposed
+graph for review; it does not create a Matter. Whole-proposal confirmation is a
+later slice. **Discard intake** asks for destructive confirmation, then removes the
+entire proposal and its reference claim without a retained judgment or history.
+
+All allowlisted practitioners share proposals and accepted Matters within this
+synthetic deployment. Each submission requires confirmation that its material is
+synthetic or fictional. Never submit real personal or client information.
+
+In addition to Google/session and PostgreSQL settings, the combined service now
+requires these proposal-analysis settings before `/health` reports ready:
+
+| Variable | Required value |
+| --- | --- |
+| `PCG_PROPOSAL_ANALYSIS_LIMIT` | Positive 32-bit integer provider attempts per window, e.g. `10` |
+| `PCG_PROPOSAL_ANALYSIS_WINDOW_SECONDS` | Positive 32-bit integer window duration, e.g. `86400` |
+| `DEEPSEEK_API_KEY` | Non-empty provider credential |
+| `DEEPSEEK_MODEL` | Optional non-empty model name; defaults to `deepseek-flash` |
+
+Provider credentials/model availability are verified by the provider on invocation;
+missing or locally invalid settings fail readiness. There is no unlimited fallback.
+These settings are required even when Public Showcase live analysis is disabled.
+The proposal allowance is persistent, deployment-wide, and independent of Showcase
+quota. Keep every replica on the same configuration and database. Each attempt
+commits immediately before provider invocation; downstream failure never refunds
+it. There are no automatic model retries. Existing reviews and discard remain
+available when the allowance is exhausted.
+
+Run the existing `alembic upgrade head` and explicit Evergreen initialization
+before deployment. New immutable migrations add minimal proposal JSONB state,
+cross-resource canonical external-reference claims (including existing Matters),
+and a separate proposal allowance. Original PDFs, filenames, PDF metadata, raw
+extractions, submission confirmations, and review decisions are never persisted.
+
+Acquisition accepts exactly one text-layer PDF: at most 10 MiB, 50 pages, and
+100,000 finalized Unicode characters, with at least one non-whitespace character.
+Encrypted, malformed, scanned, or textless PDFs are rejected; OCR is unsupported.
+Extension and MIME type are advisory. Page text retains its order, Unicode,
+spacing, punctuation, and line breaks, with CRLF/CR converted to LF, invalid control
+characters removed, and **two LF characters (`\n\n`) between every pair of pages**.
+That finalized text goes unchanged to extraction, persistence, and exact Evidence
+review. The acquisition file exists only within the active request.
+
+The proposal API provides collection and creation at `/api/matter-proposals` and
+GET/DELETE at `/api/matter-proposals/{uuid}`. POST requires multipart fields
+`external_reference`, `matter_title`, `source_title`, `synthetic_confirmation=true`,
+and one file field `pdf`, plus the existing trusted Origin and CSRF header. A
+successful POST returns 201, the full proposal, and its API `Location`. Duplicate
+409 responses identify the existing resource kind, UUID, and API location. Every
+retry resolves the trimmed, case-folded external reference before another model
+attempt, including recovery after an unknown commit/response outcome. No source,
+raw extraction, or error details are retained for failed attempts.
+
+Deterministic tests substitute Google and the model boundary while keeping real
+PDF acquisition, graph construction, PostgreSQL, and browser review/discard. The
+committed synthetic PDF fixture lives under `tests/fixtures/`; it is separate from
+benchmark ground truth. Use the full test commands above with PostgreSQL enabled.
+Start each browser-suite run with a freshly migrated and seeded disposable database;
+the quota journey deliberately leaves its persistent allowance exhausted.

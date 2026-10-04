@@ -84,7 +84,9 @@ export function GraphView({
   graph,
   selected,
   onSelect,
+  emptyTitle = "No relationships found",
 }: {
+  emptyTitle?: string;
   graph: CanonicalGraph;
   selected: number | null;
   onSelect: (index: number) => void;
@@ -102,7 +104,7 @@ export function GraphView({
   if (!graph.relationships.length)
     return (
       <div className="empty-graph">
-        <h3>No relationships found</h3>
+        <h3>{emptyTitle}</h3>
         <p>
           The analysis produced no supported relationships. The source remains
           available for review.
