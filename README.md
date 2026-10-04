@@ -141,8 +141,10 @@ runs/                   Local extraction/evaluation outputs (Git ignored)
 ## Documentation
 
 - [Agent instructions](AGENTS.md)
+- [Project glossary](GLOSSARY.md)
 - [Code style](docs/CODE_STYLE.md)
 - [Web application guidelines](docs/WEB_APP_GUIDELINES.md)
+- [Case 01 professional-review web-slice decisions](docs/design/case-01-professional-review-web-slice.md)
 - [Synthetic case authoring workflow](docs/workflows/synthetic-case-authoring.md)
 
 ## Status
