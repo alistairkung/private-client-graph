@@ -28,17 +28,24 @@ function crossesNode(
   center: Point,
   height: number,
 ) {
-  const clearance = 10;
-  return Array.from({ length: 19 }, (_, index) => (index + 1) / 20).some(progress => {
-    const point = {
-      x: start.x + (end.x - start.x) * progress,
-      y: start.y + (end.y - start.y) * progress,
-    };
-    return point.x > center.x - NODE_WIDTH / 2 - clearance
-      && point.x < center.x + NODE_WIDTH / 2 + clearance
-      && point.y > center.y - height / 2 - clearance
-      && point.y < center.y + height / 2 + clearance;
-  });
+  const bounds = nodeRectangle(center, height, 10);
+  let enter = 0;
+  let leave = 1;
+  for (const [origin, delta, minimum, maximum] of [
+    [start.x, end.x - start.x, bounds.left, bounds.right],
+    [start.y, end.y - start.y, bounds.top, bounds.bottom],
+  ]) {
+    if (!delta) {
+      if (origin < minimum || origin > maximum) return false;
+      continue;
+    }
+    const first = (minimum - origin) / delta;
+    const second = (maximum - origin) / delta;
+    enter = Math.max(enter, Math.min(first, second));
+    leave = Math.min(leave, Math.max(first, second));
+    if (enter > leave) return false;
+  }
+  return true;
 }
 
 function positionPeople(graph: RelationshipPresentation) {
@@ -127,8 +134,7 @@ type RoutingContext = {
   positions: Map<string, Point>;
   trustId: string;
   center: Point;
-  width: number;
-  trustLanes: Map<number, number>;
+  trustApproaches: Map<number, Point>;
   personGroups: Map<string, number[]>;
   obstacles: Rectangle[];
 };
@@ -140,34 +146,25 @@ function routeTrustRelationship(
 ) {
   const personId = edge.source === context.trustId ? edge.target : edge.source;
   const person = context.positions.get(personId)!;
-  const lane = context.trustLanes.get(index)!;
-  const approach = Math.abs(person.y - context.center.y) > PERSON_HEIGHT
-    ? { x: context.center.x + lane,
-        y: context.center.y + Math.sign(person.y - context.center.y) * (TRUST_HEIGHT / 2 + 30) }
-    : { x: context.center.x + Math.sign(person.x - context.center.x) * (NODE_WIDTH / 2 + 30),
-        y: context.center.y + lane };
-  const blocked = context.graph.entities.some(entity => entity.id !== personId
-    && entity.id !== context.trustId
-    && crossesNode(person, approach, context.positions.get(entity.id)!,
-      entity.type === "trust" ? TRUST_HEIGHT : PERSON_HEIGHT));
-  let personToTrust: Point[];
-  if (blocked) {
-    const corridorX = person.x <= context.center.x ? MARGIN / 2 : context.width - MARGIN / 2;
-    const exit = { x: corridorX, y: person.y + PERSON_HEIGHT / 2 + 28 };
-    personToTrust = [
-      nodeBoundary(person, exit, false),
-      exit,
-      { x: corridorX, y: approach.y },
-      approach,
-      nodeBoundary(context.center, approach, true),
-    ];
-  } else {
-    personToTrust = [
-      nodeBoundary(person, approach, false),
-      approach,
-      nodeBoundary(context.center, approach, true),
-    ];
-  }
+  const approach = context.trustApproaches.get(index)!;
+  const obstacles = context.graph.entities.filter(entity => entity.id !== personId && entity.id !== context.trustId);
+  const trustBoundary = nodeBoundary(context.center, approach, true);
+  const direct = [nodeBoundary(person, approach, false), approach, trustBoundary];
+  const corridorXs = [
+    (person.x + approach.x) / 2,
+    ...obstacles.flatMap(entity => {
+      const bounds = nodeRectangle(context.positions.get(entity.id)!,
+        entity.type === "trust" ? TRUST_HEIGHT : PERSON_HEIGHT, 24);
+      return [bounds.left, bounds.right];
+    }),
+  ].filter(x => x !== person.x).sort((first, second) => Math.abs(first - person.x) - Math.abs(second - person.x) || first - second);
+  const routes = [direct, ...corridorXs.map(x => {
+    const exit = { x, y: person.y };
+    return [nodeBoundary(person, exit, false), exit, { x, y: approach.y }, approach, trustBoundary];
+  })];
+  const personToTrust = routes.find(route => route.slice(1).every((end, segment) =>
+    obstacles.every(entity => !crossesNode(route[segment], end, context.positions.get(entity.id)!,
+      entity.type === "trust" ? TRUST_HEIGHT : PERSON_HEIGHT)))) ?? direct;
   const points = edge.source === context.trustId ? personToTrust.reverse() : personToTrust;
   return relationshipRoute(points, edge.label, {
     awayFrom: context.center,
@@ -240,15 +237,30 @@ export function centralTrustLayout(
 ) {
   const trusts = graph.entities.filter(entity => entity.type === "trust");
   if (trusts.length !== 1) return null;
-  const { positions, width, center } = positionPeople(graph);
+  const { positions, center } = positionPeople(graph);
   positions.set(trusts[0].id, center);
   const trustRelationships = graph.relationships
     .map((relationship, index) => ({ relationship, index }))
     .filter(({ relationship }) => relationship.source === trusts[0].id || relationship.target === trusts[0].id)
     .sort((first, second) => relationshipKey(first.relationship)
       .localeCompare(relationshipKey(second.relationship)));
-  const trustLanes = new Map(trustRelationships.map(({ index }, lane) =>
-    [index, (lane - (trustRelationships.length - 1) / 2) * 34]));
+  const trustApproaches = new Map<number, Point>();
+  const sideGroups = new Map<string, typeof trustRelationships>();
+  trustRelationships.forEach(item => {
+    const person = graph.entities.find(entity => entity.id === item.relationship.source)!;
+    const side = person.roles.length > 1 ? "left"
+      : person.roles[0] === "settlor" ? "top"
+      : person.roles[0] === "beneficiary" ? "bottom" : "right";
+    sideGroups.set(side, [...(sideGroups.get(side) ?? []), item]);
+  });
+  sideGroups.forEach((group, side) => group.forEach(({ index }, lane) => {
+    const vertical = side === "top" || side === "bottom";
+    const span = (vertical ? NODE_WIDTH : TRUST_HEIGHT) * 0.65;
+    const offset = (lane - (group.length - 1) / 2) * Math.min(34, span / Math.max(1, group.length - 1));
+    trustApproaches.set(index, vertical
+      ? { x: center.x + offset, y: center.y + (side === "top" ? -1 : 1) * (TRUST_HEIGHT / 2 + 30) }
+      : { x: center.x + (side === "left" ? -1 : 1) * (NODE_WIDTH / 2 + 30), y: center.y + offset });
+  }));
   const personGroups = new Map<string, number[]>();
   const orderedRelationships = graph.relationships.map((edge, index) => ({ edge, index }))
     .sort((first, second) => relationshipKey(first.edge).localeCompare(relationshipKey(second.edge)));
@@ -260,8 +272,8 @@ export function centralTrustLayout(
   const obstacles = entityObstacles(graph, positions);
   const routes: RelationshipRoute[] = [];
   const context: RoutingContext = {
-    graph, positions, trustId: trusts[0].id, center, width,
-    trustLanes, personGroups, obstacles,
+    graph, positions, trustId: trusts[0].id, center,
+    trustApproaches, personGroups, obstacles,
   };
   orderedRelationships.forEach(({ edge, index }) => {
     const route = edge.source === context.trustId || edge.target === context.trustId

@@ -434,3 +434,41 @@ test("family connectors do not pass through the Trust or unrelated people", () =
     }
   }
 });
+
+test("Trust-role routes clear unrelated people when several people hold multiple roles", () => {
+  const crowded: CanonicalGraph = {
+    entities: [
+      { id: "t", name: "Trust", type: "trust" },
+      ...["settlor", "b0", "b1", "trustee", "m0", "m1", "m2", "m3"]
+        .map(id => ({ id, name: id, type: "person" as const })),
+    ],
+    relationships: [
+      { source: "settlor", target: "t", type: "settlor_of", evidence_ids: [] },
+      { source: "b0", target: "t", type: "beneficiary_of", evidence_ids: [] },
+      { source: "b1", target: "t", type: "beneficiary_of", evidence_ids: [] },
+      { source: "trustee", target: "t", type: "trustee_of", evidence_ids: [] },
+      ...["m0", "m1", "m2", "m3"].flatMap(source => [
+        { source, target: "t", type: "settlor_of" as const, evidence_ids: [] },
+        { source, target: "t", type: "beneficiary_of" as const, evidence_ids: [] },
+      ]),
+    ],
+    evidence: [],
+  };
+  const view = toGraphView(crowded);
+  for (const edge of view.edges) {
+    const points = (edge.data!.route as { points: { x: number; y: number }[] }).points;
+    for (let index = 1; index < points.length; index++) {
+      const start = points[index - 1];
+      const end = points[index];
+      for (const node of view.nodes.filter(node => node.id !== edge.source && node.id !== edge.target)) {
+        const bounds = nodeBounds(view, node.id);
+        expect(Array.from({ length: 201 }, (_, sample) => ({
+          x: start.x + (end.x - start.x) * sample / 200,
+          y: start.y + (end.y - start.y) * sample / 200,
+        })).some(point => point.x > bounds.left && point.x < bounds.right
+          && point.y > bounds.top && point.y < bounds.bottom),
+        `${edge.ariaLabel} crosses ${node.id}`).toBe(false);
+      }
+    }
+  }
+});

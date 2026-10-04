@@ -9,6 +9,13 @@ from private_client_graph.models import ExtractionResult, RelationshipCandidate
 
 
 def extract_fixture(source, *, llm):
+    if source.startswith("Morgan Example is settlor"):
+        return ExtractionResult(relationships=[RelationshipCandidate(
+            source_name="Morgan Example",
+            relationship_type=f"{role}_of",
+            target_name="Fictional Trust",
+            supporting_text=f"Morgan Example is {role} of the Fictional Trust.",
+        ) for role in ("settlor", "beneficiary", "trustee")])
     return ExtractionResult(relationships=[RelationshipCandidate(
         source_name="Alice Example",
         relationship_type="parent_of",

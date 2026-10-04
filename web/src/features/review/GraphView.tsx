@@ -1,54 +1,51 @@
-import { NODE_WIDTH, TRUST_HEIGHT } from "./node-geometry";
-import { useCallback, useEffect, useMemo } from "react";
+import { NODE_WIDTH, TRUST_HEIGHT, type RelationshipRoute } from "./node-geometry";
+import { useEffect, useMemo } from "react";
 import {
   Handle,
   Position,
   type NodeProps,
   BaseEdge,
+  EdgeLabelRenderer,
   Controls,
   ReactFlow,
   useReactFlow,
   useStore,
-  type EdgeChange,
+  type Edge,
   type EdgeProps,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { toGraphView } from "./graph-view";
 import type { CanonicalGraph } from "../../shared/canonical-graph";
 
-function RoutedEdge({
-  id,
-  data,
-  label,
-  markerEnd,
-  style,
-  labelStyle,
-  labelBgStyle,
-}: EdgeProps) {
-  const route = data?.route as {
-    points: { x: number; y: number }[];
-    x: number;
-    y: number;
-  };
+type ReviewEdge = Edge<{
+  route: RelationshipRoute;
+  description: string;
+  connectorClass: string;
+  onSelect: () => void;
+}>;
+
+function RoutedEdge({ id, data, label, markerEnd, style, selected }: EdgeProps<ReviewEdge>) {
+  const { route, description, connectorClass, onSelect } = data!;
   const path = route.points
     .map((point, index) => `${index ? "L" : "M"} ${point.x} ${point.y}`)
     .join(" ");
-  return (
-    <BaseEdge
-      id={id}
-      path={path}
-      label={label}
-      labelX={route.x}
-      labelY={route.y}
-      markerEnd={markerEnd}
-      style={style}
-      labelStyle={labelStyle}
-      labelBgStyle={labelBgStyle}
-      labelBgPadding={[7, 4]}
-      labelBgBorderRadius={3}
-      interactionWidth={20}
-    />
-  );
+  return <>
+    <BaseEdge id={id} path={path} markerEnd={markerEnd} style={style} interactionWidth={20} />
+    <EdgeLabelRenderer>
+      <button
+        type="button"
+        className={`relationship-label nodrag nopan ${connectorClass}${selected ? " selected" : ""}`}
+        data-edge-id={id}
+        aria-label={description}
+        aria-pressed={!!selected}
+        onClick={onSelect}
+        style={{
+          transform: `translate(-50%, -50%) translate(${route.x}px, ${route.y}px)`,
+          width: route.labelBounds.right - route.labelBounds.left,
+        }}
+      >{label}</button>
+    </EdgeLabelRenderer>
+  </>;
 }
 
 function TrustNode({ data }: NodeProps) {
@@ -92,15 +89,6 @@ export function GraphView({
   onSelect: (index: number) => void;
 }) {
   const view = useMemo(() => toGraphView(graph), [graph]);
-  const selectEdge = useCallback(
-    (changes: EdgeChange[]) => {
-      const selection = changes.find(
-        (change) => change.type === "select" && change.selected,
-      );
-      if (selection?.type === "select") onSelect(Number(selection.id));
-    },
-    [onSelect],
-  );
   if (!graph.relationships.length)
     return (
       <div className="empty-graph">
@@ -118,14 +106,11 @@ export function GraphView({
       stroke: selected === index ? "#b15a27" : "#607775",
       strokeWidth: selected === index ? 3 : 1.5,
     },
-    labelStyle: {
-      fill: selected === index ? "#92421b" : "#29423f",
-      fontWeight: selected === index ? 700 : 500,
-    },
-    labelBgStyle: {
-      fill: selected === index ? "#fff0cf" : "#fafbf7",
-      stroke: selected === index ? "#b15a27" : "#9eafa2",
-      strokeWidth: selected === index ? 2 : 1,
+    data: {
+      ...edge.data,
+      description: edge.ariaLabel,
+      connectorClass: edge.className,
+      onSelect: () => onSelect(index),
     },
   }));
   return (
@@ -141,9 +126,9 @@ export function GraphView({
         nodesConnectable={false}
         nodesFocusable={false}
         edgesReconnectable={false}
+        edgesFocusable={false}
         deleteKeyCode={null}
         onEdgeClick={(_, edge) => onSelect(Number(edge.id))}
-        onEdgesChange={selectEdge}
       >
         <FitGraph bounds={view.bounds} />
         <Controls showInteractive={false} showFitView={false} />

@@ -98,7 +98,7 @@ export function toGraphView(graph: CanonicalGraph): {
       label: edge.label,
       type: "routed",
       className: `relationship-edge relationship-${edge.kind}`,
-      ariaRole: "button",
+      ariaRole: "group",
       data: {
         route: anchored?.routes[index] ?? generalRoutes[index],
       },

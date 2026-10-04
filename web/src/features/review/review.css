@@ -146,40 +146,41 @@
 .react-flow__edge {
   cursor: pointer;
 }
-.react-flow__edge:focus-visible {
-  outline: none;
-}
 .react-flow__edge:hover .react-flow__edge-path {
   stroke: #405c58 !important;
   stroke-width: 2.5 !important;
 }
-.react-flow__edge:hover .react-flow__edge-textbg {
-  stroke: #607775 !important;
-  stroke-width: 1.5 !important;
-}
-.react-flow__edge:focus-visible .react-flow__edge-path {
-  stroke: #405c58 !important;
-  stroke-width: 3.5 !important;
-}
-.react-flow__edge:focus-visible .react-flow__edge-textbg {
-  stroke: #405c58 !important;
-  stroke-width: 2 !important;
-}
 .relationship-family .react-flow__edge-path {
   stroke-dasharray: 6 4;
 }
-.react-flow__edge.selected:hover .react-flow__edge-path,
-.react-flow__edge.selected:focus-visible .react-flow__edge-path {
+.react-flow__edge.selected:hover .react-flow__edge-path {
   stroke: #b15a27 !important;
 }
-.react-flow__edge.selected:hover .react-flow__edge-textbg,
-.react-flow__edge.selected:focus-visible .react-flow__edge-textbg {
-  stroke: #b15a27 !important;
+.graph-canvas .relationship-label {
+  position: absolute;
+  pointer-events: all;
+  height: 24px;
+  padding: 0 7px;
+  border: 1px solid #9eafa2;
+  border-radius: 3px;
+  background: #fafbf7;
+  color: #29423f;
+  font: 500 12px / 16px "Public Sans", Arial, sans-serif;
+  white-space: nowrap;
 }
-.react-flow__edge-text {
-  font-family: "Public Sans", Arial, sans-serif;
-  font-size: 12px;
-  line-height: 16px;
+.graph-canvas .relationship-label:hover {
+  border-color: #607775;
+  background: #ecf1e5;
+}
+.graph-canvas .relationship-label.selected {
+  border: 2px solid #b15a27;
+  background: #fff0cf;
+  color: #92421b;
+  font-weight: 700;
+}
+.graph-canvas .relationship-label:focus-visible {
+  outline: 3px solid #405c58;
+  outline-offset: 3px;
 }
 .react-flow__controls {
   box-shadow: none;

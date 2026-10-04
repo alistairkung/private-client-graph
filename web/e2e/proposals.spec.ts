@@ -59,3 +59,34 @@ test("synthetic PDF becomes a persisted proposal with exact Evidence and can be 
   await page.goto(proposalPath);
   await expect(page.getByRole("alert")).toContainText("Matter Proposal not found");
 });
+
+
+test("multiple Trust roles remain independently selectable in the real review canvas", async ({ page }, testInfo) => {
+  await page.goto("/app");
+  await page.getByRole("link", { name: "Create Matter", exact: true }).click();
+  await page.getByRole("textbox", { name: "External Matter reference" }).fill(`Roles/${randomUUID()}`);
+  await page.getByRole("textbox", { name: "Matter title", exact: true }).fill("Fictional multiple roles");
+  await page.getByRole("textbox", { name: "Authoritative Source title" }).fill("Fictional role note");
+  await page.getByLabel("PDF", { exact: true }).setInputFiles(
+    fileURLToPath(new URL("../../tests/fixtures/multiple-role-proposal.pdf", import.meta.url)),
+  );
+  await page.getByRole("checkbox", { name: /synthetic or fictional/ }).check();
+  await page.getByRole("button", { name: "Upload and analyse" }).click();
+  await expect(page).toHaveURL(/\/app\/matter-proposals\/[a-f0-9-]{36}$/);
+  await expect(page.locator(".react-flow__node", { hasText: "Morgan Example" })).toHaveCount(1);
+  for (const role of ["Settlor", "Beneficiary", "Trustee"]) {
+    const connector = page.getByRole("button", {
+      name: `Morgan Example — ${role} of — Fictional Trust`, exact: true,
+    });
+    await connector.getByText(role, { exact: true }).click();
+    await expect(connector).toHaveClass(/selected/);
+    await expect(page.locator("mark")).toHaveText(`Morgan Example is ${role.toLowerCase()} of the Fictional Trust.`);
+    await connector.focus();
+    await connector.press("Enter");
+    await expect(page.locator("mark")).toBeInViewport();
+  }
+  await page.screenshot({ path: testInfo.outputPath("multiple-roles.png"), fullPage: true });
+  await page.getByRole("button", { name: "Discard intake", exact: true }).click();
+  await page.getByRole("button", { name: "Permanently discard intake" }).click();
+  await expect(page).toHaveURL("/app");
+});

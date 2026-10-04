@@ -35,7 +35,7 @@ test("sample journey uses real API and graph construction, then highlights exact
     name: "Bob Chen — Beneficiary of — Evergreen Family Trust",
     exact: true,
   });
-  const beneficiaryLabel = await beneficiary.locator(".react-flow__edge-text").boundingBox();
+  const beneficiaryLabel = await beneficiary.boundingBox();
   const bob = await page.locator(".react-flow__node", { hasText: "Bob Chen" }).boundingBox();
   const trust = await page.locator(".react-flow__node", { hasText: "Evergreen Family Trust" }).boundingBox();
   const alice = await page.locator(".react-flow__node", { hasText: "Alice Chen" }).boundingBox();
@@ -49,7 +49,7 @@ test("sample journey uses real API and graph construction, then highlights exact
   expect(overlaps(beneficiaryLabel, bob)).toBe(false);
   expect(overlaps(beneficiaryLabel, trust)).toBe(false);
   await expect(beneficiary).toHaveClass(/relationship-trust-role/);
-  await expect(beneficiary.locator(".react-flow__edge-path")).not.toHaveAttribute("marker-end");
+  await expect(page.locator(".react-flow__edge.relationship-trust-role .react-flow__edge-path").first()).not.toHaveAttribute("marker-end");
   await beneficiary.getByText("Beneficiary", { exact: true }).click();
   await expect(beneficiary).toHaveClass(/selected/);
   await expect(page.locator("mark")).toHaveText(
@@ -58,7 +58,7 @@ test("sample journey uses real API and graph construction, then highlights exact
   const edge = await selectSpouseRelationship(page);
   await expect(edge).toHaveClass(/selected/);
   await expect(edge).toHaveClass(/relationship-family/);
-  await expect(edge.locator(".react-flow__edge-path")).toHaveCSS("stroke-dasharray", "6px, 4px");
+  await expect(page.locator(".react-flow__edge.relationship-family .react-flow__edge-path").first()).toHaveCSS("stroke-dasharray", "6px, 4px");
   const highlight = page.locator("mark");
   await expect(highlight).toHaveCount(1);
   await expect(highlight).toHaveText(
@@ -82,7 +82,8 @@ test("sample journey uses real API and graph construction, then highlights exact
     name: "Alice Chen — Parent of — Bob Chen",
     exact: true,
   });
-  await expect(parentEdge.locator(".react-flow__edge-path")).toHaveAttribute("marker-end", /url/);
+  const parentId = await parentEdge.getAttribute("data-edge-id");
+  await expect(page.locator(`.react-flow__edge[data-id="${parentId}"] .react-flow__edge-path`)).toHaveAttribute("marker-end", /url/);
   await parentEdge.focus();
   await parentEdge.press("Enter");
   await expect(parentEdge).toHaveClass(/selected/);
