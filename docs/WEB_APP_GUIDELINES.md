@@ -25,6 +25,28 @@ API code should call the existing domain functions rather than duplicate their l
 
 Changes to core semantics require explicit review under `AGENTS.md`.
 
+## Current Case 01 web-slice boundary
+
+The first web slice is the professional-review path documented in
+`docs/design/case-01-professional-review-web-slice.md`:
+
+```text
+read-only synthetic source
+   -> explicit live or sample extraction
+   -> deterministic graph construction
+   -> read-only relationship and evidence review
+```
+
+It ends at canonical graph construction. The web application does not invoke or
+expose benchmark evaluation, even though the existing evaluator remains available
+for offline benchmark and development work. A benchmark/evaluation web surface is
+deferred to a separate future slice.
+
+The professional-facing analysis response contains execution metadata and the
+`CanonicalGraph`. Raw `ExtractionResult` data is persisted for technical
+traceability but is not returned to the browser. `EvaluationResult` is neither
+produced nor returned by this web workflow.
+
 ## Repository structure
 
 Keep backend and frontend in the same repository unless a concrete deployment or ownership need justifies a split.
@@ -50,13 +72,20 @@ web/
 
 Treat this as guidance rather than a requirement to create directories before they are needed.
 
+For the current slice, use a thin FastAPI backend and a React/TypeScript frontend
+in this repository. Keep Case 01 fixtures backend-authoritative: the browser reads
+the source and requests an explicit execution mode, but never submits or modifies
+the document.
+
 ## Backend style
 
 - Keep meaningful domain models in focused files.
 - Keep domain models independent from HTTP or UI concerns.
 - Keep routes/controllers thin.
 - Put multi-step use-case orchestration in an application layer when route code would otherwise become procedural domain logic.
-- Reuse existing extraction, graph-construction, and evaluation functions.
+- Reuse the existing domain functions needed by each workflow. The current web
+  workflow uses extraction and graph construction; offline benchmark workflows
+  continue to use evaluation.
 - Do not introduce repository patterns, service hierarchies, dependency injection, or persistence abstractions until a concrete requirement earns them.
 
 A route should read approximately as:
@@ -76,18 +105,20 @@ Prefer a shape such as:
 ```text
 CasePage
 ├── SourcePanel
+├── AnalysisControls
 ├── GraphView
-├── EvidencePanel
-└── EvaluationSummary
+└── EvidencePanel
 ```
 
-over one page containing data fetching, graph transformation, selection state, evidence rendering, metrics formatting, and large amounts of JSX.
+over one page containing data fetching, graph transformation, selection state,
+evidence rendering, and large amounts of JSX.
 
 Extract a component when it represents a meaningful UI responsibility or is genuinely reusable.
 
 Do not split trivial markup into tiny generic components merely to reduce file length.
 
-Keep graph rendering, evidence display, and evaluation display as separate concerns.
+Keep graph rendering and evidence display as separate concerns. Do not add an
+evaluation concern to the first professional-review slice.
 
 ## State and data flow
 
@@ -152,6 +183,9 @@ The layers have different jobs:
 - **Browser E2E tests** protect the real product journey while substituting only the stochastic model boundary.
 - **Live model evaluations** measure extraction quality over benchmark cases. They are evaluation runs, not ordinary deterministic CI assertions.
 
+The evaluation layers describe the wider project testing strategy; they do not
+imply that benchmark evaluation belongs in the first professional-facing web UI.
+
 CI should not depend on the model returning the same extraction on every run.
 
 For deterministic E2E tests, substitute the extraction/model boundary with a known `RelationshipCandidate` fixture. Case fixtures such as `expected_extraction.json` are appropriate candidates where they represent the intended extraction contract.
@@ -164,8 +198,8 @@ browser
 → API
 → known extraction fixture
 → real deterministic graph construction
-→ real deterministic evaluation
-→ frontend result
+→ relationship selection
+→ exact source-evidence highlight
 ```
 
 Do not mock the final canonical graph merely to make the browser test easier; doing so would skip important application behaviour.
@@ -183,11 +217,10 @@ The Case 01 vertical slice should eventually have a small browser E2E test cover
 ```text
 open Case 01
 → source is visible
-→ run extraction
+→ load sample analysis
 → graph is displayed
 → select a relationship
 → supporting evidence is shown
-→ evaluation metrics are displayed
 ```
 
 A small number of high-value integration/E2E tests is preferable to exhaustive shallow component tests.
@@ -231,3 +264,9 @@ Examples that are out of scope until required include:
 - temporal reconciliation UI.
 
 Build the smallest vertical slice that exposes the already-tested core well, then let concrete product and benchmark failures drive the next layer of complexity.
+
+Deployment is intended for the hackathon submission but deferred from the first
+professional-review slice. Its acceptance criterion is a reliably runnable local
+end-to-end application whose architecture remains deployable. Production hosting,
+secret management, access and cost controls, CORS/origin policy, and a public URL
+belong to a subsequent coherent deployment slice.
