@@ -224,3 +224,29 @@
 .practitioner-shell .eyebrow { letter-spacing: normal; }
 
 .practitioner-shell .evidence-number { text-transform: none; }
+
+.practitioner-access {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #c9cec8;
+  font-size: 13px;
+}
+.practitioner-access p { margin: 0; max-width: 760px; }
+.sign-out button {
+  color: inherit;
+  font: inherit;
+  background: transparent;
+  border: 1px solid #738a7e;
+  padding: 8px 12px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.sign-out button:focus-visible { outline: 3px solid #773b46; }
+.sign-out [role="alert"] { display: block; }
+@media (max-width: 600px) {
+  .practitioner-access { flex-direction: column; gap: 12px; }
+}

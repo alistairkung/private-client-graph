@@ -4,7 +4,9 @@ import os
 from pathlib import Path
 from types import SimpleNamespace
 
-import uvicorn
+from browser_auth import configure_browser_auth, serve
+
+configure_browser_auth(4174)
 
 # Never read real provider credentials in this deterministic test server.
 os.environ.update({
@@ -29,4 +31,4 @@ def fixture_chain(llm):
 case_analysis.build_relationship_extraction_chain = fixture_chain
 
 if __name__ == "__main__":
-    uvicorn.run(create_app(), host="127.0.0.1", port=4174)
+    serve(create_app(), 4174)

@@ -19,9 +19,9 @@ def test_healthcheck_reports_unavailable_without_database_configuration(monkeypa
     assert response.json() == {"status": "unavailable"}
 
 
-def test_built_frontend_is_served_from_the_application(tmp_path):
+def test_built_frontend_is_served_from_the_application(tmp_path, authenticated_client):
     (tmp_path / "index.html").write_text("<h1>Deployed workspace</h1>")
-    deployed_client = TestClient(create_app(tmp_path))
+    deployed_client = authenticated_client(create_app(tmp_path))
 
     for path in ("/", "/app", "/app/", "/app/matters/ff985caf-60c5-4e65-a238-f3c26381c369"):
         response = deployed_client.get(path)

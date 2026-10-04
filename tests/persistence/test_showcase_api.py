@@ -204,7 +204,9 @@ def test_live_api_uses_real_extraction_with_provider_http_substituted(
     assert "test-only-secret" not in response.text
 
 
-def test_post_rechecks_advisory_get_and_preserves_sample_and_matter_access(client, monkeypatch, tmp_path):
+def test_post_rechecks_advisory_get_and_preserves_sample_and_matter_access(
+    client, monkeypatch, tmp_path, authenticated_client
+):
     from private_client_graph.application import case_analysis
     from private_client_graph.models import ExtractionResult
     from private_client_graph.seed_evergreen import seed_evergreen
@@ -224,14 +226,16 @@ def test_post_rechecks_advisory_get_and_preserves_sample_and_matter_access(clien
     assert rejected.status_code == 429
     assert rejected.json()["error"]["live_analysis"] == exhausted
     assert client.post("/api/showcase/case-01/analysis", json={"mode": "sample"}).status_code == 200
-    matters = client.get("/api/matters").json()
+    assert client.get("/api/matters").status_code == 401
+    practitioner = authenticated_client(client.app)
+    matters = practitioner.get("/api/matters").json()
     assert len(matters) == 1
     matter_path = f'/api/matters/{matters[0]["id"]}'
-    assert client.get(matter_path).status_code == 200
+    assert practitioner.get(matter_path).status_code == 200
     monkeypatch.setenv("PCG_SHOWCASE_LIVE_ENABLED", "false")
-    disabled = TestClient(create_app())
+    disabled = authenticated_client(create_app())
     assert disabled.get("/api/matters").json() == matters
-    assert disabled.get(matter_path).json() == client.get(matter_path).json()
+    assert disabled.get(matter_path).json() == practitioner.get(matter_path).json()
 
 
 @pytest.mark.parametrize("body", [

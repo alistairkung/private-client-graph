@@ -319,7 +319,7 @@ Do not add features simply because a deployed application often has them.
 
 Examples that are out of scope until required include:
 
-- authentication/OAuth for the current synthetic read-only application;
+- additional identity providers or production tenancy beyond the Google-only synthetic prototype;
 - graph databases;
 - generalized multi-user workspaces;
 - advanced global state;
@@ -338,6 +338,7 @@ analysis is disabled by default and, when explicitly enabled, is protected by a
 persistent global fixed-window quota. This operational control is separate from
 practitioner authentication and authorization.
 
-The unauthenticated practitioner journey is permitted only while it remains
-read-only and strictly synthetic. Authentication and Matter authorization are a
-hard prerequisite for user-supplied, non-synthetic, or mutable Matter data.
+The practitioner journey requires Google OIDC, a deployment subject allowlist,
+and a short-lived backend session. It remains strictly synthetic. This prototype
+authentication boundary does not authorize real client data; non-synthetic use
+still requires an explicit data-handling, tenancy, and Matter-authorization design.
