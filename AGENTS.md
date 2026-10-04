@@ -71,3 +71,13 @@ Do not weaken or delete tests merely to make a change pass.
 - Keep changes scoped to the requested task.
 - Respect required CI checks.
 - Do not merge automatically.
+
+## Agent skills
+
+### Issue tracker
+
+Issues and specs are tracked in GitHub Issues using the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Domain docs
+
+This is a single-context repository with a root glossary and system-wide ADRs. See `docs/agents/domain.md`.
