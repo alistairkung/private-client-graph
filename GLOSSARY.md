@@ -13,7 +13,7 @@ A raw semantic claim extracted from source evidence, consisting of two named end
 _Avoid_: Edge, canonical relationship
 
 **Canonical Graph**:
-The deterministic, validated representation of entities, relationships, and first-class evidence produced from relationship candidates.
+The deterministic, mechanically validated representation of entities, relationships, and first-class evidence produced from relationship candidates. Its placement supplies its product meaning: a Matter Proposal holds a machine-proposed graph, while a Matter holds the professionally accepted current graph.
 _Avoid_: Raw extraction, model output
 
 **Evidence**:
@@ -21,7 +21,7 @@ Exact text from a source document that supports an extracted relationship. Evide
 _Avoid_: Justification, rationale
 
 **Professional Review**:
-Inspection by a private-client professional of AI-extracted relationships and the source evidence supporting them. In the first web slice it is read-only and does not include benchmark evaluation or human correction.
+Inspection by a private-client professional of AI-extracted relationships and the source evidence supporting them. It is distinct from benchmark evaluation; the existing Matter workspace is read-only, while Matter Intake requires whole-proposal confirmation without yet supporting human correction.
 _Avoid_: Case summary, benchmark review
 
 **Live Analysis**:
@@ -41,7 +41,7 @@ Offline comparison of a canonical graph with a benchmark case's known answer key
 _Avoid_: Professional review score, confidence score
 
 **Matter**:
-A scoped piece of professional work through which a practitioner accesses the authoritative source and current relationship graph relevant to that work.
+A scoped piece of professional work through which a practitioner accesses the authoritative source and professionally accepted current relationship graph relevant to that work.
 _Avoid_: Case, client record, trust record
 
 **External Matter Reference**:
@@ -49,7 +49,7 @@ A practitioner-facing identifier assigned by a firm's existing matter-management
 _Avoid_: Case ID, generated Matter reference
 
 **Authoritative Source**:
-The source material treated as authoritative for a Matter's current relationship graph. The currently supported Matter lifecycle has exactly one authoritative source, without making it a separate product hierarchy.
+The source text treated as authoritative for a Matter's current relationship graph. The currently supported Matter lifecycle has exactly one authoritative source, without making it a separate product hierarchy; an acquisition file is not itself the Authoritative Source.
 _Avoid_: Benchmark fixture, uploaded document
 
 **Public Showcase**:
@@ -59,3 +59,15 @@ _Avoid_: Matter workspace, practitioner application
 **Practitioner Application**:
 The Matter-oriented application journey used to identify and open durable professional review state. It does not expose showcase analysis controls or benchmark terminology.
 _Avoid_: Public showcase, benchmark dashboard
+
+**Matter Intake**:
+The practitioner workflow that supplies externally governed Matter identity and source material, produces structured relationship proposals for Professional Review, and creates a complete Matter after explicit whole-proposal confirmation.
+_Avoid_: Matter import, document upload
+
+**Matter Proposal**:
+Durable pre-Matter review state created after successful synchronous analysis, containing proposed Matter identity, an Authoritative Source, and a proposed Canonical Graph awaiting practitioner confirmation or discard.
+_Avoid_: Intake job, proposed Matter, draft Matter, analysis job, analysis run
+
+**Prototype Tenant**:
+The single organizational boundary assumed by an isolated synthetic prototype environment. Every allowlisted practitioner within it can access every Matter Proposal and Matter; it is not a production firm or multi-firm tenancy model.
+_Avoid_: Firm, production tenant

@@ -1,0 +1,9 @@
+# Require professional confirmation before current Matter state
+
+`Matter.current_graph` represents professionally accepted current relationship state, not merely the latest machine-produced analysis. Synchronous Matter analysis therefore runs the existing deterministic graph construction and provenance validation immediately after extraction, then creates a durable pre-Matter Matter Proposal containing proposed Matter identity, the Authoritative Source, and the resulting `proposed_graph`; only explicit practitioner confirmation of that whole proposal creates the complete Matter and copies the proposed graph unchanged into `current_graph`.
+
+## Consequences
+
+Deterministic validity and professional acceptance are separate, and placement supplies a Canonical Graph's product meaning: `MatterProposal.proposed_graph` is machine-proposed state, while `Matter.current_graph` is professionally accepted current state. `ExtractionResult` and `RelationshipCandidate` values remain request-local and are discarded after successful graph construction. A Matter Proposal is practitioner-review state rather than an incomplete Matter or raw model-debugging artifact, preserving the invariant that every persisted Matter is complete and immediately reviewable. A practitioner may discard an entire Matter Proposal without creating a Matter; discard records no judgment about relationship correctness and retains no reason, tombstone, audit record, or copy. This slice adds no editing, per-relationship decisions, correction, rejection reasons, partial confirmation, queues, background workers, or polling.
+
+The explicit backend-controlled Evergreen seed remains a pre-accepted synthetic initialization. That curated exception is not a runtime creation mechanism and does not permit practitioner-supplied material to bypass Matter Proposal confirmation.
