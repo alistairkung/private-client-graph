@@ -87,3 +87,12 @@ test("selecting an edge again returns to its evidence even when the quote is unc
     scrolls + 1,
   );
 });
+
+test("legend explains entity shapes and both relationship directions", () => {
+  render(<ReviewWorkspace source={source} graph={graph} />);
+  const legend = screen.getByLabelText("Graph legend");
+  expect(legend).toHaveTextContent("Person");
+  expect(legend).toHaveTextContent("Trust");
+  expect(legend).toHaveTextContent("Arrow points to target");
+  expect(legend).toHaveTextContent("Symmetric relationship");
+});

@@ -35,8 +35,9 @@
 }
 .graph-legend {
   display: flex;
-  gap: 18px;
-  padding: 17px 24px 0;
+  flex-wrap: wrap;
+  gap: 10px 18px;
+  padding: 15px 24px 0;
   color: #67776d;
   font-size: 10px;
 }
@@ -46,22 +47,44 @@
   align-items: center;
 }
 .graph-legend i {
-  width: 9px;
-  height: 9px;
+  width: 18px;
+  height: 10px;
   display: inline-block;
+  position: relative;
 }
 .person-key {
   background: #e2ebd9;
   border: 1px solid #759367;
-  border-radius: 50%;
+  border-radius: 8px;
+  width: 16px !important;
 }
 .trust-key {
   background: #dbe8e5;
   border: 1px solid #577f78;
+  width: 13px !important;
+}
+.directed-key::before,
+.symmetric-key::before {
+  content: "";
+  position: absolute;
+  top: 5px;
+  left: 0;
+  right: 1px;
+  border-top: 1.5px solid #607775;
+}
+.directed-key::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  right: 0;
+  border-left: 5px solid #607775;
+  border-top: 3px solid transparent;
+  border-bottom: 3px solid transparent;
 }
 .graph-canvas {
   height: 510px;
   min-height: 510px;
+  background: #fafbf7;
 }
 .react-flow__node {
   display: flex;
@@ -96,9 +119,9 @@
 }
 .trust-node span {
   position: absolute;
-  top: 50px;
-  left: 30px;
-  right: 30px;
+  top: 48px;
+  left: 38px;
+  right: 38px;
   text-align: center;
   font-size: 13px;
   line-height: 16px;
@@ -118,16 +141,49 @@
 .react-flow__edge:focus-visible {
   outline: none;
 }
+.react-flow__edge:hover .react-flow__edge-path {
+  stroke: #405c58 !important;
+  stroke-width: 2.5 !important;
+}
+.react-flow__edge:hover .react-flow__edge-textbg {
+  stroke: #607775 !important;
+  stroke-width: 1.5 !important;
+}
 .react-flow__edge:focus-visible .react-flow__edge-path {
-  stroke: #b15a27;
-  stroke-width: 4;
+  stroke: #405c58 !important;
+  stroke-width: 3.5 !important;
+}
+.react-flow__edge:focus-visible .react-flow__edge-textbg {
+  stroke: #405c58 !important;
+  stroke-width: 2 !important;
+}
+.react-flow__edge.selected .react-flow__edge-path {
+  stroke-dasharray: 7 3;
+}
+.react-flow__edge.selected:hover .react-flow__edge-path,
+.react-flow__edge.selected:focus-visible .react-flow__edge-path {
+  stroke: #b15a27 !important;
+}
+.react-flow__edge.selected:hover .react-flow__edge-textbg,
+.react-flow__edge.selected:focus-visible .react-flow__edge-textbg {
+  stroke: #b15a27 !important;
 }
 .react-flow__edge-text {
-  font-size: 13px;
+  font-family: "Public Sans", Arial, sans-serif;
+  font-size: 12px;
+  line-height: 16px;
 }
 .react-flow__controls {
   box-shadow: none;
   border: 1px solid #d4dbcf;
+  opacity: 0.72;
+  transform: scale(0.86);
+  transform-origin: bottom left;
+}
+.react-flow__controls-button {
+  background: #fafbf7;
+  border-bottom-color: #dfe4db;
+  color: #657367;
 }
 .evidence-panel {
   padding: 20px 24px;
@@ -205,7 +261,8 @@ mark {
   }
   .graph-legend {
     padding-left: 18px;
-    gap: 10px;
+    padding-right: 18px;
+    gap: 8px 14px;
     font-size: 9px;
   }
   .graph-canvas {
