@@ -7,5 +7,6 @@ __pycache__/
 .mypy_cache/
 /web/node_modules/
 /web/dist/
+/web/.vite/
 /web/test-results/
 /web/playwright-report/
