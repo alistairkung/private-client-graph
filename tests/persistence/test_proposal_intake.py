@@ -120,7 +120,7 @@ def test_security_and_validation_rejections_do_not_spend_an_attempt(proposal_cli
 def test_existing_matter_reference_resolves_without_provider(proposal_client, monkeypatch):
     from private_client_graph.application import matter_proposals
     from private_client_graph.persistence.proposal_allowance import quota_reset
-    from private_client_graph.seed_evergreen import EVERGREEN_ID, seed_evergreen
+    from private_client_graph.persistence.seeds.evergreen import EVERGREEN_ID, seed_evergreen
     seed_evergreen()
 
     def unexpected(*args, **kwargs):
@@ -175,6 +175,78 @@ def test_failed_analysis_consumes_one_attempt_without_saved_state(
     assert quota_reset(limit=1, window_seconds=86400) is not None
     assert proposal_client.get('/api/matter-proposals').json() == []
     assert proposal_client.get('/api/matters').json() == []
+    assert submit(proposal_client).status_code == 429
+    assert calls == [SOURCE]
+
+
+def test_model_construction_failure_does_not_spend_an_attempt(proposal_client, monkeypatch):
+    from private_client_graph.application import matter_proposals
+    from private_client_graph.persistence.proposal_allowance import quota_reset
+
+    calls = []
+
+    def construct_model(**kwargs):
+        calls.append('construct')
+        raise ValueError('provider-secret')
+
+    def extract(source, *, llm):
+        calls.append('invoke')
+        return ExtractionResult(relationships=[])
+
+    monkeypatch.setattr(matter_proposals, 'ChatDeepSeek', construct_model)
+    monkeypatch.setattr(matter_proposals, 'extract_relationships_from_text', extract)
+    response = submit(proposal_client)
+
+    assert response.status_code == 503
+    assert response.json()['error']['code'] == 'analysis_unavailable'
+    assert 'provider-secret' not in response.text
+    assert calls == ['construct']
+    assert quota_reset(limit=1, window_seconds=86400) is None
+    assert proposal_client.get('/api/matter-proposals').json() == []
+
+
+@pytest.mark.parametrize(
+    'provider_status,retryable',
+    [
+        (400, False),
+        (408, True),
+        (429, True),
+        (499, False),
+        (500, True),
+        (503, True),
+    ],
+)
+def test_provider_http_failure_retryability_preserves_consumed_attempt(
+    proposal_client, monkeypatch, provider_status, retryable,
+):
+    import httpx
+    from openai import APIStatusError
+    from private_client_graph.application import matter_proposals
+    from private_client_graph.persistence.proposal_allowance import quota_reset
+
+    calls = []
+
+    def extract(source, *, llm):
+        calls.append(source)
+        raise APIStatusError(
+            'provider-secret',
+            response=httpx.Response(
+                provider_status,
+                request=httpx.Request('POST', 'https://model.test'),
+            ),
+            body=None,
+        )
+
+    monkeypatch.setattr(matter_proposals, 'extract_relationships_from_text', extract)
+    response = submit(proposal_client)
+
+    assert response.status_code == 502
+    assert response.json()['error']['code'] == 'provider_failed'
+    assert response.json()['error']['retryable'] is retryable
+    assert 'provider-secret' not in response.text
+    assert calls == [SOURCE]
+    assert quota_reset(limit=1, window_seconds=86400) is not None
+    assert proposal_client.get('/api/matter-proposals').json() == []
     assert submit(proposal_client).status_code == 429
     assert calls == [SOURCE]
 

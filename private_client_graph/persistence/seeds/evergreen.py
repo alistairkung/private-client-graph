@@ -13,7 +13,7 @@ from private_client_graph.persistence.matters import matters
 from private_client_graph.persistence.matter_proposals import reference_claims
 
 EVERGREEN_ID = UUID("ff985caf-60c5-4e65-a238-f3c26381c369")
-CASE = Path(__file__).resolve().parents[1] / "cases" / "case_01"
+CASE = Path(__file__).resolve().parents[3] / "cases" / "case_01"
 
 
 def seed_evergreen() -> bool:
@@ -40,7 +40,9 @@ def seed_evergreen() -> bool:
         inserted = connection.scalar(statement) is not None
         if inserted:
             connection.execute(reference_claims.insert().values(
-                canonical_reference="pc/2026/0142", resource_kind="matter", resource_id=EVERGREEN_ID,
+                canonical_reference="pc/2026/0142",
+                resource_kind="matter",
+                resource_id=EVERGREEN_ID,
             ))
         return inserted
 

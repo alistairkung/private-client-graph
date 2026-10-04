@@ -89,7 +89,13 @@ async def invalid_request(
 ) -> JSONResponse:
     assert isinstance(exc, RequestValidationError)
     if request.url.path.startswith("/api/matter-proposals/"):
-        return JSONResponse(status_code=422, content={"error": {"code": "invalid_proposal_id", "message": "Invalid Matter Proposal UUID."}})
+        return JSONResponse(
+            status_code=422,
+            content={"error": {
+                "code": "invalid_proposal_id",
+                "message": "Invalid Matter Proposal UUID.",
+            }},
+        )
     if request.url.path.startswith("/api/matters/"):
         return JSONResponse(status_code=422, content={"error": {"message": "Invalid Matter UUID."}})
     error = AnalysisError(
@@ -103,7 +109,9 @@ def create_app(web_dist: Path = WEB_DIST) -> FastAPI:
     application = FastAPI(title="Private Client Graph")
     configure_auth(application)
     try:
-        application.state.proposal_analysis = ProposalAnalysisConfig.from_environment()
+        proposal_config = ProposalAnalysisConfig.from_environment()
+        database_engine()  # Validate deployment storage independently of proposal settings.
+        application.state.proposal_analysis = proposal_config
     except ValueError:
         application.state.proposal_analysis = None
     application.state.showcase_live = LiveConfig.from_environment()

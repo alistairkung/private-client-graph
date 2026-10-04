@@ -57,7 +57,10 @@ class MatterProposalDetail(MatterProposalSummary):
         )
         if not self.authoritative_source.text.strip():
             raise ValueError("The Authoritative Source must contain text")
-        if any(item.supporting_text not in self.authoritative_source.text for item in self.proposed_graph.evidence):
+        if any(
+            item.supporting_text not in self.authoritative_source.text
+            for item in self.proposed_graph.evidence
+        ):
             raise ValueError("Evidence must occur verbatim in the Authoritative Source")
         return self
 
@@ -69,19 +72,7 @@ class ReferenceOwner(BaseModel):
     @computed_field  # type: ignore[prop-decorator]
     @property
     def location(self) -> str:
-        collection = "matter-proposals" if self.resource_kind == "matter_proposal" else "matters"
+        collection = (
+            "matter-proposals" if self.resource_kind == "matter_proposal" else "matters"
+        )
         return f"/api/{collection}/{self.resource_id}"
-
-
-class DuplicateReference(Exception):
-    def __init__(self, owner: ReferenceOwner):
-        super().__init__("The external Matter reference is already reserved")
-        self.owner = owner
-
-
-class ProposalPersistenceFailure(Exception):
-    """A write either rolled back or reached a commit whose outcome is unknown."""
-
-    def __init__(self, *, ambiguous: bool):
-        super().__init__("Proposal persistence outcome is unknown" if ambiguous else "Proposal write rolled back")
-        self.ambiguous = ambiguous

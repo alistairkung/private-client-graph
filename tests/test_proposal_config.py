@@ -28,3 +28,20 @@ def test_invalid_intake_configuration_fails_readiness(monkeypatch, name, value):
     with pytest.raises(ValueError):
         ProposalAnalysisConfig.from_environment()
     assert TestClient(application).get('/health').status_code == 503
+
+
+def test_proposal_settings_are_independent_of_database_readiness(monkeypatch):
+    monkeypatch.setenv("PCG_PROPOSAL_ANALYSIS_LIMIT", "10")
+    monkeypatch.setenv("PCG_PROPOSAL_ANALYSIS_WINDOW_SECONDS", "3600")
+    monkeypatch.setenv("DEEPSEEK_API_KEY", "test-only")
+    monkeypatch.setenv("DEEPSEEK_MODEL", "deepseek-flash")
+    monkeypatch.delenv("DATABASE_URL", raising=False)
+
+    config = ProposalAnalysisConfig.from_environment()
+
+    assert config.limit == 10
+    assert config.window_seconds == 3600
+    assert config.model == "deepseek-flash"
+    assert config.api_key.get_secret_value() == "test-only"
+    # Parsing provider settings alone must not make the combined service ready.
+    assert TestClient(create_app()).get("/health").status_code == 503

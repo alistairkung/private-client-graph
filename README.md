@@ -214,7 +214,7 @@ to the professional workspace.
 
 ```bash
 uv run pytest
-uv run mypy private_client_graph/application private_client_graph/api private_client_graph/persistence private_client_graph/seed_evergreen.py --follow-imports=silent
+uv run mypy private_client_graph/application private_client_graph/api private_client_graph/persistence --follow-imports=silent
 cd web
 npm run typecheck
 npm test
@@ -243,7 +243,7 @@ Keep the existing GitHub → Railway service and repository root. The committed
 pre-deploy command:
 
 ```bash
-alembic upgrade head && python -m private_client_graph.seed_evergreen
+alembic upgrade head && python -m private_client_graph.persistence.seeds.evergreen
 ```
 
 The image includes Alembic, migrations, the PostgreSQL driver, and seed inputs.
@@ -343,7 +343,7 @@ docker run --rm --name pcg-postgres -e POSTGRES_USER=pcg \
   -p 5432:5432 -d postgres:16
 export DATABASE_URL='postgresql://pcg:test-only@127.0.0.1:5432/pcg_e2e'
 uv run alembic upgrade head
-uv run python -m private_client_graph.seed_evergreen
+uv run python -m private_client_graph.persistence.seeds.evergreen
 ```
 
 The ordinary commands also work with any explicitly configured PostgreSQL server.
@@ -389,7 +389,7 @@ databases:
 ```bash
 export TEST_DATABASE_URL="$DATABASE_URL"
 uv run pytest
-uv run mypy private_client_graph/application private_client_graph/api private_client_graph/persistence private_client_graph/seed_evergreen.py --follow-imports=silent
+uv run mypy private_client_graph/application private_client_graph/api private_client_graph/persistence --follow-imports=silent
 cd web
 npm run typecheck
 npm test

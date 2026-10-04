@@ -80,7 +80,7 @@ def test_saved_proposal_is_durable_and_claims_its_canonical_reference(database):
 
 def test_competing_creations_reserve_one_reference_and_identify_the_winner(database):
     from concurrent.futures import ThreadPoolExecutor
-    from private_client_graph.application.proposal_contracts import DuplicateReference
+    from private_client_graph.persistence.proposal_errors import DuplicateReference
     from private_client_graph.models import CanonicalGraph
     from private_client_graph.persistence.matter_proposals import list_proposals, save_proposal
 
@@ -105,10 +105,10 @@ def test_competing_creations_reserve_one_reference_and_identify_the_winner(datab
 
 
 def test_seed_reserves_accepted_matter_reference_and_blocks_proposals(database):
-    from private_client_graph.application.proposal_contracts import DuplicateReference
+    from private_client_graph.persistence.proposal_errors import DuplicateReference
     from private_client_graph.models import CanonicalGraph
     from private_client_graph.persistence.matter_proposals import find_reference, list_proposals, save_proposal
-    from private_client_graph.seed_evergreen import EVERGREEN_ID, seed_evergreen
+    from private_client_graph.persistence.seeds.evergreen import EVERGREEN_ID, seed_evergreen
 
     assert seed_evergreen() is True
     assert seed_evergreen() is False
@@ -143,7 +143,7 @@ def test_discard_removes_whole_proposal_releases_reference_and_creates_no_matter
 
 def test_rejected_insert_rolls_back_proposal_and_reference_claim(database):
     from sqlalchemy import text
-    from private_client_graph.application.proposal_contracts import ProposalPersistenceFailure
+    from private_client_graph.persistence.proposal_errors import ProposalPersistenceFailure
     from private_client_graph.models import CanonicalGraph
     from private_client_graph.persistence.database import database_engine
     from private_client_graph.persistence.matter_proposals import find_reference, list_proposals, save_proposal
@@ -163,7 +163,7 @@ def test_rejected_insert_rolls_back_proposal_and_reference_claim(database):
 @pytest.mark.parametrize("completion_unknown", [False, True])
 def test_lost_commit_acknowledgement_is_ambiguous_and_reference_recovers_saved_proposal(database, monkeypatch, completion_unknown):
     import psycopg
-    from private_client_graph.application.proposal_contracts import ProposalPersistenceFailure
+    from private_client_graph.persistence.proposal_errors import ProposalPersistenceFailure
     from private_client_graph.models import CanonicalGraph
     from private_client_graph.persistence.database import database_engine
     from private_client_graph.persistence.matter_proposals import find_reference, get_proposal, save_proposal
@@ -191,7 +191,7 @@ def test_lost_commit_acknowledgement_is_ambiguous_and_reference_recovers_saved_p
 
 def test_failed_discard_preserves_proposal_and_reference_together(database):
     from sqlalchemy import text
-    from private_client_graph.application.proposal_contracts import ProposalPersistenceFailure
+    from private_client_graph.persistence.proposal_errors import ProposalPersistenceFailure
     from private_client_graph.models import CanonicalGraph
     from private_client_graph.persistence.database import database_engine
     from private_client_graph.persistence.matter_proposals import discard_proposal, find_reference, get_proposal, save_proposal
@@ -283,7 +283,7 @@ def test_concurrent_discard_consumes_only_one_proposal(database):
 
 def test_server_rejection_at_commit_proves_rollback(database):
     from sqlalchemy import text
-    from private_client_graph.application.proposal_contracts import ProposalPersistenceFailure
+    from private_client_graph.persistence.proposal_errors import ProposalPersistenceFailure
     from private_client_graph.models import CanonicalGraph
     from private_client_graph.persistence.database import database_engine
     from private_client_graph.persistence.matter_proposals import find_reference, list_proposals, save_proposal

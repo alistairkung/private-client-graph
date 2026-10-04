@@ -55,7 +55,7 @@ jobs:
       - name: Run tests
         run: uv run pytest
       - name: Check application types
-        run: uv run mypy private_client_graph/application private_client_graph/api private_client_graph/persistence private_client_graph/seed_evergreen.py --follow-imports=silent
+        run: uv run mypy private_client_graph/application private_client_graph/api private_client_graph/persistence --follow-imports=silent
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -74,7 +74,7 @@ jobs:
       - name: Initialize browser-test PostgreSQL database
         run: |
           uv run alembic upgrade head
-          uv run python -m private_client_graph.seed_evergreen
+          uv run python -m private_client_graph.persistence.seeds.evergreen
       - name: Test professional-review journey
         working-directory: web
         run: npm run test:e2e
@@ -83,8 +83,8 @@ jobs:
           docker build -t pcg-test .
           docker exec "${{ job.services.postgres.id }}" createdb -U pcg pcg_image
           export DATABASE_URL='postgresql://pcg:test-only@127.0.0.1:5432/pcg_image'
-          docker run --rm --network host -e DATABASE_URL pcg-test sh -c 'alembic upgrade head && python -m private_client_graph.seed_evergreen'
-          docker run --rm --network host -e DATABASE_URL pcg-test sh -c 'alembic upgrade head && python -m private_client_graph.seed_evergreen'
+          docker run --rm --network host -e DATABASE_URL pcg-test sh -c 'alembic upgrade head && python -m private_client_graph.persistence.seeds.evergreen'
+          docker run --rm --network host -e DATABASE_URL pcg-test sh -c 'alembic upgrade head && python -m private_client_graph.persistence.seeds.evergreen'
           docker run --rm -d --name pcg-app --network host -e DATABASE_URL \
             -e PCG_GOOGLE_CLIENT_ID -e PCG_GOOGLE_CLIENT_SECRET -e PCG_SESSION_SECRET \
             -e PCG_GOOGLE_SUB_ALLOWLIST -e PCG_TRUSTED_ORIGIN \
