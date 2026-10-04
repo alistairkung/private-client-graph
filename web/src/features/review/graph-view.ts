@@ -2,7 +2,7 @@ import { NODE_WIDTH, PERSON_HEIGHT, TRUST_HEIGHT, nodeBoundary } from "./node-ge
 import { centralTrustLayout } from "./trust-layout";
 import dagre from "@dagrejs/dagre";
 import { MarkerType, Position, type Edge, type Node } from "@xyflow/react";
-import type { CanonicalGraph, RelationshipType } from "./types";
+import type { CanonicalGraph, RelationshipType } from "../../shared/canonical-graph";
 
 const labels: Record<RelationshipType, string> = {
   parent_of: "Parent of",

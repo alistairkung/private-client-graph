@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { expect, test, vi } from "vitest";
-import { App } from "./App";
+import { App } from "../../app/App";
 
 const id = "ff985caf-60c5-4e65-a238-f3c26381c369";
 test("direct Matter entry loads its persisted source and graph without analysis", async () => {

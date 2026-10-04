@@ -1,6 +1,6 @@
 import { useEffect } from "react";
-import { PractitionerApp } from "./PractitionerApp";
-import { ShowcaseApp } from "./ShowcaseApp";
+import { PractitionerApp } from "../features/matters/PractitionerApp";
+import { ShowcaseApp } from "../features/showcase/ShowcaseApp";
 
 export function App() {
   const matterId = window.location.pathname.match(/^\/app\/matters\/([^/]+)\/?$/)?.[1];

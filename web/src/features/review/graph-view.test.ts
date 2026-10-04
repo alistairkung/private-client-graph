@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import { toGraphView, locateEvidence } from "./graph-view";
-import type { CanonicalGraph } from "./types";
+import type { CanonicalGraph } from "../../shared/canonical-graph";
 
 export const graph: CanonicalGraph = {
   entities: [

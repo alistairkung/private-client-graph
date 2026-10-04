@@ -1,6 +1,6 @@
 import { AnalysisControls } from "./AnalysisControls";
-import { ReviewWorkspace } from "./ReviewWorkspace";
-import { SourcePanel } from "./SourcePanel";
+import { ReviewWorkspace } from "../review/ReviewWorkspace";
+import { SourcePanel } from "../review/SourcePanel";
 import { useCaseAnalysis } from "./useCaseAnalysis";
 
 export function ShowcaseApp() {

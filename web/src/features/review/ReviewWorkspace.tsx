@@ -3,7 +3,7 @@ import { EvidencePanel } from "./EvidencePanel";
 import { GraphView } from "./GraphView";
 import { SourcePanel } from "./SourcePanel";
 import { locateEvidence } from "./graph-view";
-import type { CanonicalGraph } from "./types";
+import type { CanonicalGraph } from "../../shared/canonical-graph";
 
 export function ReviewWorkspace({
   source,

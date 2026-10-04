@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { expect, test, vi } from "vitest";
 import { ReviewWorkspace } from "./ReviewWorkspace";
-import type { CanonicalGraph } from "./types";
+import type { CanonicalGraph } from "../../shared/canonical-graph";
 
 // Replace canvas rendering only; selection and evidence behavior remain real.
 vi.mock("./GraphView", () => ({

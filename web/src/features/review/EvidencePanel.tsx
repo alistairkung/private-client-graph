@@ -1,4 +1,4 @@
-import type { Evidence } from "./types";
+import type { Evidence } from "../../shared/canonical-graph";
 
 export function EvidencePanel({
   items,

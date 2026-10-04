@@ -1,3 +1,4 @@
+/* Global element defaults used by both application shells. */
 :root {
   font-family: Arial, Helvetica, sans-serif;
   color: #263d39;
@@ -36,6 +37,7 @@ a:focus-visible {
   outline: 3px solid #b15a27;
   outline-offset: 4px;
 }
+/* Public Showcase shell. */
 main {
   max-width: 1680px;
   margin: auto;
@@ -178,6 +180,7 @@ button.primary:hover:not(:disabled) {
   padding: 4px 9px;
   border-radius: 4px;
 }
+/* Relationship review presentation shared by the Showcase and Matters. */
 .panel {
   background: #fcfcf8;
   border: 1px solid #cdd4c9;
@@ -389,6 +392,7 @@ mark {
   color: #627565;
   text-align: center;
 }
+/* Public Showcase status and footer presentation. */
 .load-state {
   padding: 60px 0;
 }
@@ -399,6 +403,7 @@ footer {
   color: #7b857a;
   font-size: 10px;
 }
+/* Responsive rules preserve the same shell and shared-review ownership. */
 @media (max-width: 850px) {
   main {
     padding: 0 20px;

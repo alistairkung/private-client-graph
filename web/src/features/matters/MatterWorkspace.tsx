@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { getMatter, type MatterDetail } from "./matters-api";
-import { ReviewWorkspace } from "./ReviewWorkspace";
+import { getMatter } from "./api";
+import type { MatterDetail } from "./types";
+import { ReviewWorkspace } from "../review/ReviewWorkspace";
 
 type MatterState =
   | { status: "loading" | "missing" | "failed" }
