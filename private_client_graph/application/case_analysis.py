@@ -9,7 +9,7 @@ from langchain_deepseek import ChatDeepSeek
 from pydantic import SecretStr
 from openai import APIConnectionError, APIStatusError
 
-from private_client_graph.extract import build_relationship_extraction_chain
+from private_client_graph.extract import extract_relationships_from_text
 
 from private_client_graph.graph import build_graph
 from private_client_graph.models import CanonicalGraph, ExtractionResult
@@ -134,12 +134,8 @@ def extract_live(source: str, config: LiveConfig) -> ExtractionResult:
         timeout=90,
         extra_body={"thinking": {"type": "disabled"}},
     )
-    chain = build_relationship_extraction_chain(llm)
     consume_live_slot(config)
-    result = chain.invoke({"source": source})
-    if result is None:
-        raise RuntimeError("Model did not return an ExtractionResult.")
-    return result
+    return extract_relationships_from_text(source, llm=llm)
 
 
 def _persist_extraction(extraction: ExtractionResult) -> str:

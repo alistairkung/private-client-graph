@@ -6,7 +6,10 @@ import pytest
 from langchain_deepseek import ChatDeepSeek
 from pydantic import ValidationError
 
-from private_client_graph.extract import extract_relationships
+from private_client_graph.extract import (
+    extract_relationships,
+    extract_relationships_from_text,
+)
 from private_client_graph.models import ExtractionResult
 from private_client_graph import extract
 
@@ -58,16 +61,16 @@ def test_extraction_uses_tool_schema_and_parses_response(outcome):
             http_client=http_client,
         )
         if outcome == "valid":
-            result = extract_relationships(
-                CASE_01 / "source.txt", llm=llm
+            result = extract_relationships_from_text(
+                (CASE_01 / "source.txt").read_text(encoding="utf-8"), llm=llm
             )
             assert isinstance(result, ExtractionResult)
             assert result.model_dump() == expected
         else:
             error = ValidationError if outcome == "invalid_type" else RuntimeError
             with pytest.raises(error):
-                extract_relationships(
-                    CASE_01 / "source.txt", llm=llm
+                extract_relationships_from_text(
+                    (CASE_01 / "source.txt").read_text(encoding="utf-8"), llm=llm
                 )
     assert len(requests) == 1
 
@@ -79,7 +82,7 @@ def test_cli_loads_dotenv_without_exposing_key(tmp_path, monkeypatch, capsys):
     (tmp_path / ".env").write_text("DEEPSEEK_API_KEY=test-local-secret\n")
 
     def fake_llm(**kwargs):
-        assert kwargs["api_key"] == "test-local-secret"
+        assert kwargs["api_key"].get_secret_value() == "test-local-secret"
         assert kwargs["max_retries"] == 0
         assert kwargs["extra_body"] == {"thinking": {"type": "disabled"}}
         return object()

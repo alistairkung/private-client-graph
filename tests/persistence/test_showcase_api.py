@@ -1,6 +1,4 @@
 from pathlib import Path
-from types import SimpleNamespace
-
 import httpx
 import pytest
 from openai import APIConnectionError, AuthenticationError, RateLimitError
@@ -27,8 +25,14 @@ def test_live_analysis_persists_offline_compatible_extraction(tmp_path, monkeypa
     extraction = ExtractionResult.model_validate_json(
         (CASE / "expected_extraction.json").read_text()
     )
+    invocations = []
+
+    def extract(source, *, llm):
+        invocations.append((source, llm))
+        return extraction
+
     monkeypatch.setenv("PCG_RUN_DIR", str(tmp_path))
-    monkeypatch.setattr(case_analysis, "build_relationship_extraction_chain", lambda llm: SimpleNamespace(invoke=lambda inputs: extraction))
+    monkeypatch.setattr(case_analysis, "extract_relationships_from_text", extract)
     response = client.post("/api/showcase/case-01/analysis", json={"mode": "live"})
     assert client.get("/api/showcase/case-01").json()["live_analysis"]["state"] == "exhausted"
     assert response.status_code == 200
@@ -38,6 +42,8 @@ def test_live_analysis_persists_offline_compatible_extraction(tmp_path, monkeypa
     assert ExtractionResult.model_validate_json(artifact.read_text()) == extraction
     assert len(result["graph"]["relationships"]) == 6
     assert set(result) == {"execution", "graph"}
+    assert len(invocations) == 1
+    assert invocations[0][0] == (CASE / "source.txt").read_text()
 
 
 def test_rejected_live_extraction_is_saved_before_graph_failure(tmp_path, monkeypatch, client):
@@ -49,7 +55,11 @@ def test_rejected_live_extraction_is_saved_before_graph_failure(tmp_path, monkey
     )
     extraction.relationships[0].supporting_text = "Not in the authoritative source"
     monkeypatch.setenv("PCG_RUN_DIR", str(tmp_path))
-    monkeypatch.setattr(case_analysis, "build_relationship_extraction_chain", lambda llm: SimpleNamespace(invoke=lambda inputs: extraction))
+    monkeypatch.setattr(
+        case_analysis,
+        "extract_relationships_from_text",
+        lambda source, *, llm: extraction,
+    )
     response = client.post("/api/showcase/case-01/analysis", json={"mode": "live"})
     assert client.get("/api/showcase/case-01").json()["live_analysis"]["state"] == "exhausted"
     assert response.status_code == 422
@@ -102,12 +112,12 @@ def test_provider_failure_has_no_retry_fallback_or_artifact(
 
     attempts = []
 
-    def fail(inputs):
+    def fail(source, *, llm):
         attempts.append(1)
         raise failure
 
     monkeypatch.setenv("PCG_RUN_DIR", str(tmp_path))
-    monkeypatch.setattr(case_analysis, "build_relationship_extraction_chain", lambda llm: SimpleNamespace(invoke=fail))
+    monkeypatch.setattr(case_analysis, "extract_relationships_from_text", fail)
     response = client.post("/api/showcase/case-01/analysis", json={"mode": "live"})
     assert client.get("/api/showcase/case-01").json()["live_analysis"]["state"] == "exhausted"
     assert response.status_code == 502
@@ -129,8 +139,9 @@ def test_persistence_failure_returns_no_analysis(tmp_path, monkeypatch, client):
     blocked.write_text("occupied")
     monkeypatch.setenv("PCG_RUN_DIR", str(blocked))
     monkeypatch.setattr(
-        case_analysis, "build_relationship_extraction_chain",
-        lambda llm: SimpleNamespace(invoke=lambda inputs: ExtractionResult(relationships=[]))
+        case_analysis,
+        "extract_relationships_from_text",
+        lambda source, *, llm: ExtractionResult(relationships=[]),
     )
     response = client.post("/api/showcase/case-01/analysis", json={"mode": "live"})
     assert response.status_code == 500
@@ -213,8 +224,11 @@ def test_post_rechecks_advisory_get_and_preserves_sample_and_matter_access(
 
     seed_evergreen()
     monkeypatch.setenv("PCG_RUN_DIR", str(tmp_path))
-    monkeypatch.setattr(case_analysis, "build_relationship_extraction_chain",
-                        lambda llm: SimpleNamespace(invoke=lambda inputs: ExtractionResult(relationships=[])))
+    monkeypatch.setattr(
+        case_analysis,
+        "extract_relationships_from_text",
+        lambda source, *, llm: ExtractionResult(relationships=[]),
+    )
     assert client.get("/api/showcase/case-01").json()["live_analysis"] == {
         "state": "available", "resets_at": None,
     }
@@ -276,13 +290,12 @@ def test_concurrent_requests_across_app_instances_bound_provider_attempts(client
     lock = Lock()
     attempts = []
 
-    def provider(inputs):
+    def provider(source, *, llm):
         with lock:
-            attempts.append(inputs)
+            attempts.append(source)
         return ExtractionResult(relationships=[])
 
-    monkeypatch.setattr(case_analysis, "build_relationship_extraction_chain",
-                        lambda llm: SimpleNamespace(invoke=provider))
+    monkeypatch.setattr(case_analysis, "extract_relationships_from_text", provider)
 
     def request(replica):
         start.wait(timeout=10)
@@ -302,11 +315,12 @@ def test_concurrent_requests_across_app_instances_bound_provider_attempts(client
 def test_unavailable_quota_fails_closed_but_sample_still_works(client, monkeypatch):
     from private_client_graph.application import case_analysis
 
-    def unexpected_provider(inputs):
+    def unexpected_provider(source, *, llm):
         pytest.fail("Unavailable quota must prevent provider invocation")
 
-    monkeypatch.setattr(case_analysis, "build_relationship_extraction_chain",
-                        lambda llm: SimpleNamespace(invoke=unexpected_provider))
+    monkeypatch.setattr(
+        case_analysis, "extract_relationships_from_text", unexpected_provider
+    )
     monkeypatch.setenv("DATABASE_URL", "postgresql://localhost:1/unavailable")
     assert client.get("/api/showcase/case-01").json()["live_analysis"]["state"] == "unavailable"
     assert client.post("/api/showcase/case-01/analysis", json={"mode": "live"}).status_code == 503
