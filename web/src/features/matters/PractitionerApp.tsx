@@ -1,3 +1,4 @@
+import "./practitioner.css";
 import { MatterWorkspace } from "./MatterWorkspace";
 import { MatterLedger } from "./MatterLedger";
 

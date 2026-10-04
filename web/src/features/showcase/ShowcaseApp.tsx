@@ -1,3 +1,4 @@
+import "./showcase.css";
 import { AnalysisControls } from "./AnalysisControls";
 import { ReviewWorkspace } from "../review/ReviewWorkspace";
 import { SourcePanel } from "../review/SourcePanel";

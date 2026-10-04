@@ -1,3 +1,4 @@
+import "./review.css";
 import { useCallback, useState } from "react";
 import { EvidencePanel } from "./EvidencePanel";
 import { GraphView } from "./GraphView";
