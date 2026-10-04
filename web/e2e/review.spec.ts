@@ -13,6 +13,7 @@ test("sample journey uses real API and graph construction, then highlights exact
   await expect(
     page.getByText("Sample analysis · Demonstration fixture"),
   ).toBeVisible();
+  await expect(page.getByRole("img", { name: "Triangular Trust node" })).toBeVisible();
   const canvas = await page.getByLabel("Relationship graph").boundingBox();
   for (const node of await page.locator(".react-flow__node").all()) {
     await expect
@@ -29,7 +30,7 @@ test("sample journey uses real API and graph construction, then highlights exact
     name: "Alice Chen — Spouse of — David Chen",
     exact: true,
   });
-  await edge.click();
+  await edge.getByText("Spouse of", { exact: true }).click();
   await expect(edge).toHaveClass(/selected/);
   const highlight = page.locator("mark");
   await expect(highlight).toHaveCount(1);

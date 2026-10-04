@@ -223,10 +223,4 @@
 .practitioner-shell .review-workspace { margin-top: 24px; }
 .practitioner-shell .eyebrow { letter-spacing: normal; }
 
-.practitioner-shell .react-flow__node.entity-trust { background: none; border: 0; border-radius: 0; padding: 0; box-shadow: none; }
-.practitioner-shell .trust-node { width: 100%; height: 100%; position: relative; }
-.practitioner-shell .trust-node svg { width: 100%; height: 100%; fill: #e0eeea; stroke: #88a9a1; }
-.practitioner-shell .trust-node span { position: absolute; top: 50px; left: 30px; right: 30px; text-align: center; font-size: 13px; line-height: 16px; }
-.practitioner-shell .trust-key { clip-path: polygon(50% 0, 100% 100%, 0 100%); border-radius: 0; }
-
 .practitioner-shell .evidence-number { text-transform: none; }

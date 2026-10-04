@@ -13,13 +13,13 @@ const labels: Record<RelationshipType, string> = {
   beneficiary_of: "Beneficiary of",
 };
 
-export function toGraphView(graph: CanonicalGraph, practitioner = false): {
+export function toGraphView(graph: CanonicalGraph): {
   nodes: Node[];
   edges: Edge[];
   bounds: { x: number; y: number; width: number; height: number };
 } {
-  const triangle = (id: string) => practitioner && graph.entities.some(entity => entity.id === id && entity.type === "trust");
-  const height = (id: string) => triangle(id) ? TRUST_HEIGHT : PERSON_HEIGHT;
+  const isTrust = (id: string) => graph.entities.some(entity => entity.id === id && entity.type === "trust");
+  const nodeHeight = (id: string) => isTrust(id) ? TRUST_HEIGHT : PERSON_HEIGHT;
   const layout = new dagre.graphlib.Graph({ multigraph: true });
   layout.setGraph({
     rankdir: "TB",
@@ -30,7 +30,7 @@ export function toGraphView(graph: CanonicalGraph, practitioner = false): {
   });
   layout.setDefaultEdgeLabel(() => ({}));
   graph.entities.forEach((entity) =>
-    layout.setNode(entity.id, { width: NODE_WIDTH, height: height(entity.id) }),
+    layout.setNode(entity.id, { width: NODE_WIDTH, height: nodeHeight(entity.id) }),
   );
   graph.relationships.forEach((edge, index) =>
     layout.setEdge(
@@ -41,12 +41,12 @@ export function toGraphView(graph: CanonicalGraph, practitioner = false): {
     ),
   );
   dagre.layout(layout);
-  const anchored = practitioner ? centralTrustLayout(graph) : null;
-  if (practitioner && !anchored) {
+  const anchored = centralTrustLayout(graph);
+  if (!anchored) {
     graph.relationships.forEach((edge, index) => {
       const route = layout.edge({ v: edge.source, w: edge.target, name: String(index) });
-      if (triangle(edge.source)) route.points[0] = nodeBoundary(layout.node(edge.source), route.points[1], true);
-      if (triangle(edge.target)) route.points[route.points.length - 1] = nodeBoundary(
+      if (isTrust(edge.source)) route.points[0] = nodeBoundary(layout.node(edge.source), route.points[1], true);
+      if (isTrust(edge.target)) route.points[route.points.length - 1] = nodeBoundary(
         layout.node(edge.target), route.points[route.points.length - 2], true,
       );
     });
@@ -60,16 +60,16 @@ export function toGraphView(graph: CanonicalGraph, practitioner = false): {
     },
     nodes: graph.entities.map((entity) => ({
       id: entity.id,
-      type: triangle(entity.id) ? "trust" : undefined,
+      type: isTrust(entity.id) ? "trust" : undefined,
       position: {
         x: (anchored?.positions.get(entity.id)?.x ?? layout.node(entity.id).x) - NODE_WIDTH / 2,
-        y: (anchored?.positions.get(entity.id)?.y ?? layout.node(entity.id).y) - height(entity.id) / 2,
+        y: (anchored?.positions.get(entity.id)?.y ?? layout.node(entity.id).y) - nodeHeight(entity.id) / 2,
       },
       data: { label: entity.name, kind: entity.type },
       className: `entity-${entity.type}`,
       sourcePosition: Position.Bottom,
       targetPosition: Position.Top,
-      style: { width: NODE_WIDTH, height: height(entity.id) },
+      style: { width: NODE_WIDTH, height: nodeHeight(entity.id) },
     })),
     edges: graph.relationships.map((edge, index) => ({
       id: String(index),
