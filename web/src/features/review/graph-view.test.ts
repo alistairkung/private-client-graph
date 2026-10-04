@@ -194,6 +194,47 @@ test("relationship label geometry clears every entity", () => {
     labelBounds: { left: number; right: number };
   }).labelBounds;
   expect(labelBounds.right - labelBounds.left).toBeGreaterThanOrEqual(100);
+  const labelBoxes = view.edges.map(edge => (edge.data!.route as {
+    labelBounds: { left: number; top: number; right: number; bottom: number };
+  }).labelBounds);
+  labelBoxes.forEach((labelBox, index) => labelBoxes.slice(index + 1).forEach(other =>
+    expect(boxesOverlap(labelBox, other)).toBe(false)));
+});
+
+test("Person relationships use separate lanes around intervening entities", () => {
+  const laneGraph: CanonicalGraph = {
+    entities: [
+      { id: "a", name: "Alice", type: "person" },
+      { id: "b", name: "Bob", type: "person" },
+      { id: "c", name: "Carol", type: "person" },
+      { id: "t", name: "Trust", type: "trust" },
+    ],
+    relationships: [
+      { source: "a", target: "c", type: "spouse_of", evidence_ids: [] },
+      { source: "a", target: "c", type: "sibling_of", evidence_ids: [] },
+      { source: "b", target: "t", type: "beneficiary_of", evidence_ids: [] },
+    ],
+    evidence: [],
+  };
+  const view = toGraphView(laneGraph);
+  const routes = view.edges.slice(0, 2).map(edge => edge.data!.route as {
+    points: { x: number; y: number }[];
+    labelBounds: { left: number; top: number; right: number; bottom: number };
+  });
+  expect(routes[0].points).not.toEqual(routes[1].points);
+  expect(boxesOverlap(routes[0].labelBounds, routes[1].labelBounds)).toBe(false);
+  const bob = nodeBounds(view, "b");
+  for (const route of routes) {
+    for (const [index, end] of route.points.slice(1).entries()) {
+      const start = route.points[index];
+      const samples = Array.from({ length: 21 }, (_, sample) => ({
+        x: start.x + (end.x - start.x) * sample / 20,
+        y: start.y + (end.y - start.y) * sample / 20,
+      }));
+      expect(samples.some(point => point.x > bob.left && point.x < bob.right
+        && point.y > bob.top && point.y < bob.bottom)).toBe(false);
+    }
+  }
 });
 
 test("central Trust layout is independent of entity input order and has distinct node positions", () => {

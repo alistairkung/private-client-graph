@@ -4,6 +4,7 @@ import {
   TRUST_HEIGHT,
   nodeBoundary,
   relationshipRoute,
+  type Rectangle,
 } from "./node-geometry";
 import { centralTrustLayout } from "./trust-layout";
 import dagre from "@dagrejs/dagre";
@@ -57,6 +58,25 @@ export function toGraphView(graph: CanonicalGraph): {
       );
     });
   }
+  const labelObstacles: Rectangle[] = anchored ? [] : graph.entities.map(entity => {
+    const center = layout.node(entity.id);
+    const clearance = 8;
+    return {
+      left: center.x - NODE_WIDTH / 2 - clearance,
+      top: center.y - nodeHeight(entity.id) / 2 - clearance,
+      right: center.x + NODE_WIDTH / 2 + clearance,
+      bottom: center.y + nodeHeight(entity.id) / 2 + clearance,
+    };
+  });
+  const generalRoutes = anchored ? [] : graph.relationships.map((edge, index) => {
+    const route = relationshipRoute(
+      layout.edge({ v: edge.source, w: edge.target, name: String(index) }).points,
+      labels[edge.type],
+      { obstacles: labelObstacles },
+    );
+    labelObstacles.push(route.labelBounds);
+    return route;
+  });
   return {
     bounds: anchored?.bounds ?? {
       x: 0,
@@ -85,10 +105,7 @@ export function toGraphView(graph: CanonicalGraph): {
       type: "routed",
       ariaRole: "button",
       data: {
-        route: anchored?.routes[index] ?? relationshipRoute(
-          layout.edge({ v: edge.source, w: edge.target, name: String(index) }).points,
-          labels[edge.type],
-        ),
+        route: anchored?.routes[index] ?? generalRoutes[index],
       },
       markerEnd:
         edge.type === "spouse_of" || edge.type === "sibling_of"

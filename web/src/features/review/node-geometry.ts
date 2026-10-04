@@ -13,6 +13,11 @@ export const TRUST_HEIGHT = 96;
 const LABEL_HEIGHT = 24;
 const LABEL_OFFSET = 22;
 
+type RouteOptions = {
+  awayFrom?: Point;
+  obstacles?: Rectangle[];
+};
+
 export function nodeBoundary(from: Point, toward: Point, triangle: boolean): Point {
   const dx = toward.x - from.x;
   const dy = toward.y - from.y;
@@ -26,45 +31,61 @@ export function nodeBoundary(from: Point, toward: Point, triangle: boolean): Poi
 export function relationshipRoute(
   points: Point[],
   label: string,
-  awayFrom?: Point,
+  options: RouteOptions = {},
 ): RelationshipRoute {
   const lengths = points.slice(1).map((point, index) =>
     Math.hypot(point.x - points[index].x, point.y - points[index].y));
-  const halfway = lengths.reduce((total, length) => total + length, 0) / 2;
-  let travelled = 0;
-  let segment = 0;
-  while (segment < lengths.length - 1 && travelled + lengths[segment] < halfway) {
-    travelled += lengths[segment];
-    segment += 1;
-  }
-  const start = points[segment];
-  const end = points[segment + 1];
-  const length = lengths[segment] || 1;
-  const progress = (halfway - travelled) / length;
-  const anchor = {
-    x: start.x + (end.x - start.x) * progress,
-    y: start.y + (end.y - start.y) * progress,
-  };
-  const normal = { x: -(end.y - start.y) / length, y: (end.x - start.x) / length };
-  const first = { x: normal.x * LABEL_OFFSET, y: normal.y * LABEL_OFFSET };
-  const second = { x: -first.x, y: -first.y };
-  const distance = (offset: Point) => awayFrom
-    ? Math.hypot(anchor.x + offset.x - awayFrom.x, anchor.y + offset.y - awayFrom.y)
-    : 0;
-  const labelOffset = awayFrom && distance(second) > distance(first) ? second : first;
-  const x = anchor.x + labelOffset.x;
-  const y = anchor.y + labelOffset.y;
+  const routeLength = lengths.reduce((total, length) => total + length, 0);
   const width = Math.max(56, label.length * 6.6 + 14);
+  const placements = [0.5, 0.4, 0.6, 0.3, 0.7].flatMap(fraction => {
+    const targetDistance = routeLength * fraction;
+    let travelled = 0;
+    let segment = 0;
+    while (segment < lengths.length - 1 && travelled + lengths[segment] < targetDistance) {
+      travelled += lengths[segment];
+      segment += 1;
+    }
+    const start = points[segment];
+    const end = points[segment + 1];
+    const length = lengths[segment] || 1;
+    const progress = (targetDistance - travelled) / length;
+    const anchor = {
+      x: start.x + (end.x - start.x) * progress,
+      y: start.y + (end.y - start.y) * progress,
+    };
+    const normal = { x: -(end.y - start.y) / length, y: (end.x - start.x) / length };
+    const positiveNormalOffset = { x: normal.x * LABEL_OFFSET, y: normal.y * LABEL_OFFSET };
+    const negativeNormalOffset = { x: -positiveNormalOffset.x, y: -positiveNormalOffset.y };
+    const distance = (offset: Point) => options.awayFrom
+      ? Math.hypot(anchor.x + offset.x - options.awayFrom.x,
+        anchor.y + offset.y - options.awayFrom.y)
+      : 0;
+    const offsets = options.awayFrom && distance(negativeNormalOffset) > distance(positiveNormalOffset)
+      ? [negativeNormalOffset, positiveNormalOffset]
+      : [positiveNormalOffset, negativeNormalOffset];
+    return offsets.map(labelOffset => {
+      const x = anchor.x + labelOffset.x;
+      const y = anchor.y + labelOffset.y;
+      return {
+        x,
+        y,
+        labelOffset,
+        labelBounds: {
+          left: x - width / 2,
+          top: y - LABEL_HEIGHT / 2,
+          right: x + width / 2,
+          bottom: y + LABEL_HEIGHT / 2,
+        },
+      };
+    });
+  });
+  const selected = placements.find(candidate => !(options.obstacles ?? []).some(obstacle =>
+    candidate.labelBounds.left < obstacle.right
+      && candidate.labelBounds.right > obstacle.left
+      && candidate.labelBounds.top < obstacle.bottom
+      && candidate.labelBounds.bottom > obstacle.top)) ?? placements[0];
   return {
     points,
-    x,
-    y,
-    labelOffset,
-    labelBounds: {
-      left: x - width / 2,
-      top: y - LABEL_HEIGHT / 2,
-      right: x + width / 2,
-      bottom: y + LABEL_HEIGHT / 2,
-    },
+    ...selected,
   };
 }
