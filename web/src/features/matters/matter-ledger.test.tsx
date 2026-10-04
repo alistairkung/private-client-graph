@@ -16,7 +16,8 @@ test("loads persisted summaries with a direct Matter route", async () => {
   finish(new Response(JSON.stringify([matter])));
   const row = await screen.findByRole("link", { name: "PC/2026/0142 Evergreen Family Trust" });
   expect(row).toHaveAttribute("href", `/app/matters/${matter.id}`);
-  expect(fetcher).toHaveBeenCalledExactlyOnceWith("/api/matters");
+  expect(fetcher).toHaveBeenCalledOnce();
+  expect(fetcher.mock.calls[0][0]).toBe("/api/matters");
   expect(screen.queryByText(matter.id)).not.toBeInTheDocument();
 });
 
