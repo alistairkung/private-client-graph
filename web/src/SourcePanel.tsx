@@ -3,14 +3,16 @@ import { useEffect, useRef } from "react";
 export function SourcePanel({
   source,
   span,
+  activation,
 }: {
   source: string;
+  activation?: number;
   span?: { start: number; end: number };
 }) {
   const highlight = useRef<HTMLElement>(null);
   useEffect(() => {
     highlight.current?.scrollIntoView({ behavior: "instant", block: "center" });
-  }, [span?.start, span?.end]);
+  }, [span?.start, span?.end, activation]);
   return (
     <section className="source-panel panel">
       <div className="panel-heading">

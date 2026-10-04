@@ -14,6 +14,7 @@ export function ReviewWorkspace({
 }) {
   const [selected, setSelected] = useState<number | null>(null);
   const [activeId, setActiveId] = useState<string>();
+  const [activation, setActivation] = useState(0);
   const relationship =
     selected === null ? undefined : graph.relationships[selected];
   const items =
@@ -38,6 +39,7 @@ export function ReviewWorkspace({
   }
   const selectRelationship = useCallback(
     (index: number) => {
+      setActivation((value) => value + 1);
       setSelected(index);
       setActiveId(graph.relationships[index].evidence_ids[0]);
     },
@@ -80,7 +82,7 @@ export function ReviewWorkspace({
           onSelect={setActiveId}
         />
       </section>
-      <SourcePanel source={source} span={span} />
+      <SourcePanel source={source} span={span} activation={activation} />
     </div>
   );
 }

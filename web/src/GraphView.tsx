@@ -4,7 +4,6 @@ import {
   BaseEdge,
   Controls,
   ReactFlow,
-  useNodesInitialized,
   useReactFlow,
   useStore,
   type EdgeChange,
@@ -54,13 +53,13 @@ function FitGraph({
 }: {
   bounds: { x: number; y: number; width: number; height: number };
 }) {
-  const { fitBounds } = useReactFlow();
-  const ready = useNodesInitialized();
+  const { fitBounds, viewportInitialized } = useReactFlow();
   const width = useStore((state) => state.width);
   const height = useStore((state) => state.height);
   useEffect(() => {
-    if (ready && width && height) void fitBounds(bounds, { padding: 0.08 });
-  }, [ready, width, height, bounds, fitBounds]);
+    if (viewportInitialized && width && height)
+      void fitBounds(bounds, { padding: 0.08 });
+  }, [viewportInitialized, width, height, bounds, fitBounds]);
   return null;
 }
 

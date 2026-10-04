@@ -72,3 +72,18 @@ test("missing canonical evidence is an explicit client contract error", async ()
   );
   expect(container.querySelector("mark")).toBeNull();
 });
+
+test("selecting an edge again returns to its evidence even when the quote is unchanged", async () => {
+  const user = userEvent.setup();
+  render(<ReviewWorkspace source={source} graph={graph} />);
+  const edge = screen.getByRole("button", {
+    name: "Select spouse relationship",
+  });
+  await user.click(edge);
+  const scrolls = vi.mocked(HTMLElement.prototype.scrollIntoView).mock.calls
+    .length;
+  await user.click(edge);
+  expect(HTMLElement.prototype.scrollIntoView).toHaveBeenCalledTimes(
+    scrolls + 1,
+  );
+});
