@@ -10,6 +10,7 @@ export default defineConfig({
   projects: [
     {
       name: "desktop",
+      testIgnore: "**/quota.spec.ts",
       use: {
         ...devices["Desktop Chrome"],
         viewport: { width: 1440, height: 1100 },
@@ -17,16 +18,27 @@ export default defineConfig({
     },
     {
       name: "narrow",
+      testIgnore: "**/quota.spec.ts",
       use: {
         ...devices["Desktop Chrome"],
         viewport: { width: 390, height: 844 },
       },
     },
+    {
+      name: "live-quota",
+      testMatch: "**/quota.spec.ts",
+      use: { ...devices["Desktop Chrome"], baseURL: "http://127.0.0.1:4174" },
+    },
   ],
-  webServer: {
+  webServer: [{
     command:
-      "npm run build && ../.venv/bin/python -m uvicorn private_client_graph.api.app:app --app-dir .. --host 127.0.0.1 --port 4173",
+      "../.venv/bin/python -m uvicorn private_client_graph.api.app:app --app-dir .. --host 127.0.0.1 --port 4173",
     url: "http://127.0.0.1:4173/health",
     reuseExistingServer: false,
-  },
+    env: { PCG_SHOWCASE_LIVE_ENABLED: "false" },
+  }, {
+    command: "../.venv/bin/python ../tests/showcase_browser_server.py",
+    url: "http://127.0.0.1:4174/health",
+    reuseExistingServer: false,
+  }],
 });

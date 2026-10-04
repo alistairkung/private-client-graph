@@ -8,6 +8,7 @@ test("sample journey uses real API and graph construction, then highlights exact
     "Attendance Note – Meeting with Alice Chen",
   );
   await expect(page.getByText("SYNTHETIC CASE", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Run live analysis" })).toBeDisabled();
   await page.getByRole("button", { name: "Load sample analysis" }).click();
   await expect(
     page.getByText("Sample analysis · Demonstration fixture"),

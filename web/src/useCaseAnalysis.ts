@@ -28,7 +28,7 @@ export function useCaseAnalysis() {
     };
   }, []);
   async function run(mode: AnalysisMode) {
-    if (pending) return;
+    if (pending || (mode === "live" && detail?.live_analysis.state !== "available")) return;
     setPending(mode);
     setLastMode(mode);
     setError(undefined);
@@ -46,6 +46,15 @@ export function useCaseAnalysis() {
             },
       );
     } finally {
+      if (mode === "live") {
+        try {
+          setDetail(await getCase());
+        } catch {
+          setDetail((current) => current && ({
+            ...current, live_analysis: { state: "unavailable", resets_at: null },
+          }));
+        }
+      }
       setPending(undefined);
     }
   }

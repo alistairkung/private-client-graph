@@ -4,6 +4,7 @@ import { expect, test, vi } from "vitest";
 import { App } from "./App";
 
 const detail = {
+  live_analysis: { state: "available", resets_at: null },
   title: "Case 01",
   notice: "Synthetic case",
   source_text: "Authoritative source",
@@ -28,7 +29,8 @@ test.each(["live", "sample"] as const)(
           new Promise((resolve) => {
             finish = resolve;
           }),
-      );
+      )
+      .mockResolvedValue(response(detail));
     const user = userEvent.setup();
     render(<App />);
     await screen.findByText("Authoritative source");
@@ -68,7 +70,7 @@ test.each([
     const fetcher = vi
       .spyOn(globalThis, "fetch")
       .mockResolvedValueOnce(response(detail))
-      .mockResolvedValue(
+      .mockImplementation(async (url) => url === "/api/showcase/case-01" ? response(detail) :
         response(
           { error: { stage, message: "No analysis produced.", retryable } },
           502,
@@ -87,13 +89,13 @@ test.each([
     expect(
       screen.getByRole("button", { name: "Load sample analysis" }),
     ).toBeEnabled();
-    await waitFor(() => expect(fetcher).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(fetcher).toHaveBeenCalledTimes(3));
     if (retryable) {
       await user.click(
         screen.getByRole("button", { name: "Retry live analysis" }),
       );
-      await waitFor(() => expect(fetcher).toHaveBeenCalledTimes(3));
-      expect(fetcher.mock.calls[2][1]?.body).toBe('{"mode":"live"}');
+      await waitFor(() => expect(fetcher).toHaveBeenCalledTimes(5));
+      expect(fetcher.mock.calls[3][1]?.body).toBe('{"mode":"live"}');
     }
   },
 );
@@ -113,3 +115,46 @@ test.each(["/app", "/app/"])(
     expect(document.title).toBe("Matters · Private Client Graph");
   },
 );
+
+test.each(["disabled", "exhausted", "unavailable"])(
+  "%s live availability prevents provider requests while sample still works",
+  async (state) => {
+    const fetcher = vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(response({ ...detail, live_analysis: {
+        state, resets_at: state === "exhausted" ? "2026-10-05T00:00:00Z" : null,
+      } }))
+      .mockResolvedValueOnce(response(analysis));
+    render(<App />);
+    await screen.findByText("Authoritative source");
+    const live = screen.getByRole("button", { name: "Run live analysis" });
+    expect(live).toBeDisabled();
+    const user = userEvent.setup();
+    await user.click(live);
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    if (state === "exhausted") expect(document.querySelector("time")).toHaveAttribute("dateTime", "2026-10-05T00:00:00Z");
+    await user.click(screen.getByRole("button", { name: "Load sample analysis" }));
+    await screen.findByText("Sample analysis · Demonstration fixture");
+    expect(fetcher.mock.calls[1][1]?.body).toBe('{"mode":"sample"}');
+  },
+);
+
+test("an authoritative quota rejection refreshes live availability and leaves sample usable", async () => {
+  const exhausted = { state: "exhausted", resets_at: "2026-10-05T00:00:00Z" };
+  const fetcher = vi.spyOn(globalThis, "fetch")
+    .mockResolvedValueOnce(response(detail))
+    .mockResolvedValueOnce(response({ error: {
+      stage: "availability", message: "Live analysis is unavailable until the next window.",
+      retryable: false, live_analysis: exhausted,
+    } }, 429))
+    .mockResolvedValueOnce(response({ ...detail, live_analysis: exhausted }))
+    .mockResolvedValueOnce(response(analysis));
+  render(<App />);
+  await screen.findByText("Authoritative source");
+  const user = userEvent.setup();
+  await user.click(screen.getByRole("button", { name: "Run live analysis" }));
+  await screen.findByText(/Try live analysis again after/);
+  expect(screen.getByRole("button", { name: "Run live analysis" })).toBeDisabled();
+  await user.click(screen.getByRole("button", { name: "Load sample analysis" }));
+  await screen.findByText("Sample analysis · Demonstration fixture");
+  expect(fetcher.mock.calls[3][1]?.body).toBe('{"mode":"sample"}');
+});
