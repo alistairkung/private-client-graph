@@ -2,11 +2,28 @@ from pathlib import Path
 
 from fastapi.testclient import TestClient
 
-from private_client_graph.api.app import app
+from private_client_graph.api.app import app, create_app
 
 
 CASE = Path(__file__).resolve().parents[1] / "cases" / "case_01"
 client = TestClient(app)
+
+
+def test_healthcheck_reports_service_ready():
+    response = client.get("/health")
+
+    assert response.status_code == 200
+    assert response.json() == {"status": "ok"}
+
+
+def test_built_frontend_is_served_from_the_application(tmp_path):
+    (tmp_path / "index.html").write_text("<h1>Deployed workspace</h1>")
+    deployed_client = TestClient(create_app(tmp_path))
+
+    response = deployed_client.get("/")
+
+    assert response.status_code == 200
+    assert "Deployed workspace" in response.text
 
 
 def test_case_detail_is_authoritative_and_sample_builds_real_graph(

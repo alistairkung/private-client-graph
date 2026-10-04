@@ -213,5 +213,25 @@ npm run test:e2e
 Browser tests start both servers and exercise the real sample path at desktop and
 phone widths. API tests substitute the provider boundary for deterministic live
 coverage; CI never requires model credentials. `npm run build` creates the static
-frontend in `web/dist`. Public hosting and production controls remain a subsequent
-slice; this app's acceptance baseline is local execution from this repository.
+frontend in `web/dist`.
+
+## Deploy to Railway
+
+The root `Dockerfile` builds the React frontend and serves it with the FastAPI
+application as one Railway service. The process listens on Railway's injected
+`PORT`; `GET /health` is the deployment readiness endpoint.
+
+1. Create a Railway project from this GitHub repository. Keep the service root at
+   the repository root so Railway detects `Dockerfile`.
+2. Set the service healthcheck path to `/health` and generate a public domain.
+3. To enable **Run live analysis**, add `DEEPSEEK_API_KEY` as a Railway service
+   variable. `DEEPSEEK_MODEL` remains optional and defaults to `deepseek-flash`.
+
+Sample analysis does not need any service variables. Do not expose a deployment
+with live analysis to untrusted users without adding access and spend controls:
+each successful click invokes the configured model account.
+
+Live run artifacts use the container filesystem and are therefore ephemeral by
+default. To retain them, attach a Railway volume at `/app/runs`; the existing
+default path will then persist `runs/case_01/*.json` without additional
+configuration.
