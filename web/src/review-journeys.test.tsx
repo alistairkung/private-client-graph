@@ -26,6 +26,7 @@ function response(body: unknown) {
 test("showcase analysis and Matter detail pass their Canonical Graph to the shared review", async () => {
   const fetcher = vi.spyOn(globalThis, "fetch")
     .mockResolvedValueOnce(response({
+      live_analysis: { state: "available", resets_at: null },
       title: "Case 01",
       notice: "Synthetic case",
       source_text: "Shared source",
