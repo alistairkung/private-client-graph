@@ -49,6 +49,7 @@ export function ShowcaseApp() {
               <h2>{detail.title}</h2>
               <p>{detail.notice}</p>
               <AnalysisControls
+                availability={detail.live_analysis}
                 pending={pending}
                 error={error}
                 lastMode={lastMode}

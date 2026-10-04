@@ -3,7 +3,8 @@
 from pathlib import Path
 from uuid import UUID
 
-from fastapi import FastAPI, Request
+from dotenv import load_dotenv
+from fastapi import FastAPI, Request, Response
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -21,6 +22,7 @@ from private_client_graph.application.contracts import (
     CaseDetail,
 )
 from private_client_graph.application.errors import AnalysisFailure
+from private_client_graph.application.showcase_live import LiveConfig, live_availability
 
 ROOT = Path(__file__).resolve().parents[2]
 WEB_DIST = ROOT / "web" / "dist"
@@ -56,18 +58,21 @@ def matter_detail(internal_id: UUID) -> MatterDetail | JSONResponse:
     return matter
 
 
-def case_detail() -> CaseDetail:
-    return get_case()
+def case_detail(request: Request, response: Response) -> CaseDetail:
+    response.headers["Cache-Control"] = "no-store"
+    detail = get_case()
+    detail.live_analysis = live_availability(request.app.state.showcase_live)
+    return detail
 
 
-def case_analysis(request: AnalysisRequest) -> CaseAnalysis:
-    return analyse_case(request.mode)
+def case_analysis(body: AnalysisRequest, request: Request) -> CaseAnalysis:
+    return analyse_case(body.mode, request.app.state.showcase_live)
 
 
 async def analysis_failure(request: Request, exc: Exception) -> JSONResponse:
     assert isinstance(exc, AnalysisFailure)
     return JSONResponse(
-        status_code=exc.status_code, content={"error": exc.error.model_dump()}
+        status_code=exc.status_code, content={"error": exc.error.model_dump(mode="json")}
     )
 
 
@@ -84,7 +89,9 @@ async def invalid_request(
 
 
 def create_app(web_dist: Path = WEB_DIST) -> FastAPI:
+    load_dotenv(ROOT / ".env")
     application = FastAPI(title="Private Client Graph")
+    application.state.showcase_live = LiveConfig.from_environment()
     application.add_api_route("/health", health, methods=["GET"])
     application.add_api_route(
         "/api/matters", matter_collection, methods=["GET"], response_model=list[MatterSummary]

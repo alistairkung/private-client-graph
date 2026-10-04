@@ -1,5 +1,6 @@
 """Professional-review contracts; raw extraction stays inside the pipeline."""
 
+from datetime import datetime
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict
@@ -14,10 +15,16 @@ class AnalysisRequest(BaseModel):
     mode: AnalysisMode
 
 
+class LiveAvailability(BaseModel):
+    state: Literal["disabled", "available", "exhausted", "unavailable"]
+    resets_at: datetime | None = None
+
+
 class CaseDetail(BaseModel):
     title: str
     notice: str
     source_text: str
+    live_analysis: LiveAvailability = LiveAvailability(state="disabled")
 
 
 class Execution(BaseModel):
@@ -31,7 +38,8 @@ class CaseAnalysis(BaseModel):
 
 
 class AnalysisError(BaseModel):
-    stage: Literal["source", "provider", "sample", "persistence", "graph", "request"]
+    stage: Literal["source", "provider", "sample", "persistence", "graph", "request", "availability"]
     message: str
     retryable: bool = False
+    live_analysis: LiveAvailability | None = None
     run_artifact_id: str | None = None

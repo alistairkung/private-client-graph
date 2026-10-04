@@ -183,7 +183,9 @@ PostgreSQL as described below before using the practitioner application.
 Both journeys link to each other; direct entry and refresh at `/app` are supported
 by the combined deployment. The previous `/api/case-01` routes are removed.
 
-Live analysis reads `DEEPSEEK_API_KEY` from the backend environment or root `.env`.
+Live showcase analysis is disabled by default, even with `DEEPSEEK_API_KEY`.
+Enable it explicitly with the configuration below, in the backend environment or
+root `.env`.
 The optional backend-only `DEEPSEEK_MODEL` defaults to `deepseek-flash`.
 No key is needed for sample analysis. No automatic retries or fallback occur.
 A missing key or non-transient validation error leaves sample analysis available;
@@ -221,7 +223,10 @@ npm run test:e2e
 
 Browser tests build the production frontend and serve it through FastAPI,
 exercising the real sample path and practitioner navigation/refresh at desktop
-and phone widths. The test server uses port 4173. API tests substitute the provider boundary for deterministic live
+and phone widths. The test servers use ports 4173 (disabled production app) and 4174 (enabled
+quota journey with only the model boundary substituted). Start each E2E run with
+a freshly migrated and seeded disposable database: the quota journey deliberately
+consumes its one persisted slot. API tests substitute the provider boundary for deterministic live
 coverage; CI never requires model credentials. `npm run build` creates the static
 frontend in `web/dist`.
 
@@ -266,9 +271,59 @@ See Railway's [pre-deploy documentation](https://docs.railway.com/deployments/pr
 and [configuration reference](https://docs.railway.com/config-as-code/reference).
 No Railway account provisioning is performed by repository code.
 
-Showcase sample analysis needs no model credentials. Existing live analysis still
-uses `DEEPSEEK_API_KEY` and optional `DEEPSEEK_MODEL`; its behavior is unchanged by
-this ticket. Live showcase access/spend controls belong to a separate ticket.
+### Deliberately enabling public live analysis (#24)
+
+No new Railway variables are needed for the safe default: live analysis is disabled,
+while sample analysis and the practitioner application remain available. Migration
+`0002` adds the separate `showcase_live_quota` table through the existing
+`alembic upgrade head` pre-deploy step; the Matter migration and seed are unchanged.
+
+To enable live analysis, set these variables on the Railway application service
+and redeploy:
+
+| Variable | Default | Enabled configuration |
+|---|---|---|
+| `PCG_SHOWCASE_LIVE_ENABLED` | `false` | Set explicitly to `true` (`true`/`false` only, case insensitive). |
+| `PCG_SHOWCASE_LIVE_LIMIT` | Unset | Positive integer provider-attempt allowance, e.g. `10`. |
+| `PCG_SHOWCASE_LIVE_WINDOW_SECONDS` | Unset | Positive integer window in seconds, e.g. `86400` for UTC days. |
+| `DEEPSEEK_API_KEY` | Unset | Required provider credential. A key alone never enables live analysis. |
+| `DEEPSEEK_MODEL` | `deepseek-flash` | Optional backend-only model selection. |
+| `DATABASE_URL` | Existing PostgreSQL connection | Use the existing private-network reference. |
+
+Limit and duration must fit positive 32-bit integers. Enabled deployments fail
+configuration at startup for missing/invalid quota values, missing credentials,
+or missing/non-PostgreSQL database configuration. Disabled deployments do not
+require any live settings. Keep all replicas on the same configuration and database.
+To turn live analysis off, set `PCG_SHOWCASE_LIVE_ENABLED=false` and redeploy.
+
+Buckets are aligned to Unix epoch UTC using PostgreSQL's clock. Each row contains
+only window duration, bucket start, and consumed attempts; it is operational state,
+not Matter state. A single `INSERT … ON CONFLICT DO UPDATE … WHERE attempts < limit`
+claims a slot under PostgreSQL's row lock and commits before invoking the provider.
+Provider, extraction, graph, or artifact failures never refund it. Invalid requests,
+unreadable source, and provider setup failures occur before consumption. Database
+failures prevent provider invocation while sample analysis remains usable.
+
+The allowance bounds attempts per fixed window, not tokens or currency; two
+adjacent windows each have their own allowance. Restarts and additional replicas
+share the persisted count. Changing the duration selects a different bucket series;
+treat quota changes as an operator budget change, avoid mixed configurations during
+rollout, and do not delete quota rows to restart an allowance. Old buckets are
+retained; this slice introduces no cleanup job or usage-history endpoint.
+
+`GET /api/showcase/case-01` adds `live_analysis` with `state` (`disabled`,
+`available`, `exhausted`, or `unavailable`) and nullable ISO timestamp `resets_at`.
+Only exhausted responses include a reset time. The extra `unavailable` state
+covers a quota database outage. This response is uncached and advisory: the POST
+atomically claims its own slot. POST rejects disabled/unavailable live requests
+with 503 and exhausted requests with 429, with safe `error.live_analysis` metadata.
+No counters or visitor identifiers are exposed. The UI refreshes availability after
+live attempts and invites a reload after the reset time.
+
+After deployment, check sample analysis and `/app` with live disabled. When you
+choose to enable it, verify the live action, exhaustion messaging, and continued
+sample/Matter access against your chosen allowance. No Railway-specific logic is
+part of quota enforcement.
 
 Live run artifacts use the container filesystem and are therefore ephemeral by
 default. To retain them, attach a Railway volume at `/app/runs`; the existing
