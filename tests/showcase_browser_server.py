@@ -2,7 +2,6 @@
 
 import os
 from pathlib import Path
-from types import SimpleNamespace
 
 import uvicorn
 
@@ -19,14 +18,13 @@ from private_client_graph.application import case_analysis
 from private_client_graph.models import ExtractionResult
 
 
-def fixture_chain(llm):
-    extraction = ExtractionResult.model_validate_json(
+def extract_fixture(source, *, llm):
+    return ExtractionResult.model_validate_json(
         (Path(__file__).resolve().parents[1] / "cases/case_01/expected_extraction.json").read_text()
     )
-    return SimpleNamespace(invoke=lambda inputs: extraction)
 
 
-case_analysis.build_relationship_extraction_chain = fixture_chain
+case_analysis.extract_relationships_from_text = extract_fixture
 
 if __name__ == "__main__":
     uvicorn.run(create_app(), host="127.0.0.1", port=4174)

@@ -9,6 +9,7 @@ from typing import get_args
 from dotenv import load_dotenv
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_deepseek import ChatDeepSeek
+from pydantic import SecretStr
 
 from private_client_graph.models import ExtractionResult, RelationshipType
 
@@ -65,14 +66,21 @@ def build_relationship_extraction_chain(llm: ChatDeepSeek):
     return prompt | llm.with_structured_output(ExtractionResult)
 
 
-def extract_relationships(source_path: Path, *, llm: ChatDeepSeek) -> ExtractionResult:
-    """Read one source and invoke the extraction chain once."""
-    source = source_path.read_text(encoding="utf-8")
+def extract_relationships_from_text(
+    source: str, *, llm: ChatDeepSeek
+) -> ExtractionResult:
+    """Invoke the configured model once for finalized source text."""
     chain = build_relationship_extraction_chain(llm)
     result = chain.invoke({"source": source})
     if result is None:
         raise RuntimeError("Model did not return an ExtractionResult.")
     return result
+
+
+def extract_relationships(source_path: Path, *, llm: ChatDeepSeek) -> ExtractionResult:
+    """Read one source and invoke the extraction chain once."""
+    source = source_path.read_text(encoding="utf-8")
+    return extract_relationships_from_text(source, llm=llm)
 
 
 def main() -> None:
@@ -85,7 +93,7 @@ def main() -> None:
         raise SystemExit("DEEPSEEK_API_KEY is not set (add it to .env or the environment)")
     llm = ChatDeepSeek(
         model=args.model,
-        api_key=api_key,
+        api_key=SecretStr(api_key),
         max_retries=0,
         extra_body={"thinking": {"type": "disabled"}},
     )
