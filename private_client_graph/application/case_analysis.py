@@ -5,18 +5,18 @@ from datetime import datetime, timezone
 from pathlib import Path
 from uuid import uuid4
 
-from dotenv import load_dotenv
 from langchain_deepseek import ChatDeepSeek
 from pydantic import SecretStr
 from openai import APIConnectionError, APIStatusError
 
-from private_client_graph.extract import extract_relationships
+from private_client_graph.extract import build_relationship_extraction_chain
 
 from private_client_graph.graph import build_graph
 from private_client_graph.models import ExtractionResult
 
 from .contracts import AnalysisError, AnalysisMode, CaseAnalysis, CaseDetail, Execution
 from .errors import AnalysisFailure
+from .showcase_live import LiveConfig, require_live, consume_live_slot
 
 ROOT = Path(__file__).resolve().parents[2]
 CASE = ROOT / "cases" / "case_01"
@@ -39,12 +39,15 @@ def get_case() -> CaseDetail:
     )
 
 
-def analyse_case(mode: AnalysisMode) -> CaseAnalysis:
+def analyse_case(mode: AnalysisMode, live_config: LiveConfig) -> CaseAnalysis:
     source = get_case().source_text
     run_id = None
     if mode == "live":
+        require_live(live_config)
         try:
-            extraction = extract_live()
+            extraction = extract_live(source, live_config)
+        except AnalysisFailure:
+            raise
         except Exception as exc:
             retryable = isinstance(exc, APIConnectionError) or (
                 isinstance(exc, APIStatusError)
@@ -97,9 +100,8 @@ def analyse_case(mode: AnalysisMode) -> CaseAnalysis:
     )
 
 
-def extract_live() -> ExtractionResult:
+def extract_live(source: str, config: LiveConfig) -> ExtractionResult:
     """Invoke the model once; configuration never crosses the browser boundary."""
-    load_dotenv(ROOT / ".env")
     api_key = os.getenv("DEEPSEEK_API_KEY")
     if not api_key:
         raise ValueError("Live analysis is not configured.")
@@ -110,7 +112,12 @@ def extract_live() -> ExtractionResult:
         timeout=90,
         extra_body={"thinking": {"type": "disabled"}},
     )
-    return extract_relationships(CASE / "source.txt", llm=llm)
+    chain = build_relationship_extraction_chain(llm)
+    consume_live_slot(config)
+    result = chain.invoke({"source": source})
+    if result is None:
+        raise RuntimeError("Model did not return an ExtractionResult.")
+    return result
 
 
 def _persist_extraction(extraction: ExtractionResult) -> str:
