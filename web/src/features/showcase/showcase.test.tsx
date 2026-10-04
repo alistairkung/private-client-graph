@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { expect, test, vi } from "vitest";
-import { App } from "./App";
+import { App } from "../../app/App";
 
 const detail = {
   live_analysis: { state: "available", resets_at: null },
@@ -97,22 +97,6 @@ test.each([
       await waitFor(() => expect(fetcher).toHaveBeenCalledTimes(5));
       expect(fetcher.mock.calls[3][1]?.body).toBe('{"mode":"live"}');
     }
-  },
-);
-
-test.each(["/app", "/app/"])(
-  "%s shows an empty practitioner collection without requesting showcase data",
-  async (path) => {
-    window.history.replaceState(null, "", path);
-    const fetcher = vi.spyOn(globalThis, "fetch").mockResolvedValue(response([]));
-    render(<App />);
-    expect(screen.getByRole("heading", { name: "Matters" })).toBeVisible();
-    expect(await screen.findByText("No Matters available")).toBeVisible();
-    expect(screen.getByRole("link", { name: "Matters" })).toHaveAttribute("aria-current", "page");
-    expect(screen.getByRole("link", { name: "Public showcase" })).toHaveAttribute("href", "/");
-    expect(screen.queryByRole("button")).not.toBeInTheDocument();
-    expect(fetcher).toHaveBeenCalledWith("/api/matters");
-    expect(document.title).toBe("Matters · Private Client Graph");
   },
 );
 

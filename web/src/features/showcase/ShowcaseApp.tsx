@@ -1,13 +1,14 @@
+import "./showcase.css";
 import { AnalysisControls } from "./AnalysisControls";
-import { ReviewWorkspace } from "./ReviewWorkspace";
-import { SourcePanel } from "./SourcePanel";
+import { ReviewWorkspace } from "../review/ReviewWorkspace";
+import { SourcePanel } from "../review/SourcePanel";
 import { useCaseAnalysis } from "./useCaseAnalysis";
 
 export function ShowcaseApp() {
   const { detail, sourceError, analysis, pending, error, lastMode, run } =
     useCaseAnalysis();
   return (
-    <main>
+    <main className="showcase-shell">
       <header className="masthead">
         <a href="/" className="brand">
           <span className="brand-symbol" aria-hidden="true">

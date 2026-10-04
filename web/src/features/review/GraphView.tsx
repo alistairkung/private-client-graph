@@ -15,7 +15,7 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { toGraphView } from "./graph-view";
-import type { CanonicalGraph } from "./types";
+import type { CanonicalGraph } from "../../shared/canonical-graph";
 
 function RoutedEdge({
   id,

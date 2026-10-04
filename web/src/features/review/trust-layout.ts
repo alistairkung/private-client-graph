@@ -1,4 +1,4 @@
-import type { CanonicalGraph } from "./types";
+import type { CanonicalGraph } from "../../shared/canonical-graph";
 
 import { nodeBoundary, type Point } from "./node-geometry";
 

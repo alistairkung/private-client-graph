@@ -1,9 +1,9 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { expect, test, vi } from "vitest";
-import { MatterWorkspace } from "./MatterWorkspace";
-import { ShowcaseApp } from "./ShowcaseApp";
-import type { CanonicalGraph } from "./types";
+import { MatterWorkspace } from "../matters/MatterWorkspace";
+import { ShowcaseApp } from "../showcase/ShowcaseApp";
+import type { CanonicalGraph } from "../../shared/canonical-graph";
 
 const reviewWorkspaceProps = vi.fn();
 vi.mock("./ReviewWorkspace", () => ({

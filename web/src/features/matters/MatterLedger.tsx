@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { getMatters, type MatterSummary } from "./matters-api";
+import { getMatters } from "./api";
+import type { MatterSummary } from "./types";
 
 type CollectionState =
   | { status: "loading" }

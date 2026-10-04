@@ -70,7 +70,11 @@ Keep backend and frontend in the same repository unless a concrete deployment or
 
 Prefer clear package boundaries over unnecessary repositories.
 
-A reasonable direction is:
+A small frontend should expose ownership in its directory structure. Keep the
+bootstrap and application shell easy to find, colocate each feature's components,
+state, API operations, contracts, deterministic transformations, and focused
+tests, and retain a shared directory only for contracts or browser
+infrastructure genuinely consumed across feature boundaries. For example:
 
 ```text
 private_client_graph/
@@ -80,14 +84,39 @@ private_client_graph/
   ...
 
 web/
-  components/
-  hooks/
-  lib/
-  types/
-  ...
+  src/
+    main.tsx
+    test-setup.ts
+    app/
+      App.tsx
+    features/
+      showcase/
+        api.ts
+        showcase.css
+        types.ts
+        ...
+      matters/
+        api.ts
+        types.ts
+        ...
+      review/
+        graph-view.ts
+        review.css
+        ...
+    shared/
+      canonical-graph.ts
+    styles/
+      global.css
 ```
 
-Treat this as guidance rather than a requirement to create directories before they are needed.
+Do not create global `components`, `hooks`, `api`, `lib`, `utils`, or `types`
+directories as catch-alls. A feature directory is earned by a coherent product
+responsibility, not by file count; do not split a cohesive component merely to
+populate the tree. Keep tests beside the behaviour they protect. Keep global
+styles limited to application-wide foundations and explicitly shared
+presentation, and colocate shell-specific styles and assets with their owning
+feature. Avoid barrel files and import aliases unless the dependency graph is
+large enough for them to improve navigation demonstrably.
 
 Use a thin FastAPI backend and a React/TypeScript frontend in this repository.
 Keep showcase Case 01 fixtures backend-authoritative: the browser reads the source
