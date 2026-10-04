@@ -11,10 +11,12 @@ export function ReviewWorkspace({
   graph,
   sourceTitle,
   practitioner = false,
+  graphTitle = "A connected view",
 }: {
   source: string;
   sourceTitle?: string;
   practitioner?: boolean;
+  graphTitle?: string;
   graph: CanonicalGraph;
 }) {
   const [selected, setSelected] = useState<number | null>(null);
@@ -56,7 +58,7 @@ export function ReviewWorkspace({
         <div className="panel-heading">
           <div>
             <p className="eyebrow">{practitioner ? "Relationship review" : "RELATIONSHIP REVIEW"}</p>
-            <h2>A connected view</h2>
+            <h2>{graphTitle}</h2>
           </div>
           {!practitioner && <span className="pill">
             {graph.relationships.length} relationships

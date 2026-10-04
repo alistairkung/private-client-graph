@@ -9,6 +9,8 @@ from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
 from private_client_graph.api.auth import AuthConfig, configure_auth
+from private_client_graph.api.matter_proposals import router as proposal_router, proposal_failure
+from private_client_graph.application.proposal_errors import ProposalFailure
 from private_client_graph.application.matters import MatterDetail, MatterSummary, get_matter, list_matters
 from private_client_graph.persistence.database import database_engine
 from fastapi.exceptions import RequestValidationError
@@ -24,16 +26,18 @@ from private_client_graph.application.contracts import (
 )
 from private_client_graph.application.errors import AnalysisFailure
 from private_client_graph.application.showcase_live import LiveConfig, live_availability
+from private_client_graph.application.proposal_config import ProposalAnalysisConfig
 
 ROOT = Path(__file__).resolve().parents[2]
 WEB_DIST = ROOT / "web" / "dist"
 
 
 def health(request: Request) -> JSONResponse:
-    if request.app.state.auth_config is None:
+    if request.app.state.auth_config is None or request.app.state.proposal_analysis is None:
         return JSONResponse(status_code=503, content={"status": "unavailable"})
     try:
         AuthConfig.from_environment()
+        ProposalAnalysisConfig.from_environment()
         with database_engine().connect() as connection:
             connection.execute(text("SELECT 1"))
     except (SQLAlchemyError, ValueError):
@@ -84,6 +88,8 @@ async def invalid_request(
     request: Request, exc: Exception
 ) -> JSONResponse:
     assert isinstance(exc, RequestValidationError)
+    if request.url.path.startswith("/api/matter-proposals/"):
+        return JSONResponse(status_code=422, content={"error": {"code": "invalid_proposal_id", "message": "Invalid Matter Proposal UUID."}})
     if request.url.path.startswith("/api/matters/"):
         return JSONResponse(status_code=422, content={"error": {"message": "Invalid Matter UUID."}})
     error = AnalysisError(
@@ -96,7 +102,13 @@ def create_app(web_dist: Path = WEB_DIST) -> FastAPI:
     load_dotenv(ROOT / ".env")
     application = FastAPI(title="Private Client Graph")
     configure_auth(application)
+    try:
+        application.state.proposal_analysis = ProposalAnalysisConfig.from_environment()
+    except ValueError:
+        application.state.proposal_analysis = None
     application.state.showcase_live = LiveConfig.from_environment()
+    application.include_router(proposal_router)
+    application.add_exception_handler(ProposalFailure, proposal_failure)
     application.add_api_route("/health", health, methods=["GET"])
     application.add_api_route(
         "/api/matters", matter_collection, methods=["GET"], response_model=list[MatterSummary]
@@ -123,6 +135,10 @@ def create_app(web_dist: Path = WEB_DIST) -> FastAPI:
         application.add_api_route("/app/", practitioner_shell, include_in_schema=False)
         application.add_api_route(
             "/app/matters/{internal_id}", practitioner_shell, include_in_schema=False
+        )
+        application.add_api_route("/app/matter-proposals/new", practitioner_shell, include_in_schema=False)
+        application.add_api_route(
+            "/app/matter-proposals/{proposal_id}", practitioner_shell, include_in_schema=False
         )
         application.mount(
             "/", StaticFiles(directory=web_dist, html=True), name="frontend"

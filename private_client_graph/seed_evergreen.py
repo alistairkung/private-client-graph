@@ -10,6 +10,7 @@ from private_client_graph.graph import build_graph
 from private_client_graph.models import CanonicalGraph, ExtractionResult
 from private_client_graph.persistence.database import database_engine
 from private_client_graph.persistence.matters import matters
+from private_client_graph.persistence.matter_proposals import reference_claims
 
 EVERGREEN_ID = UUID("ff985caf-60c5-4e65-a238-f3c26381c369")
 CASE = Path(__file__).resolve().parents[1] / "cases" / "case_01"
@@ -36,7 +37,12 @@ def seed_evergreen() -> bool:
             source_text=source,
             current_graph=snapshot.model_dump(mode="json"),
         ).on_conflict_do_nothing(index_elements=[matters.c.id]).returning(matters.c.id)
-        return connection.scalar(statement) is not None
+        inserted = connection.scalar(statement) is not None
+        if inserted:
+            connection.execute(reference_claims.insert().values(
+                canonical_reference="pc/2026/0142", resource_kind="matter", resource_id=EVERGREEN_ID,
+            ))
+        return inserted
 
 
 if __name__ == "__main__":

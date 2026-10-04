@@ -37,7 +37,7 @@ test("persisted Matter opens from ledger and highlights exact Evidence after dir
   await expect(highlight).toHaveText("Alice Chen confirmed that Alice Chen and David Chen are the parents of Bob Chen.");
   await expect(highlight).toBeInViewport();
   expect(apiRequests).toContain(matterPath.replace("/app/", "/api/"));
-  expect(apiRequests.every(path => path.startsWith("/api/matters"))).toBe(true);
+  expect(apiRequests.every(path => path.startsWith("/api/matters") || path === "/api/matter-proposals")).toBe(true);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   await page.screenshot({ path: testInfo.outputPath("matter-workspace.png"), fullPage: true });
   await page.getByRole("link", { name: "Back to Matters" }).click();

@@ -38,6 +38,9 @@ jobs:
       PCG_SESSION_SECRET: test-session-secret-with-at-least-32-characters
       PCG_GOOGLE_SUB_ALLOWLIST: test-subject
       PCG_TRUSTED_ORIGIN: https://127.0.0.1:8000
+      PCG_PROPOSAL_ANALYSIS_LIMIT: 100
+      PCG_PROPOSAL_ANALYSIS_WINDOW_SECONDS: 86400
+      DEEPSEEK_API_KEY: test-only
     steps:
       - uses: actions/checkout@v4
       - name: Install uv
@@ -84,7 +87,9 @@ jobs:
           docker run --rm --network host -e DATABASE_URL pcg-test sh -c 'alembic upgrade head && python -m private_client_graph.seed_evergreen'
           docker run --rm -d --name pcg-app --network host -e DATABASE_URL \
             -e PCG_GOOGLE_CLIENT_ID -e PCG_GOOGLE_CLIENT_SECRET -e PCG_SESSION_SECRET \
-            -e PCG_GOOGLE_SUB_ALLOWLIST -e PCG_TRUSTED_ORIGIN pcg-test
+            -e PCG_GOOGLE_SUB_ALLOWLIST -e PCG_TRUSTED_ORIGIN \
+            -e PCG_PROPOSAL_ANALYSIS_LIMIT -e PCG_PROPOSAL_ANALYSIS_WINDOW_SECONDS \
+            -e DEEPSEEK_API_KEY pcg-test
           trap 'docker logs pcg-app; docker stop pcg-app' EXIT
           curl --fail --retry 15 --retry-connrefused --retry-delay 1 http://127.0.0.1:8000/health
           test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8000/api/matters)" = 401

@@ -1,0 +1,10 @@
+import type { ProposalError } from "./types";
+
+export function ProposalFailureNotice({ error }: { error: ProposalError }) {
+  return <div className="intake-error" role="alert">
+    <p>{error.message}</p>
+    {error.resets_at && <p>Analysis is available again after <time dateTime={error.resets_at}>{new Date(error.resets_at).toLocaleString()}</time>.</p>}
+    {error.outcome_unknown && <p><a href="/app">Check Matters and proposals</a></p>}
+    {error.code === "authentication" && <p><a href="/auth/login?next=%2Fapp%2Fmatter-proposals%2Fnew">Sign in again</a></p>}
+  </div>;
+}
