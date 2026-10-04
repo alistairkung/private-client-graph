@@ -106,15 +106,30 @@ test("central Trust layout is independent of entity input order and has distinct
 test("graphs without a single Trust retain the general layout", () => {
   const people = { ...graph, entities: graph.entities.map(entity => ({ ...entity, type: "person" as const })) };
   const view = toGraphView(people);
+  const centers = view.nodes.map(node => ({
+    x: node.position.x + Number(node.style!.width) / 2,
+    y: node.position.y + Number(node.style!.height) / 2,
+  }));
   expect(view.nodes.every(node => node.type !== "trust")).toBe(true);
-  expect(new Set(view.nodes.map(node => JSON.stringify(node.position))).size).toBe(people.entities.length);
+  expect(new Set(centers.map(center => center.x))).toHaveLength(1);
+  expect(centers.map(center => center.y)).toEqual(
+    [...centers.map(center => center.y)].sort((a, b) => a - b),
+  );
 });
 
 test("multiple Trusts remain triangles with routes meeting their visible boundary", () => {
   const multiple = { ...graph, entities: graph.entities.map(entity => entity.id === "b" ? { ...entity, type: "trust" as const } : entity) };
   const view = toGraphView(multiple);
   const trust = view.nodes.find(node => node.id === "t")!;
+  const centers = view.nodes.map(node => ({
+    x: node.position.x + Number(node.style!.width) / 2,
+    y: node.position.y + Number(node.style!.height) / 2,
+  }));
   expect(view.nodes.filter(node => node.type === "trust")).toHaveLength(2);
+  expect(new Set(centers.map(center => center.x))).toHaveLength(1);
+  expect(centers.map(center => center.y)).toEqual(
+    [...centers.map(center => center.y)].sort((a, b) => a - b),
+  );
   const route = view.edges[1].data!.route as { points: { x: number; y: number }[] };
   const end = route.points.at(-1)!;
   // A directed arrow touches one of the triangle's three sides, not its interior.
