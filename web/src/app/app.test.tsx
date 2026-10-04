@@ -23,7 +23,8 @@ test.each(["/app", "/app/"])(
       "/",
     );
     expect(screen.queryByRole("button")).not.toBeInTheDocument();
-    expect(fetcher).toHaveBeenCalledWith("/api/matters");
+    expect(fetcher).toHaveBeenCalledOnce();
+    expect(fetcher.mock.calls[0][0]).toBe("/api/matters");
     expect(document.title).toBe("Matters · Private Client Graph");
   },
 );

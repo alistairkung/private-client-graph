@@ -1,3 +1,4 @@
+import { JsonRequestError, requestJson } from "../../shared/json-request";
 import type {
   AnalysisError,
   AnalysisMode,
@@ -5,26 +6,46 @@ import type {
   CaseDetail,
 } from "./types";
 
+const connectionError: AnalysisError = {
+  stage: "connection",
+  message:
+    "The application could not be reached. Check the local server and try again.",
+  retryable: true,
+};
+
 export class RequestFailure extends Error {
   constructor(public error: AnalysisError) {
     super(error.message);
   }
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function isAnalysisError(value: unknown): value is AnalysisError {
+  return (
+    isRecord(value) &&
+    typeof value.stage === "string" &&
+    typeof value.message === "string" &&
+    typeof value.retryable === "boolean"
+  );
+}
+
+function analysisErrorFrom(body: unknown): AnalysisError | undefined {
+  if (!isRecord(body) || !isAnalysisError(body.error)) return undefined;
+  return body.error;
+}
+
 async function request<T>(url: string, options?: RequestInit): Promise<T> {
   try {
-    const response = await fetch(url, options);
-    const body = await response.json();
-    if (!response.ok) throw new RequestFailure(body.error);
-    return body as T;
+    return await requestJson<T>(url, options);
   } catch (error) {
-    if (error instanceof RequestFailure) throw error;
-    throw new RequestFailure({
-      stage: "connection",
-      message:
-        "The application could not be reached. Check the local server and try again.",
-      retryable: true,
-    });
+    if (error instanceof JsonRequestError && error.kind === "http") {
+      const analysisError = analysisErrorFrom(error.body);
+      if (analysisError) throw new RequestFailure(analysisError);
+    }
+    throw new RequestFailure(connectionError);
   }
 }
 
