@@ -70,6 +70,18 @@ jobs:
       - name: Test professional-review journey
         working-directory: web
         run: npm run test:e2e
+      - name: Build and smoke-test deployment image
+        run: |
+          docker build -t pcg-test .
+          docker exec "${{ job.services.postgres.id }}" createdb -U pcg pcg_image
+          export DATABASE_URL='postgresql://pcg:test-only@127.0.0.1:5432/pcg_image'
+          docker run --rm --network host -e DATABASE_URL pcg-test sh -c 'alembic upgrade head && python -m private_client_graph.seed_evergreen'
+          docker run --rm --network host -e DATABASE_URL pcg-test sh -c 'alembic upgrade head && python -m private_client_graph.seed_evergreen'
+          docker run --rm -d --name pcg-app --network host -e DATABASE_URL pcg-test
+          trap 'docker logs pcg-app; docker stop pcg-app' EXIT
+          curl --fail --retry 15 --retry-connrefused --retry-delay 1 http://127.0.0.1:8000/health
+          curl --fail http://127.0.0.1:8000/api/matters
+          curl --fail http://127.0.0.1:8000/app > /dev/null
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
