@@ -1,4 +1,5 @@
 import "./practitioner.css";
+import { MatterLedger } from "./MatterLedger";
 
 export function PractitionerApp() {
   return (
@@ -20,23 +21,9 @@ export function PractitionerApp() {
       <main className="ledger-content ledger-width">
         <h1>Matters</h1>
         <p className="ledger-intro">
-          Open a Matter to review relationships and the source evidence supporting them.
+          Select a Matter in the register.
         </p>
-        <table className="matter-register" aria-label="Matters">
-          <thead>
-            <tr><th scope="col">Matter reference</th><th scope="col">Matter</th></tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td colSpan={2}>
-                <div className="ledger-empty">
-                  <p>No Matters available</p>
-                  <p>This read-only application does not currently contain any Matters.</p>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+        <MatterLedger />
       </main>
       <footer className="ledger-footer ledger-width">
         <span>Private Client Graph</span>

@@ -175,8 +175,11 @@ the model; **Load sample analysis** explicitly loads the ideal-extraction fixtur
 Both use the existing graph builder. Select a relationship (by click or keyboard)
 to highlight its exact evidence in the persistent source panel.
 
-The separate practitioner application at `/app` currently shows an empty Matter
-register. No Matters, persistence, or database configuration are introduced yet.
+The practitioner application at `/app` lists the persisted synthetic Evergreen
+Matter from PostgreSQL. Rows support local mouse/keyboard selection; this ticket
+ends at the ledger, with no Matter-detail route or persisted review interaction.
+Selection is ephemeral UI state, not a saved review status. Configure and initialize
+PostgreSQL as described below before using the practitioner application.
 Both journeys link to each other; direct entry and refresh at `/app` are supported
 by the combined deployment. The previous `/api/case-01` routes are removed.
 
@@ -207,7 +210,7 @@ to the professional workspace.
 
 ```bash
 uv run pytest
-uv run mypy private_client_graph/application private_client_graph/api --follow-imports=silent
+uv run mypy private_client_graph/application private_client_graph/api private_client_graph/persistence private_client_graph/seed_evergreen.py --follow-imports=silent
 cd web
 npm run typecheck
 npm test
@@ -228,17 +231,98 @@ The root `Dockerfile` builds the React frontend and serves it with the FastAPI
 application as one Railway service. The process listens on Railway's injected
 `PORT`; `GET /health` is the deployment readiness endpoint.
 
-1. Create a Railway project from this GitHub repository. Keep the service root at
-   the repository root so Railway detects `Dockerfile`.
-2. Set the service healthcheck path to `/health` and generate a public domain.
-3. To enable **Run live analysis**, add `DEEPSEEK_API_KEY` as a Railway service
-   variable. `DEEPSEEK_MODEL` remains optional and defaults to `deepseek-flash`.
+Keep the existing GitHub → Railway service and repository root. The committed
+`railway.toml` retains the Dockerfile build and configures `/health` plus this
+pre-deploy command:
 
-Sample analysis does not need any service variables. Do not expose a deployment
-with live analysis to untrusted users without adding access and spend controls:
-each successful click invokes the configured model account.
+```bash
+alembic upgrade head && python -m private_client_graph.seed_evergreen
+```
+
+The image includes Alembic, migrations, the PostgreSQL driver, and seed inputs.
+Ordinary Uvicorn startup performs neither migration nor seeding. Either command
+failing stops pre-deploy, so the new application is not started.
+
+**Manual Railway setup before deploying this feature:**
+
+1. Add a PostgreSQL service in the same Railway project/environment.
+2. Set the application service's `DATABASE_URL` to the PostgreSQL service's private
+   connection reference, normally `${{Postgres.DATABASE_URL}}` (substitute the
+   actual service name). Verify its host is the private `*.railway.internal`
+   address, not a public proxy URL.
+3. Confirm Railway detects root `railway.toml` and displays the pre-deploy command
+   and `/health` healthcheck. Keep the existing GitHub deployment source and
+   Dockerfile start command. Apply these variables before deploying the PR.
+4. After deployment, confirm `/health` returns 200, `/app` shows Evergreen with
+   reference `PC/2026/0142`, and `/` still loads sample analysis. A redeploy must
+   leave persisted Matter values unchanged.
+
+The web service writes no Matter data to its filesystem. `/health` runs `SELECT 1`
+against PostgreSQL and returns 503 on missing configuration or a failed database
+operation; it does not require Evergreen or any Matter row. Schema compatibility
+is established by the pre-deploy migration step.
+
+See Railway's [pre-deploy documentation](https://docs.railway.com/deployments/pre-deploy-command)
+and [configuration reference](https://docs.railway.com/config-as-code/reference).
+No Railway account provisioning is performed by repository code.
+
+Showcase sample analysis needs no model credentials. Existing live analysis still
+uses `DEEPSEEK_API_KEY` and optional `DEEPSEEK_MODEL`; its behavior is unchanged by
+this ticket. Live showcase access/spend controls belong to a separate ticket.
 
 Live run artifacts use the container filesystem and are therefore ephemeral by
 default. To retain them, attach a Railway volume at `/app/runs`; the existing
 default path will then persist `runs/case_01/*.json` without additional
 configuration.
+
+## PostgreSQL initialization and integration tests
+
+Use PostgreSQL 16 (also used in CI). There is no SQLite implementation. For example,
+start a disposable local server with Docker:
+
+```bash
+docker run --rm --name pcg-postgres -e POSTGRES_USER=pcg \
+  -e POSTGRES_PASSWORD=test-only -e POSTGRES_DB=pcg_e2e \
+  -p 5432:5432 -d postgres:16
+export DATABASE_URL='postgresql://pcg:test-only@127.0.0.1:5432/pcg_e2e'
+uv run alembic upgrade head
+uv run python -m private_client_graph.seed_evergreen
+```
+
+The ordinary commands also work with any explicitly configured PostgreSQL server.
+Migration `0001` creates `matters`: UUID primary key, non-null text columns for
+external reference, title, source title and text, and a non-null JSONB
+`current_graph`. Alembic alone owns schema evolution. Never edit a merged/applied
+migration; add a new one.
+
+The explicit seed builds the graph from Case 01 source/extraction inputs through
+the existing deterministic graph builder and validates the graph and verbatim
+Evidence. It inserts UUID `ff985caf-60c5-4e65-a238-f3c26381c369` only if absent.
+A PostgreSQL conflict guard also protects concurrent seeds. An existing row is
+left wholly unchanged, even if seed inputs later change or disappear. Fixture
+files are never consulted by Matter listing; the list API selects only the three
+summary columns. No Matter source/graph read endpoint is introduced here.
+
+For the complete test suite, use a disposable server with a role allowed to create
+databases:
+
+```bash
+export TEST_DATABASE_URL="$DATABASE_URL"
+uv run pytest
+uv run mypy private_client_graph/application private_client_graph/api private_client_graph/persistence private_client_graph/seed_evergreen.py --follow-imports=silent
+cd web
+npm run typecheck
+npm test
+npm run build
+npm run test:e2e
+```
+
+Each persistence test creates a uniquely named empty PostgreSQL database, applies
+the entire Alembic chain using the real CLI, and drops it on completion. It never
+resets the database named by `TEST_DATABASE_URL`. Without that variable, persistence
+tests report explicit skips; CI always supplies it using a PostgreSQL 16 service.
+Existing domain tests remain database-free. Browser tests require `DATABASE_URL`
+and an explicitly migrated/seeded disposable database; CI initializes a separate
+`pcg_e2e` database before running the real PostgreSQL → API → ledger journey and
+the existing showcase journey at desktop and phone widths. No live model calls
+are made by CI.

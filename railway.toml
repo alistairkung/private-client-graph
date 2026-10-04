@@ -1,0 +1,7 @@
+[build]
+builder = "DOCKERFILE"
+
+[deploy]
+preDeployCommand = ["sh -c 'alembic upgrade head && python -m private_client_graph.seed_evergreen'"]
+healthcheckPath = "/health"
+healthcheckTimeout = 60

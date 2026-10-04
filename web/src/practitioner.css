@@ -175,3 +175,47 @@
   .practitioner-shell .matter-register { border-top: 1px solid #c9cec8; }
   .practitioner-shell .ledger-empty { padding: 32px 0; }
 }
+.practitioner-shell .matter-row {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  width: 100%;
+  min-height: 64px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: #fff;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  box-shadow: none;
+}
+.practitioner-shell .matter-reference {
+  display: flex;
+  align-items: center;
+  padding: 16px 24px 16px 0;
+  border-right: 1px solid #c9cec8;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.practitioner-shell .matter-title {
+  align-self: center;
+  padding: 16px 24px;
+  font: 500 18px/26px "Newsreader", Georgia, "Times New Roman", serif;
+  overflow-wrap: anywhere;
+}
+.practitioner-shell .matter-row:hover { background: #f0f2ee; }
+.practitioner-shell .matter-row:hover .matter-title { text-decoration: underline; text-underline-offset: 3px; }
+.practitioner-shell .matter-row:active,
+.practitioner-shell .matter-row[aria-pressed="true"] { background: #e8ece8; }
+.practitioner-shell .matter-row[aria-pressed="true"] .matter-title { text-decoration: underline; text-underline-offset: 3px; }
+.practitioner-shell .matter-row:focus-visible { outline: 3px solid #773b46; outline-offset: -3px; }
+@media (max-width: 639px) {
+  .practitioner-shell .matter-row { grid-template-columns: minmax(0, 1fr); padding: 16px 0; gap: 4px; }
+  .practitioner-shell .matter-reference { border: 0; padding: 0; font-size: 13px; line-height: 18px; color: #59655f; }
+  .practitioner-shell .matter-title { padding: 0; }
+}
