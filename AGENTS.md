@@ -39,6 +39,29 @@ Do not change the following without explicit instruction:
 
 If a requested feature appears to require one of these changes, explain why before changing it.
 
+## Durable application guardrails
+
+### Non-synthetic Matter data
+
+Do not add capabilities that accept, store, mutate, or process user-supplied or
+non-synthetic Matter information until authentication, Matter authorization,
+tenancy/data ownership, and appropriate data-handling requirements have been
+explicitly designed. This includes Matter creation, source upload or ingestion,
+source editing, non-synthetic Matter data, graph mutation, and persisted
+practitioner review-state mutation.
+
+The current unauthenticated practitioner application is permitted only while it
+remains read-only and synthetic. This guardrail does not require authentication
+for the current slice.
+
+### Database migrations
+
+Represent every database schema change with an explicit Alembic migration and
+ship and review it with the feature that requires it; a migration does not need
+a separate pull request. Treat merged or applied migrations as immutable. Make
+later schema changes in new migrations rather than editing history, and never
+bypass Alembic by mutating the production schema directly.
+
 ## Engineering principles
 
 - Prefer composition over large functions, modules, pages, or components.

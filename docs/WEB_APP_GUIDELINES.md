@@ -25,7 +25,7 @@ API code should call the existing domain functions rather than duplicate their l
 
 Changes to core semantics require explicit review under `AGENTS.md`.
 
-## Current Case 01 web-slice boundary
+## Implemented Case 01 showcase boundary
 
 The first web slice is the professional-review path documented in
 `docs/design/case-01-professional-review-web-slice.md`:
@@ -46,6 +46,23 @@ The professional-facing analysis response contains execution metadata and the
 `CanonicalGraph`. Raw `ExtractionResult` data is persisted for technical
 traceability but is not returned to the browser. `EvaluationResult` is neither
 produced nor returned by this web workflow.
+
+The next application slice preserves that flow as a public showcase under the
+`/api/showcase` namespace and adds a separate persisted practitioner journey.
+The authoritative design is
+`docs/design/practitioner-matter-workspace-slice.md`:
+
+```text
+public showcase
+    -> transient live or sample Case 01 analysis
+
+practitioner application
+    -> persisted Matter list
+    -> complete current Matter review state
+```
+
+Do not make either journey call through the other. They share only appropriate
+lower-level domain capabilities.
 
 ## Repository structure
 
@@ -72,10 +89,11 @@ web/
 
 Treat this as guidance rather than a requirement to create directories before they are needed.
 
-For the current slice, use a thin FastAPI backend and a React/TypeScript frontend
-in this repository. Keep Case 01 fixtures backend-authoritative: the browser reads
-the source and requests an explicit execution mode, but never submits or modifies
-the document.
+Use a thin FastAPI backend and a React/TypeScript frontend in this repository.
+Keep showcase Case 01 fixtures backend-authoritative: the browser reads the source
+and requests an explicit execution mode, but never submits or modifies the
+document. Practitioner Matter requests read complete current state from
+PostgreSQL and never use benchmark fixtures as runtime fallback storage.
 
 ## Backend style
 
@@ -212,7 +230,7 @@ The guiding rule is:
 
 ### Critical end-to-end flow
 
-The Case 01 vertical slice should eventually have a small browser E2E test covering the core user journey, for example:
+Retain the Case 01 browser E2E test covering the core showcase journey:
 
 ```text
 open Case 01
@@ -249,14 +267,30 @@ They should not silently change:
 
 If a web feature appears to require such a change, surface that dependency before implementing it.
 
+## Matter persistence
+
+The practitioner application uses synchronous SQLAlchemy 2 and Alembic with
+PostgreSQL. Keep persistence concrete and scoped to current Matter operations;
+do not introduce generalized repositories, service hierarchies, dependency
+injection, or asynchronous database infrastructure.
+
+Store the current `CanonicalGraph` atomically as JSONB and validate it through
+the existing domain model at the application boundary. Also preserve the
+cross-value invariant that every Evidence span occurs verbatim in the Matter's
+authoritative source. Do not relationalise graph contents before concrete query
+or independent-mutation requirements justify it.
+
+Every schema change requires an explicit Alembic migration. Treat merged or
+applied migrations as immutable and create a new migration for later changes.
+Persistence integration tests use PostgreSQL, not SQLite.
+
 ## Keep abstractions earned
 
 Do not add features simply because a deployed application often has them.
 
 Examples that are out of scope until required include:
 
-- authentication/OAuth;
-- database persistence;
+- authentication/OAuth for the current synthetic read-only application;
 - graph databases;
 - generalized multi-user workspaces;
 - advanced global state;
@@ -265,8 +299,16 @@ Examples that are out of scope until required include:
 
 Build the smallest vertical slice that exposes the already-tested core well, then let concrete product and benchmark failures drive the next layer of complexity.
 
-Deployment is intended for the hackathon submission but deferred from the first
-professional-review slice. Its acceptance criterion is a reliably runnable local
-end-to-end application whose architecture remains deployable. Production hosting,
-secret management, access and cost controls, CORS/origin policy, and a public URL
-belong to a subsequent coherent deployment slice.
+The application is deployed as a combined FastAPI/static-frontend Railway
+service. The practitioner slice adds PostgreSQL over private networking and runs
+Alembic plus explicit synthetic seeding in a pre-deploy command. The readiness
+endpoint must verify database connectivity.
+
+The public showcase keeps fixed backend-owned synthetic input. Live showcase
+analysis is disabled by default and, when explicitly enabled, is protected by a
+persistent global fixed-window quota. This operational control is separate from
+practitioner authentication and authorization.
+
+The unauthenticated practitioner journey is permitted only while it remains
+read-only and strictly synthetic. Authentication and Matter authorization are a
+hard prerequisite for user-supplied, non-synthetic, or mutable Matter data.

@@ -39,3 +39,23 @@ _Avoid_: Saved case, analysis history
 **Benchmark Evaluation**:
 Offline comparison of a canonical graph with a benchmark case's known answer key, including relationship and provenance metrics. It is separate from professional review.
 _Avoid_: Professional review score, confidence score
+
+**Matter**:
+A scoped piece of professional work through which a practitioner accesses the authoritative source and current relationship graph relevant to that work.
+_Avoid_: Case, client record, trust record
+
+**External Matter Reference**:
+A practitioner-facing identifier assigned by a firm's existing matter-management ecosystem. Private Client Graph stores it as display and integration metadata but does not generate or govern it.
+_Avoid_: Case ID, generated Matter reference
+
+**Authoritative Source**:
+The source material treated as authoritative for a Matter's current relationship graph. The currently supported Matter lifecycle has exactly one authoritative source, without making it a separate product hierarchy.
+_Avoid_: Benchmark fixture, uploaded document
+
+**Public Showcase**:
+The explicitly synthetic demonstration journey that exposes live or sample analysis of fixed Case 01 material. It is separate from the persisted practitioner application.
+_Avoid_: Matter workspace, practitioner application
+
+**Practitioner Application**:
+The Matter-oriented application journey used to identify and open durable professional review state. It does not expose showcase analysis controls or benchmark terminology.
+_Avoid_: Public showcase, benchmark dashboard
