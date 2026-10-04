@@ -16,6 +16,23 @@ jobs:
     name: tests
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: pcg
+          POSTGRES_PASSWORD: test-only
+          POSTGRES_DB: pcg_e2e
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U pcg -d pcg_e2e"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgresql://pcg:test-only@127.0.0.1:5432/pcg_e2e
+      DATABASE_URL: postgresql://pcg:test-only@127.0.0.1:5432/pcg_e2e
     steps:
       - uses: actions/checkout@v4
       - name: Install uv
@@ -30,7 +47,7 @@ jobs:
       - name: Run tests
         run: uv run pytest
       - name: Check application types
-        run: uv run mypy private_client_graph/application private_client_graph/api --follow-imports=silent
+        run: uv run mypy private_client_graph/application private_client_graph/api private_client_graph/persistence private_client_graph/seed_evergreen.py --follow-imports=silent
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -46,6 +63,10 @@ jobs:
       - name: Install browser
         working-directory: web
         run: npx playwright install --with-deps chromium
+      - name: Initialize browser-test PostgreSQL database
+        run: |
+          uv run alembic upgrade head
+          uv run python -m private_client_graph.seed_evergreen
       - name: Test professional-review journey
         working-directory: web
         run: npm run test:e2e

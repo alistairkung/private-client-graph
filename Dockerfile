@@ -18,6 +18,8 @@ ENV PATH="/app/.venv/bin:$PATH" \
 COPY pyproject.toml uv.lock README.md ./
 COPY private_client_graph/ ./private_client_graph/
 COPY cases/ ./cases/
+COPY alembic.ini ./
+COPY migrations/ ./migrations/
 RUN uv sync --locked --no-dev
 
 COPY --from=frontend /build/web/dist/ ./web/dist/

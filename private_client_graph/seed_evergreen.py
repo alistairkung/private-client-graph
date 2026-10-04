@@ -1,0 +1,43 @@
+"""Explicit insert-only initialization; never used by ordinary Matter reads."""
+
+from pathlib import Path
+from uuid import UUID
+
+from sqlalchemy import select
+from sqlalchemy.dialects.postgresql import insert
+
+from private_client_graph.graph import build_graph
+from private_client_graph.models import CanonicalGraph, ExtractionResult
+from private_client_graph.persistence.database import database_engine
+from private_client_graph.persistence.matters import matters
+
+EVERGREEN_ID = UUID("ff985caf-60c5-4e65-a238-f3c26381c369")
+CASE = Path(__file__).resolve().parents[1] / "cases" / "case_01"
+
+
+def seed_evergreen() -> bool:
+    """Return whether Evergreen was inserted, preserving all existing state."""
+    with database_engine().begin() as connection:
+        if connection.scalar(select(matters.c.id).where(matters.c.id == EVERGREEN_ID)):
+            return False
+        source = (CASE / "source.txt").read_text(encoding="utf-8")
+        extraction = ExtractionResult.model_validate_json(
+            (CASE / "expected_extraction.json").read_text(encoding="utf-8")
+        )
+        graph = build_graph(extraction.relationships, document="source.txt", source_text=source)
+        snapshot = CanonicalGraph.model_validate(graph.model_dump())
+        if any(item.supporting_text not in source for item in snapshot.evidence):
+            raise ValueError("Matter Evidence must occur verbatim in its Authoritative Source")
+        statement = insert(matters).values(
+            id=EVERGREEN_ID,
+            external_reference="PC/2026/0142",
+            title="Evergreen Family Trust",
+            source_title="Attendance Note – Meeting with Alice Chen",
+            source_text=source,
+            current_graph=snapshot.model_dump(mode="json"),
+        ).on_conflict_do_nothing(index_elements=[matters.c.id]).returning(matters.c.id)
+        return connection.scalar(statement) is not None
+
+
+if __name__ == "__main__":
+    print("Evergreen inserted." if seed_evergreen() else "Evergreen already exists; unchanged.")

@@ -3,6 +3,11 @@
 from pathlib import Path
 
 from fastapi import FastAPI, Request
+from sqlalchemy import text
+from sqlalchemy.exc import SQLAlchemyError
+
+from private_client_graph.application.matters import MatterSummary, list_matters
+from private_client_graph.persistence.database import database_engine
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -20,8 +25,22 @@ ROOT = Path(__file__).resolve().parents[2]
 WEB_DIST = ROOT / "web" / "dist"
 
 
-def health() -> dict[str, str]:
-    return {"status": "ok"}
+def health() -> JSONResponse:
+    try:
+        with database_engine().connect() as connection:
+            connection.execute(text("SELECT 1"))
+    except (SQLAlchemyError, ValueError):
+        return JSONResponse(status_code=503, content={"status": "unavailable"})
+    return JSONResponse(content={"status": "ok"})
+
+
+def matter_collection() -> list[MatterSummary] | JSONResponse:
+    try:
+        return list_matters()
+    except (SQLAlchemyError, ValueError):
+        return JSONResponse(status_code=503, content={"error": {
+            "message": "Matters could not be loaded.",
+        }})
 
 
 def case_detail() -> CaseDetail:
@@ -52,6 +71,9 @@ async def invalid_request(
 def create_app(web_dist: Path = WEB_DIST) -> FastAPI:
     application = FastAPI(title="Private Client Graph")
     application.add_api_route("/health", health, methods=["GET"])
+    application.add_api_route(
+        "/api/matters", matter_collection, methods=["GET"], response_model=list[MatterSummary]
+    )
     application.add_api_route(
         "/api/showcase/case-01", case_detail, methods=["GET"], response_model=CaseDetail
     )

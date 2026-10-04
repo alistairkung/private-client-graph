@@ -9,11 +9,12 @@ CASE = Path(__file__).resolve().parents[1] / "cases" / "case_01"
 client = TestClient(app)
 
 
-def test_healthcheck_reports_service_ready():
+def test_healthcheck_reports_unavailable_without_database_configuration(monkeypatch):
+    monkeypatch.delenv("DATABASE_URL", raising=False)
     response = client.get("/health")
 
-    assert response.status_code == 200
-    assert response.json() == {"status": "ok"}
+    assert response.status_code == 503
+    assert response.json() == {"status": "unavailable"}
 
 
 def test_built_frontend_is_served_from_the_application(tmp_path):
@@ -27,7 +28,8 @@ def test_built_frontend_is_served_from_the_application(tmp_path):
 
     assert deployed_client.get("/api/case-01").status_code == 404
     assert deployed_client.post("/api/case-01/analysis", json={"mode": "sample"}).status_code in (404, 405)
-    assert deployed_client.get("/api/matters").status_code == 404
+    assert deployed_client.get("/api/matters/ff985caf-60c5-4e65-a238-f3c26381c369").status_code == 404
+    assert deployed_client.get("/app/matters/ff985caf-60c5-4e65-a238-f3c26381c369").status_code == 404
     assert deployed_client.get("/unknown").status_code == 404
 
 
