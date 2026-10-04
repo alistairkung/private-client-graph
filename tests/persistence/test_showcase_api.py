@@ -296,6 +296,13 @@ def test_concurrent_requests_across_app_instances_bound_provider_attempts(client
 
 
 def test_unavailable_quota_fails_closed_but_sample_still_works(client, monkeypatch):
+    from private_client_graph.application import case_analysis
+
+    def unexpected_provider(inputs):
+        pytest.fail("Unavailable quota must prevent provider invocation")
+
+    monkeypatch.setattr(case_analysis, "build_relationship_extraction_chain",
+                        lambda llm: SimpleNamespace(invoke=unexpected_provider))
     monkeypatch.setenv("DATABASE_URL", "postgresql://localhost:1/unavailable")
     assert client.get("/api/showcase/case-01").json()["live_analysis"]["state"] == "unavailable"
     assert client.post("/api/showcase/case-01/analysis", json={"mode": "live"}).status_code == 503

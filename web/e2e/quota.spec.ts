@@ -20,6 +20,6 @@ test("live attempt exhausts the shared allowance while sample and Matter review 
   await expect(page.getByText("Sample analysis · Demonstration fixture")).toBeVisible();
   await page.getByRole("link", { name: "Practitioner application" }).click();
   await page.getByRole("link", { name: /Evergreen Family Trust/ }).click();
-  await page.getByRole("button", { name: "Alice Chen — Spouse of — David Chen", exact: true }).click();
+  await page.getByRole("button", { name: "Alice Chen — Spouse of — David Chen", exact: true }).getByText("Spouse of", { exact: true }).click();
   await expect(page.locator("mark")).toHaveText("Alice Chen confirmed that she and David Chen are spouses.");
 });
