@@ -145,6 +145,7 @@ runs/                   Local extraction/evaluation outputs (Git ignored)
 - [Code style](docs/CODE_STYLE.md)
 - [Web application guidelines](docs/WEB_APP_GUIDELINES.md)
 - [Case 01 professional-review web-slice decisions](docs/design/case-01-professional-review-web-slice.md)
+- [Practitioner Matter workspace slice](docs/design/practitioner-matter-workspace-slice.md)
 - [Synthetic case authoring workflow](docs/workflows/synthetic-case-authoring.md)
 
 ## Status

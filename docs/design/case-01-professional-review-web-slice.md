@@ -1,5 +1,11 @@
 # Case 01 professional-review web slice
 
+> **Status:** Implemented and deployed. This document records the original
+> showcase slice. The subsequent practitioner-application design preserves this
+> experience as a public showcase while adding a separate persisted Matter
+> journey; see
+> [Practitioner Matter workspace slice](practitioner-matter-workspace-slice.md).
+
 ## Goal
 
 Build the smallest complete professional-review experience that can form the first hackathon submission while preserving the existing extraction and graph semantics.
