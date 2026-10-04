@@ -140,8 +140,10 @@ runs/                   Local extraction/evaluation outputs (Git ignored)
 
 ## Documentation
 
-- [Synthetic case authoring workflow](docs/workflows/synthetic-case-authoring.md)
+- [Agent instructions](AGENTS.md)
 - [Code style](docs/CODE_STYLE.md)
+- [Web application guidelines](docs/WEB_APP_GUIDELINES.md)
+- [Synthetic case authoring workflow](docs/workflows/synthetic-case-authoring.md)
 
 ## Status
 
