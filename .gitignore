@@ -2,3 +2,10 @@
 /.env
 /runs/
 /.venv/
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+/web/node_modules/
+/web/dist/
+/web/test-results/
+/web/playwright-report/
