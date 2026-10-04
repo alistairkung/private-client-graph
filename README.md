@@ -188,8 +188,10 @@ Enable it explicitly with the configuration below, in the backend environment or
 root `.env`.
 The optional backend-only `DEEPSEEK_MODEL` defaults to `deepseek-flash`.
 No key is needed for sample analysis. No automatic retries or fallback occur.
-A missing key or non-transient validation error leaves sample analysis available;
-transient provider failures also offer **Retry live analysis**.
+Disabled live analysis needs no key and leaves sample analysis available.
+An enabled deployment with a missing key fails startup. Non-transient live errors
+leave the explicit sample action available; transient provider failures offer
+**Retry live analysis** while the global allowance remains available.
 
 Successful live extractions are saved before graph construction to
 `runs/case_01/<timestamp>-<unique-id>.json`. The API's execution metadata (or graph
