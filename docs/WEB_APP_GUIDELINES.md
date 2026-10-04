@@ -92,6 +92,7 @@ web/
     features/
       showcase/
         api.ts
+        showcase.css
         types.ts
         ...
       matters/
@@ -100,6 +101,7 @@ web/
         ...
       review/
         graph-view.ts
+        review.css
         ...
     shared/
       canonical-graph.ts

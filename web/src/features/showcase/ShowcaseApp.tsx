@@ -7,7 +7,7 @@ export function ShowcaseApp() {
   const { detail, sourceError, analysis, pending, error, lastMode, run } =
     useCaseAnalysis();
   return (
-    <main>
+    <main className="showcase-shell">
       <header className="masthead">
         <a href="/" className="brand">
           <span className="brand-symbol" aria-hidden="true">
