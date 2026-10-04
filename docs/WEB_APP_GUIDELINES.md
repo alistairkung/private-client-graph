@@ -128,6 +128,54 @@ Add tests for:
 
 Prefer testing observable behaviour rather than component implementation details.
 
+### Targeted test pyramid
+
+Treat deterministic application behaviour and stochastic model quality as separate testing concerns.
+
+```text
+                 Live model evaluations
+                 benchmark cases
+                      ↑
+             Browser E2E tests
+          model boundary substituted
+                      ↑
+          API / integration tests
+                      ↑
+    Backend + frontend deterministic
+                unit tests
+```
+
+The layers have different jobs:
+
+- **Deterministic unit tests** protect graph construction, evaluation rules, frontend transformations, and meaningful component behaviour.
+- **API/integration tests** protect contracts and orchestration across deterministic boundaries.
+- **Browser E2E tests** protect the real product journey while substituting only the stochastic model boundary.
+- **Live model evaluations** measure extraction quality over benchmark cases. They are evaluation runs, not ordinary deterministic CI assertions.
+
+CI should not depend on the model returning the same extraction on every run.
+
+For deterministic E2E tests, substitute the extraction/model boundary with a known `RelationshipCandidate` fixture. Case fixtures such as `expected_extraction.json` are appropriate candidates where they represent the intended extraction contract.
+
+Keep the rest of the path real wherever practical:
+
+```text
+browser
+→ frontend
+→ API
+→ known extraction fixture
+→ real deterministic graph construction
+→ real deterministic evaluation
+→ frontend result
+```
+
+Do not mock the final canonical graph merely to make the browser test easier; doing so would skip important application behaviour.
+
+Live-model testing should instead run the real extraction pipeline and record benchmark metrics such as relationship precision, recall, F1, and provenance accuracy. These runs may be manual, scheduled, or part of a dedicated evaluation workflow as the benchmark grows.
+
+The guiding rule is:
+
+> CI stops stochasticity at the model boundary. Live model behaviour is measured through benchmark evaluation rather than asserted as deterministic application behaviour.
+
 ### Critical end-to-end flow
 
 The Case 01 vertical slice should eventually have a small browser E2E test covering the core user journey, for example:
