@@ -4,7 +4,7 @@ from pathlib import Path
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from private_client_graph.application.case_analysis import analyse_case, get_case
@@ -53,10 +53,10 @@ def create_app(web_dist: Path = WEB_DIST) -> FastAPI:
     application = FastAPI(title="Private Client Graph")
     application.add_api_route("/health", health, methods=["GET"])
     application.add_api_route(
-        "/api/case-01", case_detail, methods=["GET"], response_model=CaseDetail
+        "/api/showcase/case-01", case_detail, methods=["GET"], response_model=CaseDetail
     )
     application.add_api_route(
-        "/api/case-01/analysis",
+        "/api/showcase/case-01/analysis",
         case_analysis,
         methods=["POST"],
         response_model=CaseAnalysis,
@@ -64,6 +64,11 @@ def create_app(web_dist: Path = WEB_DIST) -> FastAPI:
     application.add_exception_handler(AnalysisFailure, analysis_failure)
     application.add_exception_handler(RequestValidationError, invalid_request)
     if web_dist.is_dir():
+        def practitioner_shell() -> FileResponse:
+            return FileResponse(web_dist / "index.html")
+
+        application.add_api_route("/app", practitioner_shell, include_in_schema=False)
+        application.add_api_route("/app/", practitioner_shell, include_in_schema=False)
         application.mount(
             "/", StaticFiles(directory=web_dist, html=True), name="frontend"
         )

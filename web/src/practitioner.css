@@ -1,0 +1,177 @@
+@font-face {
+  font-family: "Public Sans";
+  src: url("./fonts/public-sans-latin-400-normal.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Public Sans";
+  src: url("./fonts/public-sans-latin-600-normal.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Newsreader";
+  src: url("./fonts/newsreader-latin-500-normal.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+}
+.practitioner-shell {
+  min-height: 100vh;
+  background: #f6f6f1;
+  color: #173e38;
+  font: 400 15px/23px "Public Sans", Arial, Helvetica, sans-serif;
+}
+.practitioner-shell .ledger-width {
+  width: calc(100% - 96px);
+  max-width: 1180px;
+  margin: 0 auto;
+}
+.practitioner-shell a {
+  color: inherit;
+  text-decoration: none;
+}
+.practitioner-shell a:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.practitioner-shell a:focus-visible {
+  outline: 3px solid #773b46;
+  outline-offset: -3px;
+}
+.practitioner-shell .ledger-header {
+  border-bottom: 1px solid #c9cec8;
+}
+.practitioner-shell .ledger-header-inner {
+  display: flex;
+  align-items: center;
+  gap: 40px;
+  min-height: 68px;
+}
+.practitioner-shell .ledger-brand {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: 16px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.practitioner-shell .brand-symbol {
+  background: #173e38;
+  border-radius: 3px;
+}
+.practitioner-shell nav a {
+  display: flex;
+  align-items: center;
+  min-height: 68px;
+  border-bottom: 2px solid #173e38;
+  margin-bottom: -1px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+}
+.practitioner-shell .ledger-showcase {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 600;
+}
+.practitioner-shell .ledger-wide-label {
+  white-space: pre;
+}
+.practitioner-shell .ledger-content {
+  padding: 48px 0 0;
+}
+.practitioner-shell h1 {
+  font: 500 32px/38px "Newsreader", Georgia, "Times New Roman", serif;
+  letter-spacing: normal;
+  margin: 0 0 8px;
+}
+.practitioner-shell .ledger-intro {
+  max-width: 620px;
+  margin: 0;
+}
+.practitioner-shell .matter-register {
+  margin-top: 32px;
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  table-layout: fixed;
+}
+.practitioner-shell .matter-register th {
+  height: 40px;
+  padding: 0 24px;
+  border-block: 1px solid #c9cec8;
+  color: #59655f;
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 600;
+}
+.practitioner-shell .matter-register th:first-child {
+  width: 220px;
+  padding-left: 0;
+  border-right: 1px solid #c9cec8;
+}
+.practitioner-shell .matter-register td {
+  padding: 0;
+  background: #fff;
+  border-bottom: 1px solid #c9cec8;
+}
+.practitioner-shell .ledger-empty {
+  min-height: 136px;
+  padding: 32px 24px 32px 244px;
+}
+.practitioner-shell .ledger-empty p {
+  margin: 0;
+  font-weight: 600;
+}
+.practitioner-shell .ledger-empty p + p {
+  margin-top: 4px;
+  font-size: 13px;
+  line-height: 20px;
+  font-weight: 400;
+  color: #59655f;
+}
+.practitioner-shell .ledger-footer {
+  padding: 24px 0;
+  font-size: 13px;
+  line-height: 20px;
+  color: #59655f;
+  flex-direction: row;
+}
+@media (max-width: 1199px) {
+  .practitioner-shell .ledger-width { width: calc(100% - 64px); }
+}
+@media (max-width: 719px) {
+  .practitioner-shell .ledger-width { width: calc(100% - 40px); }
+  .practitioner-shell .ledger-header-inner {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0 8px;
+    padding-top: 12px;
+  }
+  .practitioner-shell nav { grid-row: 2; }
+  .practitioner-shell nav a { width: fit-content; min-height: 44px; }
+  .practitioner-shell .ledger-showcase { grid-column: 2; grid-row: 1; text-transform: capitalize; }
+  .practitioner-shell .ledger-wide-label { display: none; }
+  .practitioner-shell .ledger-content { padding-top: 32px; }
+  .practitioner-shell h1 { font-size: 28px; line-height: 34px; }
+  .practitioner-shell .ledger-footer { flex-direction: column; gap: 4px; }
+}
+@media (max-width: 639px) {
+  .practitioner-shell .matter-register thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  .practitioner-shell .matter-register { border-top: 1px solid #c9cec8; }
+  .practitioner-shell .ledger-empty { padding: 32px 0; }
+}

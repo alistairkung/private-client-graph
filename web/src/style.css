@@ -431,3 +431,19 @@ footer {
     gap: 6px;
   }
 }
+.showcase-navigation {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+.showcase-navigation a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: #284d40;
+  font-size: 14px;
+  text-underline-offset: 3px;
+}
+@media (max-width: 550px) {
+  .masthead { height: auto; min-height: 94px; flex-wrap: wrap; padding: 12px 0; }
+}

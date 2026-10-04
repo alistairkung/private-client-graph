@@ -97,3 +97,19 @@ test.each([
     }
   },
 );
+
+test.each(["/app", "/app/"])(
+  "%s shows an empty practitioner collection without requesting showcase data",
+  (path) => {
+    window.history.replaceState(null, "", path);
+    const fetcher = vi.spyOn(globalThis, "fetch");
+    render(<App />);
+    expect(screen.getByRole("heading", { name: "Matters" })).toBeVisible();
+    expect(screen.getByText("No Matters available")).toBeVisible();
+    expect(screen.getByRole("link", { name: "Matters" })).toHaveAttribute("aria-current", "page");
+    expect(screen.getByRole("link", { name: "Public showcase" })).toHaveAttribute("href", "/");
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
+    expect(fetcher).not.toHaveBeenCalled();
+    expect(document.title).toBe("Matters · Private Client Graph");
+  },
+);

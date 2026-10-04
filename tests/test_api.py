@@ -20,21 +20,26 @@ def test_built_frontend_is_served_from_the_application(tmp_path):
     (tmp_path / "index.html").write_text("<h1>Deployed workspace</h1>")
     deployed_client = TestClient(create_app(tmp_path))
 
-    response = deployed_client.get("/")
+    for path in ("/", "/app", "/app/"):
+        response = deployed_client.get(path)
+        assert response.status_code == 200
+        assert "Deployed workspace" in response.text
 
-    assert response.status_code == 200
-    assert "Deployed workspace" in response.text
+    assert deployed_client.get("/api/case-01").status_code == 404
+    assert deployed_client.post("/api/case-01/analysis", json={"mode": "sample"}).status_code in (404, 405)
+    assert deployed_client.get("/api/matters").status_code == 404
+    assert deployed_client.get("/unknown").status_code == 404
 
 
 def test_case_detail_is_authoritative_and_sample_builds_real_graph(
     tmp_path, monkeypatch
 ):
     monkeypatch.setenv("PCG_RUN_DIR", str(tmp_path / "runs"))
-    detail = client.get("/api/case-01")
+    detail = client.get("/api/showcase/case-01")
     assert detail.status_code == 200
     assert detail.json()["source_text"] == (CASE / "source.txt").read_text()
     assert "synthetic" in detail.json()["notice"].lower()
-    response = client.post("/api/case-01/analysis", json={"mode": "sample"})
+    response = client.post("/api/showcase/case-01/analysis", json={"mode": "sample"})
     assert response.status_code == 200
     result = response.json()
     assert set(result) == {"execution", "graph"}
@@ -54,7 +59,7 @@ def test_live_analysis_persists_offline_compatible_extraction(tmp_path, monkeypa
     )
     monkeypatch.setenv("PCG_RUN_DIR", str(tmp_path))
     monkeypatch.setattr(case_analysis, "extract_live", lambda: extraction)
-    response = client.post("/api/case-01/analysis", json={"mode": "live"})
+    response = client.post("/api/showcase/case-01/analysis", json={"mode": "live"})
     assert response.status_code == 200
     result = response.json()
     assert result["execution"]["mode"] == "live"
@@ -74,7 +79,7 @@ def test_rejected_live_extraction_is_saved_before_graph_failure(tmp_path, monkey
     extraction.relationships[0].supporting_text = "Not in the authoritative source"
     monkeypatch.setenv("PCG_RUN_DIR", str(tmp_path))
     monkeypatch.setattr(case_analysis, "extract_live", lambda: extraction)
-    response = client.post("/api/case-01/analysis", json={"mode": "live"})
+    response = client.post("/api/showcase/case-01/analysis", json={"mode": "live"})
     assert response.status_code == 422
     assert set(response.json()) == {"error"}
     error = response.json()["error"]
@@ -136,7 +141,7 @@ def test_provider_failure_has_no_retry_fallback_or_artifact(
 
     monkeypatch.setenv("PCG_RUN_DIR", str(tmp_path))
     monkeypatch.setattr(case_analysis, "extract_live", fail)
-    response = client.post("/api/case-01/analysis", json={"mode": "live"})
+    response = client.post("/api/showcase/case-01/analysis", json={"mode": "live"})
     assert response.status_code == 502
     assert set(response.json()) == {"error"}
     assert response.json()["error"]["stage"] == "provider"
@@ -150,7 +155,7 @@ def test_provider_failure_has_no_retry_fallback_or_artifact(
     "body", [{}, {"mode": "other"}, {"mode": "sample", "source_text": "changed"}]
 )
 def test_request_accepts_only_an_explicit_mode(body):
-    response = client.post("/api/case-01/analysis", json=body)
+    response = client.post("/api/showcase/case-01/analysis", json=body)
     assert response.status_code == 422
     assert response.json()["error"]["stage"] == "request"
 
@@ -165,7 +170,7 @@ def test_persistence_failure_returns_no_analysis(tmp_path, monkeypatch):
     monkeypatch.setattr(
         case_analysis, "extract_live", lambda: ExtractionResult(relationships=[])
     )
-    response = client.post("/api/case-01/analysis", json={"mode": "live"})
+    response = client.post("/api/showcase/case-01/analysis", json={"mode": "live"})
     assert response.status_code == 500
     assert response.json()["error"]["stage"] == "persistence"
     assert response.json()["error"]["retryable"] is False
@@ -185,7 +190,7 @@ def test_unavailable_case_files_have_stage_aware_errors(
         if filename != missing_file:
             (tmp_path / filename).write_text((CASE / filename).read_text())
     monkeypatch.setattr(case_analysis, "CASE", tmp_path)
-    response = client.post("/api/case-01/analysis", json={"mode": "sample"})
+    response = client.post("/api/showcase/case-01/analysis", json={"mode": "sample"})
     assert response.status_code == 500
     assert response.json()["error"]["stage"] == stage
     assert response.json()["error"]["retryable"] is False
@@ -245,7 +250,7 @@ def test_live_api_uses_real_extraction_with_provider_http_substituted(
         monkeypatch.setenv("DEEPSEEK_API_KEY", "test-only-secret")
         monkeypatch.setenv("PCG_RUN_DIR", str(tmp_path))
         monkeypatch.setattr(case_analysis, "ChatDeepSeek", model)
-        response = client.post("/api/case-01/analysis", json={"mode": "live"})
+        response = client.post("/api/showcase/case-01/analysis", json={"mode": "live"})
     assert response.status_code == 200
     assert len(response.json()["graph"]["relationships"]) == 6
     assert len(requests) == 1

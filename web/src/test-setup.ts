@@ -3,6 +3,7 @@ import { cleanup } from "@testing-library/react";
 import { afterEach, vi } from "vitest";
 afterEach(() => {
   cleanup();
+  window.history.replaceState(null, "", "/");
   vi.restoreAllMocks();
 });
 HTMLElement.prototype.scrollIntoView = vi.fn();

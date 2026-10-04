@@ -175,6 +175,11 @@ the model; **Load sample analysis** explicitly loads the ideal-extraction fixtur
 Both use the existing graph builder. Select a relationship (by click or keyboard)
 to highlight its exact evidence in the persistent source panel.
 
+The separate practitioner application at `/app` currently shows an empty Matter
+register. No Matters, persistence, or database configuration are introduced yet.
+Both journeys link to each other; direct entry and refresh at `/app` are supported
+by the combined deployment. The previous `/api/case-01` routes are removed.
+
 Live analysis reads `DEEPSEEK_API_KEY` from the backend environment or root `.env`.
 The optional backend-only `DEEPSEEK_MODEL` defaults to `deepseek-flash`.
 No key is needed for sample analysis. No automatic retries or fallback occur.
@@ -191,7 +196,7 @@ creates no artifact. Evaluate live artifacts offline using the existing command:
 uv run python -m private_client_graph.evaluate runs/case_01/<run>.json
 ```
 
-The web API exposes `GET /api/case-01` and `POST /api/case-01/analysis` with body
+The web API exposes `GET /api/showcase/case-01` and `POST /api/showcase/case-01/analysis` with body
 `{"mode":"live"}` or `{"mode":"sample"}` only. Analysis returns `execution` and
 `graph`; failures return an `error` with stage, safe message, retryability, and
 optional run-artifact identifier. Source text and fixture selection remain
@@ -211,8 +216,9 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-Browser tests start both servers and exercise the real sample path at desktop and
-phone widths. API tests substitute the provider boundary for deterministic live
+Browser tests build the production frontend and serve it through FastAPI,
+exercising the real sample path and practitioner navigation/refresh at desktop
+and phone widths. The test server uses port 4173. API tests substitute the provider boundary for deterministic live
 coverage; CI never requires model credentials. `npm run build` creates the static
 frontend in `web/dist`.
 
