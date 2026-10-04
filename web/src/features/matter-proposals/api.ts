@@ -1,4 +1,5 @@
 import { JsonRequestError, requestJson } from "../../shared/json-request";
+import { csrfHeaders } from "../../shared/csrf";
 import type { MatterProposalDetail, MatterProposalSummary, ProposalInput, ProposalError } from "./types";
 
 export async function createProposal(input: ProposalInput): Promise<MatterProposalDetail> {
@@ -41,11 +42,6 @@ export async function discardProposal(id: string): Promise<void> {
   } catch (error) {
     throw proposalFailure(error, "Discard could not be confirmed. Return to Matters to check whether the intake is still awaiting confirmation.");
   }
-}
-
-function csrfHeaders(): Record<string, string> {
-  const csrf = document.cookie.split("; ").find(value => value.startsWith("__Host-pcg-csrf="))?.split("=")[1] ?? "";
-  return { "x-csrftoken": csrf };
 }
 
 export class ProposalRequestFailure extends Error {

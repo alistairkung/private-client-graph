@@ -526,3 +526,5 @@ Deterministic tests substitute Google and the model boundary while keeping real
 PDF acquisition, graph construction, PostgreSQL, and browser review/discard. The
 committed synthetic PDF fixture lives under `tests/fixtures/`; it is separate from
 benchmark ground truth. Use the full test commands above with PostgreSQL enabled.
+Start each browser-suite run with a freshly migrated and seeded disposable database;
+the quota journey deliberately leaves its persistent allowance exhausted.

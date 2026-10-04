@@ -36,6 +36,7 @@ export function ProposalWorkspace({ id, onNavigate }: { id: string; onNavigate: 
         sourceTitle={state.proposal.authoritative_source.title}
         graph={state.proposal.proposed_graph}
         graphTitle="Proposed relationships"
+        emptyGraphTitle="No supported relationships proposed"
         practitioner
       />
       <DiscardIntake id={id} onNavigate={onNavigate} />

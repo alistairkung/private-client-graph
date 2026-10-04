@@ -37,17 +37,17 @@ def analyse_proposal(metadata: ProposalMetadata, pdf: bytes,
     try:
         return save_proposal(metadata, source, graph)
     except DuplicateReference as exc:
-        raise duplicate_failure(exc.owner) from exc
+        raise _duplicate_failure(exc.owner) from exc
     except ProposalPersistenceFailure as exc:
-        raise persistence_failure(exc) from exc
+        raise _persistence_failure(exc) from exc
 
 
-def duplicate_failure(owner: ReferenceOwner) -> ProposalFailure:
+def _duplicate_failure(owner: ReferenceOwner) -> ProposalFailure:
     return ProposalFailure('duplicate_reference', 'This external Matter reference already exists.',
-        status_code=409, existing_resource=owner.model_dump(mode='json'))
+        status_code=409, existing_resource=owner)
 
 
-def persistence_failure(exc: ProposalPersistenceFailure) -> ProposalFailure:
+def _persistence_failure(exc: ProposalPersistenceFailure) -> ProposalFailure:
     if exc.ambiguous:
         return ProposalFailure('outcome_unknown',
             'The outcome is unknown. Retry to check the external reference before any new analysis.',
@@ -64,7 +64,7 @@ def _require_unclaimed_reference(reference: str) -> None:
             'The external reference could not be checked. No analysis was started. Retry when available.',
             status_code=503, retryable=True) from exc
     if owner is not None:
-        raise duplicate_failure(owner)
+        raise _duplicate_failure(owner)
 
 
 def _extract_proposal(source: str, config: ProposalAnalysisConfig | None) -> ExtractionResult:

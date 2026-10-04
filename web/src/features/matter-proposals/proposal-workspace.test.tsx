@@ -17,7 +17,7 @@ test("empty proposed graph remains reviewable and discard requires a separate de
   render(<ProposalWorkspace id="proposal-42" onNavigate={navigate} />);
   expect(await screen.findByRole("heading", { name: "Fictional family" })).toBeVisible();
   expect(screen.getByRole("heading", { name: "Proposed relationships" })).toBeVisible();
-  expect(screen.getByRole("heading", { name: "No relationships found" })).toBeVisible();
+  expect(screen.getByRole("heading", { name: "No supported relationships proposed" })).toBeVisible();
   expect(screen.getByLabelText("Source document")).toHaveTextContent(proposal.authoritative_source.text);
   const user = userEvent.setup();
   await user.click(screen.getByRole("button", { name: "Discard intake" }));

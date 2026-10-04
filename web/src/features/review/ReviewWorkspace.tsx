@@ -12,11 +12,13 @@ export function ReviewWorkspace({
   sourceTitle,
   practitioner = false,
   graphTitle = "A connected view",
+  emptyGraphTitle,
 }: {
   source: string;
   sourceTitle?: string;
   practitioner?: boolean;
   graphTitle?: string;
+  emptyGraphTitle?: string;
   graph: CanonicalGraph;
 }) {
   const [selected, setSelected] = useState<number | null>(null);
@@ -82,6 +84,7 @@ export function ReviewWorkspace({
           graph={graph}
           selected={selected}
           onSelect={selectRelationship}
+          emptyTitle={emptyGraphTitle}
         />
         {error && (
           <p role="alert" className="error-message">

@@ -8,10 +8,10 @@ from starlette.datastructures import FormData, UploadFile
 from starlette.formparsers import MultiPartException, MultiPartParser
 
 from private_client_graph.application.proposal_errors import ProposalFailure
+from private_client_graph.application.pdf_acquisition import MAX_PDF_BYTES
 
-MAX_UPLOAD_BYTES = 10 * 1024 * 1024
 # Metadata and multipart framing are bounded separately from the PDF payload.
-MAX_REQUEST_BYTES = MAX_UPLOAD_BYTES + 64 * 1024
+MAX_REQUEST_BYTES = MAX_PDF_BYTES + 64 * 1024
 
 
 @asynccontextmanager

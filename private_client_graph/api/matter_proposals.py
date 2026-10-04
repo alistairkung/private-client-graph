@@ -15,7 +15,8 @@ from private_client_graph.application.proposal_contracts import (
 )
 from private_client_graph.application.proposal_errors import ProposalFailure
 from private_client_graph.persistence.matter_proposals import list_proposals, get_proposal, discard_proposal
-from .proposal_upload import MAX_UPLOAD_BYTES, proposal_form
+from private_client_graph.application.pdf_acquisition import MAX_PDF_BYTES
+from .proposal_upload import proposal_form
 
 router = APIRouter(prefix='/api/matter-proposals')
 
@@ -32,7 +33,7 @@ async def create_proposal(request: Request, response: Response) -> MatterProposa
                 'Enter a reference of 1–100 characters and titles of 1–200 characters, without controls or line breaks.') from exc
         upload = form['pdf']
         assert isinstance(upload, UploadFile)
-        pdf = await upload.read(MAX_UPLOAD_BYTES + 1)
+        pdf = await upload.read(MAX_PDF_BYTES + 1)
         proposal = await run_in_threadpool(analyse_proposal, metadata, pdf, request.app.state.proposal_analysis)
     response.headers['Location'] = f'/api/matter-proposals/{proposal.id}'
     return proposal
