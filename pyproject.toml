@@ -11,10 +11,14 @@ dependencies = [
   "langchain-deepseek>=1.1,<2",
   "python-dotenv>=1,<2",
   "pydantic>=2,<3",
+  "fastapi>=0.115,<1",
+  "uvicorn>=0.30,<1",
 ]
 
 [dependency-groups]
 dev = [
+  "httpx>=0.28,<1",
+  "mypy>=1,<2",
   "pytest>=8,<9",
 ]
 

@@ -29,3 +29,28 @@ jobs:
         run: uv sync --locked
       - name: Run tests
         run: uv run pytest
+      - name: Check application types
+        run: uv run mypy private_client_graph/application private_client_graph/api --follow-imports=silent
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Install web dependencies
+        run: npm ci --prefix web
+      - name: Test and build web application
+        working-directory: web
+        run: |
+          npm test
+          npm run build
+      - name: Install browser
+        working-directory: web
+        run: npx playwright install --with-deps chromium
+      - name: Test professional-review journey
+        working-directory: web
+        run: npm run test:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: browser-test-results
+          path: web/test-results/

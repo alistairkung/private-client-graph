@@ -150,3 +150,68 @@ runs/                   Local extraction/evaluation outputs (Git ignored)
 ## Status
 
 Experimental MSc/hackathon research prototype. The current baseline covers a complete source → extraction → canonical graph → evaluation loop for Case 01, with additional cases intended to grow the benchmark and expose the next required capabilities.
+
+## Local professional-review app
+
+Requires Python 3.11+, uv, and Node.js 22.12+ (or 24+). Run from the repository root:
+
+```bash
+uv sync --locked
+uv run uvicorn private_client_graph.api.app:app --host 127.0.0.1 --port 8000
+```
+
+In a second terminal:
+
+```bash
+cd web
+npm ci
+npm run dev
+```
+
+Open http://127.0.0.1:5173. Vite proxies `/api` to the local backend. The fixed
+synthetic Case 01 source is available immediately. **Run live analysis** invokes
+the model; **Load sample analysis** explicitly loads the ideal-extraction fixture.
+Both use the existing graph builder. Select a relationship (by click or keyboard)
+to highlight its exact evidence in the persistent source panel.
+
+Live analysis reads `DEEPSEEK_API_KEY` from the backend environment or root `.env`.
+The optional backend-only `DEEPSEEK_MODEL` defaults to `deepseek-flash`.
+No key is needed for sample analysis. No automatic retries or fallback occur.
+A missing key or non-transient validation error leaves sample analysis available;
+transient provider failures also offer **Retry live analysis**.
+
+Successful live extractions are saved before graph construction to
+`runs/case_01/<timestamp>-<unique-id>.json`. The API's execution metadata (or graph
+error) identifies that file, including when graph validation fails. For isolated
+test environments, `PCG_RUN_DIR` overrides the output directory. Sample analysis
+creates no artifact. Evaluate live artifacts offline using the existing command:
+
+```bash
+uv run python -m private_client_graph.evaluate runs/case_01/<run>.json
+```
+
+The web API exposes `GET /api/case-01` and `POST /api/case-01/analysis` with body
+`{"mode":"live"}` or `{"mode":"sample"}` only. Analysis returns `execution` and
+`graph`; failures return an `error` with stage, safe message, retryability, and
+optional run-artifact identifier. Source text and fixture selection remain
+backend-authoritative. Raw extraction and benchmark evaluation are never returned
+to the professional workspace.
+
+### Web checks
+
+```bash
+uv run pytest
+uv run mypy private_client_graph/application private_client_graph/api --follow-imports=silent
+cd web
+npm run typecheck
+npm test
+npm run build
+npx playwright install chromium
+npm run test:e2e
+```
+
+Browser tests start both servers and exercise the real sample path at desktop and
+phone widths. API tests substitute the provider boundary for deterministic live
+coverage; CI never requires model credentials. `npm run build` creates the static
+frontend in `web/dist`. Public hosting and production controls remain a subsequent
+slice; this app's acceptance baseline is local execution from this repository.
