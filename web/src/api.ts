@@ -28,9 +28,9 @@ async function request<T>(url: string, options?: RequestInit): Promise<T> {
   }
 }
 
-export const getCase = () => request<CaseDetail>("/api/case-01");
+export const getCase = () => request<CaseDetail>("/api/showcase/case-01");
 export const analyseCase = (mode: AnalysisMode) =>
-  request<CaseAnalysis>("/api/case-01/analysis", {
+  request<CaseAnalysis>("/api/showcase/case-01/analysis", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ mode }),
