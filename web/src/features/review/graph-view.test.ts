@@ -288,3 +288,35 @@ test("multiple Trusts remain triangles with routes meeting their visible boundar
   expect(Math.min(Math.abs(y - 1), Math.abs(x - y / 2 - 0.5), Math.abs(x + y / 2 - 0.5))).toBeLessThan(0.001);
   expect(toGraphView(multiple)).toEqual(view);
 });
+
+test("general fallback geometry is stable for equivalent input order", () => {
+  const multiple: CanonicalGraph = {
+    entities: [
+      { id: "a", name: "Alice", type: "person" },
+      { id: "b", name: "Bob", type: "person" },
+      { id: "t", name: "First Trust", type: "trust" },
+      { id: "u", name: "Second Trust", type: "trust" },
+    ],
+    relationships: [
+      { source: "a", target: "t", type: "settlor_of", evidence_ids: [] },
+      { source: "a", target: "u", type: "trustee_of", evidence_ids: [] },
+      { source: "b", target: "t", type: "beneficiary_of", evidence_ids: [] },
+      { source: "b", target: "u", type: "beneficiary_of", evidence_ids: [] },
+    ],
+    evidence: [],
+  };
+  const original = toGraphView(multiple);
+  const reordered = toGraphView({
+    ...multiple,
+    entities: [...multiple.entities].reverse(),
+    relationships: [...multiple.relationships].reverse(),
+  });
+  const positions = (view: ReturnType<typeof toGraphView>) => new Map(
+    view.nodes.map(node => [node.id, node.position]),
+  );
+  const routes = (view: ReturnType<typeof toGraphView>) => new Map(
+    view.edges.map(edge => [`${edge.source}:${edge.label}:${edge.target}`, edge.data!.route]),
+  );
+  expect(positions(reordered)).toEqual(positions(original));
+  expect(routes(reordered)).toEqual(routes(original));
+});

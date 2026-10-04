@@ -41,22 +41,25 @@ export function toGraphView(graph: CanonicalGraph): {
     marginy: 30,
   });
   layout.setDefaultEdgeLabel(() => ({}));
-  graph.entities.forEach((entity) =>
+  const orderedEntities = [...graph.entities].sort((first, second) => first.id.localeCompare(second.id));
+  const orderedRelationships = graph.relationships.map((edge, index) => ({ edge, index }))
+    .sort((first, second) => relationshipKey(first.edge).localeCompare(relationshipKey(second.edge)));
+  orderedEntities.forEach((entity) =>
     layout.setNode(entity.id, { width: NODE_WIDTH, height: nodeHeight(entity.id) }),
   );
-  graph.relationships.forEach((edge, index) =>
+  orderedRelationships.forEach(({ edge }) =>
     layout.setEdge(
       edge.source,
       edge.target,
       { width: 105, height: 24 },
-      String(index),
+      relationshipKey(edge),
     ),
   );
   dagre.layout(layout);
   const anchored = centralTrustLayout(graph, labels);
   if (!anchored) {
-    graph.relationships.forEach((edge, index) => {
-      const route = layout.edge({ v: edge.source, w: edge.target, name: String(index) });
+    graph.relationships.forEach((edge) => {
+      const route = layout.edge({ v: edge.source, w: edge.target, name: relationshipKey(edge) });
       if (isTrust(edge.source)) route.points[0] = nodeBoundary(layout.node(edge.source), route.points[1], true);
       if (isTrust(edge.target)) route.points[route.points.length - 1] = nodeBoundary(
         layout.node(edge.target), route.points[route.points.length - 2], true,
@@ -66,11 +69,9 @@ export function toGraphView(graph: CanonicalGraph): {
   const labelObstacles: Rectangle[] = anchored ? [] : graph.entities.map(entity =>
     nodeRectangle(layout.node(entity.id), nodeHeight(entity.id), 8));
   const generalRoutes: RelationshipRoute[] = new Array(graph.relationships.length);
-  const orderedRelationships = graph.relationships.map((edge, index) => ({ edge, index }))
-    .sort((first, second) => relationshipKey(first.edge).localeCompare(relationshipKey(second.edge)));
   if (!anchored) orderedRelationships.forEach(({ edge, index }) => {
     const route = relationshipRoute(
-      layout.edge({ v: edge.source, w: edge.target, name: String(index) }).points,
+      layout.edge({ v: edge.source, w: edge.target, name: relationshipKey(edge) }).points,
       labels[edge.type],
       { obstacles: labelObstacles },
     );
