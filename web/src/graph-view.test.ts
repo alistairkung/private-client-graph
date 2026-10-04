@@ -108,3 +108,17 @@ test("practitioner graphs without a single Trust retain the general layout", () 
   const people = { ...graph, entities: graph.entities.map(entity => ({ ...entity, type: "person" as const })) };
   expect(toGraphView(people, true)).toEqual(toGraphView(people));
 });
+
+test("multiple Trusts remain triangles with routes meeting their visible boundary", () => {
+  const multiple = { ...graph, entities: graph.entities.map(entity => entity.id === "b" ? { ...entity, type: "trust" as const } : entity) };
+  const view = toGraphView(multiple, true);
+  const trust = view.nodes.find(node => node.id === "t")!;
+  expect(view.nodes.filter(node => node.type === "trust")).toHaveLength(2);
+  const route = view.edges[1].data!.route as { points: { x: number; y: number }[] };
+  const end = route.points.at(-1)!;
+  // A directed arrow touches one of the triangle's three sides, not its interior.
+  const x = (end.x - trust.position.x) / Number(trust.style!.width);
+  const y = (end.y - trust.position.y) / Number(trust.style!.height);
+  expect(Math.min(Math.abs(y - 1), Math.abs(x - y / 2 - 0.5), Math.abs(x + y / 2 - 0.5))).toBeLessThan(0.001);
+  expect(toGraphView(multiple, true)).toEqual(view);
+});

@@ -1,6 +1,8 @@
 import subprocess
 import sys
 
+import pytest
+
 from fastapi.testclient import TestClient
 
 from private_client_graph.api.app import create_app
@@ -154,7 +156,11 @@ def test_missing_and_invalid_matter_uuid(database):
     assert response.json() == {"error": {"message": "Invalid Matter UUID."}}
 
 
-def test_invalid_persisted_state_never_reaches_browser(database):
+@pytest.mark.parametrize("values", [
+    {"source_text": "Inconsistent synthetic source"},
+    {"current_graph": {"entities": "invalid"}},
+])
+def test_invalid_persisted_state_never_reaches_browser(database, values):
     from sqlalchemy import create_engine, update
     from private_client_graph.persistence.matters import matters
     from private_client_graph.seed_evergreen import seed_evergreen
@@ -162,12 +168,11 @@ def test_invalid_persisted_state_never_reaches_browser(database):
     seed_evergreen()
     engine = create_engine(database)
     client = TestClient(create_app())
-    for values in ({"source_text": "Inconsistent synthetic source"}, {"current_graph": {"entities": "invalid"}}):
-        with engine.begin() as connection:
-            connection.execute(update(matters).values(**values))
-        response = client.get("/api/matters/ff985caf-60c5-4e65-a238-f3c26381c369")
-        assert response.status_code == 503
-        assert response.json() == {"error": {"message": "Matter could not be loaded."}}
+    with engine.begin() as connection:
+        connection.execute(update(matters).values(**values))
+    response = client.get("/api/matters/ff985caf-60c5-4e65-a238-f3c26381c369")
+    assert response.status_code == 503
+    assert response.json() == {"error": {"message": "Matter could not be loaded."}}
     engine.dispose()
 
 

@@ -1,3 +1,4 @@
+import { NODE_WIDTH, TRUST_HEIGHT } from "./node-geometry";
 import { useCallback, useEffect, useMemo } from "react";
 import {
   Background,
@@ -51,8 +52,8 @@ function RoutedEdge({
 
 function TrustNode({ data }: NodeProps) {
   return <div className="trust-node" aria-label={`${data.label} · Trust`}>
-    <svg viewBox="0 0 170 96" role="img" aria-label="Triangular Trust node">
-      <polygon points="85,1 169,95 1,95" />
+    <svg viewBox={`0 0 ${NODE_WIDTH} ${TRUST_HEIGHT}`} role="img" aria-label="Triangular Trust node">
+      <polygon points={`${NODE_WIDTH / 2},0 ${NODE_WIDTH},${TRUST_HEIGHT} 0,${TRUST_HEIGHT}`} />
     </svg>
     <span>{String(data.label)}</span>
     <Handle type="target" position={Position.Top} />

@@ -1,3 +1,4 @@
+import { NODE_WIDTH, PERSON_HEIGHT, TRUST_HEIGHT, nodeBoundary } from "./node-geometry";
 import { centralTrustLayout } from "./trust-layout";
 import dagre from "@dagrejs/dagre";
 import { MarkerType, Position, type Edge, type Node } from "@xyflow/react";
@@ -17,6 +18,8 @@ export function toGraphView(graph: CanonicalGraph, practitioner = false): {
   edges: Edge[];
   bounds: { x: number; y: number; width: number; height: number };
 } {
+  const triangle = (id: string) => practitioner && graph.entities.some(entity => entity.id === id && entity.type === "trust");
+  const height = (id: string) => triangle(id) ? TRUST_HEIGHT : PERSON_HEIGHT;
   const layout = new dagre.graphlib.Graph({ multigraph: true });
   layout.setGraph({
     rankdir: "TB",
@@ -27,7 +30,7 @@ export function toGraphView(graph: CanonicalGraph, practitioner = false): {
   });
   layout.setDefaultEdgeLabel(() => ({}));
   graph.entities.forEach((entity) =>
-    layout.setNode(entity.id, { width: 170, height: 56 }),
+    layout.setNode(entity.id, { width: NODE_WIDTH, height: height(entity.id) }),
   );
   graph.relationships.forEach((edge, index) =>
     layout.setEdge(
@@ -39,6 +42,15 @@ export function toGraphView(graph: CanonicalGraph, practitioner = false): {
   );
   dagre.layout(layout);
   const anchored = practitioner ? centralTrustLayout(graph) : null;
+  if (practitioner && !anchored) {
+    graph.relationships.forEach((edge, index) => {
+      const route = layout.edge({ v: edge.source, w: edge.target, name: String(index) });
+      if (triangle(edge.source)) route.points[0] = nodeBoundary(layout.node(edge.source), route.points[1], true);
+      if (triangle(edge.target)) route.points[route.points.length - 1] = nodeBoundary(
+        layout.node(edge.target), route.points[route.points.length - 2], true,
+      );
+    });
+  }
   return {
     bounds: anchored?.bounds ?? {
       x: 0,
@@ -48,16 +60,16 @@ export function toGraphView(graph: CanonicalGraph, practitioner = false): {
     },
     nodes: graph.entities.map((entity) => ({
       id: entity.id,
-      type: practitioner && entity.type === "trust" ? "trust" : undefined,
+      type: triangle(entity.id) ? "trust" : undefined,
       position: {
-        x: (anchored?.positions.get(entity.id)?.x ?? layout.node(entity.id).x) - 85,
-        y: (anchored?.positions.get(entity.id)?.y ?? layout.node(entity.id).y) - (practitioner && entity.type === "trust" ? 48 : 28),
+        x: (anchored?.positions.get(entity.id)?.x ?? layout.node(entity.id).x) - NODE_WIDTH / 2,
+        y: (anchored?.positions.get(entity.id)?.y ?? layout.node(entity.id).y) - height(entity.id) / 2,
       },
       data: { label: entity.name, kind: entity.type },
       className: `entity-${entity.type}`,
       sourcePosition: Position.Bottom,
       targetPosition: Position.Top,
-      style: { width: 170, height: practitioner && entity.type === "trust" ? 96 : 56 },
+      style: { width: NODE_WIDTH, height: height(entity.id) },
     })),
     edges: graph.relationships.map((edge, index) => ({
       id: String(index),

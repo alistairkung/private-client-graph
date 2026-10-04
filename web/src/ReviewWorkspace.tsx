@@ -54,12 +54,12 @@ export function ReviewWorkspace({
       <section className="graph-panel panel">
         <div className="panel-heading">
           <div>
-            <p className="eyebrow">RELATIONSHIP REVIEW</p>
+            <p className="eyebrow">{practitioner ? "Relationship review" : "RELATIONSHIP REVIEW"}</p>
             <h2>A connected view</h2>
           </div>
-          <span className="pill">
+          {!practitioner && <span className="pill">
             {graph.relationships.length} relationships
-          </span>
+          </span>}
         </div>
         <div className="graph-legend">
           <span>
@@ -82,12 +82,13 @@ export function ReviewWorkspace({
           </p>
         )}
         <EvidencePanel
+          practitioner={practitioner}
           items={items}
           activeId={activeId}
           onSelect={setActiveId}
         />
       </section>
-      <SourcePanel title={sourceTitle} source={source} span={span} activation={activation} />
+      <SourcePanel practitioner={practitioner} title={sourceTitle} source={source} span={span} activation={activation} />
     </div>
   );
 }
