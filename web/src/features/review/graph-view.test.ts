@@ -26,6 +26,43 @@ export const graph: CanonicalGraph = {
   ],
 };
 
+const caseGraph: CanonicalGraph = {
+  entities: [
+    { id: "alice", name: "Alice Chen", type: "person" },
+    { id: "bob", name: "Bob Chen", type: "person" },
+    { id: "carol", name: "Carol Wong", type: "person" },
+    { id: "david", name: "David Chen", type: "person" },
+    { id: "trust", name: "Evergreen Family Trust", type: "trust" },
+  ],
+  relationships: [
+    { source: "alice", target: "bob", type: "parent_of", evidence_ids: [] },
+    { source: "alice", target: "trust", type: "settlor_of", evidence_ids: [] },
+    { source: "alice", target: "david", type: "spouse_of", evidence_ids: [] },
+    { source: "bob", target: "trust", type: "beneficiary_of", evidence_ids: [] },
+    { source: "carol", target: "trust", type: "beneficiary_of", evidence_ids: [] },
+    { source: "david", target: "bob", type: "parent_of", evidence_ids: [] },
+  ],
+  evidence: [],
+};
+
+function nodeBounds(view: ReturnType<typeof toGraphView>, id: string) {
+  const node = view.nodes.find(candidate => candidate.id === id)!;
+  return {
+    left: node.position.x,
+    top: node.position.y,
+    right: node.position.x + Number(node.style!.width),
+    bottom: node.position.y + Number(node.style!.height),
+  };
+}
+
+function boxesOverlap(
+  first: { left: number; top: number; right: number; bottom: number },
+  second: { left: number; top: number; right: number; bottom: number },
+) {
+  return first.left < second.right && first.right > second.left
+    && first.top < second.bottom && first.bottom > second.top;
+}
+
 function expectGeneralLayout(view: ReturnType<typeof toGraphView>) {
   const centers = view.nodes.map(node => ({
     x: node.position.x + Number(node.style!.width) / 2,
@@ -91,18 +128,72 @@ test.each([
   },
 );
 
-test("presentation centers the single Trust and preserves graph semantics", () => {
+test("presentation anchors the single Trust below people and preserves graph semantics", () => {
   const original = structuredClone(graph);
   const view = toGraphView(graph);
   const trust = view.nodes.find(node => node.id === "t")!;
   expect(trust.type).toBe("trust");
   expect(trust.position.x + Number(trust.style!.width) / 2).toBe(view.bounds.width / 2);
-  expect(trust.position.y + Number(trust.style!.height) / 2).toBe(view.bounds.height / 2);
+  expect(trust.position.y).toBeGreaterThan(Math.max(...view.nodes
+    .filter(node => node.id !== "t")
+    .map(node => node.position.y + Number(node.style!.height))));
   expect(view.nodes.filter(node => node.id !== "t").every(node => node.type !== "trust")).toBe(true);
   expect(view.edges.map(({ source, target, markerEnd }) => ({ source, target, directed: !!markerEnd })))
     .toEqual([{ source: "a", target: "b", directed: false }, { source: "b", target: "t", directed: true }]);
   expect(toGraphView(graph)).toEqual(view);
   expect(graph).toEqual(original);
+});
+
+test("single-Trust presentation keeps family claims local and Trust approaches separate", () => {
+  const view = toGraphView(caseGraph);
+  const routes = view.edges.map(edge => edge.data!.route as {
+    points: { x: number; y: number }[];
+  });
+  const familyRoutes = caseGraph.relationships
+    .map((relationship, index) => ({ relationship, route: routes[index] }))
+    .filter(({ relationship }) => relationship.target !== "trust");
+  for (const { relationship, route } of familyRoutes) {
+    const source = nodeBounds(view, relationship.source);
+    const target = nodeBounds(view, relationship.target);
+    const corridor = {
+      left: Math.min(source.left, target.left) - 32,
+      top: Math.min(source.top, target.top) - 32,
+      right: Math.max(source.right, target.right) + 32,
+      bottom: Math.max(source.bottom, target.bottom) + 32,
+    };
+    expect(route.points.every(point =>
+      point.x >= corridor.left && point.x <= corridor.right
+      && point.y >= corridor.top && point.y <= corridor.bottom,
+    )).toBe(true);
+    expect(route.points.length).toBeLessThanOrEqual(4);
+  }
+  const trustEntries = caseGraph.relationships
+    .map((relationship, index) => ({ relationship, route: routes[index] }))
+    .filter(({ relationship }) => relationship.target === "trust")
+    .map(({ route }) => route.points.at(-1));
+  expect(new Set(trustEntries.map(point => JSON.stringify(point))).size).toBe(trustEntries.length);
+  expect(toGraphView(caseGraph)).toEqual(view);
+});
+
+test("relationship label geometry clears every entity", () => {
+  const view = toGraphView(caseGraph);
+  for (const [index, edge] of view.edges.entries()) {
+    const route = edge.data!.route as {
+      labelBounds: { left: number; top: number; right: number; bottom: number };
+      labelOffset: { x: number; y: number };
+    };
+    expect(Math.hypot(route.labelOffset.x, route.labelOffset.y)).toBeGreaterThanOrEqual(20);
+    expect(Math.hypot(route.labelOffset.x, route.labelOffset.y)).toBeLessThanOrEqual(24);
+    for (const entity of caseGraph.entities) {
+      expect(boxesOverlap(route.labelBounds, nodeBounds(view, entity.id)),
+        `${caseGraph.relationships[index].type} label overlaps ${entity.name}`).toBe(false);
+    }
+  }
+  const beneficiary = view.edges.find(edge => edge.label === "Beneficiary of")!;
+  const labelBounds = (beneficiary.data!.route as {
+    labelBounds: { left: number; right: number };
+  }).labelBounds;
+  expect(labelBounds.right - labelBounds.left).toBeGreaterThanOrEqual(100);
 });
 
 test("central Trust layout is independent of entity input order and has distinct node positions", () => {

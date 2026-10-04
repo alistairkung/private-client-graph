@@ -369,11 +369,11 @@ also supports direct entry and refresh in the combined deployment. The shared
 review workspace consumes either journey's source and graph, preserving
 relationship selection and exact Evidence highlighting. In both the Public
 Showcase and practitioner presentation, Trust entities are triangles. A single
-Trust anchors a deterministic circular layout; remaining entities are ordered by
-ID, with no legal significance assigned to their positions. Zero-Trust and
-multiple-Trust graphs retain the general layout, with Trusts still rendered as
-triangles. Richer domain-specific positioning remains open to practitioner
-validation.
+Trust anchors a deterministic relationship-led layout: family relationships stay
+close to their Person endpoints and Trust relationships use separate approaches
+with offset annotation labels. Position still carries no legal significance.
+Zero-Trust and multiple-Trust graphs retain the general layout, with Trusts still
+rendered as triangles.
 
 For the #23 deployment, no new Railway service, variable, or migration is needed.
 Confirm the new deployment uses the committed pre-deploy command above. The first

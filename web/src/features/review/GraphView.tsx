@@ -1,7 +1,6 @@
 import { NODE_WIDTH, TRUST_HEIGHT } from "./node-geometry";
 import { useCallback, useEffect, useMemo } from "react";
 import {
-  Background,
   Handle,
   Position,
   type NodeProps,
@@ -45,6 +44,8 @@ function RoutedEdge({
       style={style}
       labelStyle={labelStyle}
       labelBgStyle={labelBgStyle}
+      labelBgPadding={[7, 4]}
+      labelBgBorderRadius={3}
       interactionWidth={20}
     />
   );
@@ -111,6 +112,7 @@ export function GraphView({
   const edges = view.edges.map((edge, index) => ({
     ...edge,
     selected: selected === index,
+    className: "relationship-edge",
     style: {
       stroke: selected === index ? "#b15a27" : "#607775",
       strokeWidth: selected === index ? 3 : 1.5,
@@ -119,7 +121,11 @@ export function GraphView({
       fill: selected === index ? "#92421b" : "#29423f",
       fontWeight: selected === index ? 700 : 500,
     },
-    labelBgStyle: { fill: selected === index ? "#fff0cf" : "#fafbf7" },
+    labelBgStyle: {
+      fill: selected === index ? "#fff0cf" : "#fafbf7",
+      stroke: selected === index ? "#b15a27" : "#9eafa2",
+      strokeWidth: selected === index ? 2 : 1,
+    },
   }));
   return (
     <div className="graph-canvas" aria-label="Relationship graph">
@@ -139,7 +145,6 @@ export function GraphView({
         onEdgesChange={selectEdge}
       >
         <FitGraph bounds={view.bounds} />
-        <Background color="#cbd5cc" gap={22} size={1} />
         <Controls showInteractive={false} showFitView={false} />
       </ReactFlow>
     </div>

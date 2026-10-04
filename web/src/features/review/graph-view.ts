@@ -1,4 +1,10 @@
-import { NODE_WIDTH, PERSON_HEIGHT, TRUST_HEIGHT, nodeBoundary } from "./node-geometry";
+import {
+  NODE_WIDTH,
+  PERSON_HEIGHT,
+  TRUST_HEIGHT,
+  nodeBoundary,
+  relationshipRoute,
+} from "./node-geometry";
 import { centralTrustLayout } from "./trust-layout";
 import dagre from "@dagrejs/dagre";
 import { MarkerType, Position, type Edge, type Node } from "@xyflow/react";
@@ -41,7 +47,7 @@ export function toGraphView(graph: CanonicalGraph): {
     ),
   );
   dagre.layout(layout);
-  const anchored = centralTrustLayout(graph);
+  const anchored = centralTrustLayout(graph, labels);
   if (!anchored) {
     graph.relationships.forEach((edge, index) => {
       const route = layout.edge({ v: edge.source, w: edge.target, name: String(index) });
@@ -79,16 +85,15 @@ export function toGraphView(graph: CanonicalGraph): {
       type: "routed",
       ariaRole: "button",
       data: {
-        route: anchored?.routes[index] ?? layout.edge({
-          v: edge.source,
-          w: edge.target,
-          name: String(index),
-        }),
+        route: anchored?.routes[index] ?? relationshipRoute(
+          layout.edge({ v: edge.source, w: edge.target, name: String(index) }).points,
+          labels[edge.type],
+        ),
       },
       markerEnd:
         edge.type === "spouse_of" || edge.type === "sibling_of"
           ? undefined
-          : { type: MarkerType.ArrowClosed, color: "#607775" },
+          : { type: MarkerType.ArrowClosed, color: "#607775", width: 18, height: 18 },
       ariaLabel: `${graph.entities.find((entity) => entity.id === edge.source)?.name} — ${labels[edge.type]} — ${graph.entities.find((entity) => entity.id === edge.target)?.name}`,
     })),
   };

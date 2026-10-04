@@ -62,14 +62,19 @@ export function ReviewWorkspace({
             {graph.relationships.length} relationships
           </span>}
         </div>
-        <div className="graph-legend">
+        <div className="graph-legend" aria-label="Graph legend">
           <span>
             <i className="person-key" /> Person
           </span>
           <span>
             <i className="trust-key" /> Trust
           </span>
-          <span>→ Directed relationship</span>
+          <span>
+            <i className="directed-key" /> Arrow points to target
+          </span>
+          <span>
+            <i className="symmetric-key" /> Symmetric relationship
+          </span>
         </div>
         <GraphView
           graph={graph}
