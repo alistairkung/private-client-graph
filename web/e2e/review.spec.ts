@@ -1,72 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { selectSpouseRelationship } from "./review-helpers";
 
-test("landing supports keyboard review, page scrolling and state-preserving expansion with reduced motion", async ({ page }, testInfo) => {
-  const apiRequests: string[] = [];
-  page.on("request", (request) => {
-    if (request.url().includes("/api/")) apiRequests.push(`${request.method()} ${new URL(request.url()).pathname}`);
-  });
-  await page.emulateMedia({ reducedMotion: "reduce" });
-  await page.goto("/");
-  await expect(page.getByRole("button", { name: "Load sample analysis" })).toBeVisible();
-  await page.screenshot({ path: testInfo.outputPath("landing.png"), fullPage: true });
-  const explore = page.getByRole("link", { name: "Explore the demonstration" }).first();
-  await explore.focus();
-  await explore.press("Enter");
-  await expect(page.locator("#demonstration")).toBeFocused();
-  expect(apiRequests).toEqual(["GET /api/showcase/case-01"]);
-  await expect(page.getByRole("button", { name: "Run live analysis" })).toBeHidden();
-  const load = page.getByRole("button", { name: "Load sample analysis" });
-  await load.focus();
-  await load.press("Enter");
-  await expect(page.getByLabel("Relationship graph")).toBeVisible();
-  await expect(page.locator(".sample-review")).toHaveCSS("position", "static");
-  await expect(page.locator(".sample-passage blockquote")).toHaveCount(6);
-  const list = page.getByText("Relationships as a list", { exact: true });
-  await list.focus();
-  await list.press("Enter");
-  const relationship = page.getByRole("button", { name: "Review Bob Chen — Beneficiary of — Evergreen Family Trust", exact: true });
-  await relationship.focus();
-  const beforeSelection = await page.evaluate(() => scrollY);
-  await relationship.press("Enter");
-  await expect(page.locator("mark")).toHaveText("Alice Chen confirmed that Bob Chen is a beneficiary of the Evergreen Family Trust.");
-  expect(await page.evaluate(() => scrollY)).toBe(beforeSelection);
-  await page.getByRole("link", { name: "Read passage in source" }).click();
-  await expect(page.locator("mark")).toBeInViewport();
-
-  const toggle = page.getByRole("button", { name: /^(Expand|Collapse) demonstration$/ });
-  for (const expanded of [true, false]) {
-    await toggle.focus();
-    await toggle.press("Enter");
-    // The same DOM control retains focus while its accessible name changes.
-    const currentToggle = page.getByRole("button", { name: expanded ? "Collapse demonstration" : "Expand demonstration" });
-    await expect(currentToggle).toBeFocused();
-    await expect(currentToggle).toHaveAttribute("aria-expanded", String(expanded));
-    await expect(relationship).toHaveAttribute("aria-pressed", "true");
-    await expect(page.getByRole("button", { name: /Evidence 1/ })).toHaveAttribute("aria-pressed", "true");
-    await expect(page.locator("mark")).toHaveText("Alice Chen confirmed that Bob Chen is a beneficiary of the Evergreen Family Trust.");
-    for (const node of await page.locator(".react-flow__node").all()) {
-      await expect.poll(async () => {
-        const canvas = (await page.getByLabel("Relationship graph").boundingBox())!;
-        const box = (await node.boundingBox())!;
-        return box.x >= canvas.x && box.x + box.width <= canvas.x + canvas.width
-          && box.y >= canvas.y && box.y + box.height <= canvas.y + canvas.height;
-      }).toBe(true);
-    }
-    await page.screenshot({ path: testInfo.outputPath(expanded ? "expanded.png" : "collapsed.png"), fullPage: true });
-  }
-  const canvas = page.getByLabel("Relationship graph");
-  await canvas.scrollIntoViewIfNeeded();
-  await canvas.hover();
-  const scrollBefore = await page.evaluate(() => window.scrollY);
-  const transformBefore = await page.locator(".react-flow__viewport").getAttribute("style");
-  await page.mouse.wheel(0, 160);
-  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(scrollBefore);
-  await expect(page.locator(".react-flow__viewport")).toHaveAttribute("style", transformBefore!);
-  expect(apiRequests).toEqual(["GET /api/showcase/case-01", "POST /api/showcase/case-01/analysis"]);
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-});
-
 test("sample journey uses real API and graph construction, then highlights exact evidence", async ({
   page,
 }, testInfo) => {
@@ -74,8 +8,7 @@ test("sample journey uses real API and graph construction, then highlights exact
   await expect(page.getByLabel("Source document")).toContainText(
     "Attendance Note – Meeting with Alice Chen",
   );
-  await expect(page.getByText("Synthetic research prototype. Do not use real client information.").first()).toBeVisible();
-  await page.getByText("Analysis options", { exact: true }).click();
+  await expect(page.getByText("SYNTHETIC CASE", { exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Run live analysis" })).toBeDisabled();
   await page.getByRole("button", { name: "Load sample analysis" }).click();
   await expect(
@@ -131,7 +64,6 @@ test("sample journey uses real API and graph construction, then highlights exact
   await expect(highlight).toHaveText(
     "Alice Chen confirmed that she and David Chen are spouses.",
   );
-  await page.getByRole("link", { name: "Read passage in source" }).click();
   await expect(highlight).toBeInViewport();
   await expect(
     page.getByRole("button", { name: /Evidence 1/ }),
@@ -159,7 +91,6 @@ test("sample journey uses real API and graph construction, then highlights exact
     "Alice Chen confirmed that Alice Chen and David Chen are the parents of Bob Chen.",
   );
   await expect(edge).not.toHaveClass(/selected/);
-  await page.getByRole("link", { name: "Read passage in source" }).click();
   await expect(highlight).toBeInViewport();
   await page.locator(".document-scroll").evaluate((el) => {
     el.scrollTop = 0;
@@ -171,7 +102,6 @@ test("sample journey uses real API and graph construction, then highlights exact
   await otherParent.focus();
   await otherParent.press("Enter");
   await expect(otherParent).toHaveClass(/selected/);
-  await page.getByRole("link", { name: "Read passage in source" }).click();
   await expect(highlight).toBeInViewport();
   await page.screenshot({
     path: testInfo.outputPath("review.png"),

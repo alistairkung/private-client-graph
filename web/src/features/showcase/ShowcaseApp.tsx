@@ -1,38 +1,95 @@
 import "./showcase.css";
-import { LandingOpening } from "./LandingOpening";
-import { ShowcaseDemonstration } from "./ShowcaseDemonstration";
-import { EvaluationChapter } from "./EvaluationChapter";
-import { ProfessionalJudgment } from "./ProfessionalJudgment";
+import { AnalysisControls } from "./AnalysisControls";
+import { ReviewWorkspace } from "../review/ReviewWorkspace";
+import { SourcePanel } from "../review/SourcePanel";
+import { useCaseAnalysis } from "./useCaseAnalysis";
 
 export function ShowcaseApp() {
+  const { detail, sourceError, analysis, pending, error, lastMode, run } =
+    useCaseAnalysis();
   return (
-    <div className="showcase-shell">
-      <div className="showcase-width">
-        <header className="showcase-masthead">
-          <a href="/" className="showcase-brand">Private Client Graph</a>
-          <nav className="showcase-navigation" aria-label="Public navigation">
-            <a href="#demonstration">Demonstration</a>
-            <a href="#evaluation">Evaluation</a>
-            <a href="/app">Practitioner application</a>
-          </nav>
-        </header>
-        <main>
-          <LandingOpening />
-          <ShowcaseDemonstration />
-          <ProfessionalJudgment />
-          <EvaluationChapter />
-        </main>
-        <footer className="showcase-closing">
-          <div>
-            <h2>Follow the source for yourself.</h2>
-            <div className="closing-routes">
-              <a className="showcase-action" href="#demonstration">Explore the demonstration</a>
-              <a href="/app">Open practitioner prototype</a>
+    <main className="showcase-shell">
+      <header className="masthead">
+        <a href="/" className="brand">
+          <span className="brand-symbol" aria-hidden="true">
+            ⌘
+          </span>{" "}
+          Private Client Graph
+        </a>
+        <div className="showcase-navigation">
+          <span className="masthead-note">PUBLIC SYNTHETIC SHOWCASE</span>
+          <a href="/app">Practitioner application</a>
+        </div>
+      </header>
+      {sourceError ? (
+        <section className="load-state">
+          <p role="alert">{sourceError}</p>
+          <button onClick={() => window.location.reload()}>Reload case</button>
+        </section>
+      ) : !detail ? (
+        <p role="status" className="load-state">
+          Loading the synthetic case…
+        </p>
+      ) : (
+        <>
+          <section className="case-heading">
+            <div>
+              <p className="eyebrow">CASE 01 / FAMILY & TRUST RELATIONSHIPS</p>
+              <h1>
+                Every relationship.
+                <br />
+                <em>Back to its source.</em>
+              </h1>
+              <p className="intro">
+                Review the people and trust connections in an attendance note,
+                with the original evidence always in view.
+              </p>
             </div>
-            <p className="prototype-notice">Synthetic research prototype. Do not use real client information.</p>
+            <div className="case-summary">
+              <span className="synthetic-badge">SYNTHETIC CASE</span>
+              <h2>{detail.title}</h2>
+              <p>{detail.notice}</p>
+              <AnalysisControls
+                availability={detail.live_analysis}
+                pending={pending}
+                error={error}
+                lastMode={lastMode}
+                onRun={run}
+              />
+            </div>
+          </section>
+          <div className="workspace-bar">
+            <span>
+              {analysis ? "Review workspace" : "Start with the source"}
+            </span>
+            <span
+              className={
+                analysis?.execution.mode === "sample" ? "mode sample" : "mode"
+              }
+            >
+              {analysis
+                ? analysis.execution.mode === "live"
+                  ? "Live analysis · Newly extracted"
+                  : "Sample analysis · Demonstration fixture"
+                : "Choose an analysis above to reveal the relationships"}
+            </span>
           </div>
-        </footer>
-      </div>
-    </div>
+          {analysis ? (
+            <ReviewWorkspace
+              source={detail.source_text}
+              graph={analysis.graph}
+            />
+          ) : (
+            <div className="initial-source">
+              <SourcePanel source={detail.source_text} />
+            </div>
+          )}
+        </>
+      )}
+      <footer>
+        Private Client Graph{" "}
+        <span>Read-only review · Synthetic material only</span>
+      </footer>
+    </main>
   );
 }
