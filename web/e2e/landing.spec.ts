@@ -32,3 +32,23 @@ test("landing navigation reaches an explicit, contained demonstration", async ({
     page.viewportSize()!.width,
   );
 });
+
+for (const reducedMotion of ["no-preference", "reduce"] as const) {
+  test(`Case 01 navigation respects ${reducedMotion} motion preference`, async ({ page }) => {
+    await page.emulateMedia({ reducedMotion });
+    await page.goto("/");
+    await expect(page.locator("html")).toHaveCSS(
+      "scroll-behavior", reducedMotion === "reduce" ? "auto" : "smooth",
+    );
+    await expect(page.getByLabel("Source document")).toBeVisible();
+    await page.evaluate(() => document.fonts.ready);
+    await page.getByRole("link", { name: "Explore Case 01", exact: true }).last().click();
+    await expect(page).toHaveURL(/#case-01$/);
+    await expect.poll(() => page.locator("#case-01").evaluate((section) => {
+      const target = section.getBoundingClientRect().top + window.scrollY
+        - parseFloat(getComputedStyle(section).scrollMarginTop);
+      const maximum = document.documentElement.scrollHeight - window.innerHeight;
+      return Math.abs(window.scrollY - Math.min(target, maximum));
+    })).toBeLessThan(2);
+  });
+}

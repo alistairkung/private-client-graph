@@ -115,7 +115,8 @@ case label is small, spaced uppercase text. The demonstration frame reuses
 adjusts spacing without replacing review behavior. Analysis remains an explicit
 choice, with sample and live outcomes identified separately.
 
-The action's brief color transition is removed for reduced-motion preferences.
+Public anchor links use native smooth scrolling. Reduced-motion preferences
+restore instant anchor navigation and remove the action's brief color transition.
 
 ## Do's and Don'ts
 

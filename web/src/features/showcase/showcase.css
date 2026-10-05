@@ -1,3 +1,10 @@
+/* Native anchor scrolling keeps fragment URLs and keyboard navigation intact. */
+@media (prefers-reduced-motion: no-preference) {
+  html:has(.showcase-shell) {
+    scroll-behavior: smooth;
+  }
+}
+
 /* Public landing foundations; chapter composition lives beside each chapter. */
 .showcase-shell {
   --folio-green: #173e38;
