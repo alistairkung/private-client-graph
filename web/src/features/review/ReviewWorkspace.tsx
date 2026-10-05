@@ -11,12 +11,14 @@ export function ReviewWorkspace({
   graph,
   sourceTitle,
   practitioner = false,
+  embedded = false,
   graphTitle = "A connected view",
   emptyGraphTitle,
 }: {
   source: string;
   sourceTitle?: string;
   practitioner?: boolean;
+  embedded?: boolean;
   graphTitle?: string;
   emptyGraphTitle?: string;
   graph: CanonicalGraph;
@@ -59,7 +61,7 @@ export function ReviewWorkspace({
       <section className="graph-panel panel">
         <div className="panel-heading">
           <div>
-            <p className="eyebrow">{practitioner ? "Relationship review" : "RELATIONSHIP REVIEW"}</p>
+            <p className="eyebrow">Relationship review</p>
             <h2>{graphTitle}</h2>
           </div>
           {!practitioner && <span className="pill">
@@ -84,6 +86,7 @@ export function ReviewWorkspace({
           </span>
         </div>
         <GraphView
+          embedded={embedded}
           graph={graph}
           selected={selected}
           onSelect={selectRelationship}
@@ -95,7 +98,6 @@ export function ReviewWorkspace({
           </p>
         )}
         <EvidencePanel
-          practitioner={practitioner}
           items={items}
           activeId={activeId}
           onSelect={setActiveId}

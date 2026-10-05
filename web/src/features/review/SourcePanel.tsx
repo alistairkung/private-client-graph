@@ -21,7 +21,7 @@ export function SourcePanel({
     <section className="source-panel panel">
       <div className="panel-heading">
         <div>
-          <p className="eyebrow">{practitioner ? "Authoritative source" : "THE SOURCE"}</p>
+          <p className="eyebrow">{practitioner ? "Authoritative source" : "The source"}</p>
           <h2>{title}</h2>
         </div>
         <span className="pill">Read-only</span>

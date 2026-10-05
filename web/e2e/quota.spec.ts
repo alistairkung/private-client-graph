@@ -3,6 +3,7 @@ import { selectSpouseRelationship } from "./review-helpers";
 
 test("live attempt exhausts the shared allowance while sample and Matter review stay usable", async ({ page }) => {
   await page.goto("/");
+  await page.getByText("Analysis options", { exact: true }).click();
   const live = page.getByRole("button", { name: "Run live analysis" });
   await expect(live).toBeEnabled();
   await live.click();
@@ -15,6 +16,7 @@ test("live attempt exhausts the shared allowance while sample and Matter review 
   // New navigation at a phone width discovers exhaustion before any POST.
   await page.setViewportSize({ width: 390, height: 844 });
   await page.reload();
+  await page.getByText("Analysis options", { exact: true }).click();
   await expect(live).toBeDisabled();
   await expect(page.locator("time")).toBeVisible();
   await page.getByRole("button", { name: "Load sample analysis" }).click();
