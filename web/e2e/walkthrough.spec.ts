@@ -89,6 +89,7 @@ test("skip offers keyboard access to explicit sample loading before analysis exi
   const requests: string[] = [];
   page.on("request", (request) => { if (request.method() === "POST") requests.push(request.url()); });
   await page.goto("/");
+  await expect(page.getByRole("button", { name: "Load sample analysis" })).toBeVisible();
   const skip = page.getByRole("link", { name: "Skip to interactive demonstration" });
   await skip.focus();
   await skip.press("Enter");
@@ -100,4 +101,25 @@ test("skip offers keyboard access to explicit sample loading before analysis exi
   await expect(page.getByText(/You control the review/)).toBeVisible();
   await page.locator(".sample-passage").last().scrollIntoViewIfNeeded();
   await expect(page.getByRole("button", { name: relationships[0], exact: true })).toHaveAttribute("aria-pressed", "true");
+});
+
+test("skip retains keyboard focus when the source finishes loading", async ({ page }) => {
+  let releaseSource!: () => void;
+  const sourceReady = new Promise<void>((resolve) => { releaseSource = resolve; });
+  await page.route("**/api/showcase/case-01", async (route) => {
+    const response = await route.fetch();
+    await sourceReady;
+    await route.fulfill({ response });
+  });
+  await page.goto("/");
+  await expect(page.getByRole("status")).toHaveText("Loading the synthetic case…");
+  const skip = page.getByRole("link", { name: "Skip to interactive demonstration" });
+  await skip.focus();
+  await skip.press("Enter");
+  await expect(page.locator("#interactive-demonstration")).toBeFocused();
+  releaseSource();
+  await expect(page.getByRole("button", { name: "Load sample analysis" })).toBeVisible();
+  await expect(page.locator("#interactive-demonstration")).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(page.getByRole("button", { name: "Load sample analysis" })).toBeFocused();
 });
