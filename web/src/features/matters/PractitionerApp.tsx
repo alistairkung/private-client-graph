@@ -1,5 +1,5 @@
 import "./practitioner.css";
-import { SignOut } from "./SignOut";
+import { AccountMenu } from "./AccountMenu";
 import { MatterWorkspace } from "./MatterWorkspace";
 import { MatterLedger } from "./MatterLedger";
 import { ProposalCollection } from "../matter-proposals/ProposalCollection";
@@ -19,15 +19,12 @@ export function PractitionerApp({ matterId, proposalId }: { matterId?: string; p
           <nav aria-label="Practitioner application">
             <a href="/app" aria-current="page">Matters</a>
           </nav>
-          <a href="/" className="ledger-showcase" aria-label="Public showcase">
-            <span className="ledger-wide-label">Public </span>showcase
-          </a>
+          <AccountMenu />
         </div>
       </header>
       <main className="ledger-content ledger-width">
         <div className="practitioner-access">
           <p>This prototype accepts synthetic or fictional material only. It is not suitable for real confidential client information.</p>
-          <SignOut />
         </div>
         <PractitionerPage matterId={matterId} proposalId={proposalId} />
       </main>

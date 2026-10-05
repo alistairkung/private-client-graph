@@ -73,17 +73,94 @@
   font-weight: 600;
   line-height: 20px;
 }
-.practitioner-shell .ledger-showcase {
+.practitioner-shell .account-menu {
+  position: relative;
   margin-left: auto;
+}
+.practitioner-shell .account-menu-trigger {
+  position: relative;
   display: flex;
   align-items: center;
-  min-height: 44px;
-  font-size: 14px;
-  line-height: 20px;
-  font-weight: 600;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #173e38;
 }
-.practitioner-shell .ledger-wide-label {
-  white-space: pre;
+.practitioner-shell .account-menu-trigger::before {
+  position: absolute;
+  inset: 4px;
+  border: 1px solid #c9cec8;
+  border-radius: 50%;
+  content: "";
+}
+.practitioner-shell .account-menu-trigger:hover:not(:disabled) {
+  background: transparent;
+}
+.practitioner-shell .account-menu-trigger:hover::before,
+.practitioner-shell .account-menu-trigger[aria-expanded="true"]::before {
+  background: #e8ece8;
+}
+.practitioner-shell .account-menu-trigger:focus-visible {
+  outline: 3px solid #773b46;
+  outline-offset: 0;
+}
+.practitioner-shell .account-menu-trigger svg {
+  z-index: 1;
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-width: 1.6;
+}
+.practitioner-shell .account-menu-panel {
+  position: absolute;
+  z-index: 10;
+  top: calc(100% + 4px);
+  right: 0;
+  width: 192px;
+  max-width: calc(100vw - 40px);
+  border: 1px solid #c9cec8;
+  border-radius: 3px;
+  background: #fff;
+}
+.practitioner-shell .account-menu-panel > a,
+.practitioner-shell .account-menu-panel .sign-out button {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 44px;
+  padding: 12px 16px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #173e38;
+  font: 600 14px/20px "Public Sans", Arial, Helvetica, sans-serif;
+  text-align: left;
+}
+.practitioner-shell .account-menu-panel > a:hover,
+.practitioner-shell .account-menu-panel .sign-out button:hover:not(:disabled) {
+  background: #f0f2ee;
+  text-decoration: none;
+}
+.practitioner-shell .account-menu-panel > a:focus-visible,
+.practitioner-shell .account-menu-panel .sign-out button:focus-visible {
+  outline: 3px solid #773b46;
+  outline-offset: -3px;
+}
+.practitioner-shell .account-menu-panel .sign-out {
+  border-top: 1px solid #c9cec8;
+}
+.practitioner-shell .account-menu-panel .sign-out [role="alert"] {
+  display: block;
+  padding: 0 16px 12px;
+  color: #773b46;
+  font-size: 12px;
+  line-height: 18px;
 }
 .practitioner-shell .ledger-content {
   padding: 48px 0 0;
@@ -158,8 +235,7 @@
   }
   .practitioner-shell nav { grid-row: 2; }
   .practitioner-shell nav a { width: fit-content; min-height: 44px; }
-  .practitioner-shell .ledger-showcase { grid-column: 2; grid-row: 1; text-transform: capitalize; }
-  .practitioner-shell .ledger-wide-label { display: none; }
+  .practitioner-shell .account-menu { grid-column: 2; grid-row: 1; }
   .practitioner-shell .ledger-content { padding-top: 32px; }
   .practitioner-shell h1 { font-size: 28px; line-height: 34px; }
   .practitioner-shell .ledger-footer { flex-direction: column; gap: 4px; }
@@ -226,27 +302,9 @@
 .practitioner-shell .evidence-number { text-transform: none; }
 
 .practitioner-access {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 24px;
   margin-bottom: 24px;
   padding-bottom: 16px;
   border-bottom: 1px solid #c9cec8;
   font-size: 13px;
 }
 .practitioner-access p { margin: 0; max-width: 760px; }
-.sign-out button {
-  color: inherit;
-  font: inherit;
-  background: transparent;
-  border: 1px solid #738a7e;
-  padding: 8px 12px;
-  white-space: nowrap;
-  cursor: pointer;
-}
-.sign-out button:focus-visible { outline: 3px solid #773b46; }
-.sign-out [role="alert"] { display: block; }
-@media (max-width: 600px) {
-  .practitioner-access { flex-direction: column; gap: 12px; }
-}

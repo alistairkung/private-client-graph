@@ -40,9 +40,22 @@ test("persisted Matter opens from ledger and highlights exact Evidence after dir
   expect(apiRequests.every(path => path.startsWith("/api/matters") || path === "/api/matter-proposals")).toBe(true);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   await page.screenshot({ path: testInfo.outputPath("matter-workspace.png"), fullPage: true });
-  await page.getByRole("link", { name: "Back to Matters" }).click();
+  const mattersNavigation = page.getByRole("link", { name: "Matters", exact: true });
+  await mattersNavigation.focus();
+  await mattersNavigation.press("Enter");
   await expect(matter).toBeVisible();
-  await page.getByRole("link", { name: "Public showcase" }).click();
+  const accountMenu = page.getByRole("button", { name: "Account and application menu" });
+  await accountMenu.focus();
+  await accountMenu.press("Enter");
+  await expect(accountMenu).toHaveAttribute("aria-expanded", "true");
+  const showcaseLink = page.getByRole("link", { name: "Public showcase" });
+  const menuBounds = await showcaseLink.locator("..").boundingBox();
+  expect(menuBounds).not.toBeNull();
+  expect(menuBounds!.x).toBeGreaterThanOrEqual(20);
+  expect(menuBounds!.x + menuBounds!.width).toBeLessThanOrEqual(await page.evaluate(() => window.innerWidth - 20));
+  await accountMenu.press("Tab");
+  await expect(showcaseLink).toBeFocused();
+  await showcaseLink.press("Enter");
   await expect(page.getByRole("button", { name: "Load sample analysis" })).toBeVisible();
   await page.getByRole("link", { name: "Practitioner application" }).click();
   await expect(matter).toBeVisible();
@@ -71,7 +84,14 @@ test("direct navigation requires Google sign-in and logout removes access", asyn
   const session = (await context.cookies()).find(cookie => cookie.name === "__Host-pcg-session")!;
   expect(session.httpOnly).toBe(true);
   expect(session.secure).toBe(true);
-  await page.getByRole("button", { name: "Sign out" }).click();
+  const accountMenu = page.getByRole("button", { name: "Account and application menu" });
+  await accountMenu.focus();
+  await accountMenu.press("Enter");
+  await accountMenu.press("Tab");
+  await page.getByRole("link", { name: "Public showcase" }).press("Tab");
+  const signOut = page.getByRole("button", { name: "Sign out" });
+  await expect(signOut).toBeFocused();
+  await signOut.press("Enter");
   await expect(page).toHaveURL("/");
   expect((await context.request.get("/api/matters")).status()).toBe(401);
   await page.goto(matterPath);
@@ -82,6 +102,7 @@ test("direct navigation requires Google sign-in and logout removes access", asyn
 for (const failure of ["network", "server"] as const) {
   test(`sign-out ${failure} failure keeps the session and permits retry`, async ({ page, context }) => {
     await page.goto("/app");
+    await page.getByRole("button", { name: "Account and application menu" }).click();
     const signOut = page.getByRole("button", { name: "Sign out" });
     await expect(signOut).toBeEnabled();
     await page.route("**/auth/logout", async route => {

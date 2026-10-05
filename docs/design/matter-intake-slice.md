@@ -45,6 +45,35 @@ The access boundary is path-specific:
 - the entire `/app` subtree and all `/api/matter-proposals*` and `/api/matters*` operations require authentication and allowlist authorization;
 - practitioner APIs enforce the boundary independently of frontend routing.
 
+### Practitioner account and application navigation
+
+The Practitioner Application keeps **Matters** visible as its sole primary
+navigation item throughout the `/app` subtree. A compact circular **account and
+application menu** is the single entry point for the two secondary actions
+available to an authenticated practitioner:
+
+1. **Public showcase**, which navigates to `/`;
+2. **Sign out**, which uses the existing protected logout operation.
+
+This is deliberately not a general user or profile menu. It exposes no name,
+email address, initials, profile, settings, notifications, role, Firm, or tenant
+selection. Its trigger uses a neutral account symbol because the frontend has no
+display-identity contract and must not infer authentication or identity from
+frontend-only state. Moving Sign out into this menu does not change the
+framework-managed session, CSRF, trusted-origin, allowlist, or logout security
+model.
+
+The public `/` surface does not render this account control, including when the
+browser happens to hold a valid practitioner session. It retains a visible
+**Practitioner application** link. Following that link navigates to `/app` and
+allows the existing server-enforced authentication boundary to begin Google
+sign-in when required; the public frontend does not determine authentication
+state or render a separate Sign in action.
+
+The persistent synthetic-only notice remains visible in practitioner content.
+It is a data-handling boundary, not account information, and must not move into
+the menu.
+
 This prototype authorization model is not the eventual multi-firm production architecture. Actual confidential client information would first require a separate design covering tenancy and data ownership, Matter authorization, provider and data-processing approval, retention, logging, backups, incident controls, and other applicable operational and legal safeguards. Basic authentication alone would not satisfy that requirement.
 
 ### Synthetic-only submission gate

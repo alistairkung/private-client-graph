@@ -1,10 +1,12 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { expect, test, vi } from "vitest";
 import { App } from "./App";
 
 test.each(["/app", "/app/"])(
   "%s composes the practitioner shell without requesting showcase data",
   async (path) => {
+    const user = userEvent.setup();
     window.history.replaceState(null, "", path);
     const fetcher = vi
       .spyOn(globalThis, "fetch")
@@ -18,6 +20,9 @@ test.each(["/app", "/app/"])(
       "aria-current",
       "page",
     );
+    expect(screen.queryByRole("link", { name: "Public showcase" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Sign out" })).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Account and application menu" }));
     expect(screen.getByRole("link", { name: "Public showcase" })).toHaveAttribute(
       "href",
       "/",
@@ -28,12 +33,13 @@ test.each(["/app", "/app/"])(
   },
 );
 
-test("practitioner notice and logout protect the synthetic session", async () => {
+test("practitioner notice remains visible outside the account menu", async () => {
   window.history.replaceState(null, "", "/app");
   vi.spyOn(globalThis, "fetch").mockImplementation(async () => new Response(JSON.stringify([])));
   render(<App />);
   expect(screen.getByText(/not suitable for real confidential client information/i)).toBeVisible();
-  expect(screen.getByRole("button", { name: "Sign out" })).toBeVisible();
+  expect(screen.getByRole("button", { name: "Account and application menu" })).toBeVisible();
+  expect(screen.queryByRole("button", { name: "Sign out" })).not.toBeInTheDocument();
 });
 
 test("creation direct entry stays in the practitioner shell and does not load analysis", () => {
