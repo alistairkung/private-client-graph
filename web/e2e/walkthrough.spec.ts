@@ -65,9 +65,17 @@ test("sample attention preserves graph geometry, exact source and visitor contro
   await page.evaluate(() => window.scrollBy(0, -300));
   await scrollRegion.evaluate((element) => { element.scrollTop = element.scrollHeight; });
   await scrollRegion.hover();
+  await expect.poll(() => scrollRegion.evaluate((element) =>
+    element.scrollHeight - element.clientHeight - element.scrollTop,
+  )).toBeLessThanOrEqual(1);
   const scroll = await page.evaluate(() => scrollY);
-  await page.mouse.wheel(0, 180);
-  await expect.poll(() => page.evaluate(() => scrollY)).toBeGreaterThan(scroll);
+  expect(await page.evaluate(() => document.documentElement.scrollHeight - innerHeight - scrollY)).toBeGreaterThan(180);
+  // Chromium can consume the first wheel event at the inner scroll boundary.
+  // Continued wheel input must escape to the page; a scroll trap still fails.
+  await expect.poll(async () => {
+    await page.mouse.wheel(0, 180);
+    return page.evaluate(() => scrollY);
+  }).toBeGreaterThan(scroll);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   if (testInfo.project.name === "desktop") {
     await page.setViewportSize({ width: 1200, height: 850 });
