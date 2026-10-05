@@ -82,9 +82,7 @@ export function GraphView({
   selected,
   onSelect,
   emptyTitle = "No relationships found",
-  embedded = false,
 }: {
-  embedded?: boolean;
   emptyTitle?: string;
   graph: CanonicalGraph;
   selected: number | null;
@@ -116,47 +114,25 @@ export function GraphView({
     },
   }));
   return (
-    <>
-      <div className="graph-canvas" aria-label="Relationship graph">
-        <ReactFlow
-          edgeTypes={edgeTypes}
-          nodeTypes={nodeTypes}
-          nodes={view.nodes}
-          edges={edges}
-          minZoom={0.25}
-          maxZoom={1.5}
-          nodesDraggable={false}
-          nodesConnectable={false}
-          nodesFocusable={false}
-          edgesReconnectable={false}
-          edgesFocusable={false}
-          deleteKeyCode={null}
-          zoomOnScroll={!embedded}
-          zoomOnPinch={!embedded}
-          zoomOnDoubleClick={!embedded}
-          panOnDrag={!embedded}
-          preventScrolling={!embedded}
-          onEdgeClick={(_, edge) => onSelect(Number(edge.id))}
-        >
-          <FitGraph bounds={view.bounds} />
-          <Controls showInteractive={false} showFitView={false} />
-        </ReactFlow>
-      </div>
-      {embedded && (
-        <details className="relationship-list">
-          <summary>Relationships as a list</summary>
-          <ul>
-            {view.edges.map((edge, index) => (
-              <li key={edge.id}>
-                <button aria-label={`Review ${edge.ariaLabel}`} aria-pressed={selected === index}
-                  onClick={() => onSelect(index)}>
-                  {edge.ariaLabel}
-                </button>
-              </li>
-            ))}
-          </ul>
-        </details>
-      )}
-    </>
+    <div className="graph-canvas" aria-label="Relationship graph">
+      <ReactFlow
+        edgeTypes={edgeTypes}
+        nodeTypes={nodeTypes}
+        nodes={view.nodes}
+        edges={edges}
+        minZoom={0.25}
+        maxZoom={1.5}
+        nodesDraggable={false}
+        nodesConnectable={false}
+        nodesFocusable={false}
+        edgesReconnectable={false}
+        edgesFocusable={false}
+        deleteKeyCode={null}
+        onEdgeClick={(_, edge) => onSelect(Number(edge.id))}
+      >
+        <FitGraph bounds={view.bounds} />
+        <Controls showInteractive={false} showFitView={false} />
+      </ReactFlow>
+    </div>
   );
 }

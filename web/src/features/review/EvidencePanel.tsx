@@ -2,16 +2,18 @@ import type { Evidence } from "../../shared/canonical-graph";
 
 export function EvidencePanel({
   items,
+  practitioner = false,
   activeId,
   onSelect,
 }: {
   items: Evidence[];
+  practitioner?: boolean;
   activeId?: string;
   onSelect: (id: string) => void;
 }) {
   return (
     <section className="evidence-panel" aria-label="Supporting evidence">
-      <p className="eyebrow">Supporting evidence</p>
+      <p className="eyebrow">{practitioner ? "Supporting evidence" : "SUPPORTING EVIDENCE"}</p>
       {items.length ? (
         <div className="evidence-list">
           {items.map((item, index) => (

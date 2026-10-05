@@ -1,52 +1,29 @@
 import "./review.css";
-import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 import { EvidencePanel } from "./EvidencePanel";
 import { GraphView } from "./GraphView";
 import { SourcePanel } from "./SourcePanel";
 import { locateEvidence } from "./graph-view";
 import type { CanonicalGraph } from "../../shared/canonical-graph";
 
-export interface ReviewSelection {
-  relationshipIndex: number;
-  evidenceId: string;
-}
-
 export function ReviewWorkspace({
   source,
   graph,
   sourceTitle,
   practitioner = false,
-  embedded = false,
   graphTitle = "A connected view",
   emptyGraphTitle,
-  guidedSelection,
-  onReviewInteraction,
 }: {
   source: string;
   sourceTitle?: string;
   practitioner?: boolean;
-  embedded?: boolean;
   graphTitle?: string;
   emptyGraphTitle?: string;
   graph: CanonicalGraph;
-  guidedSelection?: ReviewSelection;
-  onReviewInteraction?: () => void;
 }) {
-  const sourceId = useId();
-  const userControlled = useRef(false);
   const [selected, setSelected] = useState<number | null>(null);
   const [activeId, setActiveId] = useState<string>();
   const [activation, setActivation] = useState(0);
-  useEffect(() => {
-    if (!userControlled.current && guidedSelection) {
-      setSelected(guidedSelection.relationshipIndex);
-      setActiveId(guidedSelection.evidenceId);
-    }
-  }, [guidedSelection]);
-  function takeControl() {
-    userControlled.current = true;
-    onReviewInteraction?.();
-  }
   const relationship =
     selected === null ? undefined : graph.relationships[selected];
   const items =
@@ -78,12 +55,11 @@ export function ReviewWorkspace({
     [graph],
   );
   return (
-    <div className="review-workspace" onPointerDownCapture={takeControl}
-      onKeyDownCapture={takeControl} onClickCapture={takeControl}>
+    <div className="review-workspace">
       <section className="graph-panel panel">
         <div className="panel-heading">
           <div>
-            <p className="eyebrow">Relationship review</p>
+            <p className="eyebrow">{practitioner ? "Relationship review" : "RELATIONSHIP REVIEW"}</p>
             <h2>{graphTitle}</h2>
           </div>
           {!practitioner && <span className="pill">
@@ -108,7 +84,6 @@ export function ReviewWorkspace({
           </span>
         </div>
         <GraphView
-          embedded={embedded}
           graph={graph}
           selected={selected}
           onSelect={selectRelationship}
@@ -120,14 +95,13 @@ export function ReviewWorkspace({
           </p>
         )}
         <EvidencePanel
+          practitioner={practitioner}
           items={items}
           activeId={activeId}
           onSelect={setActiveId}
         />
-        {embedded && span && <a className="source-jump" href={`#${sourceId}`}>Read passage in source</a>}
       </section>
-      <SourcePanel practitioner={practitioner} title={sourceTitle} source={source} span={span}
-        activation={activation} scrollWithinPanel={embedded} scrollId={sourceId} onInteraction={takeControl} />
+      <SourcePanel practitioner={practitioner} title={sourceTitle} source={source} span={span} activation={activation} />
     </div>
   );
 }
