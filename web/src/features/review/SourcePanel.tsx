@@ -6,17 +6,33 @@ export function SourcePanel({
   title = "Attendance note",
   span,
   activation,
+  scrollWithinPanel = false,
+  scrollId,
+  onInteraction,
 }: {
   source: string;
   practitioner?: boolean;
   title?: string;
   activation?: number;
   span?: { start: number; end: number };
+  scrollWithinPanel?: boolean;
+  scrollId?: string;
+  onInteraction?: () => void;
 }) {
   const highlight = useRef<HTMLElement>(null);
+  const scroller = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    highlight.current?.scrollIntoView({ behavior: "instant", block: "center" });
-  }, [span?.start, span?.end, activation]);
+    if (!highlight.current) return;
+    if (scrollWithinPanel && scroller.current) {
+      const panel = scroller.current;
+      const mark = highlight.current.getBoundingClientRect();
+      // Only move the source viewport: scrollIntoView also moves the landing page.
+      panel.scrollTop += mark.top - panel.getBoundingClientRect().top
+        - (panel.clientHeight - mark.height) / 2;
+    } else {
+      highlight.current.scrollIntoView({ behavior: "instant", block: "center" });
+    }
+  }, [span?.start, span?.end, activation, scrollWithinPanel]);
   return (
     <section className="source-panel panel">
       <div className="panel-heading">
@@ -26,7 +42,8 @@ export function SourcePanel({
         </div>
         <span className="pill">Read-only</span>
       </div>
-      <div className="document-scroll">
+      <div className="document-scroll" ref={scroller} id={scrollId} tabIndex={0}
+        role="region" aria-label="Scrollable source" onWheel={onInteraction}>
         <article aria-label="Source document" className="source-text">
           {span ? (
             <>

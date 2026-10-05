@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { AnalysisControls } from "./AnalysisControls";
-import { ReviewWorkspace } from "../review/ReviewWorkspace";
 import { SourcePanel } from "../review/SourcePanel";
 import { useCaseAnalysis } from "./useCaseAnalysis";
+import { SampleStory, SampleWalkthrough } from "./SampleWalkthrough";
 
 export function ShowcaseDemonstration() {
   const [expanded, setExpanded] = useState(false);
+  const [skipRequested, setSkipRequested] = useState(false);
   const { detail, sourceError, analysis, pending, error, lastMode, run } =
     useCaseAnalysis();
   return (
@@ -17,8 +18,10 @@ export function ShowcaseDemonstration() {
     >
       <div className="demonstration-heading">
         <div>
-          <h2 id="demonstration-title">Choose a relationship. Read what supports it.</h2>
-          <p>Load the Evergreen sample, then choose any relationship to follow its Evidence into the attendance note.</p>
+          <h2 id="demonstration-title">Follow the source.</h2>
+          <p>A guided Case 01 sample walkthrough: follow the settlor, family and beneficiary passages through the complete Evergreen graph.</p>
+          <p>Load sample analysis to follow the supplied Evidence. Choose a relationship at any time to take control.</p>
+          <a href="#interactive-demonstration" onClick={() => setSkipRequested(true)}>Skip to interactive demonstration</a>
           <p className="prototype-notice">Synthetic research prototype. Do not use real client information.</p>
         </div>
         <button aria-expanded={expanded} aria-controls="demonstration-review"
@@ -27,42 +30,27 @@ export function ShowcaseDemonstration() {
         </button>
       </div>
       <div id="demonstration-review">
+        {detail && !sourceError && <div id={analysis ? undefined : "interactive-demonstration"}
+          tabIndex={analysis ? undefined : -1}>
+          <AnalysisControls availability={detail.live_analysis} pending={pending}
+            error={error} lastMode={lastMode} onRun={run} />
+        </div>}
+        {!analysis && <SampleStory />}
         {sourceError ? (
-          <div className="load-state">
+          <div className="load-state" id="interactive-demonstration" tabIndex={-1}>
             <p role="alert">{sourceError}</p>
             <button onClick={() => window.location.reload()}>Reload case</button>
           </div>
         ) : !detail ? (
-          <p role="status" className="load-state">Loading the synthetic case…</p>
+          <p role="status" className="load-state" id="interactive-demonstration" tabIndex={-1}>Loading the synthetic case…</p>
         ) : (
           <>
-            <AnalysisControls availability={detail.live_analysis} pending={pending}
-              error={error} lastMode={lastMode} onRun={run} />
-            <div className="workspace-bar">
-              <span>
-                {analysis ? "Review workspace" : "Start with the source"}
-              </span>
-              <span
-                className={
-                  analysis?.execution.mode === "sample" ? "mode sample" : "mode"
-                }
-              >
-                {analysis
-                  ? analysis.execution.mode === "live"
-                    ? "Live analysis · Newly extracted"
-                    : "Sample analysis · Demonstration fixture"
-                  : "Load an analysis to reveal the relationships"}
-              </span>
-            </div>
             {analysis ? (
-              <ReviewWorkspace
-                embedded
-                source={detail.source_text}
-                graph={analysis.graph}
-              />
+              <SampleWalkthrough source={detail.source_text} analysis={analysis}
+                expanded={expanded} skipRequested={skipRequested} />
             ) : (
               <div className="initial-source">
-                <SourcePanel source={detail.source_text} />
+                <SourcePanel source={detail.source_text} scrollWithinPanel />
               </div>
             )}
           </>

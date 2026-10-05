@@ -74,6 +74,16 @@ test("missing canonical evidence is an explicit client contract error", async ()
   expect(container.querySelector("mark")).toBeNull();
 });
 
+test("review retains a visitor's Evidence choice when later guidance arrives", async () => {
+  const { container, rerender } = render(<ReviewWorkspace graph={graph} source={source}
+    guidedSelection={{ relationshipIndex: 0, evidenceId: "e1" }} />);
+  expect(container.querySelector("mark")).toHaveTextContent("Alice and Bob are spouses.");
+  await userEvent.setup().click(screen.getByRole("button", { name: /Evidence 2/ }));
+  rerender(<ReviewWorkspace graph={graph} source={source}
+    guidedSelection={{ relationshipIndex: 0, evidenceId: "e1" }} />);
+  expect(container.querySelector("mark")).toHaveTextContent("They confirmed their marriage.");
+});
+
 test("selecting an edge again returns to its evidence even when the quote is unchanged", async () => {
   const user = userEvent.setup();
   render(<ReviewWorkspace source={source} graph={graph} />);

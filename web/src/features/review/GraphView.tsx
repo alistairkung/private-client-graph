@@ -132,6 +132,9 @@ export function GraphView({
           edgesFocusable={false}
           deleteKeyCode={null}
           zoomOnScroll={!embedded}
+          zoomOnPinch={!embedded}
+          zoomOnDoubleClick={!embedded}
+          panOnDrag={!embedded}
           preventScrolling={!embedded}
           onEdgeClick={(_, edge) => onSelect(Number(edge.id))}
         >
