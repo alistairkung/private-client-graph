@@ -1,9 +1,9 @@
 # Matter Ledger visual specification
 
-> **Status:** Approved visual direction; implementation pending.
+> **Status:** Approved visual direction; account-menu amendment implemented.
 >
-> **Applies to:** The practitioner application at `/app` and
-> `/app/matters/{internal_id}`.
+> **Applies to:** The practitioner application throughout the authenticated
+> `/app` subtree and the Public Showcase entry link at `/`.
 >
 > **Does not redesign:** The public synthetic showcase at `/`, Canonical Graph
 > semantics, relationship selection, Evidence behaviour, or source highlighting.
@@ -36,9 +36,10 @@ design ever conflict, the product design is authoritative.
    needed to identify a Matter.
 4. **Work begins immediately.** Opening a Matter leads directly to the existing
    graph-and-Evidence review workspace, not to an overview or dashboard.
-5. **The interface never promises unsupported work.** There are no create,
-   upload, edit, search, filter, status, assignment, notification, user, or
-   settings controls in this slice.
+5. **The interface never promises unsupported work.** The account control
+   contains only the two available secondary actions. It does not imply a
+   profile, settings, notifications, Firm selection, roles, or account
+   management.
 6. **Synthetic and read-only are boundaries, not badges of progress.** State
    this boundary plainly in the application footer; do not represent it as a
    Matter status.
@@ -70,9 +71,12 @@ It deliberately differs through:
 - compact task copy rather than promotional copy;
 - no analysis controls in a Matter workspace.
 
-Add one quiet text link from the showcase masthead to **Practitioner application**.
-Style that link within the existing showcase identity; do not import the Matter
-Ledger shell or typography into `/`.
+Keep one quiet text link from the showcase masthead to **Practitioner
+application**. Style that link within the existing showcase identity; do not
+import the Matter Ledger shell, typography, or account control into `/`. The
+link remains visible whether or not the browser holds an authenticated
+practitioner session. It navigates to `/app`, where the server-owned
+authentication boundary begins sign-in when required.
 
 ## Core visual system
 
@@ -171,7 +175,7 @@ rule. Its inner content uses the same `1180px` maximum width as the page.
 
 ```text
 ┌──────────────────────────────────────────────────────────────────────┐
-│ [mark] Private Client Graph   Matters              Public showcase  │
+│ [mark] Private Client Graph   Matters                    [account]  │
 ├──────────────────────────────────────────────────────────────────────┤
 │                                                                      │
 │ page content                                                         │
@@ -182,12 +186,68 @@ rule. Its inner content uses the same `1180px` maximum width as the page.
 - The brand is first and links to `/app`.
 - **Matters** is the only primary navigation item and links to `/app`.
 - Mark Matters as current on both `/app` and Matter-detail routes.
-- Place **Public showcase** at the far right and link it to `/`.
+- Place the circular account-and-application trigger at the far right.
 - Do not add placeholder navigation items to balance the header.
-- Do not add an avatar, firm name, notifications, help, or settings.
+- Do not add a profile image, identity text, Firm name, notifications, help, or
+  settings.
 
 The current-navigation treatment is a two-pixel Ledger ink rule aligned with the
 shell's bottom boundary. It is not a filled pill.
+
+The account control intentionally supersedes the original shell rule that
+required **Public showcase** as a persistent far-right text link and prohibited
+all avatar or user chrome. The exception is narrow: it consolidates only surface
+switching and session termination and creates no broader profile concept.
+
+### Account and application menu
+
+The trigger is a restrained utility control rather than a personalized avatar:
+
+- use a familiar person silhouette with no initials, photograph, presence dot,
+  badge, or chevron;
+- render a `36px` visible circle within a minimum `44px` square target;
+- use a transparent or Ledger surface background, a one-pixel Ledger rule
+  border, and a Ledger ink glyph;
+- use the stable accessible name **Account and application menu** and expose the
+  expanded state programmatically;
+- when expanded, use the existing pressed background `#E8ECE8` rather than a
+  decorative accent.
+
+Activating the trigger opens one compact popover aligned to its right edge:
+
+```text
+┌──────────────────────┐
+│ Public showcase      │
+├──────────────────────┤
+│ Sign out             │
+└──────────────────────┘
+```
+
+The menu contains exactly those two actions, in that order. **Public showcase**
+is an ordinary link to `/`. A meaningful one-pixel rule separates it from the
+**Sign out** button because one changes application surface and the other ends
+the session. Do not add an Account heading, identity summary, icons, descriptive
+copy, or unsupported actions.
+
+The panel uses Ledger surface, a one-pixel Ledger rule border, no shadow, and a
+maximum `3px` corner radius. Set its width to `192px`; constrain it to the
+viewport with the shell's small-screen margin. Rows are full-width, left-aligned,
+at least `44px` high, padded `16px` horizontally, and set in Public Sans 600 at
+`14px / 20px`. The panel opens immediately without scale, fade, bounce, or other
+decorative motion.
+
+Treat the control as a disclosure with native link and button behaviour, not as
+a strict ARIA menu widget. Click, Enter, and Space toggle it. Opening leaves
+focus on the trigger so Tab moves naturally to **Public showcase** and then
+**Sign out**. Escape closes the panel and returns focus to the trigger. Clicking
+outside or moving focus outside the trigger-and-panel region closes it. Do not
+trap focus.
+
+Sign out continues to use the existing CSRF-protected logout operation. While
+the request is pending, keep the panel open, disable the action, and label it
+**Signing out…**. Success navigates to `/`. Failure keeps the panel open,
+restores **Sign out**, and places **Could not sign out. Please try again.** in an
+alert directly below the action so retry remains available.
 
 ### Narrow shell
 
@@ -195,14 +255,17 @@ Below `720px`, use two rows:
 
 ```text
 ┌──────────────────────────────────────────┐
-│ [mark] Private Client Graph   Showcase  │
+│ [mark] Private Client Graph   [account] │
 │ Matters                                  │
 ├──────────────────────────────────────────┤
 ```
 
-The first row holds the brand and **Showcase** link. The second row contains the
+The first row holds the brand and account trigger. The second row contains the
 single current navigation item. Keep both visible; do not introduce a hamburger
-menu for one navigation item.
+menu, bottom sheet, or alternate mobile navigation model. The same popover opens
+below the trigger and aligns to the inline end. It remains inside the viewport
+with a `20px` minimum edge margin; its two rows are short enough that it needs no
+flipping or internal scrolling behaviour.
 
 ### Footer
 
@@ -368,6 +431,7 @@ to the Public Showcase as a fallback and do not load Case 01 fixture data.
 ## Interaction and motion
 
 - Use no entrance animation, staggered row reveal, or ambient motion.
+- Open and close the account popover without decorative animation.
 - Hover and focus colour changes may use a `100ms` linear transition.
 - Navigation must not depend on animation to communicate state.
 - Respect `prefers-reduced-motion` by removing non-essential transitions.
@@ -379,6 +443,12 @@ to the Public Showcase as a fallback and do not load Case 01 fixture data.
 - Give the primary navigation an accessible label such as
   `Practitioner application`.
 - Mark Matters with `aria-current="page"` or `aria-current="true"` as appropriate.
+- Implement the account trigger as a native button with a stable accessible
+  name, `aria-expanded`, and `aria-controls` referring to the popover.
+- Keep the popover's link and button in ordinary document tab order; do not add
+  ARIA menu roles or arrow-key-only navigation.
+- Support Escape, outside-click dismissal, focus-departure dismissal, and focus
+  return to the trigger after Escape.
 - The register may use a semantic table or a list with equivalent labelled
   structure. The whole row must expose one clear link, not nested interactive
   controls.
@@ -420,7 +490,8 @@ Do not add any of the following to make the design appear more complete:
 - Matter counts, relationship counts, clients, trusts, documents, or people in
   the collection;
 - review status, progress, priority, assignment, activity, deadline, or date;
-- user, firm, authentication, notification, help, or settings chrome;
+- profile identity, Firm selection, notification, help, settings, role, or
+  account-management chrome beyond the accepted account and application menu;
 - placeholder or duplicate synthetic Matters;
 - charts, KPIs, summary tiles, illustrations, or decorative icons;
 - AI sparkle marks, gradients, glowing accents, or animated graph motifs;
@@ -451,6 +522,10 @@ An implementation is visually complete when:
 - `/app` is visibly a separate practitioner application without appearing to be
   a different brand;
 - Matters is the only primary application navigation concept;
+- the account trigger is present and usable on every authenticated practitioner
+  route and absent from the Public Showcase;
+- the menu contains only Public showcase and Sign out, with no implied identity
+  or unsupported account capabilities;
 - the empty state contains no fake Matter or unsupported action;
 - a populated Matter row shows only its external reference and title;
 - the Matter list reads as aligned records rather than cards;
@@ -458,8 +533,29 @@ An implementation is visually complete when:
 - typography follows the roles and scale above;
 - keyboard focus is clearly visible on navigation and Matter rows;
 - desktop and small-screen layouts retain the same information hierarchy;
+- the menu remains inside the narrow viewport and preserves a minimum `44px`
+  target for its trigger and actions;
 - direct Matter navigation provides a clear route back to `/app`;
 - opening a Matter exposes the existing review workspace without analysis
   controls or an intermediate overview;
 - read-only synthetic scope is stated without implying a review status;
 - no UI element implies functionality beyond the accepted slice.
+
+## Behavioural test boundary
+
+Focused frontend tests should protect the account control's accessible name and
+expanded state; click and keyboard opening; Escape, outside-click, and
+focus-departure closing; Escape focus return; correct showcase destination; the
+existing CSRF-protected sign-out request; pending, success, failure, alert, and
+retry behaviour; absence of unsupported items; and continued presence of
+**Matters** and the synthetic-only notice.
+
+Browser coverage should retain the existing application journeys while proving
+the boundaries that require a real browser: authenticated practitioner to
+Public Showcase through the menu; visible Public Showcase entry back to the
+Practitioner Application and its server-enforced authentication boundary;
+successful sign-out and loss of protected access; failed sign-out with retained
+session and usable retry; keyboard access; and availability within the existing
+narrow viewport. Do not duplicate every component interaction in Playwright or
+replace the existing graph-review, Matter Proposal, and analysis journeys with
+navigation-only tests.
