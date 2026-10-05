@@ -10,3 +10,12 @@ __pycache__/
 /web/.vite/
 /web/test-results/
 /web/playwright-report/
+
+# Locally installed Impeccable library and generated integrations.
+/.agents/skills/impeccable/
+/.github/skills/impeccable/
+/.github/agents/impeccable-*.agent.md
+/.github/hooks/impeccable.json
+/.codex/hooks.json
+/.impeccable/*
+!/.impeccable/config.json

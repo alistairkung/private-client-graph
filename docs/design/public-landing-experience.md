@@ -1,6 +1,8 @@
 # Public landing experience: Follow the source
 
-> **Status:** Approved design; implementation not yet authorized.
+> **Status:** Historical design. Its visual composition is superseded by the
+> [approved Evidence Folio direction](public-landing-visual-direction.md).
+> The full-page scope below is not renewed implementation authorization.
 >
 > **Scope:** Public product/research presentation at `/`, including the real
 > synthetic demonstration and a restrained practitioner-interest invitation.
