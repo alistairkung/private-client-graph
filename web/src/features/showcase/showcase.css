@@ -144,3 +144,28 @@
   .demonstration-expanded .document-scroll { max-height: 70svh; }
   .showcase-closing { margin-top: 64px; }
 }
+
+.professional-judgment { margin-top: 104px; padding-top: 40px; border-top: 1px solid #cdd4c9; }
+.judgment-introduction { max-width: 68ch; margin-bottom: 56px; }
+.judgment-introduction h2 { max-width: 28ch; font-size: 36px; line-height: 42px; }
+.judgment-introduction p, .judgment-copy > p { font-size: 18px; line-height: 28px; }
+.judgment-stage { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; margin-top: 64px; }
+.judgment-copy { max-width: 68ch; }
+.judgment-copy h3 { margin: 0 0 16px; font: 500 28px/34px "Newsreader", Georgia, serif; }
+.judgment-copy p { margin: 0 0 24px; }
+.judgment-copy .judgment-annotation { font-size: 16px; line-height: 24px; color: var(--showcase-muted); }
+.judgment-annotation strong { font-weight: 600; color: var(--showcase-ink); }
+.practitioner-capture { width: 100%; max-width: 1036px; min-width: 0; margin: 0; }
+.practitioner-capture-image { display: block; border: 1px solid #cdd4c9; background: white; }
+.practitioner-capture img { display: block; width: 100%; height: auto; }
+.practitioner-capture figcaption { max-width: 68ch; margin-top: 16px; color: var(--showcase-muted); font-size: 14px; line-height: 20px; }
+.practitioner-capture figcaption strong { font-weight: 600; }
+.practitioner-capture figcaption a { display: block; width: fit-content; min-height: 44px; padding-top: 12px; }
+.practitioner-capture .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.judgment-confirmation-captures { display: grid; gap: 32px; min-width: 0; }
+@media (max-width: 550px) {
+  .professional-judgment { margin-top: 64px; padding-top: 32px; }
+  .judgment-introduction { margin-bottom: 40px; }
+  .judgment-introduction h2 { font-size: 32px; line-height: 38px; }
+  .judgment-stage { margin-top: 48px; }
+}
