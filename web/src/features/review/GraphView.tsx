@@ -26,6 +26,8 @@ type ReviewEdge = Edge<{
 
 function RoutedEdge({ id, data, label, markerEnd, style, selected }: EdgeProps<ReviewEdge>) {
   const { route, description, connectorClass, onSelect } = data!;
+  const { setCenter, getZoom } = useReactFlow();
+  const canvasWidth = useStore(state => state.width);
   const path = route.points
     .map((point, index) => `${index ? "L" : "M"} ${point.x} ${point.y}`)
     .join(" ");
@@ -38,6 +40,9 @@ function RoutedEdge({ id, data, label, markerEnd, style, selected }: EdgeProps<R
         data-edge-id={id}
         aria-label={description}
         aria-pressed={!!selected}
+        onFocus={event => {
+          if (canvasWidth <= 450 && event.currentTarget.matches(":focus-visible")) void setCenter(route.x, route.y, { zoom: Math.max(1, getZoom()) });
+        }}
         onClick={onSelect}
         style={{
           transform: `translate(-50%, -50%) translate(${route.x}px, ${route.y}px)`,
@@ -64,16 +69,25 @@ const edgeTypes = { routed: RoutedEdge };
 
 function FitGraph({
   bounds,
+  selectedRoute,
 }: {
   bounds: { x: number; y: number; width: number; height: number };
+  selectedRoute?: RelationshipRoute;
 }) {
-  const { fitBounds, viewportInitialized } = useReactFlow();
+  const { fitBounds, setCenter, getZoom, viewportInitialized } = useReactFlow();
   const width = useStore((state) => state.width);
   const height = useStore((state) => state.height);
+  const focusRoute = width <= 450 ? selectedRoute : undefined;
   useEffect(() => {
-    if (viewportInitialized && width && height)
+    if (!viewportInitialized || !width || !height) return;
+    if (width <= 450) {
+      void setCenter(focusRoute?.x ?? bounds.x + bounds.width / 2,
+        focusRoute?.y ?? bounds.y + bounds.height / 2,
+        { zoom: Math.max(1, getZoom()) });
+    } else {
       void fitBounds(bounds, { padding: 0.08 });
-  }, [viewportInitialized, width, height, bounds, fitBounds]);
+    }
+  }, [viewportInitialized, width, height, bounds, focusRoute, fitBounds, setCenter, getZoom]);
   return null;
 }
 
@@ -103,7 +117,7 @@ export function GraphView({
     ...edge,
     selected: selected === index,
     style: {
-      stroke: selected === index ? "#b15a27" : "#607775",
+      stroke: selected === index ? "#773b46" : "#607775",
       strokeWidth: selected === index ? 3 : 1.5,
     },
     data: {
@@ -114,6 +128,14 @@ export function GraphView({
     },
   }));
   return (
+    <>
+    <label className="graph-selector">Find a relationship
+      <select value={selected ?? ""} onChange={event => onSelect(Number(event.target.value))}>
+        <option value="" disabled>Choose a relationship</option>
+        {view.edges.map((edge, index) => <option key={edge.id} value={index}>{edge.ariaLabel}</option>)}
+      </select>
+    </label>
+    <p className="graph-navigation-hint">Drag to pan. Use + and − to zoom. Choose a relationship above to bring it into view.</p>
     <div className="graph-canvas" aria-label="Relationship graph">
       <ReactFlow
         edgeTypes={edgeTypes}
@@ -130,9 +152,10 @@ export function GraphView({
         deleteKeyCode={null}
         onEdgeClick={(_, edge) => onSelect(Number(edge.id))}
       >
-        <FitGraph bounds={view.bounds} />
+        <FitGraph bounds={view.bounds} selectedRoute={selected === null ? undefined : view.edges[selected]?.data?.route as RelationshipRoute} />
         <Controls showInteractive={false} showFitView={false} />
       </ReactFlow>
     </div>
+    </>
   );
 }

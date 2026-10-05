@@ -6,6 +6,7 @@ import { ProposalCollection } from "../matter-proposals/ProposalCollection";
 import { CreateMatter } from "../matter-proposals/CreateMatter";
 import { ProposalWorkspace } from "../matter-proposals/ProposalWorkspace";
 import "../matter-proposals/proposals.css";
+import { BrandMark } from "../../shared/brand/BrandMark";
 
 export function PractitionerApp({ matterId, proposalId }: { matterId?: string; proposalId?: string }) {
   return (
@@ -13,7 +14,7 @@ export function PractitionerApp({ matterId, proposalId }: { matterId?: string; p
       <header className="ledger-header">
         <div className="ledger-header-inner ledger-width">
           <a href="/app" className="ledger-brand">
-            <span className="brand-symbol" aria-hidden="true">⌘</span>
+            <BrandMark />
             Private Client Graph
           </a>
           <nav aria-label="Practitioner application">
@@ -43,8 +44,12 @@ function PractitionerPage({ matterId, proposalId }: { matterId?: string; proposa
   if (proposalId) return <ProposalWorkspace key={proposalId} id={proposalId} onNavigate={navigate} />;
   return <>
     <div className="ledger-title-row"><h1>Matters</h1><a className="intake-button" href="/app/matter-proposals/new">Create Matter</a></div>
-    <p className="ledger-intro">Open a Matter to review relationships and the source evidence supporting them.</p>
-    <MatterLedger />
+    <p className="ledger-intro">Open a Matter or return to a proposal awaiting confirmation.</p>
     <ProposalCollection />
+    <section className="matter-collection" aria-labelledby="accepted-matters">
+      <h2 id="accepted-matters">Accepted Matters</h2>
+      <p>Return to accepted relationships and their source evidence.</p>
+      <MatterLedger />
+    </section>
   </>;
 }

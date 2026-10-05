@@ -15,7 +15,10 @@ test.each(["/app", "/app/"])(
     render(<App />);
 
     expect(screen.getByRole("heading", { name: "Matters" })).toBeVisible();
-    expect(await screen.findByText("No Matters available")).toBeVisible();
+    expect(await screen.findByText("No accepted Matters yet")).toBeVisible();
+    const proposals = screen.getByRole("heading", { name: "Awaiting confirmation" });
+    const accepted = screen.getByRole("heading", { name: "Accepted Matters" });
+    expect(proposals.compareDocumentPosition(accepted) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(screen.getByRole("link", { name: "Matters" })).toHaveAttribute(
       "aria-current",
       "page",

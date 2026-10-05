@@ -12,6 +12,7 @@ test("persisted Matter opens from ledger and highlights exact Evidence after dir
   await expect(page).toHaveTitle("Matters · Private Client Graph");
   const matter = page.getByRole("link", { name: "PC/2026/0142 Evergreen Family Trust" });
   await expect(matter).toHaveAttribute("href", matterPath);
+  await page.screenshot({ path: testInfo.outputPath("matters-register.png"), fullPage: true });
   await matter.focus();
   await matter.press("Enter");
   await expect(page).toHaveURL(matterPath);
@@ -23,8 +24,17 @@ test("persisted Matter opens from ledger and highlights exact Evidence after dir
   await expect(page.getByRole("img", { name: "Triangular Trust node" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Matters", exact: true })).toHaveAttribute("aria-current", "page");
   const edge = page.getByRole("button", { name: "Alice Chen — Spouse of — David Chen", exact: true });
+  await page.getByLabel("Find a relationship").selectOption({ label: "Alice Chen — Spouse of — David Chen" });
   await edge.getByText("Spouse of", { exact: true }).click();
   await expect(edge).toHaveClass(/selected/);
+  if (testInfo.project.name === "narrow") {
+    const scale = await page.locator(".react-flow__viewport").evaluate(element => new DOMMatrix(getComputedStyle(element).transform).a);
+    expect(scale).toBeGreaterThanOrEqual(1);
+    const canvas = await page.getByLabel("Relationship graph").boundingBox();
+    const label = await edge.boundingBox();
+    expect(label!.x).toBeGreaterThanOrEqual(canvas!.x);
+    expect(label!.x + label!.width).toBeLessThanOrEqual(canvas!.x + canvas!.width);
+  }
   const highlight = page.locator("mark");
   await expect(highlight).toHaveText("Alice Chen confirmed that she and David Chen are spouses.");
   await expect(highlight).toBeInViewport();
@@ -36,6 +46,12 @@ test("persisted Matter opens from ledger and highlights exact Evidence after dir
   await expect(edge).not.toHaveClass(/selected/);
   await expect(highlight).toHaveText("Alice Chen confirmed that Alice Chen and David Chen are the parents of Bob Chen.");
   await expect(highlight).toBeInViewport();
+  await page.getByRole("link", { name: "View in source" }).click();
+  await expect(highlight).toBeFocused();
+  await page.getByRole("button", { name: "Back to selected relationship" }).click();
+  await expect(parent).toBeFocused();
+  await page.getByLabel("Find a relationship").selectOption({ label: "Alice Chen — Spouse of — David Chen" });
+  await expect(edge).toHaveClass(/selected/);
   expect(apiRequests).toContain(matterPath.replace("/app/", "/api/"));
   expect(apiRequests.every(path => path.startsWith("/api/matters") || path === "/api/matter-proposals")).toBe(true);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);

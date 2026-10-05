@@ -5,6 +5,18 @@ import { CreateMatter } from "./CreateMatter";
 
 const pdf = new File(["%PDF-fictional"], "Attendance note.pdf", { type: "application/pdf" });
 
+test("file selection suggests a source title without replacing the practitioner's title", async () => {
+  render(<CreateMatter onNavigate={vi.fn()} />);
+  const user = userEvent.setup();
+  await user.upload(screen.getByLabelText("PDF"), pdf);
+  const title = screen.getByRole("textbox", { name: "Authoritative Source title" });
+  expect(title).toHaveValue("Attendance note");
+  await user.clear(title);
+  await user.type(title, "My fictional source");
+  await user.upload(screen.getByLabelText("PDF"), new File(["%PDF"], "Other.pdf", { type: "application/pdf" }));
+  expect(title).toHaveValue("My fictional source");
+});
+
 async function fillIntake() {
   const user = userEvent.setup();
   await user.type(screen.getByRole("textbox", { name: "External Matter reference" }), "Firm/42");

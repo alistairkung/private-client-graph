@@ -40,7 +40,7 @@ test("synthetic PDF becomes a reviewed proposal and confirms into the accepted M
   expect(creationRequests).toHaveLength(1);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   await page.screenshot({ path: testInfo.outputPath("proposal-workspace.png"), fullPage: true });
-  await page.getByRole("link", { name: "Back to Matters" }).click();
+  await page.getByRole("link", { name: "Back to Matters" }).first().click();
   const pending = page.getByRole("region", { name: "Awaiting confirmation" });
   const proposal = pending.getByRole("link", { name: `${reference} ${title}` });
   await expect(proposal).toHaveAttribute("href", proposalPath);
@@ -48,9 +48,11 @@ test("synthetic PDF becomes a reviewed proposal and confirms into the accepted M
   await proposal.click();
   expect((await context.request.get(proposalPath.replace("/app/", "/api/"))).status()).toBe(200);
   await expect(page.getByText(/whole proposed graph becomes the professionally accepted current Matter state/i)).toBeVisible();
-  await page.getByRole("button", { name: "Confirm whole graph and create Matter" }).click();
+  await page.getByRole("button", { name: "Confirm and create Matter" }).click();
   await expect(page).toHaveURL(/\/app\/matters\/[a-f0-9-]{36}$/);
   const matterPath = new URL(page.url()).pathname;
+  await expect(page.getByRole("status")).toContainText("Matter created.");
+  await page.screenshot({ path: testInfo.outputPath("accepted-matter.png"), fullPage: true });
   await expect(page.getByRole("heading", { name: title, exact: true })).toBeVisible();
   const acceptedParent = page.getByRole("button", { name: "Alice Example — Parent of — Ben Example", exact: true });
   await acceptedParent.focus();
@@ -62,7 +64,7 @@ test("synthetic PDF becomes a reviewed proposal and confirms into the accepted M
   await acceptedParent.focus();
   await acceptedParent.press("Enter");
   await expect(page.locator("mark")).toHaveText("Alice Example is the parent of Ben Example.");
-  await page.getByRole("link", { name: "Back to Matters" }).click();
+  await page.getByRole("link", { name: "Back to Matters" }).first().click();
   await expect(page).toHaveURL("/app");
   await expect(pending.getByRole("link", { name: `${reference} ${title}` })).toHaveCount(0);
   expect((await context.request.get(proposalPath.replace("/app/", "/api/"))).status()).toBe(404);
@@ -91,6 +93,7 @@ test("multiple Trust roles remain independently selectable in the real review ca
     const connector = page.getByRole("button", {
       name: `Morgan Example — ${role} of — Fictional Trust`, exact: true,
     });
+    await page.getByLabel("Find a relationship").selectOption({ label: `Morgan Example — ${role} of — Fictional Trust` });
     await connector.getByText(role, { exact: true }).click();
     await expect(connector).toHaveClass(/selected/);
     await expect(page.locator("mark")).toHaveText(`Morgan Example is ${role.toLowerCase()} of the Fictional Trust.`);
@@ -102,4 +105,31 @@ test("multiple Trust roles remain independently selectable in the real review ca
   await page.getByRole("button", { name: "Discard intake", exact: true }).click();
   await page.getByRole("button", { name: "Permanently discard intake" }).click();
   await expect(page).toHaveURL("/app");
+});
+
+test("saved intake can be kept, resumed, then permanently discarded", async ({ page, context }, testInfo) => {
+  const reference = `Discard/${randomUUID()}`;
+  await page.goto("/app/matter-proposals/new");
+  await page.getByRole("textbox", { name: "External Matter reference" }).fill(reference);
+  await page.getByRole("textbox", { name: "Matter title", exact: true }).fill("Fictional discard example");
+  await page.getByLabel("PDF", { exact: true }).setInputFiles(sourcePdf);
+  await expect(page.getByRole("textbox", { name: "Authoritative Source title" })).toHaveValue("synthetic-proposal");
+  await page.getByRole("checkbox", { name: /synthetic or fictional/ }).check();
+  await page.getByRole("button", { name: "Upload and analyse" }).click();
+  await expect(page).toHaveURL(/\/app\/matter-proposals\/[a-f0-9-]{36}$/);
+  const proposalPath = new URL(page.url()).pathname;
+  await page.getByRole("button", { name: "Discard intake", exact: true }).click();
+  const keep = page.getByRole("button", { name: "Keep intake" });
+  await expect(keep).toBeFocused();
+  await expect(page.getByRole("button", { name: "Confirm and create Matter" })).toHaveCount(0);
+  await page.screenshot({ path: testInfo.outputPath("discard-intake.png"), fullPage: true });
+  await keep.click();
+  await expect(page.getByRole("button", { name: "Discard intake", exact: true })).toBeFocused();
+  await page.reload();
+  await expect(page.getByRole("heading", { name: "Fictional discard example", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Discard intake", exact: true }).click();
+  await page.getByRole("button", { name: "Permanently discard intake" }).click();
+  await expect(page).toHaveURL("/app");
+  await expect(page.getByRole("link", { name: `${reference} Fictional discard example` })).toHaveCount(0);
+  expect((await context.request.get(proposalPath.replace("/app/", "/api/"))).status()).toBe(404);
 });

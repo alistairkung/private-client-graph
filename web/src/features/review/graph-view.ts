@@ -2,8 +2,9 @@ import {
   NODE_WIDTH,
   PERSON_HEIGHT,
   TRUST_HEIGHT,
+  TRUST_LABEL_HEIGHT,
   nodeBoundary,
-  nodeRectangle,
+  nodeFootprint,
   relationshipRoute,
   type Rectangle,
   type RelationshipRoute,
@@ -60,7 +61,7 @@ export function toGraphView(graph: CanonicalGraph): {
     });
   }
   const labelObstacles: Rectangle[] = anchored ? [] : graph.entities.map(entity =>
-    nodeRectangle(layout.node(entity.id), nodeHeight(entity.id), 8));
+    nodeFootprint(layout.node(entity.id), nodeHeight(entity.id), 8));
   const generalRoutes: RelationshipRoute[] = new Array(graph.relationships.length);
   if (!anchored) orderedRelationships.forEach(({ edge, index }) => {
     const route = relationshipRoute(
@@ -76,7 +77,7 @@ export function toGraphView(graph: CanonicalGraph): {
       x: 0,
       y: 0,
       width: layout.graph().width!,
-      height: layout.graph().height!,
+      height: layout.graph().height! + TRUST_LABEL_HEIGHT,
     },
     nodes: graph.entities.map((entity) => ({
       id: entity.id,
