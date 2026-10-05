@@ -3,6 +3,7 @@
 /runs/
 /.venv/
 __pycache__/
+.impeccable/build/
 .pytest_cache/
 .mypy_cache/
 /web/node_modules/
@@ -10,3 +11,4 @@ __pycache__/
 /web/.vite/
 /web/test-results/
 /web/playwright-report/
+.impeccable/build/
