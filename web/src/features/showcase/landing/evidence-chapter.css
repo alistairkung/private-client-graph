@@ -1,0 +1,67 @@
+.evidence-chapter {
+  background: var(--folio-green);
+  color: var(--folio-paper);
+  padding-block: clamp(80px, 7.8vw, 124px) clamp(70px, 6.5vw, 104px);
+  scroll-margin-top: 24px;
+}
+.evidence-composition {
+  display: grid;
+  grid-template-columns: 27% 1fr;
+  column-gap: 4%;
+}
+.evidence-composition h2 {
+  grid-column: 2;
+  font: 400 clamp(58px, 8.68cqw, 124px)/1 var(--folio-serif);
+  letter-spacing: -0.035em;
+  margin: 0 0 clamp(32px, 3.4vw, 54px);
+}
+.evidence-margin {
+  display: flex;
+  align-items: center;
+  align-self: start;
+  gap: 20px;
+  font: italic 400 clamp(20px, 2.3vw, 32px)/1.4 var(--folio-serif);
+}
+.evidence-margin::after {
+  content: "";
+  height: 1px;
+  background: currentColor;
+  flex: 1;
+}
+.evidence-composition blockquote {
+  margin: 0;
+  font: 400 clamp(20px, 2.25vw, 35px)/1.4 var(--folio-serif);
+  letter-spacing: -0.03em;
+}
+.evidence-composition p {
+  grid-column: 2;
+  margin: 44px 0 0;
+  font: 400 clamp(18px, 1.9vw, 28px)/1.4 var(--folio-serif);
+}
+@media (max-width: 700px) {
+  .evidence-chapter {
+    padding-block: 68px;
+  }
+  .evidence-composition {
+    grid-template-columns: 1fr;
+  }
+  .evidence-composition h2 {
+    grid-column: 1;
+    font-size: clamp(41px, 8.8vw, 62px);
+    margin-bottom: 40px;
+  }
+  .evidence-margin {
+    max-width: 160px;
+    font-size: 20px;
+    margin-bottom: 24px;
+  }
+  .evidence-composition blockquote {
+    font-size: 27px;
+    line-height: 1.45;
+  }
+  .evidence-composition p {
+    grid-column: 1;
+    font-size: 20px;
+    margin-top: 30px;
+  }
+}

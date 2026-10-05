@@ -19,6 +19,13 @@ export function AnalysisControls({
     <div className="analysis-controls">
       <div className="actions">
         <button
+          className="secondary"
+          disabled={!!pending}
+          onClick={() => onRun("sample")}
+        >
+          Load sample analysis
+        </button>
+        <button
           className="primary"
           disabled={
             !available || !!pending || (lastMode === "live" && !!error && !error.retryable)
@@ -27,13 +34,6 @@ export function AnalysisControls({
         >
           {retryLive ? "Retry live analysis" : "Run live analysis"}
           <span aria-hidden="true"> ↗</span>
-        </button>
-        <button
-          className="secondary"
-          disabled={!!pending}
-          onClick={() => onRun("sample")}
-        >
-          Load sample analysis
         </button>
       </div>
       {!available && (
