@@ -1,0 +1,8 @@
+{
+  "prompt": "Edit this exact application screenshot surgically: move the visible burgundy keyboard-focus outline from the 'Permanently discard intake' button onto the 'Keep intake' button. Keep the destructive button solid burgundy but with no extra outer focus outline. The Keep intake button stays white with green text and gains a clear thin burgundy focus ring. Everything else in the image must remain exactly unchanged: all text, panels, graph node shapes, triangle Trust, relationships, evidence, colours, dimensions and layout. Output the same 1536x1024 image.",
+  "approved": true,
+  "mode": "operate",
+  "scope": "discard",
+  "reference": "Selected graph-led Matter Ledger direction; see ../../practitioner-matter-workflow-design.md.",
+  "approval": "Approved by the product owner in the Matter workflow design session."
+}

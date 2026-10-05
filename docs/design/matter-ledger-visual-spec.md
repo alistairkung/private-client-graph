@@ -2,6 +2,10 @@
 
 > **Status:** Approved visual direction; account-menu amendment implemented.
 >
+> **Approved extension:** [Practitioner Matter workflow design](practitioner-matter-workflow-design.md)
+> updates collection order, intake/review decisions, responsive behaviour, and the
+> brand mark. Its application integration is separate from this design record.
+>
 > **Applies to:** The practitioner application throughout the authenticated
 > `/app` subtree and the Public Showcase entry link at `/`.
 >

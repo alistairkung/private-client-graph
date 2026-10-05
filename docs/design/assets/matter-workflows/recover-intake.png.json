@@ -1,0 +1,8 @@
+{
+  "prompt": "Edit the attached Create Matter form screenshot into its uncertain-save recovery state with minimal structural change. Preserve its EXACT unboxed two-column form layout, paired reference and Matter title fields, labels, section rules, filename row, PDF limits, Source title, checkbox, typography, header and all values. The right column stays UNBOXED with a simple heading and paragraphs, no numbered steps or circle icons. Replace right heading 'What happens next' with 'Your entries are still here' and first paragraph with 'Keep this page open to retain the selected PDF for retry.' Keep 'Need something to try?' section. In the left column immediately after the checkbox insert a compact inline alert: heading 'We could not confirm whether your proposal was saved.' body 'Check this Matter reference before starting another analysis.' link 'Check Matters and proposals'. Use white background and single thin burgundy outline, no thick accent stripe. Change submit button text to 'Check reference and retry'. Below buttons small helper 'If this reference already has a proposal or Matter, we will open it. Otherwise, analysis can be tried again.' Allow image height to expand to 1152px if necessary so everything fits; do not compress text to tiny size. No claims of successful save or definite failure, no spinner or automatic retry. All else matches original intake composition.",
+  "approved": true,
+  "mode": "operate",
+  "scope": "recovery",
+  "reference": "Selected graph-led Matter Ledger direction; see ../../practitioner-matter-workflow-design.md.",
+  "approval": "Approved by the product owner in the Matter workflow design session."
+}

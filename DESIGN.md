@@ -57,6 +57,11 @@ replace the practitioner interface's existing density or component styles. The
 approved first surface and its intentional adaptations remain in
 [the landing direction](docs/design/public-landing-visual-direction.md).
 
+The approved [practitioner workflow and PC monogram](docs/design/practitioner-matter-workflow-design.md)
+extend the separate Matter Ledger system. They are design references awaiting
+application integration; the public surface foundations recorded here remain
+unchanged.
+
 **Key Characteristics:**
 
 - Document texture alongside live, selectable text.

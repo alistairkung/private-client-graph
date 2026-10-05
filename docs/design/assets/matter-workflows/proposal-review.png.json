@@ -1,0 +1,12 @@
+{
+  "prompt": "Edit the provided approved Private Client Graph UI mockup with ONE precise change: replace the rectangular 'Vale Family Trust' node in the lower right of the graph panel with an upright equilateral triangle, pale muted sage fill and thin green-gray outline, keeping the label 'Vale Family Trust' legibly below the triangle. Use the available area from approximately x=505 to 690, y=510 to 640; the triangle can be about 92px high with its apex at y=522 and base at y=602, centred at x=600, label below at y=624. Shorten the incoming burgundy 'trustee of' arrow to meet the apex and route the 'settlor of' and 'beneficiary of' arrowheads to the triangle's left edge without crossing the label. Keep all three person nodes rectangular. Keep every relationship, direction, text, exact evidence, source highlight, header, typography, panel size, overall composition and action button unchanged. Do not add nodes, icons, legends, extra relations or other UI. Output same 1536x1024 landscape dimensions. This is a surgical revision to the provided image, not a redesign.",
+  "approved": true,
+  "approval": "Approved by the product owner in the Matter workflow design session.",
+  "mode": "operate",
+  "scope": "Matter proposal review composition",
+  "reference": "Selected graph-led Matter Ledger direction; see ../../practitioner-matter-workflow-design.md.",
+  "presentation": {
+    "trust": "upright triangle with label below",
+    "person": "rectangle"
+  }
+}
