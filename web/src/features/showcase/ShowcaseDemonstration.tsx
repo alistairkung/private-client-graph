@@ -30,20 +30,23 @@ export function ShowcaseDemonstration() {
         </button>
       </div>
       <div id="demonstration-review">
-        {detail && !sourceError && <div id={analysis ? undefined : "interactive-demonstration"}
+        {/* Keep the skip target mounted so source loading does not discard keyboard focus. */}
+        <div id={analysis ? undefined : "interactive-demonstration"}
           tabIndex={analysis ? undefined : -1}>
-          <AnalysisControls availability={detail.live_analysis} pending={pending}
-            error={error} lastMode={lastMode} onRun={run} />
-        </div>}
+          {sourceError ? (
+            <div className="load-state">
+              <p role="alert">{sourceError}</p>
+              <button onClick={() => window.location.reload()}>Reload case</button>
+            </div>
+          ) : !detail ? (
+            <p role="status" className="load-state">Loading the synthetic case…</p>
+          ) : (
+            <AnalysisControls availability={detail.live_analysis} pending={pending}
+              error={error} lastMode={lastMode} onRun={run} />
+          )}
+        </div>
         {!analysis && <SampleStory />}
-        {sourceError ? (
-          <div className="load-state" id="interactive-demonstration" tabIndex={-1}>
-            <p role="alert">{sourceError}</p>
-            <button onClick={() => window.location.reload()}>Reload case</button>
-          </div>
-        ) : !detail ? (
-          <p role="status" className="load-state" id="interactive-demonstration" tabIndex={-1}>Loading the synthetic case…</p>
-        ) : (
+        {detail && !sourceError && (
           <>
             {analysis ? (
               <SampleWalkthrough source={detail.source_text} analysis={analysis}

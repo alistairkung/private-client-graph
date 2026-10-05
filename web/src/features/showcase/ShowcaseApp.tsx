@@ -1,6 +1,7 @@
 import "./showcase.css";
 import { LandingOpening } from "./LandingOpening";
 import { ShowcaseDemonstration } from "./ShowcaseDemonstration";
+import { ProfessionalJudgment } from "./ProfessionalJudgment";
 
 export function ShowcaseApp() {
   return (
@@ -16,6 +17,7 @@ export function ShowcaseApp() {
         <main>
           <LandingOpening />
           <ShowcaseDemonstration />
+          <ProfessionalJudgment />
         </main>
         <footer className="showcase-closing">
           <div>
