@@ -9,7 +9,7 @@
 .folio-hero h1 {
   grid-column: 1;
   margin: 0;
-  font: 400 clamp(64px, 8.2vw, 130px)/0.98 var(--folio-serif);
+  font: 400 clamp(64px, 9cqw, 130px)/0.98 var(--folio-serif);
   letter-spacing: -0.035em;
 }
 .folio-source {
@@ -144,11 +144,11 @@
   padding: clamp(128px, 14.5vw, 225px) 0 0 16px;
 }
 .folio-invitation p {
-  font: 400 clamp(16px, 1.85vw, 28px)/1.2 var(--folio-serif);
+  font: 400 clamp(16px, 2.03cqw, 28px)/1.2 var(--folio-serif);
   letter-spacing: -0.025em;
   margin: 0 0 30px;
 }
-@media (min-width: 1600px) {
+@media (min-width: 701px) {
   .folio-source {
     margin-left: 0;
     padding-left: 42px;
@@ -165,7 +165,7 @@
     padding-left: 8px;
   }
   .folio-source {
-    padding-left: calc(var(--folio-gutter) + 12px);
+    padding-left: 30px;
   }
   .folio-source-lines {
     gap: 14px;

@@ -11,7 +11,7 @@
 }
 .evidence-composition h2 {
   grid-column: 2;
-  font: 400 clamp(58px, 7.9vw, 124px)/1 var(--folio-serif);
+  font: 400 clamp(58px, 8.68cqw, 124px)/1 var(--folio-serif);
   letter-spacing: -0.035em;
   margin: 0 0 clamp(32px, 3.4vw, 54px);
 }

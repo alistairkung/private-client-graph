@@ -9,7 +9,7 @@
   padding-top: 58px;
 }
 .demonstration-caption h2 {
-  font: 400 clamp(27px, 2.7vw, 40px)/1.15 var(--folio-serif);
+  font: 400 clamp(27px, 2.96cqw, 40px)/1.15 var(--folio-serif);
   letter-spacing: -0.03em;
 }
 .demonstration-caption > p {

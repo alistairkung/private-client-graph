@@ -12,14 +12,15 @@
   --folio-burgundy: #773b46;
   --folio-gold: #efdda0;
   --folio-serif: "Newsreader Display", "Newsreader", Georgia, serif;
-  --folio-gutter: clamp(24px, 4.5vw, 72px);
+  --folio-gutter: clamp(24px, 8vw, 128px);
   color: var(--folio-green);
   background: #fff;
   font: 400 15px/1.5 "Public Sans", Arial, sans-serif;
 }
 .folio-width {
   width: calc(100% - var(--folio-gutter) * 2);
-  max-width: 1440px;
+  max-width: 1280px;
+  container-type: inline-size;
   margin-inline: auto;
 }
 .showcase-shell a {
@@ -92,13 +93,14 @@
   display: inline-flex;
   justify-content: center;
   align-items: center;
-  gap: 18px;
+  gap: 12px;
   min-height: 58px;
-  padding: 12px 25px;
+  padding: 12px 20px;
   border-radius: 22px;
   background: var(--folio-green);
   color: white;
-  font: 400 23px/1.2 var(--folio-serif);
+  font: 400 21px/1.2 var(--folio-serif);
+  white-space: nowrap;
   text-decoration: none;
   transition: background-color 180ms ease-out;
 }
@@ -166,5 +168,11 @@
 @media (prefers-reduced-motion: reduce) {
   .showcase-shell .folio-button {
     transition: none;
+  }
+}
+
+@media (max-width: 700px) {
+  .showcase-shell {
+    --folio-gutter: 24px;
   }
 }
