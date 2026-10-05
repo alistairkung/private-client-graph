@@ -1,7 +1,6 @@
 import "./showcase.css";
 import { LandingOpening } from "./LandingOpening";
 import { ShowcaseDemonstration } from "./ShowcaseDemonstration";
-import { EvaluationChapter } from "./EvaluationChapter";
 import { ProfessionalJudgment } from "./ProfessionalJudgment";
 
 export function ShowcaseApp() {
@@ -12,7 +11,6 @@ export function ShowcaseApp() {
           <a href="/" className="showcase-brand">Private Client Graph</a>
           <nav className="showcase-navigation" aria-label="Public navigation">
             <a href="#demonstration">Demonstration</a>
-            <a href="#evaluation">Evaluation</a>
             <a href="/app">Practitioner application</a>
           </nav>
         </header>
@@ -20,7 +18,6 @@ export function ShowcaseApp() {
           <LandingOpening />
           <ShowcaseDemonstration />
           <ProfessionalJudgment />
-          <EvaluationChapter />
         </main>
         <footer className="showcase-closing">
           <div>
