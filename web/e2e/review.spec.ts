@@ -20,13 +20,18 @@ test("landing supports keyboard review, page scrolling and state-preserving expa
   await load.focus();
   await load.press("Enter");
   await expect(page.getByLabel("Relationship graph")).toBeVisible();
+  await expect(page.locator(".sample-review")).toHaveCSS("position", "static");
+  await expect(page.locator(".sample-passage blockquote")).toHaveCount(6);
   const list = page.getByText("Relationships as a list", { exact: true });
   await list.focus();
   await list.press("Enter");
   const relationship = page.getByRole("button", { name: "Review Bob Chen — Beneficiary of — Evergreen Family Trust", exact: true });
   await relationship.focus();
+  const beforeSelection = await page.evaluate(() => scrollY);
   await relationship.press("Enter");
   await expect(page.locator("mark")).toHaveText("Alice Chen confirmed that Bob Chen is a beneficiary of the Evergreen Family Trust.");
+  expect(await page.evaluate(() => scrollY)).toBe(beforeSelection);
+  await page.getByRole("link", { name: "Read passage in source" }).click();
   await expect(page.locator("mark")).toBeInViewport();
 
   const toggle = page.getByRole("button", { name: /^(Expand|Collapse) demonstration$/ });
@@ -126,6 +131,7 @@ test("sample journey uses real API and graph construction, then highlights exact
   await expect(highlight).toHaveText(
     "Alice Chen confirmed that she and David Chen are spouses.",
   );
+  await page.getByRole("link", { name: "Read passage in source" }).click();
   await expect(highlight).toBeInViewport();
   await expect(
     page.getByRole("button", { name: /Evidence 1/ }),
@@ -153,6 +159,7 @@ test("sample journey uses real API and graph construction, then highlights exact
     "Alice Chen confirmed that Alice Chen and David Chen are the parents of Bob Chen.",
   );
   await expect(edge).not.toHaveClass(/selected/);
+  await page.getByRole("link", { name: "Read passage in source" }).click();
   await expect(highlight).toBeInViewport();
   await page.locator(".document-scroll").evaluate((el) => {
     el.scrollTop = 0;
@@ -164,6 +171,7 @@ test("sample journey uses real API and graph construction, then highlights exact
   await otherParent.focus();
   await otherParent.press("Enter");
   await expect(otherParent).toHaveClass(/selected/);
+  await page.getByRole("link", { name: "Read passage in source" }).click();
   await expect(highlight).toBeInViewport();
   await page.screenshot({
     path: testInfo.outputPath("review.png"),

@@ -266,6 +266,7 @@ mark {
 .relationship-list ul { list-style: none; padding: 0; margin: 8px 0; display: grid; gap: 8px; }
 .relationship-list button { width: 100%; text-align: left; }
 .relationship-list button[aria-pressed="true"] { border: 2px solid #b15a27; background: #fff0cf; }
+.source-jump { padding: 12px 24px; font-size: 14px; }
 @media (max-width: 850px) {
   .review-workspace {
     grid-template-columns: 1fr;

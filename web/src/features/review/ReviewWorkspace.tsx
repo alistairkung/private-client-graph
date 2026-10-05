@@ -1,10 +1,15 @@
 import "./review.css";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { EvidencePanel } from "./EvidencePanel";
 import { GraphView } from "./GraphView";
 import { SourcePanel } from "./SourcePanel";
 import { locateEvidence } from "./graph-view";
 import type { CanonicalGraph } from "../../shared/canonical-graph";
+
+export interface ReviewSelection {
+  relationshipIndex: number;
+  evidenceId: string;
+}
 
 export function ReviewWorkspace({
   source,
@@ -14,6 +19,8 @@ export function ReviewWorkspace({
   embedded = false,
   graphTitle = "A connected view",
   emptyGraphTitle,
+  guidedSelection,
+  onReviewInteraction,
 }: {
   source: string;
   sourceTitle?: string;
@@ -22,10 +29,24 @@ export function ReviewWorkspace({
   graphTitle?: string;
   emptyGraphTitle?: string;
   graph: CanonicalGraph;
+  guidedSelection?: ReviewSelection;
+  onReviewInteraction?: () => void;
 }) {
+  const sourceId = useId();
+  const userControlled = useRef(false);
   const [selected, setSelected] = useState<number | null>(null);
   const [activeId, setActiveId] = useState<string>();
   const [activation, setActivation] = useState(0);
+  useEffect(() => {
+    if (!userControlled.current && guidedSelection) {
+      setSelected(guidedSelection.relationshipIndex);
+      setActiveId(guidedSelection.evidenceId);
+    }
+  }, [guidedSelection]);
+  function takeControl() {
+    userControlled.current = true;
+    onReviewInteraction?.();
+  }
   const relationship =
     selected === null ? undefined : graph.relationships[selected];
   const items =
@@ -57,7 +78,8 @@ export function ReviewWorkspace({
     [graph],
   );
   return (
-    <div className="review-workspace">
+    <div className="review-workspace" onPointerDownCapture={takeControl}
+      onKeyDownCapture={takeControl} onClickCapture={takeControl}>
       <section className="graph-panel panel">
         <div className="panel-heading">
           <div>
@@ -102,8 +124,10 @@ export function ReviewWorkspace({
           activeId={activeId}
           onSelect={setActiveId}
         />
+        {embedded && span && <a className="source-jump" href={`#${sourceId}`}>Read passage in source</a>}
       </section>
-      <SourcePanel practitioner={practitioner} title={sourceTitle} source={source} span={span} activation={activation} />
+      <SourcePanel practitioner={practitioner} title={sourceTitle} source={source} span={span}
+        activation={activation} scrollWithinPanel={embedded} scrollId={sourceId} onInteraction={takeControl} />
     </div>
   );
 }
