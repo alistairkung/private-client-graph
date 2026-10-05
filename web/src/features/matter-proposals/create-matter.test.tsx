@@ -84,6 +84,19 @@ test("keeps keyboard focus in the prompt and copies it without bypassing intake 
   expect(screen.getByRole("button", { name: "Upload and analyse" })).toBeDisabled();
 });
 
+test("offers manual copying when clipboard access is unavailable without making a network request", async () => {
+  const fetcher = vi.spyOn(globalThis, "fetch");
+  const user = userEvent.setup();
+  vi.spyOn(navigator.clipboard, "writeText").mockRejectedValue(new DOMException("Clipboard denied"));
+  render(<CreateMatter onNavigate={vi.fn()} />);
+
+  await user.click(screen.getByRole("button", { name: "Need something to try?" }));
+  await user.click(screen.getByRole("button", { name: "Copy prompt" }));
+
+  expect(screen.getByRole("status")).toHaveTextContent("Select and copy the text manually");
+  expect(fetcher).not.toHaveBeenCalled();
+});
+
 test.each(["matter_proposal", "matter"] as const)("explicit retry keeps local inputs and opens the existing %s from a duplicate response", async resourceKind => {
   const fetcher = vi.spyOn(globalThis, "fetch")
     .mockResolvedValueOnce(new Response(JSON.stringify({ error: { code: "provider_transient", message: "Analysis could not finish. No proposal was saved.", retryable: true } }), { status: 503 }))

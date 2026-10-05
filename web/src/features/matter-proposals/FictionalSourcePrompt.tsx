@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 
 const fictionalSourcePrompt = `Create a realistic but completely fictional private-client source document in the genre of an attendance note, client email, or letter.
 
-Use only fictional people and trusts. Express supported family and trust relationships naturally in prose, including relationships such as parent, child, spouse, sibling, settlor, trustee, beneficiary, or protector where they fit the document.
+Use only fictional people and trusts. Express supported family and trust relationships naturally in prose, including relationships such as parent, child, spouse, sibling, settlor, trustee, or beneficiary where they fit the document.
 
 Do not include any real personal, client, legal, or confidential information.
 
