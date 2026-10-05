@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { ReviewWorkspace } from "../review/ReviewWorkspace";
 import { getProposal } from "./api";
+import { ConfirmMatter } from "./ConfirmMatter";
 import { DiscardIntake } from "./DiscardIntake";
 import type { MatterProposalDetail } from "./types";
 
@@ -39,7 +40,10 @@ export function ProposalWorkspace({ id, onNavigate }: { id: string; onNavigate: 
         emptyGraphTitle="No supported relationships proposed"
         practitioner
       />
-      <DiscardIntake id={id} onNavigate={onNavigate} />
+      <section className="proposal-decision" aria-label="Matter Proposal decision">
+        <ConfirmMatter id={id} onNavigate={onNavigate} />
+        <DiscardIntake id={id} onNavigate={onNavigate} />
+      </section>
     </> : state.status === "loading" ? <p role="status">Loading Matter Proposal…</p> : <div role="alert">
       <h1>{state.status === "missing" ? "Matter Proposal not found" : "Matter Proposal could not be loaded."}</h1>
       <p>{state.status === "missing" ? "This intake is no longer available. Return to Matters to view the current collections." : "Reload the page to try again."}</p>

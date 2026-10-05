@@ -9,6 +9,7 @@ from sqlalchemy.dialects.postgresql import JSONB, insert
 from sqlalchemy.engine import Connection, RowMapping
 from sqlalchemy.exc import DBAPIError, SQLAlchemyError
 
+from private_client_graph.application.matters import MatterDetail
 from private_client_graph.application.proposal_contracts import (
     MatterProposalDetail,
     MatterProposalSummary,
@@ -18,6 +19,7 @@ from private_client_graph.application.proposal_contracts import (
 from private_client_graph.models import CanonicalGraph
 
 from .database import database_engine
+from .matters import matters
 from .proposal_errors import DuplicateReference, ProposalPersistenceFailure
 
 metadata = MetaData()
@@ -103,6 +105,49 @@ def discard_proposal(proposal_id: UUID) -> bool:
         ))
         connection.execute(proposals.delete().where(proposals.c.id == proposal_id))
     return True
+
+
+def confirm_proposal(proposal_id: UUID) -> MatterDetail | None:
+    with _proposal_transaction() as connection:
+        row = connection.execute(
+            select(proposals).where(proposals.c.id == proposal_id).with_for_update()
+        ).mappings().one_or_none()
+        if row is None:
+            return None
+
+        proposal = _detail(row)
+        matter_id = uuid4()
+        connection.execute(matters.insert().values(
+            id=matter_id,
+            external_reference=proposal.external_reference,
+            title=proposal.matter_title,
+            source_title=proposal.authoritative_source.title,
+            source_text=proposal.authoritative_source.text,
+            current_graph=proposal.proposed_graph.model_dump(mode="json"),
+        ))
+        transferred = connection.execute(
+            reference_claims.update().where(
+                reference_claims.c.canonical_reference
+                == proposal.external_reference.casefold(),
+                reference_claims.c.resource_kind == "matter_proposal",
+                reference_claims.c.resource_id == proposal_id,
+            ).values(resource_kind="matter", resource_id=matter_id)
+        )
+        if transferred.rowcount != 1:
+            raise ProposalPersistenceFailure(ambiguous=False)
+        consumed = connection.execute(
+            proposals.delete().where(proposals.c.id == proposal_id)
+        )
+        if consumed.rowcount != 1:
+            raise ProposalPersistenceFailure(ambiguous=False)
+
+    return MatterDetail(
+        id=matter_id,
+        external_reference=proposal.external_reference,
+        title=proposal.matter_title,
+        authoritative_source=proposal.authoritative_source,
+        current_graph=proposal.proposed_graph,
+    )
 
 
 def _claim_reference(connection: Connection, snapshot: MatterProposalDetail) -> None:

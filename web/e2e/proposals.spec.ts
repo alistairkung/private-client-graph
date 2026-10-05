@@ -4,7 +4,7 @@ import { expect, test } from "@playwright/test";
 
 const sourcePdf = fileURLToPath(new URL("../../tests/fixtures/synthetic-proposal.pdf", import.meta.url));
 
-test("synthetic PDF becomes a persisted proposal with exact Evidence and can be explicitly discarded", async ({ page, context }, testInfo) => {
+test("synthetic PDF becomes a reviewed proposal and confirms into the accepted Matter workspace", async ({ page, context }, testInfo) => {
   const reference = `E2E/${testInfo.project.name}/${randomUUID()}`;
   const title = "Fictional Example family";
   const creationRequests: string[] = [];
@@ -46,16 +46,29 @@ test("synthetic PDF becomes a persisted proposal with exact Evidence and can be 
   await expect(proposal).toHaveAttribute("href", proposalPath);
   await expect(page.getByRole("table", { name: "Matters", exact: true })).not.toContainText(reference);
   await proposal.click();
-  await page.getByRole("button", { name: "Discard intake", exact: true }).click();
-  await page.getByRole("button", { name: "Keep intake" }).click();
   expect((await context.request.get(proposalPath.replace("/app/", "/api/"))).status()).toBe(200);
-  await page.getByRole("button", { name: "Discard intake", exact: true }).click();
-  await page.getByRole("button", { name: "Permanently discard intake" }).click();
+  await expect(page.getByText(/whole proposed graph becomes the professionally accepted current Matter state/i)).toBeVisible();
+  await page.getByRole("button", { name: "Confirm whole graph and create Matter" }).click();
+  await expect(page).toHaveURL(/\/app\/matters\/[a-f0-9-]{36}$/);
+  const matterPath = new URL(page.url()).pathname;
+  await expect(page.getByRole("heading", { name: title, exact: true })).toBeVisible();
+  const acceptedParent = page.getByRole("button", { name: "Alice Example — Parent of — Ben Example", exact: true });
+  await acceptedParent.focus();
+  await acceptedParent.press("Enter");
+  await expect(page.locator("mark")).toHaveText("Alice Example is the parent of Ben Example.");
+  await page.reload();
+  await expect(page).toHaveURL(matterPath);
+  await expect(page).toHaveTitle(`${title} · Private Client Graph`);
+  await acceptedParent.focus();
+  await acceptedParent.press("Enter");
+  await expect(page.locator("mark")).toHaveText("Alice Example is the parent of Ben Example.");
+  await page.getByRole("link", { name: "Back to Matters" }).click();
   await expect(page).toHaveURL("/app");
   await expect(pending.getByRole("link", { name: `${reference} ${title}` })).toHaveCount(0);
   expect((await context.request.get(proposalPath.replace("/app/", "/api/"))).status()).toBe(404);
+  await expect(page.getByRole("table", { name: "Matters", exact: true }).getByRole("link", { name: `${reference} ${title}` })).toHaveAttribute("href", matterPath);
   const matters = await (await context.request.get("/api/matters")).json();
-  expect(matters.some((matter: { external_reference: string }) => matter.external_reference === reference)).toBe(false);
+  expect(matters.some((matter: { external_reference: string }) => matter.external_reference === reference)).toBe(true);
   await page.goto(proposalPath);
   await expect(page.getByRole("alert")).toContainText("Matter Proposal not found");
 });

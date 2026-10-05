@@ -44,6 +44,30 @@ export async function discardProposal(id: string): Promise<void> {
   }
 }
 
+export async function confirmProposal(id: string): Promise<string> {
+  try {
+    const response = await fetch("/api/matters", {
+      method: "POST",
+      headers: { "content-type": "application/json", ...csrfHeaders() },
+      body: JSON.stringify({ matter_proposal_id: id }),
+    });
+    if (!response.ok) {
+      const body: unknown = await response.json().catch(() => undefined);
+      throw new JsonRequestError("http", response.status, body);
+    }
+    const location = response.headers.get("Location");
+    if (response.status !== 201 || !location?.match(/^\/api\/matters\/[^/]+$/)) {
+      throw new JsonRequestError("invalid-json", response.status);
+    }
+    return location.replace(/^\/api\//, "/app/");
+  } catch (error) {
+    throw proposalFailure(
+      error,
+      "Confirmation could not be confirmed. Check the Matter Ledger to determine whether the Matter was created.",
+    );
+  }
+}
+
 export class ProposalRequestFailure extends Error {
   constructor(public readonly error: ProposalError) {
     super(error.message);

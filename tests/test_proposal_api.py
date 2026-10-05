@@ -249,3 +249,34 @@ def test_pdf_filename_and_declared_media_type_are_advisory(
     assert response.json()["error"]["code"] == "reference_unavailable"
     assert tracked_upload_files
     assert all(file.closed for file in tracked_upload_files)
+
+
+@pytest.mark.parametrize("body", [
+    {},
+    {"matter_proposal_id": "not-a-uuid"},
+    {
+        "matter_proposal_id": "00000000-0000-0000-0000-000000000049",
+        "current_graph": {"entities": [], "relationships": [], "evidence": []},
+    },
+    {
+        "matter_proposal_id": "00000000-0000-0000-0000-000000000049",
+        "authoritative_source": {"title": "Injected", "text": "Injected"},
+    },
+])
+def test_confirmation_rejects_missing_invalid_or_arbitrary_matter_state_before_database(
+    body, authenticated_client, monkeypatch,
+):
+    monkeypatch.delenv("DATABASE_URL", raising=False)
+    client = authenticated_client(create_app())
+
+    response = client.post(
+        "/api/matters",
+        json=body,
+        headers=security_headers(client),
+    )
+
+    assert response.status_code == 422
+    assert response.json() == {"error": {
+        "code": "invalid_confirmation",
+        "message": "Supply exactly one valid Matter Proposal identifier.",
+    }}

@@ -1,5 +1,5 @@
 import { expect, test, vi } from "vitest";
-import { createProposal, discardProposal, getProposal, getProposals } from "./api";
+import { confirmProposal, createProposal, discardProposal, getProposal, getProposals } from "./api";
 
 const proposal = {
   id: "proposal-42", external_reference: "Firm/42", matter_title: "Example family",
@@ -56,4 +56,35 @@ test("discard accepts an empty success response and treats a lost response as am
   await expect(discardProposal("proposal/42")).resolves.toBeUndefined();
   expect(fetcher.mock.calls[0]).toEqual(["/api/matter-proposals/proposal%2F42", { method: "DELETE", headers: { "x-csrftoken": "discard-csrf" } }]);
   await expect(discardProposal("proposal/42")).rejects.toMatchObject({ error: { outcome_unknown: true, message: expect.stringContaining("could not be confirmed") } });
+});
+
+test("confirmation posts only the proposal identifier and returns the Matter workspace location", async () => {
+  vi.spyOn(document, "cookie", "get").mockReturnValue("__Host-pcg-csrf=confirm-csrf");
+  const fetcher = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(
+    JSON.stringify({ ...proposal, id: "matter-49", title: proposal.matter_title, current_graph: proposal.proposed_graph }),
+    { status: 201, headers: { Location: "/api/matters/matter-49" } },
+  ));
+
+  await expect(confirmProposal("proposal/42")).resolves.toBe("/app/matters/matter-49");
+  expect(fetcher).toHaveBeenCalledWith("/api/matters", {
+    method: "POST",
+    headers: { "content-type": "application/json", "x-csrftoken": "confirm-csrf" },
+    body: JSON.stringify({ matter_proposal_id: "proposal/42" }),
+  });
+});
+
+test("confirmation preserves typed failures and treats a lost response as an unknown outcome", async () => {
+  const missing = {
+    code: "confirmation_outcome_unknown", retryable: false, outcome_unknown: true,
+    message: "Check the Matter Ledger to find the accepted Matter.",
+  };
+  vi.spyOn(globalThis, "fetch")
+    .mockResolvedValueOnce(new Response(JSON.stringify({ error: missing }), { status: 404 }))
+    .mockRejectedValueOnce(new TypeError("Network disconnected"));
+
+  await expect(confirmProposal("proposal-42")).rejects.toMatchObject({ error: missing });
+  await expect(confirmProposal("proposal-42")).rejects.toMatchObject({ error: {
+    outcome_unknown: true,
+    message: expect.stringContaining("Matter Ledger"),
+  } });
 });

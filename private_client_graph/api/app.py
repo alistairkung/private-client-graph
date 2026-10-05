@@ -5,11 +5,13 @@ from uuid import UUID
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, Request, Response
+from pydantic import BaseModel, ConfigDict
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
 from private_client_graph.api.auth import AuthConfig, configure_auth
 from private_client_graph.api.matter_proposals import router as proposal_router, proposal_failure
+from private_client_graph.application.matter_confirmation import confirm_matter
 from private_client_graph.application.proposal_errors import ProposalFailure
 from private_client_graph.application.matters import MatterDetail, MatterSummary, get_matter, list_matters
 from private_client_graph.persistence.database import database_engine
@@ -54,6 +56,18 @@ def matter_collection() -> list[MatterSummary] | JSONResponse:
         }})
 
 
+class MatterConfirmation(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    matter_proposal_id: UUID
+
+
+def create_matter(body: MatterConfirmation, response: Response) -> MatterDetail:
+    matter = confirm_matter(body.matter_proposal_id)
+    response.headers["Location"] = f"/api/matters/{matter.id}"
+    return matter
+
+
 def matter_detail(internal_id: UUID) -> MatterDetail | JSONResponse:
     try:
         matter = get_matter(internal_id)
@@ -96,6 +110,11 @@ async def invalid_request(
                 "message": "Invalid Matter Proposal UUID.",
             }},
         )
+    if request.url.path == "/api/matters" and request.method == "POST":
+        return JSONResponse(status_code=422, content={"error": {
+            "code": "invalid_confirmation",
+            "message": "Supply exactly one valid Matter Proposal identifier.",
+        }})
     if request.url.path.startswith("/api/matters/"):
         return JSONResponse(status_code=422, content={"error": {"message": "Invalid Matter UUID."}})
     error = AnalysisError(
@@ -120,6 +139,13 @@ def create_app(web_dist: Path = WEB_DIST) -> FastAPI:
     application.add_api_route("/health", health, methods=["GET"])
     application.add_api_route(
         "/api/matters", matter_collection, methods=["GET"], response_model=list[MatterSummary]
+    )
+    application.add_api_route(
+        "/api/matters",
+        create_matter,
+        methods=["POST"],
+        status_code=201,
+        response_model=MatterDetail,
     )
     application.add_api_route(
         "/api/matters/{internal_id}", matter_detail, methods=["GET"], response_model=MatterDetail

@@ -31,6 +31,149 @@ def submit(client, *, fields=None, pdf=None):
         headers=headers(client))
 
 
+def test_confirmation_creates_the_matter_resource_and_accepts_only_a_proposal_id(proposal_client):
+    from private_client_graph.application.proposal_contracts import ProposalMetadata
+    from private_client_graph.models import CanonicalGraph
+    from private_client_graph.persistence.matter_proposals import save_proposal
+
+    proposal = save_proposal(
+        ProposalMetadata(
+            external_reference="Example/49",
+            matter_title="Example family",
+            source_title="Fictional attendance note",
+        ),
+        SOURCE,
+        CanonicalGraph(entities=[], relationships=[], evidence=[]),
+    )
+
+    response = proposal_client.post(
+        "/api/matters",
+        json={"matter_proposal_id": str(proposal.id)},
+        headers=headers(proposal_client),
+    )
+
+    assert response.status_code == 201, response.text
+    matter = response.json()
+    assert response.headers["location"] == f"/api/matters/{matter['id']}"
+    assert matter == {
+        "id": matter["id"],
+        "external_reference": proposal.external_reference,
+        "title": proposal.matter_title,
+        "authoritative_source": proposal.authoritative_source.model_dump(),
+        "current_graph": proposal.proposed_graph.model_dump(mode="json"),
+    }
+    assert matter["id"] != str(proposal.id)
+    assert proposal_client.get(response.headers["location"]).json() == matter
+    assert proposal_client.get(f"/api/matter-proposals/{proposal.id}").status_code == 404
+
+    rejected = proposal_client.post(
+        "/api/matters",
+        json={
+            "matter_proposal_id": str(proposal.id),
+            "title": "A client-supplied title must not be accepted",
+        },
+        headers=headers(proposal_client),
+    )
+    assert rejected.status_code == 422
+    assert rejected.json()["error"]["code"] == "invalid_confirmation"
+
+    replay = proposal_client.post(
+        "/api/matters",
+        json={"matter_proposal_id": str(proposal.id)},
+        headers=headers(proposal_client),
+    )
+    assert replay.status_code == 404
+    assert replay.json()["error"] == {
+        "code": "confirmation_outcome_unknown",
+        "message": "This Matter Proposal is no longer available. If confirmation may have completed, check the Matter Ledger to find the accepted Matter.",
+        "retryable": False,
+        "outcome_unknown": True,
+        "resets_at": None,
+        "existing_resource": None,
+    }
+
+
+def test_known_confirmation_rollback_is_safe_and_leaves_the_proposal_reviewable(proposal_client):
+    from sqlalchemy import text
+    from private_client_graph.application.proposal_contracts import ProposalMetadata
+    from private_client_graph.models import CanonicalGraph
+    from private_client_graph.persistence.database import database_engine
+    from private_client_graph.persistence.matter_proposals import save_proposal
+
+    proposal = save_proposal(
+        ProposalMetadata(external_reference="Example/49", matter_title="Example family", source_title="Note"),
+        SOURCE,
+        CanonicalGraph(entities=[], relationships=[], evidence=[]),
+    )
+    with database_engine().begin() as connection:
+        connection.execute(text("""
+            CREATE FUNCTION reject_matter_insert() RETURNS trigger AS $$
+            BEGIN RAISE check_violation USING MESSAGE = 'Synthetic rejection'; END;
+            $$ LANGUAGE plpgsql
+        """))
+        connection.execute(text("""
+            CREATE TRIGGER reject_matter_insert BEFORE INSERT ON matters
+            FOR EACH ROW EXECUTE FUNCTION reject_matter_insert()
+        """))
+
+    response = proposal_client.post(
+        "/api/matters",
+        json={"matter_proposal_id": str(proposal.id)},
+        headers=headers(proposal_client),
+    )
+
+    assert response.status_code == 503
+    assert response.json()["error"] == {
+        "code": "confirmation_failed",
+        "message": "The Matter could not be created. The Matter Proposal remains available. You may retry confirmation.",
+        "retryable": True,
+        "outcome_unknown": False,
+        "resets_at": None,
+        "existing_resource": None,
+    }
+    assert proposal_client.get(f"/api/matter-proposals/{proposal.id}").status_code == 200
+    assert proposal_client.get("/api/matters").json() == []
+
+
+def test_lost_confirmation_commit_response_reports_unknown_outcome_and_points_to_ledger(
+    proposal_client, monkeypatch,
+):
+    from sqlalchemy.exc import OperationalError
+    from private_client_graph.application.proposal_contracts import ProposalMetadata
+    from private_client_graph.models import CanonicalGraph
+    from private_client_graph.persistence.database import database_engine
+    from private_client_graph.persistence.matter_proposals import save_proposal
+
+    proposal = save_proposal(
+        ProposalMetadata(external_reference="Example/49", matter_title="Example family", source_title="Note"),
+        SOURCE,
+        CanonicalGraph(entities=[], relationships=[], evidence=[]),
+    )
+    dialect = database_engine().dialect
+    real_commit = dialect.do_commit
+
+    def lose_acknowledgement(connection):
+        real_commit(connection)
+        raise OperationalError(None, None, Exception("connection lost"))
+
+    with monkeypatch.context() as fault:
+        fault.setattr(dialect, "do_commit", lose_acknowledgement)
+        response = proposal_client.post(
+            "/api/matters",
+            json={"matter_proposal_id": str(proposal.id)},
+            headers=headers(proposal_client),
+        )
+
+    assert response.status_code == 503
+    error = response.json()["error"]
+    assert error["code"] == "confirmation_outcome_unknown"
+    assert error["outcome_unknown"] is True
+    assert error["retryable"] is False
+    assert "Matter Ledger" in error["message"]
+    assert proposal_client.get(f"/api/matter-proposals/{proposal.id}").status_code == 404
+    assert proposal_client.get("/api/matters").json()[0]["external_reference"] == "Example/49"
+
+
 def test_upload_review_duplicate_and_discard_with_exact_evidence(
     proposal_client, monkeypatch, tmp_path, tracked_upload_files,
 ):
