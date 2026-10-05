@@ -15,13 +15,13 @@ os.environ.update({
 
 import pytest
 from fastapi.testclient import TestClient
-from google_boundary import GoogleBoundary, sign_in
+from google_boundary import make_google_boundary, sign_in
 
 
 @pytest.fixture
 def authenticated_client():
     def make(app):
-        GoogleBoundary().install(app)
+        make_google_boundary().install(app)
         client = TestClient(app, base_url="https://testserver")
         assert sign_in(client).status_code == 303
         return client

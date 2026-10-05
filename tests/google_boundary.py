@@ -1,47 +1,18 @@
-"""Test-only Google HTTP boundary; real OAuth state and JWT validation remain active."""
-import time
+"""Test adapter for the shared synthetic Google HTTP boundary."""
+
 from urllib.parse import parse_qs, urlencode, urlsplit
 
-import httpx2 as httpx
-from joserfc import jwt
-from joserfc.jwk import RSAKey
+from local_development.google import GoogleBoundary
 
 
-class GoogleBoundary:
-    def __init__(self, authorization_endpoint="https://accounts.google.com/o/oauth2/v2/auth"):
-        self.authorization_endpoint = authorization_endpoint
-        self.key = RSAKey.generate_key(2048)
-        self.claims = {}
-        self.bad_signature = False
-
-    def respond(self, request):
-        if request.url.path.endswith("openid-configuration"):
-            payload = {
-                "issuer": "https://accounts.google.com",
-                "authorization_endpoint": self.authorization_endpoint,
-                "token_endpoint": "https://oauth2.googleapis.com/token",
-                "jwks_uri": "https://www.googleapis.com/oauth2/v3/certs",
-                "id_token_signing_alg_values_supported": ["RS256"],
-            }
-        elif request.url.path.endswith("certs"):
-            payload = {"keys": [self.key.as_dict(private=False)]}
-        elif request.url.path == "/token":
-            params = parse_qs(request.content.decode())
-            claims = {
-                "iss": "https://accounts.google.com", "sub": "test-subject",
-                "aud": "test-client.apps.googleusercontent.com",
-                "iat": int(time.time()), "exp": int(time.time()) + 300,
-                "nonce": params["code"][0],
-            } | self.claims
-            key = RSAKey.generate_key(2048) if self.bad_signature else self.key
-            payload = {"access_token": "google-access-token-never-store", "token_type": "Bearer",
-                       "id_token": jwt.encode({"alg": "RS256"}, claims, key)}
-        else:
-            raise AssertionError(f"Unexpected Google request: {request.url}")
-        return httpx.Response(200, json=payload)
-
-    def install(self, app):
-        app.state.google.client_kwargs["transport"] = httpx.MockTransport(self.respond)
+def make_google_boundary(
+    authorization_endpoint="https://accounts.google.com/o/oauth2/v2/auth",
+):
+    return GoogleBoundary(
+        authorization_endpoint,
+        subject="test-subject",
+        client_id="test-client.apps.googleusercontent.com",
+    )
 
 
 def sign_in(client, *, next_path="/app"):

@@ -1,0 +1,39 @@
+services:
+  database:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: pcg
+      POSTGRES_USER: pcg
+      POSTGRES_PASSWORD: local-only
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pcg -d pcg"]
+      interval: 2s
+      timeout: 5s
+      retries: 15
+    volumes:
+      - pcg-postgres-data:/var/lib/postgresql/data
+
+  application:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    depends_on:
+      database:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://pcg:local-only@database:5432/pcg
+      PCG_GOOGLE_CLIENT_ID: local-development.apps.googleusercontent.com
+      PCG_GOOGLE_CLIENT_SECRET: local-development-google-secret
+      PCG_GOOGLE_SUB_ALLOWLIST: local-development-subject
+      PCG_SESSION_SECRET: local-development-session-secret-at-least-32-characters
+      PCG_SESSION_SECONDS: "3600"
+      PCG_TRUSTED_ORIGIN: https://localhost:8443
+      PCG_PROPOSAL_ANALYSIS_LIMIT: "1000"
+      PCG_PROPOSAL_ANALYSIS_WINDOW_SECONDS: "86400"
+      PCG_SHOWCASE_LIVE_ENABLED: "false"
+      DEEPSEEK_API_KEY: local-development-model-substitute
+    ports:
+      - "8443:8443"
+
+volumes:
+  pcg-postgres-data:
