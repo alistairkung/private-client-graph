@@ -1,7 +1,7 @@
+import { readFileSync } from "node:fs";
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
-import extraction from "../../../../cases/case_01/expected_extraction.json";
 import type { CanonicalGraph, RelationshipType } from "../../shared/canonical-graph";
 import type { CaseAnalysis } from "./types";
 import { resolveSamplePassages } from "./sample-walkthrough";
@@ -11,12 +11,19 @@ import { ShowcaseApp } from "./ShowcaseApp";
 // Mapping tests deliberately use arbitrary IDs and reversed relationship order.
 // Browser coverage keeps API graph construction real.
 const names = ["Alice Chen", "David Chen", "Bob Chen", "Carol Wong", "Evergreen Family Trust"];
+// Backend fixtures are needed at test runtime, not in the frontend-only build stage.
+const extraction: { relationships: {
+  source_name: string;
+  target_name: string;
+  relationship_type: RelationshipType;
+  supporting_text: string;
+}[] } = JSON.parse(readFileSync("../cases/case_01/expected_extraction.json", "utf8"));
 const source = readFileSync("../cases/case_01/source.txt", "utf8");
 const graph: CanonicalGraph = {
   entities: names.map((name, index) => ({ id: `entity-${index}`, name, type: index === 4 ? "trust" : "person" })),
   relationships: extraction.relationships.map((item, index) => ({
     source: `entity-${names.indexOf(item.source_name)}`, target: `entity-${names.indexOf(item.target_name)}`,
-    type: item.relationship_type as RelationshipType, evidence_ids: [`quote-${index}`],
+    type: item.relationship_type, evidence_ids: [`quote-${index}`],
   })).reverse(),
   evidence: extraction.relationships.map((item, index) => ({
     id: `quote-${index}`, document: "source.txt", supporting_text: item.supporting_text,
@@ -144,4 +151,3 @@ test("switching analysis modes isolates the live result and starts a fresh sampl
   await screen.findByText("Sample analysis · Demonstration fixture");
   expect(screen.getByText(/Guided sample walkthrough\. Choose/)).toBeVisible();
 });
-import { readFileSync } from "node:fs";
