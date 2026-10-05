@@ -35,6 +35,55 @@ test("requires synthetic confirmation, waits for one synchronous response, and o
   expect(fetcher).toHaveBeenCalledOnce();
 });
 
+test("opens the fictional-source prompt accessibly and closes it by keyboard without network activity", async () => {
+  const fetcher = vi.spyOn(globalThis, "fetch");
+  const user = userEvent.setup();
+  render(<CreateMatter onNavigate={vi.fn()} />);
+
+  const openPrompt = screen.getByRole("button", { name: "Need something to try?" });
+  await user.click(openPrompt);
+
+  const dialog = screen.getByRole("dialog", { name: "Create a fictional source" });
+  expect(dialog).toHaveTextContent("attendance note, client email, or letter");
+  expect(dialog).toHaveTextContent("fictional people and trusts");
+  expect(dialog).toHaveTextContent("family and trust relationships");
+  expect(dialog).toHaveTextContent("Do not include any real personal, client, legal, or confidential information");
+  expect(dialog).toHaveTextContent("text-layer PDF");
+  expect(dialog).toHaveTextContent("ordinary Matter Intake");
+  expect(screen.getByRole("button", { name: "Close prompt" })).toHaveFocus();
+
+  await user.keyboard("{Escape}");
+  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  expect(openPrompt).toHaveFocus();
+  expect(fetcher).not.toHaveBeenCalled();
+});
+
+test("keeps keyboard focus in the prompt and copies it without bypassing intake confirmation", async () => {
+  const fetcher = vi.spyOn(globalThis, "fetch");
+  const user = userEvent.setup();
+  const writeText = vi.spyOn(navigator.clipboard, "writeText");
+  render(<CreateMatter onNavigate={vi.fn()} />);
+
+  await user.click(screen.getByRole("button", { name: "Need something to try?" }));
+  const close = screen.getByRole("button", { name: "Close prompt" });
+  const copy = screen.getByRole("button", { name: "Copy prompt" });
+
+  await user.tab({ shift: true });
+  expect(copy).toHaveFocus();
+  await user.tab();
+  expect(close).toHaveFocus();
+  await user.click(copy);
+
+  expect(writeText).toHaveBeenCalledOnce();
+  expect(writeText.mock.calls[0][0]).toContain("completely fictional private-client source document");
+  expect(screen.getByRole("status")).toHaveTextContent("Prompt copied");
+  expect(fetcher).not.toHaveBeenCalled();
+
+  await user.click(close);
+  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Upload and analyse" })).toBeDisabled();
+});
+
 test.each(["matter_proposal", "matter"] as const)("explicit retry keeps local inputs and opens the existing %s from a duplicate response", async resourceKind => {
   const fetcher = vi.spyOn(globalThis, "fetch")
     .mockResolvedValueOnce(new Response(JSON.stringify({ error: { code: "provider_transient", message: "Analysis could not finish. No proposal was saved.", retryable: true } }), { status: 503 }))
