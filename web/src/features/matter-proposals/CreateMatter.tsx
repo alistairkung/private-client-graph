@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { createProposal, ProposalRequestFailure } from "./api";
 import type { ProposalError } from "./types";
 import { ProposalFailureNotice } from "./ProposalFailureNotice";
+import { FictionalSourcePrompt } from "./FictionalSourcePrompt";
 
 export function CreateMatter({ onNavigate }: { onNavigate: (path: string) => void }) {
   const [reference, setReference] = useState("");
@@ -11,6 +12,7 @@ export function CreateMatter({ onNavigate }: { onNavigate: (path: string) => voi
   const [confirmed, setConfirmed] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<ProposalError>();
+  const [showPrompt, setShowPrompt] = useState(false);
 
   useEffect(() => {
     if (!error?.resets_at) return;
@@ -56,6 +58,8 @@ export function CreateMatter({ onNavigate }: { onNavigate: (path: string) => voi
     <a className="matter-back" href="/app">Back to Matters</a>
     <h1>Create Matter</h1>
     <p className="intake-intro">Upload one synthetic PDF to propose relationships for review. This creates a Matter Proposal awaiting confirmation.</p>
+    <button className="prompt-trigger" type="button" onClick={() => setShowPrompt(true)}>Need something to try?</button>
+    {showPrompt && <FictionalSourcePrompt onClose={() => setShowPrompt(false)} />}
     <form className="intake-form" onSubmit={submit}>
       <fieldset disabled={pending} onChange={() => setError(undefined)}>
         <legend className="visually-hidden">Matter identity and source</legend>
