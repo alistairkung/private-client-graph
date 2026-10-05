@@ -48,6 +48,44 @@ test("a lost discard response preserves review and directs the practitioner to c
   expect(screen.getByLabelText("Source document")).toBeVisible();
 });
 
+test("confirmation explicitly accepts the whole proposed graph and opens the created Matter", async () => {
+  const fetcher = vi.spyOn(globalThis, "fetch")
+    .mockResolvedValueOnce(new Response(JSON.stringify(proposal)))
+    .mockResolvedValueOnce(new Response(JSON.stringify({
+      id: "matter-49",
+      external_reference: proposal.external_reference,
+      title: proposal.matter_title,
+      authoritative_source: proposal.authoritative_source,
+      current_graph: proposal.proposed_graph,
+    }), { status: 201, headers: { Location: "/api/matters/matter-49" } }));
+  const navigate = vi.fn();
+  render(<ProposalWorkspace id="proposal-42" onNavigate={navigate} />);
+  await screen.findByRole("heading", { name: "Fictional family" });
+  expect(screen.getByText(/whole proposed graph becomes the professionally accepted current Matter state/i)).toBeVisible();
+
+  await userEvent.click(screen.getByRole("button", { name: "Confirm whole graph and create Matter" }));
+
+  expect(navigate).toHaveBeenCalledWith("/app/matters/matter-49");
+  expect(fetcher.mock.calls[1][0]).toBe("/api/matters");
+  expect(JSON.parse(String(fetcher.mock.calls[1][1]?.body))).toEqual({ matter_proposal_id: "proposal-42" });
+});
+
+test("an unknown confirmation outcome keeps the review visible and directs the practitioner to the Ledger", async () => {
+  vi.spyOn(globalThis, "fetch")
+    .mockResolvedValueOnce(new Response(JSON.stringify(proposal)))
+    .mockRejectedValueOnce(new TypeError("Connection lost after confirmation"));
+  const navigate = vi.fn();
+  render(<ProposalWorkspace id="proposal-42" onNavigate={navigate} />);
+  await screen.findByRole("heading", { name: "Fictional family" });
+
+  await userEvent.click(screen.getByRole("button", { name: "Confirm whole graph and create Matter" }));
+
+  expect(await screen.findByRole("alert")).toHaveTextContent("Matter Ledger");
+  expect(screen.getByRole("link", { name: "Check Matters and proposals" })).toHaveAttribute("href", "/app");
+  expect(screen.getByLabelText("Source document")).toBeVisible();
+  expect(navigate).not.toHaveBeenCalled();
+});
+
 test.each([404, 503])("proposal detail %s offers return without stale or fallback data", async status => {
   vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response("{}", { status }));
   render(<ProposalWorkspace id="unavailable" onNavigate={vi.fn()} />);

@@ -57,7 +57,10 @@
 .practitioner-shell .intake-error p + p { margin-top: 8px; }
 .practitioner-shell .intake-error a { text-decoration: underline; }
 .practitioner-shell .proposal-explanation { margin-top: 12px; max-width: 660px; }
-.practitioner-shell .discard-intake { margin-top: 28px; }
+.practitioner-shell .proposal-decision { max-width: 660px; margin-top: 28px; padding-top: 24px; border-top: 1px solid #c9d1cc; }
+.practitioner-shell .confirm-matter > p { margin: 0 0 16px; }
+.practitioner-shell .confirm-matter > [role="status"] { margin-top: 12px; }
+.practitioner-shell .discard-intake { margin-top: 16px; }
 .practitioner-shell .discard-confirmation { max-width: 660px; padding: 20px; border: 1px solid #773b46; }
 .practitioner-shell .discard-confirmation p { margin: 0 0 16px; }
 .practitioner-shell .intake-actions { display: flex; gap: 12px; flex-wrap: wrap; }

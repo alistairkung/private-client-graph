@@ -504,13 +504,15 @@ are exercised on desktop and phone widths. Browser tests keep the real callback,
 session, PostgreSQL, graph, and review flows. Their Google authorization endpoint is
 mounted only by test code, which is not copied into the deployment image.
 
-## Synthetic Matter Proposals (#48)
+## Synthetic Matter Intake (#48, #49)
 
 The authenticated `/app` entry offers **Create Matter** and a separate **Awaiting
 confirmation** collection. Upload and analyse produces a durable machine-proposed
-graph for review; it does not create a Matter. Whole-proposal confirmation is a
-later slice. **Discard intake** asks for destructive confirmation, then removes the
-entire proposal and its reference claim without a retained judgment or history.
+graph for review; it does not create a Matter. **Confirm whole graph and create
+Matter** copies the reviewed identity, Authoritative Source, and proposed graph
+unchanged into a complete Matter, consumes the proposal, and opens the existing
+Matter workspace. **Discard intake** asks for destructive confirmation, then removes
+the entire proposal and its reference claim without a retained judgment or history.
 
 All allowlisted practitioners share proposals and accepted Matters within this
 synthetic deployment. Each submission requires confirmation that its material is
@@ -560,8 +562,19 @@ retry resolves the trimmed, case-folded external reference before another model
 attempt, including recovery after an unknown commit/response outcome. No source,
 raw extraction, or error details are retained for failed attempts.
 
+`POST /api/matters` is the only runtime Matter-creation operation and accepts
+exactly one JSON field, `matter_proposal_id`. It locks and revalidates the proposal,
+generates a new Matter UUID, inserts the complete Matter, transfers the external-
+reference claim, and consumes the proposal in one transaction. Success returns the
+Matter with 201 and its API `Location`; the browser opens the corresponding Matter
+workspace without rerunning extraction or graph construction. A known rollback
+leaves the proposal reviewable. A missing proposal or lost commit response is not
+treated as replay success: the outcome is reported as unknown and the practitioner
+is directed to the Matter Ledger.
+
 Deterministic tests substitute Google and the model boundary while keeping real
-PDF acquisition, graph construction, PostgreSQL, and browser review/discard. The
+PDF acquisition, graph construction, PostgreSQL, and browser review, confirmation,
+and discard. The
 committed synthetic PDF fixture lives under `tests/fixtures/`; it is separate from
 benchmark ground truth. Use the full test commands above with PostgreSQL enabled.
 Start each browser-suite run with a freshly migrated and seeded disposable database;

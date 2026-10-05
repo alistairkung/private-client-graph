@@ -141,6 +141,205 @@ def test_discard_removes_whole_proposal_releases_reference_and_creates_no_matter
     assert replacement.id != proposal.id
 
 
+def test_confirmation_promotes_the_complete_proposal_and_transfers_its_reference(database):
+    from private_client_graph.application.matters import get_matter, list_matters
+    from private_client_graph.models import CanonicalGraph
+    from private_client_graph.persistence.matter_proposals import confirm_proposal, find_reference, get_proposal, save_proposal
+
+    graph = CanonicalGraph.model_validate({
+        "entities": [
+            {"id": "person:alice", "name": "Alice Example", "type": "person"},
+            {"id": "person:ben", "name": "Ben Example", "type": "person"},
+        ],
+        "relationships": [{
+            "source": "person:alice", "target": "person:ben",
+            "type": "parent_of", "evidence_ids": ["ev-1"],
+        }],
+        "evidence": [{
+            "id": "ev-1", "document": "Fictional note",
+            "supporting_text": "Alice Example is the parent of Ben Example.",
+        }],
+    })
+    proposal = save_proposal(
+        ProposalMetadata(
+            external_reference="Synthetic-49",
+            matter_title="Synthetic family",
+            source_title="Fictional note",
+        ),
+        "Alice Example is the parent of Ben Example.",
+        graph,
+    )
+
+    matter = confirm_proposal(proposal.id)
+
+    assert matter is not None
+    assert matter.id != proposal.id
+    assert matter.external_reference == proposal.external_reference
+    assert matter.title == proposal.matter_title
+    assert matter.authoritative_source == proposal.authoritative_source
+    assert matter.current_graph.model_dump(mode="json") == proposal.proposed_graph.model_dump(mode="json")
+    assert get_matter(matter.id) == matter
+    assert [summary.model_dump() for summary in list_matters()] == [{
+        "id": matter.id,
+        "external_reference": matter.external_reference,
+        "title": matter.title,
+    }]
+    assert get_proposal(proposal.id) is None
+    owner = find_reference("synthetic-49")
+    assert owner.resource_kind == "matter"
+    assert owner.resource_id == matter.id
+    assert owner.location == f"/api/matters/{matter.id}"
+
+
+@pytest.mark.parametrize("failure_stage", ["matter_insert", "claim_transfer", "proposal_delete"])
+def test_confirmation_failure_rolls_back_every_promotion_change(database, failure_stage):
+    from sqlalchemy import text
+    from private_client_graph.application.matters import list_matters
+    from private_client_graph.models import CanonicalGraph
+    from private_client_graph.persistence.database import database_engine
+    from private_client_graph.persistence.matter_proposals import confirm_proposal, find_reference, get_proposal, save_proposal
+    from private_client_graph.persistence.proposal_errors import ProposalPersistenceFailure
+
+    proposal = save_proposal(
+        ProposalMetadata(external_reference="Synthetic-49", matter_title="Synthetic family", source_title="Note"),
+        "Fictional source.",
+        CanonicalGraph(entities=[], relationships=[], evidence=[]),
+    )
+    table, operation = {
+        "matter_insert": ("matters", "INSERT"),
+        "claim_transfer": ("external_matter_reference_claims", "UPDATE"),
+        "proposal_delete": ("matter_proposals", "DELETE"),
+    }[failure_stage]
+    with database_engine().begin() as connection:
+        connection.execute(text(f"""
+            CREATE FUNCTION reject_confirmation() RETURNS trigger AS $$
+            BEGIN RAISE check_violation USING MESSAGE = 'Synthetic rejection'; END;
+            $$ LANGUAGE plpgsql
+        """))
+        connection.execute(text(f"""
+            CREATE TRIGGER reject_confirmation BEFORE {operation} ON {table}
+            FOR EACH ROW EXECUTE FUNCTION reject_confirmation()
+        """))
+
+    with pytest.raises(ProposalPersistenceFailure) as caught:
+        confirm_proposal(proposal.id)
+
+    assert caught.value.ambiguous is False
+    assert get_proposal(proposal.id) == proposal
+    assert list_matters() == []
+    owner = find_reference("Synthetic-49")
+    assert owner.resource_kind == "matter_proposal"
+    assert owner.resource_id == proposal.id
+
+
+@pytest.mark.parametrize("values", [
+    {"source_text": "Unrelated fictional text."},
+    {"proposed_graph": {"entities": "invalid"}},
+])
+def test_confirmation_rejects_corrupt_proposal_and_leaves_it_reviewable_for_discard(database, values):
+    from sqlalchemy import update
+    from private_client_graph.application.matters import list_matters
+    from private_client_graph.models import CanonicalGraph
+    from private_client_graph.persistence.database import database_engine
+    from private_client_graph.persistence.matter_proposals import confirm_proposal, discard_proposal, find_reference, proposals, save_proposal
+
+    proposal = save_proposal(
+        ProposalMetadata(external_reference="Synthetic-49", matter_title="Synthetic family", source_title="Note"),
+        "Alice Example is trustee.",
+        CanonicalGraph.model_validate({
+            "entities": [], "relationships": [], "evidence": [{
+                "id": "ev-1", "document": "Note", "supporting_text": "Alice Example is trustee.",
+            }],
+        }),
+    )
+    with database_engine().begin() as connection:
+        connection.execute(update(proposals).where(proposals.c.id == proposal.id).values(**values))
+
+    with pytest.raises(ValueError):
+        confirm_proposal(proposal.id)
+
+    assert list_matters() == []
+    assert find_reference("Synthetic-49").resource_id == proposal.id
+    assert discard_proposal(proposal.id) is True
+
+
+def test_confirmation_rejects_a_reference_claim_that_does_not_match_the_proposal(database):
+    from sqlalchemy import update
+    from private_client_graph.application.matters import list_matters
+    from private_client_graph.models import CanonicalGraph
+    from private_client_graph.persistence.database import database_engine
+    from private_client_graph.persistence.matter_proposals import confirm_proposal, discard_proposal, find_reference, get_proposal, reference_claims, save_proposal
+    from private_client_graph.persistence.proposal_errors import ProposalPersistenceFailure
+
+    proposal = save_proposal(
+        ProposalMetadata(external_reference="Synthetic-49", matter_title="Synthetic family", source_title="Note"),
+        "Fictional source.",
+        CanonicalGraph(entities=[], relationships=[], evidence=[]),
+    )
+    with database_engine().begin() as connection:
+        connection.execute(update(reference_claims).where(
+            reference_claims.c.resource_id == proposal.id,
+        ).values(canonical_reference="different-reference"))
+
+    with pytest.raises(ProposalPersistenceFailure) as caught:
+        confirm_proposal(proposal.id)
+
+    assert caught.value.ambiguous is False
+    assert get_proposal(proposal.id) == proposal
+    assert list_matters() == []
+    assert find_reference("Synthetic-49") is None
+    assert find_reference("different-reference").resource_id == proposal.id
+    assert discard_proposal(proposal.id) is True
+
+
+def test_concurrent_confirmation_creates_one_matter_and_consumes_once(database):
+    from concurrent.futures import ThreadPoolExecutor
+    from private_client_graph.application.matters import list_matters
+    from private_client_graph.models import CanonicalGraph
+    from private_client_graph.persistence.matter_proposals import confirm_proposal, find_reference, get_proposal, save_proposal
+
+    proposal = save_proposal(
+        ProposalMetadata(external_reference="Synthetic-49", matter_title="Synthetic family", source_title="Note"),
+        "Fictional source.",
+        CanonicalGraph(entities=[], relationships=[], evidence=[]),
+    )
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        results = list(pool.map(lambda _: confirm_proposal(proposal.id), range(8)))
+
+    matters_created = [matter for matter in results if matter is not None]
+    assert len(matters_created) == 1
+    assert [summary.id for summary in list_matters()] == [matters_created[0].id]
+    assert get_proposal(proposal.id) is None
+    assert find_reference("Synthetic-49").resource_id == matters_created[0].id
+
+
+def test_confirmation_and_discard_race_has_one_complete_terminal_winner(database):
+    from concurrent.futures import ThreadPoolExecutor
+    from private_client_graph.application.matters import list_matters
+    from private_client_graph.models import CanonicalGraph
+    from private_client_graph.persistence.matter_proposals import confirm_proposal, discard_proposal, find_reference, get_proposal, save_proposal
+
+    proposal = save_proposal(
+        ProposalMetadata(external_reference="Synthetic-49", matter_title="Synthetic family", source_title="Note"),
+        "Fictional source.",
+        CanonicalGraph(entities=[], relationships=[], evidence=[]),
+    )
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        confirmation = pool.submit(confirm_proposal, proposal.id)
+        discard = pool.submit(discard_proposal, proposal.id)
+    matter = confirmation.result()
+    discarded = discard.result()
+
+    assert (matter is not None) != discarded
+    assert get_proposal(proposal.id) is None
+    if matter is not None:
+        assert [summary.id for summary in list_matters()] == [matter.id]
+        assert find_reference("Synthetic-49").resource_id == matter.id
+    else:
+        assert list_matters() == []
+        assert find_reference("Synthetic-49") is None
+
+
 def test_rejected_insert_rolls_back_proposal_and_reference_claim(database):
     from sqlalchemy import text
     from private_client_graph.persistence.proposal_errors import ProposalPersistenceFailure
