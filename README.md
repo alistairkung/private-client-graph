@@ -136,6 +136,7 @@ runs/                   Local extraction/evaluation outputs (Git ignored)
 - **Answer key first.** Benchmark cases are designed from ground truth before source documents are written.
 - **One new difficulty at a time.** New cases should make failures interpretable.
 - **Architecture is earned by failures.** Add retries, verification, temporal state, entity resolution, or other complexity only when benchmark results justify it.
+- **Canonical facts live in PostgreSQL; representations are derived.** Persist enough canonical Matter state and relationships to reconstruct the current state deterministically from the database. Derived forms such as `CanonicalGraph` are representations of that state and must not contain authoritative facts that exist nowhere else in canonical persistence. A derived representation should gain independent persisted identity only when the domain gives it an independent lifecycle, history, or other semantics that cannot be reconstructed from the underlying state. This principle does not require every domain concept to have its own table; persistence structure remains earned by concrete requirements and invariants.
 - **Refactors preserve behaviour.** Deterministic rules are protected by focused tests and required CI checks.
 
 ## Documentation
