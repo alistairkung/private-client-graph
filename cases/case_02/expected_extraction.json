@@ -43,6 +43,12 @@
       "supporting_text": "She further confirmed that Daniel Lau and Elena Lau are siblings."
     },
     {
+      "source_name": "Henry Lau",
+      "relationship_type": "trustee_of",
+      "target_name": "Lakeside Family Trust",
+      "supporting_text": "Margaret Lau confirmed that Henry Lau is a trustee of the Lakeside Family Trust."
+    },
+    {
       "source_name": "Daniel Lau",
       "relationship_type": "beneficiary_of",
       "target_name": "Lakeside Family Trust",
