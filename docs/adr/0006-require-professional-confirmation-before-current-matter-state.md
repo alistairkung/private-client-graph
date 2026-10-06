@@ -1,5 +1,7 @@
 # Require professional confirmation before current Matter state
 
+[ADR 0008](0008-enforce-canonical-provenance-and-aggregate-integrity.md) replaces graph-blob copying with relational fact copying in the next persistence slice. Whole-proposal acceptance, unchanged observable graph contents, and atomic proposal consumption remain in force.
+
 `Matter.current_graph` represents professionally accepted current relationship state, not merely the latest machine-produced analysis. Synchronous Matter analysis therefore runs the existing deterministic graph construction and provenance validation immediately after extraction, then creates a durable pre-Matter Matter Proposal containing proposed Matter identity, the Authoritative Source, and the resulting `proposed_graph`; only explicit practitioner confirmation of that whole proposal creates the complete Matter and copies the proposed graph unchanged into `current_graph`.
 
 ## Consequences

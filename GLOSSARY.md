@@ -17,8 +17,12 @@ The deterministic, mechanically validated representation of entities, relationsh
 _Avoid_: Raw extraction, model output
 
 **Evidence**:
-Exact text from a source document that supports an extracted relationship. Evidence is provenance for a relationship, not a graph entity or a generated explanation.
+An exact supporting quote attributable to one Source, potentially supporting multiple Relationships. Evidence is distinguished by its Source and exact text: repeated identical quotes within one Source are one Evidence item, identical quotes from different Sources are distinct, and no particular occurrence within the Source is implied.
 _Avoid_: Justification, rationale
+
+**Entity**:
+A Person or Trust identified within one Matter's relationship state. Its name describes it but does not define its identity; matching names alone do not establish that two Entities are the same participant.
+_Avoid_: Name string, globally identified person
 
 **Professional Review**:
 Inspection by a private-client professional of AI-extracted relationships and the source evidence supporting them. It is distinct from benchmark evaluation; the existing Matter workspace is read-only, while Matter Intake requires whole-proposal confirmation without yet supporting human correction.
@@ -49,7 +53,7 @@ A practitioner-facing identifier assigned by a firm's existing matter-management
 _Avoid_: Case ID, generated Matter reference
 
 **Authoritative Source**:
-The source text treated as authoritative for a Matter's current relationship graph. The currently supported Matter lifecycle has exactly one authoritative source, without making it a separate product hierarchy; an acquisition file is not itself the Authoritative Source.
+An explicitly identified body of source text treated as authoritative for a Matter's current relationship graph, also called a Source. Separately designated Sources within a Matter remain distinct even when their titles and text match; an acquisition file is not itself the Authoritative Source, and distinct Sources do not necessarily constitute independent corroboration.
 _Avoid_: Benchmark fixture, uploaded document
 
 **Public Showcase**:

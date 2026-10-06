@@ -139,6 +139,8 @@ runs/                   Local extraction/evaluation outputs (Git ignored)
 - **Canonical facts live in PostgreSQL; representations are derived.** Persist enough canonical Matter state and relationships to reconstruct the current state deterministically from the database. Derived forms such as `CanonicalGraph` are representations of that state and must not contain authoritative facts that exist nowhere else in canonical persistence. A derived representation should gain independent persisted identity only when the domain gives it an independent lifecycle, history, or other semantics that cannot be reconstructed from the underlying state. This principle does not require every domain concept to have its own table; persistence structure remains earned by concrete requirements and invariants.
 - **Refactors preserve behaviour.** Deterministic rules are protected by focused tests and required CI checks.
 
+Canonical persistence must also protect the structural and referential invariants that make its facts trustworthy wherever PostgreSQL can naturally enforce them; application validation complements rather than replaces those guarantees. Provenance integrity and Matter isolation are explicit domain requirements. The [agreed canonical-persistence slice](docs/design/canonical-persistence-slice.md) and [ADR 0008](docs/adr/0008-enforce-canonical-provenance-and-aggregate-integrity.md) define the next design; the current implementation still uses JSONB graphs.
+
 ## Documentation
 
 - [Agent instructions](AGENTS.md)
