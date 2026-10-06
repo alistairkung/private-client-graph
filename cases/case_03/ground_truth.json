@@ -1,0 +1,77 @@
+{
+  "entities": [
+    { "id": "person_001", "type": "person", "name": "Rebecca Tan" },
+    { "id": "person_002", "type": "person", "name": "Jonathan Tan" },
+    { "id": "person_003", "type": "person", "name": "Michael Tan" },
+    { "id": "person_004", "type": "person", "name": "Sophie Tan" },
+    { "id": "person_005", "type": "person", "name": "Adrian Koh" },
+    { "id": "trust_001", "type": "trust", "name": "Riverside Family Trust" }
+  ],
+  "relationships": [
+    {
+      "source": "person_001",
+      "type": "settlor_of",
+      "target": "trust_001",
+      "approved_evidence": [
+        "She confirmed that she is the settlor of the Riverside Family Trust.",
+        "Rebecca Tan confirmed that she is the settlor of the Riverside Family Trust."
+      ]
+    },
+    {
+      "source": "person_001",
+      "type": "spouse_of",
+      "target": "person_002",
+      "approved_evidence": [
+        "Rebecca confirmed that she and Jonathan Tan are spouses.",
+        "She confirmed that she and Jonathan Tan are spouses and that Rebecca Tan and Jonathan Tan are the parents of Michael Tan."
+      ]
+    },
+    {
+      "source": "person_001",
+      "type": "parent_of",
+      "target": "person_003",
+      "approved_evidence": [
+        "Rebecca Tan confirmed that Rebecca Tan and Jonathan Tan are the parents of Michael Tan.",
+        "She confirmed that she and Jonathan Tan are spouses and that Rebecca Tan and Jonathan Tan are the parents of Michael Tan.",
+        "In particular, the fact that Michael Tan is a child of Rebecca Tan and Jonathan Tan was recorded separately from the fact that Michael Tan is a beneficiary of the Riverside Family Trust."
+      ]
+    },
+    {
+      "source": "person_002",
+      "type": "parent_of",
+      "target": "person_003",
+      "approved_evidence": [
+        "Rebecca Tan confirmed that Rebecca Tan and Jonathan Tan are the parents of Michael Tan.",
+        "She confirmed that she and Jonathan Tan are spouses and that Rebecca Tan and Jonathan Tan are the parents of Michael Tan.",
+        "In particular, the fact that Michael Tan is a child of Rebecca Tan and Jonathan Tan was recorded separately from the fact that Michael Tan is a beneficiary of the Riverside Family Trust."
+      ]
+    },
+    {
+      "source": "person_003",
+      "type": "beneficiary_of",
+      "target": "trust_001",
+      "approved_evidence": [
+        "Rebecca confirmed that Michael Tan is a beneficiary of the Riverside Family Trust.",
+        "In particular, the fact that Michael Tan is a child of Rebecca Tan and Jonathan Tan was recorded separately from the fact that Michael Tan is a beneficiary of the Riverside Family Trust."
+      ]
+    },
+    {
+      "source": "person_004",
+      "type": "beneficiary_of",
+      "target": "trust_001",
+      "approved_evidence": [
+        "Mrs Tan also confirmed that Sophie Tan is a beneficiary of the Riverside Family Trust.",
+        "Sophie Tan's inclusion in the discussion was confined to Sophie Tan's status as a beneficiary of the Riverside Family Trust."
+      ]
+    },
+    {
+      "source": "person_005",
+      "type": "beneficiary_of",
+      "target": "trust_001",
+      "approved_evidence": [
+        "Rebecca Tan further confirmed that Adrian Koh is a beneficiary of the Riverside Family Trust.",
+        "Adrian Koh's inclusion in the discussion was confined to Adrian Koh's status as a beneficiary of the Riverside Family Trust."
+      ]
+    }
+  ]
+}

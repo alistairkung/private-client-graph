@@ -1,0 +1,112 @@
+{
+  "entities": [
+    { "id": "person_001", "type": "person", "name": "Margaret Lau" },
+    { "id": "person_002", "type": "person", "name": "Henry Lau" },
+    { "id": "person_003", "type": "person", "name": "Daniel Lau" },
+    { "id": "person_004", "type": "person", "name": "Elena Lau" },
+    { "id": "person_005", "type": "person", "name": "Priya Nair" },
+    { "id": "trust_001", "type": "trust", "name": "Lakeside Family Trust" }
+  ],
+  "relationships": [
+    {
+      "source": "person_001",
+      "type": "settlor_of",
+      "target": "trust_001",
+      "approved_evidence": [
+        "She confirmed that she is the settlor of the Lakeside Family Trust.",
+        "Margaret Lau confirmed that she is the settlor of the Lakeside Family Trust."
+      ]
+    },
+    {
+      "source": "person_001",
+      "type": "spouse_of",
+      "target": "person_002",
+      "approved_evidence": [
+        "Margaret Lau confirmed that she and Henry Lau are spouses.",
+        "She confirmed that she and Henry Lau are spouses and that Margaret Lau and Henry Lau are the parents of Daniel Lau and of Elena Lau, and that Daniel Lau and Elena Lau are siblings."
+      ]
+    },
+    {
+      "source": "person_001",
+      "type": "parent_of",
+      "target": "person_003",
+      "approved_evidence": [
+        "Margaret Lau confirmed that Margaret Lau and Henry Lau are the parents of Daniel Lau and of Elena Lau.",
+        "She confirmed that she and Henry Lau are spouses and that Margaret Lau and Henry Lau are the parents of Daniel Lau and of Elena Lau, and that Daniel Lau and Elena Lau are siblings.",
+        "In particular, the fact that Daniel Lau and Elena Lau are children of Margaret Lau and Henry Lau, and that they are siblings, was recorded separately from the fact that Daniel Lau is a beneficiary of the Lakeside Family Trust."
+      ]
+    },
+    {
+      "source": "person_002",
+      "type": "parent_of",
+      "target": "person_003",
+      "approved_evidence": [
+        "Margaret Lau confirmed that Margaret Lau and Henry Lau are the parents of Daniel Lau and of Elena Lau.",
+        "She confirmed that she and Henry Lau are spouses and that Margaret Lau and Henry Lau are the parents of Daniel Lau and of Elena Lau, and that Daniel Lau and Elena Lau are siblings.",
+        "In particular, the fact that Daniel Lau and Elena Lau are children of Margaret Lau and Henry Lau, and that they are siblings, was recorded separately from the fact that Daniel Lau is a beneficiary of the Lakeside Family Trust."
+      ]
+    },
+    {
+      "source": "person_001",
+      "type": "parent_of",
+      "target": "person_004",
+      "approved_evidence": [
+        "Margaret Lau confirmed that Margaret Lau and Henry Lau are the parents of Daniel Lau and of Elena Lau.",
+        "She confirmed that she and Henry Lau are spouses and that Margaret Lau and Henry Lau are the parents of Daniel Lau and of Elena Lau, and that Daniel Lau and Elena Lau are siblings.",
+        "In particular, the fact that Daniel Lau and Elena Lau are children of Margaret Lau and Henry Lau, and that they are siblings, was recorded separately from the fact that Daniel Lau is a beneficiary of the Lakeside Family Trust."
+      ]
+    },
+    {
+      "source": "person_002",
+      "type": "parent_of",
+      "target": "person_004",
+      "approved_evidence": [
+        "Margaret Lau confirmed that Margaret Lau and Henry Lau are the parents of Daniel Lau and of Elena Lau.",
+        "She confirmed that she and Henry Lau are spouses and that Margaret Lau and Henry Lau are the parents of Daniel Lau and of Elena Lau, and that Daniel Lau and Elena Lau are siblings.",
+        "In particular, the fact that Daniel Lau and Elena Lau are children of Margaret Lau and Henry Lau, and that they are siblings, was recorded separately from the fact that Daniel Lau is a beneficiary of the Lakeside Family Trust."
+      ]
+    },
+    {
+      "source": "person_003",
+      "type": "sibling_of",
+      "target": "person_004",
+      "approved_evidence": [
+        "She further confirmed that Daniel Lau and Elena Lau are siblings.",
+        "She confirmed that she and Henry Lau are spouses and that Margaret Lau and Henry Lau are the parents of Daniel Lau and of Elena Lau, and that Daniel Lau and Elena Lau are siblings.",
+        "In particular, the fact that Daniel Lau and Elena Lau are children of Margaret Lau and Henry Lau, and that they are siblings, was recorded separately from the fact that Daniel Lau is a beneficiary of the Lakeside Family Trust."
+      ]
+    },
+    {
+      "source": "person_002",
+      "type": "trustee_of",
+      "target": "trust_001",
+      "approved_evidence": [
+        "Margaret Lau confirmed that Henry Lau is a trustee of the Lakeside Family Trust.",
+        "She further confirmed that Henry Lau is a trustee of the Lakeside Family Trust.",
+        "Henry Lau's position as a trustee of the Lakeside Family Trust was recorded separately from his family relationships and from the beneficiary information."
+      ]
+    },
+    {
+      "source": "person_003",
+      "type": "beneficiary_of",
+      "target": "trust_001",
+      "approved_evidence": [
+        "Margaret Lau confirmed that Daniel Lau is a beneficiary of the Lakeside Family Trust.",
+        "Margaret Lau confirmed that the factual position to be recorded for the purposes of the initial review was that Daniel Lau and Priya Nair are beneficiaries of the Lakeside Family Trust.",
+        "She also confirmed that Daniel Lau and Priya Nair are beneficiaries of the Lakeside Family Trust.",
+        "In particular, the fact that Daniel Lau and Elena Lau are children of Margaret Lau and Henry Lau, and that they are siblings, was recorded separately from the fact that Daniel Lau is a beneficiary of the Lakeside Family Trust."
+      ]
+    },
+    {
+      "source": "person_005",
+      "type": "beneficiary_of",
+      "target": "trust_001",
+      "approved_evidence": [
+        "Margaret Lau also confirmed that Priya Nair is a beneficiary of the Lakeside Family Trust.",
+        "Margaret Lau confirmed that the factual position to be recorded for the purposes of the initial review was that Daniel Lau and Priya Nair are beneficiaries of the Lakeside Family Trust.",
+        "She also confirmed that Daniel Lau and Priya Nair are beneficiaries of the Lakeside Family Trust.",
+        "Priya Nair's inclusion in the discussion was confined to Priya Nair's status as a beneficiary of the Lakeside Family Trust."
+      ]
+    }
+  ]
+}

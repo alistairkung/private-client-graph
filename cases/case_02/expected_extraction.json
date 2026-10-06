@@ -1,0 +1,64 @@
+{
+  "relationships": [
+    {
+      "source_name": "Margaret Lau",
+      "relationship_type": "settlor_of",
+      "target_name": "Lakeside Family Trust",
+      "supporting_text": "She confirmed that she is the settlor of the Lakeside Family Trust."
+    },
+    {
+      "source_name": "Margaret Lau",
+      "relationship_type": "spouse_of",
+      "target_name": "Henry Lau",
+      "supporting_text": "Margaret Lau confirmed that she and Henry Lau are spouses."
+    },
+    {
+      "source_name": "Margaret Lau",
+      "relationship_type": "parent_of",
+      "target_name": "Daniel Lau",
+      "supporting_text": "Margaret Lau confirmed that Margaret Lau and Henry Lau are the parents of Daniel Lau and of Elena Lau."
+    },
+    {
+      "source_name": "Henry Lau",
+      "relationship_type": "parent_of",
+      "target_name": "Daniel Lau",
+      "supporting_text": "Margaret Lau confirmed that Margaret Lau and Henry Lau are the parents of Daniel Lau and of Elena Lau."
+    },
+    {
+      "source_name": "Margaret Lau",
+      "relationship_type": "parent_of",
+      "target_name": "Elena Lau",
+      "supporting_text": "Margaret Lau confirmed that Margaret Lau and Henry Lau are the parents of Daniel Lau and of Elena Lau."
+    },
+    {
+      "source_name": "Henry Lau",
+      "relationship_type": "parent_of",
+      "target_name": "Elena Lau",
+      "supporting_text": "Margaret Lau confirmed that Margaret Lau and Henry Lau are the parents of Daniel Lau and of Elena Lau."
+    },
+    {
+      "source_name": "Daniel Lau",
+      "relationship_type": "sibling_of",
+      "target_name": "Elena Lau",
+      "supporting_text": "She further confirmed that Daniel Lau and Elena Lau are siblings."
+    },
+    {
+      "source_name": "Henry Lau",
+      "relationship_type": "trustee_of",
+      "target_name": "Lakeside Family Trust",
+      "supporting_text": "Margaret Lau confirmed that Henry Lau is a trustee of the Lakeside Family Trust."
+    },
+    {
+      "source_name": "Daniel Lau",
+      "relationship_type": "beneficiary_of",
+      "target_name": "Lakeside Family Trust",
+      "supporting_text": "Margaret Lau confirmed that Daniel Lau is a beneficiary of the Lakeside Family Trust."
+    },
+    {
+      "source_name": "Priya Nair",
+      "relationship_type": "beneficiary_of",
+      "target_name": "Lakeside Family Trust",
+      "supporting_text": "Margaret Lau also confirmed that Priya Nair is a beneficiary of the Lakeside Family Trust."
+    }
+  ]
+}

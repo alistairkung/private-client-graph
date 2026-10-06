@@ -1,0 +1,46 @@
+{
+  "relationships": [
+    {
+      "source_name": "Rebecca Tan",
+      "relationship_type": "settlor_of",
+      "target_name": "Riverside Family Trust",
+      "supporting_text": "She confirmed that she is the settlor of the Riverside Family Trust."
+    },
+    {
+      "source_name": "Rebecca",
+      "relationship_type": "spouse_of",
+      "target_name": "Jonathan Tan",
+      "supporting_text": "Rebecca confirmed that she and Jonathan Tan are spouses."
+    },
+    {
+      "source_name": "Rebecca Tan",
+      "relationship_type": "parent_of",
+      "target_name": "Michael Tan",
+      "supporting_text": "Rebecca Tan confirmed that Rebecca Tan and Jonathan Tan are the parents of Michael Tan."
+    },
+    {
+      "source_name": "Jonathan Tan",
+      "relationship_type": "parent_of",
+      "target_name": "Michael Tan",
+      "supporting_text": "Rebecca Tan confirmed that Rebecca Tan and Jonathan Tan are the parents of Michael Tan."
+    },
+    {
+      "source_name": "Michael Tan",
+      "relationship_type": "beneficiary_of",
+      "target_name": "Riverside Family Trust",
+      "supporting_text": "Rebecca confirmed that Michael Tan is a beneficiary of the Riverside Family Trust."
+    },
+    {
+      "source_name": "Sophie Tan",
+      "relationship_type": "beneficiary_of",
+      "target_name": "Riverside Family Trust",
+      "supporting_text": "Mrs Tan also confirmed that Sophie Tan is a beneficiary of the Riverside Family Trust."
+    },
+    {
+      "source_name": "Adrian Koh",
+      "relationship_type": "beneficiary_of",
+      "target_name": "Riverside Family Trust",
+      "supporting_text": "Rebecca Tan further confirmed that Adrian Koh is a beneficiary of the Riverside Family Trust."
+    }
+  ]
+}
