@@ -141,6 +141,18 @@ runs/                   Local extraction/evaluation outputs (Git ignored)
 
 Canonical persistence must also protect the structural and referential invariants that make its facts trustworthy wherever PostgreSQL can naturally enforce them; application validation complements rather than replaces those guarantees. Provenance integrity and Matter isolation are explicit domain requirements. The [agreed canonical-persistence slice](docs/design/canonical-persistence-slice.md) and [ADR 0008](docs/adr/0008-enforce-canonical-provenance-and-aggregate-integrity.md) define the next design; the current implementation still uses JSONB graphs.
 
+The preparatory domain boundary accepts a `CanonicalState` containing explicitly
+identified Sources, Entities, Relationships, and source-attributed Evidence.
+`single_source_state` adapts today's graph without interpreting document labels as
+Source identity; `validate_canonical_state` checks references within that single
+aggregate, and `reconstruct_graph` preserves the reviewed IDs, ordering and values.
+The legacy graph projection does not carry Source IDs, so source-aware consumers
+must retain the state for attribution. This boundary validates rather than repairs
+facts: it never resolves aliases, merges names, or normalizes a reviewed graph.
+Matter/proposal boundaries and Evergreen use it while retaining existing API and
+JSONB storage contracts. Database-enforced ownership and integrity remain work for
+the subsequent relational persistence tickets.
+
 ## Documentation
 
 - [Agent instructions](AGENTS.md)
