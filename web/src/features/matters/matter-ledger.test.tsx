@@ -29,5 +29,5 @@ test.each(["http", "network"])("%s failure never displays a fallback Matter", as
   expect(await screen.findByRole("alert")).toHaveTextContent("Matters could not be loaded.");
   expect(screen.getByRole("alert")).toHaveTextContent("Reload the page to try again.");
   expect(screen.queryByText("Evergreen Family Trust")).not.toBeInTheDocument();
-  expect(screen.queryByText("No Matters available")).not.toBeInTheDocument();
+  expect(screen.queryByText("No accepted Matters yet")).not.toBeInTheDocument();
 });

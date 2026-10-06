@@ -10,6 +10,7 @@ export type RelationshipRoute = {
 export const NODE_WIDTH = 170;
 export const PERSON_HEIGHT = 56;
 export const TRUST_HEIGHT = 96;
+export const TRUST_LABEL_HEIGHT = 52;
 const LABEL_HEIGHT = 24;
 const LABEL_OFFSET = 22;
 
@@ -35,6 +36,13 @@ export function nodeRectangle(center: Point, height: number, clearance = 0): Rec
     right: center.x + NODE_WIDTH / 2 + clearance,
     bottom: center.y + height / 2 + clearance,
   };
+}
+
+// Labels beneath Trust triangles occupy real layout space without changing connectors.
+export function nodeFootprint(center: Point, height: number, clearance = 0): Rectangle {
+  const rectangle = nodeRectangle(center, height, clearance);
+  if (height === TRUST_HEIGHT) rectangle.bottom += TRUST_LABEL_HEIGHT;
+  return rectangle;
 }
 
 export function relationshipRoute(

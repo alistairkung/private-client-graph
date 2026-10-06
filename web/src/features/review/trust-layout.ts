@@ -5,7 +5,7 @@ import {
   PERSON_HEIGHT,
   TRUST_HEIGHT,
   nodeBoundary,
-  nodeRectangle,
+  nodeFootprint,
   relationshipRoute,
   type Point,
   type Rectangle,
@@ -28,7 +28,7 @@ function crossesNode(
   center: Point,
   height: number,
 ) {
-  const bounds = nodeRectangle(center, height, 10);
+  const bounds = nodeFootprint(center, height, 10);
   let enter = 0;
   let leave = 1;
   for (const [origin, delta, minimum, maximum] of [
@@ -122,7 +122,7 @@ function placeFamilyContext(
 }
 
 function entityObstacles(graph: RelationshipPresentation, positions: Map<string, Point>): Rectangle[] {
-  return graph.entities.map(entity => nodeRectangle(
+  return graph.entities.map(entity => nodeFootprint(
     positions.get(entity.id)!,
     entity.type === "trust" ? TRUST_HEIGHT : PERSON_HEIGHT,
     8,
@@ -153,7 +153,7 @@ function routeTrustRelationship(
   const corridorXs = [
     (person.x + approach.x) / 2,
     ...obstacles.flatMap(entity => {
-      const bounds = nodeRectangle(context.positions.get(entity.id)!,
+      const bounds = nodeFootprint(context.positions.get(entity.id)!,
         entity.type === "trust" ? TRUST_HEIGHT : PERSON_HEIGHT, 24);
       return [bounds.left, bounds.right];
     }),
@@ -205,7 +205,7 @@ function meaningfulBounds(
   positions: Map<string, Point>,
   routes: RelationshipRoute[],
 ) {
-  const nodeBounds = graph.entities.map(entity => nodeRectangle(
+  const nodeBounds = graph.entities.map(entity => nodeFootprint(
     positions.get(entity.id)!,
     entity.type === "trust" ? TRUST_HEIGHT : PERSON_HEIGHT,
   ));

@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import { ReviewWorkspace } from "../review/ReviewWorkspace";
 import { getProposal } from "./api";
-import { ConfirmMatter } from "./ConfirmMatter";
-import { DiscardIntake } from "./DiscardIntake";
+import { ProposalDecision } from "./ProposalDecision";
 import type { MatterProposalDetail } from "./types";
 
 type ProposalState =
@@ -30,7 +29,8 @@ export function ProposalWorkspace({ id, onNavigate }: { id: string; onNavigate: 
       <header className="matter-context">
         <h1>{state.proposal.matter_title}</h1>
         <p>Matter reference: {state.proposal.external_reference}</p>
-        <p className="proposal-explanation">Matter Proposal awaiting confirmation. These relationships are proposed; no Matter has been created.</p>
+        <p className="proposal-explanation">Awaiting confirmation. These relationships are proposed; no Matter has been created.</p>
+        <p className="proposal-saved">Your proposal is saved. You can return to it from Matters.</p>
       </header>
       <ReviewWorkspace
         source={state.proposal.authoritative_source.text}
@@ -40,10 +40,7 @@ export function ProposalWorkspace({ id, onNavigate }: { id: string; onNavigate: 
         emptyGraphTitle="No supported relationships proposed"
         practitioner
       />
-      <section className="proposal-decision" aria-label="Matter Proposal decision">
-        <ConfirmMatter id={id} onNavigate={onNavigate} />
-        <DiscardIntake id={id} onNavigate={onNavigate} />
-      </section>
+      <ProposalDecision proposal={state.proposal} onNavigate={onNavigate} />
     </> : state.status === "loading" ? <p role="status">Loading Matter Proposal…</p> : <div role="alert">
       <h1>{state.status === "missing" ? "Matter Proposal not found" : "Matter Proposal could not be loaded."}</h1>
       <p>{state.status === "missing" ? "This intake is no longer available. Return to Matters to view the current collections." : "Reload the page to try again."}</p>

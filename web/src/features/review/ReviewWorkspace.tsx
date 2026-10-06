@@ -1,10 +1,11 @@
 import "./review.css";
-import { useCallback, useState } from "react";
+import { useCallback, useId, useMemo, useRef, useState } from "react";
 import { EvidencePanel } from "./EvidencePanel";
-import { GraphView } from "./GraphView";
+import { RelationshipGraph } from "./RelationshipGraph";
 import { SourcePanel } from "./SourcePanel";
 import { locateEvidence } from "./graph-view";
 import type { CanonicalGraph } from "../../shared/canonical-graph";
+import { presentRelationships } from "./relationship-presentation";
 
 export function ReviewWorkspace({
   source,
@@ -24,6 +25,10 @@ export function ReviewWorkspace({
   const [selected, setSelected] = useState<number | null>(null);
   const [activeId, setActiveId] = useState<string>();
   const [activation, setActivation] = useState(0);
+  const [sourceFocus, setSourceFocus] = useState(0);
+  const highlightId = useId();
+  const graphPanel = useRef<HTMLElement>(null);
+  const presentation = useMemo(() => presentRelationships(graph), [graph]);
   const relationship =
     selected === null ? undefined : graph.relationships[selected];
   const items =
@@ -56,39 +61,8 @@ export function ReviewWorkspace({
   );
   return (
     <div className="review-workspace">
-      <section className="graph-panel panel">
-        <div className="panel-heading">
-          <div>
-            <p className="eyebrow">{practitioner ? "Relationship review" : "RELATIONSHIP REVIEW"}</p>
-            <h2>{graphTitle}</h2>
-          </div>
-          {!practitioner && <span className="pill">
-            {graph.relationships.length} relationships
-          </span>}
-        </div>
-        <div className="graph-legend" aria-label="Graph legend">
-          <span>
-            <i className="person-key" /> Person
-          </span>
-          <span>
-            <i className="trust-key" /> Trust
-          </span>
-          <span>
-            <i className="role-key" /> Trust role · no flow implied
-          </span>
-          <span>
-            <i className="directed-key" /> Parent → child
-          </span>
-          <span>
-            <i className="symmetric-key" /> Spouse / sibling
-          </span>
-        </div>
-        <GraphView
-          graph={graph}
-          selected={selected}
-          onSelect={selectRelationship}
-          emptyTitle={emptyGraphTitle}
-        />
+      <RelationshipGraph graph={graph} title={graphTitle} selected={selected}
+        onSelect={selectRelationship} emptyTitle={emptyGraphTitle} panelRef={graphPanel}>
         {error && (
           <p role="alert" className="error-message">
             {error}
@@ -99,9 +73,17 @@ export function ReviewWorkspace({
           items={items}
           activeId={activeId}
           onSelect={setActiveId}
+          relationship={selected === null ? undefined : presentation.relationships[selected].description}
+          sourceLink={span ? { id: highlightId, onActivate: () => setSourceFocus(value => value + 1) } : undefined}
         />
-      </section>
-      <SourcePanel practitioner={practitioner} title={sourceTitle} source={source} span={span} activation={activation} />
+      </RelationshipGraph>
+      <SourcePanel practitioner={practitioner} title={sourceTitle} source={source} span={span}
+        activation={activation} highlightId={highlightId} focusRequest={sourceFocus}
+        onReturn={() => {
+          const button = graphPanel.current?.querySelector<HTMLButtonElement>(`button[data-edge-id="${selected}"]`);
+          button?.focus();
+          button?.scrollIntoView({ block: "center" });
+        }} />
     </div>
   );
 }

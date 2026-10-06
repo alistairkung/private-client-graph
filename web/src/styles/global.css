@@ -40,17 +40,7 @@ a:focus-visible {
   outline: 3px solid #b15a27;
   outline-offset: 4px;
 }
-.brand-symbol {
-  display: inline-grid;
-  place-items: center;
-  margin-right: 12px;
-  background: #284d40;
-  color: #fff;
-  width: 34px;
-  height: 34px;
-  border-radius: 9px;
-  font-size: 25px;
-}
+.brand-mark { display: block; flex: 0 0 auto; width: 28px; height: 34px; }
 .eyebrow {
   font-size: 10px;
   letter-spacing: 1.8px;
