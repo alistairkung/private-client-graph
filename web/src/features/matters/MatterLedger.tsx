@@ -52,10 +52,11 @@ function CollectionMessage({ state }: { state: CollectionState }) {
     return <div className="ledger-empty" role="alert">
       <p>Matters could not be loaded.</p>
       <p>Reload the page to try again.</p>
+      <button onClick={() => window.location.reload()}>Reload page</button>
     </div>;
   }
   return <div className="ledger-empty">
-    <p>No Matters available</p>
+    <p>No accepted Matters yet</p>
     <p>Accepted Matters will appear here.</p>
   </div>;
 }

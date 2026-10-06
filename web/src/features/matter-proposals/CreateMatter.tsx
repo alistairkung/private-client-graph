@@ -57,22 +57,50 @@ export function CreateMatter({ onNavigate }: { onNavigate: (path: string) => voi
   return <>
     <a className="matter-back" href="/app">Back to Matters</a>
     <h1>Create Matter</h1>
-    <p className="intake-intro">Upload one synthetic PDF to propose relationships for review. This creates a Matter Proposal awaiting confirmation.</p>
-    <button className="prompt-trigger" type="button" onClick={() => setShowPrompt(true)}>Need something to try?</button>
+    <p className="intake-intro">Upload one synthetic PDF. Review the proposed relationships before creating the Matter.</p>
     {showPrompt && <FictionalSourcePrompt onClose={() => setShowPrompt(false)} />}
+    <div className="intake-layout">
     <form className="intake-form" onSubmit={submit}>
       <fieldset disabled={pending} onChange={() => setError(undefined)}>
-        <legend className="visually-hidden">Matter identity and source</legend>
-        <label>External Matter reference<input required name="external_reference" value={reference} onChange={event => setReference(event.target.value)} /></label>
-        <label>Matter title<input required name="matter_title" value={title} onChange={event => setTitle(event.target.value)} /></label>
-        <label>Authoritative Source title<input required name="source_title" value={sourceTitle} onChange={event => setSourceTitle(event.target.value)} /></label>
-        <label>PDF<input required type="file" name="pdf" accept=".pdf,application/pdf" onChange={event => setPdf(event.target.files?.[0])} aria-describedby="pdf-admission" /></label>
+        <legend>Matter details</legend>
+        <div className="intake-identity">
+          <div><label>External Matter reference<input required maxLength={100} name="external_reference" value={reference} onChange={event => setReference(event.target.value)} aria-describedby="reference-guidance" /></label>
+            <p className="field-guidance" id="reference-guidance">Use the reference from your existing Matter system.</p></div>
+          <label>Matter title<input required maxLength={200} name="matter_title" value={title} onChange={event => setTitle(event.target.value)} /></label>
+        </div>
+      </fieldset>
+      <fieldset disabled={pending} onChange={() => setError(undefined)}>
+        <legend>Source document</legend>
+        <label>PDF<input required type="file" name="pdf" accept=".pdf,application/pdf" onChange={event => {
+          const file = event.target.files?.[0];
+          setPdf(file);
+          if (file && !sourceTitle.trim()) setSourceTitle(file.name.replace(/\.pdf$/i, "").slice(0, 200));
+        }} aria-describedby="pdf-admission" /></label>
         <p id="pdf-admission" className="field-guidance">One text-layer PDF, up to 10 MiB and 50 pages. Scanned and encrypted PDFs are unsupported. Extracted source text may contain up to 100,000 characters.</p>
+        <label>Authoritative Source title<input required maxLength={200} name="source_title" value={sourceTitle} onChange={event => setSourceTitle(event.target.value)} aria-describedby="source-title-guidance" /></label>
+        <p id="source-title-guidance" className="field-guidance">This title will appear beside the source evidence.</p>
         <label className="synthetic-confirmation"><input type="checkbox" required checked={confirmed} onChange={event => setConfirmed(event.target.checked)} />I confirm that this material is synthetic or fictional and contains no real confidential client information.</label>
       </fieldset>
       {error && <ProposalFailureNotice error={error} />}
+      <div className="intake-actions">
       <button className="intake-button" disabled={!confirmed || !pdf || pending || error?.retryable === false} type="submit">{error?.outcome_unknown ? "Check reference and retry" : error?.retryable ? "Retry analysis" : "Upload and analyse"}</button>
+      {!pending && <a className="decision-return" href="/app">Back to Matters</a>}
+      </div>
       {pending && <p role="status">Uploading and analysing… Keep this page open while the proposal is prepared.</p>}
+      {!pending && <p className="intake-save-guidance">{error?.outcome_unknown
+        ? "If this reference already has a proposal or Matter, we will open it. Otherwise, analysis can be tried again."
+        : "Keep this page open during analysis. A proposal is saved only after analysis succeeds."}</p>}
     </form>
+    <aside className="intake-guidance" aria-label="Intake guidance">
+      <h2>{error?.outcome_unknown ? "Your entries are still here" : "What happens next"}</h2>
+      <p>{error?.outcome_unknown ? "Keep this page open to retain the selected PDF for retry." : "We extract the text from your PDF."}</p>
+      <p>You review the proposed graph against the exact source evidence.</p>
+      <p>You decide whether to accept the whole proposal.</p>
+      <div className="fictional-prompt-guidance">
+        <button className="prompt-trigger" type="button" onClick={() => setShowPrompt(true)}>Need something to try?</button>
+        <p>Get a prompt for creating a fictional source.</p>
+      </div>
+    </aside>
+    </div>
   </>;
 }

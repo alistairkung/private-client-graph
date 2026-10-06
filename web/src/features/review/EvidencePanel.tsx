@@ -5,15 +5,19 @@ export function EvidencePanel({
   practitioner = false,
   activeId,
   onSelect,
+  relationship,
+  sourceLink,
 }: {
   items: Evidence[];
   practitioner?: boolean;
   activeId?: string;
   onSelect: (id: string) => void;
+  relationship?: string;
+  sourceLink?: { id: string; onActivate: () => void };
 }) {
   return (
     <section className="evidence-panel" aria-label="Supporting evidence">
-      <p className="eyebrow">{practitioner ? "Supporting evidence" : "SUPPORTING EVIDENCE"}</p>
+      <h3>{relationship ?? "Supporting evidence"}</h3>
       {items.length ? (
         <div className="evidence-list">
           {items.map((item, index) => (
@@ -31,6 +35,10 @@ export function EvidencePanel({
       ) : (
         <p>Select a relationship to follow its evidence into the source.</p>
       )}
+      {sourceLink && <a className="evidence-source-link" href={`#${sourceLink.id}`} onClick={event => {
+        event.preventDefault();
+        sourceLink.onActivate();
+      }}>View in source</a>}
     </section>
   );
 }

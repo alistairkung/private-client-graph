@@ -176,3 +176,5 @@
     --folio-gutter: 24px;
   }
 }
+
+.showcase-brand { display: inline-flex; align-items: center; gap: 12px; }

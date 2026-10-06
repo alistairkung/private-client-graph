@@ -20,7 +20,8 @@ test("sample journey uses real API and graph construction, then highlights exact
   await expect(page.getByLabel("Graph legend")).toContainText("Trust role · no flow implied");
   await expect(page.locator(".react-flow__background")).toHaveCount(0);
   const canvas = await page.getByLabel("Relationship graph").boundingBox();
-  for (const node of await page.locator(".react-flow__node").all()) {
+  // Wide panels fit the full structure; narrow panels retain readable scale and pan.
+  if (canvas!.width > 450) for (const node of await page.locator(".react-flow__node").all()) {
     await expect
       .poll(async () => {
         const box = await node.boundingBox();
@@ -50,6 +51,7 @@ test("sample journey uses real API and graph construction, then highlights exact
   expect(overlaps(beneficiaryLabel, trust)).toBe(false);
   await expect(beneficiary).toHaveClass(/relationship-trust-role/);
   await expect(page.locator(".react-flow__edge.relationship-trust-role .react-flow__edge-path").first()).not.toHaveAttribute("marker-end");
+  await page.getByLabel("Find a relationship").selectOption({ label: "Bob Chen — Beneficiary of — Evergreen Family Trust" });
   await beneficiary.getByText("Beneficiary", { exact: true }).click();
   await expect(beneficiary).toHaveClass(/selected/);
   await expect(page.locator("mark")).toHaveText(

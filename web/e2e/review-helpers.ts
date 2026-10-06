@@ -5,6 +5,7 @@ export async function selectSpouseRelationship(page: Page) {
     name: "Alice Chen — Spouse of — David Chen",
     exact: true,
   });
+  await page.getByLabel("Find a relationship").selectOption({ label: "Alice Chen — Spouse of — David Chen" });
   await relationship.getByText("Spouse of", { exact: true }).click();
   return relationship;
 }

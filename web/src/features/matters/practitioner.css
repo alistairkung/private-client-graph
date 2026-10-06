@@ -37,10 +37,7 @@
   font-size: 16px;
   font-weight: 600;
   white-space: nowrap;
-}
-.practitioner-shell .brand-symbol {
-  background: #173e38;
-  border-radius: 3px;
+  gap: 12px;
 }
 .practitioner-shell nav a {
   display: flex;

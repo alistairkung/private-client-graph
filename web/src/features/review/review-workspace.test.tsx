@@ -8,7 +8,7 @@ import type { CanonicalGraph } from "../../shared/canonical-graph";
 vi.mock("./GraphView", () => ({
   GraphView: ({ graph, onSelect }: { graph: CanonicalGraph; onSelect: (index: number) => void }) => (
     <>{graph.relationships.map((_, index) =>
-      <button key={index} onClick={() => onSelect(index)}>Select relationship {index}</button>)}</>
+      <button key={index} data-edge-id={index} onClick={() => onSelect(index)}>Select relationship {index}</button>)}</>
   ),
 }));
 const graph: CanonicalGraph = {
@@ -34,6 +34,18 @@ const graph: CanonicalGraph = {
 };
 const source =
   "Introduction. Alice and Bob are spouses. Later. They confirmed their marriage. End.";
+
+test("source navigation moves focus to exact Evidence and returns to the selected relationship", async () => {
+  const user = userEvent.setup();
+  const { container } = render(<ReviewWorkspace source={source} graph={graph} practitioner />);
+  const relationship = screen.getByRole("button", { name: "Select relationship 0" });
+  await user.click(relationship);
+  await user.click(screen.getByRole("link", { name: "View in source" }));
+  expect(container.querySelector("mark")).toHaveFocus();
+  expect(container.querySelector("mark")).toHaveTextContent("Alice and Bob are spouses.");
+  await user.click(screen.getByRole("button", { name: "Back to selected relationship" }));
+  expect(relationship).toHaveFocus();
+});
 
 test("edge selection activates first evidence and changing evidence moves the single exact highlight", async () => {
   const user = userEvent.setup();
