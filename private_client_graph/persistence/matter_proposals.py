@@ -5,7 +5,7 @@ from contextlib import contextmanager
 from uuid import UUID, uuid4
 
 from sqlalchemy import CheckConstraint, Column, MetaData, Table, Text, Uuid, select
-from sqlalchemy.dialects.postgresql import JSONB, insert
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.engine import Connection, RowMapping
 from sqlalchemy.exc import DBAPIError, SQLAlchemyError
 
@@ -18,23 +18,16 @@ from private_client_graph.application.proposal_contracts import (
 )
 from private_client_graph.models import CanonicalGraph
 from private_client_graph.models.source import Source
-from private_client_graph.canonical_state import single_source_state
+from private_client_graph.canonical_state import reconstruct_graph, single_source_state
+from private_client_graph.models.canonical_state import CanonicalState
 
 from .database import database_engine
 from .matter_state import insert_matter
+from .proposal_records import proposals
+from .proposal_state import insert_proposal, load_proposal_state
 from .proposal_errors import DuplicateReference, ProposalPersistenceFailure
 
 metadata = MetaData()
-proposals = Table(
-    "matter_proposals",
-    metadata,
-    Column("id", Uuid, primary_key=True),
-    Column("external_reference", Text, nullable=False),
-    Column("matter_title", Text, nullable=False),
-    Column("source_title", Text, nullable=False),
-    Column("source_text", Text, nullable=False),
-    Column("proposed_graph", JSONB, nullable=False),
-)
 reference_claims = Table(
     "external_matter_reference_claims",
     metadata,
@@ -65,11 +58,11 @@ def list_proposals() -> list[MatterProposalSummary]:
 
 
 def get_proposal(proposal_id: UUID) -> MatterProposalDetail | None:
-    with database_engine().connect() as connection:
+    with database_engine().connect().execution_options(isolation_level="REPEATABLE READ") as connection:
         row = connection.execute(
             select(proposals).where(proposals.c.id == proposal_id)
         ).mappings().one_or_none()
-    return _detail(row) if row is not None else None
+        return _detail(row, load_proposal_state(connection, proposal_id)) if row is not None else None
 
 
 def find_reference(external_reference: str) -> ReferenceOwner | None:
@@ -116,43 +109,52 @@ def confirm_proposal(proposal_id: UUID) -> MatterDetail | None:
         ).mappings().one_or_none()
         if row is None:
             return None
+        # Validate the single-source presentation contract before consuming state.
+        state = load_proposal_state(connection, proposal_id)
+        proposal = _detail(row, state)
+        matter_id = _promote_locked_proposal(connection, row, state)
+        return MatterDetail(
+            id=matter_id, external_reference=proposal.external_reference,
+            title=proposal.matter_title, authoritative_source=proposal.authoritative_source,
+            current_graph=proposal.proposed_graph,
+        )
 
-        proposal = _detail(row)
-        matter_id = uuid4()
-        inserted = insert_matter(
-            connection, matter_id=matter_id,
-            external_reference=proposal.external_reference,
-            title=proposal.matter_title,
-            state=single_source_state(Source(
-                id="source_001", title=proposal.authoritative_source.title,
-                text=proposal.authoritative_source.text,
-            ), proposal.proposed_graph),
-        )
-        if not inserted:
-            raise ProposalPersistenceFailure(ambiguous=False)
-        transferred = connection.execute(
-            reference_claims.update().where(
-                reference_claims.c.canonical_reference
-                == proposal.external_reference.casefold(),
-                reference_claims.c.resource_kind == "matter_proposal",
-                reference_claims.c.resource_id == proposal_id,
-            ).values(resource_kind="matter", resource_id=matter_id)
-        )
-        if transferred.rowcount != 1:
-            raise ProposalPersistenceFailure(ambiguous=False)
-        consumed = connection.execute(
-            proposals.delete().where(proposals.c.id == proposal_id)
-        )
-        if consumed.rowcount != 1:
-            raise ProposalPersistenceFailure(ambiguous=False)
 
-    return MatterDetail(
-        id=matter_id,
-        external_reference=proposal.external_reference,
-        title=proposal.matter_title,
-        authoritative_source=proposal.authoritative_source,
-        current_graph=proposal.proposed_graph,
-    )
+def promote_proposal(connection: Connection, proposal_id: UUID) -> UUID | None:
+    """Copy and consume a complete source-aware proposal in the caller's transaction.
+
+    The root lock serializes supported confirmation/discard operations. Facts
+    are loaded in one statement snapshot.
+    No Matter identity is allocated before locked state has been validated.
+    """
+    row = connection.execute(
+        select(proposals).where(proposals.c.id == proposal_id).with_for_update()
+    ).mappings().one_or_none()
+    if row is None:
+        return None
+    state = load_proposal_state(connection, proposal_id)
+    return _promote_locked_proposal(connection, row, state)
+
+
+def _promote_locked_proposal(connection: Connection, row: RowMapping, state: CanonicalState) -> UUID:
+    proposal_id = row["id"]
+    matter_id = uuid4()
+    if not insert_matter(
+        connection, matter_id=matter_id, external_reference=row["external_reference"],
+        title=row["matter_title"], state=state,
+    ):
+        raise ProposalPersistenceFailure(ambiguous=False)
+    transferred = connection.execute(reference_claims.update().where(
+        reference_claims.c.canonical_reference == row["external_reference"].casefold(),
+        reference_claims.c.resource_kind == "matter_proposal",
+        reference_claims.c.resource_id == proposal_id,
+    ).values(resource_kind="matter", resource_id=matter_id))
+    if transferred.rowcount != 1:
+        raise ProposalPersistenceFailure(ambiguous=False)
+    consumed = connection.execute(proposals.delete().where(proposals.c.id == proposal_id))
+    if consumed.rowcount != 1:
+        raise ProposalPersistenceFailure(ambiguous=False)
+    return matter_id
 
 
 def _claim_reference(connection: Connection, snapshot: MatterProposalDetail) -> None:
@@ -176,14 +178,15 @@ def _claim_reference(connection: Connection, snapshot: MatterProposalDetail) -> 
 
 
 def _insert_proposal(connection: Connection, snapshot: MatterProposalDetail) -> None:
-    connection.execute(proposals.insert().values(
-        id=snapshot.id,
-        external_reference=snapshot.external_reference,
-        matter_title=snapshot.matter_title,
-        source_title=snapshot.authoritative_source.title,
-        source_text=snapshot.authoritative_source.text,
-        proposed_graph=snapshot.proposed_graph.model_dump(mode="json"),
-    ))
+    state = single_source_state(Source(
+        id="source_001", title=snapshot.authoritative_source.title,
+        text=snapshot.authoritative_source.text,
+    ), snapshot.proposed_graph)
+    if not insert_proposal(
+        connection, proposal_id=snapshot.id, external_reference=snapshot.external_reference,
+        title=snapshot.matter_title, state=state,
+    ):
+        raise ProposalPersistenceFailure(ambiguous=False)
 
 
 @contextmanager
@@ -216,11 +219,14 @@ def _find_reference(connection: Connection, external_reference: str) -> Referenc
     return ReferenceOwner.model_validate(row) if row is not None else None
 
 
-def _detail(row: RowMapping) -> MatterProposalDetail:
+def _detail(row: RowMapping, state: CanonicalState) -> MatterProposalDetail:
+    if len(state.sources) != 1:
+        raise ValueError("The practitioner workspace requires exactly one Source")
+    source = state.sources[0]
     return MatterProposalDetail.model_validate({
         "id": row["id"],
         "external_reference": row["external_reference"],
         "matter_title": row["matter_title"],
-        "authoritative_source": {"title": row["source_title"], "text": row["source_text"]},
-        "proposed_graph": row["proposed_graph"],
+        "authoritative_source": {"title": source.title, "text": source.text},
+        "proposed_graph": reconstruct_graph(state),
     })

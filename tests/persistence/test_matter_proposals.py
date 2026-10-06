@@ -250,12 +250,13 @@ def test_confirmation_failure_rolls_back_every_promotion_change(database, failur
     assert owner.resource_id == proposal.id
 
 
-@pytest.mark.parametrize("values", [
-    {"source_text": "Unrelated fictional text."},
-    {"proposed_graph": {"entities": "invalid"}},
+@pytest.mark.parametrize("sql", [
+    "UPDATE proposal_sources SET text='Unrelated text' WHERE proposal_id=:id",
+    "UPDATE proposal_evidence SET source_id='missing' WHERE proposal_id=:id",
 ])
-def test_confirmation_rejects_corrupt_proposal_and_leaves_it_reviewable_for_discard(database, values):
-    from sqlalchemy import update
+def test_database_rejects_corruption_before_confirmation(database, sql):
+    from sqlalchemy import text
+    from sqlalchemy.exc import IntegrityError
     from private_client_graph.application.matters import list_matters
     from private_client_graph.models import CanonicalGraph
     from private_client_graph.persistence.database import database_engine
@@ -270,15 +271,13 @@ def test_confirmation_rejects_corrupt_proposal_and_leaves_it_reviewable_for_disc
             }],
         }),
     )
-    with database_engine().begin() as connection:
-        connection.execute(update(proposals).where(proposals.c.id == proposal.id).values(**values))
-
-    with pytest.raises(ValueError):
-        confirm_proposal(proposal.id)
-
-    assert list_matters() == []
-    assert find_reference("Synthetic-49").resource_id == proposal.id
-    assert discard_proposal(proposal.id) is True
+    with pytest.raises(IntegrityError):
+        with database_engine().begin() as connection:
+            connection.execute(text(sql), {"id": proposal.id})
+    matter = confirm_proposal(proposal.id)
+    assert matter.current_graph == proposal.proposed_graph
+    assert matter.authoritative_source == proposal.authoritative_source
+    assert find_reference("Synthetic-49").resource_id == matter.id
 
 
 def test_confirmation_rejects_a_reference_claim_that_does_not_match_the_proposal(database):
@@ -366,7 +365,7 @@ def test_rejected_insert_rolls_back_proposal_and_reference_claim(database):
     from private_client_graph.persistence.matter_proposals import find_reference, list_proposals, save_proposal
 
     with database_engine().begin() as connection:
-        connection.execute(text("ALTER TABLE matter_proposals ADD CHECK (source_text <> 'Rejected synthetic source')"))
+        connection.execute(text("ALTER TABLE proposal_sources ADD CHECK (text <> 'Rejected synthetic source')"))
     with pytest.raises(ProposalPersistenceFailure) as caught:
         save_proposal(
             ProposalMetadata(external_reference="Synthetic-1", matter_title="Synthetic Trust", source_title="Note"),
@@ -434,12 +433,13 @@ def test_failed_discard_preserves_proposal_and_reference_together(database):
     assert find_reference("Synthetic-1").resource_id == proposal.id
 
 
-@pytest.mark.parametrize("values", [
-    {"source_text": "Unrelated synthetic text"},
-    {"proposed_graph": {"entities": "invalid"}},
+@pytest.mark.parametrize("sql", [
+    "UPDATE proposal_sources SET text='Unrelated text' WHERE proposal_id=:id",
+    "UPDATE proposal_evidence SET source_id='missing' WHERE proposal_id=:id",
 ])
-def test_corrupt_proposal_never_leaves_read_boundary_but_can_be_discarded(database, values):
-    from sqlalchemy import update
+def test_database_rejects_corruption_and_retains_reviewable_proposal(database, sql):
+    from sqlalchemy import text
+    from sqlalchemy.exc import IntegrityError
     from private_client_graph.models import CanonicalGraph
     from private_client_graph.persistence.database import database_engine
     from private_client_graph.persistence.matter_proposals import discard_proposal, find_reference, get_proposal, proposals, save_proposal
@@ -452,10 +452,10 @@ def test_corrupt_proposal_never_leaves_read_boundary_but_can_be_discarded(databa
             ],
         }),
     )
-    with database_engine().begin() as connection:
-        connection.execute(update(proposals).where(proposals.c.id == proposal.id).values(**values))
-    with pytest.raises(ValueError):
-        get_proposal(proposal.id)
+    with pytest.raises(IntegrityError):
+        with database_engine().begin() as connection:
+            connection.execute(text(sql), {"id": proposal.id})
+    assert get_proposal(proposal.id) == proposal
     assert discard_proposal(proposal.id) is True
     assert find_reference("Synthetic-1") is None
 
@@ -539,3 +539,34 @@ def test_invalid_source_evidence_cannot_persist_a_proposal_or_reservation(databa
         )
     assert list_proposals() == []
     assert find_reference("Synthetic-1") is None
+
+
+def test_lost_confirmation_acknowledgement_recovers_matter_by_reference_without_replay(database, monkeypatch):
+    import psycopg
+    from private_client_graph.models import CanonicalGraph
+    from private_client_graph.application.matters import get_matter
+    from private_client_graph.persistence.database import database_engine
+    from private_client_graph.persistence.matter_proposals import confirm_proposal, find_reference, get_proposal, save_proposal
+    from private_client_graph.persistence.proposal_errors import ProposalPersistenceFailure
+
+    proposal = save_proposal(
+        ProposalMetadata(external_reference='Lost-confirmation', matter_title='Synthetic', source_title='Note'),
+        'Alice is trustee.', CanonicalGraph(entities=[], relationships=[], evidence=[]),
+    )
+    dialect = database_engine().dialect
+    original_commit = dialect.do_commit
+
+    def lose_acknowledgement(connection):
+        original_commit(connection)
+        raise psycopg.OperationalError('Synthetic lost confirmation acknowledgement')
+
+    with monkeypatch.context() as fault:
+        fault.setattr(dialect, 'do_commit', lose_acknowledgement)
+        with pytest.raises(ProposalPersistenceFailure) as caught:
+            confirm_proposal(proposal.id)
+    assert caught.value.ambiguous is True
+    owner = find_reference('Lost-confirmation')
+    assert owner.resource_kind == 'matter'
+    assert get_matter(owner.resource_id).current_graph == proposal.proposed_graph
+    assert get_proposal(proposal.id) is None
+    assert confirm_proposal(proposal.id) is None

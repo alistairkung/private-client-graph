@@ -21,7 +21,7 @@ def _legacy_matter(engine, graph, source="Alice is a beneficiary."):
 
 
 def _upgrade():
-    return subprocess.run([sys.executable, "-m", "alembic", "upgrade", "head"], capture_output=True, text=True)
+    return subprocess.run([sys.executable, "-m", "alembic", "upgrade", "0005"], capture_output=True, text=True)
 
 
 @pytest.mark.parametrize("database", ["0004"], indirect=True)
