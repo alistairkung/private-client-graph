@@ -1,9 +1,9 @@
 # Private Client Graph
 
-**Integration branch notice (#84):** accepted Matter persistence is relational in
-this branch, while Matter Proposals still use JSONB. Do not deploy this intermediate
-slice independently; #85 must complete the combined cutover. See the
-[maintenance and verification procedure](docs/workflows/canonical-matter-cutover.md).
+**Canonical persistence cutover:** Matters and pending Matter Proposals now use
+separate constrained relational facts. Existing deployments require a coordinated
+maintenance window; follow the [cutover and recovery procedure](docs/workflows/canonical-matter-cutover.md)
+before activating this release.
 
 Private Client Graph is an FTEC5660 MSc AI technical spike exploring whether an LLM can reconstruct **family and trust relationship graphs** from synthetic private-client-style documents while preserving **source provenance** and producing measurable evaluation results.
 
@@ -144,7 +144,7 @@ runs/                   Local extraction/evaluation outputs (Git ignored)
 - **Canonical facts live in PostgreSQL; representations are derived.** Persist enough canonical Matter state and relationships to reconstruct the current state deterministically from the database. Derived forms such as `CanonicalGraph` are representations of that state and must not contain authoritative facts that exist nowhere else in canonical persistence. A derived representation should gain independent persisted identity only when the domain gives it an independent lifecycle, history, or other semantics that cannot be reconstructed from the underlying state. This principle does not require every domain concept to have its own table; persistence structure remains earned by concrete requirements and invariants.
 - **Refactors preserve behaviour.** Deterministic rules are protected by focused tests and required CI checks.
 
-Canonical persistence must also protect the structural and referential invariants that make its facts trustworthy wherever PostgreSQL can naturally enforce them; application validation complements rather than replaces those guarantees. Provenance integrity and Matter isolation are explicit domain requirements. The [agreed canonical-persistence slice](docs/design/canonical-persistence-slice.md) and [ADR 0008](docs/adr/0008-enforce-canonical-provenance-and-aggregate-integrity.md) define the design; accepted Matter facts are relational on this integration branch, with proposal conversion still pending.
+Canonical persistence must also protect the structural and referential invariants that make its facts trustworthy wherever PostgreSQL can naturally enforce them; application validation complements rather than replaces those guarantees. Provenance integrity and Matter isolation are explicit domain requirements. The [agreed canonical-persistence slice](docs/design/canonical-persistence-slice.md) and [ADR 0008](docs/adr/0008-enforce-canonical-provenance-and-aggregate-integrity.md) define the design; both accepted Matters and pending Matter Proposals now use separate relational facts with equivalent integrity guarantees.
 
 The preparatory domain boundary accepts a `CanonicalState` containing explicitly
 identified Sources, Entities, Relationships, and source-attributed Evidence.
@@ -155,8 +155,9 @@ The legacy graph projection does not carry Source IDs, so source-aware consumers
 must retain the state for attribution. This boundary validates rather than repairs
 facts: it never resolves aliases, merges names, or normalizes a reviewed graph.
 Matter/proposal boundaries and Evergreen use it while retaining existing API
-contracts. Accepted Matter reads reconstruct it from relational facts; pending
-proposals retain their JSONB storage until #85.
+contracts. Both Matter and proposal reads reconstruct it from relational facts. Confirmation
+copies the complete reviewed state unchanged, transfers the reference claim, and
+consumes the proposal atomically.
 
 ## Documentation
 
@@ -306,7 +307,9 @@ alembic upgrade head && python -m private_client_graph.persistence.seeds.evergre
 
 The image includes Alembic, migrations, the PostgreSQL driver, and seed inputs.
 Ordinary Uvicorn startup performs neither migration nor seeding. Either command
-failing stops pre-deploy, so the new application is not started.
+failing stops pre-deploy, so the new application is not started. This hook does
+not stop an old replica: upgrades from legacy canonical storage must first follow
+the [maintenance procedure](docs/workflows/canonical-matter-cutover.md).
 
 **Manual Railway setup before deploying this feature:**
 
@@ -409,7 +412,9 @@ The original migration `0001` creates `matters`: UUID primary key, non-null text
 external reference, title, source title and text, and a non-null JSONB
 `current_graph`. Migration `0005` converts those accepted facts to constrained,
 owner-scoped Source, Entity, Evidence, Relationship and support records, verifies
-exact reconstruction, then removes the legacy graph/source columns. Existing-data
+exact reconstruction, then removes the legacy graph/source columns. Migration
+`0006` does the same for pending proposals. A single upgrade from `0004` to head
+runs both conversions in one transaction. Existing-data
 upgrades require the coordinated maintenance procedure above. Alembic alone owns
 schema evolution. Never edit a merged/applied migration; add a new one.
 
@@ -562,9 +567,10 @@ it. There are no automatic model retries. Existing reviews and discard remain
 available when the allowance is exhausted.
 
 Run the existing `alembic upgrade head` and explicit Evergreen initialization
-before deployment. New immutable migrations add minimal proposal JSONB state,
-cross-resource canonical external-reference claims (including existing Matters),
-and a separate proposal allowance. Original PDFs, filenames, PDF metadata, raw
+during the coordinated cutover. Historical migrations introduced proposal JSONB
+state, cross-resource canonical external-reference claims, and a separate proposal
+allowance. Migration `0006` converts stored proposals and removes their legacy
+graph/source columns; current proposal state uses only constrained relational facts. Original PDFs, filenames, PDF metadata, raw
 extractions, submission confirmations, and review decisions are never persisted.
 
 Acquisition accepts exactly one text-layer PDF: at most 10 MiB, 50 pages, and

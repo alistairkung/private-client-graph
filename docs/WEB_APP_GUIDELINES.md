@@ -307,9 +307,10 @@ ADR 0008 supersedes the original JSONB Matter storage choice: database-enforced
 provenance integrity and aggregate isolation are earned domain requirements.
 Reconstruct `CanonicalGraph` from canonical relational Matter facts and retain
 domain validation at the application boundary. Keep the existing single-source
-API contract and exact graph identity/order. Issue #84 is integration-only until
-#85 completes equivalent proposal storage and the coordinated cutover; do not
-deploy the intermediate branch independently. Follow the
+API contract and exact graph identity/order. Matter Proposals have separate
+relational ownership and equivalent constraints. Confirmation copies their facts
+unchanged and consumes them atomically. Deploy the complete Matter/proposal
+conversion together after quiescing old application access. Follow the
 [cutover procedure](workflows/canonical-matter-cutover.md).
 
 Every schema change requires an explicit Alembic migration. Treat merged or
