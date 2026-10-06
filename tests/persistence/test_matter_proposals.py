@@ -460,22 +460,21 @@ def test_corrupt_proposal_never_leaves_read_boundary_but_can_be_discarded(databa
     assert find_reference("Synthetic-1") is None
 
 
-def test_migration_reserves_existing_matter_references_without_fixture_access(database):
+@pytest.mark.parametrize("database", ["0002"], indirect=True)
+def test_migration_reserves_existing_matter_references_without_fixture_access(database, monkeypatch):
     import subprocess
     import sys
-    from sqlalchemy import insert
+    from sqlalchemy import text
     from private_client_graph.persistence.database import database_engine
-    from private_client_graph.persistence.matters import matters
     from private_client_graph.persistence.matter_proposals import find_reference
 
-    subprocess.run([sys.executable, "-m", "alembic", "downgrade", "0002"], check=True)
     existing_id = uuid4()
     with database_engine().begin() as connection:
-        connection.execute(insert(matters).values(
-            id=existing_id, external_reference=" Legacy/Straße-42 ", title="Existing synthetic Matter",
-            source_title="Legacy source", source_text="Fictional source.",
-            current_graph={"entities": [], "relationships": [], "evidence": []},
-        ))
+        connection.execute(text("""
+            INSERT INTO matters VALUES (:id,' Legacy/Straße-42 ','Existing synthetic Matter',
+                'Legacy source','Fictional source.','{"entities": [], "relationships": [], "evidence": []}'::jsonb)
+        """), {"id": existing_id})
+    monkeypatch.setenv("PCG_MATTER_MIGRATION_QUIESCED", "true")
     subprocess.run([sys.executable, "-m", "alembic", "upgrade", "head"], check=True)
     owner = find_reference("legacy/STRASSE-42")
     assert owner.resource_kind == "matter"

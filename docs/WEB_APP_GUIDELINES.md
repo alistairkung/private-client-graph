@@ -303,11 +303,14 @@ PostgreSQL. Keep persistence concrete and scoped to current Matter operations;
 do not introduce generalized repositories, service hierarchies, dependency
 injection, or asynchronous database infrastructure.
 
-Store the current `CanonicalGraph` atomically as JSONB and validate it through
-the existing domain model at the application boundary. Also preserve the
-cross-value invariant that every Evidence span occurs verbatim in the Matter's
-authoritative source. Do not relationalise graph contents before concrete query
-or independent-mutation requirements justify it.
+ADR 0008 supersedes the original JSONB Matter storage choice: database-enforced
+provenance integrity and aggregate isolation are earned domain requirements.
+Reconstruct `CanonicalGraph` from canonical relational Matter facts and retain
+domain validation at the application boundary. Keep the existing single-source
+API contract and exact graph identity/order. Issue #84 is integration-only until
+#85 completes equivalent proposal storage and the coordinated cutover; do not
+deploy the intermediate branch independently. Follow the
+[cutover procedure](workflows/canonical-matter-cutover.md).
 
 Every schema change requires an explicit Alembic migration. Treat merged or
 applied migrations as immutable and create a new migration for later changes.

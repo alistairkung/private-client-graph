@@ -25,22 +25,25 @@ def test_repeat_seed_preserves_complete_existing_snapshot(database, monkeypatch,
     from sqlalchemy import create_engine, text
     from private_client_graph.persistence.seeds.evergreen import seed_evergreen
     from private_client_graph.persistence.seeds import evergreen as seed_module
+    from private_client_graph.persistence.matter_state import load_matter_state
 
     assert seed_evergreen() is True
     engine = create_engine(database)
     with engine.begin() as connection:
         before = dict(connection.execute(text("SELECT * FROM matters")).mappings().one())
+        facts_before = load_matter_state(connection, seed_module.EVERGREEN_ID)
     assert seed_evergreen() is False
     with engine.begin() as connection:
         assert dict(connection.execute(text("SELECT * FROM matters")).mappings().one()) == before
+        assert load_matter_state(connection, seed_module.EVERGREEN_ID) == facts_before
         # Simulate valid state already held by the datastore, independent of fixtures.
         connection.execute(text("""
             UPDATE matters SET title = 'Evergreen succession advice',
-                external_reference = 'PC/2026/0999', source_title = 'Revised synthetic note',
-                source_text = 'Fictional replacement source',
-                current_graph = '{"entities": [], "relationships": [], "evidence": []}'::jsonb
+                external_reference = 'PC/2026/0999'
         """))
+        connection.execute(text("UPDATE matter_sources SET title='Revised synthetic note'"))
         existing = dict(connection.execute(text("SELECT * FROM matters")).mappings().one())
+        existing_facts = load_matter_state(connection, seed_module.EVERGREEN_ID)
     (tmp_path / "source.txt").write_text("Changed fictional seed input")
     (tmp_path / "expected_extraction.json").write_text('{"relationships": []}')
     monkeypatch.setattr(seed_module, "CASE", tmp_path)
@@ -49,6 +52,7 @@ def test_repeat_seed_preserves_complete_existing_snapshot(database, monkeypatch,
     assert seed_evergreen() is False
     with engine.connect() as connection:
         assert dict(connection.execute(text("SELECT * FROM matters")).mappings().one()) == existing
+        assert load_matter_state(connection, seed_module.EVERGREEN_ID) == existing_facts
     engine.dispose()
     response = authenticated_client(create_app()).get("/api/matters")
     assert response.json()[0]["title"] == "Evergreen succession advice"
@@ -88,20 +92,21 @@ def test_readiness_without_seed_and_unavailable_database(database, monkeypatch, 
 
 
 def test_seed_contains_domain_valid_graph_and_verbatim_source_evidence(database):
-    from sqlalchemy import create_engine, text
-    from private_client_graph.models import CanonicalGraph
-    from private_client_graph.persistence.seeds.evergreen import seed_evergreen
+    from sqlalchemy import create_engine
+    from private_client_graph.canonical_state import reconstruct_graph
+    from private_client_graph.persistence.matter_state import load_matter_state
+    from private_client_graph.persistence.seeds.evergreen import seed_evergreen, EVERGREEN_ID
 
     seed_evergreen()
     engine = create_engine(database)
     with engine.connect() as connection:
-        snapshot = connection.execute(text("SELECT source_title, source_text, current_graph FROM matters")).mappings().one()
+        snapshot = load_matter_state(connection, EVERGREEN_ID)
     engine.dispose()
-    graph = CanonicalGraph.model_validate(snapshot["current_graph"])
-    assert snapshot["source_title"] == "Attendance Note – Meeting with Alice Chen"
+    graph = reconstruct_graph(snapshot)
+    assert snapshot.sources[0].title == "Attendance Note – Meeting with Alice Chen"
     assert len(graph.relationships) == 6
     assert len(graph.entities) == 5
-    assert all(item.supporting_text in snapshot["source_text"] for item in graph.evidence)
+    assert all(item.supporting_text in snapshot.sources[0].text for item in graph.evidence)
 
 
 def test_invalid_seed_input_does_not_insert_partial_matter(database, monkeypatch, tmp_path, authenticated_client):
@@ -156,43 +161,44 @@ def test_missing_and_invalid_matter_uuid(database, authenticated_client):
     assert response.json() == {"error": {"message": "Invalid Matter UUID."}}
 
 
-@pytest.mark.parametrize("values", [
-    {"source_text": "Inconsistent synthetic source"},
-    {"current_graph": {"entities": "invalid"}},
-    {"source_text": "Alice is a trustee.", "current_graph": {
-        "entities": [{"id": "alice", "type": "person", "name": "Alice"}],
-        "relationships": [{"source": "alice", "type": "trustee_of", "target": "missing-trust", "evidence_ids": ["quote"]}],
-        "evidence": [{"id": "quote", "document": "Legacy label", "supporting_text": "Alice is a trustee."}],
-    }},
+@pytest.mark.parametrize("sql", [
+    "UPDATE matter_sources SET text='Inconsistent synthetic source'",
+    "UPDATE matter_entities SET type='invalid'",
+    "UPDATE matter_relationships SET target_id='missing-trust'",
 ])
-def test_invalid_persisted_state_never_reaches_browser(database, values, authenticated_client):
-    from sqlalchemy import create_engine, update
-    from private_client_graph.persistence.matters import matters
+def test_invalid_persisted_state_never_reaches_browser(database, sql, authenticated_client):
+    from sqlalchemy import create_engine, text
+    from sqlalchemy.exc import IntegrityError
     from private_client_graph.persistence.seeds.evergreen import seed_evergreen
 
     seed_evergreen()
     engine = create_engine(database)
     client = authenticated_client(create_app())
-    with engine.begin() as connection:
-        connection.execute(update(matters).values(**values))
+    before = client.get("/api/matters/ff985caf-60c5-4e65-a238-f3c26381c369").json()
+    # Previously detected on read; the database now rejects corruption at write.
+    with pytest.raises(IntegrityError):
+        with engine.begin() as connection:
+            connection.execute(text(sql))
     response = client.get("/api/matters/ff985caf-60c5-4e65-a238-f3c26381c369")
-    assert response.status_code == 503
-    assert response.json() == {"error": {"message": "Matter could not be loaded."}}
+    assert response.status_code == 200
+    assert response.json() == before
     engine.dispose()
 
 
 def test_detail_reads_only_persisted_state(database, monkeypatch, authenticated_client):
     from pathlib import Path
-    from sqlalchemy import create_engine, update
-    from private_client_graph.persistence.matters import matters
-    from private_client_graph.persistence.seeds.evergreen import seed_evergreen
+    from sqlalchemy import create_engine
+    from private_client_graph.persistence.matter_state import insert_matter
+    from private_client_graph.models.canonical_state import CanonicalState
+    from private_client_graph.models.source import Source
+    from private_client_graph.persistence.seeds.evergreen import EVERGREEN_ID
     from langchain_deepseek import ChatDeepSeek
 
-    seed_evergreen()
     engine = create_engine(database)
     with engine.begin() as connection:
-        connection.execute(update(matters).values(source_title="Persisted note", source_text="Persisted text",
-            current_graph={"entities": [], "relationships": [], "evidence": []}))
+        insert_matter(connection, matter_id=EVERGREEN_ID, external_reference="Persisted", title="Persisted",
+            state=CanonicalState(sources=[Source(id="note", title="Persisted note", text="Persisted text")],
+                                 entities=[], relationships=[], evidence=[]))
     engine.dispose()
 
     def forbidden(*args, **kwargs):
