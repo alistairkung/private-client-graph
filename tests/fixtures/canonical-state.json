@@ -1,0 +1,30 @@
+{
+  "sources": [
+    {
+      "id": "note_b",
+      "title": "Attendance note",
+      "text": "Alex Lee is a beneficiary of Cedar Trust. Alex Lee is a beneficiary of Cedar Trust. Alex Lee and Morgan Lee are siblings."
+    },
+    {
+      "id": "note_a",
+      "title": "Attendance note",
+      "text": "Alex Lee is a beneficiary of Cedar Trust. Alex Lee is a beneficiary of Cedar Trust. Alex Lee and Morgan Lee are siblings."
+    }
+  ],
+  "entities": [
+    {"id": "other_alex", "type": "person", "name": "Alex Lee"},
+    {"id": "trust", "type": "trust", "name": "Cedar Trust"},
+    {"id": "shared_alex", "type": "person", "name": "Alex Lee"},
+    {"id": "morgan", "type": "person", "name": "Morgan Lee"}
+  ],
+  "relationships": [
+    {"source": "shared_alex", "type": "beneficiary_of", "target": "trust", "evidence_ids": ["quote_b", "quote_a"]},
+    {"source": "other_alex", "type": "beneficiary_of", "target": "trust", "evidence_ids": ["quote_a"]},
+    {"source": "shared_alex", "type": "sibling_of", "target": "morgan", "evidence_ids": ["siblings"]}
+  ],
+  "evidence": [
+    {"id": "quote_b", "source_id": "note_b", "document": "legacy-b.txt", "supporting_text": "Alex Lee is a beneficiary of Cedar Trust."},
+    {"id": "siblings", "source_id": "note_a", "document": "legacy-a.txt", "supporting_text": "Alex Lee and Morgan Lee are siblings."},
+    {"id": "quote_a", "source_id": "note_a", "document": "legacy-a.txt", "supporting_text": "Alex Lee is a beneficiary of Cedar Trust."}
+  ]
+}

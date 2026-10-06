@@ -6,7 +6,9 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, computed_field, field_validator, model_validator
 
+from private_client_graph.canonical_state import single_source_state
 from private_client_graph.models import CanonicalGraph
+from private_client_graph.models.source import Source
 
 from .matters import AuthoritativeSource
 
@@ -57,11 +59,14 @@ class MatterProposalDetail(MatterProposalSummary):
         )
         if not self.authoritative_source.text.strip():
             raise ValueError("The Authoritative Source must contain text")
-        if any(
-            item.supporting_text not in self.authoritative_source.text
-            for item in self.proposed_graph.evidence
-        ):
-            raise ValueError("Evidence must occur verbatim in the Authoritative Source")
+        single_source_state(
+            Source(
+                id="source_001",
+                title=self.authoritative_source.title,
+                text=self.authoritative_source.text,
+            ),
+            self.proposed_graph,
+        )
         return self
 
 

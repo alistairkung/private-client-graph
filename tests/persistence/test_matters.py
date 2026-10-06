@@ -159,6 +159,11 @@ def test_missing_and_invalid_matter_uuid(database, authenticated_client):
 @pytest.mark.parametrize("values", [
     {"source_text": "Inconsistent synthetic source"},
     {"current_graph": {"entities": "invalid"}},
+    {"source_text": "Alice is a trustee.", "current_graph": {
+        "entities": [{"id": "alice", "type": "person", "name": "Alice"}],
+        "relationships": [{"source": "alice", "type": "trustee_of", "target": "missing-trust", "evidence_ids": ["quote"]}],
+        "evidence": [{"id": "quote", "document": "Legacy label", "supporting_text": "Alice is a trustee."}],
+    }},
 ])
 def test_invalid_persisted_state_never_reaches_browser(database, values, authenticated_client):
     from sqlalchemy import create_engine, update

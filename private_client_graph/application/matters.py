@@ -5,7 +5,9 @@ from uuid import UUID
 from pydantic import BaseModel
 from sqlalchemy import select
 
+from private_client_graph.canonical_state import reconstruct_graph, single_source_state
 from private_client_graph.models import CanonicalGraph
+from private_client_graph.models.source import Source
 from private_client_graph.persistence.database import database_engine
 from private_client_graph.persistence.matters import matters
 
@@ -42,10 +44,11 @@ def get_matter(internal_id: UUID) -> MatterDetail | None:
     if row is None:
         return None
     graph = CanonicalGraph.model_validate(row["current_graph"])
-    if any(item.supporting_text not in row["source_text"] for item in graph.evidence):
-        raise ValueError("Persisted Evidence does not occur in the authoritative source")
+    state = single_source_state(
+        Source(id="source_001", title=row["source_title"], text=row["source_text"]), graph,
+    )
     return MatterDetail(
         id=row["id"], external_reference=row["external_reference"], title=row["title"],
         authoritative_source=AuthoritativeSource(title=row["source_title"], text=row["source_text"]),
-        current_graph=graph,
+        current_graph=reconstruct_graph(state),
     )

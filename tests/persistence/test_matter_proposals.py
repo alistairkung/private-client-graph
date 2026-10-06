@@ -51,6 +51,24 @@ def test_proposal_detail_requires_evidence_to_occur_in_its_source():
         MatterProposalDetail.model_validate(values)
 
 
+def test_proposal_creation_rejects_broken_references_without_reserving_a_reference(database):
+    from private_client_graph.models import CanonicalGraph
+    from private_client_graph.persistence.matter_proposals import find_reference, list_proposals, save_proposal
+
+    graph = CanonicalGraph.model_validate({
+        "entities": [{"id": "alice", "type": "person", "name": "Alice"}],
+        "relationships": [{"source": "alice", "type": "trustee_of", "target": "missing-trust", "evidence_ids": ["quote"]}],
+        "evidence": [{"id": "quote", "document": "Legacy label", "supporting_text": "Alice is a trustee."}],
+    })
+    with pytest.raises(ValueError, match="Entity reference"):
+        save_proposal(
+            ProposalMetadata(external_reference="R-invalid", matter_title="Synthetic Matter", source_title="Note"),
+            "Alice is a trustee.", graph,
+        )
+    assert list_proposals() == []
+    assert find_reference("R-invalid") is None
+
+
 def test_saved_proposal_is_durable_and_claims_its_canonical_reference(database):
     from private_client_graph.models import CanonicalGraph
     from private_client_graph.persistence.matter_proposals import find_reference, get_proposal, list_proposals, save_proposal
