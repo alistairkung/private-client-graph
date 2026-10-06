@@ -5,11 +5,11 @@ from uuid import UUID
 from pydantic import BaseModel
 from sqlalchemy import select
 
-from private_client_graph.canonical_state import reconstruct_graph, single_source_state
+from private_client_graph.canonical_state import reconstruct_graph
 from private_client_graph.models import CanonicalGraph
-from private_client_graph.models.source import Source
 from private_client_graph.persistence.database import database_engine
 from private_client_graph.persistence.matters import matters
+from private_client_graph.persistence.matter_state import load_matter_state
 
 
 class MatterSummary(BaseModel):
@@ -37,18 +37,20 @@ class MatterDetail(MatterSummary):
 
 
 def get_matter(internal_id: UUID) -> MatterDetail | None:
-    with database_engine().connect() as connection:
+    with database_engine().connect().execution_options(isolation_level="REPEATABLE READ") as connection:
         row = connection.execute(
             select(matters).where(matters.c.id == internal_id)
         ).mappings().one_or_none()
-    if row is None:
-        return None
-    graph = CanonicalGraph.model_validate(row["current_graph"])
-    state = single_source_state(
-        Source(id="source_001", title=row["source_title"], text=row["source_text"]), graph,
-    )
+        if row is None:
+            return None
+        state = load_matter_state(connection, internal_id)
+    # The current practitioner contract is deliberately single-source. Never
+    # display a multi-source graph against one arbitrarily chosen source panel.
+    if len(state.sources) != 1:
+        raise ValueError("The practitioner workspace requires exactly one Source")
+    source = state.sources[0]
     return MatterDetail(
         id=row["id"], external_reference=row["external_reference"], title=row["title"],
-        authoritative_source=AuthoritativeSource(title=row["source_title"], text=row["source_text"]),
+        authoritative_source=AuthoritativeSource(title=source.title, text=source.text),
         current_graph=reconstruct_graph(state),
     )

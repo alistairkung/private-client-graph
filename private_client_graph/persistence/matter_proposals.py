@@ -17,9 +17,11 @@ from private_client_graph.application.proposal_contracts import (
     ReferenceOwner,
 )
 from private_client_graph.models import CanonicalGraph
+from private_client_graph.models.source import Source
+from private_client_graph.canonical_state import single_source_state
 
 from .database import database_engine
-from .matters import matters
+from .matter_state import insert_matter
 from .proposal_errors import DuplicateReference, ProposalPersistenceFailure
 
 metadata = MetaData()
@@ -117,14 +119,17 @@ def confirm_proposal(proposal_id: UUID) -> MatterDetail | None:
 
         proposal = _detail(row)
         matter_id = uuid4()
-        connection.execute(matters.insert().values(
-            id=matter_id,
+        inserted = insert_matter(
+            connection, matter_id=matter_id,
             external_reference=proposal.external_reference,
             title=proposal.matter_title,
-            source_title=proposal.authoritative_source.title,
-            source_text=proposal.authoritative_source.text,
-            current_graph=proposal.proposed_graph.model_dump(mode="json"),
-        ))
+            state=single_source_state(Source(
+                id="source_001", title=proposal.authoritative_source.title,
+                text=proposal.authoritative_source.text,
+            ), proposal.proposed_graph),
+        )
+        if not inserted:
+            raise ProposalPersistenceFailure(ambiguous=False)
         transferred = connection.execute(
             reference_claims.update().where(
                 reference_claims.c.canonical_reference

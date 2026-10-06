@@ -4,14 +4,14 @@ from pathlib import Path
 from uuid import UUID
 
 from sqlalchemy import select
-from sqlalchemy.dialects.postgresql import insert
 
-from private_client_graph.canonical_state import reconstruct_graph, single_source_state
+from private_client_graph.canonical_state import single_source_state
 from private_client_graph.graph import build_graph
 from private_client_graph.models import ExtractionResult
 from private_client_graph.models.source import Source
 from private_client_graph.persistence.database import database_engine
 from private_client_graph.persistence.matters import matters
+from private_client_graph.persistence.matter_state import insert_matter
 from private_client_graph.persistence.matter_proposals import reference_claims
 
 EVERGREEN_ID = UUID("ff985caf-60c5-4e65-a238-f3c26381c369")
@@ -29,18 +29,15 @@ def seed_evergreen() -> bool:
         )
         graph = build_graph(extraction.relationships, document="source.txt", source_text=source)
         source_title = "Attendance Note – Meeting with Alice Chen"
-        snapshot = reconstruct_graph(single_source_state(
+        state = single_source_state(
             Source(id="source_001", title=source_title, text=source), graph,
-        ))
-        statement = insert(matters).values(
-            id=EVERGREEN_ID,
+        )
+        inserted = insert_matter(
+            connection, matter_id=EVERGREEN_ID,
             external_reference="PC/2026/0142",
             title="Evergreen Family Trust",
-            source_title=source_title,
-            source_text=source,
-            current_graph=snapshot.model_dump(mode="json"),
-        ).on_conflict_do_nothing(index_elements=[matters.c.id]).returning(matters.c.id)
-        inserted = connection.scalar(statement) is not None
+            state=state,
+        )
         if inserted:
             connection.execute(reference_claims.insert().values(
                 canonical_reference="pc/2026/0142",

@@ -1,5 +1,10 @@
 # Private Client Graph
 
+**Integration branch notice (#84):** accepted Matter persistence is relational in
+this branch, while Matter Proposals still use JSONB. Do not deploy this intermediate
+slice independently; #85 must complete the combined cutover. See the
+[maintenance and verification procedure](docs/workflows/canonical-matter-cutover.md).
+
 Private Client Graph is an FTEC5660 MSc AI technical spike exploring whether an LLM can reconstruct **family and trust relationship graphs** from synthetic private-client-style documents while preserving **source provenance** and producing measurable evaluation results.
 
 The project is deliberately benchmark-driven: start with a known answer key, generate realistic source material, extract relationships, build a canonical graph deterministically, and evaluate the result.
@@ -139,7 +144,7 @@ runs/                   Local extraction/evaluation outputs (Git ignored)
 - **Canonical facts live in PostgreSQL; representations are derived.** Persist enough canonical Matter state and relationships to reconstruct the current state deterministically from the database. Derived forms such as `CanonicalGraph` are representations of that state and must not contain authoritative facts that exist nowhere else in canonical persistence. A derived representation should gain independent persisted identity only when the domain gives it an independent lifecycle, history, or other semantics that cannot be reconstructed from the underlying state. This principle does not require every domain concept to have its own table; persistence structure remains earned by concrete requirements and invariants.
 - **Refactors preserve behaviour.** Deterministic rules are protected by focused tests and required CI checks.
 
-Canonical persistence must also protect the structural and referential invariants that make its facts trustworthy wherever PostgreSQL can naturally enforce them; application validation complements rather than replaces those guarantees. Provenance integrity and Matter isolation are explicit domain requirements. The [agreed canonical-persistence slice](docs/design/canonical-persistence-slice.md) and [ADR 0008](docs/adr/0008-enforce-canonical-provenance-and-aggregate-integrity.md) define the next design; the current implementation still uses JSONB graphs.
+Canonical persistence must also protect the structural and referential invariants that make its facts trustworthy wherever PostgreSQL can naturally enforce them; application validation complements rather than replaces those guarantees. Provenance integrity and Matter isolation are explicit domain requirements. The [agreed canonical-persistence slice](docs/design/canonical-persistence-slice.md) and [ADR 0008](docs/adr/0008-enforce-canonical-provenance-and-aggregate-integrity.md) define the design; accepted Matter facts are relational on this integration branch, with proposal conversion still pending.
 
 The preparatory domain boundary accepts a `CanonicalState` containing explicitly
 identified Sources, Entities, Relationships, and source-attributed Evidence.
@@ -149,9 +154,9 @@ aggregate, and `reconstruct_graph` preserves the reviewed IDs, ordering and valu
 The legacy graph projection does not carry Source IDs, so source-aware consumers
 must retain the state for attribution. This boundary validates rather than repairs
 facts: it never resolves aliases, merges names, or normalizes a reviewed graph.
-Matter/proposal boundaries and Evergreen use it while retaining existing API and
-JSONB storage contracts. Database-enforced ownership and integrity remain work for
-the subsequent relational persistence tickets.
+Matter/proposal boundaries and Evergreen use it while retaining existing API
+contracts. Accepted Matter reads reconstruct it from relational facts; pending
+proposals retain their JSONB storage until #85.
 
 ## Documentation
 
@@ -400,10 +405,13 @@ uv run python -m private_client_graph.persistence.seeds.evergreen
 ```
 
 The ordinary commands also work with any explicitly configured PostgreSQL server.
-Migration `0001` creates `matters`: UUID primary key, non-null text columns for
+The original migration `0001` creates `matters`: UUID primary key, non-null text columns for
 external reference, title, source title and text, and a non-null JSONB
-`current_graph`. Alembic alone owns schema evolution. Never edit a merged/applied
-migration; add a new one.
+`current_graph`. Migration `0005` converts those accepted facts to constrained,
+owner-scoped Source, Entity, Evidence, Relationship and support records, verifies
+exact reconstruction, then removes the legacy graph/source columns. Existing-data
+upgrades require the coordinated maintenance procedure above. Alembic alone owns
+schema evolution. Never edit a merged/applied migration; add a new one.
 
 The explicit seed builds the graph from Case 01 source/extraction inputs through
 the existing deterministic graph builder and validates the graph and verbatim
@@ -413,8 +421,9 @@ left wholly unchanged, even if seed inputs later change or disappear. Fixture
 files are never consulted by Matter listing; the list API selects only the three
 summary columns. `GET /api/matters/{internal_uuid}` returns Matter identity, the embedded
 Authoritative Source (`title`, `text`), and `current_graph`. The application
-validates stored JSONB through `CanonicalGraph` and rejects Evidence absent from
-the persisted source with a safe 503 response; missing Matters return 404 and
+reconstructs and validates relational state through the canonical domain boundary;
+the database rejects broken provenance and references. Invalid or unsupported
+stored state still produces a safe 503 response; missing Matters return 404 and
 invalid UUIDs return 422. Reads never consult fixtures or invoke extraction.
 
 Opening a ledger row navigates directly to `/app/matters/{internal_uuid}`, which
