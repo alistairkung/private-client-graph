@@ -23,7 +23,7 @@ def evaluate_run(bundle: Bundle) -> RunEvaluation:
         return RunEvaluation(run_id=bundle.manifest['experiment_id'], aggregate=RunAggregate(reasons=[reason]),
             cost=RunCost(known_subtotal=None, reasons=[reason]), reasons=[reason],
             eligibility=ChartEligibility(f1_reasons=[reason], cost_reasons=[reason]))
-    slots = [PlannedObservation.model_validate(row.model_dump()) for row in bundle.plan.planned_slots]
+    slots = bundle.plan.planned_slots
     results = [ResearchResult.model_validate(row) for row in bundle.results()]
     attempts, authority_reasons = retained_attempts(bundle)
     lifecycle: list[dict] = [json.loads(path.read_text()) for path in (bundle.path / 'lifecycle').glob('*.json')]
@@ -89,7 +89,10 @@ def aggregate_observations(slots: list[PlannedObservation], results: list[Resear
         row = indexed.get((slot.sample_id, slot.configuration, slot.repetition))
         if row and row.case_id != slot.case_id:
             raise ValueError('Result Case identity differs from its frozen observation slot')
-        status = row.status if row else (execution_statuses or {}).get(slot.observation_id, 'not_attempted')
+        retained_status = (execution_statuses or {}).get(slot.observation_id)
+        extraction_placeholder = row is not None and row.status == 'unavailable' and row.stage == 'extraction'
+        status = (retained_status if retained_status and extraction_placeholder else
+                  row.status if row else retained_status or 'not_attempted')
         observation = _observation_coverage(slot, row, status)
         aggregate.observations.append(observation)
         state = observation.state

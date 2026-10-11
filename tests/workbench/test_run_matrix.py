@@ -70,7 +70,7 @@ def test_catalog_keeps_case_names_distinct_from_diagnostic_fixture_names():
     assert catalog['alias_distinct'].fixture_name == 'Similar names refer to distinct people'
     assert catalog['alias_merge'].kind == 'diagnostic'
     frozen = frozen_case_metadata(load_inputs()[:1])
-    assert frozen['case_01_fixture']['name'] == 'Evergreen Family Trust — explicit names'
+    assert frozen['case_01_fixture'].name == 'Evergreen Family Trust — explicit names'
 
 
 def test_frozen_slot_changes_are_rejected_on_reload():
@@ -100,8 +100,8 @@ def test_discovered_case_defaults_and_frozen_labels_do_not_follow_repository_edi
     labels = frozen_case_metadata(inputs, tmp_path)
     plan = RunPlan(inputs=inputs, max_calls=0, invocation_cap=0, case_metadata=labels)
     metadata_path.write_text(json.dumps({'id': 'case_04', 'name': 'Renamed benchmark', 'description': 'Changed description.'}))
-    assert RunPlan.model_validate_json(plan.model_dump_json()).case_metadata['case_04_fixture']['name'] == 'New benchmark'
-    assert frozen_case_metadata(inputs, tmp_path)['case_04_fixture']['name'] == 'Renamed benchmark'
+    assert RunPlan.model_validate_json(plan.model_dump_json()).case_metadata['case_04_fixture'].name == 'New benchmark'
+    assert frozen_case_metadata(inputs, tmp_path)['case_04_fixture'].name == 'Renamed benchmark'
 
 
 def test_catalog_rejects_blank_authored_names(tmp_path):
@@ -143,6 +143,36 @@ def test_catalog_reports_explicit_missing_metadata_without_borrowing_labels(tmp_
     shutil.copytree(ROOT / 'cases', tmp_path / 'cases')
     (tmp_path / 'cases/case_01/metadata.json').unlink()
     labels = frozen_case_metadata(load_inputs()[:1], tmp_path)['case_01_fixture']
-    assert labels['metadata_available'] is False
-    assert labels['description'] is None
-    assert labels['name'] == 'Benchmark case case_01 (name unavailable)'
+    assert labels.metadata_available is False
+    assert labels.description is None
+    assert labels.name == 'Benchmark case case_01 (name unavailable)'
+
+
+def test_real_fresh_failures_and_uncertainty_keep_authoritative_coverage(tmp_path):
+    from private_client_graph.research.artifacts import Bundle
+    from private_client_graph.research.provider import ModelRequest
+    from private_client_graph.research.runner import execute
+    from private_client_graph.workbench.run_evaluation import evaluate_run
+
+    for state in ('failed', 'uncertain'):
+        plan = RunPlan(inputs=load_inputs()[:1], input_mode='fresh', fresh_extractions=1,
+            execution_mode='recorded', resolver='generative', repetitions=2,
+            max_calls=3, invocation_cap=3)
+        bundle = Bundle.create(tmp_path / state, plan, task_ledger=tmp_path / 'ledger')
+        calls = []
+        def failure(request):
+            calls.append(request)
+            raise RuntimeError('Substituted extraction failure')
+        if state == 'uncertain':
+            bundle.reserve(plan.planned_slots[0].extraction_attempt_id,
+                ModelRequest(stage='extraction', source=plan.inputs[0].source,
+                             settings=plan.settings).model_dump(mode='json'))
+        execute(bundle, provider=failure)
+        evaluation = evaluate_run(bundle)
+        assert evaluation.aggregate.coverage.planned == 2
+        assert getattr(evaluation.aggregate.coverage, state) == 2
+        assert evaluation.aggregate.coverage.unavailable == 0
+        assert evaluation.aggregate.f1 is None
+        execute(bundle, provider=failure)
+        assert bundle.attempt_count == 1
+        assert len(calls) == (1 if state == 'failed' else 0)

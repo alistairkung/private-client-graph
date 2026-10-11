@@ -68,3 +68,19 @@ def test_freeze_recovers_published_plan_before_membership_without_duplicate(tmp_
     recovered = freeze_run(tmp_path, workspace.id, command)
     assert recovered == frozen
     assert read_experiment(tmp_path, workspace.id).run_ids == [frozen.id]
+
+
+def test_copy_rejects_corrupt_frozen_preview_without_changing_draft(tmp_path):
+    import json
+    from private_client_graph.workbench.run_planning import freeze_run, copy_run_draft
+    from private_client_graph.workbench.workspace_contracts import FreezeRun, CopyRunDraft
+    workspace = create_experiment(tmp_path, CreateExperiment(request_id='e', name='Integrity'))
+    frozen = freeze_run(tmp_path, workspace.id, FreezeRun(request_id='run', expected_revision=0))
+    artifact = tmp_path / frozen.id / 'execution.json'
+    changed = json.loads(artifact.read_text())
+    changed['preview']['proposal']['temperature'] = 0.7
+    artifact.write_text(json.dumps(changed))
+    before = read_experiment(tmp_path, workspace.id).draft
+    with pytest.raises(ValueError, match='preview mismatch'):
+        copy_run_draft(tmp_path, workspace.id, CopyRunDraft(request_id='copy', expected_revision=0, run_id=frozen.id))
+    assert read_experiment(tmp_path, workspace.id).draft == before

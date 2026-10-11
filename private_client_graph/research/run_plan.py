@@ -1,9 +1,10 @@
 """Single-configuration execution matrices, additive to historical study plans."""
-from typing import Any, Literal
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from .plan import FiniteExperimentPlan
+from .case_metadata import CaseMetadata
 
 
 class ObservationSlot(BaseModel):
@@ -25,7 +26,7 @@ class RunPlan(FiniteExperimentPlan):
     max_calls: int = Field(default=0, ge=0, le=10000)
     repetitions: int = Field(default=1, ge=1, le=3)
     planned_slots: list[ObservationSlot] = Field(default_factory=list)
-    case_metadata: dict[str, dict[str, Any]] = Field(default_factory=dict)
+    case_metadata: dict[str, CaseMetadata] = Field(default_factory=dict)
     evaluator_version: str = 'semantic_edges_v1'
     aggregate_version: Literal['observation_micro_f1_v1'] = 'observation_micro_f1_v1'
 
@@ -46,11 +47,8 @@ class RunPlan(FiniteExperimentPlan):
             raise ValueError('Runs require frozen case metadata for every input')
         for sample in self.inputs:
             metadata = self.case_metadata[sample.sample_id]
-            if metadata.get('id') != sample.sample_id or metadata.get('case_id') != sample.case_id:
+            if metadata.id != sample.sample_id or metadata.case_id != sample.case_id:
                 raise ValueError('Frozen case metadata must match input identities')
-            for field in ('name', 'fixture_name'):
-                if not isinstance(metadata.get(field), str) or not metadata[field].strip():
-                    raise ValueError('Frozen case names must not be blank')
 
     @model_validator(mode='after')
     def validate_finite_matrix(self) -> 'RunPlan':

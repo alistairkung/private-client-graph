@@ -510,7 +510,7 @@ export type RunObservation = {
   repetition: number;
   status: string;
   reason: string | null;
-  metadata: Record<string, unknown>;
+  metadata: CaseMetadata | null;
   source: string | null;
   result: ResearchResult | null;
   relationships: Array<RelationshipOutcome>;

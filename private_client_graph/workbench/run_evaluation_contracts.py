@@ -1,17 +1,11 @@
 """Versioned, backend-owned Run metrics and scientific comparison contracts."""
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, Field
 
 
-class PlannedObservation(BaseModel):
-    model_config = ConfigDict(extra='forbid', frozen=True)
-    observation_id: str
-    sample_id: str
-    case_id: str
-    configuration: Literal['noop', 'generative_full_source']
-    repetition: int
-    extraction_attempt_id: str | None = None
+# Compatibility name for the same research-owned frozen observation contract.
+from private_client_graph.research.run_plan import ObservationSlot as PlannedObservation
 
 
 class Coverage(BaseModel):

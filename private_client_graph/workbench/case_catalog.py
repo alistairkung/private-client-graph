@@ -2,31 +2,10 @@
 import hashlib
 import json
 from pathlib import Path
-from typing import Any, Literal
-
-from pydantic import BaseModel, ConfigDict, field_validator
 
 from private_client_graph.research.fixtures import ROOT, load_inputs
 from private_client_graph.research.inputs import ResearchInput
-
-
-class CaseMetadata(BaseModel):
-    model_config = ConfigDict(extra='forbid')
-    id: str
-    case_id: str
-    name: str
-    description: str | None
-    fixture_name: str
-    fixture_description: str | None
-    kind: Literal['benchmark', 'diagnostic', 'historical']
-    metadata_available: bool
-
-    @field_validator('name', 'fixture_name', 'description', 'fixture_description')
-    @classmethod
-    def nonblank_labels(cls, value: str | None) -> str | None:
-        if value is not None and not value.strip():
-            raise ValueError('Case labels and descriptions must not be blank')
-        return value
+from private_client_graph.research.case_metadata import CaseMetadata
 
 
 def default_input_ids(root: Path = ROOT) -> list[str]:
@@ -57,9 +36,9 @@ def load_case_catalog(root: Path = ROOT) -> list[CaseMetadata]:
     return [_metadata(sample, root) for sample in repository_inputs(root)]
 
 
-def frozen_case_metadata(inputs: list[ResearchInput], root: Path = ROOT) -> dict[str, dict[str, Any]]:
+def frozen_case_metadata(inputs: list[ResearchInput], root: Path = ROOT) -> dict[str, CaseMetadata]:
     """Copy labels now; historical readers use only the retained copy."""
-    return {sample.sample_id: _metadata(sample, root).model_dump(mode='json') for sample in inputs}
+    return {sample.sample_id: _metadata(sample, root) for sample in inputs}
 
 
 def _case_directories(root: Path) -> list[Path]:
