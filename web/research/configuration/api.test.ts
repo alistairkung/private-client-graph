@@ -42,6 +42,7 @@ it("preserves the server preview and propagates abort for stale configuration", 
     model: "deepseek-flash",
     timeout_seconds: 90,
     temperature: null,
+    task_call_cap: 0,
   };
   expect(await preview(proposal, signal)).toEqual(response);
   expect(fetch).toHaveBeenCalledWith(

@@ -10,7 +10,7 @@ from private_client_graph.research.results import ResearchResult
 from private_client_graph.research.plan import FiniteExperimentPlan
 from private_client_graph.research.summary import summarize
 
-from .execution_contracts import FrozenPlan
+from .execution_contracts import FrozenPlan, Preview
 from .contracts import CohortMetric, CohortSummary, ExperimentDetail, HistoryItem, Observation, Sample
 from .evidence import digest_text, relationship_outcomes
 
@@ -42,13 +42,13 @@ def read_artifact(path: Path, relative_path: str) -> ExperimentDetail:
         version = manifest.get('schema_version')
         history.artifact_version = version if type(version) is int else None
         history.created_at = manifest.get('created_at') if isinstance(manifest.get('created_at'), str) else None
-        if history.artifact_version not in (1, 2):
+        if history.artifact_version not in (1, 2, 3):
             history.integrity = 'unsupported'
             history.integrity_reason = f'Unsupported artifact version: {history.artifact_version}'
             return ExperimentDetail(history=history)
         _verify_export_checksums(path)
         bundle = Bundle.open(path)
-        if history.artifact_version == 2:
+        if history.artifact_version in (2, 3):
             _verify_execution_binding(path)
         detail = _project_bundle(bundle, history)
         if artifact_digest(path) != history.digest:
@@ -105,7 +105,9 @@ def _project_bundle(bundle: Bundle, history: HistoryItem) -> ExperimentDetail:
         history=HistoryItem.model_validate(history.model_dump()), configuration=summary['configuration'],
         provenance={**{key: value for key, value in summary['provenance'].items() if key != 'code'},
                     'code_digest': _value_digest(summary['provenance'].get('code'))},
-        operations=summary['operations'], cohorts=summary['cohorts'],
+        operations={**summary['operations'],
+            'authorizations': [json.loads(p.read_text()) for p in sorted((bundle.path / 'authorizations').glob('*.json'))]},
+        cohorts=summary['cohorts'],
         sessions=summary['sessions'], samples=samples,
         cohort_summaries=_cohort_summaries(summary['cohorts']),
     )
@@ -222,7 +224,7 @@ def _verify_execution_binding(path: Path) -> None:
     if plan.digest != digest:
         raise ValueError('Frozen execution binding checksum mismatch')
     binding = json.loads(binding_bytes)
-    if binding['preview'] != plan.preview.model_dump(mode='json'):
+    if Preview.model_validate(binding['preview']) != plan.preview:
         raise ValueError('Frozen execution preview mismatch')
     if binding['recordings_digest'] != hashlib.sha256((path / 'recorded-responses.json').read_bytes()).hexdigest():
         raise ValueError('Frozen recordings checksum mismatch')

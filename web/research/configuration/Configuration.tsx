@@ -24,6 +24,7 @@ export function Configuration({
       temperature: null,
       timeout_seconds: 90,
       model: "deepseek-flash",
+      task_call_cap: 0,
     },
   );
   const [preview, setPreview] = useState<Preview | null>(null);
@@ -67,8 +68,7 @@ export function Configuration({
       <a href="#">Back to experiments</a>
       <h1>New experiment</h1>
       <p>
-        Configure a finite offline experiment. Review the frozen plan before
-        running it.
+        Configure a finite experiment. Review the frozen plan before running it.
       </p>
       <form
         className="configuration-layout"

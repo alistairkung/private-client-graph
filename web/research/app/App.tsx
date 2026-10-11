@@ -58,7 +58,9 @@ export function App() {
         <span>
           Local · Synthetic ·{" "}
           {available
-            ? "Offline execution"
+            ? available.live_enabled
+              ? "Live approval available"
+              : "Offline execution"
             : available === null
               ? "Read-only"
               : "Checking capabilities"}

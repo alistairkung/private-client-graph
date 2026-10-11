@@ -20,7 +20,7 @@ class Pricing(BaseModel):
 
 class ExperimentPlan(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    kind: Literal["demonstration", "task_a_diagnostic", "task_b_pilot"] = "demonstration"
+    kind: Literal["demonstration", "task_a_diagnostic", "task_b_pilot", "live_experiment"] = "demonstration"
     task_id: str = "91"
     inputs: list[ResearchInput]
     settings: ModelSettings = Field(default_factory=ModelSettings)
@@ -34,7 +34,7 @@ class ExperimentPlan(BaseModel):
 
     @model_validator(mode="after")
     def validate_scope(self) -> "ExperimentPlan":
-        if self.kind != 'demonstration' and self.task_id != ('91' if self.kind == 'task_a_diagnostic' else '92'):
+        if self.kind in ('task_a_diagnostic', 'task_b_pilot') and self.task_id != ('91' if self.kind == 'task_a_diagnostic' else '92'):
             raise ValueError('Task ID must match the authorized work item')
         if self.kind == "task_a_diagnostic" and self.max_calls > 5:
             raise ValueError("Task A has at most five attempts")
@@ -65,16 +65,24 @@ class ExperimentPlan(BaseModel):
 
 
 class FiniteExperimentPlan(ExperimentPlan):
-    """Version 2 offline matrix; legacy study plans retain their original rules."""
-    plan_version: Literal[2] = 2
+    """Versioned finite matrix; legacy study plans retain their original rules."""
+    plan_version: Literal[2, 3] = 2
+    task_call_cap: int = Field(default=0, ge=0, le=10000)
     invocation_cap: int = Field(default=0, ge=0, le=38)
-    kind: Literal["demonstration"] = "demonstration"
+    kind: Literal["demonstration", "live_experiment"] = "demonstration"
     input_mode: Literal["saved", "fresh"] = "saved"
-    execution_mode: Literal["replay", "recorded"] = "replay"
+    execution_mode: Literal["replay", "recorded", "live"] = "replay"
     resolver: Literal["none", "generative"] = "none"
 
     @model_validator(mode="after")
     def validate_finite_matrix(self) -> "FiniteExperimentPlan":
+        live = self.execution_mode == 'live'
+        if live != (self.plan_version == 3) or live != (self.kind == 'live_experiment'):
+            raise ValueError('Live matrices require explicit version 3 plans')
+        if live and (not self.maximum_attempts or not self.task_call_cap):
+            raise ValueError('Live execution requires a paid matrix and explicit task cap')
+        if not live and self.task_call_cap:
+            raise ValueError('Offline plans cannot authorize paid calls')
         if not self.inputs:
             raise ValueError("Select at least one input")
         if self.input_mode == 'fresh':

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { Proposal, RunStatus } from "../shared/contracts";
-import { control, progress } from "./api";
+import { control, progress, authorize } from "./api";
+import { LiveReview } from "./LiveReview";
 import { PlanSummary } from "./PlanSummary";
 import "./configuration.css";
 
@@ -63,6 +64,33 @@ export function Run({
       setBusy(false);
     }
   }
+  async function approveLive() {
+    if (!data?.task_budget) return;
+    setBusy(true);
+    setError("");
+    const requestId = requestIds.current.approve ?? crypto.randomUUID();
+    requestIds.current.approve = requestId;
+    try {
+      const result = await authorize(id, {
+        request_id: requestId,
+        plan_digest: data.plan.digest,
+        approved: true,
+        task_id: data.task_budget.task_id,
+        expected_task_usage: data.task_budget.used,
+        expected_task_cap: data.task_budget.cap,
+        task_cap: data.plan.preview.proposal.task_call_cap,
+        continuation: data.state !== "frozen",
+      });
+      setData(result);
+      delete requestIds.current.approve;
+      setReviewing(false);
+      setRetry((value) => value + 1);
+    } catch (error) {
+      setError((error as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
   if (!data)
     return (
       <>
@@ -74,6 +102,7 @@ export function Run({
         </button>
       </>
     );
+  const live = data.plan.preview.proposal.execution_mode === "live";
   const another = data.active_plan_id && data.active_plan_id !== id;
   return (
     <>
@@ -85,7 +114,7 @@ export function Run({
         {data.current_work && <p>Current work: {data.current_work}</p>}
         <p>
           {data.completed_observations} / {data.planned_observations}{" "}
-          observations recorded · {data.attempts} recorded calls ·{" "}
+          observations recorded · {data.attempts} provider attempts ·{" "}
           {data.uncertain_attempts} uncertain
         </p>
         {(data.state === "running" || data.state === "stopping") && (
@@ -97,7 +126,7 @@ export function Run({
             <a href={`#plan=${data.active_plan_id}`}>Open active experiment</a>
           </p>
         )}
-        {error && (
+        {error && !(live && (data.state === "frozen" || reviewing)) && (
           <p role="alert">
             {error}{" "}
             <button onClick={() => setRetry((value) => value + 1)}>
@@ -129,18 +158,27 @@ export function Run({
         <section className="continuation">
           <h2>Review remaining execution</h2>
           <p>
-            {data.remaining_attempts} recorded attempts remain in the frozen
-            matrix. Invocation cap: {data.plan.preview.invocation_cap}.
-            Uncertain attempts stay counted and will not be resubmitted.
+            Provider attempts remaining: {data.remaining_attempts}. Invocation
+            cap: {data.plan.preview.invocation_cap}. Uncertain attempts stay
+            counted and will not be resubmitted.
           </p>
-          <p>No paid calls are authorized. Existing results are retained.</p>
-          <button disabled={busy || !!another} onClick={() => act("continue")}>
-            Continue offline execution
-          </button>
+          <p>
+            {live
+              ? "Review the task budget and explicitly approve continuation after the frozen configuration."
+              : "No paid calls are authorized. Existing results are retained."}
+          </p>
+          {!live && (
+            <button
+              disabled={busy || !!another}
+              onClick={() => act("continue")}
+            >
+              Continue offline execution
+            </button>
+          )}
         </section>
       )}
       <div className="frozen-layout">
-        <PlanSummary preview={data.plan.preview} />
+        <PlanSummary preview={data.plan.preview} frozen />
         <section>
           <h2>Frozen configuration</h2>
           <dl>
@@ -182,9 +220,23 @@ export function Run({
           </details>
         </section>
       </div>
+      {live && (data.state === "frozen" || reviewing) && (
+        <LiveReview
+          key={`${data.task_budget?.used}-${data.task_budget?.cap}`}
+          data={data}
+          busy={busy}
+          error={error}
+          continuing={data.state !== "frozen"}
+          approve={() => void approveLive()}
+          refresh={() => {
+            delete requestIds.current.approve;
+            setRetry((value) => value + 1);
+          }}
+        />
+      )}
       <div className="frozen-actions">
         <div className="run-actions">
-          {data.state === "frozen" && (
+          {data.state === "frozen" && !live && (
             <button disabled={busy || !!another} onClick={() => act("start")}>
               {data.plan.preview.proposal.execution_mode === "replay"
                 ? "Run replay"
@@ -199,8 +251,8 @@ export function Run({
           </button>
         </div>
         <p className="muted">
-          Editing creates a new proposal requiring a new frozen plan. This
-          plan and its results remain unchanged.
+          Editing creates a new proposal requiring a new frozen plan. This plan
+          and its results remain unchanged.
         </p>
       </div>
     </>

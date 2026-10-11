@@ -30,9 +30,15 @@ export function InputFields({
                     extraction_samples: 1,
                     resolver_repetitions: 1,
                     invocation_cap: 0,
+                    task_call_cap: 0,
                   }
                 : {
-                    execution_mode: "recorded",
+                    execution_mode:
+                      event.target.value === "live" ? "live" : "recorded",
+                    task_call_cap:
+                      event.target.value === "live"
+                        ? capabilities.live_task?.cap || 1
+                        : 0,
                     resolver: "generative",
                     invocation_cap: 1,
                   },
@@ -43,6 +49,11 @@ export function InputFields({
           <option value="recorded">
             Recorded demonstration · Not live quality
           </option>
+          {capabilities.live_enabled && (
+            <option value="live">
+              Live provider · Explicit approval required
+            </option>
+          )}
         </select>
       </label>
       <label>
@@ -68,14 +79,12 @@ export function InputFields({
           }
         >
           <option value="saved">Saved extraction snapshots</option>
-          <option value="fresh">
-            Fresh extraction samples · Recorded responses
-          </option>
+          <option value="fresh">Fresh extraction samples</option>
         </select>
       </label>
       <p className="muted">
         Saved extraction with a generative resolver can still require paid calls
-        in live execution. This workbench permits recorded responses only.
+        in live execution. {capabilities.live_reason}
       </p>
       <div
         className="input-choices"
@@ -216,6 +225,27 @@ export function PipelineFields({
           "Provider settings do not affect saved replay. "}
         {capabilities.provider}. Thinking disabled; retries disabled.
       </small>
+      {proposal.execution_mode === "live" && (
+        <>
+          <label>
+            Proposed total task call cap
+            <input
+              type="number"
+              min={1}
+              max={10000}
+              value={proposal.task_call_cap}
+              aria-describedby="task-cap-help"
+              onChange={(event) =>
+                update({ task_call_cap: Number(event.target.value) })
+              }
+            />
+          </label>
+          <small id="task-cap-help">
+            Shared across experiments in this local task. Freezing does not
+            increase the allowance; approval is required.
+          </small>
+        </>
+      )}
       <label>
         Invocation attempt cap
         <input
@@ -229,7 +259,7 @@ export function PipelineFields({
         />
       </label>
       <small>
-        Stop at this many new recorded calls, then explicitly review
+        Stop at this many new provider attempts, then explicitly review
         continuation. Replay uses zero.
       </small>
     </fieldset>
