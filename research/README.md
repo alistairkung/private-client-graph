@@ -1,141 +1,103 @@
-# Alias-resolution research
+# Research Workbench
 
-Issue [#91](https://github.com/alistairkung/private-client-graph/issues/91) implements
-these tools. The separately authorized pilot is
-[#92](https://github.com/alistairkung/private-client-graph/issues/92).
-The [agreed design](../docs/design/entity-resolution-research-experiment.md) defines
-the study; these commands do not extend its authority or alter production paths.
+Private Client Graph's primary research interface is the local, synthetic-only
+**Research Workbench**. It uses the Shared Analysis Pipeline and existing
+deterministic evaluators; it does not change the practitioner application.
 
-## Offline demonstration (no credentials or provider calls)
+## Start the workbench
 
-From the repository root:
+From the repository root, with Docker installed:
 
 ```bash
-uv run python -m private_client_graph.research plan runs/research/demo --kind demonstration --fresh 5
-uv run python -m private_client_graph.research run runs/research/demo
-uv run python -m private_client_graph.research render runs/research/demo
-uv run python -m private_client_graph.research export runs/research/demo runs/research/demo.zip
+docker compose up --build -d
 ```
 
-Open `runs/research/demo/report.html`. It is a standalone document with no external
-scripts, fonts or services. The bundle includes `summary.json` and every individual
-observation; the ZIP adds `CHECKSUMS.json`. The demonstration uses authored/recorded
-responses and is prominently labelled: none of its scores measure a live resolver.
-Use a new directory for a new experiment; an existing manifest is never replaced.
-
-`inspect BUNDLE` prints a complete summary without making calls. `render` recomputes
-only derived HTML/summary files, never observations. All six frozen inputs, Source,
-truth, annotations and hashes are embedded in the manifest. The manifest also
-records prompts, source-code snapshots, code revision/dirty state and dependencies.
-
-## Optional Task A development checks
-
-Task A has a shared maximum of five attempted paid calls, including failures and
-retries, for useful live diagnostics. No need to use it; CI/tests are fully offline.
-For example, a targeted check can be planned with:
+Open **http://127.0.0.1:8080**. The `research` service builds the React
+frontend, waits for its PostgreSQL service, applies Alembic migrations, indexes
+retained artifacts and starts the research API. Inspect startup with:
 
 ```bash
-uv run python -m private_client_graph.research plan runs/research/diagnostic --kind task_a_diagnostic --samples alias_merge,alias_distinct --repetitions 1
-uv run python -m private_client_graph.research run runs/research/diagnostic --live
+docker compose ps
+docker compose logs -f research
 ```
 
-`plan` freezes the explicit `--model` or configured `DEEPSEEK_MODEL` (fallback
-`deepseek-flash`). `run --live` reads `DEEPSEEK_API_KEY`; credentials never enter the
-manifest. Thinking and SDK retries are disabled; the default timeout is 90 seconds.
-Environment tracing is disabled for these isolated observations. These checks do
-not start the Task B matrix. Document any paid calls made outside this runner in
-the same task accounting before using it; do not claim a new per-session allowance.
+By default `PCG_RESEARCH_LIVE_ENABLED=0`: no paid model execution is enabled.
+Use the deterministic demonstration path for an offline smoke test. Live execution
+requires a separate deliberate configuration and explicit per-Run authorization;
+setting a provider key alone does not enable it.
 
-## Task B — only after review and explicit authorization
-
-Do not run the paid pilot simply because Task A is complete. After the user
-explicitly authorizes #92, plan a separate `task_b_pilot` bundle with the approval
-reference and reviewed Task A commit:
+Compose persists the authoritative research artifacts under
+`./runs/research` on the host and the rebuildable PostgreSQL index in a named
+volume. Stop without deleting either:
 
 ```bash
-uv run python -m private_client_graph.research plan runs/research/pilot --kind task_b_pilot --effective-model RESOLVED_MODEL --pricing pricing.json --authorization-reference APPROVAL_REFERENCE --reviewed-commit REVIEWED_COMMIT
-uv run python -m private_client_graph.research run runs/research/pilot --live
+docker compose down
 ```
 
-Defaults are six frozen inputs, five fresh Case 03 extraction attempts, and three
-resolver repetitions per usable input: at most 38 new provider attempts.
-`--effective-model` records the provider-resolved model/version separately from the
-requested `--model` alias; resolve it during preflight, before creating the pilot
-manifest. Task B also requires dated pricing metadata for that effective model.
-The first run stops after six attempts on the matched challenge. Inspect those artifacts;
-continue only if the implementation is working and further observations serve the
-fixed study. `--checkpoint N` bounds new attempts in that invocation, never resets
-the task budget. A poor result is data, not authorization to tune/rebuild or replace
-failures. Record reasons for ending early. No automatic next experiment is started.
+Do not delete `./runs/research` or its task ledgers to reset an experiment
+budget. Never treat a restored archive or rebuilt database as execution authority.
 
-## Failure handling and recovery
+## Research workflow
 
-An attempt is durably reserved before dispatch. A timeout or interruption counts,
-even if billing is uncertain. Resume reuses results and never resubmits unfinished
-attempts. Provider errors store the exception class, not messages that could expose
-credentials. Parse failures retain raw responses. Invalid edits/graphs retain their
-predictions and have null scores; they never masquerade as a successful no-op.
+1. Create a **named Experiment**, optionally recording its hypothesis.
+2. Configure the **next Run** in the horizontal pipeline editor. Available
+   capabilities currently include no resolution or generative alias resolution;
+   the execution topology is not freely editable.
+3. Select benchmark inputs (all authored cases by default), saved extraction
+   or fresh extraction, and the supported execution settings.
+4. Review and freeze the Run plan. For paid work, explicitly authorize the
+   bounded invocation before starting; freezing alone does not authorize calls.
+5. Execute the Run. Its configuration, inputs, results, provenance and available
+   costs remain immutable. Interrupted Runs require explicit continuation.
+6. Inspect F1, per-case coverage, provider cost and individual relationships
+   with exact Evidence. Edit the next-Run draft and run again within the same
+   Experiment; selecting historical Runs does not overwrite the draft.
 
-The task-wide ledger is `runs/research/task-ledgers/91/` or `92/`, shared across
-bundles and sessions. Preserve it along with experiment bundles; copying an archive
-is for analysis, not permission to reset a budget. Execution is locked against
-concurrent runners. Interrupted in-flight reservations remain uncertain. Changes
-to research/domain code invalidate execution resume; render/export still work from
-saved observations. A revised experiment requires a new manifest and still shares
-the existing task cap. Ask for approval before exceeding the task allowance.
+A **Run** can contain several scored observations. The backend computes pooled
+observation micro-F1 from TP/FP/FN. Partial results are provisional; unscored
+observations do not become zeros. Cost means estimated provider spend incurred
+by that Run, not historical extraction spending. Unpriced attempts make a
+cost point unavailable. Runs with differing benchmark scopes remain visible but
+must not be presented as directly matched comparisons.
 
-Keep artifacts until the user elects deletion. Run `render` before `export`; export
-rejects bundles missing their derived `summary.json` or standalone `report.html`.
-`export` produces a portable archive outside the bundle and refuses overwriting an
-existing archive. Verify it with:
+For the authoritative v2 API sequence, idempotency, recovery, budget handling,
+legacy history and migration requirements, see
+[Persistent Research Experiments and Runs](../docs/workflows/persistent-research-workspaces.md).
 
-```python
-from pathlib import Path
-from private_client_graph.research.export import verify_export
-verify_export(Path('runs/research/pilot.zip'))
-```
+## Historical alias-resolution pilot
 
-Archive checksums protect completeness and byte integrity, not source authenticity.
-Keep an additional retained copy; Git ignores `runs/`. Attach actual report/archive
-paths, hashes and attempt counts to #92 after execution; do not deliver only an
-unavailable local path or only aggregates.
+The original [#91](https://github.com/alistairkung/private-client-graph/issues/91)
+research runner and [#92](https://github.com/alistairkung/private-client-graph/issues/92)
+pilot preceded the persistent Experiment/Run model. Their schema 1–3 bundles
+remain available as **legacy studies**, not automatically converted into new
+single-configuration Runs. Keep their original manifests, observations, checksums
+and attempt ledgers intact.
 
-## Pricing and interpretation
-
-Pricing is optional outside Task B because unknown cost must not become zero. Task B
-requires preflighted pricing metadata. Supply `--pricing` with JSON matching the
-effective model, for example (illustrative rates only):
-
-```json
-{"model":"deepseek-flash","currency":"USD","input_per_million":1.0,
- "cached_input_per_million":0.1,"output_per_million":2.0,
- "source_url":"https://PROVIDER_OFFICIAL_PRICING","retrieved_at":"YYYY-MM-DD"}
-```
-
-Use verified current rates for actual experiments. Cached tokens are a subset of
-input tokens. Missing cache detail with different cache pricing makes cost unknown.
-Actual experiment spend counts each attempt once. Single-pipeline estimates combine
-one extraction with one resolver execution; authored extraction cost is unavailable,
-and historical cost is unavailable without historical pricing. Reports retain these
-limitations and separate authored, historical and fresh cohorts. Pairwise identity
-errors measure annotated endpoints, not individuals or missing extractions.
-
-Resolver latency includes provider and edit application time only. Pipeline latency
-adds the shared extraction provider measurement and each configuration's graph and
-evaluation times; artifact I/O and identity diagnostics are excluded. The historical
-observation's original elapsed time includes local processing, so it is displayed
-separately and comparable pipeline estimates remain unavailable. Resume rejects
-changed code or dependency versions. Restore an incomplete task ledger before
-attempting further paid calls; never reset it to recover an interrupted experiment.
-
-## Deterministic verification
+The historical CLI is implemented in `private_client_graph.research`.
+It can still inspect a retained bundle without making provider calls:
 
 ```bash
-uv run pytest tests/research
-uv run mypy private_client_graph/research --follow-imports=silent
+uv run python -m private_client_graph.research inspect runs/research/EXISTING_BUNDLE
+```
+
+The original study's planning, paid-call budget and report/export instructions
+are historical, not the recommended way to start new experiments. In particular,
+do not repeat the paid #92 pilot simply to populate the new UI. The legacy
+standalone HTML report is being retired separately; until that cleanup is merged,
+its CLI and export requirements may still be present in the checkout.
+
+## Verification
+
+```bash
+uv run pytest tests/research tests/workbench
 uv run pytest
 ```
 
-Research tests block live sockets and substitute only the provider boundary. They
-cover endpoint edits, annotation truth, actual SDK HTTP shaping/parsing, pairing,
-budget/resume, failures, metrics, escaping, report rendering and export restoration.
+The tests use deterministic provider substitutes; they must not invoke live
+models. For the Research Workbench's end-to-end and frontend checks, follow
+[Web application guidelines](../docs/WEB_APP_GUIDELINES.md).
+
+Research and practitioner deployments are separate: the default Compose stack
+starts the research workbench, while the practitioner demonstration uses the
+explicit `practitioner` profile described in the
+[repository README](../README.md).
