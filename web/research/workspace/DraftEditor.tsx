@@ -8,7 +8,8 @@ import type {
 } from "../shared/contracts";
 import { Pipeline } from "../configuration/Pipeline";
 import { PipelineFields } from "../configuration/Fields";
-import { PlanSummary } from "../configuration/PlanSummary";
+import { ReviewDialog } from "./ReviewDialog";
+import { ReviewSummary } from "./ReviewSummary";
 import { CasePicker } from "./CasePicker";
 import { freezeDraft, previewDraft, saveDraft } from "./api";
 import "../configuration/configuration.css";
@@ -157,48 +158,47 @@ export function DraftEditor({
         </p>
       )}
       {review && preview && (
-        <section className="plan-review" aria-label="Review next Run">
-          <h2>Review next Run</h2>
-          <PlanSummary preview={preview} />
-          <p>
-            Freeze this configuration before starting. Live execution requires
-            separate authorization.
-          </p>
-          <div className="run-actions">
-            <button
-              disabled={busy}
-              onClick={async () => {
-                if (lock.current) return;
-                lock.current = true;
-                setBusy(true);
-                setError("");
-                try {
-                  const result = await freezeDraft(id, {
-                    request_id: freezeId.current,
-                    expected_revision: revision.current,
-                  });
-                  freezeId.current = crypto.randomUUID();
-                  setReview(false);
-                  frozen(result.id);
-                } catch (error) {
-                  setError((error as Error).message);
-                } finally {
-                  lock.current = false;
-                  setBusy(false);
-                }
-              }}
-            >
-              {busy ? "Freezing…" : "Freeze Run"}
-            </button>
-            <button
-              className="secondary"
-              disabled={busy}
-              onClick={() => setReview(false)}
-            >
-              Cancel review
-            </button>
-          </div>
-        </section>
+        <ReviewDialog
+          title="Review next Run"
+          close={() => setReview(false)}
+          busy={busy}
+          actions={
+            <>
+              <small>
+                Freezing preserves this configuration. It does not start
+                execution.
+              </small>
+              <button
+                disabled={busy}
+                onClick={async () => {
+                  if (lock.current) return;
+                  lock.current = true;
+                  setBusy(true);
+                  setError("");
+                  try {
+                    const result = await freezeDraft(id, {
+                      request_id: freezeId.current,
+                      expected_revision: revision.current,
+                    });
+                    freezeId.current = crypto.randomUUID();
+                    setReview(false);
+                    frozen(result.id);
+                  } catch (error) {
+                    setError((error as Error).message);
+                  } finally {
+                    lock.current = false;
+                    setBusy(false);
+                  }
+                }}
+              >
+                {busy ? "Freezing…" : "Freeze Run"}
+              </button>
+            </>
+          }
+        >
+          <ReviewSummary preview={preview} />
+          {error && <p role="alert">{error}</p>}
+        </ReviewDialog>
       )}
     </section>
   );

@@ -21,17 +21,69 @@ test("persistent Experiment: changed and repeated Runs retain frozen Evidence an
   await page.getByRole("button", { name: "Clear selection" }).click();
   await page.getByRole("checkbox", { name: /case_03_fixture/ }).check();
   await page.getByRole("button", { name: "Apply cases" }).click();
+  let created = 0;
   async function run() {
     await page.getByRole("button", { name: "Run", exact: true }).click();
     await expect(
-      page.getByRole("region", { name: "Review next Run" }),
+      page.getByRole("dialog", { name: "Review next Run" }),
     ).toBeVisible();
+    const review = page.getByRole("dialog", { name: "Review next Run" });
+    await expect(
+      review.getByRole("button", { name: "Freeze Run", exact: true }),
+    ).toBeInViewport();
+    await review
+      .getByRole("button", { name: "Freeze Run", exact: true })
+      .focus();
+    await page.keyboard.press("Tab");
+    await expect(
+      review.getByRole("button", { name: "Close review" }),
+    ).toBeFocused();
+    await page.keyboard.press("Escape");
+    await expect(
+      page.getByRole("button", { name: "Run", exact: true }),
+    ).toBeFocused();
+    await page.getByRole("button", { name: "Run", exact: true }).click();
+    if (info.project.name !== "research-compact")
+      await review.screenshot({
+        path: `../.impeccable/review/flow-review-${info.project.name}.png`,
+      });
     await page
       .getByRole("button", { name: "Freeze Run", exact: true })
       .dblclick();
+    const frozen = page.getByRole("dialog", {
+      name: /Ready to start Run \d+/,
+      exact: true,
+    });
+    await expect(frozen).toBeVisible();
+    created++;
+    await expect(frozen).toHaveAccessibleName(`Ready to start Run ${created}`);
+    if (created > 1)
+      await expect(
+        page.locator(".run-inspection > .section-heading h2"),
+      ).toHaveText("Run 1 · No resolver");
+    if (created === 2 && info.project.name !== "research-compact") {
+      await frozen.screenshot({
+        path: `../.impeccable/review/flow-frozen-${info.project.name}.png`,
+      });
+      await page.screenshot({
+        path: `../.impeccable/review/flow-distinct-${info.project.name}.png`,
+        fullPage: true,
+      });
+    }
+    await page.keyboard.press("Escape");
+    await page
+      .getByRole("button", { name: "Review frozen Run", exact: true })
+      .click();
+    await expect(frozen).toBeVisible();
+    await expect(
+      frozen.getByRole("button", { name: "Start Run", exact: true }),
+    ).toBeInViewport();
     await page.getByRole("button", { name: "Start Run", exact: true }).click();
     await expect(
-      page.getByRole("heading", { name: "Execution · complete", exact: true }),
+      page.getByRole("heading", {
+        name: /Run \d+ · Execution · complete/,
+        exact: true,
+      }),
     ).toBeVisible();
   }
   await run();
@@ -65,6 +117,14 @@ test("persistent Experiment: changed and repeated Runs retain frozen Evidence an
   await expect(
     page.getByRole("heading", { name: "Run 1 · No resolver", exact: true }),
   ).toBeVisible();
+  await expect(
+    page.getByRole("region", { name: "Selected Run evaluation" }),
+  ).toBeFocused();
+  await expect(
+    page.getByRole("heading", { name: "Run 1 · No resolver", exact: true }),
+  ).toBeInViewport();
+  await expect(page.locator(".run-inspection")).toHaveCount(1);
+  await expect(page.locator(".chart-inspection details")).toHaveCount(0);
   const resolverNode = page.getByRole("button", { name: /Resolve aliases/ });
   if ((await resolverNode.getAttribute("aria-expanded")) === "false")
     await resolverNode.click();
@@ -146,7 +206,7 @@ test("persistent Experiment: changed and repeated Runs retain frozen Evidence an
   ).toBe(true);
   if (info.project.name !== "research-compact")
     await page.screenshot({
-      path: `../.impeccable/review/117-${info.project.name}.png`,
+      path: `../.impeccable/review/flow-${info.project.name}.png`,
       fullPage: true,
       animations: "disabled",
     });
@@ -184,4 +244,38 @@ test("sidebar preserves wide preference and traps focus in narrow drawer", async
   await expect(
     page.getByRole("button", { name: "Expand experiments" }),
   ).toHaveAttribute("aria-expanded", "false");
+});
+
+test("compact insertion preserves rail height and keeps its option visible", async ({
+  page,
+}, info) => {
+  await page.goto("/");
+  await page
+    .getByLabel("Experiment name", { exact: true })
+    .fill("Compact insertion review");
+  await page
+    .getByRole("button", { name: "Create experiment", exact: true })
+    .click();
+  await page.getByRole("button", { name: "Run", exact: true }).waitFor();
+  const rail = page.locator(".pipeline-rail");
+  const before = await rail.boundingBox();
+  await page
+    .getByRole("button", { name: "Add alias resolution", exact: true })
+    .click();
+  const menu = page.locator(".resolver-menu");
+  await expect(menu).toBeVisible();
+  expect((await rail.boundingBox())!.height).toBeLessThanOrEqual(
+    Math.max(before!.height, 210),
+  );
+  await expect(menu.getByRole("button")).toHaveCount(1);
+  const popup = (await menu.boundingBox())!;
+  const frame = (await page.locator(".pipeline-viewport").boundingBox())!;
+  expect(popup.x).toBeGreaterThanOrEqual(frame.x);
+  expect(popup.x + popup.width).toBeLessThanOrEqual(frame.x + frame.width);
+  if (info.project.name !== "research-compact")
+    await page.locator(".pipeline-viewport").screenshot({
+      path: `../.impeccable/review/flow-insert-${info.project.name}.png`,
+    });
+  await page.keyboard.press("Escape");
+  await expect(menu).toHaveCount(0);
 });

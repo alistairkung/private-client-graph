@@ -148,7 +148,7 @@ test("workspace authorizes before separate start and explicitly continues provis
   await page.getByRole("checkbox", { name: /I approve this task cap/ }).check();
   await page.getByRole("button", { name: "Authorize invocation" }).click();
   await expect(
-    page.getByRole("heading", { name: "Execution · frozen", exact: true }),
+    page.getByRole("dialog", { name: "Ready to start Run 1", exact: true }),
   ).toBeVisible();
   const frozen = await (
     await page.request.get(
@@ -158,7 +158,10 @@ test("workspace authorizes before separate start and explicitly continues provis
   expect(frozen[0].attempts).toHaveLength(0);
   await page.getByRole("button", { name: "Start Run", exact: true }).click();
   await expect(
-    page.getByRole("heading", { name: "Execution · stopped", exact: true }),
+    page.getByRole("heading", {
+      name: "Run 1 · Execution · stopped",
+      exact: true,
+    }),
   ).toBeVisible();
   await expect(page.locator(".chart-point.provisional")).toHaveCount(1);
   await expect(
@@ -169,7 +172,10 @@ test("workspace authorizes before separate start and explicitly continues provis
   await page.getByRole("button", { name: "Authorize invocation" }).click();
   await page.getByRole("button", { name: "Continue Run", exact: true }).click();
   await expect(
-    page.getByRole("heading", { name: "Execution · complete", exact: true }),
+    page.getByRole("heading", {
+      name: "Run 1 · Execution · complete",
+      exact: true,
+    }),
   ).toBeVisible();
   await expect(page.locator(".chart-point")).toHaveCount(1);
   await expect(page.locator(".chart-point.provisional")).toHaveCount(0);

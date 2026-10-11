@@ -201,30 +201,6 @@ export function RunChart({
                 {tooltip.plan.preview.proposal.model} · Scope{" "}
                 {tooltip.evaluation.scope?.identity ?? "unavailable"}
               </p>
-              {Array.from(
-                new Map(
-                  tooltip.observations.map((item) => [
-                    item.metadata?.id ?? item.sample_id,
-                    item,
-                  ]),
-                ).values(),
-              ).map((item) => (
-                <details key={item.sample_id}>
-                  <summary>
-                    {item.metadata?.name ??
-                      `Case ${item.case_id} (name unavailable)`}{" "}
-                    ·{" "}
-                    {item.metadata?.fixture_name ?? "Fixture name unavailable"}
-                  </summary>
-                  <p>
-                    {item.metadata?.description ?? "Description unavailable"}
-                  </p>
-                  <p>
-                    {item.metadata?.fixture_description ??
-                      "Fixture description unavailable"}
-                  </p>
-                </details>
-              ))}
             </>
           ) : (
             <span>Focus or select a point to inspect its Run.</span>

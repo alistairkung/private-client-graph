@@ -44,6 +44,10 @@ export function Workspace({
   const [draftKey, setDraftKey] = useState(0);
   const [draftBusy, setDraftBusy] = useState(true);
   const [copying, setCopying] = useState(false);
+  const [executionId, setExecutionId] = useState<string | null>(null);
+  const evaluation = useRef<HTMLDivElement>(null);
+  const focusRun = useRef<string | null>(null);
+  const [selectionRevision, setSelectionRevision] = useState(0);
   const copyCommand = useRef<string | null>(null);
   const copyLock = useRef(false);
   useEffect(() => () => saving(false), []);
@@ -97,6 +101,25 @@ export function Workspace({
   const run =
     runs.find((item) => item.id === selected) ??
     (selected ? undefined : runs.at(-1));
+  const executionRun = runs.find((item) => item.id === executionId) ?? run;
+  useEffect(() => {
+    if (!run || focusRun.current !== run.id) return;
+    focusRun.current = null;
+    const target = evaluation.current;
+    target?.focus({ preventScroll: true });
+    target?.scrollIntoView({
+      block: "start",
+      behavior: matchMedia("(prefers-reduced-motion: reduce)").matches
+        ? "instant"
+        : "smooth",
+    });
+  }, [run?.id, selectionRevision]);
+  function selectEvaluation(id: string) {
+    focusRun.current = id;
+    setSelectionRevision((value) => value + 1);
+    setExecutionId(null);
+    select(id);
+  }
   return (
     <>
       {error && (
@@ -135,8 +158,9 @@ export function Workspace({
               saved={(draft) =>
                 setWorkspace((value) => value && { ...value, draft })
               }
-              frozen={(run) => {
-                select(run);
+              frozen={(id) => {
+                select(run?.id ?? id);
+                setExecutionId(id);
                 refresh();
                 changed();
               }}
@@ -154,7 +178,7 @@ export function Workspace({
             workspace={workspace}
             runs={runs}
             selected={run?.id ?? null}
-            select={select}
+            select={selectEvaluation}
           />
           {failures.map((failure) => (
             <p role="alert" key={failure}>
@@ -164,16 +188,24 @@ export function Workspace({
           {selected && !run && !failures.length && (
             <p role="status">Loading selected Run…</p>
           )}
+          {executionRun && capabilities && (
+            <RunExecution
+              key={`execution-${executionRun.id}`}
+              run={executionRun}
+              number={workspace.run_ids.indexOf(executionRun.id) + 1}
+              initiallyOpen={executionId === executionRun.id}
+              availability={availability}
+              refresh={refresh}
+            />
+          )}
           {run && (
-            <>
-              {capabilities && (
-                <RunExecution
-                  key={`execution-${run.id}`}
-                  run={run}
-                  availability={availability}
-                  refresh={refresh}
-                />
-              )}
+            <div
+              ref={evaluation}
+              tabIndex={-1}
+              className="selected-evaluation"
+              role="region"
+              aria-label="Selected Run evaluation"
+            >
               <RunInspection
                 key={`inspection-${run.id}`}
                 workspace={workspace}
@@ -208,7 +240,7 @@ export function Workspace({
                     : undefined
                 }
               />
-            </>
+            </div>
           )}
         </>
       )}

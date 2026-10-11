@@ -90,6 +90,60 @@ it("opening a persisted draft is read-only; changing input mode preserves select
     expect(screen.getByRole("button", { name: "Run" })).toBeEnabled(),
   );
   fireEvent.click(screen.getByRole("button", { name: "Run" }));
-  expect(screen.getByRole("region", { name: "Review next Run" })).toBeVisible();
+  expect(screen.getByRole("dialog", { name: "Review next Run" })).toBeVisible();
   expect(api.freezeDraft).not.toHaveBeenCalled();
+});
+
+it("dismisses the compact insertion menu with Escape or outside click and preserves expanded resolver fields", async () => {
+  render(
+    <DraftEditor
+      id="experiment"
+      draft={{
+        ...draft,
+        configuration: { ...draft.configuration, resolver: "none" },
+      }}
+      cases={[]}
+      capabilities={capabilities}
+      saved={() => {}}
+      saving={() => {}}
+      frozen={() => {}}
+    />,
+  );
+  const add = screen.getByRole("button", {
+    name: "Add alias resolution",
+  });
+  fireEvent.click(add);
+  const insert = screen.getByRole("button", {
+    name: "Add generative resolver",
+  });
+  expect(screen.queryByText("After extraction")).not.toBeInTheDocument();
+  fireEvent.keyDown(insert, { key: "Escape" });
+  expect(add).toHaveFocus();
+  expect(
+    screen.queryByRole("button", {
+      name: "Add generative resolver",
+    }),
+  ).not.toBeInTheDocument();
+  fireEvent.click(add);
+  fireEvent.pointerDown(document.body);
+  expect(add).toHaveAttribute("aria-expanded", "false");
+  fireEvent.click(add);
+  fireEvent.click(
+    screen.getByRole("button", {
+      name: "Add generative resolver",
+    }),
+  );
+  expect(
+    screen.getByRole("region", { name: "Resolve aliases settings" }),
+  ).toBeVisible();
+  expect(screen.getByRole("combobox", { name: "Model" })).toBeVisible();
+  expect(
+    screen.getByRole("spinbutton", { name: "Temperature (optional)" }),
+  ).toBeVisible();
+  expect(
+    screen.getByRole("spinbutton", { name: "Provider timeout (seconds)" }),
+  ).toBeVisible();
+  expect(
+    screen.getByRole("spinbutton", { name: "Invocation attempt cap" }),
+  ).toBeVisible();
 });
