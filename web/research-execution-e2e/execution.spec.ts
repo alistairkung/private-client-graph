@@ -24,7 +24,18 @@ test("configure, freeze, run replay and inspect exact Evidence", async ({
   await page.getByRole("button", { name: "Clear selection" }).click();
   await page.getByRole("checkbox", { name: /case_03_fixture/ }).check();
   await page.getByRole("button", { name: "Apply inputs" }).click();
-  await page.getByRole("button", { name: "Review frozen plan" }).click();
+  // Freezing rebuilds the retained-artifact index and can exceed the UI assertion
+  // timeout on CI. Await the command, then verify the resulting page separately.
+  const [frozenResponse] = await Promise.all([
+    page.waitForResponse(
+      (response) =>
+        new URL(response.url()).pathname === "/api/research/v1/plans" &&
+        response.request().method() === "POST",
+      { timeout: 15_000 },
+    ),
+    page.getByRole("button", { name: "Review frozen plan" }).click(),
+  ]);
+  expect(frozenResponse.status()).toBe(200);
   await expect(
     page.getByRole("heading", { name: "Frozen experiment" }),
   ).toBeVisible();
