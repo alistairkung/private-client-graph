@@ -134,32 +134,35 @@ class Bundle:
             return self.attempt_count
         return len(list(self.task_ledger.glob('*.json')))
 
-    def reserve(self, attempt_id: str, request: dict[str, Any]) -> None:
+    def reserve(self, attempt_id: str, request: dict[str, Any]) -> bool:
+        """Reserve a provider call, returning false when a shared reservation is recovered."""
         path = self.path / 'attempts' / f'{_safe_id(attempt_id)}.started.json'
         record = {'attempt_id': attempt_id, 'started_at': utc_now(),
                   'request': request, 'status': 'uncertain'}
         if self.plan.kind == 'demonstration':
             self._reserve_demonstration(path, record)
-            return
+            return True
 
-        self._reserve_paid_attempt(path, record)
+        return self._reserve_paid_attempt(path, record)
 
     def _reserve_demonstration(self, path: Path, record: dict[str, Any]) -> None:
         self._check_budget(path)
         write_json_once(path, record)
 
-    def _reserve_paid_attempt(self, path: Path, record: dict[str, Any]) -> None:
+    def _reserve_paid_attempt(self, path: Path, record: dict[str, Any]) -> bool:
         self.task_ledger.mkdir(parents=True, exist_ok=True)
         with (self.task_ledger / '.lock').open('a') as lock:
             fcntl.flock(lock, fcntl.LOCK_EX)
             self._validate_task_ledger()
             shared = self._task_reservation_path(record['attempt_id'])
-            self._recover_bundle_reservation(path, shared)
+            if self._recover_bundle_reservation(path, shared):
+                return False
             self._check_budget(path)
             if self.task_attempt_count >= self._task_call_limit():
                 raise BudgetExceeded('Shared task allowance exhausted; approval required')
             write_json_once(shared, record)
             write_json_once(path, record)
+            return True
 
     def _validate_task_ledger(self) -> None:
         for previous in self.attempts():
@@ -170,10 +173,12 @@ class Bundle:
         return self.task_ledger / f"{self.manifest['experiment_id']}-{attempt_id}.json"
 
     @staticmethod
-    def _recover_bundle_reservation(path: Path, shared: Path) -> None:
+    def _recover_bundle_reservation(path: Path, shared: Path) -> bool:
         if shared.exists() and not path.exists():
             # Recover a crash between the task-wide and bundle reservations.
             write_json_once(path, json.loads(shared.read_text()))
+            return True
+        return False
 
     def _task_call_limit(self) -> int:
         return 5 if self.plan.kind == 'task_a_diagnostic' else 38
@@ -198,8 +203,20 @@ class Bundle:
             attempts.append({**start, **(json.loads(finish.read_text()) if finish.exists() else {})})
         return attempts
 
+    def attempt(self, attempt_id: str) -> dict[str, Any] | None:
+        return next(
+            (attempt for attempt in self.attempts() if attempt['attempt_id'] == attempt_id),
+            None,
+        )
+
     def save_result(self, result_id: str, result: dict[str, Any]) -> None:
-        write_json_once(self.path / 'results' / f'{_safe_id(result_id)}.json', result)
+        write_json_once(self._result_path(result_id), result)
+
+    def has_result(self, result_id: str) -> bool:
+        return self._result_path(result_id).exists()
+
+    def _result_path(self, result_id: str) -> Path:
+        return self.path / 'results' / f'{_safe_id(result_id)}.json'
 
     def results(self) -> list[dict[str, Any]]:
         from .results import ResearchResult

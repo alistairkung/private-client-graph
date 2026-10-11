@@ -61,6 +61,53 @@ def test_bad_structured_output_keeps_raw_message_and_does_not_retry():
     assert result.usage.input_tokens == 20
 
 
+def test_persistable_response_uses_safe_fields_and_redacts_credentials():
+    sample = load_inputs()[-2]
+    api_key = 'credential-that-must-not-persist'
+
+    def respond(request):
+        body = json.loads(request.content)
+        tool = body['tools'][0]['function']['name']
+        return httpx.Response(200, json={
+            'id': f'response-{api_key}',
+            'model': f'model-{api_key}',
+            'object': 'chat.completion',
+            'created': 0,
+            'system_fingerprint': f'fingerprint-{api_key}',
+            'authorization': f'Bearer {api_key}',
+            'choices': [{'index': 0, 'finish_reason': 'tool_calls', 'message': {
+                'role': 'assistant', 'content': '',
+                'tool_calls': [{'id': 'edit', 'type': 'function', 'function': {
+                    'name': tool,
+                    'arguments': json.dumps({'edits': [{
+                        'candidate_index': 1,
+                        'endpoint': 'source_name',
+                        'name': api_key,
+                    }]})}}],
+            }}],
+            'usage': {'prompt_tokens': 20, 'completion_tokens': 5, 'total_tokens': 25},
+        })
+
+    with httpx.Client(transport=httpx.MockTransport(respond)) as client:
+        result = invoke_deepseek(
+            ModelRequest(stage='resolution', source=sample.source,
+                         extraction=sample.extraction, settings=ModelSettings()),
+            api_key=api_key,
+            http_client=client,
+        )
+
+    persisted = result.model_dump_json()
+    assert api_key not in persisted
+    assert '[redacted]' in persisted
+    assert 'authorization' not in persisted.lower()
+    assert set(result.raw_response) == {
+        'content', 'id', 'tool_calls', 'invalid_tool_calls', 'response_metadata'
+    }
+    assert set(result.raw_response['response_metadata']) <= {
+        'finish_reason', 'id', 'model_name', 'system_fingerprint'
+    }
+
+
 def test_extraction_uses_original_prompt_and_exact_source_and_transport_never_retries():
     from private_client_graph.extract import EXTRACTION_PROMPT
     calls = []

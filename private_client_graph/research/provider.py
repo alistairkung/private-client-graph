@@ -1,10 +1,11 @@
 """Single-call DeepSeek boundary. No retries, truth access or live defaults."""
 import json
+from collections.abc import Mapping
 from typing import Any, Literal
 
 import httpx
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from langchain_deepseek import ChatDeepSeek
 from langsmith import tracing_context
 from pydantic import BaseModel, ConfigDict, Field, SecretStr, model_validator
@@ -69,6 +70,14 @@ class ModelResponse(BaseModel):
     error_type: str | None = None
 
 
+_SAFE_RESPONSE_METADATA = {
+    "finish_reason",
+    "id",
+    "model_name",
+    "system_fingerprint",
+}
+
+
 def request_messages(request: ModelRequest) -> list[tuple[str, str]]:
     if request.stage == "extraction":
         return [("system", EXTRACTION_PROMPT), ("human", request.source)]
@@ -98,17 +107,52 @@ def invoke_deepseek(request: ModelRequest, *, api_key: str,
     if not isinstance(result, dict):
         raise TypeError("Expected a raw structured-output response")
     message = result["raw"]
+    if not isinstance(message, AIMessage):
+        raise TypeError("Expected an AI message from the provider")
     parsed = result.get("parsed")
     metadata = message.response_metadata
-    usage = message.usage_metadata or {}
-    response = ModelResponse(
-        payload=parsed.model_dump() if parsed is not None else None,
-        raw_response=message.model_dump(mode="json"),
-        returned_model=metadata.get("model_name"),
-        usage=TokenUsage(input_tokens=usage.get("input_tokens"),
-                         output_tokens=usage.get("output_tokens"),
-                         cached_tokens=usage.get("input_token_details", {}).get("cache_read")),
-        error_type=type(result["parsing_error"]).__name__ if result.get("parsing_error") else None,
+    usage: Mapping[str, Any] = message.usage_metadata or {}
+    response = {
+        "payload": parsed.model_dump() if parsed is not None else None,
+        "raw_response": _safe_raw_response(message),
+        "returned_model": metadata.get("model_name"),
+        "usage": TokenUsage(
+            input_tokens=usage.get("input_tokens"),
+            output_tokens=usage.get("output_tokens"),
+            cached_tokens=usage.get("input_token_details", {}).get("cache_read"),
+        ),
+        "error_type": (
+            type(result["parsing_error"]).__name__
+            if result.get("parsing_error") else None
+        ),
+    }
+    return ModelResponse.model_validate(_redact_sensitive(response, api_key))
+
+
+def _safe_raw_response(message: AIMessage) -> dict[str, Any]:
+    """Keep useful provider output while excluding transport/authentication metadata."""
+    raw = message.model_dump(
+        mode="json",
+        include={"content", "id", "tool_calls", "invalid_tool_calls"},
     )
-    # Provider-controlled text is retained, but never leak a configured credential.
-    return ModelResponse.model_validate_json(response.model_dump_json().replace(api_key, "[redacted]"))
+    raw["response_metadata"] = {
+        key: value
+        for key, value in message.response_metadata.items()
+        if key in _SAFE_RESPONSE_METADATA
+    }
+    return raw
+
+
+def _redact_sensitive(value: Any, secret: str) -> Any:
+    if isinstance(value, str):
+        return value.replace(secret, "[redacted]")
+    if isinstance(value, list):
+        return [_redact_sensitive(item, secret) for item in value]
+    if isinstance(value, tuple):
+        return tuple(_redact_sensitive(item, secret) for item in value)
+    if isinstance(value, dict):
+        return {
+            _redact_sensitive(key, secret): _redact_sensitive(item, secret)
+            for key, item in value.items()
+        }
+    return value

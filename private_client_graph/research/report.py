@@ -100,49 +100,122 @@ def _details(title: str, value: Any) -> str:
 def _cohort_section(report: dict[str, Any], cohort: str) -> str:
     samples = [s for s in report['samples'] if s['cohort'] == cohort]
     stats = report['cohorts'][cohort]
+    summary_table = _cohort_summary_table(samples)
+    quality_table = _quality_table(stats)
+    sample_details = ''.join(_sample_details(sample) for sample in samples)
+    chart = f1_chart(samples, cohort)
+    return f'''<section id="{cohort}"><h2>{cohort.capitalize()} inputs</h2>
+<p class="caption">{stats['samples']} paired inputs across {len(stats['cases'])} case identifiers. {stats['valid_repetitions']} valid resolver repetitions; {stats['scored_repetitions']} scored; {stats['failed_repetitions']} failed or unavailable; {stats['not_attempted_repetitions']} not attempted. {stats['paired_score_count']} paired deltas available.</p>
+<div class="plot"><div class="legend"><span>Dashed line / square: no-op baseline</span><span>Solid line / circle: resolver mean; bars: range</span></div>{chart}</div>
+{summary_table}
+{quality_table}
+<div class="details">{sample_details}</div></section>'''
+
+
+def _cohort_summary_table(samples: list[dict[str, Any]]) -> str:
     rows = []
     for index, sample in enumerate(samples, 1):
         baseline = (sample['baseline'].get('evaluation') or {}).get('f1')
         metrics = sample['resolver_metrics']
-        cells = [html.escape(f"{index}. {sample['sample_id']}"), _number(baseline),
-                 _number(metrics['f1']['mean']), _number(metrics['f1']['standard_deviation']),
-                 _number(metrics['f1']['minimum']), _number(sample['paired_deltas']['mean']),
-                 f"{sample['scored_repetitions']}/{len(sample['repetitions'])}", str(sample['failed_repetitions'])]
-        rows.append('<tr>'+''.join(f'<td>{c}</td>' for c in cells)+'</tr>')
-    return f'''<section id="{cohort}"><h2>{cohort.capitalize()} inputs</h2>
-<p class="caption">{stats['samples']} paired inputs across {len(stats['cases'])} case identifiers. {stats['valid_repetitions']} valid resolver repetitions; {stats['scored_repetitions']} scored; {stats['failed_repetitions']} failed or unavailable; {stats['not_attempted_repetitions']} not attempted. {stats['paired_score_count']} paired deltas available.</p>
-<div class="plot"><div class="legend"><span>Dashed line / square: no-op baseline</span><span>Solid line / circle: resolver mean; bars: range</span></div>{f1_chart(samples, cohort)}</div>
-<div class="table-scroll"><table><caption>F1 by paired input; failures are excluded from scores and counted explicitly.</caption>
-<thead><tr><th>Paired sample</th><th>Baseline</th><th>Resolver mean</th><th>Sample SD</th><th>Minimum</th><th>Mean delta</th><th>Scored/planned</th><th>Failed</th></tr></thead><tbody>{''.join(rows)}</tbody></table></div>
-{_quality_table(stats)}
-<div class="details">{''.join(_sample_details(s) for s in samples)}</div></section>'''
+        rows.append([
+            html.escape(f"{index}. {sample['sample_id']}"),
+            _number(baseline),
+            _number(metrics['f1']['mean']),
+            _number(metrics['f1']['standard_deviation']),
+            _number(metrics['f1']['minimum']),
+            _number(sample['paired_deltas']['mean']),
+            f"{sample['scored_repetitions']}/{len(sample['repetitions'])}",
+            str(sample['failed_repetitions']),
+        ])
+    return _table(
+        headers=[
+            'Paired sample', 'Baseline', 'Resolver mean', 'Sample SD',
+            'Minimum', 'Mean delta', 'Scored/planned', 'Failed',
+        ],
+        rows=rows,
+        caption='F1 by paired input; failures are excluded from scores and counted explicitly.',
+    )
 
 
 def _quality_table(stats: dict[str, Any]) -> str:
     rows = []
     for metric in ('precision', 'recall', 'f1', 'provenance_accuracy'):
         base, treatment = stats['baseline_metrics'][metric], stats['resolver_per_input_means'][metric]
-        rows.append(f'<tr><td>{metric.replace("_", " ").capitalize()}</td><td>{_number(base["mean"])}</td><td>{_number(base["standard_deviation"])}</td><td>{_number(treatment["mean"])}</td><td>{_number(treatment["standard_deviation"])}</td><td>{base["n"]} / {treatment["n"]}</td></tr>')
-    return '<div class="table-scroll"><table><caption>Equal-weight input means; SD measures variation across inputs.</caption><thead><tr><th>Metric</th><th>Baseline mean</th><th>Baseline SD</th><th>Resolver mean</th><th>Resolver SD</th><th>Scored inputs B / R</th></tr></thead><tbody>'+''.join(rows)+'</tbody></table></div>'
+        rows.append([
+            metric.replace('_', ' ').capitalize(),
+            _number(base['mean']),
+            _number(base['standard_deviation']),
+            _number(treatment['mean']),
+            _number(treatment['standard_deviation']),
+            f"{base['n']} / {treatment['n']}",
+        ])
+    return _table(
+        headers=[
+            'Metric', 'Baseline mean', 'Baseline SD', 'Resolver mean',
+            'Resolver SD', 'Scored inputs B / R',
+        ],
+        rows=rows,
+        caption='Equal-weight input means; SD measures variation across inputs.',
+    )
 
 
 def _sample_details(sample: dict[str, Any]) -> str:
-    rows = []
-    for result in [sample['baseline'], *sample['repetitions']]:
-        evaluation, identity = result.get('evaluation') or {}, result.get('identity')
-        name = 'Baseline' if result.get('configuration') == 'noop' else f"Resolver {result.get('repetition', '')}"
-        cells = [name, html.escape(result['status']), _number(evaluation.get('f1')),
-                 str(identity['incorrect_merges']) if identity is not None else 'Unavailable',
-                 str(identity['missed_merges']) if identity is not None else 'Unavailable',
-                 _number(result.get('provider_seconds')), _number(result.get('incremental_cost'), 6)]
-        rows.append('<tr>'+''.join(f'<td>{c}</td>' for c in cells)+'</tr>')
+    results_table = _individual_results_table(sample)
     return f'''<details><summary>{html.escape(sample['sample_id'])}: individual results and identity diagnostics</summary>
-<div class="table-scroll"><table><thead><tr><th>Run</th><th>Status</th><th>F1</th><th>Incorrect merges</th><th>Missed merges</th><th>Provider s</th><th>Resolver cost</th></tr></thead><tbody>{''.join(rows)}</tbody></table></div>
+{results_table}
 <p>No-edit resolver responses: {sample['no_edit_repetitions']}. Mean single-pipeline cost: {_number(sample['single_pipeline_cost']['mean'],6)}. Mean single-pipeline latency: {_number(sample['single_pipeline_latency']['mean'])} s.</p>
 <p>Failure fraction among attempted resolver calls: {_number(sample['failure_rate_among_attempted'])} ({sample['attempted_repetitions']} attempted). Paired score coverage of planned repetitions: {_number(sample['paired_score_coverage'])}. Baseline single-pipeline latency: {_number(sample['baseline_single_pipeline_latency'])} s. Historical original elapsed time: {_number(sample['historical_pipeline_seconds'])} s.</p>
 {_details('Full predictions, denominators, metrics and stage timings', sample)}</details>'''
 
 
+def _individual_results_table(sample: dict[str, Any]) -> str:
+    rows = []
+    for result in [sample['baseline'], *sample['repetitions']]:
+        evaluation, identity = result.get('evaluation') or {}, result.get('identity')
+        name = 'Baseline' if result.get('configuration') == 'noop' else f"Resolver {result.get('repetition', '')}"
+        rows.append([
+            name,
+            html.escape(result['status']),
+            _number(evaluation.get('f1')),
+            str(identity['incorrect_merges']) if identity is not None else 'Unavailable',
+            str(identity['missed_merges']) if identity is not None else 'Unavailable',
+            _number(result.get('provider_seconds')),
+            _number(result.get('incremental_cost'), 6),
+        ])
+    return _table(
+        headers=[
+            'Run', 'Status', 'F1', 'Incorrect merges', 'Missed merges',
+            'Provider s', 'Resolver cost',
+        ],
+        rows=rows,
+    )
+
+
 def _usage_table(tokens: dict[str, Any]) -> str:
-    rows = ''.join(f'<tr><td>{name.replace("_", " ")}</td><td>{value["known_sum"]}</td><td>{value["known_attempts"]}</td><td>{value["unknown_attempts"]}</td></tr>' for name, value in tokens.items())
-    return '<div class="table-scroll"><table><thead><tr><th>Usage</th><th>Known subtotal</th><th>Known attempts</th><th>Unknown attempts</th></tr></thead><tbody>'+rows+'</tbody></table></div>'
+    rows = [
+        [
+            name.replace('_', ' '),
+            str(value['known_sum']),
+            str(value['known_attempts']),
+            str(value['unknown_attempts']),
+        ]
+        for name, value in tokens.items()
+    ]
+    return _table(
+        headers=['Usage', 'Known subtotal', 'Known attempts', 'Unknown attempts'],
+        rows=rows,
+    )
+
+
+def _table(headers: list[str], rows: list[list[str]], caption: str | None = None) -> str:
+    """Render shared table chrome; callers must escape provider-controlled cells."""
+    caption_html = f'<caption>{html.escape(caption)}</caption>' if caption else ''
+    headings = ''.join(f'<th>{html.escape(header)}</th>' for header in headers)
+    body = ''.join(
+        '<tr>' + ''.join(f'<td>{cell}</td>' for cell in row) + '</tr>'
+        for row in rows
+    )
+    return (
+        f'<div class="table-scroll"><table>{caption_html}'
+        f'<thead><tr>{headings}</tr></thead><tbody>{body}</tbody></table></div>'
+    )

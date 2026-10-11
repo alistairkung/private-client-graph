@@ -42,41 +42,129 @@ def summarize(bundle: Bundle) -> dict[str, Any]:
 
 def _sample_summary(bundle: Bundle, sample: dict[str, Any], rows: list[dict[str, Any]],
                     attempts: list[dict[str, Any]]) -> dict[str, Any]:
-    selected = [r for r in rows if r['sample_id'] == sample['sample_id']]
-    baseline = next((r for r in selected if r['configuration'] == 'noop'), {'status': 'not_attempted'})
-    repetitions: list[dict[str, Any]] = [next((r for r in selected if r['configuration'] == 'generative_full_source'
-                        and r['repetition'] == i), {'status': 'not_attempted', 'repetition': i})
-                   for i in range(1, bundle.plan.repetitions + 1)]
-    metrics = {metric: distribution([_score(r, metric) for r in repetitions]) for metric in QUALITY}
+    baseline, repetitions = _sample_results(
+        sample['sample_id'], rows, bundle.plan.repetitions
+    )
+    quality = _quality_summary(baseline, repetitions)
+    execution = _repetition_summary(repetitions)
+    cost_and_latency = _cost_and_latency_summary(
+        bundle, sample, baseline, repetitions, attempts
+    )
+    return {
+        **sample,
+        'baseline': baseline,
+        'repetitions': repetitions,
+        **quality,
+        **execution,
+        **cost_and_latency,
+    }
+
+
+def _sample_results(
+    sample_id: str,
+    rows: list[dict[str, Any]],
+    repetition_count: int,
+) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    selected = [row for row in rows if row['sample_id'] == sample_id]
+    baseline = next(
+        (row for row in selected if row['configuration'] == 'noop'),
+        {'status': 'not_attempted'},
+    )
+    repetitions = [
+        next(
+            (
+                row for row in selected
+                if row['configuration'] == 'generative_full_source'
+                and row['repetition'] == repetition
+            ),
+            {'status': 'not_attempted', 'repetition': repetition},
+        )
+        for repetition in range(1, repetition_count + 1)
+    ]
+    return baseline, repetitions
+
+
+def _quality_summary(
+    baseline: dict[str, Any],
+    repetitions: list[dict[str, Any]],
+) -> dict[str, Any]:
+    metrics = {
+        metric: distribution([_score(result, metric) for result in repetitions])
+        for metric in QUALITY
+    }
     baseline_f1 = _score(baseline, 'f1')
-    costs = [r.get('incremental_cost') for r in repetitions]
-    extraction_cost, extraction_seconds, extraction_usage = _extraction_observation(bundle, sample, attempts)
-    pipeline_costs = [c + extraction_cost if c is not None and extraction_cost is not None else None for c in costs]
-    resolver_seconds = [r.get('resolution_seconds') for r in repetitions]
-    failed = sum(r['status'] in FAILURES for r in repetitions)
-    attempted = sum('attempt_id' in r for r in repetitions)
-    attempted_failures = sum('attempt_id' in r and r['status'] in FAILURES for r in repetitions)
-    paired = sum(_score(r, 'f1') is not None and baseline_f1 is not None for r in repetitions)
-    historical = next((s.historical for s in bundle.plan.inputs if s.sample_id == sample['sample_id']), None)
-    return {**sample, 'baseline': baseline, 'repetitions': repetitions,
-            'resolver_metrics': metrics, 'scored_repetitions': metrics['f1']['n'],
-            'valid_repetitions': sum(r['status'] == 'completed' for r in repetitions),
-            'failed_repetitions': failed,
-            'attempted_repetitions': attempted,
-            'failure_rate_among_attempted': attempted_failures / attempted if attempted else None,
-            'paired_score_coverage': paired / len(repetitions),
-            'not_attempted_repetitions': sum(r['status'] == 'not_attempted' for r in repetitions),
-            'paired_deltas': distribution([_score(r, 'f1') - baseline_f1
-                if _score(r, 'f1') is not None and baseline_f1 is not None else None for r in repetitions]),
-            'incremental_cost': distribution(costs), 'extraction_cost': extraction_cost,
-            'extraction_seconds': extraction_seconds, 'extraction_usage': extraction_usage,
-            'historical_pipeline_seconds': historical['metadata'].get('duration_seconds') if historical else None,
-            'single_pipeline_cost': distribution(pipeline_costs),
-            'provider_latency': distribution([r.get('provider_seconds') for r in repetitions]),
-            'resolver_latency': distribution(resolver_seconds),
-            'baseline_single_pipeline_latency': _pipeline_seconds(baseline, extraction_seconds),
-            'single_pipeline_latency': distribution([_pipeline_seconds(r, extraction_seconds) for r in repetitions]),
-            'no_edit_repetitions': sum(r.get('edits') == [] for r in repetitions)}
+    deltas = [
+        _score(result, 'f1') - baseline_f1
+        if _score(result, 'f1') is not None and baseline_f1 is not None else None
+        for result in repetitions
+    ]
+    paired_count = sum(delta is not None for delta in deltas)
+    return {
+        'resolver_metrics': metrics,
+        'scored_repetitions': metrics['f1']['n'],
+        'paired_score_coverage': paired_count / len(repetitions),
+        'paired_deltas': distribution(deltas),
+    }
+
+
+def _repetition_summary(repetitions: list[dict[str, Any]]) -> dict[str, Any]:
+    attempted = [result for result in repetitions if 'attempt_id' in result]
+    attempted_failures = sum(result['status'] in FAILURES for result in attempted)
+    return {
+        'valid_repetitions': sum(result['status'] == 'completed' for result in repetitions),
+        'failed_repetitions': sum(result['status'] in FAILURES for result in repetitions),
+        'attempted_repetitions': len(attempted),
+        'failure_rate_among_attempted': (
+            attempted_failures / len(attempted) if attempted else None
+        ),
+        'not_attempted_repetitions': sum(
+            result['status'] == 'not_attempted' for result in repetitions
+        ),
+        'no_edit_repetitions': sum(result.get('edits') == [] for result in repetitions),
+    }
+
+
+def _cost_and_latency_summary(
+    bundle: Bundle,
+    sample: dict[str, Any],
+    baseline: dict[str, Any],
+    repetitions: list[dict[str, Any]],
+    attempts: list[dict[str, Any]],
+) -> dict[str, Any]:
+    incremental_costs = [result.get('incremental_cost') for result in repetitions]
+    extraction_cost, extraction_seconds, extraction_usage = _extraction_observation(
+        bundle, sample, attempts
+    )
+    pipeline_costs = [
+        cost + extraction_cost
+        if cost is not None and extraction_cost is not None else None
+        for cost in incremental_costs
+    ]
+    historical = next(
+        (item.historical for item in bundle.plan.inputs
+         if item.sample_id == sample['sample_id']),
+        None,
+    )
+    return {
+        'incremental_cost': distribution(incremental_costs),
+        'extraction_cost': extraction_cost,
+        'extraction_seconds': extraction_seconds,
+        'extraction_usage': extraction_usage,
+        'historical_pipeline_seconds': (
+            historical['metadata'].get('duration_seconds') if historical else None
+        ),
+        'single_pipeline_cost': distribution(pipeline_costs),
+        'provider_latency': distribution([
+            result.get('provider_seconds') for result in repetitions
+        ]),
+        'resolver_latency': distribution([
+            result.get('resolution_seconds') for result in repetitions
+        ]),
+        'baseline_single_pipeline_latency': _pipeline_seconds(baseline, extraction_seconds),
+        'single_pipeline_latency': distribution([
+            _pipeline_seconds(result, extraction_seconds) for result in repetitions
+        ]),
+    }
 
 
 def _score(row: dict[str, Any], metric: str) -> Any:

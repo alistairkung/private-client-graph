@@ -59,6 +59,10 @@ def test_uncertain_attempt_is_not_reissued_and_explicit_live_gate_is_required(tm
         raise AssertionError('Must not reissue interrupted call')
     execute(bundle, provider=forbidden)
     assert next(r for r in bundle.results() if r['configuration'] != 'noop')['status'] == 'uncertain'
+    from private_client_graph.research.summary import summarize
+    operations = summarize(bundle)['operations']
+    assert operations['attempted'] == 1
+    assert operations['uncertain_attempts'] == 1
     pricing = Pricing(model='deepseek-flash', input_per_million=1, output_per_million=2,
                       source_url='https://provider.test/pricing', retrieved_at='2026-10-11')
     paid = Bundle.create(tmp_path / 'paid', ExperimentPlan(
@@ -69,6 +73,63 @@ def test_uncertain_attempt_is_not_reissued_and_explicit_live_gate_is_required(tm
         execute(paid, provider=forbidden)
     with pytest.raises(ValueError, match='authorization'):
         execute(paid, provider=forbidden, live=True)
+
+
+def test_resume_recovers_task_ledger_reservation_without_redispatch(tmp_path):
+    import pytest
+
+    sample = load_inputs()[-2]
+    bundle = Bundle.create(
+        tmp_path / 'recovered',
+        ExperimentPlan(kind='task_a_diagnostic', inputs=[sample], repetitions=1, max_calls=1),
+        task_ledger=tmp_path / 'ledger',
+    )
+    attempt_id = 'alias_merge-resolve-1'
+    bundle.reserve(attempt_id, {'stage': 'resolution'})
+    (bundle.path / 'attempts' / f'{attempt_id}.started.json').unlink()
+
+    execute(
+        bundle,
+        provider=lambda request: pytest.fail('Recovered reservations must not dispatch'),
+        live=True,
+    )
+
+    attempts = bundle.attempts()
+    assert len(attempts) == 1
+    assert attempts[0]['attempt_id'] == attempt_id
+    assert attempts[0]['status'] == 'uncertain'
+    assert bundle.task_attempt_count == 1
+    result = next(row for row in bundle.results() if row['configuration'] != 'noop')
+    assert result['status'] == 'uncertain'
+
+
+def test_resume_materializes_completed_observation_without_redispatch(tmp_path):
+    import pytest
+    from private_client_graph.research.provider import ModelRequest
+
+    sample = load_inputs()[-2]
+    bundle = Bundle.create(
+        tmp_path / 'completed',
+        ExperimentPlan(inputs=[sample], repetitions=1),
+    )
+    attempt_id = 'alias_merge-resolve-1'
+    request = ModelRequest(
+        stage='resolution', source=sample.source,
+        extraction=sample.extraction, settings=bundle.plan.settings,
+    )
+    bundle.reserve(attempt_id, request.model_dump(mode='json'))
+    bundle.complete(attempt_id, {
+        'status': 'completed',
+        'response': ModelResponse(payload={'edits': []}).model_dump(mode='json'),
+        'provider_seconds': 1.25,
+    })
+
+    execute(bundle, provider=lambda request: pytest.fail('Completed observations must not dispatch'))
+
+    result = next(row for row in bundle.results() if row['configuration'] != 'noop')
+    assert result['status'] == 'completed'
+    assert result['provider_seconds'] == 1.25
+    assert bundle.attempt_count == 1
 
 
 def test_task_b_plan_requires_effective_model_and_pricing_before_dispatch():
