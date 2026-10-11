@@ -95,9 +95,9 @@ def copy_run_draft(root: Path, experiment_id: str, command: CopyRunDraft) -> Run
         workspace = read_experiment(root, experiment_id)
         if command.run_id not in workspace.run_ids:
             raise ValueError('Run does not belong to this Experiment')
-        # Read the immutable plan; do not validate current execution authority or copy it.
-        Bundle.open(root / command.run_id)
-        frozen = FrozenPlan.model_validate_json((root / command.run_id / 'execution.json').read_text())
+        # Validate retained integrity without requiring today's execution environment.
+        from .run_inspection import read_run
+        frozen = read_run(root, experiment_id, command.run_id).plan
         configuration = RunConfiguration.model_validate(frozen.preview.proposal.model_dump())
         return save_draft(root, experiment_id, DraftUpdate(request_id=command.request_id,
             expected_revision=command.expected_revision, configuration=configuration), copied_from=command.run_id)

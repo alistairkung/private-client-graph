@@ -196,7 +196,10 @@ def test_upstream_failure_preserves_every_planned_repetition(tmp_path):
 def test_scope_matching_ignores_labels_but_discloses_provenance_and_source_changes(tmp_path):
     from private_client_graph.workbench.run_evaluation import compare_runs
     left, right = run_bundle(tmp_path / 'left'), run_bundle(tmp_path / 'right')
-    right.plan.case_metadata = {'case_01_fixture': {'name': 'Renamed'}}
+    from private_client_graph.workbench.case_catalog import frozen_case_metadata
+    right.plan.case_metadata = frozen_case_metadata(right.plan.inputs)
+    metadata = right.plan.case_metadata['case_01_fixture']
+    right.plan.case_metadata['case_01_fixture'] = metadata.model_copy(update={'name': 'Renamed'})
     right.manifest['provenance']['git_sha'] = 'different'
     comparison = compare_runs(left, right)
     assert comparison.comparable_scope

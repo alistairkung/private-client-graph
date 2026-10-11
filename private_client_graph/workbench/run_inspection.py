@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 
 from private_client_graph.research.artifacts import Bundle, checksum
 from private_client_graph.research.inputs import ResearchInput
+from private_client_graph.research.case_metadata import CaseMetadata
 from private_client_graph.research.results import ResearchResult
 from private_client_graph.research.run_plan import RunPlan
 from .artifacts import artifact_digest, _verify_execution_binding
@@ -26,7 +27,7 @@ class RunObservation(BaseModel):
     repetition: int
     status: str
     reason: str | None = None
-    metadata: dict[str, Any] = Field(default_factory=dict)
+    metadata: CaseMetadata | None = None
     source: str | None = None
     result: ResearchResult | None = None
     relationships: list[RelationshipOutcome] = Field(default_factory=list)
@@ -91,7 +92,7 @@ def _observations(bundle: Bundle, evaluation: RunEvaluation) -> list[RunObservat
         row = results.get((slot.sample_id, slot.configuration, slot.repetition))
         sample = inputs.get(slot.sample_id)
         template_id = slot.sample_id.split('_fresh_')[0] if slot.extraction_attempt_id else slot.sample_id
-        metadata = bundle.plan.case_metadata.get(template_id, {})
+        metadata = bundle.plan.case_metadata.get(template_id)
         template = inputs.get(template_id)
         source = sample.source if sample else template.source if template else None
         outcome = coverage.get(slot.observation_id)
