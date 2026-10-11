@@ -2,8 +2,9 @@
 
 Status: Comparison bench B approved on 2026-10-11. The user authorized implementation
 of the complete design, including Connector rail A with inline settings and the
-always-visible insertion control, on 2026-10-12. Implementation branches from
-unmerged design PR #112 and preserves the existing execution authorization contracts.
+always-visible insertion control, on 2026-10-12. Implementation branched from
+design PR #112, now merged into main, and preserves the existing execution
+authorization contracts.
 See the [complete illustrated design reference](research-workbench-complete-design-reference.md)
 for the sidebar, full-page composition, pipeline interaction states, input picker,
 responsive layouts, Execution and Evaluation.
