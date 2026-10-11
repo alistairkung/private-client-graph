@@ -44,6 +44,10 @@ _Avoid_: Replay, sample analysis
 A deterministic demonstration path that loads the Case 01 ideal-extraction fixture and passes it through current graph construction. It is explicitly selected and is never a fallback from live analysis.
 _Avoid_: Live analysis, prior-run replay
 
+**Shared Analysis Pipeline**:
+The fixed Extract → Resolve → Construct Graph workflow used by Matter Intake, the Public Showcase, and research. Its configuration selects only explicitly supported semantic capabilities; consumer-specific operational policy and Benchmark Evaluation remain outside it.
+_Avoid_: Production pipeline, research pipeline, agent framework
+
 **Run Artifact**:
 A retained observation from extraction or a benchmark experiment, preserving outputs and available execution context for reproducibility and diagnosis. It is technical traceability data, not application state or a professional case history.
 _Avoid_: Saved case, analysis history
