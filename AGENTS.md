@@ -122,6 +122,19 @@ Do not weaken or delete tests merely to make a change pass.
 - Respect required CI checks.
 - Do not merge automatically.
 
+### CI handoff
+
+After local validation and opening a PR, hand the work back even if GitHub Actions
+checks are still running. Do not repeatedly poll or wait solely for CI to finish.
+
+The handoff must report the PR URL, local validation results, any known CI failures,
+and required checks that are still pending. Do not describe a PR with pending checks
+as merge-ready.
+
+If a CI failure is already known, investigate and fix it before declaring the
+implementation ready. Required checks must pass before merge; this handoff rule
+does not waive any quality gate or authorize automatic merging.
+
 ## Agent skills
 
 ### Issue tracker
