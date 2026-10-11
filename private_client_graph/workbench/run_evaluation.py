@@ -25,14 +25,14 @@ def evaluate_run(bundle: Bundle) -> RunEvaluation:
             eligibility=ChartEligibility(f1_reasons=[reason], cost_reasons=[reason]))
     slots = [PlannedObservation.model_validate(row.model_dump()) for row in bundle.plan.planned_slots]
     results = [ResearchResult.model_validate(row) for row in bundle.results()]
-    attempts, authority_reasons = _retained_attempts(bundle)
+    attempts, authority_reasons = retained_attempts(bundle)
     lifecycle: list[dict] = [json.loads(path.read_text()) for path in (bundle.path / 'lifecycle').glob('*.json')]
     lifecycle.sort(key=lambda row: row['at'])
     current = lifecycle[-1] if lifecycle else {'state': 'frozen'}
     aggregate = aggregate_observations(slots, results, _slot_statuses(slots, attempts, current, bundle.path.name))
     cost = _bundle_cost(bundle, attempts, authority_reasons)
     f1_reasons = [] if aggregate.f1 is not None else ['No scored planned observations.']
-    return RunEvaluation(run_id=bundle.manifest['experiment_id'], aggregate=aggregate,
+    return RunEvaluation(run_id=bundle.plan.run_id or bundle.manifest['experiment_id'], aggregate=aggregate,
         cost=cost, scope=_benchmark_scope(bundle.plan),
         artifact_digest=_digest({'manifest': bundle.manifest,
             'results': [row.model_dump(mode='json') for row in results], 'attempts': attempts,
@@ -161,7 +161,7 @@ def _digest(value: object) -> str:
     return hashlib.sha256(json.dumps(value, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
 
 
-def _retained_attempts(bundle: Bundle) -> tuple[list[dict], list[str]]:
+def retained_attempts(bundle: Bundle) -> tuple[list[dict], list[str]]:
     """Read shared-only reservations without invoking mutating crash recovery."""
     local = bundle.attempts()
     if bundle.plan.kind != 'live_experiment':

@@ -54,3 +54,17 @@ def test_draft_and_membership_corruption_fail_without_repair(tmp_path):
     with pytest.raises(ValueError, match='checksum'):
         read_experiment(tmp_path, workspace.id)
     assert record.read_bytes() == before
+
+
+def test_freeze_recovers_published_plan_before_membership_without_duplicate(tmp_path):
+    from private_client_graph.workbench.run_planning import freeze_run
+    from private_client_graph.workbench.workspace_contracts import FreezeRun
+    from private_client_graph.workbench.workspaces import experiment_path
+    workspace = create_experiment(tmp_path, CreateExperiment(request_id='e', name='Recovery'))
+    command = FreezeRun(request_id='one', expected_revision=0)
+    frozen = freeze_run(tmp_path, workspace.id, command)
+    membership = experiment_path(tmp_path, workspace.id) / 'runs' / f'{frozen.id}.json'
+    membership.unlink()  # Crash boundary: plan durable, membership not yet published.
+    recovered = freeze_run(tmp_path, workspace.id, command)
+    assert recovered == frozen
+    assert read_experiment(tmp_path, workspace.id).run_ids == [frozen.id]

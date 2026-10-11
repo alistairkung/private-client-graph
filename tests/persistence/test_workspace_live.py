@@ -69,8 +69,8 @@ def completed(client, path):
         response = client.get(PREFIX + path)
         if response.status_code == 200 and response.json()['lifecycle'] == 'complete':
             # Terminal results publish before the supervised process releases its lock.
-            status = client.get('/api/research/v1/plans/' + path.rsplit('/', 1)[-1])
-            if status.status_code == 200 and not status.json()['active_plan_id']:
+            status = client.get(PREFIX + '/status')
+            if status.status_code == 200 and not status.json()['active_run_id']:
                 return response.json()
         time.sleep(.05)
     raise AssertionError(f'Run did not complete: {response.text}')

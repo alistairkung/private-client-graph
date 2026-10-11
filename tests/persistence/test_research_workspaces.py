@@ -26,7 +26,7 @@ def wait_for_run(client, path):
             continue
         assert response.status_code == 200, response.text
         detail = response.json()
-        if detail['lifecycle'] in ('complete', 'stopped', 'failed'):
+        if detail['lifecycle'] in ('complete', 'stopped', 'failed') and client.get(PREFIX + '/status').json()['active_run_id'] is None:
             return detail
         time.sleep(.1)
     raise AssertionError('Run did not finish')
@@ -48,6 +48,7 @@ def test_api_persistent_experiment_multiple_runs_evidence_and_rebuild(database, 
         request(client, 'post', first_path + '/start', command)
         first_detail = wait_for_run(client, first_path)
         assert first_detail['lifecycle'] == 'complete'
+        assert first_detail['evaluation']['run_id'] == first['id']
         assert len(first_detail['observations']) == 3
         relationship = next(r for o in first_detail['observations'] for r in o['relationships'] if r['expected'])
         assert relationship['expected'][0]['occurrences']
@@ -64,6 +65,9 @@ def test_api_persistent_experiment_multiple_runs_evidence_and_rebuild(database, 
         assert second_detail['observations'][0]['configuration'] == 'generative_full_source'
         third = request(client, 'post', experiment + '/runs', {'request_id': 'run3', 'expected_revision': 1})
         assert third['id'] != second['id']
+        comparison = client.get(PREFIX + experiment + '/comparison', params={'left': first['id'], 'right': second['id']}).json()
+        assert comparison['left_run_id'] == first['id']
+        assert comparison['right_run_id'] == second['id']
         assert (tmp_path / first['id'] / 'manifest.json').read_bytes() == retained_manifest
         assert client.get(PREFIX + first_path).json() == first_detail
         assert client.get(PREFIX + experiment).json()['draft']['configuration'] == configuration
@@ -80,3 +84,27 @@ def test_api_persistent_experiment_multiple_runs_evidence_and_rebuild(database, 
     reader = TestClient(create_app())
     assert reader.post(PREFIX + '/experiments', json={}).status_code == 405
     assert reader.get(PREFIX + first_path).json() == first_detail
+
+
+def test_history_keeps_corrupt_workspaces_and_legacy_labels_explicit(database, tmp_path, monkeypatch):
+    from pathlib import Path
+    from private_client_graph.workbench.restore import restore_archive
+    monkeypatch.setenv('PCG_RESEARCH_ARTIFACTS', str(tmp_path))
+    restore_archive(Path('research/history/issue-92-pilot.zip'), tmp_path / 'issue-92')
+    client = TestClient(create_execution_app())
+    first = request(client, 'post', '/experiments', {'request_id': 'first', 'name': 'Healthy'})
+    second = request(client, 'post', '/experiments', {'request_id': 'second', 'name': 'Corrupt'})
+    record = tmp_path / 'experiments' / second['id'] / 'workspace.json'
+    record.write_text('{}')
+    history = client.get(PREFIX + '/experiments')
+    assert history.status_code == 200, history.text
+    items = {item['id']: item for item in history.json()['items']}
+    assert items[first['id']]['integrity'] == 'verified'
+    assert items[second['id']]['integrity'] == 'corrupt'
+    assert items[second['id']]['metadata_available'] is False
+    legacy = client.get(PREFIX + '/legacy/experiments').json()
+    assert len(legacy) == 1 and legacy[0]['metadata_available'] is False
+    assert legacy[0]['run_mapping_available'] is False
+    detail = client.get(PREFIX + '/legacy/experiments/' + legacy[0]['id']).json()
+    assert all(case['metadata_available'] is False for case in detail['cases'])
+    assert all('unavailable' in case['name'] for case in detail['cases'])

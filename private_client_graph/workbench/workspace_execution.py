@@ -9,10 +9,10 @@ from .approval import authorize
 from .execution_contracts import Command, FrozenPlan, LiveApproval, Preview, RunStatus
 from .planning import open_executable, require_live
 from .run_planning import copy_run_draft, freeze_run, preview_run
-from .supervisor import command_lock, start, stop
+from .supervisor import command_lock, latest_event, start, stop
 from .workspace_api import PREFIX
 from .workspace_contracts import (CopyRunDraft, CreateExperiment, DraftUpdate, FreezeRun,
-                                 RunConfiguration, RunDraft, WorkspaceDetail)
+                                 RunConfiguration, RunDraft, WorkspaceDetail, RunAuthorization)
 from .workspace_index import rebuild_workspaces
 from .workspaces import create_experiment, read_experiment, update_draft
 
@@ -23,6 +23,9 @@ def prepare_authorization(root: Path, identity: str, approval: LiveApproval, ori
         require_live(root)
         if bundle.plan.kind != 'live_experiment':
             raise ValueError('Only live Runs require provider authorization')
+        permitted = ('stopped', 'interrupted', 'failed') if approval.continuation else ('frozen',)
+        if latest_event(bundle)['state'] not in permitted:
+            raise ValueError('Authorization requires a frozen Run or explicit continuation')
         authorize(bundle, frozen, approval, origin)
 
 
@@ -76,11 +79,11 @@ def mount_workspace_commands(app: FastAPI, root: Path) -> None:
         refresh()
         return result
 
-    @app.post(f'{PREFIX}/experiments/{{experiment_id}}/runs/{{run_id}}/authorize')
+    @app.post(f'{PREFIX}/experiments/{{experiment_id}}/runs/{{run_id}}/authorize', response_model=RunAuthorization)
     def approval(experiment_id: str, run_id: str, command: LiveApproval, request: Request):
         member(experiment_id, run_id)
         prepare_authorization(root, run_id, command, request.headers['origin'])
-        return {'authorized': True, 'invocation_id': command.request_id, 'started': False}
+        return RunAuthorization(invocation_id=command.request_id)
 
     @app.post(f'{PREFIX}/experiments/{{experiment_id}}/runs/{{run_id}}/start', response_model=RunStatus)
     def begin(experiment_id: str, run_id: str, command: Command, request: Request):

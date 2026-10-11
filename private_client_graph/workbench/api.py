@@ -23,6 +23,10 @@ def create_app(*, refresh: Callable[[], None] | None = None) -> FastAPI:
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=['localhost', '127.0.0.1', '[::1]', 'testserver'])
     root = Path(os.getenv('PCG_RESEARCH_ARTIFACTS', 'runs/research'))
 
+    @app.exception_handler(KeyError)
+    async def artifact_incomplete(request, error):
+        return JSONResponse(status_code=409, content={'detail': 'Research artifact schema is incomplete.'})
+
     @app.exception_handler(ValueError)
     async def artifact_invalid(request, error):
         return JSONResponse(status_code=409, content={'detail': str(error)})
