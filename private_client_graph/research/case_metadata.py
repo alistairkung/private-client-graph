@@ -21,5 +21,3 @@ class CaseMetadata(BaseModel):
         if value is not None and not value.strip():
             raise ValueError('Case labels and descriptions must not be blank')
         return value
-
-
