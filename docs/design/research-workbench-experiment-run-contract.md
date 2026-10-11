@@ -46,7 +46,7 @@ starting a new Run from a draft is a separate operation. Neither action retries
 uncertain attempts automatically. The future backend continues independently
 of browser navigation. The prototype only simulates these states.
 
-When a Run completes, its scored observation becomes a selectable chart point;
+Once a Run has a scored observation, its aggregate becomes one selectable chart point;
 the draft remains available for the next Run. Chart selection drives a separate
 frozen-run inspector, TP/FP/FN matrix, relationship selection and exact Evidence
 and Source. Completion never means the whole Experiment is closed.
@@ -84,12 +84,30 @@ rewrite the accepted ADR as if the future contract were already implemented.
 No extraction, relationship, graph identity, evaluation or provenance-scoring
 semantics change is required by this UI model.
 
+## Human-readable metadata contract
+
+Required addition, 2026-10-12, before implementation:
+
+- Every newly created Experiment requires a non-blank human-readable name and accepts an optional hypothesis/description. Retain a stable machine-readable Experiment ID separately; display names are not unique identifiers and do not change Run identity.
+- Persist the name and optional hypothesis/description in authoritative research artifacts. PostgreSQL only projects them. Rebuilding the index from artifacts must recover these fields without relying on a database backup. Any future edits must preserve historical frozen provenance; editing old immutable manifests is not permitted.
+- Benchmark Cases require manually authored human-readable names and descriptions in repository-owned case JSON metadata. Load that metadata through the existing capability/input discovery path; do not infer authored labels from filenames, source text or model output. Keep stable Case IDs separate from display names. Metadata is descriptive and must not change ground truth, evaluation, input matching or Run identity.
+- Distinguish the parent Benchmark Case from an individual diagnostic fixture when they exercise different scenarios: retain separate case and fixture IDs and labels, with the scenario description belonging to the correct level. Do not use a fixture's scenario name as the parent case name.
+- Freeze the relevant Case name, description, and any selected fixture's scenario metadata alongside the existing input identities in each new Run's experiment provenance. Historical views use this frozen metadata even after repository labels change; the next-run picker uses current repository metadata. Preserve existing semantic input hashes and matching rules rather than conflating a label change with changed ground truth.
+- Expose these fields through the existing versioned Research Workbench API, including creation/plan contracts, capabilities, history/detail and comparison/inspection responses where relevant. Keep schemas backend-authoritative and TypeScript consumers checked. PostgreSQL schema changes, if necessary, require a new Alembic migration.
+- Support artifacts predating these fields without rewriting their manifests. For example, display `Unnamed experiment · <stable ID>`, `Case <stable ID> · name unavailable`, and `Fixture <stable ID> · name unavailable`. Missing historical descriptions/hypotheses remain unavailable, not invented. Responses must distinguish frozen/authored metadata from a compatibility fallback. Never silently substitute a current repository label for missing historical metadata.
+
+This is a small contract and presentation enhancement. It introduces no case editor, case-management service, user-authored case ingestion, or changes to protected semantics, evaluation metrics or Run identity. The persistent Experiment/Run contract remains a separately required prerequisite; this addition does not implement it.
+
+Acceptance checks must cover required-name validation, optional description, duplicate display names with distinct IDs, artifact-to-index rebuild, repository metadata loading, case-versus-fixture distinction, freezing before repository label changes, historical fallback rendering without manifest writes, versioned API compatibility, and unchanged evaluator outputs and Run identity.
+
 ## Comparison and data honesty
 
-The design demonstrates one selected benchmark input and one scored observation
-per Run. Multi-input Run aggregation is not defined here: a future design must
-use existing evaluator outputs and explicit observation scope rather than invent
-an aggregate F1. Resolver repetitions are not renamed to Runs automatically.
+The approved [Run aggregate evaluation contract](research-workbench-run-aggregate-evaluation.md)
+defines observation-weighted micro-F1, provisional coverage, comparable scope,
+exact input matching and incurred provider spend. All available Benchmark Cases
+are selected by default. The prototype illustrates one observation per Run;
+production must support the specified multi-case aggregation and one point per Run.
+Resolver repetitions are not renamed to Runs automatically.
 
 Use discrete selectable points. Never draw a continuous series across unrelated
 frozen inputs. Run number is workspace order, not a claim that inputs match.
@@ -127,3 +145,7 @@ exists. No material readability refactors were needed. The interactive mockup wa
 checked at 1440px and 390px for the multi-run workflow, immutable prior snapshots,
 draft preservation, keyboard Evidence inspection, cost exclusions and reload
 persistence. Backend tests were not run for documentation-only repository changes.
+
+## Tracking
+
+[Implementation follow-up #115](https://github.com/alistairkung/private-client-graph/issues/115) tracks the metadata contract and collapsible-sidebar refinement, linked from #100, #104, #105 and the Case authoring roadmap #78. Implementation remains separate from this handoff update.
