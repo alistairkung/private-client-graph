@@ -124,6 +124,7 @@ export function Workspace({
             <DraftEditor
               key={draftKey}
               id={id}
+              disabled={copying}
               draft={workspace.draft}
               cases={cases}
               capabilities={capabilities}

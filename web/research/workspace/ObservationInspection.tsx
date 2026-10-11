@@ -1,9 +1,23 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { RunDetail } from "../shared/contracts";
 import { EvidenceInspector } from "../results/EvidenceInspector";
 import { metric } from "./RunChart";
 
 export function ObservationInspection({ run }: { run: RunDetail }) {
+  const evidence = useRef<HTMLDivElement>(null);
+  const selectedControl = useRef<HTMLButtonElement | null>(null);
+  function showEvidence(button: HTMLButtonElement, id: string) {
+    selectedControl.current = button;
+    setRelationshipId(id);
+    if (matchMedia("(width < 760px)").matches)
+      requestAnimationFrame(() => {
+        evidence.current?.focus({ preventScroll: true });
+        evidence.current?.scrollIntoView({
+          block: "start",
+          behavior: "instant",
+        });
+      });
+  }
   const [observationId, setObservationId] = useState(run.observations[0]?.id);
   const [outcome, setOutcome] = useState("all");
   const [relationshipId, setRelationshipId] = useState<string | null>(null);
@@ -96,7 +110,9 @@ export function ObservationInspection({ run }: { run: RunDetail }) {
                       className="secondary"
                       key={item.id}
                       aria-pressed={relationshipId === item.id}
-                      onClick={() => setRelationshipId(item.id)}
+                      onClick={(event) =>
+                        showEvidence(event.currentTarget, item.id)
+                      }
                     >
                       {item.edge[0]}
                       <small>{item.edge[1].replaceAll("_", " ")}</small>
@@ -109,11 +125,29 @@ export function ObservationInspection({ run }: { run: RunDetail }) {
                 <p>No scored relationships available for this observation.</p>
               )}
             </section>
-            <EvidenceInspector
-              key={`${observation.id}-${relationship?.id ?? ""}`}
-              relationship={relationship}
-              source={observation.source}
-            />
+            <div
+              ref={evidence}
+              tabIndex={-1}
+              className="selected-evidence"
+              role="region"
+              aria-label="Selected relationship Evidence"
+            >
+              <EvidenceInspector
+                onBack={() => {
+                  const target = selectedControl.current?.isConnected
+                    ? selectedControl.current
+                    : document.getElementById("relationships");
+                  target?.focus({ preventScroll: true });
+                  target?.scrollIntoView({
+                    block: "center",
+                    behavior: "instant",
+                  });
+                }}
+                key={`${observation.id}-${relationship?.id ?? ""}`}
+                relationship={relationship}
+                source={observation.source}
+              />
+            </div>
           </div>
         </>
       )}

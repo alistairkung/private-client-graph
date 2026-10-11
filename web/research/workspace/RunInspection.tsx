@@ -35,8 +35,13 @@ export function RunInspection({
               : "Generative resolver"}
           </h2>
           <small>
-            {workspace.name} · {configuration.input_mode} inputs ·{" "}
-            {run.lifecycle}
+            {workspace.name} ·{" "}
+            {configuration.execution_mode === "recorded"
+              ? "Recorded demonstration · Not live quality"
+              : configuration.execution_mode === "live"
+                ? "Live provider execution"
+                : "Provider-free replay"}{" "}
+            · {configuration.input_mode} inputs · {run.lifecycle}
           </small>
         </div>
         <strong>F1 {metric(aggregate.f1)}</strong>
@@ -207,7 +212,7 @@ export function RunInspection({
               .filter((item) => item.id !== run.id)
               .map((item) => (
                 <option key={item.id} value={item.id}>
-                  Run {runs.indexOf(item) + 1}
+                  Run {workspace.run_ids.indexOf(item.id) + 1}
                 </option>
               ))}
           </select>

@@ -21,7 +21,13 @@ export function RunChart({
   const [tab, setTab] = useState<"run" | "cost">("run");
   const [inspected, setInspected] = useState<string | null>(null);
   const chartId = useId();
-  const eligible = runs.filter((run) =>
+  const [inputMode, setInputMode] = useState("all");
+  const runNumber = (id: string) => workspace.run_ids.indexOf(id) + 1;
+  const visible = runs.filter(
+    (run) =>
+      inputMode === "all" || run.plan.preview.proposal.input_mode === inputMode,
+  );
+  const eligible = visible.filter((run) =>
     tab === "run"
       ? run.evaluation.eligibility.f1_by_run
       : run.evaluation.eligibility.f1_vs_cost,
@@ -36,7 +42,8 @@ export function RunChart({
       <div className="section-heading">
         <h2>Run history &amp; performance</h2>
         <span>
-          {runs.length} {runs.length === 1 ? "Run" : "Runs"} retained
+          {workspace.run_ids.length}{" "}
+          {workspace.run_ids.length === 1 ? "Run" : "Runs"} retained
         </span>
       </div>
       {new Set(
@@ -78,6 +85,17 @@ export function RunChart({
         role="tabpanel"
         aria-labelledby={`${chartId}-${tab}`}
       >
+        <label className="chart-filter">
+          Input mode
+          <select
+            value={inputMode}
+            onChange={(event) => setInputMode(event.target.value)}
+          >
+            <option value="all">All inputs · Discrete points</option>
+            <option value="saved">Saved extraction</option>
+            <option value="fresh">Fresh extraction</option>
+          </select>
+        </label>
         <div className="chart-legend">
           <span>F1 · 0–1</span>
           <span>◇ No resolver　● Generative resolver　○ Provisional</span>
@@ -99,16 +117,13 @@ export function RunChart({
                 </div>
               ))}
               {eligible.map((run) => {
-                const index =
-                  workspace.run_ids?.indexOf(run.id) ??
-                  runs.findIndex((item) => item.id === run.id);
+                const index = runNumber(run.id) - 1;
                 const aggregate = run.evaluation.aggregate;
                 const resolver =
                   run.plan.preview.proposal.resolver === "generative";
                 const x =
                   tab === "run"
-                    ? (index + 1) /
-                      ((workspace.run_ids?.length ?? runs.length) + 1)
+                    ? (index + 1) / (workspace.run_ids.length + 1)
                     : 0.05 + (0.9 * (run.evaluation.cost.total ?? 0)) / maxCost;
                 return (
                   <button
@@ -132,15 +147,15 @@ export function RunChart({
                 );
               })}
               {tab === "run" &&
-                runs.map((run, index) => (
+                workspace.run_ids.map((id, index) => (
                   <span
-                    key={run.id}
+                    key={id}
                     className="plot-tick"
                     style={{
-                      left: `${((index + 1) / ((workspace.run_ids?.length ?? runs.length) + 1)) * 100}%`,
+                      left: `${((index + 1) / (workspace.run_ids.length + 1)) * 100}%`,
                     }}
                   >
-                    {workspace.run_ids?.indexOf(run.id) + 1 || index + 1}
+                    {index + 1}
                   </span>
                 ))}
             </div>
@@ -158,8 +173,8 @@ export function RunChart({
           </>
         )}
         <p className="chart-footnote">
-          {eligible.length}/{runs.length} Runs plotted · Discrete points; no
-          trend or improvement is implied across different scopes.
+          {eligible.length}/{workspace.run_ids.length} Runs plotted · Discrete
+          points; no trend or improvement is implied across different scopes.
         </p>
         <div
           id={`${chartId}-tooltip`}
@@ -169,7 +184,7 @@ export function RunChart({
           {tooltip ? (
             <>
               <strong>
-                {workspace.name} · Run {runs.indexOf(tooltip) + 1}
+                {workspace.name} · Run {runNumber(tooltip.id)}
               </strong>
               <span>
                 F1 {metric(tooltip.evaluation.aggregate.f1)} ·{" "}
@@ -179,6 +194,9 @@ export function RunChart({
               </span>
               <small>{tooltip.id}</small>
               <p>
+                {tooltip.plan.preview.proposal.execution_mode === "recorded"
+                  ? "Recorded demonstration · Not live quality · "
+                  : ""}
                 {tooltip.plan.preview.proposal.input_mode} inputs ·{" "}
                 {tooltip.plan.preview.proposal.model} · Scope{" "}
                 {tooltip.evaluation.scope?.identity ?? "unavailable"}
@@ -214,14 +232,14 @@ export function RunChart({
         </div>
         {!!runs.length && (
           <div className="run-history-list" aria-label="All Runs">
-            {runs.map((run, index) => (
+            {runs.map((run) => (
               <div key={run.id}>
                 <button
                   className="secondary"
                   aria-pressed={selected === run.id}
                   onClick={() => select(run.id)}
                 >
-                  Run {index + 1} ·{" "}
+                  Run {runNumber(run.id)} ·{" "}
                   {run.plan.preview.proposal.resolver === "none"
                     ? "No resolver"
                     : "Generative resolver"}

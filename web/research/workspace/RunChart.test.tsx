@@ -33,7 +33,10 @@ function run(
     },
   } as unknown as RunDetail;
 }
-const workspace = { name: "Research question" } as WorkspaceDetail;
+const workspace = {
+  name: "Research question",
+  run_ids: ["first", "unpriced", "empty"],
+} as WorkspaceDetail;
 it("displays server scores including zero, excludes unavailable values, preserves selection and updates a provisional point in place", () => {
   const select = vi.fn();
   const first = run("first", 0, 0, "provisional");
@@ -73,4 +76,42 @@ it("displays server scores including zero, excludes unavailable values, preserve
     }),
   ).toBeInTheDocument();
   // Deliberately inconsistent counts prove React never recalculates F1.
+});
+
+it("shares input-mode filters across tabs without changing selection or renumbering Runs after a failed read", () => {
+  const select = vi.fn();
+  const saved = run("saved", 0.5, 0.1),
+    fresh = run("fresh", 0.8, 0.2);
+  saved.plan.preview.proposal.input_mode = "saved";
+  fresh.plan.preview.proposal.input_mode = "fresh";
+  const scope = { ...workspace, run_ids: ["unreadable", "saved", "fresh"] };
+  const { container } = render(
+    <RunChart
+      workspace={scope}
+      runs={[saved, fresh]}
+      selected="saved"
+      select={select}
+    />,
+  );
+  expect(
+    screen.getByRole("button", { name: /Run 2, F1 0.500/ }),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByRole("button", { name: /Run 2 · No resolver/ }),
+  ).toBeInTheDocument();
+  expect(screen.getByText("Research question · Run 2")).toBeInTheDocument();
+  fireEvent.change(screen.getByLabelText("Input mode"), {
+    target: { value: "fresh" },
+  });
+  expect(container.querySelectorAll(".chart-point")).toHaveLength(1);
+  expect(
+    screen.getByRole("button", { name: /Run 3, F1 0.800/ }),
+  ).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("tab", { name: "F1 vs Cost" }));
+  expect(screen.getByLabelText("Input mode")).toHaveValue("fresh");
+  expect(container.querySelectorAll(".chart-point")).toHaveLength(1);
+  expect(
+    screen.getByRole("button", { name: /Run 2 · No resolver/ }),
+  ).toHaveAttribute("aria-pressed", "true");
+  expect(select).not.toHaveBeenCalled();
 });

@@ -21,6 +21,7 @@ export function DraftEditor({
   saved,
   frozen,
   saving,
+  disabled = false,
 }: {
   id: string;
   draft: RunDraft;
@@ -29,13 +30,15 @@ export function DraftEditor({
   saved: (draft: RunDraft) => void;
   frozen: (id: string) => void;
   saving: (busy: boolean) => void;
+  disabled?: boolean;
 }) {
   const [configuration, setConfiguration] = useState<RunConfiguration>(
     draft.configuration,
   );
   const [preview, setPreview] = useState<Preview | null>(null);
   const [error, setError] = useState("");
-  const [busy, setBusy] = useState(false);
+  const [freezing, setBusy] = useState(false);
+  const busy = freezing || disabled;
   const [review, setReview] = useState(false);
   const [state, setState] = useState("Saved");
   const revision = useRef(draft.revision);

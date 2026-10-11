@@ -76,6 +76,19 @@ test("persistent Experiment: changed and repeated Runs retain frozen Evidence an
     .locator(".observation-bench .relationship-list button")
     .first()
     .click();
+  if (info.project.name === "research-narrow") {
+    const evidence = page.getByRole("region", {
+      name: "Selected relationship Evidence",
+    });
+    await expect(evidence).toBeFocused();
+    await expect(evidence).toBeInViewport();
+    await page.getByRole("link", { name: "Back to relationships" }).click();
+    await expect(
+      page.locator(".observation-bench .relationship-list button").first(),
+    ).toBeFocused();
+    await page.keyboard.press("Enter");
+    await expect(evidence).toBeFocused();
+  }
   await expect(
     page.getByText("No predicted relationship", { exact: true }),
   ).toBeVisible();
@@ -119,7 +132,11 @@ test("persistent Experiment: changed and repeated Runs retain frozen Evidence an
     0,
   );
   await expect(
-    page.getByRole("navigation", { name: "Experiments", exact: true, includeHidden: true }),
+    page.getByRole("navigation", {
+      name: "Experiments",
+      exact: true,
+      includeHidden: true,
+    }),
   ).toBeAttached();
   await page.evaluate(() => window.scrollTo(0, 0));
   expect(

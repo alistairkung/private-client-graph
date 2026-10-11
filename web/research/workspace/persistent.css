@@ -494,3 +494,10 @@ pre {
 .observation-bench .relationship-list button {
   overflow-wrap: anywhere;
 }
+.chart-filter {
+  max-width: 265px;
+  margin: 0 0 24px;
+}
+.selected-evidence {
+  min-width: 0;
+}
