@@ -24,6 +24,14 @@ _Avoid_: Justification, rationale
 A Person or Trust identified within one Matter's relationship state. Its name describes it but does not define its identity; matching names alone do not establish that two Entities are the same participant.
 _Avoid_: Name string, globally identified person
 
+**Alias Resolution**:
+Determining whether different names or references denote the same Entity. Similar spelling alone does not establish that correspondence.
+_Avoid_: Fuzzy-name matching, identity disambiguation
+
+**Identity Disambiguation**:
+Distinguishing different Entities whose names or references could otherwise be confused, including different participants with identical names.
+_Avoid_: Alias resolution, name normalization
+
 **Professional Review**:
 Inspection by a private-client professional of AI-extracted relationships and the source evidence supporting them. It is distinct from benchmark evaluation; the existing Matter workspace is read-only, while Matter Intake requires whole-proposal confirmation without yet supporting human correction.
 _Avoid_: Case summary, benchmark review
@@ -37,7 +45,7 @@ A deterministic demonstration path that loads the Case 01 ideal-extraction fixtu
 _Avoid_: Live analysis, prior-run replay
 
 **Run Artifact**:
-A persisted raw extraction created for reproducibility and diagnosis. It is technical traceability data, not application state or a professional case history.
+A retained observation from extraction or a benchmark experiment, preserving outputs and available execution context for reproducibility and diagnosis. It is technical traceability data, not application state or a professional case history.
 _Avoid_: Saved case, analysis history
 
 **Benchmark Evaluation**:
