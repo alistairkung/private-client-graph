@@ -5,6 +5,8 @@ import json
 from typing import Literal
 
 from private_client_graph.research.artifacts import Bundle
+from private_client_graph.research.metrics import estimate_cost
+from private_client_graph.research.provider import TokenUsage
 from private_client_graph.research.results import ResearchResult
 from private_client_graph.research.run_plan import RunPlan
 
@@ -146,7 +148,7 @@ def _bundle_cost(bundle: Bundle) -> RunCost:
     attempts, reasons = _retained_attempts(bundle)
     pricing = bundle.plan.pricing
     costs = [AttemptCost(attempt_id=row['attempt_id'],
-        cost=row.get('incremental_cost') if pricing else None,
+        cost=estimate_cost(TokenUsage.model_validate(row.get('response', {}).get('usage', {})), pricing),
         currency=pricing.currency if pricing else None,
         reason='Retained usage or pricing unavailable.') for row in attempts]
     value = incurred_cost(costs)
@@ -176,9 +178,10 @@ def compare_runs(left: Bundle, right: Bundle) -> RunComparison:
     if first.scope is None or second.scope is None:
         comparison.reasons = ['One or both bundles lack a verified Run scope.']
         return comparison
-    for field in ('inputs', 'input_mode', 'evaluator_version', 'aggregate_version'):
+    for field in ('input_mode', 'evaluator_version', 'aggregate_version'):
         if getattr(first.scope, field) != getattr(second.scope, field):
             comparison.scope_differences.append(f'{field} differs.')
+    comparison.scope_differences.extend(_input_scope_differences(first.scope, second.scope))
     comparison.comparable_scope = not comparison.scope_differences
     assert isinstance(left.plan, RunPlan) and isinstance(right.plan, RunPlan)
     for label, a, b in (
@@ -242,3 +245,16 @@ def _pairable_inputs(bundle: Bundle) -> dict[str, list[str]]:
             extraction=sample.extraction.model_dump(mode='json')))
         grouped.setdefault(key, []).append(sample.sample_id)
     return grouped
+
+
+def _input_scope_differences(left: BenchmarkScope, right: BenchmarkScope) -> list[str]:
+    first = {row.input_id: row for row in left.inputs}
+    second = {row.input_id: row for row in right.inputs}
+    differences = []
+    if first.keys() != second.keys():
+        differences.append(f'Case/fixture selection differs: left-only {sorted(first.keys() - second.keys())}; right-only {sorted(second.keys() - first.keys())}.')
+    for identity in sorted(first.keys() & second.keys()):
+        for field in ('case_id', 'source_digest', 'truth_digest', 'cohort', 'samples', 'repetitions'):
+            if getattr(first[identity], field) != getattr(second[identity], field):
+                differences.append(f'{identity}: {field} differs.')
+    return differences

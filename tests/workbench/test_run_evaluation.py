@@ -162,7 +162,7 @@ def test_live_cost_reads_shared_only_reservation_without_mutating_bundle(tmp_pat
     bundle = run_bundle(tmp_path / 'live', execution='live')
     planned = PlannedObservation.model_validate(bundle.plan.planned_slots[0].model_dump())
     bundle.save_result('result', result(planned, (8, 2, 2)).model_dump(mode='json'))
-    record = {'attempt_id': planned.observation_id, 'status': 'provider_error', 'incremental_cost': .15}
+    record = {'attempt_id': planned.observation_id, 'status': 'provider_error', 'response': {'usage': {'input_tokens': 1500000, 'output_tokens': 0, 'cached_tokens': 0}}}
     write_json_once(bundle.path / 'attempts' / 'first.started.json', record)
     shared = bundle.task_ledger / 'reservations'
     prefix = bundle.manifest['experiment_id']
@@ -210,3 +210,40 @@ def test_scope_matching_ignores_labels_but_discloses_provenance_and_source_chang
     assert changed.scope_differences
     assert changed.matched_inputs == 1
     assert len(changed.exclusions) == 2
+
+
+def test_real_retained_usage_prices_extraction_resolvers_and_known_failure_once(tmp_path):
+    from private_client_graph.research.artifacts import write_json_once
+    from private_client_graph.workbench.run_evaluation import evaluate_run
+    bundle = run_bundle(tmp_path / 'live', mode='fresh', execution='live', repetitions=2)
+    for identity, tokens, status in [('extract', 1000000, 'completed'),
+        ('resolve1', 200000, 'completed'), ('resolve2', 200000, 'completed'),
+        ('failed', 100000, 'provider_error')]:
+        record = {'attempt_id': identity, 'status': status,
+            'response': {'usage': {'input_tokens': tokens, 'output_tokens': 0, 'cached_tokens': 0}}}
+        write_json_once(bundle.path / 'attempts' / f'{identity}.started.json', record)
+        write_json_once(bundle.task_ledger / 'reservations' / f"{bundle.manifest['experiment_id']}-{identity}.json", record)
+    cost = evaluate_run(bundle).cost
+    assert cost.total == .15
+    assert cost.known_subtotal == .15
+    assert cost.attempts == 4
+
+
+def test_fresh_matching_scope_does_not_claim_exact_pairing(tmp_path):
+    from private_client_graph.workbench.run_evaluation import compare_runs
+    comparison = compare_runs(run_bundle(tmp_path / 'left', mode='fresh'),
+        run_bundle(tmp_path / 'right', mode='fresh'))
+    assert comparison.comparable_scope
+    assert comparison.matched_inputs == 0
+    assert len(comparison.exclusions) == 4
+    assert not comparison.unqualified_improvement_allowed
+
+
+def test_scope_differences_explain_truth_and_allocation_changes(tmp_path):
+    from private_client_graph.workbench.run_evaluation import compare_runs
+    left, right = run_bundle(tmp_path / 'left'), run_bundle(tmp_path / 'right', repetitions=2)
+    right.plan.inputs[0].truth.relationships.clear()
+    comparison = compare_runs(left, right)
+    assert any('truth_digest' in difference for difference in comparison.scope_differences)
+    assert any('repetitions' in difference for difference in comparison.scope_differences)
+    assert not comparison.comparable_scope
