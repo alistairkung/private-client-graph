@@ -24,6 +24,13 @@ Task B retains its separately scoped 38-attempt ceiling and explicit execution
 gate; the default five calls do not add to that budget. Keep Task A diagnostics
 separate from the Task B pilot and label their artifacts accordingly.
 
+`authorization_reference` and `reviewed_commit` are provenance records for this
+operational workflow. Their presence lets the local CLI reject an incomplete
+Task B manifest, but it does not authenticate the user, verify consent, or prove
+that Task B was authorized. Explicit authorization must still be established in
+the user-controlled workflow before execution; successful local validation is
+not an authorization or security guarantee.
+
 The user controls the build → evaluate → interpret → rebuild loop. Completion
 of Task A does not start Task B, and experiment findings do not authorize a new
 iteration or architectural change. No additional per-invocation approval is
