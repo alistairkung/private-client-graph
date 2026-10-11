@@ -1,0 +1,22 @@
+[
+  {
+    "candidate_index": 0,
+    "endpoint": "source_name",
+    "participant": "elizabeth"
+  },
+  {
+    "candidate_index": 0,
+    "endpoint": "target_name",
+    "participant": "harbour"
+  },
+  {
+    "candidate_index": 1,
+    "endpoint": "source_name",
+    "participant": "elizabeth"
+  },
+  {
+    "candidate_index": 1,
+    "endpoint": "target_name",
+    "participant": "harbour"
+  }
+]
