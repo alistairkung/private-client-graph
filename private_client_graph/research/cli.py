@@ -1,4 +1,4 @@
-"""Plan, run, inspect, render and export the bounded alias-resolution experiment."""
+"""Plan, run, inspect, summarize and export bounded alias-resolution experiments."""
 import argparse
 import json
 import os
@@ -13,7 +13,6 @@ from .export import export_bundle, verify_export
 from .fixtures import load_inputs
 from .plan import ExperimentPlan, Pricing
 from .provider import ModelSettings, invoke_deepseek
-from .report import render_report
 from .runner import Provider, execute
 from .summary import summarize
 
@@ -37,7 +36,7 @@ def main(argv: list[str] | None = None) -> None:
     run.add_argument('bundle', type=Path)
     run.add_argument('--live', action='store_true')
     run.add_argument('--checkpoint', type=int, help='Maximum new attempts this invocation; does not reset task budget')
-    for command in ('inspect', 'render'):
+    for command in ('inspect', 'summarize'):
         commands.add_parser(command).add_argument('bundle', type=Path)
     export = commands.add_parser('export')
     export.add_argument('bundle', type=Path)
@@ -51,11 +50,10 @@ def main(argv: list[str] | None = None) -> None:
         _run(bundle, args)
     elif args.command == 'inspect':
         print(json.dumps(summarize(bundle), indent=2))
-    elif args.command == 'render':
+    elif args.command == 'summarize':
         with bundle.execution_lock():
-            (bundle.path / 'report.html').write_text(render_report(bundle))
             (bundle.path / 'summary.json').write_text(json.dumps(summarize(bundle), indent=2) + '\n')
-        print(bundle.path / 'report.html')
+        print(bundle.path / 'summary.json')
     else:
         export_bundle(bundle, args.destination)
         verify_export(args.destination)
