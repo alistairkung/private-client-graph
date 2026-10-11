@@ -9,7 +9,7 @@ from langchain_deepseek import ChatDeepSeek
 from pydantic import SecretStr
 from openai import APIConnectionError, APIStatusError
 
-from private_client_graph.extract import extract_relationships_from_text
+from private_client_graph.extraction import extract_relationships_from_text
 
 from private_client_graph.pipeline import Pipeline, PipelineInput, PipelineExecutionError
 from private_client_graph.models import ExtractionResult

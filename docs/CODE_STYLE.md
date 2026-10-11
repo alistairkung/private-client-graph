@@ -5,7 +5,10 @@ existing code and requirements demonstrated by benchmark cases.
 
 ## Responsibilities and contracts
 
-- `extract.py`: probabilistic semantic extraction; its CLI also handles extraction I/O.
+- `extraction/semantic.py`: probabilistic semantic extraction.
+- `extraction/cli.py`: extraction file I/O and CLI orchestration; `extract.py` preserves compatibility.
+- `pipeline/executor.py`: fixed Extract → Resolve → Construct CanonicalGraph execution.
+- `resolution.py`: shared constrained alias-resolution semantics.
 - `graph.py`: deterministic candidate validation and graph construction.
 - `evaluation.py`: deterministic semantic-edge and approved-provenance evaluation.
 - CLI entry points: argument parsing, file I/O, and orchestration.
@@ -15,6 +18,28 @@ count. Pydantic models define explicit data contracts. Prefer plain functions fo
 deterministic transformations; introduce classes only when concrete state or
 behaviour warrants them, not merely to organise functions. Service classes,
 strategies, repositories, dependency injection, and inheritance need a real use.
+
+## Package cohesion
+
+Organize Python packages around cohesive domain or application capabilities with
+independently meaningful responsibilities. A package should improve navigation,
+ownership, or public-boundary clarity. Keep closely related contracts and mechanics
+together unless separating them makes those responsibilities clearer. A small,
+explicit package API may preserve stable imports without copying implementations.
+Do not mechanically use one class per file, turn every module into a directory, or
+add layers solely for structural symmetry. Preserve top-down readability of public
+workflows.
+
+The shared `pipeline/` package separates execution, finite configuration, execution
+values, and stage errors. `extraction/` separates shared prompt/chain semantics from
+CLI credentials and I/O. The constrained resolver remains a cohesive module; its
+classes do not each need a separate file. Consumer operational policy stays outside
+these semantic boundaries.
+
+When moving modules, preserve supported imports and CLI entry points, update tests
+at their actual provider lookup boundaries, and include the new paths in research
+code snapshots. Compatibility re-exports do not promise arbitrary monkeypatching
+of old module globals. Check installed distributions as well as source imports.
 
 ## Public workflows and private helpers
 

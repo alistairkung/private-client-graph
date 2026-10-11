@@ -6,7 +6,7 @@ from openai import APIConnectionError, APIStatusError
 from pydantic import ValidationError
 from sqlalchemy.exc import SQLAlchemyError
 
-from private_client_graph.extract import extract_relationships_from_text
+from private_client_graph.extraction import extract_relationships_from_text
 from private_client_graph.pipeline import Pipeline, PipelineInput, PipelineExecutionError
 from private_client_graph.models import ExtractionResult
 from private_client_graph.persistence.matter_proposals import find_reference, save_proposal

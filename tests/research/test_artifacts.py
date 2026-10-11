@@ -83,3 +83,23 @@ def test_missing_task_reservation_blocks_further_paid_calls(tmp_path):
     with pytest.raises(ValueError, match='Task ledger is incomplete'):
         bundle.reserve('second', {})
     assert bundle.attempt_count == 1
+
+
+@pytest.mark.parametrize('module', ['pipeline/executor.py', 'extraction/semantic.py'])
+def test_semantic_package_changes_are_snapshotted_and_block_resume(tmp_path, monkeypatch, module):
+    from private_client_graph.research import artifacts
+    from private_client_graph.research.runner import execute
+
+    source_root = tmp_path / 'source'
+    source_file = source_root / 'private_client_graph' / module
+    source_file.parent.mkdir(parents=True)
+    source_file.write_text('# original semantic implementation\n')
+    monkeypatch.setattr(artifacts, 'ROOT', source_root)
+    bundle = Bundle.create(tmp_path / 'versioned-package', ExperimentPlan(inputs=load_inputs()[-2:]))
+    key = f'private_client_graph/{module}'
+    assert bundle.manifest['provenance']['code'][key] == source_file.read_text()
+    source_file.write_text('# changed semantic implementation\n')
+
+    with pytest.raises(ValueError, match='Code changed'):
+        execute(Bundle.open(bundle.path), provider=lambda request: pytest.fail('No dispatch'))
+    assert bundle.attempt_count == 0

@@ -1,49 +1,20 @@
 """One fixed semantic workflow for live analysis and explicit extraction replay."""
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Literal, Protocol
-
-from pydantic import BaseModel, ConfigDict
+from typing import Protocol
 
 from private_client_graph.graph import build_graph
 from private_client_graph.models import CanonicalGraph, ExtractionResult, RelationshipCandidate
 from private_client_graph.resolution import ResolutionProvider, resolve_generative, no_resolution
 
-
-@dataclass(frozen=True)
-class PipelineInput:
-    source_text: str
-    document: str
-
-
-class PipelineConfig(BaseModel):
-    model_config = ConfigDict(frozen=True, extra='forbid')
-
-    resolver: Literal['none', 'generative'] = 'none'
-
-
-@dataclass(frozen=True)
-class PipelineResult:
-    extracted: ExtractionResult
-    resolved: ExtractionResult
-    graph: CanonicalGraph
+from .config import PipelineConfig
+from .errors import PipelineExecutionError
+from .models import PipelineInput, PipelineResult
 
 
 class GraphBuilder(Protocol):
     def __call__(self, candidates: list[RelationshipCandidate], *, document: str,
                  source_text: str) -> CanonicalGraph: ...
-
-
-class PipelineExecutionError(Exception):
-    """Only completed domain outputs cross this semantic failure boundary."""
-
-    def __init__(self, stage: Literal['extraction', 'resolution', 'graph'], *,
-                 extracted: ExtractionResult | None = None,
-                 resolved: ExtractionResult | None = None):
-        super().__init__(f'Analysis failed during {stage}')
-        self.stage = stage
-        self.extracted = extracted.model_copy(deep=True) if extracted is not None else None
-        self.resolved = resolved.model_copy(deep=True) if resolved is not None else None
 
 
 @dataclass(frozen=True)

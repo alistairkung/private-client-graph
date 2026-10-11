@@ -16,7 +16,7 @@ from uuid import uuid4
 from .fixtures import ROOT
 from .plan import ExperimentPlan
 from private_client_graph.resolution import RESOLUTION_PROMPT
-from private_client_graph.extract import EXTRACTION_PROMPT
+from private_client_graph.extraction import EXTRACTION_PROMPT
 
 
 class BudgetExceeded(ValueError):
@@ -53,8 +53,8 @@ def write_json_once(path: Path, value: Any) -> None:
 
 def code_snapshot() -> dict[str, str]:
     paths = sorted((ROOT / 'private_client_graph').glob('*.py'))
-    paths += sorted((ROOT / 'private_client_graph/models').glob('*.py'))
-    paths += sorted((ROOT / 'private_client_graph/research').glob('*.py'))
+    for package in ('models', 'pipeline', 'extraction', 'research'):
+        paths += sorted((ROOT / 'private_client_graph' / package).rglob('*.py'))
     return {str(p.relative_to(ROOT)): p.read_text() for p in paths}
 
 

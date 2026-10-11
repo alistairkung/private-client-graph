@@ -9,7 +9,7 @@ from langchain_deepseek import ChatDeepSeek
 from langsmith import tracing_context
 from pydantic import BaseModel, ConfigDict, Field, SecretStr, model_validator
 
-from private_client_graph.extract import extraction_messages, build_relationship_extraction_chain
+from private_client_graph.extraction import extraction_messages, build_relationship_extraction_chain
 from private_client_graph.models import ExtractionResult
 from private_client_graph.resolution import EndpointEdits, resolution_messages
 
