@@ -48,9 +48,16 @@ def validate_execution(bundle: Bundle, live: bool) -> None:
     plan = bundle.plan
     if live != (plan.kind != 'demonstration'):
         raise ValueError('Live execution must be explicit and match the manifest kind')
+    if plan.kind == 'live_experiment':
+        from .live_accounting import validate_authorization
+        validate_authorization(bundle)
     # These fields record workflow provenance; local validation cannot prove user authorization.
     if plan.kind == 'task_b_pilot' and not (plan.authorization_reference and plan.reviewed_commit):
         raise ValueError('Task B requires explicit user authorization and reviewed Task A commit')
+    validate_environment(bundle)
+
+
+def validate_environment(bundle: Bundle) -> None:
     if bundle.manifest['provenance']['code'] != code_snapshot():
         raise ValueError('Code changed since manifest creation; do not mix configurations on resume')
     if bundle.manifest['provenance']['dependencies'] != dependency_versions():

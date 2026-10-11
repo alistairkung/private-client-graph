@@ -91,13 +91,14 @@ class Bundle:
     def __init__(self, path: Path, manifest: dict[str, Any]):
         self.path = path
         self.manifest = manifest
-        self.plan = (FiniteExperimentPlan if manifest['schema_version'] == 2 else ExperimentPlan).model_validate(manifest['plan'])
+        self.plan = (FiniteExperimentPlan if manifest['schema_version'] in (2, 3) else ExperimentPlan).model_validate(manifest['plan'])
         self.task_ledger = Path(manifest['task_ledger'])
+        self.authorization_id: str | None = None
 
     @classmethod
     def create(cls, path: Path, plan: ExperimentPlan, *, task_ledger: Path | None = None) -> "Bundle":
         path.mkdir(parents=True, exist_ok=False)
-        manifest = {'schema_version': 2 if isinstance(plan, FiniteExperimentPlan) else 1, 'experiment_id': uuid4().hex,
+        manifest = {'schema_version': plan.plan_version if isinstance(plan, FiniteExperimentPlan) else 1, 'experiment_id': uuid4().hex,
                     'created_at': utc_now(), 'plan': plan.model_dump(mode='json'),
                     'task_ledger': str((task_ledger or ROOT / 'runs/research/task-ledgers' / plan.task_id).resolve()),
                     'provenance': _provenance()}
@@ -111,7 +112,7 @@ class Bundle:
         if checksum(data) != json.loads((path / 'manifest-checksum.json').read_text()):
             raise ValueError('Manifest checksum mismatch')
         manifest = json.loads(data)
-        if manifest['schema_version'] not in (1, 2):
+        if manifest['schema_version'] not in (1, 2, 3):
             raise ValueError('Unsupported artifact schema version')
         return cls(path, manifest)
 
@@ -135,6 +136,9 @@ class Bundle:
     def task_attempt_count(self) -> int:
         if self.plan.kind == 'demonstration':
             return self.attempt_count
+        if self.plan.kind == 'live_experiment':
+            from .live_accounting import task_state
+            return task_state(self.task_ledger)['used']
         return len(list(self.task_ledger.glob('*.json')))
 
     def reserve(self, attempt_id: str, request: dict[str, Any]) -> bool:
@@ -146,6 +150,9 @@ class Bundle:
             self._reserve_demonstration(path, record)
             return True
 
+        if self.plan.kind == 'live_experiment':
+            from .live_accounting import reserve
+            return reserve(self, path, record)
         return self._reserve_paid_attempt(path, record)
 
     def _reserve_demonstration(self, path: Path, record: dict[str, Any]) -> None:

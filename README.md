@@ -692,7 +692,7 @@ Use a migrated disposable database for browser tests. The Compose smoke test req
 Docker and verifies container restart, retained artifact digests, empty-index rebuild
 and idempotence. `docker compose down` retains data; `down -v` removes the disposable
 PostgreSQL volume but retains the bind-mounted artifacts. All ports publish only to
-loopback. No public deployment or live execution is included.
+loopback. No public deployment is included; optional local live execution is described below.
 
 
 ### Offline experiment configuration (Slice 2)
@@ -720,7 +720,7 @@ One experiment subprocess runs at a time, independent of the browser connection.
 observation. A checkpoint or interrupted worker requires **Review continuation**
 and an explicit continuation command. Repeated command IDs cannot dispatch twice;
 uncertain reservations remain counted and are never resubmitted. There are no
-provider retries, automatic resume, queue or live dispatch. Results use the same
+provider retries, automatic resume or queue. Offline modes never dispatch live calls. Results use the same
 pipeline/evaluator and history/Evidence inspector as retained experiments.
 
 Executable artifacts and accounting use stable `/artifacts` container paths.
@@ -733,5 +733,63 @@ The strictly read-only composition remains
 `private_client_graph.workbench.api:app`; it mounts no commands and imports no
 runner. For a read-only Docker service, set `PCG_RESEARCH_APP` in the research
 service's Compose environment to that entry point. Both compositions serve the same
-frontend; creation/controls appear only when the offline capabilities endpoint is
-present. Slice 3 live approval and paid execution remain out of scope.
+frontend; creation/controls appear only when the execution capabilities endpoint is
+present. Live approval is a separately enabled capability described below.
+
+### Explicitly authorized local live research
+
+Live execution is disabled by default. The read-only composition still has no
+command endpoints. Issue #103 is demonstrated with substituted providers; starting
+an actual paid experiment requires separate user authorization.
+
+Provision one persistent task inside the same stable artifact root used by the
+service (for Compose, the container path is `/artifacts`):
+
+```bash
+docker compose run --rm research python -m private_client_graph.workbench.approval /artifacts --label 'Approved research task'
+```
+
+Provisioning creates a task identity with **zero paid allowance**. It is a one-time
+operator step, not a way to reset budgets. Keep `live-task.json` and the complete
+`task-ledgers/` directory with the experiment artifacts. Missing accounting must
+be restored from backup; copying/importing a bundle or rebuilding PostgreSQL does
+not create execution authority. A root represents one task across experiments,
+processes and sessions. Do not create another root to evade a task allowance.
+
+For an explicitly authorized experiment, set `PCG_RESEARCH_LIVE_ENABLED=1` and
+supply `DEEPSEEK_API_KEY` to the research service environment, then recreate the
+service. Credentials stay server-side; never put them in a plan, task label or
+approval reference. Host/Origin checks and loopback-only Compose publishing remain
+in force. Disable the flag again to prevent further live invocations.
+
+In **New experiment**, choose **Live provider**, configure the finite matrix and
+propose a total task call cap. Review the server's extraction/resolution maxima,
+existing task usage and invocation cap, then freeze. On the frozen page, review the
+current task budget and explicitly check the approval box before **Authorize and
+start**. Freezing cannot increase the allowance. Every continuation requires a new
+explicit approval; editing creates a new frozen plan. A stale task-budget review
+is rejected: refresh the budget and review it again. Increasing the cap requires
+freezing and explicitly approving a plan with that larger cap.
+
+Schema-3 authorizations bind the plan digest, task identity/cap, invocation ID and
+bound, approval time and validated local Origin. Durable task reservations precede
+bundle reservations and provider dispatch. Interrupted/uncertain calls keep their
+slots and are never retried. Stop means stop after the current attempt; restarting
+the service never resumes work automatically. Full authorization records remain
+inspectable under **Execution & artifacts**.
+
+The requested model is frozen and returned model names, latency and token usage
+are retained when supplied. This slice does not fetch or invent pricing: USD cost
+estimates remain unavailable without verified pricing metadata. Unknown usage is
+not zero, and a call cap is not a guaranteed dollar cap. Fresh extraction retains
+the finite Case 03 Source coverage from Slice 2.
+
+Run the live-control browser journey without paid calls:
+
+```bash
+DATABASE_URL=postgresql://... npm run test:e2e:live --prefix web
+```
+
+Its server launches a test-only worker that substitutes the DeepSeek boundary;
+the real approval, supervisor, reservation, pipeline, evaluator and index remain
+in use. Production has no provider-substitution environment switch.

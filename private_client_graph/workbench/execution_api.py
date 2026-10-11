@@ -1,4 +1,4 @@
-"""Opt-in local command composition. No live provider or credential initialization."""
+"""Opt-in local commands; credentials are read only inside the approved worker."""
 from pathlib import Path
 from contextlib import asynccontextmanager
 
@@ -7,7 +7,7 @@ from fastapi.responses import JSONResponse
 
 from private_client_graph.persistence.database import database_engine
 from .api import PREFIX, create_app
-from .execution_contracts import Capabilities, Command, FrozenPlan, Preview, Proposal, RunStatus
+from .execution_contracts import Capabilities, Command, FrozenPlan, Preview, Proposal, RunStatus, LiveApproval
 from .index import rebuild_index
 from .planning import capabilities, freeze, preview
 from .supervisor import reconcile, start, status, stop
@@ -44,11 +44,11 @@ def mount_execution(app: FastAPI, root: Path) -> None:
 
     @app.get(f'{PREFIX}/capabilities', response_model=Capabilities)
     def available():
-        return capabilities()
+        return capabilities(root)
 
     @app.post(f'{PREFIX}/preview', response_model=Preview)
     def review(proposal: Proposal):
-        return preview(proposal)
+        return preview(proposal, root)
 
     @app.post(f'{PREFIX}/plans', response_model=FrozenPlan)
     def create_plan(proposal: Proposal):
@@ -66,6 +66,12 @@ def mount_execution(app: FastAPI, root: Path) -> None:
     @app.post(f'{PREFIX}/plans/{{identity}}/start', response_model=RunStatus)
     def begin(identity: str, command: Command):
         return start(root, identity, command)
+
+    @app.post(f'{PREFIX}/plans/{{identity}}/authorize', response_model=RunStatus)
+    def approve(identity: str, approval: LiveApproval, request: Request):
+        command = Command(request_id=approval.request_id, plan_digest=approval.plan_digest)
+        return start(root, identity, command, continuation=approval.continuation,
+                     approval=approval, origin=request.headers['origin'])
 
     @app.post(f'{PREFIX}/plans/{{identity}}/stop', response_model=RunStatus)
     def halt(identity: str, command: Command):

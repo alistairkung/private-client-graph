@@ -98,7 +98,7 @@ test("recorded checkpoint requires explicit continuation and preserves plan when
     page.getByRole("heading", { name: "stopped", exact: true }),
   ).toBeVisible();
   await page.getByRole("button", { name: "Review continuation" }).click();
-  await expect(page.getByText(/1 recorded attempts remain/)).toBeVisible();
+  await expect(page.getByText(/Provider attempts remaining: 1/)).toBeVisible();
   await page
     .getByRole("button", { name: "Continue offline execution" })
     .click();

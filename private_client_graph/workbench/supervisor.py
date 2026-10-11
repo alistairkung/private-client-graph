@@ -11,10 +11,11 @@ from typing import Iterator, TextIO
 from uuid import uuid4
 
 from private_client_graph.research.artifacts import Bundle, utc_now, write_json_once
-from private_client_graph.research.runner import validate_execution
+from private_client_graph.research.runner import validate_execution, validate_environment
 from .evidence import digest_text
-from .execution_contracts import Command, RunStatus
-from .planning import open_executable
+from .execution_contracts import Command, LiveApproval, RunStatus
+from .planning import open_executable, live_budget, require_live
+from .approval import authorize
 
 
 def event(bundle: Bundle, state: str, message: str, invocation: str) -> None:
@@ -67,6 +68,9 @@ def _status(root: Path, identity: str) -> RunStatus:
     if latest['state'] in ('running', 'stopping') and active != identity:
         event(bundle, 'interrupted', 'Execution did not resume. Review remaining work before explicit continuation.', latest['invocation'])
         latest = latest_event(bundle)
+    if bundle.plan.kind == 'live_experiment':
+        from private_client_graph.research.live_accounting import recover_reservations
+        recover_reservations(bundle)
     attempts = bundle.attempts()
     current_work = None
     if latest['state'] in ('running', 'stopping'):
@@ -76,17 +80,28 @@ def _status(root: Path, identity: str) -> RunStatus:
         completed_observations=len(bundle.results()), planned_observations=plan.preview.planned_observations,
         attempts=len(attempts), uncertain_attempts=sum(a['status'] == 'uncertain' for a in attempts),
         remaining_attempts=max(0, plan.preview.matrix_call_maximum - len(attempts)),
-        result_id=digest_text(identity), active_plan_id=active, current_work=current_work)
+        result_id=digest_text(identity), active_plan_id=active, current_work=current_work,
+        task_budget=live_budget(root) if bundle.plan.kind == 'live_experiment' else None)
 
 
-def start(root: Path, identity: str, command: Command, *, continuation: bool = False) -> RunStatus:
+def start(root: Path, identity: str, command: Command, *, continuation: bool = False,
+          approval: LiveApproval | None = None, origin: str = '') -> RunStatus:
     with command_lock(root):
         bundle, plan = open_executable(root, identity)
         if command.plan_digest != plan.digest:
             raise ValueError('Command does not match the frozen plan digest')
-        validate_execution(bundle, live=False)
+        validate_environment(bundle)
+        live = bundle.plan.kind == 'live_experiment'
+        if approval is not None and not live:
+            raise ValueError('Live approval requires a live plan')
+        if live:
+            require_live(root)
+            if approval is None:
+                raise ValueError('Explicit live approval is required')
         request = bundle.path / 'commands' / f'{command.request_id}.json'
         value = {**command.model_dump(), 'continuation': continuation}
+        if approval is not None:
+            value['approval'] = approval.model_dump()
         if request.exists():
             if json.loads(request.read_text()) != value:
                 raise ValueError('Idempotency key was already used for another command')
@@ -99,11 +114,17 @@ def start(root: Path, identity: str, command: Command, *, continuation: bool = F
         if lock is None:
             raise ValueError(f'Another experiment is active: {current.active_plan_id}')
         try:
+            if live:
+                assert approval is not None
+                authorize(bundle, plan, approval, origin)
+                bundle.authorization_id = command.request_id
             write_json_once(request, value)
-            event(bundle, 'running', 'Running offline. Browser closure does not stop execution.', command.request_id)
+            validate_execution(bundle, live=live)
+            event(bundle, 'running', 'Running live.' if live else 'Running offline.', command.request_id)
             _launch_worker(root, bundle, identity, command.request_id, lock)
         except Exception:
-            event(bundle, 'interrupted', 'Worker could not start; explicit continuation required.', command.request_id)
+            if request.exists():
+                event(bundle, 'interrupted', 'Worker could not start; explicit continuation required.', command.request_id)
             raise
         finally:
             # Close without LOCK_UN: the child owns the inherited open-file description.
