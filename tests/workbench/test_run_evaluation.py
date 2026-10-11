@@ -247,3 +247,62 @@ def test_scope_differences_explain_truth_and_allocation_changes(tmp_path):
     assert any('truth_digest' in difference for difference in comparison.scope_differences)
     assert any('repetitions' in difference for difference in comparison.scope_differences)
     assert not comparison.comparable_scope
+
+
+def test_current_attempt_is_pending_until_interruption_and_shared_evidence_changes_digest(tmp_path):
+    from private_client_graph.research.artifacts import write_json_once
+    from private_client_graph.workbench.run_evaluation import evaluate_run
+    bundle = run_bundle(tmp_path / 'live', execution='live')
+    attempt = {'attempt_id': bundle.plan.planned_slots[0].observation_id, 'status': 'uncertain', 'authorization': f'{bundle.path.name}-current'}
+    write_json_once(bundle.task_ledger / 'reservations' / f"{bundle.manifest['experiment_id']}-active.json", attempt)
+    write_json_once(bundle.path / 'lifecycle' / '1.json', {'at': '1', 'state': 'running', 'invocation': 'current'})
+    running = evaluate_run(bundle)
+    assert running.aggregate.coverage.pending == 2
+    assert running.aggregate.coverage.uncertain == 0
+    write_json_once(bundle.path / 'lifecycle' / '2.json', {'at': '2', 'state': 'interrupted'})
+    interrupted = evaluate_run(bundle)
+    assert interrupted.aggregate.coverage.uncertain == 1
+    assert interrupted.artifact_digest != running.artifact_digest
+
+
+def test_result_case_identity_mismatch_is_explicitly_rejected():
+    import pytest
+    first = slot('a')
+    wrong = result(first, (8, 2, 2)).model_copy(update={'case_id': 'different'})
+    with pytest.raises(ValueError, match='Case'):
+        aggregate_observations([first], [wrong])
+
+
+def test_continuation_does_not_reclassify_old_uncertain_attempt_as_running(tmp_path):
+    from private_client_graph.research.artifacts import write_json_once
+    from private_client_graph.workbench.run_evaluation import evaluate_run
+    bundle = run_bundle(tmp_path / 'live', execution='live')
+    attempt = {'attempt_id': bundle.plan.planned_slots[0].observation_id,
+        'status': 'uncertain', 'authorization': f'{bundle.path.name}-old'}
+    write_json_once(bundle.task_ledger / 'reservations' / f"{bundle.manifest['experiment_id']}-old.json", attempt)
+    write_json_once(bundle.path / 'lifecycle' / 'current.json',
+        {'at': '2', 'state': 'running', 'invocation': 'current'})
+    assert evaluate_run(bundle).aggregate.coverage.uncertain == 1
+
+
+def test_continuation_updates_same_run_point_and_ambiguous_saved_inputs_stay_unpaired(tmp_path):
+    from private_client_graph.research.artifacts import Bundle
+    from private_client_graph.workbench.run_evaluation import compare_runs, evaluate_run
+    bundle = run_bundle(tmp_path / 'run')
+    first, second = [PlannedObservation.model_validate(row.model_dump()) for row in bundle.plan.planned_slots]
+    bundle.save_result(first.observation_id, result(first, (8, 2, 2)).model_dump(mode='json'))
+    provisional = evaluate_run(bundle)
+    assert provisional.aggregate.state == 'provisional'
+    assert provisional.aggregate.reasons
+    bundle.save_result(second.observation_id, result(second, (1, 0, 3)).model_dump(mode='json'))
+    complete = evaluate_run(Bundle.open(bundle.path))
+    assert complete.run_id == provisional.run_id
+    assert complete.aggregate.state == 'complete'
+    assert complete.aggregate.coverage.planned == 2
+    assert complete.aggregate.f1 == .72
+    other = run_bundle(tmp_path / 'other')
+    duplicate = other.plan.inputs[0].model_copy(update={'sample_id': 'alternate'})
+    other.plan.inputs.append(duplicate)
+    comparison = compare_runs(bundle, other)
+    assert comparison.matched_inputs == 1
+    assert any(row.observation_id == first.observation_id for row in comparison.exclusions)
