@@ -10,10 +10,12 @@ export function Results({
   id,
   params,
   historyLink,
+  executable = false,
 }: {
   id: string;
   params: URLSearchParams;
   historyLink: string;
+  executable?: boolean;
 }) {
   const load = useCallback(
     (signal: AbortSignal) => experiment(id, signal),
@@ -50,16 +52,29 @@ export function Results({
           {history.cohorts.join(" / ")} · {history.model ?? "Model unavailable"}
         </p>
       </div>
-      {history.kind === "demonstration" && (
+      {data.configuration.execution_mode === "replay" && (
         <p className="notice">
-          Recorded provider responses. This demonstration is not a live quality
-          measurement.
+          Saved replay · No resolution · No provider calls.
         </p>
       )}
+      {executable && data.configuration.plan_version === 2 && (
+        <p>
+          <a href={`#plan=${history.artifact_path}`}>
+            Execution status and controls
+          </a>
+        </p>
+      )}
+      {history.kind === "demonstration" &&
+        data.configuration.execution_mode !== "replay" && (
+          <p className="notice">
+            Recorded provider responses. This demonstration is not a live
+            quality measurement.
+          </p>
+        )}
       {history.lifecycle === "incomplete" && (
         <p className="notice">
           Incomplete experiment. Unattempted and uncertain observations remain
-          visible; imported history cannot resume execution.
+          visible. Historical imports cannot resume execution.
         </p>
       )}
       {history.lifecycle === "failed" && (

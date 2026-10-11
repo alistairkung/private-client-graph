@@ -11,6 +11,7 @@ from private_client_graph.pipeline import Pipeline, PipelineConfig, PipelineInpu
 from private_client_graph.resolution import EndpointEdits, ResolutionRequest, ResolutionProvider
 from .artifacts import Bundle, BudgetExceeded, code_snapshot, dependency_versions, utc_now, write_json_once
 from .inputs import ResearchInput
+from .plan import FiniteExperimentPlan
 from .metrics import IdentityDiagnostics, estimate_cost, identity_diagnostics
 from .provider import ModelRequest, ModelResponse, TokenUsage
 from .results import ResearchResult
@@ -19,18 +20,20 @@ Provider = Callable[[ModelRequest], ModelResponse]
 
 
 def execute(bundle: Bundle, *, provider: Provider, live: bool = False,
-            max_new_attempts: int | None = None) -> dict[str, Any]:
+            max_new_attempts: int | None = None,
+            should_stop: Callable[[], bool] = lambda: False) -> dict[str, Any]:
     """Resume recorded attempts without reissuing them, including uncertain calls."""
-    _validate_execution(bundle, live)
+    validate_execution(bundle, live)
     initial_count = bundle.attempt_count
     stop_reason = 'matrix_complete'
     with bundle.execution_lock():
         # All writes, including task-wide budget reservations, precede dispatch.
         try:
             for sample in _ordered_inputs(bundle):
-                _run_pair(bundle, sample, provider, initial_count, max_new_attempts)
-            for sample in _fresh_inputs(bundle, provider, initial_count, max_new_attempts):
-                _run_pair(bundle, sample, provider, initial_count, max_new_attempts)
+                _checkpoint(should_stop)
+                _run_pair(bundle, sample, provider, initial_count, max_new_attempts, should_stop)
+            for sample in _fresh_inputs(bundle, provider, initial_count, max_new_attempts, should_stop):
+                _run_pair(bundle, sample, provider, initial_count, max_new_attempts, should_stop)
         except BudgetExceeded as error:
             stop_reason = str(error)
         session = {'finished_at': utc_now(), 'stop_reason': stop_reason,
@@ -41,7 +44,7 @@ def execute(bundle: Bundle, *, provider: Provider, live: bool = False,
     return session
 
 
-def _validate_execution(bundle: Bundle, live: bool) -> None:
+def validate_execution(bundle: Bundle, live: bool) -> None:
     plan = bundle.plan
     if live != (plan.kind != 'demonstration'):
         raise ValueError('Live execution must be explicit and match the manifest kind')
@@ -55,15 +58,19 @@ def _validate_execution(bundle: Bundle, live: bool) -> None:
 
 
 def _ordered_inputs(bundle: Bundle) -> list[ResearchInput]:
+    if isinstance(bundle.plan, FiniteExperimentPlan) and bundle.plan.input_mode == 'fresh':
+        return []
     priorities = {'alias_merge': 0, 'alias_distinct': 1}
     return sorted(bundle.plan.inputs, key=lambda sample: priorities.get(sample.sample_id, 2))
 
 
 def _observe(bundle: Bundle, attempt_id: str, request: ModelRequest,
-             provider: Provider, initial_count: int, limit: int | None) -> dict[str, Any]:
+             provider: Provider, initial_count: int, limit: int | None,
+             should_stop: Callable[[], bool] = lambda: False) -> dict[str, Any]:
     existing = bundle.attempt(attempt_id)
     if existing is not None:
         return existing
+    _checkpoint(should_stop)
     if limit is not None and bundle.attempt_count - initial_count >= limit:
         raise BudgetExceeded('Requested checkpoint reached; inspect artifacts before continuing')
     if not bundle.reserve(attempt_id, request.model_dump(mode='json')):
@@ -86,12 +93,15 @@ def _observe(bundle: Bundle, attempt_id: str, request: ModelRequest,
 
 
 def _run_pair(bundle: Bundle, sample: ResearchInput, provider: Provider,
-              initial_count: int, limit: int | None) -> None:
+              initial_count: int, limit: int | None,
+              should_stop: Callable[[], bool]) -> None:
     assert sample.extraction is not None
     _save_baseline_if_needed(bundle, sample)
-    for repetition in range(1, bundle.plan.repetitions + 1):
+    repetitions = bundle.plan.resolution_repetitions
+    for repetition in range(1, repetitions + 1):
+        _checkpoint(should_stop)
         _run_resolution_repetition(
-            bundle, sample, repetition, provider, initial_count, limit
+            bundle, sample, repetition, provider, initial_count, limit, should_stop
         )
 
 
@@ -124,6 +134,7 @@ def _run_resolution_repetition(
     provider: Provider,
     initial_count: int,
     limit: int | None,
+    should_stop: Callable[[], bool],
 ) -> None:
     attempt_id = f'{sample.sample_id}-resolve-{repetition}'
     if bundle.has_result(attempt_id):
@@ -137,7 +148,7 @@ def _run_resolution_repetition(
         operational_request = ModelRequest(stage='resolution', source=request.source,
                                            extraction=request.extraction, settings=bundle.plan.settings)
         started = time.perf_counter()
-        observation = _observe(bundle, attempt_id, operational_request, provider, initial_count, limit)
+        observation = _observe(bundle, attempt_id, operational_request, provider, initial_count, limit, should_stop)
         observation_seconds = time.perf_counter() - started
         return EndpointEdits.model_validate(_observed_payload(observation))
 
@@ -276,17 +287,18 @@ def _evaluate(result: ResearchResult, sample: ResearchInput) -> None:
 
 
 def _fresh_inputs(bundle: Bundle, provider: Provider, initial_count: int,
-                  limit: int | None) -> Iterator[ResearchInput]:
+                  limit: int | None, should_stop: Callable[[], bool]) -> Iterator[ResearchInput]:
     if not bundle.plan.fresh_extractions:
         return
     template = next(sample for sample in bundle.plan.inputs if sample.case_id == 'case_03')
     for index in range(1, bundle.plan.fresh_extractions + 1):
+        _checkpoint(should_stop)
         sample_id = f'fresh_{index:02d}'
         sample = _fresh_sample(template, sample_id)
 
         def extract(source: str) -> ExtractionResult:
             request = ModelRequest(stage='extraction', source=source, settings=bundle.plan.settings)
-            observation = _observe(bundle, f'{sample_id}-extraction', request, provider, initial_count, limit)
+            observation = _observe(bundle, f'{sample_id}-extraction', request, provider, initial_count, limit, should_stop)
             return ExtractionResult.model_validate(_observed_payload(observation))
 
         baseline, extracted = _pipeline_result(sample, PipelineConfig(), mode='live', extractor=extract)
@@ -320,9 +332,10 @@ def _save_unavailable_fresh_results(bundle: Bundle, sample: ResearchInput) -> No
     result_variants: list[
         tuple[str, Literal['noop', 'generative_full_source'], int]
     ] = [('noop', 'noop', 0)]
+    repetitions = bundle.plan.resolution_repetitions
     result_variants.extend(
         (f'resolve-{repetition}', 'generative_full_source', repetition)
-        for repetition in range(1, bundle.plan.repetitions + 1)
+        for repetition in range(1, repetitions + 1)
     )
     for suffix, configuration, repetition in result_variants:
         result_id = f'{sample.sample_id}-{suffix}'
@@ -340,3 +353,8 @@ def _save_fresh_input_snapshot(bundle: Bundle, sample: ResearchInput) -> None:
     snapshot = bundle.path / 'fresh_inputs' / f'{sample.sample_id}.json'
     if not snapshot.exists():
         write_json_once(snapshot, sample.model_dump(mode='json'))
+
+
+def _checkpoint(should_stop: Callable[[], bool]) -> None:
+    if should_stop():
+        raise BudgetExceeded('Stopped after the current attempt; explicit continuation required')

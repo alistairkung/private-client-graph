@@ -14,7 +14,7 @@ from typing import Any, Iterator
 from uuid import uuid4
 
 from .fixtures import ROOT
-from .plan import ExperimentPlan
+from .plan import ExperimentPlan, FiniteExperimentPlan
 from private_client_graph.resolution import RESOLUTION_PROMPT
 from private_client_graph.extraction import EXTRACTION_PROMPT
 
@@ -66,7 +66,10 @@ def dependency_versions() -> dict[str, str]:
 
 def _provenance() -> dict[str, Any]:
     def git(*args: str) -> str | None:
-        result = subprocess.run(['git', *args], cwd=ROOT, capture_output=True, text=True)
+        try:
+            result = subprocess.run(['git', *args], cwd=ROOT, capture_output=True, text=True)
+        except FileNotFoundError:
+            return None
         return result.stdout.strip() if result.returncode == 0 else None
     return {'git_sha': git('rev-parse', 'HEAD'),
             'dirty': bool(git('status', '--porcelain')),
@@ -88,13 +91,13 @@ class Bundle:
     def __init__(self, path: Path, manifest: dict[str, Any]):
         self.path = path
         self.manifest = manifest
-        self.plan = ExperimentPlan.model_validate(manifest['plan'])
+        self.plan = (FiniteExperimentPlan if manifest['schema_version'] == 2 else ExperimentPlan).model_validate(manifest['plan'])
         self.task_ledger = Path(manifest['task_ledger'])
 
     @classmethod
     def create(cls, path: Path, plan: ExperimentPlan, *, task_ledger: Path | None = None) -> "Bundle":
         path.mkdir(parents=True, exist_ok=False)
-        manifest = {'schema_version': 1, 'experiment_id': uuid4().hex,
+        manifest = {'schema_version': 2 if isinstance(plan, FiniteExperimentPlan) else 1, 'experiment_id': uuid4().hex,
                     'created_at': utc_now(), 'plan': plan.model_dump(mode='json'),
                     'task_ledger': str((task_ledger or ROOT / 'runs/research/task-ledgers' / plan.task_id).resolve()),
                     'provenance': _provenance()}
@@ -108,7 +111,7 @@ class Bundle:
         if checksum(data) != json.loads((path / 'manifest-checksum.json').read_text()):
             raise ValueError('Manifest checksum mismatch')
         manifest = json.loads(data)
-        if manifest['schema_version'] != 1:
+        if manifest['schema_version'] not in (1, 2):
             raise ValueError('Unsupported artifact schema version')
         return cls(path, manifest)
 

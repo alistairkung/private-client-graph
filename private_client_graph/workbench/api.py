@@ -1,6 +1,7 @@
 """Local read-only ASGI entry point. No runner, provider, or credential setup."""
 import os
 from pathlib import Path
+from collections.abc import Callable
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.responses import FileResponse, JSONResponse
@@ -17,7 +18,7 @@ from .index import experiment_detail, history_page
 PREFIX = '/api/research/v1'
 
 
-def create_app() -> FastAPI:
+def create_app(*, refresh: Callable[[], None] | None = None) -> FastAPI:
     app = FastAPI(title='PCG Research read-only API', version='1')
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=['localhost', '127.0.0.1', '[::1]', 'testserver'])
     root = Path(os.getenv('PCG_RESEARCH_ARTIFACTS', 'runs/research'))
@@ -30,16 +31,20 @@ def create_app() -> FastAPI:
     def health():
         with database_engine().connect() as connection:
             connection.execute(text('SELECT 1 FROM research_experiments LIMIT 1'))
-        return {'status': 'ok', 'read_only': True}
+        return {'status': 'ok', 'read_only': not getattr(app.state, 'execution_enabled', False)}
 
     @app.get(f'{PREFIX}/experiments', response_model=HistoryPage)
     def history(q: str = Query('', max_length=300), lifecycle: str | None = None,
                 kind: str | None = None, integrity: str | None = None,
                 offset: int = Query(0, ge=0), limit: int = Query(25, ge=1, le=100)):
+        if refresh is not None:
+            refresh()
         return history_page(database_engine(), root, query=q, lifecycle=lifecycle,
                             kind=kind, integrity=integrity, offset=offset, limit=limit)
 
     def load(identity: str) -> ExperimentDetail:
+        if refresh is not None:
+            refresh()
         detail = experiment_detail(database_engine(), root, identity)
         if detail is None:
             raise HTTPException(404, 'Experiment not found in the research index.')

@@ -3,6 +3,7 @@ import argparse
 from pathlib import Path
 from typing import Any
 
+from .execution_contracts import Capabilities, Command, FrozenPlan, Preview, Proposal, RunStatus
 from .contracts import Comparison, ExperimentDetail, HistoryPage
 
 
@@ -34,7 +35,7 @@ def _type(schema: dict[str, Any]) -> str:
 
 def render() -> str:
     definitions = {}
-    for model in (HistoryPage, ExperimentDetail, Comparison):
+    for model in (HistoryPage, ExperimentDetail, Comparison, Capabilities, Command, FrozenPlan, Preview, Proposal, RunStatus):
         schema = model.model_json_schema(mode='serialization')
         definitions.update(schema.pop('$defs', {}))
         definitions[model.__name__] = schema

@@ -58,6 +58,13 @@ export function History({ params }: { params: URLSearchParams }) {
             <option value="incomplete">Incomplete</option>
             <option value="failed">Failed</option>
             <option value="unavailable">Unavailable</option>
+            {["frozen", "running", "stopping", "stopped", "interrupted"].map(
+              (state) => (
+                <option key={state} value={state}>
+                  {state}
+                </option>
+              ),
+            )}
           </select>
         </label>
         <label>
@@ -67,6 +74,7 @@ export function History({ params }: { params: URLSearchParams }) {
             onChange={(event) => update("kind", event.target.value)}
           >
             <option value="">All modes</option>
+            <option value="replay">Saved replay</option>
             <option value="demonstration">Recorded demonstration</option>
             <option value="task_b_pilot">Development pilot</option>
             <option value="task_a_diagnostic">Development diagnostic</option>
@@ -166,8 +174,14 @@ export function History({ params }: { params: URLSearchParams }) {
                     <td>
                       {item.cases.join(", ") || "Unavailable"}
                       <small>
-                        {item.kind
-                          ? "No resolution / Generative resolution"
+                        {item.configurations.length
+                          ? item.configurations
+                              .map((value) =>
+                                value === "noop"
+                                  ? "No resolution"
+                                  : "Generative resolution",
+                              )
+                              .join(" / ")
                           : "Configuration unavailable"}
                       </small>
                     </td>

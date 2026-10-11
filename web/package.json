@@ -12,7 +12,8 @@
     "dev:research": "vite --config vite.research.config.ts",
     "build:research": "tsc --noEmit && vite build --config vite.research.config.ts",
     "test:research": "vitest run --config vite.research.config.ts",
-    "test:e2e:research": "npm run build:research && playwright test --config playwright.research.config.ts"
+    "test:e2e:research": "npm run build:research && playwright test --config playwright.research.config.ts",
+    "test:e2e:execution": "npm run build:research && playwright test --config playwright.execution.config.ts"
   },
   "dependencies": {
     "@dagrejs/dagre": "^1.1.0",

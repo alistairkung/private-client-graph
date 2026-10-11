@@ -18,10 +18,11 @@ class HistoryItem(BaseModel):
     integrity: Literal["verified", "corrupt", "unsupported", "missing"] = "verified"
     integrity_reason: str | None = None
     freshness: Literal["current", "changed", "missing"] = "current"
-    lifecycle: Literal["complete", "incomplete", "failed", "unavailable"] = "unavailable"
+    lifecycle: Literal["complete", "incomplete", "failed", "unavailable", "frozen", "running", "stopping", "stopped", "interrupted"] = "unavailable"
     kind: str | None = None
     model: str | None = None
     cases: list[str] = Field(default_factory=list)
+    configurations: list[str] = Field(default_factory=list)
     cohorts: list[str] = Field(default_factory=list)
     scored: int | None = None
     planned: int | None = None

@@ -3,6 +3,7 @@ from statistics import mean, stdev
 from typing import Any
 
 from .artifacts import Bundle
+from .plan import FiniteExperimentPlan
 from .metrics import estimate_cost
 from .provider import TokenUsage
 
@@ -25,6 +26,8 @@ def summarize(bundle: Bundle) -> dict[str, Any]:
     attempts = bundle.attempts()
     samples = [{'sample_id': s.sample_id, 'case_id': s.case_id, 'cohort': s.cohort}
                for s in bundle.plan.inputs]
+    if isinstance(bundle.plan, FiniteExperimentPlan) and bundle.plan.input_mode == 'fresh':
+        samples = []
     samples += [{'sample_id': f'fresh_{i:02d}', 'case_id': 'case_03', 'cohort': 'fresh'}
                 for i in range(1, bundle.plan.fresh_extractions + 1)]
     summaries = [_sample_summary(bundle, sample, rows, attempts) for sample in samples]
@@ -32,8 +35,7 @@ def summarize(bundle: Bundle) -> dict[str, Any]:
             'kind': bundle.plan.kind, 'task_id': bundle.plan.task_id,
             'model': bundle.plan.settings.model, 'effective_model': bundle.plan.effective_model,
             'configuration': bundle.plan.model_dump(mode='json', exclude={'inputs'}),
-            'planned_provider_attempts': len(bundle.plan.inputs) * bundle.plan.repetitions
-                + bundle.plan.fresh_extractions * (1 + bundle.plan.repetitions),
+            'planned_provider_attempts': bundle.plan.maximum_attempts,
             'call_cap': bundle.plan.max_calls, 'samples': summaries,
             'cohorts': _cohorts(summaries), 'operations': _operations(bundle, attempts),
             'provenance': bundle.manifest['provenance'],
@@ -43,7 +45,7 @@ def summarize(bundle: Bundle) -> dict[str, Any]:
 def _sample_summary(bundle: Bundle, sample: dict[str, Any], rows: list[dict[str, Any]],
                     attempts: list[dict[str, Any]]) -> dict[str, Any]:
     baseline, repetitions = _sample_results(
-        sample['sample_id'], rows, bundle.plan.repetitions
+        sample['sample_id'], rows, bundle.plan.resolution_repetitions
     )
     quality = _quality_summary(baseline, repetitions)
     execution = _repetition_summary(repetitions)
@@ -102,7 +104,7 @@ def _quality_summary(
     return {
         'resolver_metrics': metrics,
         'scored_repetitions': metrics['f1']['n'],
-        'paired_score_coverage': paired_count / len(repetitions),
+        'paired_score_coverage': paired_count / len(repetitions) if repetitions else None,
         'paired_deltas': distribution(deltas),
     }
 

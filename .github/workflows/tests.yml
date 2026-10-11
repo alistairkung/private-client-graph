@@ -88,6 +88,9 @@ jobs:
       - name: Test research history and Evidence journey
         working-directory: web
         run: npm run test:e2e:research
+      - name: Test offline research execution journey
+        working-directory: web
+        run: npm run test:e2e:execution
       - name: Verify research Compose restart and index rebuild
         run: python tests/research_compose_smoke.py
       - name: Build and smoke-test deployment image
