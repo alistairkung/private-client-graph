@@ -35,7 +35,7 @@ it("ignores a stale preview after the proposal changes", async () => {
   render(<Configuration capabilities={capabilities} />);
   await waitFor(() => expect(preview).toHaveBeenCalledTimes(1));
   await userEvent.selectOptions(
-    screen.getByRole("combobox", { name: "Execution mode", exact: true }),
+    screen.getByRole("combobox", { name: "Execution mode" }),
     "recorded",
   );
   await waitFor(() => expect(preview).toHaveBeenCalledTimes(2));
