@@ -1,0 +1,37 @@
+{
+  "entities": [
+    {
+      "id": "elizabeth",
+      "type": "person",
+      "name": "Elizabeth Tan"
+    },
+    {
+      "id": "harbour",
+      "type": "trust",
+      "name": "Harbour Trust"
+    },
+    {
+      "id": "beth",
+      "type": "person",
+      "name": "Beth"
+    }
+  ],
+  "relationships": [
+    {
+      "source": "elizabeth",
+      "type": "settlor_of",
+      "target": "harbour",
+      "approved_evidence": [
+        "Elizabeth Tan is the settlor of Harbour Trust."
+      ]
+    },
+    {
+      "source": "beth",
+      "type": "beneficiary_of",
+      "target": "harbour",
+      "approved_evidence": [
+        "Beth is a beneficiary of Harbour Trust."
+      ]
+    }
+  ]
+}

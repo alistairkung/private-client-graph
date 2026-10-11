@@ -5,15 +5,16 @@ person referred to by more than one surface form. Rebecca Tan appears in
 the source as "Rebecca Tan", as "Rebecca", and as "Mrs Tan". Everyone else
 in the source appears only by full canonical name.
 
-The case is designed to expose the absence of alias resolution in the
-current deterministic builder, which groups mentions only when the emitted
-string is identical. A correct extraction will therefore contain multiple
-distinct name strings for one person, and the builder is expected to split
-Rebecca into three separate entities — "Rebecca Tan", "Rebecca", and
-"Mrs Tan" — with edges touching her appearing as both false positives and
-false negatives. That failure is the point of the case.
+The committed extraction fixture emits both "Rebecca Tan" and "Rebecca" as
+endpoints. The exact-name builder therefore constructs two Rebecca entities,
+producing one false-positive and one false-negative spouse edge. "Mrs Tan"
+appears only in supporting text, not as an extracted endpoint. This deterministic
+fixture failure does not imply that a live extractor must emit unresolved aliases:
+one recorded live run resolved Rebecca Tan consistently and scored perfectly.
+See the [research design](../../docs/design/entity-resolution-research-experiment.md)
+for the observation and its limits.
 
-Surname-only references ("Tan") are deliberately excluded. Two other Tans
+Surname-only references ("Tan") are deliberately excluded. Three other Tans
 appear in the source (Jonathan Tan, Michael Tan, and Sophie Tan), so a bare
 surname is genuinely ambiguous and would introduce a second difficulty
 alongside aliasing.

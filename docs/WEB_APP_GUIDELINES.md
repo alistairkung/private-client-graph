@@ -178,6 +178,8 @@ evaluation concern to the first professional-review slice.
 ## Testing strategy
 
 The goal is high-value behavioural coverage, not a unit test for every React component.
+Web implementation work must also pass the repository-wide completion and final-diff
+self-review gate in `docs/CODE_STYLE.md`.
 
 ### Usually do not unit test
 
