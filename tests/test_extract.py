@@ -11,7 +11,7 @@ from private_client_graph.extract import (
     extract_relationships_from_text,
 )
 from private_client_graph.models import ExtractionResult
-from private_client_graph import extract
+from private_client_graph.extraction import cli
 
 
 CASE_01 = Path(__file__).resolve().parents[1] / "cases" / "case_01"
@@ -75,24 +75,35 @@ def test_extraction_uses_tool_schema_and_parses_response(outcome):
     assert len(requests) == 1
 
 
-def test_cli_loads_dotenv_without_exposing_key(tmp_path, monkeypatch, capsys):
+@pytest.mark.parametrize("model", ["deepseek-flash", "test-explicit"])
+def test_cli_loads_dotenv_without_exposing_key(tmp_path, monkeypatch, capsys, model):
     monkeypatch.chdir(tmp_path)
     monkeypatch.delenv("DEEPSEEK_API_KEY", raising=False)
-    monkeypatch.setattr("sys.argv", ["extract"])
+    from types import SimpleNamespace
+    from langchain_core.runnables import RunnableLambda
+
+    arguments = ["extract"] if model == "deepseek-flash" else ["extract", "--model", model]
+    monkeypatch.setattr("sys.argv", arguments)
+    source_path = tmp_path / "cases" / "case_01" / "source.txt"
+    source_path.parent.mkdir(parents=True)
+    source_path.write_text("Synthetic text with {literal braces}.")
+    calls = []
+
+    def invoke(prompt):
+        calls.append(prompt.to_messages()[1].content)
+        return ExtractionResult(relationships=[])
     (tmp_path / ".env").write_text("DEEPSEEK_API_KEY=test-local-secret\n")
 
     def fake_llm(**kwargs):
         assert kwargs["api_key"].get_secret_value() == "test-local-secret"
         assert kwargs["max_retries"] == 0
         assert kwargs["extra_body"] == {"thinking": {"type": "disabled"}}
-        return object()
+        assert kwargs["model"] == model
+        return SimpleNamespace(with_structured_output=lambda schema, **options: RunnableLambda(invoke))
 
-    monkeypatch.setattr(extract, "ChatDeepSeek", fake_llm)
-    monkeypatch.setattr(
-        extract, "extract_relationships",
-        lambda source_path, *, llm: ExtractionResult(relationships=[]),
-    )
-    extract.main()
+    monkeypatch.setattr(cli, "ChatDeepSeek", fake_llm)
+    cli.main()
+    assert calls == [source_path.read_text()]
     captured = capsys.readouterr()
     assert json.loads(captured.out) == {"relationships": []}
     assert "test-local-secret" not in captured.out + captured.err

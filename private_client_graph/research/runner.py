@@ -6,13 +6,13 @@ from uuid import uuid4
 
 from private_client_graph.evaluation import evaluate_graph
 from private_client_graph.graph import build_graph
-from private_client_graph.models import ExtractionResult
+from private_client_graph.models import CanonicalGraph, ExtractionResult, RelationshipCandidate
+from private_client_graph.pipeline import Pipeline, PipelineConfig, PipelineInput, PipelineExecutionError
+from private_client_graph.resolution import EndpointEdits, ResolutionRequest, ResolutionProvider
 from .artifacts import Bundle, BudgetExceeded, code_snapshot, dependency_versions, utc_now, write_json_once
 from .inputs import ResearchInput
 from .metrics import IdentityDiagnostics, estimate_cost, identity_diagnostics
-from .plan import Pricing
 from .provider import ModelRequest, ModelResponse, TokenUsage
-from .resolution import apply_edits, no_resolution
 from .results import ResearchResult
 
 Provider = Callable[[ModelRequest], ModelResponse]
@@ -73,11 +73,14 @@ def _observe(bundle: Bundle, attempt_id: str, request: ModelRequest,
     started = time.perf_counter()
     try:
         response = provider(request)
-        observation: dict[str, Any] = {'status': 'completed', 'response': response.model_dump(mode='json')}
     except Exception as error:
+        provider_seconds = time.perf_counter() - started
         # Provider exception strings may contain request headers or credentials.
-        observation = {'status': 'provider_error', 'error_type': type(error).__name__}
-    observation['provider_seconds'] = time.perf_counter() - started
+        observation: dict[str, Any] = {'status': 'provider_error', 'error_type': type(error).__name__}
+    else:
+        provider_seconds = time.perf_counter() - started
+        observation = {'status': 'completed', 'response': response.model_dump(mode='json')}
+    observation['provider_seconds'] = provider_seconds
     bundle.complete(attempt_id, observation)
     return {**observation, 'attempt_id': attempt_id}
 
@@ -86,11 +89,9 @@ def _run_pair(bundle: Bundle, sample: ResearchInput, provider: Provider,
               initial_count: int, limit: int | None) -> None:
     assert sample.extraction is not None
     _save_baseline_if_needed(bundle, sample)
-    request = ModelRequest(stage='resolution', source=sample.source,
-                           extraction=sample.extraction, settings=bundle.plan.settings)
     for repetition in range(1, bundle.plan.repetitions + 1):
         _run_resolution_repetition(
-            bundle, sample, request, repetition, provider, initial_count, limit
+            bundle, sample, repetition, provider, initial_count, limit
         )
 
 
@@ -100,7 +101,12 @@ def _save_baseline_if_needed(bundle: Bundle, sample: ResearchInput) -> None:
         return
 
     assert sample.extraction is not None
-    baseline = _evaluate(sample, no_resolution(sample.extraction))
+    baseline, _ = _pipeline_result(sample, PipelineConfig(), mode='replay')
+    _save_baseline(bundle, sample, baseline)
+
+
+def _save_baseline(bundle: Bundle, sample: ResearchInput, baseline: ResearchResult) -> None:
+    baseline_id = f'{sample.sample_id}-noop'
     baseline.configuration = 'noop'
     baseline.repetition = 0
     baseline.provider_seconds = 0
@@ -114,7 +120,6 @@ def _save_baseline_if_needed(bundle: Bundle, sample: ResearchInput) -> None:
 def _run_resolution_repetition(
     bundle: Bundle,
     sample: ResearchInput,
-    request: ModelRequest,
     repetition: int,
     provider: Provider,
     initial_count: int,
@@ -124,30 +129,49 @@ def _run_resolution_repetition(
     if bundle.has_result(attempt_id):
         return
 
-    observation = _observe(bundle, attempt_id, request, provider, initial_count, limit)
-    result = _resolution_result(
-        sample, observation, attempt_id, repetition, bundle.plan.pricing
-    )
-    bundle.save_result(attempt_id, result.model_dump(mode='json'))
+    observation: dict[str, Any] = {}
+    observation_seconds = 0.0
 
+    def resolve(request: ResolutionRequest) -> EndpointEdits:
+        nonlocal observation, observation_seconds
+        operational_request = ModelRequest(stage='resolution', source=request.source,
+                                           extraction=request.extraction, settings=bundle.plan.settings)
+        started = time.perf_counter()
+        observation = _observe(bundle, attempt_id, operational_request, provider, initial_count, limit)
+        observation_seconds = time.perf_counter() - started
+        return EndpointEdits.model_validate(_observed_payload(observation))
 
-def _resolution_result(
-    sample: ResearchInput,
-    observation: dict[str, Any],
-    attempt_id: str,
-    repetition: int,
-    pricing: Pricing | None,
-) -> ResearchResult:
-    result = _resolved_result(sample, observation)
+    result, _ = _pipeline_result(sample, PipelineConfig(resolver='generative'), mode='replay',
+                                 resolution_provider=resolve)
     result.configuration = 'generative_full_source'
     result.repetition = repetition
     result.attempt_id = attempt_id
     result.provider_seconds = observation.get('provider_seconds')
-    result.usage = TokenUsage.model_validate(
-        observation.get('response', {}).get('usage', {})
-    )
-    result.incremental_cost = estimate_cost(result.usage, pricing)
-    return result
+    result.usage = TokenUsage.model_validate(observation.get('response', {}).get('usage', {}))
+    result.incremental_cost = estimate_cost(result.usage, bundle.plan.pricing)
+    if result.resolution_seconds is not None and result.provider_seconds is not None:
+        # Replace observation I/O with the recorded call duration, also on resume.
+        local_seconds = max(0, result.resolution_seconds - observation_seconds)
+        result.resolution_seconds = local_seconds + result.provider_seconds
+        if result.status not in ('provider_error', 'parse_error'):
+            result.edit_seconds = local_seconds
+        if result.extraction is not None:
+            result.edits = observation['response']['payload']['edits']
+    else:
+        result.resolution_seconds = None
+    bundle.save_result(attempt_id, result.model_dump(mode='json'))
+
+
+class _ObservationFailure(Exception):
+    def __init__(self, observation: dict[str, Any]):
+        super().__init__('Provider observation unavailable')
+        self.observation = observation
+
+
+def _observed_payload(observation: dict[str, Any]) -> object:
+    if observation['status'] != 'completed' or observation['response'].get('payload') is None:
+        raise _ObservationFailure(observation)
+    return observation['response']['payload']
 
 
 def _base_result(sample: ResearchInput) -> ResearchResult:
@@ -158,64 +182,97 @@ def _base_result(sample: ResearchInput) -> ResearchResult:
     )
 
 
-def _resolved_result(sample: ResearchInput, observation: dict[str, Any]) -> ResearchResult:
+def _replay_only(source: str) -> ExtractionResult:
+    raise RuntimeError('Frozen research inputs must use explicit replay')
+
+
+def _pipeline_result(
+    sample: ResearchInput,
+    config: PipelineConfig,
+    *,
+    mode: Literal['live', 'replay'],
+    extractor: Callable[[str], ExtractionResult] = _replay_only,
+    resolution_provider: ResolutionProvider | None = None,
+) -> tuple[ResearchResult, ExtractionResult | None]:
     result = _base_result(sample)
-    if observation['status'] != 'completed':
-        result.status = observation['status']
-        result.stage = 'provider'
-        result.error_type = observation.get('error_type')
-        return result
-    payload = observation['response'].get('payload')
-    if payload is None:
-        result.status = 'parse_error'
-        result.stage = 'parse'
-        result.error_type = observation['response'].get('error_type')
-        return result
-    assert sample.extraction is not None
     started = time.perf_counter()
+
+    def timed_graph(candidates: list[RelationshipCandidate], *, document: str,
+                    source_text: str) -> CanonicalGraph:
+        result.resolution_seconds = time.perf_counter() - started
+        graph_started = time.perf_counter()
+        try:
+            return build_graph(candidates, document=document, source_text=source_text)
+        finally:
+            result.graph_seconds = time.perf_counter() - graph_started
+            result.downstream_seconds = result.graph_seconds
+
+    pipeline = Pipeline(config, extractor=extractor,
+                        resolution_provider=resolution_provider, graph_builder=timed_graph)
+    input = PipelineInput(source_text=sample.source, document='source.txt')
     try:
-        resolved = apply_edits(sample.extraction, sample.source, payload)
-    except ValueError as error:
-        result.status = 'edit_error'
-        result.stage = 'edits'
-        result.error_type = type(error).__name__
-        result.edit_seconds = time.perf_counter() - started
-        result.resolution_seconds = result.edit_seconds + observation['provider_seconds']
-        return result
-    edit_seconds = time.perf_counter() - started
-    result = _evaluate(sample, resolved)
-    result.edits = payload['edits']
-    result.edit_seconds = edit_seconds
-    result.resolution_seconds = edit_seconds + observation['provider_seconds']
-    return result
+        if mode == 'live':
+            output = pipeline.run(input)
+        else:
+            assert sample.extraction is not None
+            output = pipeline.run_from_extraction(input, sample.extraction)
+    except PipelineExecutionError as error:
+        if error.stage == 'resolution':
+            result.resolution_seconds = time.perf_counter() - started
+        if isinstance(error.__cause__, BudgetExceeded):
+            raise error.__cause__
+        _record_pipeline_failure(result, error)
+        if error.resolved is not None:
+            _record_prediction(result, sample, error.resolved)
+        return result, error.extracted
+    _record_prediction(result, sample, output.resolved)
+    result.graph = output.graph
+    _evaluate(result, sample)
+    return result, output.extracted
 
 
-def _evaluate(sample: ResearchInput, extraction: ExtractionResult) -> ResearchResult:
-    result = _base_result(sample)
+def _record_pipeline_failure(result: ResearchResult, error: PipelineExecutionError) -> None:
+    cause = error.__cause__
+    if isinstance(cause, _ObservationFailure):
+        observation = cause.observation
+        if observation['status'] != 'completed':
+            result.status = observation['status']
+            result.stage = 'provider'
+            result.error_type = observation.get('error_type')
+        else:
+            result.status = 'parse_error'
+            result.stage = 'parse'
+            result.error_type = observation['response'].get('error_type')
+        return
+    result.error_type = type(cause).__name__
+    if error.stage == 'graph':
+        result.status, result.stage = 'graph_error', 'graph'
+    elif error.stage == 'resolution':
+        result.status, result.stage = 'edit_error', 'edits'
+    else:
+        result.status, result.stage = 'unavailable', 'extraction'
+
+
+def _record_prediction(result: ResearchResult, sample: ResearchInput,
+                       extraction: ExtractionResult) -> None:
     result.extraction = extraction
     diagnostics = identity_diagnostics(sample, extraction)
     result.identity = IdentityDiagnostics.model_validate(diagnostics) if diagnostics is not None else None
+
+
+def _evaluate(result: ResearchResult, sample: ResearchInput) -> None:
+    assert result.graph is not None and result.graph_seconds is not None
     started = time.perf_counter()
     try:
-        graph = build_graph(extraction.relationships, document='source.txt', source_text=sample.source)
+        result.evaluation = evaluate_graph(result.graph, sample.truth)
     except ValueError as error:
-        result.status = 'graph_error'
-        result.stage = 'graph'
-        result.error_type = type(error).__name__
-        result.graph_seconds = time.perf_counter() - started
-        return result
-    result.graph = graph
-    result.graph_seconds = time.perf_counter() - started
-    started = time.perf_counter()
-    try:
-        result.evaluation = evaluate_graph(graph, sample.truth)
-    except ValueError as error:
+        result.evaluation_seconds = time.perf_counter() - started
         result.status = 'evaluation_error'
         result.stage = 'evaluation'
         result.error_type = type(error).__name__
-    result.evaluation_seconds = time.perf_counter() - started
+    else:
+        result.evaluation_seconds = time.perf_counter() - started
     result.downstream_seconds = result.graph_seconds + result.evaluation_seconds
-    return result
 
 
 def _fresh_inputs(bundle: Bundle, provider: Provider, initial_count: int,
@@ -223,15 +280,23 @@ def _fresh_inputs(bundle: Bundle, provider: Provider, initial_count: int,
     if not bundle.plan.fresh_extractions:
         return
     template = next(sample for sample in bundle.plan.inputs if sample.case_id == 'case_03')
-    request = ModelRequest(stage='extraction', source=template.source, settings=bundle.plan.settings)
     for index in range(1, bundle.plan.fresh_extractions + 1):
         sample_id = f'fresh_{index:02d}'
-        observation = _observe(bundle, f'{sample_id}-extraction', request, provider, initial_count, limit)
         sample = _fresh_sample(template, sample_id)
-        if not _apply_fresh_extraction(sample, observation):
+
+        def extract(source: str) -> ExtractionResult:
+            request = ModelRequest(stage='extraction', source=source, settings=bundle.plan.settings)
+            observation = _observe(bundle, f'{sample_id}-extraction', request, provider, initial_count, limit)
+            return ExtractionResult.model_validate(_observed_payload(observation))
+
+        baseline, extracted = _pipeline_result(sample, PipelineConfig(), mode='live', extractor=extract)
+        if extracted is None:
             _save_unavailable_fresh_results(bundle, sample)
             continue
+        sample.extraction = extracted
         _save_fresh_input_snapshot(bundle, sample)
+        if not bundle.has_result(f'{sample_id}-noop'):
+            _save_baseline(bundle, sample, baseline)
         yield sample
 
 
@@ -249,16 +314,6 @@ def _fresh_sample(template: ResearchInput, sample_id: str) -> ResearchInput:
         'extraction': None,
         'origin_hashes': origin_hashes,
     })
-
-
-def _apply_fresh_extraction(sample: ResearchInput, observation: dict[str, Any]) -> bool:
-    if observation['status'] != 'completed':
-        return False
-    try:
-        sample.extraction = ExtractionResult.model_validate(observation['response']['payload'])
-    except ValueError:
-        return False
-    return True
 
 
 def _save_unavailable_fresh_results(bundle: Bundle, sample: ResearchInput) -> None:

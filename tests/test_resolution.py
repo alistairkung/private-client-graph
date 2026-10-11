@@ -1,7 +1,7 @@
 import pytest
 
 from private_client_graph.models import ExtractionResult
-from private_client_graph.research.resolution import apply_edits, no_resolution
+from private_client_graph.resolution import resolve_generative, no_resolution
 
 
 SOURCE = "Elizabeth Tan is the settlor of Harbour Trust. Beth is Elizabeth Tan's nickname. Beth is a beneficiary of Harbour Trust."
@@ -16,7 +16,7 @@ def candidates():
 
 def test_resolution_changes_only_requested_endpoint_without_mutating_input():
     original = candidates()
-    result = apply_edits(original, SOURCE, {"edits": [
+    result = resolve_generative(original, SOURCE, lambda request: {"edits": [
         {"candidate_index": 1, "endpoint": "source_name", "name": "Elizabeth Tan"}
     ]})
     assert result.relationships[1].source_name == "Elizabeth Tan"
@@ -45,7 +45,7 @@ def test_invalid_edits_reject_whole_result(response):
     original = candidates()
     before = original.model_dump()
     with pytest.raises(ValueError):
-        apply_edits(original, SOURCE, response)
+        resolve_generative(original, SOURCE, lambda request: response)
     assert original.model_dump() == before
 
 
@@ -53,8 +53,8 @@ def test_uncertain_identity_keeps_everything_and_existing_graph_rules_still_appl
     from private_client_graph.graph import build_graph
 
     original = candidates()
-    assert apply_edits(original, SOURCE, {"edits": []}) == original
-    invalid = apply_edits(original, SOURCE, {"edits": [
+    assert resolve_generative(original, SOURCE, lambda request: {"edits": []}) == original
+    invalid = resolve_generative(original, SOURCE, lambda request: {"edits": [
         {"candidate_index": 1, "endpoint": "source_name", "name": "Harbour Trust"}
     ]})
     with pytest.raises(ValueError, match="self-relationship"):

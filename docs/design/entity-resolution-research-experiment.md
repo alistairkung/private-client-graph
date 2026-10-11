@@ -216,6 +216,40 @@ provider pricing, preserving currency, rates, cache treatment, source URL and re
 date. Unsupported pricing stays unknown. An interrupted or timed-out request may
 have unknown billing; retain that uncertainty rather than assuming it was free.
 
+### Research timing definitions
+
+The runner measures durations with a monotonic clock. These are execution-stage
+measurements, not total experiment wall time:
+
+- `provider_seconds` measures one provider callable, including its transport and
+  structured-output parsing, whether it returns or raises. Runner serialization,
+  budget reservation, observation storage and observation reads are excluded.
+- Summary `extraction_seconds` is the fresh extraction attempt's recorded
+  `provider_seconds`, including failed attempts. It is not the entire ingestion
+  workflow. Authored inputs and historical records without an isolated extraction
+  measurement remain unknown.
+- `resolution_seconds` measures local preparation, snapshots, typed edit validation
+  and application through the graph boundary (or resolution failure), plus the
+  recorded resolver provider duration. Observation I/O is excluded. On resume,
+  local work is measured again and the original provider duration is reused;
+  reading an artifact is never substituted for a model call's latency. Known
+  provider/parse failures retain their elapsed resolution time. An uncertain
+  attempt without a recorded provider duration remains unknown.
+- `edit_seconds` is the local, non-provider portion of resolution when edit
+  validation is reached, including preparation and copying; it is not an isolated
+  edit-application benchmark. It remains unknown when provider/parse failure
+  prevents edit validation. The no-resolution baseline records zero incremental
+  provider, resolution and edit time by convention.
+- `graph_seconds` and `evaluation_seconds` measure their respective domain calls,
+  including calls that fail. Diagnostics, artifact writes and error classification
+  are excluded. An unentered stage remains unknown, not zero.
+- `downstream_seconds` sums the entered graph and evaluation stages. A graph
+  failure retains graph time alone; an evaluation failure retains both durations.
+  Summary single-pipeline latency is produced only for completed results with
+  known extraction, resolution and downstream durations. Failed execution times
+  remain visible in their stage fields and are never presented as successful
+  pipeline latency.
+
 ## Artifact persistence and retention
 
 Extend `runs/` conventions with one versioned, append-only experiment bundle:
