@@ -25,6 +25,8 @@ it("ignores a stale preview after the proposal changes", async () => {
   const capabilities: Capabilities = {
     api_version: "1",
     live_enabled: false,
+    live_reason: "Live disabled",
+    live_task: null,
     inputs: [],
     models: ["deepseek-flash"],
     provider: "Recorded only",
@@ -50,6 +52,8 @@ it("ignores a stale preview after the proposal changes", async () => {
     task_paid_usage: 0,
     task_paid_allowance: 0,
     task_paid_remaining: 0,
+    task_id: null,
+    task_label: null,
     cost_reason: "New server preview",
   };
   await act(async () => {

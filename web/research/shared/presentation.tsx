@@ -1,15 +1,17 @@
 export const number = (value: number | null | undefined, places = 3) =>
   value == null ? "Unavailable" : value.toFixed(places);
 export const mode = (kind: string | null) =>
-  kind === "replay"
-    ? "Saved replay"
-    : kind === "demonstration"
-      ? "Recorded demonstration"
-      : kind === "task_b_pilot"
-        ? "Development pilot"
-        : kind === "task_a_diagnostic"
-          ? "Development diagnostic"
-          : "Unavailable";
+  kind === "live_experiment"
+    ? "Live experiment"
+    : kind === "replay"
+      ? "Saved replay"
+      : kind === "demonstration"
+        ? "Recorded demonstration"
+        : kind === "task_b_pilot"
+          ? "Development pilot"
+          : kind === "task_a_diagnostic"
+            ? "Development diagnostic"
+            : "Unavailable";
 export const configuration = (value: string) =>
   value === "noop"
     ? "Baseline · No resolution"

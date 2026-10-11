@@ -57,13 +57,14 @@ export function Results({
           Saved replay · No resolution · No provider calls.
         </p>
       )}
-      {executable && data.configuration.plan_version === 2 && (
-        <p>
-          <a href={`#plan=${history.artifact_path}`}>
-            Execution status and controls
-          </a>
-        </p>
-      )}
+      {executable &&
+        [2, 3].includes(Number(data.configuration.plan_version)) && (
+          <p>
+            <a href={`#plan=${history.artifact_path}`}>
+              Execution status and controls
+            </a>
+          </p>
+        )}
       {history.kind === "demonstration" &&
         data.configuration.execution_mode !== "replay" && (
           <p className="notice">

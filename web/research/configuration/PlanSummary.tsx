@@ -1,6 +1,12 @@
 import type { Preview } from "../shared/contracts";
 
-export function PlanSummary({ preview }: { preview: Preview }) {
+export function PlanSummary({
+  preview,
+  frozen = false,
+}: {
+  preview: Preview;
+  frozen?: boolean;
+}) {
   return (
     <section
       className="plan-summary"
@@ -10,7 +16,9 @@ export function PlanSummary({ preview }: { preview: Preview }) {
       <p>
         {preview.proposal.execution_mode === "replay"
           ? "Saved extraction replay · No resolution"
-          : "Recorded demonstration · Not live quality"}
+          : preview.proposal.execution_mode === "live"
+            ? "Live provider · Approval required before execution"
+            : "Recorded demonstration · Not live quality"}
       </p>
       <dl>
         <dt>Maximum extraction calls</dt>
@@ -23,11 +31,21 @@ export function PlanSummary({ preview }: { preview: Preview }) {
         <dd>{preview.invocation_cap}</dd>
         <dt>Planned observations</dt>
         <dd>{preview.planned_observations}</dd>
-        <dt>Task paid calls used / allowance</dt>
+        <dt>
+          Task paid calls used / allowance
+          {frozen && preview.proposal.execution_mode === "live"
+            ? " at freeze"
+            : ""}
+        </dt>
         <dd>
           {preview.task_paid_usage} / {preview.task_paid_allowance}
         </dd>
-        <dt>Paid calls remaining</dt>
+        <dt>
+          Paid calls remaining
+          {frozen && preview.proposal.execution_mode === "live"
+            ? " at freeze"
+            : ""}
+        </dt>
         <dd>{preview.task_paid_remaining}</dd>
       </dl>
       <p className="muted">{preview.cost_reason}</p>
