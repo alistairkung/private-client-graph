@@ -5,6 +5,7 @@ type FieldProps = {
   capabilities: Capabilities;
   update: (changes: Partial<Proposal>) => void;
   busy: boolean;
+  persistent?: boolean;
 };
 
 export function InputFields({
@@ -12,6 +13,7 @@ export function InputFields({
   capabilities,
   update,
   busy,
+  persistent = false,
 }: FieldProps) {
   return (
     <fieldset disabled={busy}>
@@ -66,13 +68,17 @@ export function InputFields({
               event.target.value === "fresh"
                 ? {
                     input_mode: "fresh",
-                    input_ids: [capabilities.fresh_input_id],
+                    input_ids: persistent
+                      ? proposal.input_ids
+                      : [capabilities.fresh_input_id],
                     extraction_samples: 1,
                     invocation_cap: 1,
                   }
                 : {
                     input_mode: "saved",
-                    input_ids: capabilities.inputs.map((input) => input.id),
+                    input_ids: persistent
+                      ? proposal.input_ids
+                      : capabilities.inputs.map((input) => input.id),
                     extraction_samples: 1,
                     invocation_cap: proposal.resolver === "none" ? 0 : 1,
                   },

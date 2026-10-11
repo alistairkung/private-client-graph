@@ -3,7 +3,7 @@ import { test, expect } from "@playwright/test";
 test("explicit approval, checkpoint, continuation and exact Evidence with substituted provider", async ({
   page,
 }, info) => {
-  await page.goto("/#new=1");
+  await page.goto("/#legacy-new=1");
   await page.getByRole("button", { name: /Extract relationships/ }).click();
   await page
     .getByRole("combobox", { name: "Execution mode", exact: true })
@@ -110,4 +110,76 @@ test("explicit approval, checkpoint, continuation and exact Evidence with substi
       .locator("mark")
       .first(),
   ).toBeVisible();
+});
+
+test("workspace authorizes before separate start and explicitly continues provisional coverage", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page
+    .getByLabel("Experiment name", { exact: true })
+    .fill("Bounded resolver investigation");
+  await page
+    .getByRole("button", { name: "Create experiment", exact: true })
+    .click();
+  await page.getByRole("button", { name: "Choose cases" }).click();
+  await page.getByRole("button", { name: "Clear selection" }).click();
+  await page.getByRole("checkbox", { name: /case_03_fixture/ }).check();
+  await page.getByRole("button", { name: "Apply cases" }).click();
+  await page.getByRole("button", { name: /Extract relationships/ }).click();
+  await page
+    .getByRole("combobox", { name: "Execution mode", exact: true })
+    .selectOption("live");
+  await page.getByRole("button", { name: /Resolve aliases/ }).click();
+  await page
+    .getByRole("spinbutton", { name: "Resolver repetitions", exact: true })
+    .fill("2");
+  await page
+    .getByRole("spinbutton", { name: "Proposed total task call cap" })
+    .fill("20");
+  await page.getByRole("button", { name: "Run", exact: true }).click();
+  await page.getByRole("button", { name: "Freeze Run", exact: true }).click();
+  await expect(
+    page.getByRole("button", { name: "Authorize invocation" }),
+  ).toBeDisabled();
+  await expect(
+    page.getByRole("button", { name: "Start Run", exact: true }),
+  ).toHaveCount(0);
+  await page.getByRole("checkbox", { name: /I approve this task cap/ }).check();
+  await page.getByRole("button", { name: "Authorize invocation" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Execution · frozen", exact: true }),
+  ).toBeVisible();
+  const frozen = await (
+    await page.request.get(
+      `/api/research/v2/experiments/${new URLSearchParams(page.url().split("#")[1]).get("workspace")}/runs`,
+    )
+  ).json();
+  expect(frozen[0].attempts).toHaveLength(0);
+  await page.getByRole("button", { name: "Start Run", exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: "Execution · stopped", exact: true }),
+  ).toBeVisible();
+  await expect(page.locator(".chart-point.provisional")).toHaveCount(1);
+  await expect(
+    page.getByText("Provisional evaluation", { exact: true }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Review continuation" }).click();
+  await page.getByRole("checkbox", { name: /I approve this task cap/ }).check();
+  await page.getByRole("button", { name: "Authorize invocation" }).click();
+  await page.getByRole("button", { name: "Continue Run", exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: "Execution · complete", exact: true }),
+  ).toBeVisible();
+  await expect(page.locator(".chart-point")).toHaveCount(1);
+  await expect(page.locator(".chart-point.provisional")).toHaveCount(0);
+  await page.getByRole("button", { name: "Use as next draft" }).click();
+  await page.getByRole("button", { name: "Run", exact: true }).click();
+  await page.getByRole("button", { name: "Freeze Run", exact: true }).click();
+  await expect(
+    page.getByRole("button", { name: "Authorize invocation" }),
+  ).toBeDisabled();
+  await expect(
+    page.getByRole("button", { name: "Start Run", exact: true }),
+  ).toHaveCount(0);
 });

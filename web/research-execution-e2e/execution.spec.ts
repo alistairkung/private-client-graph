@@ -3,7 +3,7 @@ import { test, expect } from "@playwright/test";
 test("configure, freeze, run replay and inspect exact Evidence", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto("/#legacy-new=1");
   // The pipeline workspace is the execution-enabled entry point.
   await expect(
     page.getByRole("heading", { name: "New experiment", exact: true }),
@@ -94,7 +94,7 @@ test("configure, freeze, run replay and inspect exact Evidence", async ({
 test("recorded checkpoint requires explicit continuation and preserves plan when editing", async ({
   page,
 }) => {
-  await page.goto("/#new=1");
+  await page.goto("/#legacy-new=1");
   await page.getByRole("button", { name: /Extract relationships/ }).click();
   await page
     .getByRole("combobox", { name: "Execution mode", exact: true })
@@ -144,7 +144,7 @@ test("recorded checkpoint requires explicit continuation and preserves plan when
 test("configuration reflows and is operable by keyboard", async ({
   page,
 }, info) => {
-  await page.goto("/#new=1");
+  await page.goto("/#legacy-new=1");
   await expect(
     page.getByRole("heading", { name: "New experiment", exact: true }),
   ).toBeVisible();
@@ -195,7 +195,7 @@ test("configuration reflows and is operable by keyboard", async ({
 test("connector rail keeps settings inline and runs into the comparison bench", async ({
   page,
 }, info) => {
-  await page.goto("/#new=1");
+  await page.goto("/#legacy-new=1");
   await expect(
     page.getByText("6 benchmark inputs selected", { exact: true }),
   ).toBeVisible();
@@ -285,7 +285,7 @@ test("connector rail keeps settings inline and runs into the comparison bench", 
       .getByRole("button", { name: "Experiments", exact: true })
       .click();
   await page
-    .getByRole("link", { name: "Browse all experiments", exact: true })
+    .getByRole("link", { name: "Legacy study history", exact: true })
     .click();
   await expect(
     page.getByRole("heading", { name: "Experiments", exact: true }),

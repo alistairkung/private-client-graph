@@ -1,4 +1,6 @@
 import { useCallback, useState } from "react";
+import type { LegacyHistoryRecord } from "../shared/contracts";
+import { request } from "../workspace/api";
 import { history } from "../shared/api";
 import { useRead } from "../shared/useRead";
 import { mode, ReadState } from "../shared/presentation";
@@ -6,7 +8,13 @@ import { mode, ReadState } from "../shared/presentation";
 export function History({ params }: { params: URLSearchParams }) {
   const query = params.toString();
   const load = useCallback(
-    (signal: AbortSignal) => history(new URLSearchParams(query), signal),
+    async (signal: AbortSignal) => {
+      const [page, labels] = await Promise.all([
+        history(new URLSearchParams(query), signal),
+        request<LegacyHistoryRecord[]>('/legacy/experiments', undefined, undefined, signal),
+      ]);
+      return { ...page, labels: new Map(labels.map(item => [item.id, item])) };
+    },
     [query],
   );
   const { data, error, retry } = useRead(load);
@@ -166,6 +174,8 @@ export function History({ params }: { params: URLSearchParams }) {
                       <a href={`#${params}&experiment=${item.id}`}>
                         {item.artifact_path}
                       </a>
+                      <small>{data.labels.get(item.id)?.name ?? 'Historical name unavailable'}</small>
+                      <small>{data.labels.get(item.id)?.hypothesis ?? 'Hypothesis unavailable'}</small>
                       <small>
                         {item.created_at
                           ? new Date(item.created_at).toLocaleString()

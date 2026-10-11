@@ -32,9 +32,11 @@ export function sourceSegments(
 export function EvidenceInspector({
   relationship,
   source,
+  onBack,
 }: {
   relationship?: RelationshipOutcome;
   source: string | null;
+  onBack?: () => void;
 }) {
   const [quote, setQuote] = useState<EvidenceQuote>();
   const sourceRef = useRef<HTMLElement>(null);
@@ -53,6 +55,10 @@ export function EvidenceInspector({
         href="#relationships"
         onClick={(event) => {
           event.preventDefault();
+          if (onBack) {
+            onBack();
+            return;
+          }
           const target = document.getElementById("relationships");
           target?.focus();
           target?.scrollIntoView({ block: "start" });
