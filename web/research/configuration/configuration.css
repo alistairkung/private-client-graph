@@ -1,0 +1,92 @@
+.configuration-layout,
+.frozen-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(280px, 1fr);
+  gap: 40px;
+  max-width: 1200px;
+  align-items: start;
+}
+.configuration-fields fieldset {
+  margin: 0 0 28px;
+  padding: 24px;
+  border: 1px solid var(--rule);
+  background: white;
+  min-width: 0;
+}
+.configuration-fields legend {
+  font-size: 20px;
+  font-weight: 600;
+}
+.configuration-fields label + label,
+.configuration-fields small + label {
+  margin-top: 20px;
+}
+.input-choices {
+  margin: 20px 0;
+}
+.input-choices label {
+  display: flex;
+  align-items: center;
+  min-height: 56px;
+}
+.input-choices label + label {
+  margin-top: 0;
+}
+.input-choices span {
+  overflow-wrap: anywhere;
+}
+.configuration-review {
+  position: sticky;
+  top: 24px;
+}
+.plan-summary {
+  padding: 24px 0;
+  border-block: 1px solid var(--rule);
+  margin-bottom: 24px;
+}
+.plan-summary h2 {
+  margin-top: 0;
+}
+.plan-summary dd,
+.frozen-layout dd,
+.plan-identity {
+  overflow-wrap: anywhere;
+}
+.plan-summary dl {
+  font-variant-numeric: tabular-nums;
+}
+.run-status {
+  border-block: 1px solid var(--rule);
+  padding: 24px 0;
+  margin: 24px 0;
+}
+.run-actions {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.continuation {
+  padding: 24px;
+  background: white;
+  border: 1px solid var(--rule);
+  margin-bottom: 24px;
+}
+.research-header nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+}
+@media (max-width: 800px) {
+  .configuration-layout,
+  .frozen-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+  }
+  .configuration-review {
+    position: static;
+  }
+  .configuration-fields fieldset {
+    padding: 16px;
+  }
+}

@@ -27,4 +27,8 @@ with tempfile.TemporaryDirectory(prefix='pcg-research-browser-') as directory:
     os.environ['PCG_RESEARCH_ARTIFACTS'] = str(root)
     rebuild_index(database_engine(), root)
     from private_client_graph.workbench.api import create_app
-    uvicorn.run(create_app(), host='127.0.0.1', port=4175)
+    app = create_app()
+    if os.getenv('PCG_BROWSER_EXECUTION') == '1':
+        from private_client_graph.workbench.execution_api import mount_execution
+        mount_execution(app, root)
+    uvicorn.run(app, host='127.0.0.1', port=4175)

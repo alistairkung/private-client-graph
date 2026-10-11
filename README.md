@@ -611,7 +611,7 @@ Start each browser-suite run with a freshly migrated and seeded disposable datab
 the quota journey deliberately leaves its persistent allowance exhausted.
 
 
-## Local Research Workbench (read-only)
+## Local Research Workbench
 
 ```bash
 docker compose up --build
@@ -621,7 +621,8 @@ Open [http://localhost:8080](http://localhost:8080). This separate React/TypeScr
 application and `/api/research/v1` API require no provider credentials. The default
 Compose services restore the retained Issue #91 recorded demonstration and Issue #92
 pilot exports, migrate a separate PostgreSQL database and rebuild its research index.
-No experiment executes. Practitioner services remain available through the explicit
+No experiment starts automatically. Offline replay and recorded demonstrations require
+an explicit frozen-plan command. Practitioner services remain available through the explicit
 `practitioner` profile command above.
 
 In history, search `issue-`, select the two experiments and compare them. Inspect
@@ -642,7 +643,8 @@ To restore an additional supported schema-1 export into a **new** directory:
 uv run python -m private_client_graph.workbench.restore archive.zip runs/research/new-history
 ```
 
-Then explicitly rebuild the index (there is no mutation endpoint):
+The offline service refreshes its rebuildable index on reads. To explicitly rebuild it
+through its CLI:
 
 ```bash
 docker compose exec research python -m private_client_graph.workbench /artifacts
@@ -670,7 +672,7 @@ set `DATABASE_URL` and `PCG_RESEARCH_ARTIFACTS`, then run:
 ```bash
 uv run alembic upgrade head
 uv run python -m private_client_graph.workbench runs/research
-uv run uvicorn private_client_graph.workbench.api:app --host 127.0.0.1 --port 8080
+uv run uvicorn private_client_graph.workbench.execution_api:app --host 127.0.0.1 --port 8080
 # In a second terminal:
 npm run dev:research --prefix web
 ```
@@ -682,6 +684,7 @@ TEST_DATABASE_URL=postgresql://... uv run pytest
 npm run test:research --prefix web
 npm run build:research --prefix web
 DATABASE_URL=postgresql://... npm run test:e2e:research --prefix web
+DATABASE_URL=postgresql://... npm run test:e2e:execution --prefix web
 python tests/research_compose_smoke.py
 ```
 
@@ -689,5 +692,46 @@ Use a migrated disposable database for browser tests. The Compose smoke test req
 Docker and verifies container restart, retained artifact digests, empty-index rebuild
 and idempotence. `docker compose down` retains data; `down -v` removes the disposable
 PostgreSQL volume but retains the bind-mounted artifacts. All ports publish only to
-loopback. No public deployment, execution controls or authorization workflow is
-included in Slice 1.
+loopback. No public deployment or live execution is included.
+
+
+### Offline experiment configuration (Slice 2)
+
+Choose **New experiment**, select repository-owned saved snapshots and choose
+**Saved replay** (no resolver or provider calls) or **Recorded demonstration**.
+The recorded mode supports `none` or `generative` resolution and 1–3 resolver
+repetitions. Fresh recorded extraction supports the existing Case 03 Source with
+1–5 samples. This is the finite recording coverage, not arbitrary source ingestion.
+Each extraction is held fixed across its baseline and resolver repetitions.
+
+The server previews extraction calls, resolution calls, matrix maximum, invocation
+cap and observation count. Paid task allowance, usage and remaining authority are
+all zero: these are offline tasks. Recorded attempts have a separate invocation cap
+and do not represent live quality, latency or cost. Model settings are retained for
+provenance; the response model is explicitly a deterministic substitute.
+**Review frozen plan** writes a schema-2 manifest, code/dependency provenance,
+recorded responses and zero-paid-authority ledger. Then choose **Run replay** or
+**Run recorded demonstration**. Schema-1 study manifests and authorizations remain
+unchanged. `POST /api/research/v1/preview`, `/plans`, and
+`/plans/{id}/{start,stop,continue}` accept only local same-origin JSON requests.
+
+One experiment subprocess runs at a time, independent of the browser connection.
+**Stop after current attempt** prevents the next dispatch and retains the current
+observation. A checkpoint or interrupted worker requires **Review continuation**
+and an explicit continuation command. Repeated command IDs cannot dispatch twice;
+uncertain reservations remain counted and are never resubmitted. There are no
+provider retries, automatic resume, queue or live dispatch. Results use the same
+pipeline/evaluator and history/Evidence inspector as retained experiments.
+
+Executable artifacts and accounting use stable `/artifacts` container paths.
+Do not move bundles or ledgers, change recorded responses, or mix code/dependencies
+on continuation: execution rejects these mismatches. Inspect old results read-only
+or create a new plan after code changes; never edit an old manifest to bypass a
+rejection. Historical imports cannot start or continue execution.
+
+The strictly read-only composition remains
+`private_client_graph.workbench.api:app`; it mounts no commands and imports no
+runner. For a read-only Docker service, set `PCG_RESEARCH_APP` in the research
+service's Compose environment to that entry point. Both compositions serve the same
+frontend; creation/controls appear only when the offline capabilities endpoint is
+present. Slice 3 live approval and paid execution remain out of scope.

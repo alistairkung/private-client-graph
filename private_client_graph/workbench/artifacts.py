@@ -7,8 +7,10 @@ from typing import Any, Literal
 from private_client_graph.research.artifacts import Bundle
 from private_client_graph.research.inputs import ResearchInput
 from private_client_graph.research.results import ResearchResult
+from private_client_graph.research.plan import FiniteExperimentPlan
 from private_client_graph.research.summary import summarize
 
+from .execution_contracts import FrozenPlan
 from .contracts import CohortMetric, CohortSummary, ExperimentDetail, HistoryItem, Observation, Sample
 from .evidence import digest_text, relationship_outcomes
 
@@ -40,12 +42,14 @@ def read_artifact(path: Path, relative_path: str) -> ExperimentDetail:
         version = manifest.get('schema_version')
         history.artifact_version = version if type(version) is int else None
         history.created_at = manifest.get('created_at') if isinstance(manifest.get('created_at'), str) else None
-        if history.artifact_version != 1:
+        if history.artifact_version not in (1, 2):
             history.integrity = 'unsupported'
             history.integrity_reason = f'Unsupported artifact version: {history.artifact_version}'
             return ExperimentDetail(history=history)
         _verify_export_checksums(path)
         bundle = Bundle.open(path)
+        if history.artifact_version == 2:
+            _verify_execution_binding(path)
         detail = _project_bundle(bundle, history)
         if artifact_digest(path) != history.digest:
             raise ValueError('Artifacts changed during indexing; rerun after writes finish')
@@ -82,15 +86,23 @@ def _project_bundle(bundle: Bundle, history: HistoryItem) -> ExperimentDetail:
     samples = [_sample_projection(item, inputs.get(item['sample_id']), attempts)
                for item in summary['samples']]
     observations = [observation for sample in samples for observation in sample.observations]
-    history.kind = bundle.plan.kind
+    history.kind = 'replay' if isinstance(bundle.plan, FiniteExperimentPlan) and bundle.plan.execution_mode == 'replay' else bundle.plan.kind
     history.model = bundle.plan.effective_model or bundle.plan.settings.model
     history.cases = sorted({sample.case_id for sample in samples})
     history.cohorts = sorted({sample.cohort for sample in samples})
+    history.configurations = sorted({observation.configuration for observation in observations})
     history.scored = sum(observation.evaluation is not None for observation in observations)
     history.planned = len(observations)
     history.lifecycle = _lifecycle(observations)
+    if isinstance(bundle.plan, FiniteExperimentPlan):
+        records = [json.loads(p.read_text()) for p in (bundle.path / 'lifecycle').glob('*.json')]
+        history.lifecycle = max(records, key=lambda record: record['at'])['state'] if records else 'frozen'
+        # Failed scientific observations remain explicit even when execution completed.
+        if history.lifecycle == 'complete' and _lifecycle(observations) == 'failed':
+            history.lifecycle = 'failed'
+
     return ExperimentDetail(
-        history=history, configuration=summary['configuration'],
+        history=HistoryItem.model_validate(history.model_dump()), configuration=summary['configuration'],
         provenance={**{key: value for key, value in summary['provenance'].items() if key != 'code'},
                     'code_digest': _value_digest(summary['provenance'].get('code'))},
         operations=summary['operations'], cohorts=summary['cohorts'],
@@ -196,6 +208,21 @@ def _validate_result_identities(bundle: Bundle, summary: dict[str, Any]) -> None
 
     for row in rows:
         valid_baseline = row['configuration'] == 'noop' and row['repetition'] in (None, 0)
-        valid_treatment = row['configuration'] == 'generative_full_source' and row['repetition'] in range(1, bundle.plan.repetitions + 1)
+        valid_treatment = (row['configuration'] == 'generative_full_source'
+                           and row['repetition'] in range(1, bundle.plan.resolution_repetitions + 1))
         if not (valid_baseline or valid_treatment):
             raise ValueError('Result configuration or repetition is outside the frozen plan')
+
+
+def _verify_execution_binding(path: Path) -> None:
+    """Verify frozen offline provenance without requiring current execution authority."""
+    plan = FrozenPlan.model_validate_json((path / 'execution.json').read_text())
+    binding_bytes = (path / 'execution-binding.json').read_bytes()
+    digest = hashlib.sha256((path / 'manifest.json').read_bytes() + binding_bytes).hexdigest()
+    if plan.digest != digest:
+        raise ValueError('Frozen execution binding checksum mismatch')
+    binding = json.loads(binding_bytes)
+    if binding['preview'] != plan.preview.model_dump(mode='json'):
+        raise ValueError('Frozen execution preview mismatch')
+    if binding['recordings_digest'] != hashlib.sha256((path / 'recorded-responses.json').read_bytes()).hexdigest():
+        raise ValueError('Frozen recordings checksum mismatch')

@@ -53,3 +53,50 @@ class ExperimentPlan(BaseModel):
         if self.pricing is not None and self.pricing.model != priced_model:
             raise ValueError("Pricing must identify the effective model")
         return self
+
+
+    @property
+    def resolution_repetitions(self) -> int:
+        return self.repetitions
+
+    @property
+    def maximum_attempts(self) -> int:
+        return len(self.inputs) * self.repetitions + self.fresh_extractions * (1 + self.repetitions)
+
+
+class FiniteExperimentPlan(ExperimentPlan):
+    """Version 2 offline matrix; legacy study plans retain their original rules."""
+    plan_version: Literal[2] = 2
+    invocation_cap: int = Field(default=0, ge=0, le=38)
+    kind: Literal["demonstration"] = "demonstration"
+    input_mode: Literal["saved", "fresh"] = "saved"
+    execution_mode: Literal["replay", "recorded"] = "replay"
+    resolver: Literal["none", "generative"] = "none"
+
+    @model_validator(mode="after")
+    def validate_finite_matrix(self) -> "FiniteExperimentPlan":
+        if not self.inputs:
+            raise ValueError("Select at least one input")
+        if self.input_mode == 'fresh':
+            if len(self.inputs) != 1 or self.inputs[0].sample_id != 'case_03_fixture' or not self.fresh_extractions:
+                raise ValueError("Fresh recorded extraction supports the Case 03 authored Source only")
+        elif self.fresh_extractions:
+            raise ValueError("Saved inputs cannot request fresh extractions")
+        if self.execution_mode == 'replay' and (self.resolver != 'none' or self.input_mode != 'saved'):
+            raise ValueError("Replay requires saved extractions and no resolution; generative replay is not free")
+        if self.resolver == 'none' and self.repetitions != 1:
+            raise ValueError("No resolution has one deterministic observation per input")
+        if self.invocation_cap > self.maximum_attempts or (self.maximum_attempts and not self.invocation_cap):
+            raise ValueError('Invocation bound must fit the frozen matrix')
+        if self.max_calls != self.maximum_attempts:
+            raise ValueError("The frozen call maximum must match the finite matrix")
+        return self
+
+    @property
+    def resolution_repetitions(self) -> int:
+        return self.repetitions if self.resolver == 'generative' else 0
+
+    @property
+    def maximum_attempts(self) -> int:
+        samples = self.fresh_extractions if self.input_mode == 'fresh' else len(self.inputs)
+        return self.fresh_extractions + samples * self.resolution_repetitions
