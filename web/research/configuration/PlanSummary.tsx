@@ -31,8 +31,21 @@ export function PlanSummary({ preview }: { preview: Preview }) {
         <dd>{preview.task_paid_remaining}</dd>
       </dl>
       <p className="muted">{preview.cost_reason}</p>
+      <section aria-label="Selected inputs">
+        <h3>Selected inputs</h3>
+        <ul>
+          {preview.inputs.map((input) => (
+            <li key={input.id}>
+              {input.id}
+              <small>
+                {input.case_id} · {input.cohort}
+              </small>
+            </li>
+          ))}
+        </ul>
+      </section>
       <details>
-        <summary>Frozen input identities</summary>
+        <summary>Input hashes</summary>
         {preview.inputs.map((input) => (
           <div key={input.id}>
             <h3>

@@ -97,7 +97,7 @@ export function Configuration({
           ) : (
             <p role="status">
               {error
-                ? "Preview unavailable. Correct the configuration below."
+                ? "Preview unavailable. Check the configuration fields."
                 : "Updating server preview…"}
             </p>
           )}

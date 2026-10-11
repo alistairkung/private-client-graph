@@ -79,7 +79,6 @@ export function Run({
     <>
       <a href="#">Back to experiments</a>
       <h1>Frozen experiment</h1>
-      <p className="plan-identity">{data.plan.id}</p>
       <section className="run-status" aria-label="Execution status">
         <h2>{data.state}</h2>
         <p role="status">{data.message}</p>
@@ -107,13 +106,6 @@ export function Run({
           </p>
         )}
         <div className="run-actions">
-          {data.state === "frozen" && (
-            <button disabled={busy || !!another} onClick={() => act("start")}>
-              {data.plan.preview.proposal.execution_mode === "replay"
-                ? "Run replay"
-                : "Run recorded demonstration"}
-            </button>
-          )}
           {data.state === "running" && (
             <button disabled={busy} onClick={() => act("stop")}>
               Stop after current attempt
@@ -153,9 +145,17 @@ export function Run({
           <h2>Frozen configuration</h2>
           <dl>
             <dt>Input mode</dt>
-            <dd>{data.plan.preview.proposal.input_mode}</dd>
+            <dd>
+              {data.plan.preview.proposal.input_mode === "saved"
+                ? "Saved extraction snapshots"
+                : "Fresh extraction samples"}
+            </dd>
             <dt>Resolver</dt>
-            <dd>{data.plan.preview.proposal.resolver}</dd>
+            <dd>
+              {data.plan.preview.proposal.resolver === "none"
+                ? "No resolution"
+                : "Generative · Full Source"}
+            </dd>
             <dt>Extraction samples</dt>
             <dd>{data.plan.preview.proposal.extraction_samples}</dd>
             <dt>Resolver repetitions</dt>
@@ -168,22 +168,40 @@ export function Run({
             </dd>
             <dt>Timeout (seconds)</dt>
             <dd>{data.plan.preview.proposal.timeout_seconds}</dd>
-            <dt>Task identity</dt>
-            <dd>{data.plan.task_id}</dd>
-            <dt>Plan digest</dt>
-            <dd>{data.plan.digest}</dd>
           </dl>
+          <details>
+            <summary>Plan identity and digest</summary>
+            <dl>
+              <dt>Plan identity</dt>
+              <dd>{data.plan.id}</dd>
+              <dt>Task identity</dt>
+              <dd>{data.plan.task_id}</dd>
+              <dt>Plan digest</dt>
+              <dd>{data.plan.digest}</dd>
+            </dl>
+          </details>
+        </section>
+      </div>
+      <div className="frozen-actions">
+        <div className="run-actions">
+          {data.state === "frozen" && (
+            <button disabled={busy || !!another} onClick={() => act("start")}>
+              {data.plan.preview.proposal.execution_mode === "replay"
+                ? "Run replay"
+                : "Run recorded demonstration"}
+            </button>
+          )}
           <button
             disabled={busy}
             onClick={() => edit(data.plan.preview.proposal)}
           >
             Edit configuration
           </button>
-          <p className="muted">
-            Editing creates a new proposal requiring a new frozen plan. This
-            plan and its results remain unchanged.
-          </p>
-        </section>
+        </div>
+        <p className="muted">
+          Editing creates a new proposal requiring a new frozen plan. This
+          plan and its results remain unchanged.
+        </p>
       </div>
     </>
   );

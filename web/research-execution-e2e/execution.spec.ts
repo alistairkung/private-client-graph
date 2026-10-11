@@ -8,6 +8,12 @@ test("configure, freeze, run replay and inspect exact Evidence", async ({
   await expect(
     page.getByRole("heading", { name: "Review execution" }),
   ).toBeVisible();
+  await expect(
+    page.getByRole("spinbutton", { name: "Temperature (optional)" }),
+  ).toBeDisabled();
+  await expect(
+    page.getByRole("spinbutton", { name: "Provider timeout (seconds)" }),
+  ).toBeDisabled();
   await page.getByRole("button", { name: "Review frozen plan" }).click();
   await expect(
     page.getByRole("heading", { name: "Frozen experiment" }),
@@ -15,7 +21,20 @@ test("configure, freeze, run replay and inspect exact Evidence", async ({
   await expect(
     page.getByRole("heading", { name: "frozen", exact: true }),
   ).toBeVisible();
-  await page.getByRole("button", { name: "Run replay", exact: true }).click();
+  const inputs = page.getByRole("region", { name: "Selected inputs", exact: true });
+  await expect(inputs).toContainText("case_03_fixture");
+  await expect(inputs).toContainText("authored");
+  const configuration = page.locator(".frozen-layout");
+  const run = page.getByRole("button", { name: "Run replay", exact: true });
+  const reviewBounds = await configuration.boundingBox();
+  const runBounds = await run.boundingBox();
+  expect(runBounds!.y).toBeGreaterThanOrEqual(
+    reviewBounds!.y + reviewBounds!.height,
+  );
+  await expect(page.getByText("Plan digest", { exact: true })).not.toBeVisible();
+  await page.getByText("Plan identity and digest", { exact: true }).click();
+  await expect(page.getByText("Plan digest", { exact: true })).toBeVisible();
+  await run.click();
   await expect(
     page.getByRole("heading", { name: "complete", exact: true }),
   ).toBeVisible();
