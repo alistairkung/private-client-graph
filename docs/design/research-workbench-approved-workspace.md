@@ -1,5 +1,7 @@
 # Research Workbench: approved continuous workspace
 
+> **Design update, 2026-10-12:** The [approved persistent Experiment / Run workspace](research-workbench-approved-run-workspace.md) supersedes this document’s experiment/run model, execution presentation, and performance comparison layout. This document remains a record of the earlier design or implementation. Preserve incumbent pipeline capabilities and visual conventions where the new handoff does not change them. The new backend contract is required future work, not an implemented capability.
+
 Status: Comparison bench B approved on 2026-10-11. The user authorized implementation
 of the complete design, including Connector rail A with inline settings and the
 always-visible insertion control, on 2026-10-12. Implementation branched from

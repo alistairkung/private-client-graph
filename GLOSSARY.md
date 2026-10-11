@@ -52,6 +52,26 @@ _Avoid_: Production pipeline, research pipeline, agent framework
 A retained observation from extraction or a benchmark experiment, preserving outputs and available execution context for reproducibility and diagnosis. It is technical traceability data, not application state or a professional case history.
 _Avoid_: Saved case, analysis history
 
+**Experiment**:
+A named, persistent research workspace containing independently configured Runs used to investigate a research question.
+_Avoid_: Single execution, frozen study plan
+
+**Run**:
+One immutable execution of a selected Shared Analysis Pipeline configuration within an Experiment, retaining its input identities, configuration, provenance, results and available cost.
+_Avoid_: Experiment, provider attempt, resolver repetition
+
+**Observation**:
+An individual case, sample and repetition evaluation within a Run, retaining its result or explicit unscored outcome.
+_Avoid_: Run, provider attempt
+
+**Aggregate Evaluation**:
+A Run-level summary of its scored Observations together with coverage of the planned Observations. Its relationship F1 pools observation counts rather than averaging individual F1 scores.
+_Avoid_: Average F1, case-balanced score
+
+**Run Draft**:
+The editable configuration for a proposed next Run within an Experiment. Editing a Run Draft does not alter any previous Run.
+_Avoid_: Edited historical run, replacement result
+
 **Benchmark Evaluation**:
 Offline comparison of a canonical graph with a benchmark case's known answer key, including relationship and provenance metrics. It is separate from professional review.
 _Avoid_: Professional review score, confidence score

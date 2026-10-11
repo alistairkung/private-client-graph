@@ -1,5 +1,7 @@
 # Research Workbench: complete design reference
 
+> **Design update, 2026-10-12:** The [approved persistent Experiment / Run workspace](research-workbench-approved-run-workspace.md) supersedes this document’s experiment/run model, execution presentation, and performance comparison layout. This document remains a record of the earlier design or implementation. Preserve incumbent pipeline capabilities and visual conventions where the new handoff does not change them. The new backend contract is required future work, not an implemented capability.
+
 This is the visual review companion to the [implementation handoff](research-workbench-approved-workspace.md).
 It covers the entire workspace, not only Evaluation. All screenshots below were
 captured from the self-contained prototype shipped in this PR. They show design
