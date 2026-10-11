@@ -54,7 +54,7 @@ def test_combined_cutover_preserves_matters_pending_proposals_and_claims(databas
             assert state.evidence[0].document == 'Legacy label'
         assert set(connection.scalars(text('SELECT resource_id FROM external_matter_reference_claims'))) == {matter_id, proposal_id}
         assert set(connection.scalars(text("SELECT column_name FROM information_schema.columns WHERE table_name='matter_proposals'"))) == {'id', 'external_reference', 'matter_title'}
-        assert connection.scalar(text('SELECT version_num FROM alembic_version')) == '0006'
+        assert connection.scalar(text('SELECT version_num FROM alembic_version')) == '0007'
     engine.dispose()
 
 

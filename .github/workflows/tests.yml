@@ -60,7 +60,7 @@ jobs:
       - name: Run tests
         run: uv run pytest
       - name: Check application types
-        run: uv run mypy private_client_graph/application private_client_graph/api private_client_graph/persistence private_client_graph/research private_client_graph/pipeline private_client_graph/extraction private_client_graph/resolution.py private_client_graph/extract.py --follow-imports=silent
+        run: uv run mypy private_client_graph/application private_client_graph/api private_client_graph/persistence private_client_graph/research private_client_graph/pipeline private_client_graph/extraction private_client_graph/resolution.py private_client_graph/extract.py private_client_graph/workbench --follow-imports=silent
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -73,6 +73,8 @@ jobs:
         run: |
           npm test
           npm run build
+          npm run test:research
+          npm run build:research
       - name: Install browser
         working-directory: web
         run: npx playwright install --with-deps chromium
@@ -83,6 +85,11 @@ jobs:
       - name: Test professional-review journey
         working-directory: web
         run: npm run test:e2e
+      - name: Test research history and Evidence journey
+        working-directory: web
+        run: npm run test:e2e:research
+      - name: Verify research Compose restart and index rebuild
+        run: python tests/research_compose_smoke.py
       - name: Build and smoke-test deployment image
         run: |
           docker build -t pcg-test .
