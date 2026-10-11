@@ -6,20 +6,28 @@ import { Investigation } from "./Investigation";
 import { Overview } from "./Overview";
 import { Execution } from "./Execution";
 
+import { Pipeline } from "../configuration/Pipeline";
+import { UsageSummary } from "./UsageSummary";
+import { ComparisonBench } from "./ComparisonBench";
+
 export function Results({
   id,
   params,
   historyLink,
   executable = false,
+  embedded = false,
+  refresh = 0,
 }: {
   id: string;
   params: URLSearchParams;
   historyLink: string;
   executable?: boolean;
+  embedded?: boolean;
+  refresh?: number;
 }) {
   const load = useCallback(
     (signal: AbortSignal) => experiment(id, signal),
-    [id],
+    [id, refresh],
   );
   const { data, error, retry } = useRead(load);
   const link = (changes: Record<string, string>) => {
@@ -27,7 +35,7 @@ export function Results({
     Object.entries(changes).forEach(([key, value]) => next.set(key, value));
     return `#${next}`;
   };
-  const view = params.get("view") ?? "overview";
+  const view = params.get("view") ?? "bench";
   if (!data)
     return (
       <>
@@ -38,10 +46,10 @@ export function Results({
   const { history } = data;
   return (
     <>
-      <a className="breadcrumb" href={historyLink}>
+      <a className="breadcrumb" href={historyLink} hidden={embedded}>
         Back to experiments
       </a>
-      <div className="experiment-heading">
+      <div className="experiment-heading" hidden={embedded}>
         <h1>{history.artifact_path}</h1>
         <p>
           {mode(history.kind)} · {history.lifecycle} ·{" "}
@@ -110,8 +118,68 @@ export function Results({
           value={data.provenance}
         />
       </details>
+      {!embedded &&
+        history.integrity === "verified" &&
+        history.freshness === "current" && (
+          <>
+            <Pipeline
+              frozen={{
+                resolver: history.configurations.includes(
+                  "generative_full_source",
+                ),
+                input: `${data.samples.length} retained samples · ${history.cohorts.join(" / ")}`,
+                model: history.model ?? "Unavailable",
+                repetitions: String(
+                  data.configuration.repetitions ?? "Unavailable",
+                ),
+              }}
+            />
+            <section className="historical-console execution-bench">
+              <div className="run-status">
+                <h2>Execution · {history.lifecycle}</h2>
+                <p>
+                  {history.scored ?? "Unavailable"} /{" "}
+                  {history.planned ?? "Unavailable"} observations scored ·
+                  Read-only retained results
+                </p>
+                <p>
+                  {String(data.operations.valid_attempts ?? "Unavailable")}{" "}
+                  valid attempts ·{" "}
+                  {String(
+                    data.operations.provider_failed_attempts ?? "Unavailable",
+                  )}{" "}
+                  provider failures ·{" "}
+                  {String(data.operations.uncertain_attempts ?? "Unavailable")}{" "}
+                  uncertain
+                </p>
+              </div>
+              <div className="execution-review">
+                <UsageSummary data={data} />
+              </div>
+            </section>
+          </>
+        )}
+      {embedded &&
+        history.integrity === "verified" &&
+        history.freshness === "current" && (
+          <details>
+            <summary>Recorded attempt accounting and provider usage</summary>
+            <p>
+              {String(data.operations.valid_attempts ?? "Unavailable")} valid
+              attempts ·{" "}
+              {String(
+                data.operations.provider_failed_attempts ?? "Unavailable",
+              )}{" "}
+              provider failures ·{" "}
+              {String(data.operations.uncertain_attempts ?? "Unavailable")}{" "}
+              uncertain
+            </p>
+            <UsageSummary data={data} />
+          </details>
+        )}
       <nav className="result-tabs" aria-label="Experiment views">
         {[
+          ["bench", "Comparison bench"],
           ["overview", "Overview"],
           ["investigate", "Investigate"],
           ["execution", "Execution & artifacts"],
@@ -130,6 +198,8 @@ export function Results({
           <h2>Artifact cannot be inspected</h2>
           <p>{history.integrity_reason}</p>
         </section>
+      ) : view === "bench" ? (
+        <ComparisonBench data={data} params={params} link={link} />
       ) : view === "investigate" ? (
         <Investigation data={data} params={params} link={link} />
       ) : view === "execution" ? (

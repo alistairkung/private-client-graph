@@ -36,6 +36,9 @@ it("ignores a stale preview after the proposal changes", async () => {
   };
   render(<Configuration capabilities={capabilities} />);
   await waitFor(() => expect(preview).toHaveBeenCalledTimes(1));
+  await userEvent.click(
+    screen.getByRole("button", { name: /Extract relationships/ }),
+  );
   await userEvent.selectOptions(
     screen.getByRole("combobox", { name: "Execution mode" }),
     "recorded",

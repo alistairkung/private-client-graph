@@ -5,11 +5,12 @@ It covers the entire workspace, not only Evaluation. All screenshots below were
 captured from the self-contained prototype shipped in this PR. They show design
 states, not a production application or newly executed experiments.
 
-Comparison bench B is approved. Connector rail A was selected; the final inline
-settings and always-visible insertion-control refinement is included here for
-explicit final review, following the user's clarification that this approval had
-not yet been recorded. Inclusion in this PR is not authorization to execute
-experiments or implement hypothetical capabilities.
+Comparison bench B and Connector rail A, including inline settings and the
+always-visible insertion control, are included in the complete implementation
+authorized by the user on 2026-10-12. These design artifacts do not authorize paid
+experiments or hypothetical capabilities. The implementation preserves #111's
+atomic Authorize and start/continue API rather than adding a separate authorized
+but not started backend state.
 
 ## Whole workspace: draft
 
