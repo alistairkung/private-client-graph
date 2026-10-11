@@ -226,33 +226,61 @@ def _fresh_inputs(bundle: Bundle, provider: Provider, initial_count: int,
     for index in range(1, bundle.plan.fresh_extractions + 1):
         sample_id = f'fresh_{index:02d}'
         observation = _observe(bundle, f'{sample_id}-extraction', request, provider, initial_count, limit)
-        sample = template.model_copy(update={'sample_id': sample_id, 'cohort': 'fresh',
-                                            'annotations': None, 'historical': None, 'extraction': None,
-                                            'origin_hashes': {k: v for k, v in template.origin_hashes.items()
-                                                              if k in ('source.txt', 'ground_truth.json')}})
-        try:
-            if observation['status'] != 'completed':
-                raise ValueError('No parsed extraction')
-            sample.extraction = ExtractionResult.model_validate(observation['response']['payload'])
-        except ValueError:
-            unavailable_results: list[
-                tuple[str, Literal['noop', 'generative_full_source'], int]
-            ] = [('noop', 'noop', 0)]
-            unavailable_results.extend(
-                (f'resolve-{repetition}', 'generative_full_source', repetition)
-                for repetition in range(1, bundle.plan.repetitions + 1)
-            )
-            for suffix, configuration, repetition in unavailable_results:
-                result_id = f'{sample_id}-{suffix}'
-                if not bundle.has_result(result_id):
-                    unavailable = _base_result(sample)
-                    unavailable.status = 'unavailable'
-                    unavailable.stage = 'extraction'
-                    unavailable.configuration = configuration
-                    unavailable.repetition = repetition
-                    bundle.save_result(result_id, unavailable.model_dump(mode='json'))
+        sample = _fresh_sample(template, sample_id)
+        if not _apply_fresh_extraction(sample, observation):
+            _save_unavailable_fresh_results(bundle, sample)
             continue
-        snapshot = bundle.path / 'fresh_inputs' / f'{sample_id}.json'
-        if not snapshot.exists():
-            write_json_once(snapshot, sample.model_dump(mode='json'))
+        _save_fresh_input_snapshot(bundle, sample)
         yield sample
+
+
+def _fresh_sample(template: ResearchInput, sample_id: str) -> ResearchInput:
+    origin_hashes = {
+        name: digest
+        for name, digest in template.origin_hashes.items()
+        if name in ('source.txt', 'ground_truth.json')
+    }
+    return template.model_copy(update={
+        'sample_id': sample_id,
+        'cohort': 'fresh',
+        'annotations': None,
+        'historical': None,
+        'extraction': None,
+        'origin_hashes': origin_hashes,
+    })
+
+
+def _apply_fresh_extraction(sample: ResearchInput, observation: dict[str, Any]) -> bool:
+    if observation['status'] != 'completed':
+        return False
+    try:
+        sample.extraction = ExtractionResult.model_validate(observation['response']['payload'])
+    except ValueError:
+        return False
+    return True
+
+
+def _save_unavailable_fresh_results(bundle: Bundle, sample: ResearchInput) -> None:
+    result_variants: list[
+        tuple[str, Literal['noop', 'generative_full_source'], int]
+    ] = [('noop', 'noop', 0)]
+    result_variants.extend(
+        (f'resolve-{repetition}', 'generative_full_source', repetition)
+        for repetition in range(1, bundle.plan.repetitions + 1)
+    )
+    for suffix, configuration, repetition in result_variants:
+        result_id = f'{sample.sample_id}-{suffix}'
+        if bundle.has_result(result_id):
+            continue
+        unavailable = _base_result(sample)
+        unavailable.status = 'unavailable'
+        unavailable.stage = 'extraction'
+        unavailable.configuration = configuration
+        unavailable.repetition = repetition
+        bundle.save_result(result_id, unavailable.model_dump(mode='json'))
+
+
+def _save_fresh_input_snapshot(bundle: Bundle, sample: ResearchInput) -> None:
+    snapshot = bundle.path / 'fresh_inputs' / f'{sample.sample_id}.json'
+    if not snapshot.exists():
+        write_json_once(snapshot, sample.model_dump(mode='json'))

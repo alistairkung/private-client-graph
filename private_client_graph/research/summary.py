@@ -213,23 +213,59 @@ def _extraction_observation(bundle: Bundle, sample: dict[str, Any],
 def _operations(bundle: Bundle, attempts: list[dict[str, Any]]) -> dict[str, Any]:
     usages = [TokenUsage.model_validate(a.get('response', {}).get('usage', {})) for a in attempts]
     costs = [estimate_cost(u, bundle.plan.pricing) for u in usages]
-    known_costs = [c for c in costs if c is not None]
-    usage_totals = {}
+    return {
+        **_attempt_counts(bundle, attempts),
+        **_cost_totals(costs),
+        'tokens': _token_totals(usages),
+        'provider_latency': distribution([a.get('provider_seconds') for a in attempts]),
+        'returned_models': sorted({
+            a['response']['returned_model']
+            for a in attempts
+            if a.get('response', {}).get('returned_model')
+        }),
+        'attempts': attempts,
+    }
+
+
+def _attempt_counts(bundle: Bundle, attempts: list[dict[str, Any]]) -> dict[str, int]:
+    return {
+        'attempted': len(attempts),
+        'paid_attempts': len(attempts) if bundle.plan.kind != 'demonstration' else 0,
+        'valid_attempts': sum(
+            attempt['status'] == 'completed'
+            and attempt.get('response', {}).get('payload') is not None
+            for attempt in attempts
+        ),
+        'uncertain_attempts': sum(attempt['status'] == 'uncertain' for attempt in attempts),
+        'provider_failed_attempts': sum(
+            attempt['status'] == 'provider_error' for attempt in attempts
+        ),
+    }
+
+
+def _cost_totals(costs: list[float | None]) -> dict[str, float | int | None]:
+    known_costs = [cost for cost in costs if cost is not None]
+    return {
+        'estimated_spend': sum(known_costs) if len(known_costs) == len(costs) else None,
+        'known_cost_sum': sum(known_costs),
+        'unpriced_attempts': len(costs) - len(known_costs),
+    }
+
+
+def _token_totals(usages: list[TokenUsage]) -> dict[str, dict[str, int]]:
+    totals = {}
     for field in ('input_tokens', 'output_tokens', 'cached_tokens'):
-        observed = [getattr(u, field) for u in usages if getattr(u, field) is not None]
-        usage_totals[field] = {'known_sum': sum(observed), 'known_attempts': len(observed),
-                               'unknown_attempts': len(usages) - len(observed)}
-    return {'attempted': len(attempts), 'paid_attempts': len(attempts) if bundle.plan.kind != 'demonstration' else 0,
-            'valid_attempts': sum(a['status'] == 'completed'
-                                  and a.get('response', {}).get('payload') is not None for a in attempts),
-            'uncertain_attempts': sum(a['status'] == 'uncertain' for a in attempts),
-            'provider_failed_attempts': sum(a['status'] == 'provider_error' for a in attempts),
-            'estimated_spend': sum(known_costs) if len(known_costs) == len(costs) else None,
-            'known_cost_sum': sum(known_costs), 'unpriced_attempts': len(costs) - len(known_costs),
-            'tokens': usage_totals, 'provider_latency': distribution([a.get('provider_seconds') for a in attempts]),
-            'returned_models': sorted({a['response']['returned_model'] for a in attempts
-                                      if a.get('response', {}).get('returned_model')}),
-            'attempts': attempts}
+        observed = [
+            value
+            for usage in usages
+            if (value := getattr(usage, field)) is not None
+        ]
+        totals[field] = {
+            'known_sum': sum(observed),
+            'known_attempts': len(observed),
+            'unknown_attempts': len(usages) - len(observed),
+        }
+    return totals
 
 
 def _sessions(bundle: Bundle) -> list[dict[str, Any]]:

@@ -106,6 +106,11 @@ def invoke_deepseek(request: ModelRequest, *, api_key: str,
         result = (prompt | llm.with_structured_output(schema, include_raw=True)).invoke({})
     if not isinstance(result, dict):
         raise TypeError("Expected a raw structured-output response")
+    return _persistable_response(result, api_key)
+
+
+def _persistable_response(result: dict[str, Any], api_key: str) -> ModelResponse:
+    """Build the allowlisted, credential-redacted artifact persisted by the runner."""
     message = result["raw"]
     if not isinstance(message, AIMessage):
         raise TypeError("Expected an AI message from the provider")
