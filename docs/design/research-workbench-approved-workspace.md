@@ -1,8 +1,12 @@
 # Research Workbench: approved continuous workspace
 
-Status: approved by the user on 2026-10-11. Implementation handoff, not an
-implementation or execution authorization. The approval selects Connector rail A
-with inline node settings and Comparison bench B for Execution and Evaluation.
+Status: Comparison bench B approved on 2026-10-11. Connector rail A is selected;
+the final inline-settings and always-visible insertion refinement awaits explicit
+final approval, as clarified by the user. This handoff includes the whole design
+for review and implementation planning, not implementation or execution authority.
+See the [complete illustrated design reference](research-workbench-complete-design-reference.md)
+for the sidebar, full-page composition, pipeline interaction states, input picker,
+responsive layouts, Execution and Evaluation.
 The final correction gives the Stop-after-current-attempt button explicit dark
 text on a light surface, including hover and a contrasting keyboard focus ring.
 
@@ -13,6 +17,9 @@ safety contracts in `research-workbench.md`, `shared-analysis-pipeline.md`,
 It does not supersede domain semantics or expand execution authority.
 
 ## Visual source of truth
+
+Start with the [complete visual reference](research-workbench-complete-design-reference.md);
+the isolated analysis and console images below are only parts of the full design.
 
 - [Approved interactive design archive](assets/research-workbench-approved-prototype.zip).
   Extract and serve its directory with a local static HTTP server. It is an
