@@ -258,3 +258,53 @@ def test_fresh_checkpoint_preserves_extraction_and_resumes_paired_resolution(tmp
     assert len(bundle.results()) == 4
     assert all(row['status'] == 'completed' for row in bundle.results())
     assert bundle.attempts()[1]['response']['raw_response'] == {'retained': 'extraction'}
+
+
+def test_fresh_graph_failure_retains_extraction_and_resolver_can_recover_on_resume(tmp_path):
+    import json
+    from private_client_graph.research.summary import summarize
+
+    template = load_inputs()[2]
+    invalid = template.extraction.model_copy(deep=True)
+    # A parsed self-relationship is invalid for graph construction, but an
+    # endpoint-only resolver edit can recover the original candidate.
+    candidate = invalid.relationships[0]
+    original_name = candidate.source_name
+    candidate.source_name = candidate.target_name
+    bundle = Bundle.create(tmp_path / 'fresh-recovery', ExperimentPlan(
+        inputs=[template], repetitions=2, fresh_extractions=1, max_calls=5,
+    ))
+    calls = []
+    fresh_requests = []
+
+    def provider(request):
+        calls.append(request.stage)
+        if request.stage == 'extraction':
+            return ModelResponse(payload=invalid.model_dump())
+        if request.extraction == invalid:
+            fresh_requests.append(request.extraction.model_dump())
+            return ModelResponse(payload={'edits': [
+                {'candidate_index': 0, 'endpoint': 'source_name', 'name': original_name},
+            ]})
+        return ModelResponse(payload={'edits': []})
+
+    execute(bundle, provider=provider, max_new_attempts=3)
+    baseline = next(row for row in bundle.results() if row['sample_id'] == 'fresh_01')
+    assert baseline['status'] == 'graph_error'
+    assert baseline['stage'] == 'graph'
+    assert baseline['extraction'] == invalid.model_dump()
+    assert baseline['graph'] is None and baseline['evaluation'] is None
+    snapshot = json.loads((bundle.path / 'fresh_inputs' / 'fresh_01.json').read_text())
+    assert snapshot['extraction'] == invalid.model_dump()
+
+    execute(Bundle.open(bundle.path), provider=provider)
+    fresh = next(row for row in summarize(bundle)['samples'] if row['cohort'] == 'fresh')
+    assert fresh['baseline'] == baseline
+    assert all(row['status'] == 'completed' for row in fresh['repetitions'])
+    assert all(row['extraction'] == template.extraction.model_dump() for row in fresh['repetitions'])
+    assert all(row['evaluation'] is not None for row in fresh['repetitions'])
+    assert fresh['paired_score_coverage'] == 0  # No fabricated score for the failed baseline.
+    assert fresh_requests == [invalid.model_dump(), invalid.model_dump()]
+    assert calls == ['resolution', 'resolution', 'extraction', 'resolution', 'resolution']
+    execute(Bundle.open(bundle.path), provider=provider)
+    assert bundle.attempt_count == len(calls) == 5

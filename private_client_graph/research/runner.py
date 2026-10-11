@@ -73,11 +73,14 @@ def _observe(bundle: Bundle, attempt_id: str, request: ModelRequest,
     started = time.perf_counter()
     try:
         response = provider(request)
-        observation: dict[str, Any] = {'status': 'completed', 'response': response.model_dump(mode='json')}
     except Exception as error:
+        provider_seconds = time.perf_counter() - started
         # Provider exception strings may contain request headers or credentials.
-        observation = {'status': 'provider_error', 'error_type': type(error).__name__}
-    observation['provider_seconds'] = time.perf_counter() - started
+        observation: dict[str, Any] = {'status': 'provider_error', 'error_type': type(error).__name__}
+    else:
+        provider_seconds = time.perf_counter() - started
+        observation = {'status': 'completed', 'response': response.model_dump(mode='json')}
+    observation['provider_seconds'] = provider_seconds
     bundle.complete(attempt_id, observation)
     return {**observation, 'attempt_id': attempt_id}
 
@@ -146,9 +149,12 @@ def _run_resolution_repetition(
     result.provider_seconds = observation.get('provider_seconds')
     result.usage = TokenUsage.model_validate(observation.get('response', {}).get('usage', {}))
     result.incremental_cost = estimate_cost(result.usage, bundle.plan.pricing)
-    if result.resolution_seconds is not None and result.status not in ('provider_error', 'parse_error', 'uncertain'):
-        result.edit_seconds = max(0, result.resolution_seconds - observation_seconds)
-        result.resolution_seconds = result.edit_seconds + observation.get('provider_seconds', 0)
+    if result.resolution_seconds is not None and result.provider_seconds is not None:
+        # Replace observation I/O with the recorded call duration, also on resume.
+        local_seconds = max(0, result.resolution_seconds - observation_seconds)
+        result.resolution_seconds = local_seconds + result.provider_seconds
+        if result.status not in ('provider_error', 'parse_error'):
+            result.edit_seconds = local_seconds
         if result.extraction is not None:
             result.edits = observation['response']['payload']['edits']
     else:
@@ -199,6 +205,7 @@ def _pipeline_result(
             return build_graph(candidates, document=document, source_text=source_text)
         finally:
             result.graph_seconds = time.perf_counter() - graph_started
+            result.downstream_seconds = result.graph_seconds
 
     pipeline = Pipeline(config, extractor=extractor,
                         resolution_provider=resolution_provider, graph_builder=timed_graph)
@@ -210,13 +217,13 @@ def _pipeline_result(
             assert sample.extraction is not None
             output = pipeline.run_from_extraction(input, sample.extraction)
     except PipelineExecutionError as error:
+        if error.stage == 'resolution':
+            result.resolution_seconds = time.perf_counter() - started
         if isinstance(error.__cause__, BudgetExceeded):
             raise error.__cause__
         _record_pipeline_failure(result, error)
         if error.resolved is not None:
             _record_prediction(result, sample, error.resolved)
-        if error.stage == 'resolution':
-            result.resolution_seconds = time.perf_counter() - started
         return result, error.extracted
     _record_prediction(result, sample, output.resolved)
     result.graph = output.graph
@@ -259,10 +266,12 @@ def _evaluate(result: ResearchResult, sample: ResearchInput) -> None:
     try:
         result.evaluation = evaluate_graph(result.graph, sample.truth)
     except ValueError as error:
+        result.evaluation_seconds = time.perf_counter() - started
         result.status = 'evaluation_error'
         result.stage = 'evaluation'
         result.error_type = type(error).__name__
-    result.evaluation_seconds = time.perf_counter() - started
+    else:
+        result.evaluation_seconds = time.perf_counter() - started
     result.downstream_seconds = result.graph_seconds + result.evaluation_seconds
 
 
