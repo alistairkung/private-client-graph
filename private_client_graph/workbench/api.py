@@ -23,6 +23,18 @@ def create_app(*, refresh: Callable[[], None] | None = None) -> FastAPI:
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=['localhost', '127.0.0.1', '[::1]', 'testserver'])
     root = Path(os.getenv('PCG_RESEARCH_ARTIFACTS', 'runs/research'))
 
+    @app.exception_handler(KeyError)
+    async def artifact_incomplete(request, error):
+        return JSONResponse(status_code=409, content={'detail': 'Research artifact schema is incomplete.'})
+
+    @app.exception_handler(ValueError)
+    async def artifact_invalid(request, error):
+        return JSONResponse(status_code=409, content={'detail': str(error)})
+
+    @app.exception_handler(OSError)
+    async def artifact_missing(request, error):
+        return JSONResponse(status_code=409, content={'detail': 'Required research artifact is unavailable.'})
+
     @app.exception_handler(SQLAlchemyError)
     async def database_unavailable(request, error):
         return JSONResponse(status_code=503, content={'detail': 'Research index unavailable. Check PostgreSQL and migrations.'})
@@ -72,6 +84,8 @@ def create_app(*, refresh: Callable[[], None] | None = None) -> FastAPI:
         def frontend():
             return FileResponse(static / 'index.html')
 
+    from .workspace_api import mount_workspace_reads
+    mount_workspace_reads(app, root, refresh)
     return app
 
 

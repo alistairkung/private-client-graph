@@ -1,0 +1,7 @@
+{
+  "id": "alias_distinct",
+  "name": "Similar names refer to distinct people",
+  "description": "Elizabeth Tan and Beth are explicitly different people; resolution must preserve their separate identities.",
+  "case_name": "Harbour Trust — identity diagnostics",
+  "case_description": "Focused synthetic scenarios isolating alias identity decisions from the larger benchmark cases."
+}

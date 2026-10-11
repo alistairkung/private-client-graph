@@ -12,6 +12,7 @@ from private_client_graph.resolution import EndpointEdits, ResolutionRequest, Re
 from .artifacts import Bundle, BudgetExceeded, code_snapshot, dependency_versions, utc_now, write_json_once
 from .inputs import ResearchInput
 from .plan import FiniteExperimentPlan
+from .run_plan import RunPlan
 from .metrics import IdentityDiagnostics, estimate_cost, identity_diagnostics
 from .provider import ModelRequest, ModelResponse, TokenUsage
 from .results import ResearchResult
@@ -103,7 +104,8 @@ def _run_pair(bundle: Bundle, sample: ResearchInput, provider: Provider,
               initial_count: int, limit: int | None,
               should_stop: Callable[[], bool]) -> None:
     assert sample.extraction is not None
-    _save_baseline_if_needed(bundle, sample)
+    if not isinstance(bundle.plan, RunPlan) or bundle.plan.resolver == 'none':
+        _save_baseline_if_needed(bundle, sample)
     repetitions = bundle.plan.resolution_repetitions
     for repetition in range(1, repetitions + 1):
         _checkpoint(should_stop)
@@ -297,10 +299,8 @@ def _fresh_inputs(bundle: Bundle, provider: Provider, initial_count: int,
                   limit: int | None, should_stop: Callable[[], bool]) -> Iterator[ResearchInput]:
     if not bundle.plan.fresh_extractions:
         return
-    template = next(sample for sample in bundle.plan.inputs if sample.case_id == 'case_03')
-    for index in range(1, bundle.plan.fresh_extractions + 1):
+    for template, sample_id in _fresh_templates(bundle):
         _checkpoint(should_stop)
-        sample_id = f'fresh_{index:02d}'
         sample = _fresh_sample(template, sample_id)
 
         def extract(source: str) -> ExtractionResult:
@@ -314,9 +314,21 @@ def _fresh_inputs(bundle: Bundle, provider: Provider, initial_count: int,
             continue
         sample.extraction = extracted
         _save_fresh_input_snapshot(bundle, sample)
-        if not bundle.has_result(f'{sample_id}-noop'):
+        include_baseline = not isinstance(bundle.plan, RunPlan) or bundle.plan.resolver == 'none'
+        if include_baseline and not bundle.has_result(f'{sample_id}-noop'):
             _save_baseline(bundle, sample, baseline)
         yield sample
+
+
+def _fresh_templates(bundle: Bundle) -> Iterator[tuple[ResearchInput, str]]:
+    if isinstance(bundle.plan, RunPlan):
+        for template in bundle.plan.inputs:
+            for index in range(1, bundle.plan.fresh_extractions + 1):
+                yield template, f'{template.sample_id}_fresh_{index:02d}'
+        return
+    template = next(sample for sample in bundle.plan.inputs if sample.case_id == 'case_03')
+    for index in range(1, bundle.plan.fresh_extractions + 1):
+        yield template, f'fresh_{index:02d}'
 
 
 def _fresh_sample(template: ResearchInput, sample_id: str) -> ResearchInput:
@@ -338,7 +350,9 @@ def _fresh_sample(template: ResearchInput, sample_id: str) -> ResearchInput:
 def _save_unavailable_fresh_results(bundle: Bundle, sample: ResearchInput) -> None:
     result_variants: list[
         tuple[str, Literal['noop', 'generative_full_source'], int]
-    ] = [('noop', 'noop', 0)]
+    ] = []
+    if not isinstance(bundle.plan, RunPlan) or bundle.plan.resolver == 'none':
+        result_variants.append(('noop', 'noop', 0))
     repetitions = bundle.plan.resolution_repetitions
     result_variants.extend(
         (f'resolve-{repetition}', 'generative_full_source', repetition)
