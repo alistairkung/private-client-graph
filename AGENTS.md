@@ -77,6 +77,11 @@ bypass Alembic by mutating the production schema directly.
 
 Every deterministic behavioural change requires tests.
 
+Implementation work is not complete until the mandatory self-review gate in
+`docs/CODE_STYLE.md` has been performed. Implementation PR descriptions must
+include its brief `Code Quality Review` section; a clean review should say so
+rather than manufacture refactors.
+
 Before completing implementation work, run:
 
 ```bash
