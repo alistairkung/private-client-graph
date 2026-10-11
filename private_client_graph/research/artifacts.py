@@ -58,14 +58,19 @@ def code_snapshot() -> dict[str, str]:
     return {str(p.relative_to(ROOT)): p.read_text() for p in paths}
 
 
+def dependency_versions() -> dict[str, str]:
+    packages = ('pydantic', 'pydantic-core', 'langchain-core', 'langchain-deepseek',
+                'langchain-openai', 'openai', 'langsmith', 'httpx', 'httpcore')
+    return {package: importlib.metadata.version(package) for package in packages}
+
+
 def _provenance() -> dict[str, Any]:
     def git(*args: str) -> str | None:
         result = subprocess.run(['git', *args], cwd=ROOT, capture_output=True, text=True)
         return result.stdout.strip() if result.returncode == 0 else None
-    packages = ('pydantic', 'langchain-core', 'langchain-deepseek', 'langsmith', 'httpx')
     return {'git_sha': git('rev-parse', 'HEAD'),
             'dirty': bool(git('status', '--porcelain')),
-            'dependencies': {p: importlib.metadata.version(p) for p in packages},
+            'dependencies': dependency_versions(),
             'code': code_snapshot(),
             'prompts': {'extraction': EXTRACTION_PROMPT, 'resolution': RESOLUTION_PROMPT},
             'prompt_hashes': {'extraction': checksum(EXTRACTION_PROMPT.encode()),
@@ -140,6 +145,10 @@ class Bundle:
         self.task_ledger.mkdir(parents=True, exist_ok=True)
         with (self.task_ledger / '.lock').open('a') as lock:
             fcntl.flock(lock, fcntl.LOCK_EX)
+            for previous in self.attempts():
+                reservation = self.task_ledger / f"{self.manifest['experiment_id']}-{previous['attempt_id']}.json"
+                if not reservation.exists():
+                    raise ValueError('Task ledger is incomplete; restore it before paid execution')
             shared = self.task_ledger / f"{self.manifest['experiment_id']}-{attempt_id}.json"
             if shared.exists() and not path.exists():
                 # Recover a crash between the task-wide and bundle reservations.

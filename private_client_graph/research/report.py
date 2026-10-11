@@ -57,6 +57,7 @@ def render_report(bundle: Bundle) -> str:
 <p>Cohort summaries give each input equal weight. Between-input variation of resolver means is separate from within-input variation. Identity diagnostics compare annotated endpoint pairs, not counts of people. Unannotated inputs have no identity score. Provenance accuracy applies only to matched relationships.</p>
 <p>Authored challenges measure targeted behavior, not real-world error prevalence. Existing name-based evaluation cannot distinguish different people with identical names. No statistical significance or unseen-test generalisation is claimed.</p>
 <p>Incremental cost is resolver-only. Single-pipeline estimates add one extraction to one resolver attempt; reused extractions are not charged again as experiment spend. Authored extraction cost is unavailable. Historical elapsed time includes local processing and has no recorded price.</p>
+<p>Pipeline latency sums extraction provider time, resolver provider and edit time, graph construction and evaluation. It excludes artifact I/O and research identity diagnostics. Historical elapsed time cannot be split into stages, so its comparable pipeline estimates remain unavailable.</p>
 {_details('Configuration and pricing metadata', report['configuration'])}
 {_details('Code revision, dependencies and prompt snapshots', provenance)}
 {_details('Fixture versions, hashes and annotation provenance', [s.model_dump(mode='json') for s in bundle.plan.inputs])}
@@ -113,6 +114,7 @@ def _sample_details(sample: dict[str, Any]) -> str:
     return f'''<details><summary>{html.escape(sample['sample_id'])}: individual results and identity diagnostics</summary>
 <div class="table-scroll"><table><thead><tr><th>Run</th><th>Status</th><th>F1</th><th>Incorrect merges</th><th>Missed merges</th><th>Provider s</th><th>Resolver cost</th></tr></thead><tbody>{''.join(rows)}</tbody></table></div>
 <p>No-edit resolver responses: {sample['no_edit_repetitions']}. Mean single-pipeline cost: {_number(sample['single_pipeline_cost']['mean'],6)}. Mean single-pipeline latency: {_number(sample['single_pipeline_latency']['mean'])} s.</p>
+<p>Failure fraction among attempted resolver calls: {_number(sample['failure_rate_among_attempted'])} ({sample['attempted_repetitions']} attempted). Paired score coverage of planned repetitions: {_number(sample['paired_score_coverage'])}. Baseline single-pipeline latency: {_number(sample['baseline_single_pipeline_latency'])} s. Historical original elapsed time: {_number(sample['historical_pipeline_seconds'])} s.</p>
 {_details('Full predictions, denominators, metrics and stage timings', sample)}</details>'''
 
 

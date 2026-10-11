@@ -99,3 +99,38 @@ def test_graph_error_retains_prediction_and_cannot_masquerade_as_score_zero(tmp_
     assert result['status'] == 'graph_error'
     assert result['evaluation'] is None
     assert result['extraction']['relationships'][1]['source_name'] == 'Harbour Trust'
+
+
+def test_stage_timings_separate_resolution_from_graph_and_evaluation(tmp_path, monkeypatch):
+    from private_client_graph.research import runner
+    clock = [0.0]
+    monkeypatch.setattr(runner.time, 'perf_counter', lambda: clock[0])
+    for name, seconds in [('apply_edits', 3), ('build_graph', 100), ('evaluate_graph', 200)]:
+        original = getattr(runner, name)
+        def timed(*args, _original=original, _seconds=seconds, **kwargs):
+            clock[0] += _seconds
+            return _original(*args, **kwargs)
+        monkeypatch.setattr(runner, name, timed)
+    sample = load_inputs()[2]
+    bundle = Bundle.create(tmp_path / 'timing', ExperimentPlan(inputs=[sample], repetitions=1,
+                                                            fresh_extractions=1))
+    def provider(request):
+        clock[0] += 5
+        if request.stage == 'extraction':
+            return ModelResponse(payload=sample.extraction.model_dump())
+        return ModelResponse(payload={'edits': []})
+    execute(bundle, provider=provider)
+    baseline = next(r for r in bundle.results() if r['configuration'] == 'noop')
+    result = next(r for r in bundle.results() if r['configuration'] != 'noop')
+    assert baseline['resolution_seconds'] == 0
+    assert baseline['downstream_seconds'] == 300
+    assert result['provider_seconds'] == 5
+    assert result['edit_seconds'] == 3
+    assert result['resolution_seconds'] == 8
+    assert result['graph_seconds'] == 100
+    assert result['evaluation_seconds'] == 200
+    assert result['downstream_seconds'] == 300
+    from private_client_graph.research.summary import summarize
+    fresh = next(s for s in summarize(bundle)['samples'] if s['cohort'] == 'fresh')
+    assert fresh['baseline_single_pipeline_latency'] == 305
+    assert fresh['single_pipeline_latency']['mean'] == 313

@@ -28,6 +28,8 @@ def test_aggregate_keeps_missing_scores_separate_and_uses_all_repetitions(tmp_pa
     assert row['paired_deltas']['mean'] == .25
     assert row['scored_repetitions'] == 2
     assert row['failed_repetitions'] == 1
+    assert row['failure_rate_among_attempted'] == pytest.approx(1 / 3)
+    assert row['paired_score_coverage'] == pytest.approx(2 / 3)
     assert report['operations']['attempted'] == 3
     assert report['operations']['estimated_spend'] is None
     assert row['single_pipeline_cost']['mean'] is None  # authored extraction has no measured cost
@@ -65,3 +67,15 @@ def test_unattempted_repetitions_are_visible_and_single_score_has_no_sd(tmp_path
     assert row['resolver_metrics']['f1']['standard_deviation'] is None
     assert row['not_attempted_repetitions'] == 2
     assert summary['samples'][1]['not_attempted_repetitions'] == 3
+    assert summary['samples'][1]['failure_rate_among_attempted'] is None
+
+
+def test_historical_elapsed_time_is_not_treated_as_extraction_stage_time(tmp_path):
+    sample = load_inputs()[3]
+    bundle = Bundle.create(tmp_path / 'history', ExperimentPlan(inputs=[sample], repetitions=1))
+    execute(bundle, provider=lambda request: ModelResponse(payload={'edits': []}))
+    row = summarize(bundle)['samples'][0]
+    assert row['historical_pipeline_seconds'] == sample.historical['metadata']['duration_seconds']
+    assert row['extraction_seconds'] is None
+    assert row['baseline_single_pipeline_latency'] is None
+    assert row['single_pipeline_latency']['mean'] is None

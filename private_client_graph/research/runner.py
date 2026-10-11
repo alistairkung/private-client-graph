@@ -7,7 +7,7 @@ from uuid import uuid4
 from private_client_graph.evaluation import evaluate_graph
 from private_client_graph.graph import build_graph
 from private_client_graph.models import ExtractionResult
-from .artifacts import Bundle, BudgetExceeded, code_snapshot, utc_now, write_json_once
+from .artifacts import Bundle, BudgetExceeded, code_snapshot, dependency_versions, utc_now, write_json_once
 from .inputs import ResearchInput
 from .metrics import estimate_cost, identity_diagnostics
 from .provider import ModelRequest, ModelResponse, TokenUsage
@@ -47,6 +47,8 @@ def _validate_execution(bundle: Bundle, live: bool) -> None:
         raise ValueError('Task B requires explicit user authorization and reviewed Task A commit')
     if bundle.manifest['provenance']['code'] != code_snapshot():
         raise ValueError('Code changed since manifest creation; do not mix configurations on resume')
+    if bundle.manifest['provenance']['dependencies'] != dependency_versions():
+        raise ValueError('Dependencies changed since manifest creation; do not mix environments on resume')
 
 
 def _ordered_inputs(bundle: Bundle) -> list[ResearchInput]:
@@ -81,7 +83,8 @@ def _run_pair(bundle: Bundle, sample: ResearchInput, provider: Provider,
     if not (bundle.path / 'results' / f'{baseline_id}.json').exists():
         baseline = _evaluate(sample, no_resolution(sample.extraction))
         bundle.save_result(baseline_id, {**baseline, 'configuration': 'noop', 'repetition': 0,
-                                        'provider_seconds': 0, 'incremental_cost': 0,
+                                        'provider_seconds': 0, 'resolution_seconds': 0,
+                                        'edit_seconds': 0, 'incremental_cost': 0,
                                         'usage': TokenUsage(input_tokens=0, output_tokens=0, cached_tokens=0).model_dump()})
     request = ModelRequest(stage='resolution', source=sample.source,
                            extraction=sample.extraction, settings=bundle.plan.settings)
@@ -118,10 +121,14 @@ def _resolved_result(sample: ResearchInput, observation: dict[str, Any]) -> dict
     try:
         resolved = apply_edits(sample.extraction, sample.source, payload)
     except ValueError as error:
-        return {**result, 'status': 'edit_error', 'stage': 'edits', 'error_type': type(error).__name__}
+        edit_seconds = time.perf_counter() - started
+        return {**result, 'status': 'edit_error', 'stage': 'edits', 'error_type': type(error).__name__,
+                'edit_seconds': edit_seconds,
+                'resolution_seconds': edit_seconds + observation['provider_seconds']}
+    edit_seconds = time.perf_counter() - started
     result = _evaluate(sample, resolved)
-    return {**result, 'edits': payload['edits'],
-            'resolution_seconds': time.perf_counter() - started + observation['provider_seconds']}
+    return {**result, 'edits': payload['edits'], 'edit_seconds': edit_seconds,
+            'resolution_seconds': edit_seconds + observation['provider_seconds']}
 
 
 def _evaluate(sample: ResearchInput, extraction: ExtractionResult) -> dict[str, Any]:
@@ -141,6 +148,7 @@ def _evaluate(sample: ResearchInput, extraction: ExtractionResult) -> dict[str, 
     except ValueError as error:
         result.update(status='evaluation_error', stage='evaluation', error_type=type(error).__name__)
     result['evaluation_seconds'] = time.perf_counter() - started
+    result['downstream_seconds'] = result['graph_seconds'] + result['evaluation_seconds']
     return result
 
 

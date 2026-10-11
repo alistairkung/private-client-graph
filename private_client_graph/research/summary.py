@@ -52,24 +52,40 @@ def _sample_summary(bundle: Bundle, sample: dict[str, Any], rows: list[dict[str,
     extraction_cost, extraction_seconds, extraction_usage = _extraction_observation(bundle, sample, attempts)
     pipeline_costs = [c + extraction_cost if c is not None and extraction_cost is not None else None for c in costs]
     resolver_seconds = [r.get('resolution_seconds') for r in repetitions]
+    failed = sum(r['status'] in FAILURES for r in repetitions)
+    attempted = sum('attempt_id' in r for r in repetitions)
+    attempted_failures = sum('attempt_id' in r and r['status'] in FAILURES for r in repetitions)
+    paired = sum(_score(r, 'f1') is not None and baseline_f1 is not None for r in repetitions)
+    historical = next((s.historical for s in bundle.plan.inputs if s.sample_id == sample['sample_id']), None)
     return {**sample, 'baseline': baseline, 'repetitions': repetitions,
             'resolver_metrics': metrics, 'scored_repetitions': metrics['f1']['n'],
-            'failed_repetitions': sum(r['status'] in FAILURES for r in repetitions),
+            'failed_repetitions': failed,
+            'attempted_repetitions': attempted,
+            'failure_rate_among_attempted': attempted_failures / attempted if attempted else None,
+            'paired_score_coverage': paired / len(repetitions),
             'not_attempted_repetitions': sum(r['status'] == 'not_attempted' for r in repetitions),
             'paired_deltas': distribution([_score(r, 'f1') - baseline_f1
                 if _score(r, 'f1') is not None and baseline_f1 is not None else None for r in repetitions]),
             'incremental_cost': distribution(costs), 'extraction_cost': extraction_cost,
             'extraction_seconds': extraction_seconds, 'extraction_usage': extraction_usage,
+            'historical_pipeline_seconds': historical['metadata'].get('duration_seconds') if historical else None,
             'single_pipeline_cost': distribution(pipeline_costs),
             'provider_latency': distribution([r.get('provider_seconds') for r in repetitions]),
             'resolver_latency': distribution(resolver_seconds),
-            'single_pipeline_latency': distribution([v + extraction_seconds
-                if v is not None and extraction_seconds is not None else None for v in resolver_seconds]),
+            'baseline_single_pipeline_latency': _pipeline_seconds(baseline, extraction_seconds),
+            'single_pipeline_latency': distribution([_pipeline_seconds(r, extraction_seconds) for r in repetitions]),
             'no_edit_repetitions': sum(r.get('edits') == [] for r in repetitions)}
 
 
 def _score(row: dict[str, Any], metric: str) -> Any:
     return (row.get('evaluation') or {}).get(metric)
+
+
+def _pipeline_seconds(row: dict[str, Any], extraction_seconds: float | None) -> float | None:
+    stages = [extraction_seconds, row.get('resolution_seconds'), row.get('downstream_seconds')]
+    if row['status'] != 'completed' or any(value is None for value in stages):
+        return None
+    return sum(value for value in stages if value is not None)
 
 
 def _cohorts(samples: list[dict[str, Any]]) -> dict[str, Any]:
@@ -99,7 +115,7 @@ def _extraction_observation(bundle: Bundle, sample: dict[str, Any],
     if historical:
         metadata = historical['metadata']
         # Historical wall-clock measurement includes local processing; no historical price was recorded.
-        return None, metadata.get('duration_seconds'), metadata.get('llm_output', {}).get('token_usage')
+        return None, None, metadata.get('llm_output', {}).get('token_usage')
     return None, None, None
 
 

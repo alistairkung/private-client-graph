@@ -65,3 +65,21 @@ def test_resume_rejects_changed_code_without_making_calls(tmp_path, monkeypatch)
     with pytest.raises(ValueError, match='Code changed'):
         execute(bundle, provider=lambda request: pytest.fail('No dispatch'))
     assert bundle.attempt_count == 0
+
+
+def test_resume_rejects_changed_dependencies_without_making_calls(tmp_path):
+    from private_client_graph.research.runner import execute
+    bundle = Bundle.create(tmp_path / 'dependencies', ExperimentPlan(inputs=load_inputs()[-2:]))
+    bundle.manifest['provenance']['dependencies']['pydantic'] = 'different-version'
+    with pytest.raises(ValueError, match='Dependencies changed'):
+        execute(bundle, provider=lambda request: pytest.fail('No dispatch'))
+
+
+def test_missing_task_reservation_blocks_further_paid_calls(tmp_path):
+    bundle = Bundle.create(tmp_path / 'lost-ledger', ExperimentPlan(
+        kind='task_a_diagnostic', inputs=load_inputs()[-2:]), task_ledger=tmp_path / 'ledger')
+    bundle.reserve('first', {})
+    next(bundle.task_ledger.glob('*.json')).unlink()
+    with pytest.raises(ValueError, match='Task ledger is incomplete'):
+        bundle.reserve('second', {})
+    assert bundle.attempt_count == 1

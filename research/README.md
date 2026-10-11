@@ -114,6 +114,14 @@ and historical cost is unavailable without historical pricing. Reports retain th
 limitations and separate authored, historical and fresh cohorts. Pairwise identity
 errors measure annotated endpoints, not individuals or missing extractions.
 
+Resolver latency includes provider and edit application time only. Pipeline latency
+adds the shared extraction provider measurement and each configuration's graph and
+evaluation times; artifact I/O and identity diagnostics are excluded. The historical
+observation's original elapsed time includes local processing, so it is displayed
+separately and comparable pipeline estimates remain unavailable. Resume rejects
+changed code or dependency versions. Restore an incomplete task ledger before
+attempting further paid calls; never reset it to recover an interrupted experiment.
+
 ## Deterministic verification
 
 ```bash
