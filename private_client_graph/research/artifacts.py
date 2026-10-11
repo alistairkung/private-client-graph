@@ -139,26 +139,44 @@ class Bundle:
         record = {'attempt_id': attempt_id, 'started_at': utc_now(),
                   'request': request, 'status': 'uncertain'}
         if self.plan.kind == 'demonstration':
-            self._check_budget(path)
-            write_json_once(path, record)
+            self._reserve_demonstration(path, record)
             return
+
+        self._reserve_paid_attempt(path, record)
+
+    def _reserve_demonstration(self, path: Path, record: dict[str, Any]) -> None:
+        self._check_budget(path)
+        write_json_once(path, record)
+
+    def _reserve_paid_attempt(self, path: Path, record: dict[str, Any]) -> None:
         self.task_ledger.mkdir(parents=True, exist_ok=True)
         with (self.task_ledger / '.lock').open('a') as lock:
             fcntl.flock(lock, fcntl.LOCK_EX)
-            for previous in self.attempts():
-                reservation = self.task_ledger / f"{self.manifest['experiment_id']}-{previous['attempt_id']}.json"
-                if not reservation.exists():
-                    raise ValueError('Task ledger is incomplete; restore it before paid execution')
-            shared = self.task_ledger / f"{self.manifest['experiment_id']}-{attempt_id}.json"
-            if shared.exists() and not path.exists():
-                # Recover a crash between the task-wide and bundle reservations.
-                write_json_once(path, json.loads(shared.read_text()))
+            self._validate_task_ledger()
+            shared = self._task_reservation_path(record['attempt_id'])
+            self._recover_bundle_reservation(path, shared)
             self._check_budget(path)
-            limit = 5 if self.plan.kind == 'task_a_diagnostic' else 38
-            if self.task_attempt_count >= limit:
+            if self.task_attempt_count >= self._task_call_limit():
                 raise BudgetExceeded('Shared task allowance exhausted; approval required')
             write_json_once(shared, record)
             write_json_once(path, record)
+
+    def _validate_task_ledger(self) -> None:
+        for previous in self.attempts():
+            if not self._task_reservation_path(previous['attempt_id']).exists():
+                raise ValueError('Task ledger is incomplete; restore it before paid execution')
+
+    def _task_reservation_path(self, attempt_id: str) -> Path:
+        return self.task_ledger / f"{self.manifest['experiment_id']}-{attempt_id}.json"
+
+    @staticmethod
+    def _recover_bundle_reservation(path: Path, shared: Path) -> None:
+        if shared.exists() and not path.exists():
+            # Recover a crash between the task-wide and bundle reservations.
+            write_json_once(path, json.loads(shared.read_text()))
+
+    def _task_call_limit(self) -> int:
+        return 5 if self.plan.kind == 'task_a_diagnostic' else 38
 
     def _check_budget(self, path: Path) -> None:
         if path.exists():
@@ -184,4 +202,9 @@ class Bundle:
         write_json_once(self.path / 'results' / f'{_safe_id(result_id)}.json', result)
 
     def results(self) -> list[dict[str, Any]]:
-        return [json.loads(p.read_text()) for p in sorted((self.path / 'results').glob('*.json'))]
+        from .results import ResearchResult
+
+        return [
+            ResearchResult.model_validate_json(path.read_text()).model_dump(mode='json')
+            for path in sorted((self.path / 'results').glob('*.json'))
+        ]

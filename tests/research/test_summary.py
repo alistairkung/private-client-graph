@@ -27,10 +27,12 @@ def test_aggregate_keeps_missing_scores_separate_and_uses_all_repetitions(tmp_pa
     assert row['resolver_metrics']['f1']['minimum'] == .5
     assert row['paired_deltas']['mean'] == .25
     assert row['scored_repetitions'] == 2
+    assert row['valid_repetitions'] == 2
     assert row['failed_repetitions'] == 1
     assert row['failure_rate_among_attempted'] == pytest.approx(1 / 3)
     assert row['paired_score_coverage'] == pytest.approx(2 / 3)
     assert report['operations']['attempted'] == 3
+    assert report['operations']['valid_attempts'] == 2
     assert report['operations']['estimated_spend'] is None
     assert row['single_pipeline_cost']['mean'] is None  # authored extraction has no measured cost
 

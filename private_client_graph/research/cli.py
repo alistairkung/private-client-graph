@@ -26,6 +26,7 @@ def main(argv: list[str] | None = None) -> None:
     plan.add_argument('--kind', choices=['demonstration', 'task_a_diagnostic', 'task_b_pilot'], default='demonstration')
     plan.add_argument('--samples', help='Comma-separated frozen input IDs; default all six')
     plan.add_argument('--model')
+    plan.add_argument('--effective-model', help='Provider-resolved model/version recorded during preflight')
     plan.add_argument('--repetitions', type=int, default=3)
     plan.add_argument('--fresh', type=int)
     plan.add_argument('--max-calls', type=int)
@@ -72,7 +73,7 @@ def _plan(args: argparse.Namespace) -> None:
     settings = ModelSettings(model=args.model or os.getenv('DEEPSEEK_MODEL', 'deepseek-flash'))
     plan = ExperimentPlan(
         kind=args.kind, task_id='92' if args.kind == 'task_b_pilot' else '91', inputs=inputs,
-        settings=settings, repetitions=args.repetitions,
+        settings=settings, effective_model=args.effective_model, repetitions=args.repetitions,
         fresh_extractions=args.fresh if args.fresh is not None else (5 if args.kind == 'task_b_pilot' else 0),
         max_calls=args.max_calls if args.max_calls is not None else (5 if args.kind == 'task_a_diagnostic' else 38),
         pricing=Pricing.model_validate_json(args.pricing.read_text()) if args.pricing else None,

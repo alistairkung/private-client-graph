@@ -29,30 +29,55 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;padding:18px;background:white;fo
 
 def render_report(bundle: Bundle) -> str:
     report = summarize(bundle)
-    mode = ('Deterministic demonstration — substitute responses, not provider performance.'
-            if report['kind'] == 'demonstration' else
-            'Task A development diagnostics — not the evaluation pilot.' if report['kind'] == 'task_a_diagnostic'
-            else 'Development pilot — descriptive evidence, not a reliability estimate.')
-    operations = report['operations']
-    sections = [_cohort_section(report, cohort) for cohort in report['cohorts']]
-    provenance = {k: v for k, v in report['provenance'].items() if k != 'code'}
+    header = _report_header(report)
+    cohort_sections = ''.join(_cohort_section(report, cohort) for cohort in report['cohorts'])
+    operations = _operations_section(report)
+    method = _method_section(bundle, report)
+    return _document(header, cohort_sections, operations, method)
+
+
+def _document(header: str, cohorts: str, operations: str, method: str) -> str:
     return f'''<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"><title>Alias resolution experiment · Private Client Graph</title>
-<style>{STYLE}</style></head><body><main>
-<header><h1>Does alias resolution earn its place?</h1>
+<style>{STYLE}</style></head><body><main>{header}{cohorts}{operations}{method}</main></body></html>'''
+
+
+def _report_header(report: dict[str, Any]) -> str:
+    mode = _mode_notice(report['kind'])
+    effective_model = report['effective_model'] or 'Unavailable before provider response'
+    navigation = ''.join(
+        f'<a href="#{cohort}">{cohort.capitalize()} inputs</a>'
+        for cohort in report['cohorts']
+    )
+    return f'''<header><h1>Does alias resolution earn its place?</h1>
 <p>Private Client Graph compares the unchanged extraction with a full-Source generative resolver. Every comparison shares its extraction, graph construction and evaluation.</p>
 <p class="notice">{html.escape(mode)}</p>
-<p class="caption">Model: {html.escape(report['model'])}<br>Experiment: {html.escape(report['experiment_id'])}</p>
-<nav aria-label="Report sections">{''.join(f'<a href="#{c}">{c.capitalize()} inputs</a>' for c in report['cohorts'])}<a href="#operations">Cost and execution</a><a href="#method">Method and provenance</a></nav></header>
-{''.join(sections)}
-<section id="operations"><h2>Cost and execution</h2>
-<p>{operations['attempted']} attempted calls of {report['planned_provider_attempts']} planned; cap {report['call_cap']}. {operations['paid_attempts']} paid attempts. {operations['provider_failed_attempts']} provider failures; {operations['uncertain_attempts']} uncertain attempts.</p>
+<p class="caption">Requested model: {html.escape(report['model'])}<br>Effective model: {html.escape(effective_model)}<br>Experiment: {html.escape(report['experiment_id'])}</p>
+<nav aria-label="Report sections">{navigation}<a href="#operations">Cost and execution</a><a href="#method">Method and provenance</a></nav></header>'''
+
+
+def _mode_notice(kind: str) -> str:
+    if kind == 'demonstration':
+        return 'Deterministic demonstration — substitute responses, not provider performance.'
+    if kind == 'task_a_diagnostic':
+        return 'Task A development diagnostics — not the evaluation pilot.'
+    return 'Development pilot — descriptive evidence, not a reliability estimate.'
+
+
+def _operations_section(report: dict[str, Any]) -> str:
+    operations = report['operations']
+    return f'''<section id="operations"><h2>Cost and execution</h2>
+<p>{operations['attempted']} attempted calls of {report['planned_provider_attempts']} planned; {operations['valid_attempts']} valid provider responses; cap {report['call_cap']}. {operations['paid_attempts']} paid attempts. {operations['provider_failed_attempts']} provider failures; {operations['uncertain_attempts']} uncertain attempts.</p>
 <p>Estimated experiment spend: {_number(operations['estimated_spend'], 6)} {html.escape((report['configuration'].get('pricing') or {}).get('currency', ''))}. {operations['unpriced_attempts']} attempts lack sufficient pricing or usage. Known partial cost: {_number(operations['known_cost_sum'], 6)}. Unknown is not zero.</p>
 {_usage_table(operations['tokens'])}
 <p>Provider latency per attempt: mean {_number(operations['provider_latency']['mean'])} s; sample SD {_number(operations['provider_latency']['standard_deviation'])} s. Returned models: {html.escape(', '.join(operations['returned_models']) or 'Unavailable')}.</p>
 {_details('Attempt statuses, raw observations and usage', operations['attempts'])}
-{_details('Execution checkpoints and stop reasons', report['sessions'])}</section>
-<section id="method"><h2>Method and provenance</h2>
+{_details('Execution checkpoints and stop reasons', report['sessions'])}</section>'''
+
+
+def _method_section(bundle: Bundle, report: dict[str, Any]) -> str:
+    provenance = {k: v for k, v in report['provenance'].items() if k != 'code'}
+    return f'''<section id="method"><h2>Method and provenance</h2>
 <p>Each resolver repetition uses the same saved extraction. Resolver mean and range describe all scored repetitions; failed scores remain missing. Sample index is not elapsed time. Three repetitions do not establish reliability.</p>
 <p>Cohort summaries give each input equal weight. Between-input variation of resolver means is separate from within-input variation. Identity diagnostics compare annotated endpoint pairs, not counts of people. Unannotated inputs have no identity score. Provenance accuracy applies only to matched relationships.</p>
 <p>Authored challenges measure targeted behavior, not real-world error prevalence. Existing name-based evaluation cannot distinguish different people with identical names. No statistical significance or unseen-test generalisation is claimed.</p>
@@ -61,7 +86,7 @@ def render_report(bundle: Bundle) -> str:
 {_details('Configuration and pricing metadata', report['configuration'])}
 {_details('Code revision, dependencies and prompt snapshots', provenance)}
 {_details('Fixture versions, hashes and annotation provenance', [s.model_dump(mode='json') for s in bundle.plan.inputs])}
-</section></main></body></html>'''
+</section>'''
 
 
 def _number(value: Any, places: int = 3) -> str:
@@ -85,7 +110,7 @@ def _cohort_section(report: dict[str, Any], cohort: str) -> str:
                  f"{sample['scored_repetitions']}/{len(sample['repetitions'])}", str(sample['failed_repetitions'])]
         rows.append('<tr>'+''.join(f'<td>{c}</td>' for c in cells)+'</tr>')
     return f'''<section id="{cohort}"><h2>{cohort.capitalize()} inputs</h2>
-<p class="caption">{stats['samples']} paired inputs across {len(stats['cases'])} case identifiers. {stats['scored_repetitions']} scored resolver repetitions; {stats['failed_repetitions']} failed or unavailable; {stats['not_attempted_repetitions']} not attempted. {stats['paired_score_count']} paired deltas available.</p>
+<p class="caption">{stats['samples']} paired inputs across {len(stats['cases'])} case identifiers. {stats['valid_repetitions']} valid resolver repetitions; {stats['scored_repetitions']} scored; {stats['failed_repetitions']} failed or unavailable; {stats['not_attempted_repetitions']} not attempted. {stats['paired_score_count']} paired deltas available.</p>
 <div class="plot"><div class="legend"><span>Dashed line / square: no-op baseline</span><span>Solid line / circle: resolver mean; bars: range</span></div>{f1_chart(samples, cohort)}</div>
 <div class="table-scroll"><table><caption>F1 by paired input; failures are excluded from scores and counted explicitly.</caption>
 <thead><tr><th>Paired sample</th><th>Baseline</th><th>Resolver mean</th><th>Sample SD</th><th>Minimum</th><th>Mean delta</th><th>Scored/planned</th><th>Failed</th></tr></thead><tbody>{''.join(rows)}</tbody></table></div>

@@ -30,7 +30,8 @@ def summarize(bundle: Bundle) -> dict[str, Any]:
     summaries = [_sample_summary(bundle, sample, rows, attempts) for sample in samples]
     return {'schema_version': 1, 'experiment_id': bundle.manifest['experiment_id'],
             'kind': bundle.plan.kind, 'task_id': bundle.plan.task_id,
-            'model': bundle.plan.settings.model, 'configuration': bundle.plan.model_dump(mode='json', exclude={'inputs'}),
+            'model': bundle.plan.settings.model, 'effective_model': bundle.plan.effective_model,
+            'configuration': bundle.plan.model_dump(mode='json', exclude={'inputs'}),
             'planned_provider_attempts': len(bundle.plan.inputs) * bundle.plan.repetitions
                 + bundle.plan.fresh_extractions * (1 + bundle.plan.repetitions),
             'call_cap': bundle.plan.max_calls, 'samples': summaries,
@@ -59,6 +60,7 @@ def _sample_summary(bundle: Bundle, sample: dict[str, Any], rows: list[dict[str,
     historical = next((s.historical for s in bundle.plan.inputs if s.sample_id == sample['sample_id']), None)
     return {**sample, 'baseline': baseline, 'repetitions': repetitions,
             'resolver_metrics': metrics, 'scored_repetitions': metrics['f1']['n'],
+            'valid_repetitions': sum(r['status'] == 'completed' for r in repetitions),
             'failed_repetitions': failed,
             'attempted_repetitions': attempted,
             'failure_rate_among_attempted': attempted_failures / attempted if attempted else None,
@@ -98,6 +100,7 @@ def _cohorts(samples: list[dict[str, Any]]) -> dict[str, Any]:
             'baseline_metrics': {m: distribution([_score(s['baseline'], m) for s in group]) for m in QUALITY},
             'resolver_per_input_means': {m: distribution([s['resolver_metrics'][m]['mean'] for s in group]) for m in QUALITY},
             'within_input_f1_standard_deviations': {s['sample_id']: s['resolver_metrics']['f1']['standard_deviation'] for s in group},
+            'valid_repetitions': sum(s['valid_repetitions'] for s in group),
             'scored_repetitions': sum(s['scored_repetitions'] for s in group),
             'failed_repetitions': sum(s['failed_repetitions'] for s in group),
             'not_attempted_repetitions': sum(s['not_attempted_repetitions'] for s in group),
@@ -129,6 +132,8 @@ def _operations(bundle: Bundle, attempts: list[dict[str, Any]]) -> dict[str, Any
         usage_totals[field] = {'known_sum': sum(observed), 'known_attempts': len(observed),
                                'unknown_attempts': len(usages) - len(observed)}
     return {'attempted': len(attempts), 'paid_attempts': len(attempts) if bundle.plan.kind != 'demonstration' else 0,
+            'valid_attempts': sum(a['status'] == 'completed'
+                                  and a.get('response', {}).get('payload') is not None for a in attempts),
             'uncertain_attempts': sum(a['status'] == 'uncertain' for a in attempts),
             'provider_failed_attempts': sum(a['status'] == 'provider_error' for a in attempts),
             'estimated_spend': sum(known_costs) if len(known_costs) == len(costs) else None,

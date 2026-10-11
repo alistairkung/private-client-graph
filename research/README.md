@@ -53,13 +53,16 @@ explicitly authorizes #92, plan a separate `task_b_pilot` bundle with the approv
 reference and reviewed Task A commit:
 
 ```bash
-uv run python -m private_client_graph.research plan runs/research/pilot --kind task_b_pilot --authorization-reference APPROVAL_REFERENCE --reviewed-commit REVIEWED_COMMIT
+uv run python -m private_client_graph.research plan runs/research/pilot --kind task_b_pilot --effective-model RESOLVED_MODEL --pricing pricing.json --authorization-reference APPROVAL_REFERENCE --reviewed-commit REVIEWED_COMMIT
 uv run python -m private_client_graph.research run runs/research/pilot --live
 ```
 
 Defaults are six frozen inputs, five fresh Case 03 extraction attempts, and three
-resolver repetitions per usable input: at most 38 new provider attempts. The first
-run stops after six attempts on the matched challenge. Inspect those artifacts;
+resolver repetitions per usable input: at most 38 new provider attempts.
+`--effective-model` records the provider-resolved model/version separately from the
+requested `--model` alias; resolve it during preflight, before creating the pilot
+manifest. Task B also requires dated pricing metadata for that effective model.
+The first run stops after six attempts on the matched challenge. Inspect those artifacts;
 continue only if the implementation is working and further observations serve the
 fixed study. `--checkpoint N` bounds new attempts in that invocation, never resets
 the task budget. A poor result is data, not authorization to tune/rebuild or replace
@@ -81,8 +84,10 @@ to research/domain code invalidate execution resume; render/export still work fr
 saved observations. A revised experiment requires a new manifest and still shares
 the existing task cap. Ask for approval before exceeding the task allowance.
 
-Keep artifacts until the user elects deletion. `export` produces a portable archive
-outside the bundle and refuses overwriting an existing archive. Verify it with:
+Keep artifacts until the user elects deletion. Run `render` before `export`; export
+rejects bundles missing their derived `summary.json` or standalone `report.html`.
+`export` produces a portable archive outside the bundle and refuses overwriting an
+existing archive. Verify it with:
 
 ```python
 from pathlib import Path
@@ -97,8 +102,9 @@ unavailable local path or only aggregates.
 
 ## Pricing and interpretation
 
-Pricing is optional because unknown cost must not become zero. Supply `--pricing`
-with JSON matching the configured model, for example (illustrative rates only):
+Pricing is optional outside Task B because unknown cost must not become zero. Task B
+requires preflighted pricing metadata. Supply `--pricing` with JSON matching the
+effective model, for example (illustrative rates only):
 
 ```json
 {"model":"deepseek-flash","currency":"USD","input_per_million":1.0,

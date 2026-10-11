@@ -1,6 +1,6 @@
 from private_client_graph.research.artifacts import Bundle
 from private_client_graph.research.fixtures import load_inputs
-from private_client_graph.research.plan import ExperimentPlan
+from private_client_graph.research.plan import ExperimentPlan, Pricing
 from private_client_graph.research.provider import ModelResponse, TokenUsage
 from private_client_graph.research.runner import execute
 
@@ -59,11 +59,30 @@ def test_uncertain_attempt_is_not_reissued_and_explicit_live_gate_is_required(tm
         raise AssertionError('Must not reissue interrupted call')
     execute(bundle, provider=forbidden)
     assert next(r for r in bundle.results() if r['configuration'] != 'noop')['status'] == 'uncertain'
-    paid = Bundle.create(tmp_path / 'paid', ExperimentPlan(kind='task_b_pilot', task_id='92', inputs=[sample]), task_ledger=tmp_path / 'ledger')
+    pricing = Pricing(model='deepseek-flash', input_per_million=1, output_per_million=2,
+                      source_url='https://provider.test/pricing', retrieved_at='2026-10-11')
+    paid = Bundle.create(tmp_path / 'paid', ExperimentPlan(
+        kind='task_b_pilot', task_id='92', inputs=[sample],
+        effective_model='deepseek-flash', pricing=pricing,
+    ), task_ledger=tmp_path / 'ledger')
     with pytest.raises(ValueError, match='explicit'):
         execute(paid, provider=forbidden)
     with pytest.raises(ValueError, match='authorization'):
         execute(paid, provider=forbidden, live=True)
+
+
+def test_task_b_plan_requires_effective_model_and_pricing_before_dispatch():
+    import pytest
+
+    sample = load_inputs()[-2]
+    with pytest.raises(ValueError, match='effective model'):
+        ExperimentPlan(kind='task_b_pilot', task_id='92', inputs=[sample])
+
+    with pytest.raises(ValueError, match='pricing metadata'):
+        ExperimentPlan(
+            kind='task_b_pilot', task_id='92', inputs=[sample],
+            effective_model='deepseek-flash',
+        )
 
 
 def test_fresh_extractions_repeat_same_input_without_copying_annotations(tmp_path):

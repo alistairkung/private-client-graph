@@ -1,7 +1,7 @@
 """Paired execution over frozen inputs, with explicit live gates and no retries."""
 import time
 from collections.abc import Callable, Iterator
-from typing import Any
+from typing import Any, Literal
 from uuid import uuid4
 
 from private_client_graph.evaluation import evaluate_graph
@@ -9,9 +9,10 @@ from private_client_graph.graph import build_graph
 from private_client_graph.models import ExtractionResult
 from .artifacts import Bundle, BudgetExceeded, code_snapshot, dependency_versions, utc_now, write_json_once
 from .inputs import ResearchInput
-from .metrics import estimate_cost, identity_diagnostics
+from .metrics import IdentityDiagnostics, estimate_cost, identity_diagnostics
 from .provider import ModelRequest, ModelResponse, TokenUsage
 from .resolution import apply_edits, no_resolution
+from .results import ResearchResult
 
 Provider = Callable[[ModelRequest], ModelResponse]
 
@@ -82,10 +83,14 @@ def _run_pair(bundle: Bundle, sample: ResearchInput, provider: Provider,
     baseline_id = f'{sample.sample_id}-noop'
     if not (bundle.path / 'results' / f'{baseline_id}.json').exists():
         baseline = _evaluate(sample, no_resolution(sample.extraction))
-        bundle.save_result(baseline_id, {**baseline, 'configuration': 'noop', 'repetition': 0,
-                                        'provider_seconds': 0, 'resolution_seconds': 0,
-                                        'edit_seconds': 0, 'incremental_cost': 0,
-                                        'usage': TokenUsage(input_tokens=0, output_tokens=0, cached_tokens=0).model_dump()})
+        baseline.configuration = 'noop'
+        baseline.repetition = 0
+        baseline.provider_seconds = 0
+        baseline.resolution_seconds = 0
+        baseline.edit_seconds = 0
+        baseline.incremental_cost = 0
+        baseline.usage = TokenUsage(input_tokens=0, output_tokens=0, cached_tokens=0)
+        bundle.save_result(baseline_id, baseline.model_dump(mode='json'))
     request = ModelRequest(stage='resolution', source=sample.source,
                            extraction=sample.extraction, settings=bundle.plan.settings)
     for repetition in range(1, bundle.plan.repetitions + 1):
@@ -94,61 +99,81 @@ def _run_pair(bundle: Bundle, sample: ResearchInput, provider: Provider,
             continue
         observation = _observe(bundle, attempt_id, request, provider, initial_count, limit)
         result = _resolved_result(sample, observation)
-        result.update(configuration='generative_full_source', repetition=repetition,
-                      attempt_id=attempt_id, provider_seconds=observation.get('provider_seconds'))
+        result.configuration = 'generative_full_source'
+        result.repetition = repetition
+        result.attempt_id = attempt_id
+        result.provider_seconds = observation.get('provider_seconds')
         usage = TokenUsage.model_validate(observation.get('response', {}).get('usage', {}))
-        result.update(usage=usage.model_dump(), incremental_cost=estimate_cost(usage, bundle.plan.pricing))
-        bundle.save_result(attempt_id, result)
+        result.usage = usage
+        result.incremental_cost = estimate_cost(usage, bundle.plan.pricing)
+        bundle.save_result(attempt_id, result.model_dump(mode='json'))
 
 
-def _base_result(sample: ResearchInput) -> dict[str, Any]:
-    return {'sample_id': sample.sample_id, 'case_id': sample.case_id, 'cohort': sample.cohort,
-            'status': 'completed', 'graph': None, 'evaluation': None, 'identity': None,
-            'extraction': None, 'edits': None}
+def _base_result(sample: ResearchInput) -> ResearchResult:
+    return ResearchResult(
+        sample_id=sample.sample_id,
+        case_id=sample.case_id,
+        cohort=sample.cohort,
+    )
 
 
-def _resolved_result(sample: ResearchInput, observation: dict[str, Any]) -> dict[str, Any]:
+def _resolved_result(sample: ResearchInput, observation: dict[str, Any]) -> ResearchResult:
     result = _base_result(sample)
     if observation['status'] != 'completed':
-        return {**result, 'status': observation['status'], 'stage': 'provider',
-                'error_type': observation.get('error_type')}
+        result.status = observation['status']
+        result.stage = 'provider'
+        result.error_type = observation.get('error_type')
+        return result
     payload = observation['response'].get('payload')
     if payload is None:
-        return {**result, 'status': 'parse_error', 'stage': 'parse',
-                'error_type': observation['response'].get('error_type')}
+        result.status = 'parse_error'
+        result.stage = 'parse'
+        result.error_type = observation['response'].get('error_type')
+        return result
     assert sample.extraction is not None
     started = time.perf_counter()
     try:
         resolved = apply_edits(sample.extraction, sample.source, payload)
     except ValueError as error:
-        edit_seconds = time.perf_counter() - started
-        return {**result, 'status': 'edit_error', 'stage': 'edits', 'error_type': type(error).__name__,
-                'edit_seconds': edit_seconds,
-                'resolution_seconds': edit_seconds + observation['provider_seconds']}
+        result.status = 'edit_error'
+        result.stage = 'edits'
+        result.error_type = type(error).__name__
+        result.edit_seconds = time.perf_counter() - started
+        result.resolution_seconds = result.edit_seconds + observation['provider_seconds']
+        return result
     edit_seconds = time.perf_counter() - started
     result = _evaluate(sample, resolved)
-    return {**result, 'edits': payload['edits'], 'edit_seconds': edit_seconds,
-            'resolution_seconds': edit_seconds + observation['provider_seconds']}
+    result.edits = payload['edits']
+    result.edit_seconds = edit_seconds
+    result.resolution_seconds = edit_seconds + observation['provider_seconds']
+    return result
 
 
-def _evaluate(sample: ResearchInput, extraction: ExtractionResult) -> dict[str, Any]:
+def _evaluate(sample: ResearchInput, extraction: ExtractionResult) -> ResearchResult:
     result = _base_result(sample)
-    result['extraction'] = extraction.model_dump()
-    result['identity'] = identity_diagnostics(sample, extraction)
+    result.extraction = extraction
+    diagnostics = identity_diagnostics(sample, extraction)
+    result.identity = IdentityDiagnostics.model_validate(diagnostics) if diagnostics is not None else None
     started = time.perf_counter()
     try:
         graph = build_graph(extraction.relationships, document='source.txt', source_text=sample.source)
     except ValueError as error:
-        return {**result, 'status': 'graph_error', 'stage': 'graph', 'error_type': type(error).__name__,
-                'graph_seconds': time.perf_counter() - started}
-    result.update(graph=graph.model_dump(), graph_seconds=time.perf_counter() - started)
+        result.status = 'graph_error'
+        result.stage = 'graph'
+        result.error_type = type(error).__name__
+        result.graph_seconds = time.perf_counter() - started
+        return result
+    result.graph = graph
+    result.graph_seconds = time.perf_counter() - started
     started = time.perf_counter()
     try:
-        result['evaluation'] = evaluate_graph(graph, sample.truth).model_dump()
+        result.evaluation = evaluate_graph(graph, sample.truth)
     except ValueError as error:
-        result.update(status='evaluation_error', stage='evaluation', error_type=type(error).__name__)
-    result['evaluation_seconds'] = time.perf_counter() - started
-    result['downstream_seconds'] = result['graph_seconds'] + result['evaluation_seconds']
+        result.status = 'evaluation_error'
+        result.stage = 'evaluation'
+        result.error_type = type(error).__name__
+    result.evaluation_seconds = time.perf_counter() - started
+    result.downstream_seconds = result.graph_seconds + result.evaluation_seconds
     return result
 
 
@@ -170,13 +195,22 @@ def _fresh_inputs(bundle: Bundle, provider: Provider, initial_count: int,
                 raise ValueError('No parsed extraction')
             sample.extraction = ExtractionResult.model_validate(observation['response']['payload'])
         except ValueError:
-            for suffix, configuration, repetition in [('noop', 'noop', 0)] + [
-                    (f'resolve-{r}', 'generative_full_source', r) for r in range(1, bundle.plan.repetitions + 1)]:
+            unavailable_results: list[
+                tuple[str, Literal['noop', 'generative_full_source'], int]
+            ] = [('noop', 'noop', 0)]
+            unavailable_results.extend(
+                (f'resolve-{repetition}', 'generative_full_source', repetition)
+                for repetition in range(1, bundle.plan.repetitions + 1)
+            )
+            for suffix, configuration, repetition in unavailable_results:
                 result_id = f'{sample_id}-{suffix}'
                 if not (bundle.path / 'results' / f'{result_id}.json').exists():
-                    bundle.save_result(result_id, {**_base_result(sample), 'status': 'unavailable',
-                                                  'stage': 'extraction', 'configuration': configuration,
-                                                  'repetition': repetition})
+                    unavailable = _base_result(sample)
+                    unavailable.status = 'unavailable'
+                    unavailable.stage = 'extraction'
+                    unavailable.configuration = configuration
+                    unavailable.repetition = repetition
+                    bundle.save_result(result_id, unavailable.model_dump(mode='json'))
             continue
         snapshot = bundle.path / 'fresh_inputs' / f'{sample_id}.json'
         if not snapshot.exists():
