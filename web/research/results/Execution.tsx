@@ -1,6 +1,8 @@
 import type { ExperimentDetail } from "../shared/contracts";
 import { number, RecordedDetails } from "../shared/presentation";
 
+import { UsageSummary } from "./UsageSummary";
+
 export function Execution({ data }: { data: ExperimentDetail }) {
   const operations = data.operations;
   const spend =
@@ -15,6 +17,7 @@ export function Execution({ data }: { data: ExperimentDetail }) {
         Historical imports are read-only. Recorded authorizations and ledger
         paths cannot authorize execution here.
       </p>
+      <UsageSummary data={data} />
       <dl>
         <dt>Recorded provider attempts</dt>
         <dd>{String(operations.attempted ?? "Unavailable")}</dd>

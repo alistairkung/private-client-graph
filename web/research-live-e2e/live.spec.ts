@@ -4,9 +4,11 @@ test("explicit approval, checkpoint, continuation and exact Evidence with substi
   page,
 }, info) => {
   await page.goto("/#new=1");
+  await page.getByRole("button", { name: /Extract relationships/ }).click();
   await page
     .getByRole("combobox", { name: "Execution mode", exact: true })
     .selectOption("live");
+  await page.getByRole("button", { name: /Resolve aliases/ }).click();
   await page
     .getByRole("spinbutton", { name: "Resolver repetitions", exact: true })
     .fill("2");
@@ -17,6 +19,10 @@ test("explicit approval, checkpoint, continuation and exact Evidence with substi
       exact: true,
     })
     .fill("20");
+  await page.getByRole("button", { name: "Customize inputs" }).click();
+  await page.getByRole("button", { name: "Clear selection" }).click();
+  await page.getByRole("checkbox", { name: /case_03_fixture/ }).check();
+  await page.getByRole("button", { name: "Apply inputs" }).click();
   await page.getByRole("button", { name: "Review frozen plan" }).click();
   const approve = page.getByRole("button", {
     name: "Authorize and start",
@@ -31,7 +37,7 @@ test("explicit approval, checkpoint, continuation and exact Evidence with substi
     "A call cap is not a guaranteed dollar cap",
   );
   await expect(
-    page.getByRole("heading", { name: "frozen", exact: true }),
+    page.getByRole("heading", { name: "Execution · frozen", exact: true }),
   ).toBeVisible();
   await page.reload();
   await expect(approve).toBeDisabled();
@@ -51,11 +57,11 @@ test("explicit approval, checkpoint, continuation and exact Evidence with substi
   await page.keyboard.press("Space");
   await approve.click();
   await expect(
-    page.getByRole("heading", { name: "stopped", exact: true }),
+    page.getByRole("heading", { name: "Execution · stopped", exact: true }),
   ).toBeVisible();
   await page.reload();
   await expect(
-    page.getByRole("heading", { name: "stopped", exact: true }),
+    page.getByRole("heading", { name: "Execution · stopped", exact: true }),
   ).toBeVisible();
   await page.getByRole("button", { name: "Review continuation" }).click();
   await expect(
@@ -68,8 +74,20 @@ test("explicit approval, checkpoint, continuation and exact Evidence with substi
   await consent.check();
   await page.getByRole("button", { name: "Authorize and continue" }).click();
   await expect(
-    page.getByRole("heading", { name: "complete", exact: true }),
+    page.getByRole("heading", { name: "Execution · complete", exact: true }),
   ).toBeVisible();
+  await expect(
+    page.getByRole("region", { name: "Relationship evaluation", exact: true }),
+  ).toBeVisible();
+  await page
+    .getByRole("combobox", { name: "Treatment repetition", exact: true })
+    .selectOption("generative_full_source-2");
+  await page
+    .getByRole("link", { name: "Baseline missing: 1", exact: true })
+    .click();
+  await expect(
+    page.getByRole("combobox", { name: "Treatment repetition", exact: true }),
+  ).toHaveValue("generative_full_source-2");
   await page.getByRole("link", { name: "Inspect persisted results" }).click();
   await expect(page.locator(".experiment-heading")).toContainText(
     "Live experiment",

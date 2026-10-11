@@ -5,11 +5,16 @@ import { LiveReview } from "./LiveReview";
 import { PlanSummary } from "./PlanSummary";
 import "./configuration.css";
 
+import { Pipeline } from "./Pipeline";
+import { Results } from "../results/Results";
+
 export function Run({
   id,
   edit,
+  params,
 }: {
   id: string;
+  params: URLSearchParams;
   edit: (proposal: Proposal) => void;
 }) {
   const [data, setData] = useState<RunStatus | null>(null);
@@ -94,7 +99,7 @@ export function Run({
   if (!data)
     return (
       <>
-        <a href="#">Back to experiments</a>
+        <a href="#browse=1">Back to experiments</a>
         <h1>Frozen experiment</h1>
         {error ? <p role="alert">{error}</p> : <p>Loading plan…</p>}
         <button onClick={() => setRetry((value) => value + 1)}>
@@ -106,155 +111,178 @@ export function Run({
   const another = data.active_plan_id && data.active_plan_id !== id;
   return (
     <>
-      <a href="#">Back to experiments</a>
+      <a href="#browse=1">Back to experiments</a>
       <h1>Frozen experiment</h1>
-      <section className="run-status" aria-label="Execution status">
-        <h2>{data.state}</h2>
-        <p role="status">{data.message}</p>
-        {data.current_work && <p>Current work: {data.current_work}</p>}
-        <p>
-          {data.completed_observations} / {data.planned_observations}{" "}
-          observations recorded · {data.attempts} provider attempts ·{" "}
-          {data.uncertain_attempts} uncertain
-        </p>
-        {(data.state === "running" || data.state === "stopping") && (
-          <p>Browser closure does not stop this experiment.</p>
-        )}
-        {another && (
+      <Pipeline proposal={data.plan.preview.proposal} />
+      <div className="execution-bench">
+        <section className="run-status" aria-label="Execution status">
+          <h2>Execution · {data.state}</h2>
+          <progress
+            aria-label="Recorded observations"
+            max={Math.max(1, data.planned_observations)}
+            value={data.completed_observations}
+          />
+          <p role="status">{data.message}</p>
+          <p>Current work: {data.current_work ?? "Unavailable"}</p>
+          <p>{data.remaining_attempts} remaining attempts</p>
           <p>
-            Another experiment is active.{" "}
-            <a href={`#plan=${data.active_plan_id}`}>Open active experiment</a>
+            {data.completed_observations} / {data.planned_observations}{" "}
+            observations recorded · {data.attempts} provider attempts ·{" "}
+            {data.uncertain_attempts} uncertain
           </p>
-        )}
-        {error && !(live && (data.state === "frozen" || reviewing)) && (
-          <p role="alert">
-            {error}{" "}
-            <button onClick={() => setRetry((value) => value + 1)}>
-              Refresh status
-            </button>
-          </p>
-        )}
-        <div className="run-actions">
-          {data.state === "running" && (
-            <button disabled={busy} onClick={() => act("stop")}>
-              Stop after current attempt
-            </button>
+          {(data.state === "running" || data.state === "stopping") && (
+            <p>Browser closure does not stop this experiment.</p>
           )}
-          {["stopped", "interrupted", "failed"].includes(data.state) &&
-            !reviewing && (
-              <button
-                disabled={busy || !!another}
-                onClick={() => setReviewing(true)}
-              >
-                Review continuation
+          {another && (
+            <p>
+              Another experiment is active.{" "}
+              <a href={`#plan=${data.active_plan_id}`}>
+                Open active experiment
+              </a>
+            </p>
+          )}
+          {error && !(live && (data.state === "frozen" || reviewing)) && (
+            <p role="alert">
+              {error}{" "}
+              <button onClick={() => setRetry((value) => value + 1)}>
+                Refresh status
+              </button>
+            </p>
+          )}
+          <div className="run-actions">
+            {data.state === "running" && (
+              <button disabled={busy} onClick={() => act("stop")}>
+                Stop after current attempt
               </button>
             )}
-          <a href={`#experiment=${data.result_id}`}>
-            Inspect persisted results
-          </a>
-        </div>
-      </section>
-      {reviewing && (
-        <section className="continuation">
-          <h2>Review remaining execution</h2>
-          <p>
-            Provider attempts remaining: {data.remaining_attempts}. Invocation
-            cap: {data.plan.preview.invocation_cap}. Uncertain attempts stay
-            counted and will not be resubmitted.
-          </p>
-          <p>
-            {live
-              ? "Review the task budget and explicitly approve continuation after the frozen configuration."
-              : "No paid calls are authorized. Existing results are retained."}
-          </p>
-          {!live && (
-            <button
-              disabled={busy || !!another}
-              onClick={() => act("continue")}
-            >
-              Continue offline execution
-            </button>
-          )}
+            {["stopped", "interrupted", "failed"].includes(data.state) &&
+              !reviewing && (
+                <button
+                  disabled={busy || !!another}
+                  onClick={() => setReviewing(true)}
+                >
+                  Review continuation
+                </button>
+              )}
+            <a href={`#experiment=${data.result_id}`}>
+              Inspect persisted results
+            </a>
+          </div>
         </section>
-      )}
-      <div className="frozen-layout">
-        <PlanSummary preview={data.plan.preview} frozen />
-        <section>
-          <h2>Frozen configuration</h2>
-          <dl>
-            <dt>Input mode</dt>
-            <dd>
-              {data.plan.preview.proposal.input_mode === "saved"
-                ? "Saved extraction snapshots"
-                : "Fresh extraction samples"}
-            </dd>
-            <dt>Resolver</dt>
-            <dd>
-              {data.plan.preview.proposal.resolver === "none"
-                ? "No resolution"
-                : "Generative · Full Source"}
-            </dd>
-            <dt>Extraction samples</dt>
-            <dd>{data.plan.preview.proposal.extraction_samples}</dd>
-            <dt>Resolver repetitions</dt>
-            <dd>{data.plan.preview.proposal.resolver_repetitions}</dd>
-            <dt>Model</dt>
-            <dd>{data.plan.preview.proposal.model}</dd>
-            <dt>Temperature</dt>
-            <dd>
-              {data.plan.preview.proposal.temperature ?? "Provider default"}
-            </dd>
-            <dt>Timeout (seconds)</dt>
-            <dd>{data.plan.preview.proposal.timeout_seconds}</dd>
-          </dl>
-          <details>
-            <summary>Plan identity and digest</summary>
-            <dl>
-              <dt>Plan identity</dt>
-              <dd>{data.plan.id}</dd>
-              <dt>Task identity</dt>
-              <dd>{data.plan.task_id}</dd>
-              <dt>Plan digest</dt>
-              <dd>{data.plan.digest}</dd>
-            </dl>
-          </details>
-        </section>
-      </div>
-      {live && (data.state === "frozen" || reviewing) && (
-        <LiveReview
-          key={`${data.task_budget?.used}-${data.task_budget?.cap}`}
-          data={data}
-          busy={busy}
-          error={error}
-          continuing={data.state !== "frozen"}
-          approve={() => void approveLive()}
-          refresh={() => {
-            delete requestIds.current.approve;
-            setRetry((value) => value + 1);
-          }}
-        />
-      )}
-      <div className="frozen-actions">
-        <div className="run-actions">
-          {data.state === "frozen" && !live && (
-            <button disabled={busy || !!another} onClick={() => act("start")}>
-              {data.plan.preview.proposal.execution_mode === "replay"
-                ? "Run replay"
-                : "Run recorded demonstration"}
-            </button>
+        <div className="execution-review">
+          {reviewing && (
+            <section className="continuation">
+              <h2>Review remaining execution</h2>
+              <p>
+                Provider attempts remaining: {data.remaining_attempts}.
+                Invocation cap: {data.plan.preview.invocation_cap}. Uncertain
+                attempts stay counted and will not be resubmitted.
+              </p>
+              <p>
+                {live
+                  ? "Review the task budget and explicitly approve continuation after the frozen configuration."
+                  : "No paid calls are authorized. Existing results are retained."}
+              </p>
+              {!live && (
+                <button
+                  disabled={busy || !!another}
+                  onClick={() => act("continue")}
+                >
+                  Continue offline execution
+                </button>
+              )}
+            </section>
           )}
-          <button
-            disabled={busy}
-            onClick={() => edit(data.plan.preview.proposal)}
-          >
-            Edit configuration
-          </button>
+          <div className="frozen-layout">
+            <PlanSummary preview={data.plan.preview} frozen />
+            <details>
+              <summary>Frozen configuration</summary>
+              <dl>
+                <dt>Input mode</dt>
+                <dd>
+                  {data.plan.preview.proposal.input_mode === "saved"
+                    ? "Saved extraction snapshots"
+                    : "Fresh extraction samples"}
+                </dd>
+                <dt>Resolver</dt>
+                <dd>
+                  {data.plan.preview.proposal.resolver === "none"
+                    ? "No resolution"
+                    : "Generative · Full Source"}
+                </dd>
+                <dt>Extraction samples</dt>
+                <dd>{data.plan.preview.proposal.extraction_samples}</dd>
+                <dt>Resolver repetitions</dt>
+                <dd>{data.plan.preview.proposal.resolver_repetitions}</dd>
+                <dt>Model</dt>
+                <dd>{data.plan.preview.proposal.model}</dd>
+                <dt>Temperature</dt>
+                <dd>
+                  {data.plan.preview.proposal.temperature ?? "Provider default"}
+                </dd>
+                <dt>Timeout (seconds)</dt>
+                <dd>{data.plan.preview.proposal.timeout_seconds}</dd>
+              </dl>
+              <details>
+                <summary>Plan identity and digest</summary>
+                <dl>
+                  <dt>Plan identity</dt>
+                  <dd>{data.plan.id}</dd>
+                  <dt>Task identity</dt>
+                  <dd>{data.plan.task_id}</dd>
+                  <dt>Plan digest</dt>
+                  <dd>{data.plan.digest}</dd>
+                </dl>
+              </details>
+            </details>
+          </div>
+          {live && (data.state === "frozen" || reviewing) && (
+            <LiveReview
+              key={`${data.task_budget?.used}-${data.task_budget?.cap}`}
+              data={data}
+              busy={busy}
+              error={error}
+              continuing={data.state !== "frozen"}
+              approve={() => void approveLive()}
+              refresh={() => {
+                delete requestIds.current.approve;
+                setRetry((value) => value + 1);
+              }}
+            />
+          )}
+          <div className="frozen-actions">
+            <div className="run-actions">
+              {data.state === "frozen" && !live && (
+                <button
+                  disabled={busy || !!another}
+                  onClick={() => act("start")}
+                >
+                  {data.plan.preview.proposal.execution_mode === "replay"
+                    ? "Run replay"
+                    : "Run recorded demonstration"}
+                </button>
+              )}
+              <button
+                disabled={busy}
+                onClick={() => edit(data.plan.preview.proposal)}
+              >
+                Edit configuration
+              </button>
+            </div>
+            <p className="muted">
+              Editing creates a new proposal requiring a new frozen plan. This
+              plan and its results remain unchanged.
+            </p>
+          </div>
         </div>
-        <p className="muted">
-          Editing creates a new proposal requiring a new frozen plan. This plan
-          and its results remain unchanged.
-        </p>
       </div>
+      <Results
+        id={data.result_id}
+        params={params}
+        historyLink="#browse=1"
+        embedded
+        refresh={data.completed_observations + data.attempts + retry}
+      />
     </>
   );
 }

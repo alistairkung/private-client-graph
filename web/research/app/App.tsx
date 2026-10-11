@@ -7,12 +7,16 @@ import { History } from "../history/History";
 import { Results } from "../results/Results";
 import { HistoricalComparison } from "../results/HistoricalComparison";
 
+import { Sidebar } from "./Sidebar";
+import "./workspace.css";
+
 export function App() {
   const [available, setAvailable] = useState<Capabilities | null | undefined>(
     undefined,
   );
   const [capabilityError, setCapabilityError] = useState("");
   const [capabilityRetry, setCapabilityRetry] = useState(0);
+  const [draftRevision, setDraftRevision] = useState(0);
   const [proposal, setProposal] = useState<Proposal | undefined>();
   useEffect(() => {
     const controller = new AbortController();
@@ -44,37 +48,37 @@ export function App() {
     "view",
     "sample",
     "observation",
+    "treatment",
     "relationship",
     "outcome",
     "case_outcome",
   ].forEach((key) => historyParams.delete(key));
+  historyParams.set("browse", "1");
   const historyLink = `#${historyParams}`;
+  const showNew =
+    params.has("new") || ((!location || location === "#") && !!available);
   return (
     <>
-      <header className="research-header">
-        <a href="#">
-          Private Client Graph <span>/ Research</span>
-        </a>
-        <span>
-          Local · Synthetic ·{" "}
-          {available
-            ? available.live_enabled
-              ? "Live approval available"
-              : "Offline execution"
-            : available === null
-              ? "Read-only"
-              : "Checking capabilities"}
-        </span>
-        {available && (
-          <nav aria-label="Research navigation">
-            <a href="#">Experiments</a>
-            <a href="#new=1" onClick={() => setProposal(undefined)}>
-              New experiment
-            </a>
-          </nav>
-        )}
-      </header>
-      <main>
+      <a
+        className="skip-workspace"
+        href="#workspace"
+        onClick={(event) => {
+          event.preventDefault();
+          document.getElementById("workspace")?.focus();
+        }}
+      >
+        Skip to workspace
+      </a>
+      <Sidebar
+        selected={id ?? params.get("plan")}
+        executable={!!available}
+        refreshKey={id ?? params.get("plan") ?? ""}
+        newExperiment={() => {
+          setProposal(undefined);
+          setDraftRevision((value) => value + 1);
+        }}
+      />
+      <main className="continuous-workspace" id="workspace" tabIndex={-1}>
         {capabilityError && (
           <p role="alert">
             {capabilityError}{" "}
@@ -89,16 +93,18 @@ export function App() {
               ? "This composition is read-only. Open experiment history to inspect retained results."
               : "Loading execution capabilities…"}
           </p>
-        ) : available && params.has("new") ? (
+        ) : available && showNew ? (
           <Configuration
-            key={location}
+            key={`${location}-${draftRevision}`}
             capabilities={available}
             initial={proposal}
+            onProposalChange={setProposal}
           />
         ) : available && params.has("plan") ? (
           <Run
             key={params.get("plan")}
             id={params.get("plan")!}
+            params={params}
             edit={(value) => {
               setProposal(value);
               window.location.hash = "new=1";

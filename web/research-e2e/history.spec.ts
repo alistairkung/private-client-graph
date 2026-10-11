@@ -73,7 +73,9 @@ test("history through comparison, individual error and exact frozen Evidence", a
   await page
     .getByRole("link", { name: "Back to experiments", exact: true })
     .click();
-  await expect(page.getByRole("searchbox")).toHaveValue("issue-");
+  await expect(
+    page.getByRole("searchbox", { name: "Search experiments", exact: true }),
+  ).toHaveValue("issue-");
 });
 
 test("empty, incomplete and corrupt history remain explicit", async ({
@@ -110,7 +112,7 @@ test("keyboard navigation, browser history and viewport reflow", async ({
   await page.goto("/");
   await page.keyboard.press("Tab");
   await expect(
-    page.getByRole("link", { name: "Private Client Graph / Research" }),
+    page.getByRole("link", { name: "Skip to workspace" }),
   ).toBeFocused();
   await page.getByRole("link", { name: "issue-92-pilot", exact: true }).click();
   await page.getByRole("link", { name: "Investigate", exact: true }).click();
@@ -124,7 +126,7 @@ test("keyboard navigation, browser history and viewport reflow", async ({
   ).toBe(true);
   await page.goBack();
   await expect(
-    page.getByRole("heading", { name: "Paired results" }),
+    page.getByRole("heading", { name: "Relationship evaluation", exact: true }),
   ).toBeVisible();
 });
 
@@ -168,4 +170,51 @@ test("case outcome selection survives view changes", async ({ page }) => {
   await expect(
     page.getByRole("combobox", { name: "Samples with outcome" }),
   ).toHaveValue("missing");
+});
+
+test("retained Issue 92 opens directly into the comparison bench and exact Evidence", async ({
+  page,
+}) => {
+  await page.goto("/#q=issue-92");
+  await page.getByRole("link", { name: "issue-92-pilot", exact: true }).click();
+  await page
+    .getByRole("combobox", { name: "Input / cohort", exact: true })
+    .selectOption("case_03_fixture");
+  await expect(
+    page.getByRole("link", { name: "Baseline matched: 6", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Treatment matched: 7", exact: true }),
+  ).toBeVisible();
+  await page
+    .getByRole("combobox", { name: "Treatment repetition", exact: true })
+    .selectOption("generative_full_source-3");
+  await page
+    .getByRole("link", { name: "Baseline missing: 1", exact: true })
+    .click();
+  await page.locator(".bench-inspection .relationship-list a").first().click();
+  const quote = await page
+    .locator(".evidence-group")
+    .filter({ hasText: "Expected Evidence" })
+    .locator("blockquote")
+    .first()
+    .innerText();
+  await page
+    .getByRole("button", { name: "View expected in Source" })
+    .first()
+    .click();
+  await expect(
+    page
+      .getByRole("article", { name: "Frozen Source" })
+      .locator("mark")
+      .first(),
+  ).toHaveText(quote);
+  await expect(
+    page.getByRole("combobox", { name: "Treatment repetition", exact: true }),
+  ).toHaveValue("generative_full_source-3");
+  await expect(
+    page.getByRole("button", {
+      name: /run|authorize|start|stop|add optional|bypass/i,
+    }),
+  ).toHaveCount(0);
 });

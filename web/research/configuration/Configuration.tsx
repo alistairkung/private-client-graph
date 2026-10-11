@@ -1,20 +1,24 @@
 import { useEffect, useState } from "react";
 import type { Capabilities, Preview, Proposal } from "../shared/contracts";
 import { freeze, preview as requestPreview } from "./api";
-import { InputFields, PipelineFields } from "./Fields";
+import { PipelineFields } from "./Fields";
+import { Pipeline } from "./Pipeline";
+import { InputSelection } from "./InputSelection";
 import { PlanSummary } from "./PlanSummary";
 import "./configuration.css";
 
 export function Configuration({
   capabilities,
   initial,
+  onProposalChange,
 }: {
   capabilities: Capabilities;
   initial?: Proposal;
+  onProposalChange?: (proposal: Proposal) => void;
 }) {
   const [proposal, setProposal] = useState<Proposal>(
     initial ?? {
-      input_ids: ["case_03_fixture"],
+      input_ids: capabilities.inputs.map((input) => input.id),
       input_mode: "saved",
       execution_mode: "replay",
       resolver: "none",
@@ -49,7 +53,9 @@ export function Configuration({
     };
   }, [proposal]);
   function update(changes: Partial<Proposal>) {
-    setProposal((current) => ({ ...current, ...changes }));
+    const next = { ...proposal, ...changes };
+    setProposal(next);
+    onProposalChange?.(next);
   }
   async function review() {
     setBusy(true);
@@ -65,7 +71,7 @@ export function Configuration({
   }
   return (
     <>
-      <a href="#">Back to experiments</a>
+      <a href="#browse=1">Back to experiments</a>
       <h1>New experiment</h1>
       <p>
         Configure a finite experiment. Review the frozen plan before running it.
@@ -77,39 +83,61 @@ export function Configuration({
           void review();
         }}
       >
-        <div className="configuration-fields">
-          <InputFields
-            proposal={proposal}
-            capabilities={capabilities}
-            update={update}
-            busy={busy}
-          />
-          <PipelineFields
-            proposal={proposal}
-            capabilities={capabilities}
-            update={update}
-            busy={busy}
-          />
-        </div>
-        <div className="configuration-review">
-          {preview ? (
-            <PlanSummary preview={preview} />
-          ) : (
-            <p role="status">
-              {error
-                ? "Preview unavailable. Check the configuration fields."
-                : "Updating server preview…"}
+        <InputSelection
+          proposal={proposal}
+          capabilities={capabilities}
+          update={update}
+          busy={busy}
+        />
+        <Pipeline
+          proposal={proposal}
+          capabilities={capabilities}
+          update={update}
+          busy={busy}
+        />
+        <div className="configuration-review execution-bench">
+          <section className="run-status" aria-label="Draft execution status">
+            <h2>Execution</h2>
+            <p>
+              {preview ? "Ready for plan review" : "Draft · Preview pending"}
             </p>
-          )}
-          {error && <p role="alert">{error}</p>}
-          <button type="submit" disabled={busy || !preview}>
-            {busy ? "Freezing plan…" : "Review frozen plan"}
-          </button>
-          <p className="muted">
-            Freezing does not start execution or authorize paid calls.
-          </p>
+            <button type="submit" disabled={busy || !preview}>
+              {busy ? "Freezing plan…" : "Review frozen plan"}
+            </button>
+            <p>Freezing does not start execution or authorize paid calls.</p>
+          </section>
+          <div className="execution-review">
+            {proposal.resolver === "none" && (
+              <details>
+                <summary>Experiment settings and invocation limits</summary>
+                <PipelineFields
+                  proposal={proposal}
+                  capabilities={capabilities}
+                  update={update}
+                  busy={busy}
+                />
+              </details>
+            )}
+            {preview ? (
+              <PlanSummary preview={preview} />
+            ) : (
+              <p role="status">
+                {error
+                  ? "Preview unavailable. Check the configuration fields."
+                  : "Updating server preview…"}
+              </p>
+            )}
+            {error && <p role="alert">{error}</p>}
+          </div>
         </div>
       </form>
+      <section className="evaluation-empty">
+        <h2>Evaluation</h2>
+        <p>
+          Completed observations will appear here for baseline and treatment
+          comparison, then exact Evidence inspection.
+        </p>
+      </section>
     </>
   );
 }

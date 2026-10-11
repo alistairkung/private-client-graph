@@ -1,9 +1,10 @@
 # Research Workbench: approved continuous workspace
 
-Status: Comparison bench B approved on 2026-10-11. Connector rail A is selected;
-the final inline-settings and always-visible insertion refinement awaits explicit
-final approval, as clarified by the user. This handoff includes the whole design
-for review and implementation planning, not implementation or execution authority.
+Status: Comparison bench B approved on 2026-10-11. The user authorized implementation
+of the complete design, including Connector rail A with inline settings and the
+always-visible insertion control, on 2026-10-12. Implementation branched from
+design PR #112, now merged into main, and preserves the existing execution
+authorization contracts.
 See the [complete illustrated design reference](research-workbench-complete-design-reference.md)
 for the sidebar, full-page composition, pipeline interaction states, input picker,
 responsive layouts, Execution and Evaluation.
@@ -91,7 +92,7 @@ Do not sum overlapping categories or conflate scored observations with attempts.
 | Draft | Server-calculated preview; review/freeze plan; no execution implied. |
 | Frozen | Immutable identity/digest and workload; freezing grants no authority. |
 | Authorization required | Explicit task allowance, used/uncertain attempts, invocation cap and proposed change; affirmative consent when required by existing contracts. |
-| Authorized | Distinct “not started” status; separate Start action and server revalidation. |
+| Authorize and start | Existing #111 API atomically authorizes and starts after affirmative consent and server revalidation; there is no separate authorized-but-not-started backend state. |
 | Running | Authoritative status and available progress; Stop after current attempt. |
 | Stop requested | Acknowledge request immediately; do not claim stopped until backend confirms. |
 | Stopped/interrupted | Retain available results; explicit continuation review, never automatic resume. |

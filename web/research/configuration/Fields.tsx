@@ -72,6 +72,7 @@ export function InputFields({
                   }
                 : {
                     input_mode: "saved",
+                    input_ids: capabilities.inputs.map((input) => input.id),
                     extraction_samples: 1,
                     invocation_cap: proposal.resolver === "none" ? 0 : 1,
                   },
@@ -86,40 +87,6 @@ export function InputFields({
         Saved extraction with a generative resolver can still require paid calls
         in live execution. {capabilities.live_reason}
       </p>
-      <div
-        className="input-choices"
-        role="group"
-        aria-label="Repository-owned synthetic inputs"
-      >
-        {capabilities.inputs
-          .filter(
-            (input) =>
-              proposal.input_mode === "saved" ||
-              input.id === capabilities.fresh_input_id,
-          )
-          .map((input) => (
-            <label key={input.id}>
-              <input
-                type="checkbox"
-                checked={proposal.input_ids.includes(input.id)}
-                disabled={proposal.input_mode === "fresh"}
-                onChange={(event) =>
-                  update({
-                    input_ids: event.target.checked
-                      ? [...proposal.input_ids, input.id]
-                      : proposal.input_ids.filter((id) => id !== input.id),
-                  })
-                }
-              />
-              <span>
-                {input.id}
-                <small>
-                  {input.case_id} · {input.cohort} snapshot
-                </small>
-              </span>
-            </label>
-          ))}
-      </div>
       <label>
         Extraction samples
         <input
