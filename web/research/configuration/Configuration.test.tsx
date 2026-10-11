@@ -56,7 +56,9 @@ it("ignores a stale preview after the proposal changes", async () => {
     resolveNew(response);
   });
   expect(
-    within(screen.getByRole("region")).getByText("New server preview"),
+    within(
+      screen.getByRole("region", { name: "Server-provided execution summary" }),
+    ).getByText("New server preview"),
   ).toBeVisible();
   await act(async () => {
     resolveOld({ ...response, cost_reason: "Stale server preview" });

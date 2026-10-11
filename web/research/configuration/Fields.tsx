@@ -188,6 +188,7 @@ export function PipelineFields({
           min={0}
           max={2}
           step={0.1}
+          disabled={proposal.execution_mode === "replay"}
           value={proposal.temperature ?? ""}
           onChange={(event) =>
             update({
@@ -203,6 +204,7 @@ export function PipelineFields({
           type="number"
           min={1}
           max={300}
+          disabled={proposal.execution_mode === "replay"}
           value={proposal.timeout_seconds}
           onChange={(event) =>
             update({ timeout_seconds: Number(event.target.value) })
@@ -210,6 +212,8 @@ export function PipelineFields({
         />
       </label>
       <small>
+        {proposal.execution_mode === "replay" &&
+          "Provider settings do not affect saved replay. "}
         {capabilities.provider}. Thinking disabled; retries disabled.
       </small>
       <label>
