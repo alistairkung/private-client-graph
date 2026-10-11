@@ -5,7 +5,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 class Proposal(BaseModel):
     model_config = ConfigDict(extra='forbid')
-    input_ids: list[str] = Field(min_length=1, max_length=6)
+    input_ids: list[str] = Field(min_length=1, max_length=100)
     input_mode: Literal['saved', 'fresh'] = 'saved'
     execution_mode: Literal['replay', 'recorded', 'live'] = 'replay'
     resolver: Literal['none', 'generative'] = 'none'

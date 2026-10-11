@@ -1,0 +1,7 @@
+{
+  "id": "alias_merge",
+  "name": "Nickname refers to the same person",
+  "description": "Elizabeth Tan and Beth are explicitly identified as the same person across settlor and beneficiary roles.",
+  "case_name": "Harbour Trust — identity diagnostics",
+  "case_description": "Focused synthetic scenarios isolating alias identity decisions from the larger benchmark cases."
+}

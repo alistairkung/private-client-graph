@@ -66,7 +66,7 @@ class ExperimentPlan(BaseModel):
 
 class FiniteExperimentPlan(ExperimentPlan):
     """Versioned finite matrix; legacy study plans retain their original rules."""
-    plan_version: Literal[2, 3] = 2
+    plan_version: Literal[2, 3, 4] = 2
     task_call_cap: int = Field(default=0, ge=0, le=10000)
     invocation_cap: int = Field(default=0, ge=0, le=38)
     kind: Literal["demonstration", "live_experiment"] = "demonstration"
@@ -76,6 +76,8 @@ class FiniteExperimentPlan(ExperimentPlan):
 
     @model_validator(mode="after")
     def validate_finite_matrix(self) -> "FiniteExperimentPlan":
+        if self.plan_version not in (2, 3):
+            raise ValueError("Legacy finite matrices require version 2 or 3")
         live = self.execution_mode == 'live'
         if live != (self.plan_version == 3) or live != (self.kind == 'live_experiment'):
             raise ValueError('Live matrices require explicit version 3 plans')

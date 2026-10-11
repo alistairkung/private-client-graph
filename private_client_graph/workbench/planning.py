@@ -96,11 +96,21 @@ def freeze(root: Path, proposal: Proposal) -> FrozenPlan:
     reviewed = preview(proposal, root)
     identity = uuid4().hex
     task_id = reviewed.task_id or f'offline-{identity}'
+    return publish_plan(root, identity, _finite_plan(proposal, task_id, reviewed.matrix_call_maximum), reviewed)
+
+
+def publish_plan(root: Path, identity: str, plan: FiniteExperimentPlan, reviewed: Preview) -> FrozenPlan:
+    task_id = plan.task_id
     ledger = root.resolve() / 'task-ledgers' / task_id
-    if proposal.execution_mode != 'live':
+    if plan.execution_mode != 'live':
         write_json_once(ledger / 'offline.json', {'task_id': task_id, 'paid_allowance': 0})
-    bundle = Bundle.create(root / identity, _finite_plan(proposal, task_id, reviewed.matrix_call_maximum), task_ledger=ledger)
+    bundle = Bundle.create(root / identity, plan, task_ledger=ledger)
     records = json.loads((ROOT / 'research/fixtures/demonstration_responses.json').read_text())
+    if getattr(plan, 'plan_version', 0) == 4:
+        for sample in plan.inputs:
+            key = checksum(sample.source.encode()) + ':' + checksum(b'null')
+            assert sample.extraction is not None
+            records.setdefault('extraction', {}).setdefault(key, sample.extraction.model_dump(mode='json'))
     write_json_once(bundle.path / 'recorded-responses.json', records)
     binding = {
         'recordings_digest': checksum((bundle.path / 'recorded-responses.json').read_bytes()),
@@ -113,7 +123,7 @@ def freeze(root: Path, proposal: Proposal) -> FrozenPlan:
     frozen = FrozenPlan(id=identity, digest=_plan_digest(bundle.path),
         task_id=task_id, preview=reviewed, created_at=bundle.manifest['created_at'])
     write_json_once(bundle.path / 'execution.json', frozen.model_dump(mode='json'))
-    return frozen
+    return FrozenPlan.model_validate_json((bundle.path / 'execution.json').read_text())
 
 
 def open_executable(root: Path, identity: str) -> tuple[Bundle, FrozenPlan]:

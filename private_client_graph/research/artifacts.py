@@ -15,6 +15,7 @@ from uuid import uuid4
 
 from .fixtures import ROOT
 from .plan import ExperimentPlan, FiniteExperimentPlan
+from .run_plan import RunPlan
 from private_client_graph.resolution import RESOLUTION_PROMPT
 from private_client_graph.extraction import EXTRACTION_PROMPT
 
@@ -91,7 +92,9 @@ class Bundle:
     def __init__(self, path: Path, manifest: dict[str, Any]):
         self.path = path
         self.manifest = manifest
-        self.plan = (FiniteExperimentPlan if manifest['schema_version'] in (2, 3) else ExperimentPlan).model_validate(manifest['plan'])
+        plan_types: dict[int, type[ExperimentPlan]] = {1: ExperimentPlan, 2: FiniteExperimentPlan,
+            3: FiniteExperimentPlan, 4: RunPlan}
+        self.plan = plan_types[manifest['schema_version']].model_validate(manifest['plan'])
         self.task_ledger = Path(manifest['task_ledger'])
         self.authorization_id: str | None = None
 
@@ -112,7 +115,7 @@ class Bundle:
         if checksum(data) != json.loads((path / 'manifest-checksum.json').read_text()):
             raise ValueError('Manifest checksum mismatch')
         manifest = json.loads(data)
-        if manifest['schema_version'] not in (1, 2, 3):
+        if manifest['schema_version'] not in (1, 2, 3, 4):
             raise ValueError('Unsupported artifact schema version')
         return cls(path, manifest)
 
