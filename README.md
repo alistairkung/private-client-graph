@@ -179,7 +179,7 @@ Docker is the only prerequisite for the normal protected-development workflow.
 From a clean checkout, run:
 
 ```bash
-docker compose up --build
+docker compose --profile practitioner up --build application
 ```
 
 Open [https://localhost:8443/app](https://localhost:8443/app) and accept the
@@ -196,13 +196,13 @@ built frontend. Database state is stored in the named Compose volume and survive
 ordinary stops and restarts. Stop the environment without deleting its data with:
 
 ```bash
-docker compose down
+docker compose --profile practitioner down
 ```
 
 Reset to a clean database by removing the volume:
 
 ```bash
-docker compose down -v
+docker compose --profile practitioner down -v
 ```
 
 This development-only, synthetically authenticated environment is strictly for
@@ -609,3 +609,85 @@ committed synthetic PDF fixture lives under `tests/fixtures/`; it is separate fr
 benchmark ground truth. Use the full test commands above with PostgreSQL enabled.
 Start each browser-suite run with a freshly migrated and seeded disposable database;
 the quota journey deliberately leaves its persistent allowance exhausted.
+
+
+## Local Research Workbench (read-only)
+
+```bash
+docker compose up --build
+```
+
+Open [http://localhost:8080](http://localhost:8080). This separate React/TypeScript
+application and `/api/research/v1` API require no provider credentials. The default
+Compose services restore the retained Issue #91 recorded demonstration and Issue #92
+pilot exports, migrate a separate PostgreSQL database and rebuild its research index.
+No experiment executes. Practitioner services remain available through the explicit
+`practitioner` profile command above.
+
+In history, search `issue-`, select the two experiments and compare them. Inspect
+Issue #92's `case_03_fixture` baseline, select **Missing**, open the Jonathan Tan /
+Rebecca Tan relationship and choose **View expected in Source**. The expected
+quotation is highlighted in the frozen Source; **No predicted relationship** remains
+explicit. Choose a treatment repetition to inspect the repaired result.
+
+Artifacts and task ledgers persist together in `runs/research`, mounted at
+`/artifacts`. PostgreSQL persists in `pcg-research-postgres-data`; it is only a
+rebuildable projection. Never delete the artifact directory to reset an index.
+Historical absolute ledger paths remain unchanged and imports confer no execution
+authority. The portable archives' provenance is in `research/history/README.md`.
+
+To restore an additional supported schema-1 export into a **new** directory:
+
+```bash
+uv run python -m private_client_graph.workbench.restore archive.zip runs/research/new-history
+```
+
+Then explicitly rebuild the index (there is no mutation endpoint):
+
+```bash
+docker compose exec research python -m private_client_graph.workbench /artifacts
+```
+
+The index records artifact identity, full-file digest and index time. Reads detect
+changes since indexing and withhold stale result detail. Missing, corrupt and
+unsupported artifacts remain discoverable with an explicit reason. A legacy bundle
+without an export checksum inventory validates its frozen manifest and parses its
+recorded contracts; its content digest detects subsequent changes, but cannot prove
+that an original result was never altered before import. Exported bundles additionally
+validate every file against `CHECKSUMS.json`. No evaluator is rerun while importing.
+
+History supports `q`, `kind`, `lifecycle`, `integrity`, `offset`, and `limit` (1–100).
+Detail and comparison use opaque index IDs. API schemas are available at
+`/openapi.json`; checked TypeScript contracts are generated with
+`uv run python -m private_client_graph.workbench.typescript` and verified by tests.
+Unknown costs/diagnostics remain unavailable. Comparisons require identical case,
+cohort, Source, truth and extraction digests and disclose configuration/code changes;
+ambiguous or unmatched inputs are excluded explicitly, not silently pooled.
+
+For local development without Docker, migrate an isolated PostgreSQL database,
+set `DATABASE_URL` and `PCG_RESEARCH_ARTIFACTS`, then run:
+
+```bash
+uv run alembic upgrade head
+uv run python -m private_client_graph.workbench runs/research
+uv run uvicorn private_client_graph.workbench.api:app --host 127.0.0.1 --port 8080
+# In a second terminal:
+npm run dev:research --prefix web
+```
+
+Validation uses real stored historical results and PostgreSQL, with no provider calls:
+
+```bash
+TEST_DATABASE_URL=postgresql://... uv run pytest
+npm run test:research --prefix web
+npm run build:research --prefix web
+DATABASE_URL=postgresql://... npm run test:e2e:research --prefix web
+python tests/research_compose_smoke.py
+```
+
+Use a migrated disposable database for browser tests. The Compose smoke test requires
+Docker and verifies container restart, retained artifact digests, empty-index rebuild
+and idempotence. `docker compose down` retains data; `down -v` removes the disposable
+PostgreSQL volume but retains the bind-mounted artifacts. All ports publish only to
+loopback. No public deployment, execution controls or authorization workflow is
+included in Slice 1.
