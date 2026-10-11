@@ -61,6 +61,8 @@ services:
     environment:
       DATABASE_URL: postgresql://pcg:local-only@research-database:5432/pcg_research
       PCG_RESEARCH_ARTIFACTS: /artifacts
+      PCG_RESEARCH_LIVE_ENABLED: ${PCG_RESEARCH_LIVE_ENABLED:-0}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
     ports:
       - "127.0.0.1:8080:8000"
     volumes:

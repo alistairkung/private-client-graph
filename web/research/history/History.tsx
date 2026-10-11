@@ -75,6 +75,7 @@ export function History({ params }: { params: URLSearchParams }) {
           >
             <option value="">All modes</option>
             <option value="replay">Saved replay</option>
+            <option value="live_experiment">Live experiment</option>
             <option value="demonstration">Recorded demonstration</option>
             <option value="task_b_pilot">Development pilot</option>
             <option value="task_a_diagnostic">Development diagnostic</option>

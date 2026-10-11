@@ -29,7 +29,7 @@ def test_api_subprocess_checkpoint_continue_and_rebuild(database, tmp_path, monk
                 'resolver': 'generative', 'resolver_repetitions': 2, 'invocation_cap': 1}
     assert client.post(PREFIX + '/preview', json=proposal).status_code == 403
     assert client.post(PREFIX + '/preview', json=proposal, headers={'origin': 'http://evil.example'}).status_code == 403
-    assert client.post(PREFIX + '/preview', json={**proposal, 'execution_mode': 'live'}, headers=HEADERS).status_code == 422
+    assert client.post(PREFIX + '/preview', json={**proposal, 'execution_mode': 'live'}, headers=HEADERS).status_code == 409
     plan_response = client.post(PREFIX + '/plans', json=proposal, headers=HEADERS)
     assert plan_response.status_code == 200, plan_response.text
     plan = plan_response.json()

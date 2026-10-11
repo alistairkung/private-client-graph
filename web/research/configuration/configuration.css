@@ -98,3 +98,20 @@
   padding-top: 24px;
   border-top: 1px solid var(--rule);
 }
+
+.live-review {
+  max-width: 1200px;
+  margin-top: 28px;
+  padding: 24px;
+  background: white;
+  border: 1px solid var(--rule);
+}
+.live-review dd {
+  overflow-wrap: anywhere;
+}
+.approval-choice {
+  display: flex;
+  align-items: center;
+  margin: 24px 0;
+  min-height: 56px;
+}

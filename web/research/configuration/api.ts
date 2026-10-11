@@ -1,6 +1,7 @@
 import { read } from "../shared/api";
 import type {
   Capabilities,
+  LiveApproval,
   Command,
   FrozenPlan,
   Preview,
@@ -49,3 +50,6 @@ export const control = (
   action: "start" | "stop" | "continue",
   body: Command,
 ) => command<RunStatus>(`/plans/${id}/${action}`, body);
+
+export const authorize = (id: string, body: LiveApproval) =>
+  command<RunStatus>(`/plans/${id}/authorize`, body);
