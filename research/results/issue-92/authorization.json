@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "codex_thread_id": "01a12a43-2a13-75b2-82d3-a0ccda6f5c02",
+  "initial_task_reference": "User Codex request on 2026-10-11: implement issue 92",
+  "paid_egress_approvals": [
+    {
+      "scope": "First six paid DeepSeek resolver attempts using the synthetic matched-variant inputs",
+      "user_message": "approved",
+      "recorded_before_session_finished_at": "2026-10-11T09:23:47.993647+00:00"
+    },
+    {
+      "scope": "Remaining fixed matrix of up to 32 additional paid DeepSeek attempts, capped at 38 total",
+      "user_message": "yes approved",
+      "recorded_before_session_finished_at": "2026-10-11T09:27:51.090124+00:00"
+    }
+  ],
+  "note": "This append-only record supplements the pre-dispatch manifest reference; the frozen manifest and provider observations were not rewritten."
+}
