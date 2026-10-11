@@ -91,6 +91,8 @@ def create_execution_app() -> FastAPI:
 
     app = create_app(refresh=refresh_index)
     mount_execution(app, root)
+    from .workspace_execution import mount_workspace_commands
+    mount_workspace_commands(app, root)
     return app
 
 

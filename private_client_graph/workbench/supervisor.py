@@ -85,7 +85,7 @@ def _status(root: Path, identity: str) -> RunStatus:
 
 
 def start(root: Path, identity: str, command: Command, *, continuation: bool = False,
-          approval: LiveApproval | None = None, origin: str = '') -> RunStatus:
+          approval: LiveApproval | None = None, origin: str = '', preauthorized: bool = False) -> RunStatus:
     with command_lock(root):
         bundle, plan = open_executable(root, identity)
         if command.plan_digest != plan.digest:
@@ -106,6 +106,9 @@ def start(root: Path, identity: str, command: Command, *, continuation: bool = F
             if json.loads(request.read_text()) != value:
                 raise ValueError('Idempotency key was already used for another command')
             return _status(root, identity)
+        if preauthorized and approval is not None:
+            if live_budget(root).used != approval.expected_task_usage:
+                raise ValueError('Task budget changed after authorization; review a new approval')
         current = _status(root, identity)
         permitted = ('stopped', 'interrupted', 'failed') if continuation else ('frozen',)
         if current.state not in permitted:

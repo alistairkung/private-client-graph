@@ -1,4 +1,5 @@
 """Rebuildable PostgreSQL projections and artifact freshness checks."""
+import json
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Sequence
@@ -29,7 +30,8 @@ def rebuild_index(engine: Engine, root: Path) -> int:
         raise ValueError('Research artifact root does not exist')
     paths = sorted({path.parent for name in ('manifest.json', 'manifest-checksum.json')
                     for path in root.rglob(name)})
-    projections = [read_artifact(path, path.relative_to(root).as_posix()) for path in paths]
+    projections = [read_artifact(path, path.relative_to(root).as_posix()) for path in paths
+                   if not _workspace_run(path)]
     with engine.begin() as connection:
         connection.execute(text('SELECT pg_advisory_xact_lock(1010001)'))
         retained = {detail.history.id for detail in projections}
@@ -53,6 +55,8 @@ def rebuild_index(engine: Engine, root: Path) -> int:
             statement = insert(experiments).values(**values)
             connection.execute(statement.on_conflict_do_update(
                 index_elements=[experiments.c.id], set_=values))
+    from .workspace_index import rebuild_workspaces
+    rebuild_workspaces(engine, root)
     return len(projections)
 
 
@@ -98,3 +102,10 @@ def experiment_detail(engine: Engine, root: Path, identity: str) -> ExperimentDe
         detail.samples = []
         detail.history.integrity_reason = 'Artifacts changed or disappeared after indexing. Rebuild the index to inspect results.'
     return detail
+
+
+def _workspace_run(path: Path) -> bool:
+    try:
+        return json.loads((path / 'manifest.json').read_text()).get('schema_version') == 4
+    except (OSError, ValueError, AttributeError):
+        return False
