@@ -1,5 +1,7 @@
 # Research Workbench: Case investigation
 
+> Complete workspace revision (2026-10-12): see [the continuous workspace implementation handoff](research-workbench-approved-workspace.md) for Connector rail with inline settings and Comparison bench B. See also the [complete illustrated design reference](research-workbench-complete-design-reference.md), including final connector-rail approval status. Earlier functional and safety contracts remain in force.
+
 Status: selected structural direction; detailed design proposed for approval. The user selected `navigator` / **Case investigation** in the Impeccable decision page. This document does not authorize React implementation or paid execution. It develops the [accepted functional handoff](research-workbench.md) without changing its architecture.
 
 ## Job and design thesis
