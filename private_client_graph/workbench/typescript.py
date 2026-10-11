@@ -5,6 +5,13 @@ from typing import Any
 
 from .execution_contracts import Capabilities, Command, FrozenPlan, Preview, Proposal, RunStatus, LiveApproval
 from .contracts import Comparison, ExperimentDetail, HistoryPage
+from .case_catalog import CaseMetadata
+from .execution_state import ExecutionAvailability
+from .run_inspection import RunDetail, RunObservation
+from .run_evaluation_contracts import RunEvaluation, RunComparison
+from .workspace_contracts import (CreateExperiment, DraftUpdate, CopyRunDraft, FreezeRun,
+                                 RunConfiguration, RunDraft, WorkspaceDetail, WorkspaceHistory,
+                                 LegacyHistoryRecord, LegacyStudyDetail, RunAuthorization)
 
 
 def _type(schema: dict[str, Any]) -> str:
@@ -35,7 +42,11 @@ def _type(schema: dict[str, Any]) -> str:
 
 def render() -> str:
     definitions = {}
-    for model in (HistoryPage, ExperimentDetail, Comparison, Capabilities, Command, FrozenPlan, Preview, Proposal, RunStatus, LiveApproval):
+    for model in (HistoryPage, ExperimentDetail, Comparison, Capabilities, Command, FrozenPlan,
+                  Preview, Proposal, RunStatus, LiveApproval, CaseMetadata, ExecutionAvailability,
+                  RunDetail, RunObservation, RunEvaluation, RunComparison, CreateExperiment,
+                  DraftUpdate, CopyRunDraft, FreezeRun, RunConfiguration, RunDraft,
+                  WorkspaceDetail, WorkspaceHistory, LegacyHistoryRecord, LegacyStudyDetail, RunAuthorization):
         schema = model.model_json_schema(mode='serialization')
         definitions.update(schema.pop('$defs', {}))
         definitions[model.__name__] = schema

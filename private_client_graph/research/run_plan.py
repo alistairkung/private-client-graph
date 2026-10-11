@@ -20,6 +20,7 @@ class RunPlan(FiniteExperimentPlan):
     """Freeze planned membership before execution, including extraction failures."""
     plan_version: Literal[2, 3, 4] = 4
     experiment_id: str | None = None
+    run_id: str | None = None
     draft_revision: int | None = None
     max_calls: int = Field(default=0, ge=0, le=10000)
     repetitions: int = Field(default=1, ge=1, le=3)

@@ -62,6 +62,8 @@ def freeze_run(root: Path, experiment_id: str, command: FreezeRun) -> FrozenPlan
         identity = uuid5(NAMESPACE_URL, f'pcg-run:{experiment_id}:{command.request_id}').hex
         membership = experiment_path(root, experiment_id) / 'runs' / f'{identity}.json'
         if membership.exists():
+            from .artifacts import _verify_execution_binding
+            _verify_execution_binding(root / identity)
             record = read_record(membership)
             if record['command'] != command.model_dump():
                 raise ValueError('Idempotency key was already used for another Run')
@@ -79,6 +81,7 @@ def freeze_run(root: Path, experiment_id: str, command: FreezeRun) -> FrozenPlan
         else:
             plan = _run_plan(workspace.draft.configuration, reviewed.task_id or f'offline-{identity}', reviewed.matrix_call_maximum)
             plan.experiment_id = experiment_id
+            plan.run_id = identity
             plan.draft_revision = workspace.draft.revision
             frozen = publish_plan(root, identity, plan, reviewed)
         write_record(membership, {'run_id': identity, 'experiment_id': experiment_id,

@@ -57,7 +57,12 @@ def read_experiment(root: Path, identity: str) -> WorkspaceDetail:
         if updated.revision != revision:
             raise ValueError('Draft revision history is incomplete')
         draft = updated
-    memberships = [read_record(record) for record in (path / 'runs').glob('*.json')]
+    memberships = []
+    for record in (path / 'runs').glob('*.json'):
+        membership = read_record(record)
+        if membership.get('experiment_id') != identity or membership.get('run_id') != record.stem or not re.fullmatch('[a-f0-9]{32}', record.stem):
+            raise ValueError('Run membership identity mismatch')
+        memberships.append(membership)
     runs = [record['run_id'] for record in sorted(memberships, key=lambda record: record['created_at'])]
     if len(runs) != len(set(runs)):
         raise ValueError('Duplicate Run membership')
@@ -99,8 +104,10 @@ def read_record(path: Path) -> dict:
     if any(parent.is_symlink() for parent in (path, *path.parents)):
         raise ValueError('Symlink workspace records are unsupported')
     value = json.loads(path.read_text())
+    if not isinstance(value, dict) or not isinstance(value.get('record'), dict):
+        raise ValueError('Invalid workspace record')
     record = value['record']
     encoded = json.dumps(record, sort_keys=True, ensure_ascii=False).encode()
-    if value['checksum'] != checksum(encoded):
+    if value.get('checksum') != checksum(encoded):
         raise ValueError('Workspace record checksum mismatch')
     return record
