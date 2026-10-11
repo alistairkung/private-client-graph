@@ -15,7 +15,7 @@ from private_client_graph.workbench.index import rebuild_index
 from private_client_graph.workbench.restore import restore_archive
 
 with tempfile.TemporaryDirectory(prefix='pcg-research-browser-') as directory:
-    root = Path(directory)
+    root = Path(directory).resolve()
     for name in ('issue-91-demonstration', 'issue-92-pilot'):
         restore_archive(ROOT / 'research/history' / f'{name}.zip', root / name)
     # Explicit exceptional-state fixtures derived from retained history, in a temporary directory only.
@@ -39,6 +39,6 @@ with tempfile.TemporaryDirectory(prefix='pcg-research-browser-') as directory:
         from private_client_graph.workbench import supervisor
         supervisor.subprocess.Popen = substituted_worker
     if os.getenv('PCG_BROWSER_EXECUTION') == '1':
-        from private_client_graph.workbench.execution_api import mount_execution
-        mount_execution(app, root)
+        from private_client_graph.workbench.execution_api import create_execution_app
+        app = create_execution_app()
     uvicorn.run(app, host='127.0.0.1', port=4175)

@@ -1,4 +1,4 @@
-import { useRef, useState, type ReactNode } from "react";
+import { useId, useRef, useState, type ReactNode } from "react";
 import type { Capabilities, Proposal } from "../shared/contracts";
 import { InputFields, PipelineFields } from "./Fields";
 
@@ -8,6 +8,7 @@ type PipelineProps = {
   capabilities?: Capabilities;
   update?: (changes: Partial<Proposal>) => void;
   busy?: boolean;
+  persistent?: boolean;
   frozen?: {
     resolver: boolean;
     input: string;
@@ -22,7 +23,9 @@ export function Pipeline({
   update,
   busy = false,
   frozen,
+  persistent = false,
 }: PipelineProps) {
+  const instance = useId();
   const [expanded, setExpanded] = useState<Stage | null>(null);
   const [menu, setMenu] = useState(false);
   const viewport = useRef<HTMLDivElement>(null);
@@ -74,7 +77,7 @@ export function Pipeline({
           type="button"
           className="node-header"
           aria-expanded={open}
-          aria-controls={`stage-${id}`}
+          aria-controls={`${instance}-stage-${id}`}
           onClick={() => setExpanded(open ? null : id)}
         >
           <strong>{title}</strong>
@@ -101,7 +104,7 @@ export function Pipeline({
           </button>
         )}
         <div
-          id={`stage-${id}`}
+          id={`${instance}-stage-${id}`}
           role="region"
           aria-label={`${title} settings`}
           hidden={!open}
@@ -140,6 +143,7 @@ export function Pipeline({
               : (frozen?.input ?? "Input unavailable"),
             mutable ? (
               <InputFields
+                persistent={persistent}
                 proposal={proposal!}
                 capabilities={capabilities!}
                 update={update!}
@@ -169,14 +173,14 @@ export function Pipeline({
                   disabled={busy}
                   aria-label="Add alias resolution"
                   aria-expanded={menu}
-                  aria-controls="resolver-menu"
+                  aria-controls={`${instance}-resolver-menu`}
                   onClick={() => setMenu(!menu)}
                 >
                   <span>+</span>
                 </button>
                 {menu && (
                   <div
-                    id="resolver-menu"
+                    id={`${instance}-resolver-menu`}
                     className="resolver-menu"
                     onKeyDown={(e) => {
                       if (e.key === "Escape") {
@@ -225,11 +229,8 @@ export function Pipeline({
               `Full source · ${proposal?.model ?? frozen?.model ?? "Model unavailable"} · ${proposal?.resolver_repetitions ?? frozen?.repetitions ?? "?"} repetitions`,
               mutable ? (
                 <>
-                  <p>Provider settings are shared across the experiment.</p>
-                  <p>
-                    Resolver repetitions are experiment-level measurements of
-                    variability.
-                  </p>
+                  <p>Provider settings are shared across this configuration.</p>
+                  <p>Resolver repetitions are measurements of variability.</p>
                   <PipelineFields
                     proposal={proposal!}
                     capabilities={capabilities!}
@@ -245,7 +246,7 @@ export function Pipeline({
                   {readOnly}
                   <p>Model: {proposal?.model ?? frozen?.model}</p>
                   <p>
-                    Experiment repetitions:{" "}
+                    Resolver repetitions:{" "}
                     {proposal?.resolver_repetitions ?? frozen?.repetitions}
                   </p>
                 </>

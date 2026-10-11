@@ -8,7 +8,11 @@ import { Results } from "../results/Results";
 import { HistoricalComparison } from "../results/HistoricalComparison";
 
 import { Sidebar } from "./Sidebar";
+import { LegacyMetadata } from "../workspace/LegacyMetadata";
+import { Workspace } from "../workspace/Workspace";
+import { CreateExperiment } from "../workspace/CreateExperiment";
 import "./workspace.css";
+import "../workspace/persistent.css";
 
 export function App() {
   const [available, setAvailable] = useState<Capabilities | null | undefined>(
@@ -16,7 +20,12 @@ export function App() {
   );
   const [capabilityError, setCapabilityError] = useState("");
   const [capabilityRetry, setCapabilityRetry] = useState(0);
-  const [draftRevision, setDraftRevision] = useState(0);
+  const [draftSaving, setDraftSaving] = useState(false);
+  const [sidebarRevision, setSidebarRevision] = useState(0);
+  const [collapsed, setCollapsed] = useState(
+    () => localStorage.getItem("research-sidebar-collapsed") === "true",
+  );
+  const [draftRevision] = useState(0);
   const [proposal, setProposal] = useState<Proposal | undefined>();
   useEffect(() => {
     const controller = new AbortController();
@@ -35,6 +44,7 @@ export function App() {
     return () => window.removeEventListener("hashchange", update);
   }, []);
   const params = new URLSearchParams(location.replace(/^#/, ""));
+  const workspaceId = params.get("workspace");
   const id = params.get("experiment");
   const left = params.get("left"),
     right = params.get("right");
@@ -70,15 +80,23 @@ export function App() {
         Skip to workspace
       </a>
       <Sidebar
-        selected={id ?? params.get("plan")}
+        selected={workspaceId}
         executable={!!available}
-        refreshKey={id ?? params.get("plan") ?? ""}
-        newExperiment={() => {
-          setProposal(undefined);
-          setDraftRevision((value) => value + 1);
-        }}
+        revision={sidebarRevision}
+        saving={draftSaving}
+        collapsed={collapsed}
+        toggle={() =>
+          setCollapsed((value) => {
+            localStorage.setItem("research-sidebar-collapsed", String(!value));
+            return !value;
+          })
+        }
       />
-      <main className="continuous-workspace" id="workspace" tabIndex={-1}>
+      <main
+        className={`continuous-workspace ${collapsed ? "sidebar-collapsed" : ""}`}
+        id="workspace"
+        tabIndex={-1}
+      >
         {capabilityError && (
           <p role="alert">
             {capabilityError}{" "}
@@ -87,13 +105,35 @@ export function App() {
             </button>
           </p>
         )}
-        {(params.has("new") || params.has("plan")) && !available ? (
+        {workspaceId ? (
+          <Workspace
+            key={workspaceId}
+            id={workspaceId}
+            selected={params.get("run")}
+            select={(run) => {
+              window.location.hash = `workspace=${workspaceId}&run=${run}`;
+            }}
+            capabilities={available ?? null}
+            saving={setDraftSaving}
+            changed={() => setSidebarRevision((value) => value + 1)}
+          />
+        ) : (params.has("new") ||
+            params.has("plan") ||
+            params.has("legacy-new")) &&
+          !available ? (
           <p role="status">
             {available === null
               ? "This composition is read-only. Open experiment history to inspect retained results."
               : "Loading execution capabilities…"}
           </p>
         ) : available && showNew ? (
+          <CreateExperiment
+            created={(id) => {
+              setSidebarRevision((value) => value + 1);
+              window.location.hash = `workspace=${id}`;
+            }}
+          />
+        ) : available && params.has("legacy-new") ? (
           <Configuration
             key={`${location}-${draftRevision}`}
             capabilities={available}
@@ -107,17 +147,20 @@ export function App() {
             params={params}
             edit={(value) => {
               setProposal(value);
-              window.location.hash = "new=1";
+              window.location.hash = "legacy-new=1";
             }}
           />
         ) : id ? (
-          <Results
-            key={id}
-            id={id}
-            params={params}
-            historyLink={historyLink}
-            executable={!!available}
-          />
+          <>
+            <LegacyMetadata id={id} />
+            <Results
+              key={id}
+              id={id}
+              params={params}
+              historyLink={historyLink}
+              executable={!!available}
+            />
+          </>
         ) : left && right ? (
           <HistoricalComparison
             left={left}
