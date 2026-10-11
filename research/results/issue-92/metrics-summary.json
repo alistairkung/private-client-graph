@@ -1,0 +1,2761 @@
+{
+  "schema_version": 1,
+  "compact_schema": "issue-92-metrics-v1",
+  "experiment_id": "ae4e17678f104d09b6d15bcb7bfec960",
+  "kind": "task_b_pilot",
+  "task_id": "92",
+  "model": "deepseek-flash",
+  "effective_model": "DeepSeek-V4.1-Flash",
+  "configuration": {
+    "kind": "task_b_pilot",
+    "task_id": "92",
+    "settings": {
+      "model": "deepseek-flash",
+      "timeout_seconds": 90.0,
+      "temperature": null,
+      "max_retries": 0,
+      "thinking": "disabled"
+    },
+    "effective_model": "DeepSeek-V4.1-Flash",
+    "repetitions": 3,
+    "fresh_extractions": 5,
+    "max_calls": 38,
+    "pricing": {
+      "currency": "USD",
+      "input_per_million": 0.15,
+      "output_per_million": 0.6,
+      "cached_input_per_million": 0.003,
+      "source_url": "https://api-docs.deepseek.com/quick_start/pricing/",
+      "retrieved_at": "2026-10-11",
+      "model": "DeepSeek-V4.1-Flash"
+    },
+    "authorization_reference": "User Codex request on 2026-10-11: implement issue 92",
+    "reviewed_commit": "051e2b08166584c7372626dcd8b02c09fbd075af"
+  },
+  "planned_provider_attempts": 38,
+  "call_cap": 38,
+  "operations": {
+    "attempted": 38,
+    "paid_attempts": 38,
+    "valid_attempts": 38,
+    "uncertain_attempts": 0,
+    "provider_failed_attempts": 0,
+    "estimated_spend": 0.004279962000000001,
+    "known_cost_sum": 0.004279962000000001,
+    "unpriced_attempts": 0,
+    "tokens": {
+      "input_tokens": {
+        "known_sum": 70307,
+        "known_attempts": 38,
+        "unknown_attempts": 0
+      },
+      "output_tokens": {
+        "known_sum": 3449,
+        "known_attempts": 38,
+        "unknown_attempts": 0
+      },
+      "cached_tokens": {
+        "known_sum": 56704,
+        "known_attempts": 38,
+        "unknown_attempts": 0
+      }
+    },
+    "provider_latency": {
+      "n": 38,
+      "missing": 0,
+      "mean": 0.9189216481080573,
+      "standard_deviation": 0.33751201458667524,
+      "minimum": 0.5193537906743586,
+      "maximum": 1.9119721250608563
+    },
+    "returned_models": [
+      "deepseek-flash"
+    ]
+  },
+  "cohorts": {
+    "fresh": {
+      "samples": 5,
+      "cases": [
+        "case_03"
+      ],
+      "baseline_metrics": {
+        "precision": {
+          "n": 5,
+          "missing": 0,
+          "mean": 1.0,
+          "standard_deviation": 0.0,
+          "minimum": 1.0,
+          "maximum": 1.0
+        },
+        "recall": {
+          "n": 5,
+          "missing": 0,
+          "mean": 1.0,
+          "standard_deviation": 0.0,
+          "minimum": 1.0,
+          "maximum": 1.0
+        },
+        "f1": {
+          "n": 5,
+          "missing": 0,
+          "mean": 1.0,
+          "standard_deviation": 0.0,
+          "minimum": 1.0,
+          "maximum": 1.0
+        },
+        "provenance_accuracy": {
+          "n": 5,
+          "missing": 0,
+          "mean": 1.0,
+          "standard_deviation": 0.0,
+          "minimum": 1.0,
+          "maximum": 1.0
+        }
+      },
+      "resolver_per_input_means": {
+        "precision": {
+          "n": 5,
+          "missing": 0,
+          "mean": 1.0,
+          "standard_deviation": 0.0,
+          "minimum": 1.0,
+          "maximum": 1.0
+        },
+        "recall": {
+          "n": 5,
+          "missing": 0,
+          "mean": 1.0,
+          "standard_deviation": 0.0,
+          "minimum": 1.0,
+          "maximum": 1.0
+        },
+        "f1": {
+          "n": 5,
+          "missing": 0,
+          "mean": 1.0,
+          "standard_deviation": 0.0,
+          "minimum": 1.0,
+          "maximum": 1.0
+        },
+        "provenance_accuracy": {
+          "n": 5,
+          "missing": 0,
+          "mean": 1.0,
+          "standard_deviation": 0.0,
+          "minimum": 1.0,
+          "maximum": 1.0
+        }
+      },
+      "within_input_f1_standard_deviations": {
+        "fresh_01": 0.0,
+        "fresh_02": 0.0,
+        "fresh_03": 0.0,
+        "fresh_04": 0.0,
+        "fresh_05": 0.0
+      },
+      "valid_repetitions": 15,
+      "scored_repetitions": 15,
+      "failed_repetitions": 0,
+      "not_attempted_repetitions": 0,
+      "paired_score_count": 15
+    },
+    "authored": {
+      "samples": 5,
+      "cases": [
+        "alias_distinct",
+        "alias_merge",
+        "case_01",
+        "case_02",
+        "case_03"
+      ],
+      "baseline_metrics": {
+        "precision": {
+          "n": 5,
+          "missing": 0,
+          "mean": 0.8714285714285714,
+          "standard_deviation": 0.21665358411575858,
+          "minimum": 0.5,
+          "maximum": 1.0
+        },
+        "recall": {
+          "n": 5,
+          "missing": 0,
+          "mean": 0.8714285714285714,
+          "standard_deviation": 0.21665358411575858,
+          "minimum": 0.5,
+          "maximum": 1.0
+        },
+        "f1": {
+          "n": 5,
+          "missing": 0,
+          "mean": 0.8714285714285714,
+          "standard_deviation": 0.21665358411575858,
+          "minimum": 0.5,
+          "maximum": 1.0
+        },
+        "provenance_accuracy": {
+          "n": 5,
+          "missing": 0,
+          "mean": 1.0,
+          "standard_deviation": 0.0,
+          "minimum": 1.0,
+          "maximum": 1.0
+        }
+      },
+      "resolver_per_input_means": {
+        "precision": {
+          "n": 5,
+          "missing": 0,
+          "mean": 1.0,
+          "standard_deviation": 0.0,
+          "minimum": 1.0,
+          "maximum": 1.0
+        },
+        "recall": {
+          "n": 5,
+          "missing": 0,
+          "mean": 1.0,
+          "standard_deviation": 0.0,
+          "minimum": 1.0,
+          "maximum": 1.0
+        },
+        "f1": {
+          "n": 5,
+          "missing": 0,
+          "mean": 1.0,
+          "standard_deviation": 0.0,
+          "minimum": 1.0,
+          "maximum": 1.0
+        },
+        "provenance_accuracy": {
+          "n": 5,
+          "missing": 0,
+          "mean": 1.0,
+          "standard_deviation": 0.0,
+          "minimum": 1.0,
+          "maximum": 1.0
+        }
+      },
+      "within_input_f1_standard_deviations": {
+        "case_01_fixture": 0.0,
+        "case_02_fixture": 0.0,
+        "case_03_fixture": 0.0,
+        "alias_merge": 0.0,
+        "alias_distinct": 0.0
+      },
+      "valid_repetitions": 15,
+      "scored_repetitions": 15,
+      "failed_repetitions": 0,
+      "not_attempted_repetitions": 0,
+      "paired_score_count": 15
+    },
+    "historical": {
+      "samples": 1,
+      "cases": [
+        "case_03"
+      ],
+      "baseline_metrics": {
+        "precision": {
+          "n": 1,
+          "missing": 0,
+          "mean": 1.0,
+          "standard_deviation": null,
+          "minimum": 1.0,
+          "maximum": 1.0
+        },
+        "recall": {
+          "n": 1,
+          "missing": 0,
+          "mean": 1.0,
+          "standard_deviation": null,
+          "minimum": 1.0,
+          "maximum": 1.0
+        },
+        "f1": {
+          "n": 1,
+          "missing": 0,
+          "mean": 1.0,
+          "standard_deviation": null,
+          "minimum": 1.0,
+          "maximum": 1.0
+        },
+        "provenance_accuracy": {
+          "n": 1,
+          "missing": 0,
+          "mean": 1.0,
+          "standard_deviation": null,
+          "minimum": 1.0,
+          "maximum": 1.0
+        }
+      },
+      "resolver_per_input_means": {
+        "precision": {
+          "n": 1,
+          "missing": 0,
+          "mean": 1.0,
+          "standard_deviation": null,
+          "minimum": 1.0,
+          "maximum": 1.0
+        },
+        "recall": {
+          "n": 1,
+          "missing": 0,
+          "mean": 1.0,
+          "standard_deviation": null,
+          "minimum": 1.0,
+          "maximum": 1.0
+        },
+        "f1": {
+          "n": 1,
+          "missing": 0,
+          "mean": 1.0,
+          "standard_deviation": null,
+          "minimum": 1.0,
+          "maximum": 1.0
+        },
+        "provenance_accuracy": {
+          "n": 1,
+          "missing": 0,
+          "mean": 1.0,
+          "standard_deviation": null,
+          "minimum": 1.0,
+          "maximum": 1.0
+        }
+      },
+      "within_input_f1_standard_deviations": {
+        "case_03_historical": 0.0
+      },
+      "valid_repetitions": 3,
+      "scored_repetitions": 3,
+      "failed_repetitions": 0,
+      "not_attempted_repetitions": 0,
+      "paired_score_count": 3
+    }
+  },
+  "samples": [
+    {
+      "sample_id": "case_01_fixture",
+      "case_id": "case_01",
+      "cohort": "authored",
+      "baseline": {
+        "status": "completed",
+        "evaluation": {
+          "tp": 6,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "provenance_passed": 6,
+          "provenance_failed": 0,
+          "provenance_accuracy": 1.0
+        },
+        "identity": {
+          "incorrect_merges": 0,
+          "missed_merges": 0,
+          "different_truth_pairs": 29,
+          "same_truth_pairs": 10,
+          "eligible_pairs": 39
+        }
+      },
+      "resolver_metrics": {
+        "precision": {
+          "n": 3,
+          "missing": 0,
+          "mean": 1.0,
+          "standard_deviation": 0.0,
+          "minimum": 1.0,
+          "maximum": 1.0
+        },
+        "recall": {
+          "n": 3,
+          "missing": 0,
+          "mean": 1.0,
+          "standard_deviation": 0.0,
+          "minimum": 1.0,
+          "maximum": 1.0
+        },
+        "f1": {
+          "n": 3,
+          "missing": 0,
+          "mean": 1.0,
+          "standard_deviation": 0.0,
+          "minimum": 1.0,
+          "maximum": 1.0
+        },
+        "provenance_accuracy": {
+          "n": 3,
+          "missing": 0,
+          "mean": 1.0,
+          "standard_deviation": 0.0,
+          "minimum": 1.0,
+          "maximum": 1.0
+        }
+      },
+      "scored_repetitions": 3,
+      "paired_score_coverage": 1.0,
+      "paired_deltas": {
+        "n": 3,
+        "missing": 0,
+        "mean": 0.0,
+        "standard_deviation": 0.0,
+        "minimum": 0.0,
+        "maximum": 0.0
+      },
+      "valid_repetitions": 3,
+      "failed_repetitions": 0,
+      "attempted_repetitions": 3,
+      "failure_rate_among_attempted": 0.0,
+      "not_attempted_repetitions": 0,
+      "no_edit_repetitions": 3,
+      "incremental_cost": {
+        "n": 3,
+        "missing": 0,
+        "mean": 0.00011771799999999999,
+        "standard_deviation": 0.00011949764931579195,
+        "minimum": 0.000048726,
+        "maximum": 0.00025570199999999996
+      },
+      "extraction_cost": null,
+      "extraction_seconds": null,
+      "extraction_usage": null,
+      "historical_pipeline_seconds": null,
+      "single_pipeline_cost": {
+        "n": 0,
+        "missing": 3,
+        "mean": null,
+        "standard_deviation": null,
+        "minimum": null,
+        "maximum": null
+      },
+      "provider_latency": {
+        "n": 3,
+        "missing": 0,
+        "mean": 0.8963339027638236,
+        "standard_deviation": 0.4726629485930575,
+        "minimum": 0.5248938328586519,
+        "maximum": 1.428369500208646
+      },
+      "resolver_latency": {
+        "n": 3,
+        "missing": 0,
+        "mean": 0.8964104581003388,
+        "standard_deviation": 0.4726750226862696,
+        "minimum": 0.5249627488665283,
+        "maximum": 1.4284602091647685
+      },
+      "baseline_single_pipeline_latency": null,
+      "single_pipeline_latency": {
+        "n": 0,
+        "missing": 3,
+        "mean": null,
+        "standard_deviation": null,
+        "minimum": null,
+        "maximum": null
+      },
+      "repetitions": [
+        {
+          "repetition": 1,
+          "status": "completed",
+          "stage": null,
+          "error_type": null,
+          "edit_count": 0,
+          "evaluation": {
+            "tp": 6,
+            "fp": 0,
+            "fn": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "provenance_passed": 6,
+            "provenance_failed": 0,
+            "provenance_accuracy": 1.0
+          },
+          "identity": {
+            "incorrect_merges": 0,
+            "missed_merges": 0,
+            "different_truth_pairs": 29,
+            "same_truth_pairs": 10,
+            "eligible_pairs": 39
+          },
+          "usage": {
+            "input_tokens": 1945,
+            "output_tokens": 34,
+            "cached_tokens": 384
+          },
+          "incremental_cost": 0.00025570199999999996,
+          "provider_seconds": 1.428369500208646,
+          "resolution_seconds": 1.4284602091647685,
+          "downstream_seconds": 0.0001988341100513935
+        },
+        {
+          "repetition": 2,
+          "status": "completed",
+          "stage": null,
+          "error_type": null,
+          "edit_count": 0,
+          "evaluation": {
+            "tp": 6,
+            "fp": 0,
+            "fn": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "provenance_passed": 6,
+            "provenance_failed": 0,
+            "provenance_accuracy": 1.0
+          },
+          "identity": {
+            "incorrect_merges": 0,
+            "missed_merges": 0,
+            "different_truth_pairs": 29,
+            "same_truth_pairs": 10,
+            "eligible_pairs": 39
+          },
+          "usage": {
+            "input_tokens": 1945,
+            "output_tokens": 34,
+            "cached_tokens": 1792
+          },
+          "incremental_cost": 0.000048726,
+          "provider_seconds": 0.7357383752241731,
+          "resolution_seconds": 0.7358084162697196,
+          "downstream_seconds": 0.00015629176050424576
+        },
+        {
+          "repetition": 3,
+          "status": "completed",
+          "stage": null,
+          "error_type": null,
+          "edit_count": 0,
+          "evaluation": {
+            "tp": 6,
+            "fp": 0,
+            "fn": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "provenance_passed": 6,
+            "provenance_failed": 0,
+            "provenance_accuracy": 1.0
+          },
+          "identity": {
+            "incorrect_merges": 0,
+            "missed_merges": 0,
+            "different_truth_pairs": 29,
+            "same_truth_pairs": 10,
+            "eligible_pairs": 39
+          },
+          "usage": {
+            "input_tokens": 1945,
+            "output_tokens": 34,
+            "cached_tokens": 1792
+          },
+          "incremental_cost": 0.000048726,
+          "provider_seconds": 0.5248938328586519,
+          "resolution_seconds": 0.5249627488665283,
+          "downstream_seconds": 0.00017445813864469528
+        }
+      ]
+    },
+    {
+      "sample_id": "case_02_fixture",
+      "case_id": "case_02",
+      "cohort": "authored",
+      "baseline": {
+        "status": "completed",
+        "evaluation": {
+          "tp": 10,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "provenance_passed": 10,
+          "provenance_failed": 0,
+          "provenance_accuracy": 1.0
+        },
+        "identity": {
+          "incorrect_merges": 0,
+          "missed_merges": 0,
+          "different_truth_pairs": 99,
+          "same_truth_pairs": 27,
+          "eligible_pairs": 126
+        }
+      },
+      "resolver_metrics": {
+        "precision": {
+          "n": 3,
+          "missing": 0,
+          "mean": 1.0,
+          "standard_deviation": 0.0,
+          "minimum": 1.0,
+          "maximum": 1.0
+        },
+        "recall": {
+          "n": 3,
+          "missing": 0,
+          "mean": 1.0,
+          "standard_deviation": 0.0,
+          "minimum": 1.0,
+          "maximum": 1.0
+        },
+        "f1": {
+          "n": 3,
+          "missing": 0,
+          "mean": 1.0,
+          "standard_deviation": 0.0,
+          "minimum": 1.0,
+          "maximum": 1.0
+        },
+        "provenance_accuracy": {
+          "n": 3,
+          "missing": 0,
+          "mean": 1.0,
+          "standard_deviation": 0.0,
+          "minimum": 1.0,
+          "maximum": 1.0
+        }
+      },
+      "scored_repetitions": 3,
+      "paired_score_coverage": 1.0,
+      "paired_deltas": {
+        "n": 3,
+        "missing": 0,
+        "mean": 0.0,
+        "standard_deviation": 0.0,
+        "minimum": 0.0,
+        "maximum": 0.0
+      },
+      "valid_repetitions": 3,
+      "failed_repetitions": 0,
+      "attempted_repetitions": 3,
+      "failure_rate_among_attempted": 0.0,
+      "not_attempted_repetitions": 0,
+      "no_edit_repetitions": 3,
+      "incremental_cost": {
+        "n": 3,
+        "missing": 0,
+        "mean": 0.00013708599999999997,
+        "standard_deviation": 0.00015208791731100794,
+        "minimum": 0.000049278,
+        "maximum": 0.00031270199999999993
+      },
+      "extraction_cost": null,
+      "extraction_seconds": null,
+      "extraction_usage": null,
+      "historical_pipeline_seconds": null,
+      "single_pipeline_cost": {
+        "n": 0,
+        "missing": 3,
+        "mean": null,
+        "standard_deviation": null,
+        "minimum": null,
+        "maximum": null
+      },
+      "provider_latency": {
+        "n": 3,
+        "missing": 0,
+        "mean": 0.8273259303532541,
+        "standard_deviation": 0.22337125309580647,
+        "minimum": 0.5837480830959976,
+        "maximum": 1.022579750046134
+      },
+      "resolver_latency": {
+        "n": 3,
+        "missing": 0,
+        "mean": 0.8274091663770378,
+        "standard_deviation": 0.22337116631993195,
+        "minimum": 0.5838313330896199,
+        "maximum": 1.022662749979645
+      },
+      "baseline_single_pipeline_latency": null,
+      "single_pipeline_latency": {
+        "n": 0,
+        "missing": 3,
+        "mean": null,
+        "standard_deviation": null,
+        "minimum": null,
+        "maximum": null
+      },
+      "repetitions": [
+        {
+          "repetition": 1,
+          "status": "completed",
+          "stage": null,
+          "error_type": null,
+          "edit_count": 0,
+          "evaluation": {
+            "tp": 10,
+            "fp": 0,
+            "fn": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "provenance_passed": 10,
+            "provenance_failed": 0,
+            "provenance_accuracy": 1.0
+          },
+          "identity": {
+            "incorrect_merges": 0,
+            "missed_merges": 0,
+            "different_truth_pairs": 99,
+            "same_truth_pairs": 27,
+            "eligible_pairs": 126
+          },
+          "usage": {
+            "input_tokens": 2325,
+            "output_tokens": 34,
+            "cached_tokens": 384
+          },
+          "incremental_cost": 0.00031270199999999993,
+          "provider_seconds": 1.022579750046134,
+          "resolution_seconds": 1.022662749979645,
+          "downstream_seconds": 0.00018516648560762405
+        },
+        {
+          "repetition": 2,
+          "status": "completed",
+          "stage": null,
+          "error_type": null,
+          "edit_count": 0,
+          "evaluation": {
+            "tp": 10,
+            "fp": 0,
+            "fn": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "provenance_passed": 10,
+            "provenance_failed": 0,
+            "provenance_accuracy": 1.0
+          },
+          "identity": {
+            "incorrect_merges": 0,
+            "missed_merges": 0,
+            "different_truth_pairs": 99,
+            "same_truth_pairs": 27,
+            "eligible_pairs": 126
+          },
+          "usage": {
+            "input_tokens": 2325,
+            "output_tokens": 34,
+            "cached_tokens": 2176
+          },
+          "incremental_cost": 0.000049278,
+          "provider_seconds": 0.8756499579176307,
+          "resolution_seconds": 0.8757334160618484,
+          "downstream_seconds": 0.000193833839148283
+        },
+        {
+          "repetition": 3,
+          "status": "completed",
+          "stage": null,
+          "error_type": null,
+          "edit_count": 0,
+          "evaluation": {
+            "tp": 10,
+            "fp": 0,
+            "fn": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "provenance_passed": 10,
+            "provenance_failed": 0,
+            "provenance_accuracy": 1.0
+          },
+          "identity": {
+            "incorrect_merges": 0,
+            "missed_merges": 0,
+            "different_truth_pairs": 99,
+            "same_truth_pairs": 27,
+            "eligible_pairs": 126
+          },
+          "usage": {
+            "input_tokens": 2325,
+            "output_tokens": 34,
+            "cached_tokens": 2176
+          },
+          "incremental_cost": 0.000049278,
+          "provider_seconds": 0.5837480830959976,
+          "resolution_seconds": 0.5838313330896199,
+          "downstream_seconds": 0.00018191616982221603
+        }
+      ]
+    },
+    {
+      "sample_id": "case_03_fixture",
+      "case_id": "case_03",
+      "cohort": "authored",
+      "baseline": {
+        "status": "completed",
+        "evaluation": {
+          "tp": 6,
+          "fp": 1,
+          "fn": 1,
+          "precision": 0.8571428571428571,
+          "recall": 0.8571428571428571,
+          "f1": 0.8571428571428571,
+          "provenance_passed": 6,
+          "provenance_failed": 0,
+          "provenance_accuracy": 1.0
+        },
+        "identity": {
+          "incorrect_merges": 0,
+          "missed_merges": 2,
+          "different_truth_pairs": 38,
+          "same_truth_pairs": 13,
+          "eligible_pairs": 51
+        }
+      },
+      "resolver_metrics": {
+        "precision": {
+          "n": 3,
+          "missing": 0,
+          "mean": 1.0,
+          "standard_deviation": 0.0,
+          "minimum": 1.0,
+          "maximum": 1.0
+        },
+        "recall": {
+          "n": 3,
+          "missing": 0,
+          "mean": 1.0,
+          "standard_deviation": 0.0,
+          "minimum": 1.0,
+          "maximum": 1.0
+        },
+        "f1": {
+          "n": 3,
+          "missing": 0,
+          "mean": 1.0,
+          "standard_deviation": 0.0,
+          "minimum": 1.0,
+          "maximum": 1.0
+        },
+        "provenance_accuracy": {
+          "n": 3,
+          "missing": 0,
+          "mean": 1.0,
+          "standard_deviation": 0.0,
+          "minimum": 1.0,
+          "maximum": 1.0
+        }
+      },
+      "scored_repetitions": 3,
+      "paired_score_coverage": 1.0,
+      "paired_deltas": {
+        "n": 3,
+        "missing": 0,
+        "mean": 0.1428571428571429,
+        "standard_deviation": 0.0,
+        "minimum": 0.1428571428571429,
+        "maximum": 0.1428571428571429
+      },
+      "valid_repetitions": 3,
+      "failed_repetitions": 0,
+      "attempted_repetitions": 3,
+      "failure_rate_among_attempted": 0.0,
+      "not_attempted_repetitions": 0,
+      "no_edit_repetitions": 0,
+      "incremental_cost": {
+        "n": 3,
+        "missing": 0,
+        "mean": 0.00014327399999999998,
+        "standard_deviation": 0.00013036107198086396,
+        "minimum": 0.00006801,
+        "maximum": 0.00029380199999999996
+      },
+      "extraction_cost": null,
+      "extraction_seconds": null,
+      "extraction_usage": null,
+      "historical_pipeline_seconds": null,
+      "single_pipeline_cost": {
+        "n": 0,
+        "missing": 3,
+        "mean": null,
+        "standard_deviation": null,
+        "minimum": null,
+        "maximum": null
+      },
+      "provider_latency": {
+        "n": 3,
+        "missing": 0,
+        "mean": 0.8851523194462061,
+        "standard_deviation": 0.05983281615273182,
+        "minimum": 0.8330234996974468,
+        "maximum": 0.9504838339053094
+      },
+      "resolver_latency": {
+        "n": 3,
+        "missing": 0,
+        "mean": 0.8852456528693438,
+        "standard_deviation": 0.05983398876136165,
+        "minimum": 0.8331203749403358,
+        "maximum": 0.9505807091481984
+      },
+      "baseline_single_pipeline_latency": null,
+      "single_pipeline_latency": {
+        "n": 0,
+        "missing": 3,
+        "mean": null,
+        "standard_deviation": null,
+        "minimum": null,
+        "maximum": null
+      },
+      "repetitions": [
+        {
+          "repetition": 1,
+          "status": "completed",
+          "stage": null,
+          "error_type": null,
+          "edit_count": 1,
+          "evaluation": {
+            "tp": 7,
+            "fp": 0,
+            "fn": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "provenance_passed": 7,
+            "provenance_failed": 0,
+            "provenance_accuracy": 1.0
+          },
+          "identity": {
+            "incorrect_merges": 0,
+            "missed_merges": 0,
+            "different_truth_pairs": 38,
+            "same_truth_pairs": 13,
+            "eligible_pairs": 51
+          },
+          "usage": {
+            "input_tokens": 2095,
+            "output_tokens": 60,
+            "cached_tokens": 384
+          },
+          "incremental_cost": 0.00029380199999999996,
+          "provider_seconds": 0.871949624735862,
+          "resolution_seconds": 0.8720358745194972,
+          "downstream_seconds": 0.00012141605839133263
+        },
+        {
+          "repetition": 2,
+          "status": "completed",
+          "stage": null,
+          "error_type": null,
+          "edit_count": 1,
+          "evaluation": {
+            "tp": 7,
+            "fp": 0,
+            "fn": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "provenance_passed": 7,
+            "provenance_failed": 0,
+            "provenance_accuracy": 1.0
+          },
+          "identity": {
+            "incorrect_merges": 0,
+            "missed_merges": 0,
+            "different_truth_pairs": 38,
+            "same_truth_pairs": 13,
+            "eligible_pairs": 51
+          },
+          "usage": {
+            "input_tokens": 2095,
+            "output_tokens": 60,
+            "cached_tokens": 1920
+          },
+          "incremental_cost": 0.00006801,
+          "provider_seconds": 0.8330234996974468,
+          "resolution_seconds": 0.8331203749403358,
+          "downstream_seconds": 0.00018395809456706047
+        },
+        {
+          "repetition": 3,
+          "status": "completed",
+          "stage": null,
+          "error_type": null,
+          "edit_count": 1,
+          "evaluation": {
+            "tp": 7,
+            "fp": 0,
+            "fn": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "provenance_passed": 7,
+            "provenance_failed": 0,
+            "provenance_accuracy": 1.0
+          },
+          "identity": {
+            "incorrect_merges": 0,
+            "missed_merges": 0,
+            "different_truth_pairs": 38,
+            "same_truth_pairs": 13,
+            "eligible_pairs": 51
+          },
+          "usage": {
+            "input_tokens": 2095,
+            "output_tokens": 60,
+            "cached_tokens": 1920
+          },
+          "incremental_cost": 0.00006801,
+          "provider_seconds": 0.9504838339053094,
+          "resolution_seconds": 0.9505807091481984,
+          "downstream_seconds": 0.00021345773711800575
+        }
+      ]
+    },
+    {
+      "sample_id": "case_03_historical",
+      "case_id": "case_03",
+      "cohort": "historical",
+      "baseline": {
+        "status": "completed",
+        "evaluation": {
+          "tp": 7,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "provenance_passed": 7,
+          "provenance_failed": 0,
+          "provenance_accuracy": 1.0
+        },
+        "identity": {
+          "incorrect_merges": 0,
+          "missed_merges": 0,
+          "different_truth_pairs": 38,
+          "same_truth_pairs": 13,
+          "eligible_pairs": 51
+        }
+      },
+      "resolver_metrics": {
+        "precision": {
+          "n": 3,
+          "missing": 0,
+          "mean": 1.0,
+          "standard_deviation": 0.0,
+          "minimum": 1.0,
+          "maximum": 1.0
+        },
+        "recall": {
+          "n": 3,
+          "missing": 0,
+          "mean": 1.0,
+          "standard_deviation": 0.0,
+          "minimum": 1.0,
+          "maximum": 1.0
+        },
+        "f1": {
+          "n": 3,
+          "missing": 0,
+          "mean": 1.0,
+          "standard_deviation": 0.0,
+          "minimum": 1.0,
+          "maximum": 1.0
+        },
+        "provenance_accuracy": {
+          "n": 3,
+          "missing": 0,
+          "mean": 1.0,
+          "standard_deviation": 0.0,
+          "minimum": 1.0,
+          "maximum": 1.0
+        }
+      },
+      "scored_repetitions": 3,
+      "paired_score_coverage": 1.0,
+      "paired_deltas": {
+        "n": 3,
+        "missing": 0,
+        "mean": 0.0,
+        "standard_deviation": 0.0,
+        "minimum": 0.0,
+        "maximum": 0.0
+      },
+      "valid_repetitions": 3,
+      "failed_repetitions": 0,
+      "attempted_repetitions": 3,
+      "failure_rate_among_attempted": 0.0,
+      "not_attempted_repetitions": 0,
+      "no_edit_repetitions": 3,
+      "incremental_cost": {
+        "n": 3,
+        "missing": 0,
+        "mean": 0.000127824,
+        "standard_deviation": 0.00013036107198086399,
+        "minimum": 0.00005256,
+        "maximum": 0.000278352
+      },
+      "extraction_cost": null,
+      "extraction_seconds": null,
+      "extraction_usage": {
+        "completion_tokens": 390,
+        "prompt_tokens": 1879,
+        "total_tokens": 2269,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": {
+          "audio_tokens": null,
+          "cache_write_tokens": null,
+          "cached_tokens": 512,
+          "image_tokens": null,
+          "text_tokens": null
+        },
+        "prompt_cache_hit_tokens": 512,
+        "prompt_cache_miss_tokens": 1367
+      },
+      "historical_pipeline_seconds": 1.9962322497740388,
+      "single_pipeline_cost": {
+        "n": 0,
+        "missing": 3,
+        "mean": null,
+        "standard_deviation": null,
+        "minimum": null,
+        "maximum": null
+      },
+      "provider_latency": {
+        "n": 3,
+        "missing": 0,
+        "mean": 0.8238965974499782,
+        "standard_deviation": 0.10578806522670516,
+        "minimum": 0.7044170000590384,
+        "maximum": 0.9056496671400964
+      },
+      "resolver_latency": {
+        "n": 3,
+        "missing": 0,
+        "mean": 0.8239707640993098,
+        "standard_deviation": 0.10579537226367748,
+        "minimum": 0.7044842499308288,
+        "maximum": 0.9057342503219843
+      },
+      "baseline_single_pipeline_latency": null,
+      "single_pipeline_latency": {
+        "n": 0,
+        "missing": 3,
+        "mean": null,
+        "standard_deviation": null,
+        "minimum": null,
+        "maximum": null
+      },
+      "repetitions": [
+        {
+          "repetition": 1,
+          "status": "completed",
+          "stage": null,
+          "error_type": null,
+          "edit_count": 0,
+          "evaluation": {
+            "tp": 7,
+            "fp": 0,
+            "fn": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "provenance_passed": 7,
+            "provenance_failed": 0,
+            "provenance_accuracy": 1.0
+          },
+          "identity": {
+            "incorrect_merges": 0,
+            "missed_merges": 0,
+            "different_truth_pairs": 38,
+            "same_truth_pairs": 13,
+            "eligible_pairs": 51
+          },
+          "usage": {
+            "input_tokens": 2096,
+            "output_tokens": 34,
+            "cached_tokens": 384
+          },
+          "incremental_cost": 0.000278352,
+          "provider_seconds": 0.7044170000590384,
+          "resolution_seconds": 0.7044842499308288,
+          "downstream_seconds": 0.00018062535673379898
+        },
+        {
+          "repetition": 2,
+          "status": "completed",
+          "stage": null,
+          "error_type": null,
+          "edit_count": 0,
+          "evaluation": {
+            "tp": 7,
+            "fp": 0,
+            "fn": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "provenance_passed": 7,
+            "provenance_failed": 0,
+            "provenance_accuracy": 1.0
+          },
+          "identity": {
+            "incorrect_merges": 0,
+            "missed_merges": 0,
+            "different_truth_pairs": 38,
+            "same_truth_pairs": 13,
+            "eligible_pairs": 51
+          },
+          "usage": {
+            "input_tokens": 2096,
+            "output_tokens": 34,
+            "cached_tokens": 1920
+          },
+          "incremental_cost": 0.00005256,
+          "provider_seconds": 0.8616231251507998,
+          "resolution_seconds": 0.8616937920451164,
+          "downstream_seconds": 0.00015308288857340813
+        },
+        {
+          "repetition": 3,
+          "status": "completed",
+          "stage": null,
+          "error_type": null,
+          "edit_count": 0,
+          "evaluation": {
+            "tp": 7,
+            "fp": 0,
+            "fn": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "provenance_passed": 7,
+            "provenance_failed": 0,
+            "provenance_accuracy": 1.0
+          },
+          "identity": {
+            "incorrect_merges": 0,
+            "missed_merges": 0,
+            "different_truth_pairs": 38,
+            "same_truth_pairs": 13,
+            "eligible_pairs": 51
+          },
+          "usage": {
+            "input_tokens": 2096,
+            "output_tokens": 34,
+            "cached_tokens": 1920
+          },
+          "incremental_cost": 0.00005256,
+          "provider_seconds": 0.9056496671400964,
+          "resolution_seconds": 0.9057342503219843,
+          "downstream_seconds": 0.0001721251755952835
+        }
+      ]
+    },
+    {
+      "sample_id": "alias_merge",
+      "case_id": "alias_merge",
+      "cohort": "authored",
+      "baseline": {
+        "status": "completed",
+        "evaluation": {
+          "tp": 1,
+          "fp": 1,
+          "fn": 1,
+          "precision": 0.5,
+          "recall": 0.5,
+          "f1": 0.5,
+          "provenance_passed": 1,
+          "provenance_failed": 0,
+          "provenance_accuracy": 1.0
+        },
+        "identity": {
+          "incorrect_merges": 0,
+          "missed_merges": 1,
+          "different_truth_pairs": 0,
+          "same_truth_pairs": 2,
+          "eligible_pairs": 2
+        }
+      },
+      "resolver_metrics": {
+        "precision": {
+          "n": 3,
+          "missing": 0,
+          "mean": 1.0,
+          "standard_deviation": 0.0,
+          "minimum": 1.0,
+          "maximum": 1.0
+        },
+        "recall": {
+          "n": 3,
+          "missing": 0,
+          "mean": 1.0,
+          "standard_deviation": 0.0,
+          "minimum": 1.0,
+          "maximum": 1.0
+        },
+        "f1": {
+          "n": 3,
+          "missing": 0,
+          "mean": 1.0,
+          "standard_deviation": 0.0,
+          "minimum": 1.0,
+          "maximum": 1.0
+        },
+        "provenance_accuracy": {
+          "n": 3,
+          "missing": 0,
+          "mean": 1.0,
+          "standard_deviation": 0.0,
+          "minimum": 1.0,
+          "maximum": 1.0
+        }
+      },
+      "scored_repetitions": 3,
+      "paired_score_coverage": 1.0,
+      "paired_deltas": {
+        "n": 3,
+        "missing": 0,
+        "mean": 0.5,
+        "standard_deviation": 0.0,
+        "minimum": 0.5,
+        "maximum": 0.5
+      },
+      "valid_repetitions": 3,
+      "failed_repetitions": 0,
+      "attempted_repetitions": 3,
+      "failure_rate_among_attempted": 0.0,
+      "not_attempted_repetitions": 0,
+      "no_edit_repetitions": 0,
+      "incremental_cost": {
+        "n": 3,
+        "missing": 0,
+        "mean": 0.000086624,
+        "standard_deviation": 0.000043453690660288006,
+        "minimum": 0.000061536,
+        "maximum": 0.00013680000000000002
+      },
+      "extraction_cost": null,
+      "extraction_seconds": null,
+      "extraction_usage": null,
+      "historical_pipeline_seconds": null,
+      "single_pipeline_cost": {
+        "n": 0,
+        "missing": 3,
+        "mean": null,
+        "standard_deviation": null,
+        "minimum": null,
+        "maximum": null
+      },
+      "provider_latency": {
+        "n": 3,
+        "missing": 0,
+        "mean": 0.8121778606437147,
+        "standard_deviation": 0.25660493676340473,
+        "minimum": 0.5193537906743586,
+        "maximum": 0.9977899161167443
+      },
+      "resolver_latency": {
+        "n": 3,
+        "missing": 0,
+        "mean": 0.8122661798261106,
+        "standard_deviation": 0.25657523945498945,
+        "minimum": 0.5194755406118929,
+        "maximum": 0.9978544157929718
+      },
+      "baseline_single_pipeline_latency": null,
+      "single_pipeline_latency": {
+        "n": 0,
+        "missing": 3,
+        "mean": null,
+        "standard_deviation": null,
+        "minimum": null,
+        "maximum": null
+      },
+      "repetitions": [
+        {
+          "repetition": 1,
+          "status": "completed",
+          "stage": null,
+          "error_type": null,
+          "edit_count": 1,
+          "evaluation": {
+            "tp": 2,
+            "fp": 0,
+            "fn": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "provenance_passed": 2,
+            "provenance_failed": 0,
+            "provenance_accuracy": 1.0
+          },
+          "identity": {
+            "incorrect_merges": 0,
+            "missed_merges": 0,
+            "different_truth_pairs": 0,
+            "same_truth_pairs": 2,
+            "eligible_pairs": 2
+          },
+          "usage": {
+            "input_tokens": 680,
+            "output_tokens": 58,
+            "cached_tokens": 0
+          },
+          "incremental_cost": 0.00013680000000000002,
+          "provider_seconds": 0.9977899161167443,
+          "resolution_seconds": 0.9978544157929718,
+          "downstream_seconds": 0.00011424999684095383
+        },
+        {
+          "repetition": 2,
+          "status": "completed",
+          "stage": null,
+          "error_type": null,
+          "edit_count": 1,
+          "evaluation": {
+            "tp": 2,
+            "fp": 0,
+            "fn": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "provenance_passed": 2,
+            "provenance_failed": 0,
+            "provenance_accuracy": 1.0
+          },
+          "identity": {
+            "incorrect_merges": 0,
+            "missed_merges": 0,
+            "different_truth_pairs": 0,
+            "same_truth_pairs": 2,
+            "eligible_pairs": 2
+          },
+          "usage": {
+            "input_tokens": 680,
+            "output_tokens": 58,
+            "cached_tokens": 512
+          },
+          "incremental_cost": 0.000061536,
+          "provider_seconds": 0.5193537906743586,
+          "resolution_seconds": 0.5194755406118929,
+          "downstream_seconds": 0.00016204267740249634
+        },
+        {
+          "repetition": 3,
+          "status": "completed",
+          "stage": null,
+          "error_type": null,
+          "edit_count": 1,
+          "evaluation": {
+            "tp": 2,
+            "fp": 0,
+            "fn": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "provenance_passed": 2,
+            "provenance_failed": 0,
+            "provenance_accuracy": 1.0
+          },
+          "identity": {
+            "incorrect_merges": 0,
+            "missed_merges": 0,
+            "different_truth_pairs": 0,
+            "same_truth_pairs": 2,
+            "eligible_pairs": 2
+          },
+          "usage": {
+            "input_tokens": 680,
+            "output_tokens": 58,
+            "cached_tokens": 512
+          },
+          "incremental_cost": 0.000061536,
+          "provider_seconds": 0.9193898751400411,
+          "resolution_seconds": 0.919468583073467,
+          "downstream_seconds": 0.00012516649439930916
+        }
+      ]
+    },
+    {
+      "sample_id": "alias_distinct",
+      "case_id": "alias_distinct",
+      "cohort": "authored",
+      "baseline": {
+        "status": "completed",
+        "evaluation": {
+          "tp": 2,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "provenance_passed": 2,
+          "provenance_failed": 0,
+          "provenance_accuracy": 1.0
+        },
+        "identity": {
+          "incorrect_merges": 0,
+          "missed_merges": 0,
+          "different_truth_pairs": 1,
+          "same_truth_pairs": 1,
+          "eligible_pairs": 2
+        }
+      },
+      "resolver_metrics": {
+        "precision": {
+          "n": 3,
+          "missing": 0,
+          "mean": 1.0,
+          "standard_deviation": 0.0,
+          "minimum": 1.0,
+          "maximum": 1.0
+        },
+        "recall": {
+          "n": 3,
+          "missing": 0,
+          "mean": 1.0,
+          "standard_deviation": 0.0,
+          "minimum": 1.0,
+          "maximum": 1.0
+        },
+        "f1": {
+          "n": 3,
+          "missing": 0,
+          "mean": 1.0,
+          "standard_deviation": 0.0,
+          "minimum": 1.0,
+          "maximum": 1.0
+        },
+        "provenance_accuracy": {
+          "n": 3,
+          "missing": 0,
+          "mean": 1.0,
+          "standard_deviation": 0.0,
+          "minimum": 1.0,
+          "maximum": 1.0
+        }
+      },
+      "scored_repetitions": 3,
+      "paired_score_coverage": 1.0,
+      "paired_deltas": {
+        "n": 3,
+        "missing": 0,
+        "mean": 0.0,
+        "standard_deviation": 0.0,
+        "minimum": 0.0,
+        "maximum": 0.0
+      },
+      "valid_repetitions": 3,
+      "failed_repetitions": 0,
+      "attempted_repetitions": 3,
+      "failure_rate_among_attempted": 0.0,
+      "not_attempted_repetitions": 0,
+      "no_edit_repetitions": 3,
+      "incremental_cost": {
+        "n": 3,
+        "missing": 0,
+        "mean": 0.000053858000000000005,
+        "standard_deviation": 0.000010863422665072002,
+        "minimum": 0.000047586,
+        "maximum": 0.000066402
+      },
+      "extraction_cost": null,
+      "extraction_seconds": null,
+      "extraction_usage": null,
+      "historical_pipeline_seconds": null,
+      "single_pipeline_cost": {
+        "n": 0,
+        "missing": 3,
+        "mean": null,
+        "standard_deviation": null,
+        "minimum": null,
+        "maximum": null
+      },
+      "provider_latency": {
+        "n": 3,
+        "missing": 0,
+        "mean": 0.917153333624204,
+        "standard_deviation": 0.13694891371523,
+        "minimum": 0.7592269172891974,
+        "maximum": 1.003147916868329
+      },
+      "resolver_latency": {
+        "n": 3,
+        "missing": 0,
+        "mean": 0.9172146944329143,
+        "standard_deviation": 0.13694749270696754,
+        "minimum": 0.759290125221014,
+        "maximum": 1.003211791627109
+      },
+      "baseline_single_pipeline_latency": null,
+      "single_pipeline_latency": {
+        "n": 0,
+        "missing": 3,
+        "mean": null,
+        "standard_deviation": null,
+        "minimum": null,
+        "maximum": null
+      },
+      "repetitions": [
+        {
+          "repetition": 1,
+          "status": "completed",
+          "stage": null,
+          "error_type": null,
+          "edit_count": 0,
+          "evaluation": {
+            "tp": 2,
+            "fp": 0,
+            "fn": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "provenance_passed": 2,
+            "provenance_failed": 0,
+            "provenance_accuracy": 1.0
+          },
+          "identity": {
+            "incorrect_merges": 0,
+            "missed_merges": 0,
+            "different_truth_pairs": 1,
+            "same_truth_pairs": 1,
+            "eligible_pairs": 2
+          },
+          "usage": {
+            "input_tokens": 683,
+            "output_tokens": 34,
+            "cached_tokens": 384
+          },
+          "incremental_cost": 0.000066402,
+          "provider_seconds": 1.003147916868329,
+          "resolution_seconds": 1.003211791627109,
+          "downstream_seconds": 0.00012591620907187462
+        },
+        {
+          "repetition": 2,
+          "status": "completed",
+          "stage": null,
+          "error_type": null,
+          "edit_count": 0,
+          "evaluation": {
+            "tp": 2,
+            "fp": 0,
+            "fn": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "provenance_passed": 2,
+            "provenance_failed": 0,
+            "provenance_accuracy": 1.0
+          },
+          "identity": {
+            "incorrect_merges": 0,
+            "missed_merges": 0,
+            "different_truth_pairs": 1,
+            "same_truth_pairs": 1,
+            "eligible_pairs": 2
+          },
+          "usage": {
+            "input_tokens": 683,
+            "output_tokens": 34,
+            "cached_tokens": 512
+          },
+          "incremental_cost": 0.000047586,
+          "provider_seconds": 0.9890851667150855,
+          "resolution_seconds": 0.9891421664506197,
+          "downstream_seconds": 0.0001289169304072857
+        },
+        {
+          "repetition": 3,
+          "status": "completed",
+          "stage": null,
+          "error_type": null,
+          "edit_count": 0,
+          "evaluation": {
+            "tp": 2,
+            "fp": 0,
+            "fn": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "provenance_passed": 2,
+            "provenance_failed": 0,
+            "provenance_accuracy": 1.0
+          },
+          "identity": {
+            "incorrect_merges": 0,
+            "missed_merges": 0,
+            "different_truth_pairs": 1,
+            "same_truth_pairs": 1,
+            "eligible_pairs": 2
+          },
+          "usage": {
+            "input_tokens": 683,
+            "output_tokens": 34,
+            "cached_tokens": 512
+          },
+          "incremental_cost": 0.000047586,
+          "provider_seconds": 0.7592269172891974,
+          "resolution_seconds": 0.759290125221014,
+          "downstream_seconds": 0.00023004086688160896
+        }
+      ]
+    },
+    {
+      "sample_id": "fresh_01",
+      "case_id": "case_03",
+      "cohort": "fresh",
+      "baseline": {
+        "status": "completed",
+        "evaluation": {
+          "tp": 7,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "provenance_passed": 7,
+          "provenance_failed": 0,
+          "provenance_accuracy": 1.0
+        },
+        "identity": null
+      },
+      "resolver_metrics": {
+        "precision": {
+          "n": 3,
+          "missing": 0,
+          "mean": 1.0,
+          "standard_deviation": 0.0,
+          "minimum": 1.0,
+          "maximum": 1.0
+        },
+        "recall": {
+          "n": 3,
+          "missing": 0,
+          "mean": 1.0,
+          "standard_deviation": 0.0,
+          "minimum": 1.0,
+          "maximum": 1.0
+        },
+        "f1": {
+          "n": 3,
+          "missing": 0,
+          "mean": 1.0,
+          "standard_deviation": 0.0,
+          "minimum": 1.0,
+          "maximum": 1.0
+        },
+        "provenance_accuracy": {
+          "n": 3,
+          "missing": 0,
+          "mean": 1.0,
+          "standard_deviation": 0.0,
+          "minimum": 1.0,
+          "maximum": 1.0
+        }
+      },
+      "scored_repetitions": 3,
+      "paired_score_coverage": 1.0,
+      "paired_deltas": {
+        "n": 3,
+        "missing": 0,
+        "mean": 0.0,
+        "standard_deviation": 0.0,
+        "minimum": 0.0,
+        "maximum": 0.0
+      },
+      "valid_repetitions": 3,
+      "failed_repetitions": 0,
+      "attempted_repetitions": 3,
+      "failure_rate_among_attempted": 0.0,
+      "not_attempted_repetitions": 0,
+      "no_edit_repetitions": 1,
+      "incremental_cost": {
+        "n": 3,
+        "missing": 0,
+        "mean": 0.00006756,
+        "standard_deviation": 0.000014709180806557513,
+        "minimum": 0.00005256,
+        "maximum": 0.00008196
+      },
+      "extraction_cost": 0.00027124200000000004,
+      "extraction_seconds": 1.9119721250608563,
+      "extraction_usage": {
+        "input_tokens": 1879,
+        "output_tokens": 390,
+        "cached_tokens": 1664
+      },
+      "historical_pipeline_seconds": null,
+      "single_pipeline_cost": {
+        "n": 3,
+        "missing": 0,
+        "mean": 0.000338802,
+        "standard_deviation": 0.00001470918080655752,
+        "minimum": 0.00032380200000000004,
+        "maximum": 0.00035320200000000005
+      },
+      "provider_latency": {
+        "n": 3,
+        "missing": 0,
+        "mean": 0.7980006945629915,
+        "standard_deviation": 0.04190880569083623,
+        "minimum": 0.7611652086488903,
+        "maximum": 0.8435976249165833
+      },
+      "resolver_latency": {
+        "n": 3,
+        "missing": 0,
+        "mean": 0.7980934167280793,
+        "standard_deviation": 0.04190018205756098,
+        "minimum": 0.7612629164941609,
+        "maximum": 0.8436796246096492
+      },
+      "baseline_single_pipeline_latency": 1.912145707756281,
+      "single_pipeline_latency": {
+        "n": 3,
+        "missing": 0,
+        "mean": 2.7102310142169395,
+        "standard_deviation": 0.041902423904871325,
+        "minimum": 2.6733772912994027,
+        "maximum": 2.7558086668141186
+      },
+      "repetitions": [
+        {
+          "repetition": 1,
+          "status": "completed",
+          "stage": null,
+          "error_type": null,
+          "edit_count": 2,
+          "evaluation": {
+            "tp": 7,
+            "fp": 0,
+            "fn": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "provenance_passed": 7,
+            "provenance_failed": 0,
+            "provenance_accuracy": 1.0
+          },
+          "identity": null,
+          "usage": {
+            "input_tokens": 2096,
+            "output_tokens": 83,
+            "cached_tokens": 1920
+          },
+          "incremental_cost": 0.00008196,
+          "provider_seconds": 0.8435976249165833,
+          "resolution_seconds": 0.8436796246096492,
+          "downstream_seconds": 0.00015691714361310005
+        },
+        {
+          "repetition": 2,
+          "status": "completed",
+          "stage": null,
+          "error_type": null,
+          "edit_count": 0,
+          "evaluation": {
+            "tp": 7,
+            "fp": 0,
+            "fn": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "provenance_passed": 7,
+            "provenance_failed": 0,
+            "provenance_accuracy": 1.0
+          },
+          "identity": null,
+          "usage": {
+            "input_tokens": 2096,
+            "output_tokens": 34,
+            "cached_tokens": 1920
+          },
+          "incremental_cost": 0.00005256,
+          "provider_seconds": 0.7892392501235008,
+          "resolution_seconds": 0.7893377090804279,
+          "downstream_seconds": 0.0001972503960132599
+        },
+        {
+          "repetition": 3,
+          "status": "completed",
+          "stage": null,
+          "error_type": null,
+          "edit_count": 1,
+          "evaluation": {
+            "tp": 7,
+            "fp": 0,
+            "fn": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "provenance_passed": 7,
+            "provenance_failed": 0,
+            "provenance_accuracy": 1.0
+          },
+          "identity": null,
+          "usage": {
+            "input_tokens": 2096,
+            "output_tokens": 60,
+            "cached_tokens": 1920
+          },
+          "incremental_cost": 0.00006816,
+          "provider_seconds": 0.7611652086488903,
+          "resolution_seconds": 0.7612629164941609,
+          "downstream_seconds": 0.00014224974438548088
+        }
+      ]
+    },
+    {
+      "sample_id": "fresh_02",
+      "case_id": "case_03",
+      "cohort": "fresh",
+      "baseline": {
+        "status": "completed",
+        "evaluation": {
+          "tp": 7,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "provenance_passed": 7,
+          "provenance_failed": 0,
+          "provenance_accuracy": 1.0
+        },
+        "identity": null
+      },
+      "resolver_metrics": {
+        "precision": {
+          "n": 3,
+          "missing": 0,
+          "mean": 1.0,
+          "standard_deviation": 0.0,
+          "minimum": 1.0,
+          "maximum": 1.0
+        },
+        "recall": {
+          "n": 3,
+          "missing": 0,
+          "mean": 1.0,
+          "standard_deviation": 0.0,
+          "minimum": 1.0,
+          "maximum": 1.0
+        },
+        "f1": {
+          "n": 3,
+          "missing": 0,
+          "mean": 1.0,
+          "standard_deviation": 0.0,
+          "minimum": 1.0,
+          "maximum": 1.0
+        },
+        "provenance_accuracy": {
+          "n": 3,
+          "missing": 0,
+          "mean": 1.0,
+          "standard_deviation": 0.0,
+          "minimum": 1.0,
+          "maximum": 1.0
+        }
+      },
+      "scored_repetitions": 3,
+      "paired_score_coverage": 1.0,
+      "paired_deltas": {
+        "n": 3,
+        "missing": 0,
+        "mean": 0.0,
+        "standard_deviation": 0.0,
+        "minimum": 0.0,
+        "maximum": 0.0
+      },
+      "valid_repetitions": 3,
+      "failed_repetitions": 0,
+      "attempted_repetitions": 3,
+      "failure_rate_among_attempted": 0.0,
+      "not_attempted_repetitions": 0,
+      "no_edit_repetitions": 3,
+      "incremental_cost": {
+        "n": 3,
+        "missing": 0,
+        "mean": 0.00005256,
+        "standard_deviation": 0.0,
+        "minimum": 0.00005256,
+        "maximum": 0.00005256
+      },
+      "extraction_cost": 0.00027124200000000004,
+      "extraction_seconds": 1.3781440407037735,
+      "extraction_usage": {
+        "input_tokens": 1879,
+        "output_tokens": 390,
+        "cached_tokens": 1664
+      },
+      "historical_pipeline_seconds": null,
+      "single_pipeline_cost": {
+        "n": 3,
+        "missing": 0,
+        "mean": 0.00032380200000000004,
+        "standard_deviation": 0.0,
+        "minimum": 0.00032380200000000004,
+        "maximum": 0.00032380200000000004
+      },
+      "provider_latency": {
+        "n": 3,
+        "missing": 0,
+        "mean": 0.7594240003575882,
+        "standard_deviation": 0.13442812458727332,
+        "minimum": 0.6469208751805127,
+        "maximum": 0.9082941669039428
+      },
+      "resolver_latency": {
+        "n": 3,
+        "missing": 0,
+        "mean": 0.7595120699455341,
+        "standard_deviation": 0.13441437280262183,
+        "minimum": 0.647022666875273,
+        "maximum": 0.9083679169416428
+      },
+      "baseline_single_pipeline_latency": 1.3783055818639696,
+      "single_pipeline_latency": {
+        "n": 3,
+        "missing": 0,
+        "mean": 2.137845068704337,
+        "standard_deviation": 0.13438394894133007,
+        "minimum": 2.025394373573363,
+        "maximum": 2.2866726657375693
+      },
+      "repetitions": [
+        {
+          "repetition": 1,
+          "status": "completed",
+          "stage": null,
+          "error_type": null,
+          "edit_count": 0,
+          "evaluation": {
+            "tp": 7,
+            "fp": 0,
+            "fn": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "provenance_passed": 7,
+            "provenance_failed": 0,
+            "provenance_accuracy": 1.0
+          },
+          "identity": null,
+          "usage": {
+            "input_tokens": 2096,
+            "output_tokens": 34,
+            "cached_tokens": 1920
+          },
+          "incremental_cost": 0.00005256,
+          "provider_seconds": 0.6469208751805127,
+          "resolution_seconds": 0.647022666875273,
+          "downstream_seconds": 0.0002276659943163395
+        },
+        {
+          "repetition": 2,
+          "status": "completed",
+          "stage": null,
+          "error_type": null,
+          "edit_count": 0,
+          "evaluation": {
+            "tp": 7,
+            "fp": 0,
+            "fn": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "provenance_passed": 7,
+            "provenance_failed": 0,
+            "provenance_accuracy": 1.0
+          },
+          "identity": null,
+          "usage": {
+            "input_tokens": 2096,
+            "output_tokens": 34,
+            "cached_tokens": 1920
+          },
+          "incremental_cost": 0.00005256,
+          "provider_seconds": 0.9082941669039428,
+          "resolution_seconds": 0.9083679169416428,
+          "downstream_seconds": 0.00016070809215307236
+        },
+        {
+          "repetition": 3,
+          "status": "completed",
+          "stage": null,
+          "error_type": null,
+          "edit_count": 0,
+          "evaluation": {
+            "tp": 7,
+            "fp": 0,
+            "fn": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "provenance_passed": 7,
+            "provenance_failed": 0,
+            "provenance_accuracy": 1.0
+          },
+          "identity": null,
+          "usage": {
+            "input_tokens": 2096,
+            "output_tokens": 34,
+            "cached_tokens": 1920
+          },
+          "incremental_cost": 0.00005256,
+          "provider_seconds": 0.7230569589883089,
+          "resolution_seconds": 0.7231456260196865,
+          "downstream_seconds": 0.00017850007861852646
+        }
+      ]
+    },
+    {
+      "sample_id": "fresh_03",
+      "case_id": "case_03",
+      "cohort": "fresh",
+      "baseline": {
+        "status": "completed",
+        "evaluation": {
+          "tp": 7,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "provenance_passed": 7,
+          "provenance_failed": 0,
+          "provenance_accuracy": 1.0
+        },
+        "identity": null
+      },
+      "resolver_metrics": {
+        "precision": {
+          "n": 3,
+          "missing": 0,
+          "mean": 1.0,
+          "standard_deviation": 0.0,
+          "minimum": 1.0,
+          "maximum": 1.0
+        },
+        "recall": {
+          "n": 3,
+          "missing": 0,
+          "mean": 1.0,
+          "standard_deviation": 0.0,
+          "minimum": 1.0,
+          "maximum": 1.0
+        },
+        "f1": {
+          "n": 3,
+          "missing": 0,
+          "mean": 1.0,
+          "standard_deviation": 0.0,
+          "minimum": 1.0,
+          "maximum": 1.0
+        },
+        "provenance_accuracy": {
+          "n": 3,
+          "missing": 0,
+          "mean": 1.0,
+          "standard_deviation": 0.0,
+          "minimum": 1.0,
+          "maximum": 1.0
+        }
+      },
+      "scored_repetitions": 3,
+      "paired_score_coverage": 1.0,
+      "paired_deltas": {
+        "n": 3,
+        "missing": 0,
+        "mean": 0.0,
+        "standard_deviation": 0.0,
+        "minimum": 0.0,
+        "maximum": 0.0
+      },
+      "valid_repetitions": 3,
+      "failed_repetitions": 0,
+      "attempted_repetitions": 3,
+      "failure_rate_among_attempted": 0.0,
+      "not_attempted_repetitions": 0,
+      "no_edit_repetitions": 3,
+      "incremental_cost": {
+        "n": 3,
+        "missing": 0,
+        "mean": 0.00005256,
+        "standard_deviation": 0.0,
+        "minimum": 0.00005256,
+        "maximum": 0.00005256
+      },
+      "extraction_cost": 0.00027124200000000004,
+      "extraction_seconds": 1.6782185840420425,
+      "extraction_usage": {
+        "input_tokens": 1879,
+        "output_tokens": 390,
+        "cached_tokens": 1664
+      },
+      "historical_pipeline_seconds": null,
+      "single_pipeline_cost": {
+        "n": 3,
+        "missing": 0,
+        "mean": 0.00032380200000000004,
+        "standard_deviation": 0.0,
+        "minimum": 0.00032380200000000004,
+        "maximum": 0.00032380200000000004
+      },
+      "provider_latency": {
+        "n": 3,
+        "missing": 0,
+        "mean": 0.7078893198631704,
+        "standard_deviation": 0.10807415895323372,
+        "minimum": 0.5873531252145767,
+        "maximum": 0.7961447923444211
+      },
+      "resolver_latency": {
+        "n": 3,
+        "missing": 0,
+        "mean": 0.7079753194314738,
+        "standard_deviation": 0.10806939773864037,
+        "minimum": 0.5874406252987683,
+        "maximum": 0.796216499991715
+      },
+      "baseline_single_pipeline_latency": 1.678394251037389,
+      "single_pipeline_latency": {
+        "n": 3,
+        "missing": 0,
+        "mean": 2.3863846813328564,
+        "standard_deviation": 0.10807704596614563,
+        "minimum": 2.265837667044252,
+        "maximum": 2.4746217518113554
+      },
+      "repetitions": [
+        {
+          "repetition": 1,
+          "status": "completed",
+          "stage": null,
+          "error_type": null,
+          "edit_count": 0,
+          "evaluation": {
+            "tp": 7,
+            "fp": 0,
+            "fn": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "provenance_passed": 7,
+            "provenance_failed": 0,
+            "provenance_accuracy": 1.0
+          },
+          "identity": null,
+          "usage": {
+            "input_tokens": 2096,
+            "output_tokens": 34,
+            "cached_tokens": 1920
+          },
+          "incremental_cost": 0.00005256,
+          "provider_seconds": 0.7401700420305133,
+          "resolution_seconds": 0.7402688330039382,
+          "downstream_seconds": 0.00020720809698104858
+        },
+        {
+          "repetition": 2,
+          "status": "completed",
+          "stage": null,
+          "error_type": null,
+          "edit_count": 0,
+          "evaluation": {
+            "tp": 7,
+            "fp": 0,
+            "fn": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "provenance_passed": 7,
+            "provenance_failed": 0,
+            "provenance_accuracy": 1.0
+          },
+          "identity": null,
+          "usage": {
+            "input_tokens": 2096,
+            "output_tokens": 34,
+            "cached_tokens": 1920
+          },
+          "incremental_cost": 0.00005256,
+          "provider_seconds": 0.7961447923444211,
+          "resolution_seconds": 0.796216499991715,
+          "downstream_seconds": 0.0001866677775979042
+        },
+        {
+          "repetition": 3,
+          "status": "completed",
+          "stage": null,
+          "error_type": null,
+          "edit_count": 0,
+          "evaluation": {
+            "tp": 7,
+            "fp": 0,
+            "fn": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "provenance_passed": 7,
+            "provenance_failed": 0,
+            "provenance_accuracy": 1.0
+          },
+          "identity": null,
+          "usage": {
+            "input_tokens": 2096,
+            "output_tokens": 34,
+            "cached_tokens": 1920
+          },
+          "incremental_cost": 0.00005256,
+          "provider_seconds": 0.5873531252145767,
+          "resolution_seconds": 0.5874406252987683,
+          "downstream_seconds": 0.00017845770344138145
+        }
+      ]
+    },
+    {
+      "sample_id": "fresh_04",
+      "case_id": "case_03",
+      "cohort": "fresh",
+      "baseline": {
+        "status": "completed",
+        "evaluation": {
+          "tp": 7,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "provenance_passed": 7,
+          "provenance_failed": 0,
+          "provenance_accuracy": 1.0
+        },
+        "identity": null
+      },
+      "resolver_metrics": {
+        "precision": {
+          "n": 3,
+          "missing": 0,
+          "mean": 1.0,
+          "standard_deviation": 0.0,
+          "minimum": 1.0,
+          "maximum": 1.0
+        },
+        "recall": {
+          "n": 3,
+          "missing": 0,
+          "mean": 1.0,
+          "standard_deviation": 0.0,
+          "minimum": 1.0,
+          "maximum": 1.0
+        },
+        "f1": {
+          "n": 3,
+          "missing": 0,
+          "mean": 1.0,
+          "standard_deviation": 0.0,
+          "minimum": 1.0,
+          "maximum": 1.0
+        },
+        "provenance_accuracy": {
+          "n": 3,
+          "missing": 0,
+          "mean": 1.0,
+          "standard_deviation": 0.0,
+          "minimum": 1.0,
+          "maximum": 1.0
+        }
+      },
+      "scored_repetitions": 3,
+      "paired_score_coverage": 1.0,
+      "paired_deltas": {
+        "n": 3,
+        "missing": 0,
+        "mean": 0.0,
+        "standard_deviation": 0.0,
+        "minimum": 0.0,
+        "maximum": 0.0
+      },
+      "valid_repetitions": 3,
+      "failed_repetitions": 0,
+      "attempted_repetitions": 3,
+      "failure_rate_among_attempted": 0.0,
+      "not_attempted_repetitions": 0,
+      "no_edit_repetitions": 2,
+      "incremental_cost": {
+        "n": 3,
+        "missing": 0,
+        "mean": 0.000057759999999999996,
+        "standard_deviation": 0.000009006664199358162,
+        "minimum": 0.00005256,
+        "maximum": 0.00006816
+      },
+      "extraction_cost": 0.00027124200000000004,
+      "extraction_seconds": 1.741609959397465,
+      "extraction_usage": {
+        "input_tokens": 1879,
+        "output_tokens": 390,
+        "cached_tokens": 1664
+      },
+      "historical_pipeline_seconds": null,
+      "single_pipeline_cost": {
+        "n": 3,
+        "missing": 0,
+        "mean": 0.00032900200000000006,
+        "standard_deviation": 0.000009006664199358162,
+        "minimum": 0.00032380200000000004,
+        "maximum": 0.00033940200000000004
+      },
+      "provider_latency": {
+        "n": 3,
+        "missing": 0,
+        "mean": 0.6951808890638252,
+        "standard_deviation": 0.08903867652946156,
+        "minimum": 0.5953789581544697,
+        "maximum": 0.7664726669900119
+      },
+      "resolver_latency": {
+        "n": 3,
+        "missing": 0,
+        "mean": 0.6952865421772003,
+        "standard_deviation": 0.08905390171554779,
+        "minimum": 0.5954662505537271,
+        "maximum": 0.7665866259485483
+      },
+      "baseline_single_pipeline_latency": 1.741781959310174,
+      "single_pipeline_latency": {
+        "n": 3,
+        "missing": 0,
+        "mean": 2.4370921961963177,
+        "standard_deviation": 0.08906680053332683,
+        "minimum": 2.3372487938031554,
+        "maximum": 2.508376626763493
+      },
+      "repetitions": [
+        {
+          "repetition": 1,
+          "status": "completed",
+          "stage": null,
+          "error_type": null,
+          "edit_count": 0,
+          "evaluation": {
+            "tp": 7,
+            "fp": 0,
+            "fn": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "provenance_passed": 7,
+            "provenance_failed": 0,
+            "provenance_accuracy": 1.0
+          },
+          "identity": null,
+          "usage": {
+            "input_tokens": 2096,
+            "output_tokens": 34,
+            "cached_tokens": 1920
+          },
+          "incremental_cost": 0.00005256,
+          "provider_seconds": 0.5953789581544697,
+          "resolution_seconds": 0.5954662505537271,
+          "downstream_seconds": 0.00017258385196328163
+        },
+        {
+          "repetition": 2,
+          "status": "completed",
+          "stage": null,
+          "error_type": null,
+          "edit_count": 0,
+          "evaluation": {
+            "tp": 7,
+            "fp": 0,
+            "fn": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "provenance_passed": 7,
+            "provenance_failed": 0,
+            "provenance_accuracy": 1.0
+          },
+          "identity": null,
+          "usage": {
+            "input_tokens": 2096,
+            "output_tokens": 34,
+            "cached_tokens": 1920
+          },
+          "incremental_cost": 0.00005256,
+          "provider_seconds": 0.723691042046994,
+          "resolution_seconds": 0.7238067500293255,
+          "downstream_seconds": 0.00023445859551429749
+        },
+        {
+          "repetition": 3,
+          "status": "completed",
+          "stage": null,
+          "error_type": null,
+          "edit_count": 1,
+          "evaluation": {
+            "tp": 7,
+            "fp": 0,
+            "fn": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "provenance_passed": 7,
+            "provenance_failed": 0,
+            "provenance_accuracy": 1.0
+          },
+          "identity": null,
+          "usage": {
+            "input_tokens": 2096,
+            "output_tokens": 60,
+            "cached_tokens": 1920
+          },
+          "incremental_cost": 0.00006816,
+          "provider_seconds": 0.7664726669900119,
+          "resolution_seconds": 0.7665866259485483,
+          "downstream_seconds": 0.00018004141747951508
+        }
+      ]
+    },
+    {
+      "sample_id": "fresh_05",
+      "case_id": "case_03",
+      "cohort": "fresh",
+      "baseline": {
+        "status": "completed",
+        "evaluation": {
+          "tp": 7,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "provenance_passed": 7,
+          "provenance_failed": 0,
+          "provenance_accuracy": 1.0
+        },
+        "identity": null
+      },
+      "resolver_metrics": {
+        "precision": {
+          "n": 3,
+          "missing": 0,
+          "mean": 1.0,
+          "standard_deviation": 0.0,
+          "minimum": 1.0,
+          "maximum": 1.0
+        },
+        "recall": {
+          "n": 3,
+          "missing": 0,
+          "mean": 1.0,
+          "standard_deviation": 0.0,
+          "minimum": 1.0,
+          "maximum": 1.0
+        },
+        "f1": {
+          "n": 3,
+          "missing": 0,
+          "mean": 1.0,
+          "standard_deviation": 0.0,
+          "minimum": 1.0,
+          "maximum": 1.0
+        },
+        "provenance_accuracy": {
+          "n": 3,
+          "missing": 0,
+          "mean": 1.0,
+          "standard_deviation": 0.0,
+          "minimum": 1.0,
+          "maximum": 1.0
+        }
+      },
+      "scored_repetitions": 3,
+      "paired_score_coverage": 1.0,
+      "paired_deltas": {
+        "n": 3,
+        "missing": 0,
+        "mean": 0.0,
+        "standard_deviation": 0.0,
+        "minimum": 0.0,
+        "maximum": 0.0
+      },
+      "valid_repetitions": 3,
+      "failed_repetitions": 0,
+      "attempted_repetitions": 3,
+      "failure_rate_among_attempted": 0.0,
+      "not_attempted_repetitions": 0,
+      "no_edit_repetitions": 1,
+      "incremental_cost": {
+        "n": 3,
+        "missing": 0,
+        "mean": 0.00007776,
+        "standard_deviation": 0.000022980861602646668,
+        "minimum": 0.00005256,
+        "maximum": 0.00009756
+      },
+      "extraction_cost": 0.00027124200000000004,
+      "extraction_seconds": 1.532075791619718,
+      "extraction_usage": {
+        "input_tokens": 1879,
+        "output_tokens": 390,
+        "cached_tokens": 1664
+      },
+      "historical_pipeline_seconds": null,
+      "single_pipeline_cost": {
+        "n": 3,
+        "missing": 0,
+        "mean": 0.00034900200000000006,
+        "standard_deviation": 0.00002298086160264667,
+        "minimum": 0.00032380200000000004,
+        "maximum": 0.00036880200000000005
+      },
+      "provider_latency": {
+        "n": 3,
+        "missing": 0,
+        "mean": 0.7697991942986846,
+        "standard_deviation": 0.033041732844403336,
+        "minimum": 0.7398474579676986,
+        "maximum": 0.8052427498623729
+      },
+      "resolver_latency": {
+        "n": 3,
+        "missing": 0,
+        "mean": 0.769890485641857,
+        "standard_deviation": 0.033035616143758086,
+        "minimum": 0.7399453739635646,
+        "maximum": 0.8053281251341105
+      },
+      "baseline_single_pipeline_latency": 1.5322726662270725,
+      "single_pipeline_latency": {
+        "n": 3,
+        "missing": 0,
+        "mean": 2.3021364578356347,
+        "standard_deviation": 0.03303884936917534,
+        "minimum": 2.272179873660207,
+        "maximum": 2.3375724591314793
+      },
+      "repetitions": [
+        {
+          "repetition": 1,
+          "status": "completed",
+          "stage": null,
+          "error_type": null,
+          "edit_count": 2,
+          "evaluation": {
+            "tp": 7,
+            "fp": 0,
+            "fn": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "provenance_passed": 7,
+            "provenance_failed": 0,
+            "provenance_accuracy": 1.0
+          },
+          "identity": null,
+          "usage": {
+            "input_tokens": 2096,
+            "output_tokens": 85,
+            "cached_tokens": 1920
+          },
+          "incremental_cost": 0.00008316,
+          "provider_seconds": 0.8052427498623729,
+          "resolution_seconds": 0.8053281251341105,
+          "downstream_seconds": 0.00016854237765073776
+        },
+        {
+          "repetition": 2,
+          "status": "completed",
+          "stage": null,
+          "error_type": null,
+          "edit_count": 3,
+          "evaluation": {
+            "tp": 7,
+            "fp": 0,
+            "fn": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "provenance_passed": 7,
+            "provenance_failed": 0,
+            "provenance_accuracy": 1.0
+          },
+          "identity": null,
+          "usage": {
+            "input_tokens": 2096,
+            "output_tokens": 109,
+            "cached_tokens": 1920
+          },
+          "incremental_cost": 0.00009756,
+          "provider_seconds": 0.7398474579676986,
+          "resolution_seconds": 0.7399453739635646,
+          "downstream_seconds": 0.00015870807692408562
+        },
+        {
+          "repetition": 3,
+          "status": "completed",
+          "stage": null,
+          "error_type": null,
+          "edit_count": 0,
+          "evaluation": {
+            "tp": 7,
+            "fp": 0,
+            "fn": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "provenance_passed": 7,
+            "provenance_failed": 0,
+            "provenance_accuracy": 1.0
+          },
+          "identity": null,
+          "usage": {
+            "input_tokens": 2096,
+            "output_tokens": 34,
+            "cached_tokens": 1920
+          },
+          "incremental_cost": 0.00005256,
+          "provider_seconds": 0.7643073750659823,
+          "resolution_seconds": 0.7643979578278959,
+          "downstream_seconds": 0.0001832912676036358
+        }
+      ]
+    }
+  ],
+  "provenance": {
+    "git_sha": "051e2b08166584c7372626dcd8b02c09fbd075af",
+    "dirty": true,
+    "dependencies": {
+      "pydantic": "2.13.5",
+      "pydantic-core": "2.46.5",
+      "langchain-core": "1.6.6",
+      "langchain-deepseek": "1.1.1",
+      "langchain-openai": "1.6.7",
+      "openai": "3.23.0",
+      "langsmith": "0.14.3",
+      "httpx": "0.28.1",
+      "httpcore": "1.0.9"
+    },
+    "prompt_hashes": {
+      "extraction": "3a2cfa90eafbe514eaa6192b129a4233ba0f20af7e452e2c5435adaab073859a",
+      "resolution": "b0264a7e3c85c222596d4d27b3b2d733a7285f301e664917ccea3f07702a50ab"
+    }
+  },
+  "sessions": [
+    {
+      "finished_at": "2026-10-11T09:23:47.993647+00:00",
+      "stop_reason": "Requested checkpoint reached; inspect artifacts before continuing",
+      "new_attempts": 6,
+      "attempts_total": 6,
+      "task_attempts_total": 6
+    },
+    {
+      "finished_at": "2026-10-11T09:27:51.090124+00:00",
+      "stop_reason": "matrix_complete",
+      "new_attempts": 32,
+      "attempts_total": 38,
+      "task_attempts_total": 38
+    }
+  ]
+}
