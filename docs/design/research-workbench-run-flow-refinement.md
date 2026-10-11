@@ -8,6 +8,7 @@ Follow-up to [Issue 117 implementation](research-workbench-117-implementation.md
 - Freeze, required authorization and start are distinct backend operations. A frozen Run can be reopened; dismissing review never starts or cancels it. Authorization retained in the current mounted controller remains tied to its existing invocation. Reloading or switching execution targets requires review again; no authority is copied.
 - Execution and evaluation selection are separate. The execution strip and frozen/authorization/start dialogs name their stable Run number. Freezing another Run preserves the selected historical evaluation; the first Run becomes selected when no earlier result exists.
 - Chart activation replaces the single evaluation panel, focuses it and scrolls smoothly into view. Reduced-motion preferences use instant scrolling. Hover and focus alone do not scroll. Re-activating the selected point also brings its evaluation into view.
+- Observations & Evidence starts collapsed for each selected Run; expanding it exposes the existing observation selector, relationships and exact Evidence.
 - Remove case/input accordions from the chart. Keep compact scope/coverage disclosure, eligibility exclusions, and complete frozen metadata in Run details and observation inspection.
 - Replace the insertion popup with one compact Add generative resolver option. Escape or outside click dismisses it. Expanded pipeline nodes, all existing settings, collapse and removal remain unchanged.
 

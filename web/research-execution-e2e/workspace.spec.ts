@@ -131,6 +131,8 @@ test("persistent Experiment: changed and repeated Runs retain frozen Evidence an
   await expect(
     page.getByRole("region", { name: "Resolve aliases settings" }),
   ).toBeVisible();
+  await expect(page.getByLabel("Relationship outcome")).not.toBeVisible();
+  await page.getByText("Observations & Evidence", { exact: true }).click();
   await page.getByLabel("Relationship outcome").selectOption("missing");
   await page
     .locator(".observation-bench .relationship-list button")
