@@ -47,9 +47,10 @@
 .plan-summary h2 {
   margin-top: 0;
 }
+.plan-summary li,
 .plan-summary dd,
 .frozen-layout dd,
-.plan-identity {
+.frozen-layout details {
   overflow-wrap: anywhere;
 }
 .plan-summary dl {
@@ -89,4 +90,11 @@
   .configuration-fields fieldset {
     padding: 16px;
   }
+}
+
+.frozen-actions {
+  max-width: 1200px;
+  margin-top: 28px;
+  padding-top: 24px;
+  border-top: 1px solid var(--rule);
 }
