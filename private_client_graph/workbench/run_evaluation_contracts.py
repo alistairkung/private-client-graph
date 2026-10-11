@@ -105,7 +105,7 @@ class RunEvaluation(BaseModel):
     eligibility: ChartEligibility = Field(default_factory=ChartEligibility)
     artifact_digest: str | None = None
     full_pipeline_cost: float | None = None
-    full_pipeline_cost_reason: str = 'Run-wide reconstruction is undefined; retained individual pipeline estimates remain separate.' 
+    full_pipeline_cost_reason: str = 'Run-wide reconstruction is undefined; retained individual pipeline estimates remain separate.'
     reasons: list[str] = Field(default_factory=list)
 
 

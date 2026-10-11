@@ -10,7 +10,65 @@ from private_client_graph.research.provider import TokenUsage
 from private_client_graph.research.results import ResearchResult
 from private_client_graph.research.run_plan import RunPlan
 
-from .run_evaluation_contracts import AttemptCost, BenchmarkScope, ScopeInput, RunComparison, ObservationPair, PairingExclusion, ChartEligibility, RunEvaluation, RunCost, CaseAggregate, ObservationCoverage, PlannedObservation, RunAggregate
+from .run_evaluation_contracts import (
+    AttemptCost, BenchmarkScope, CaseAggregate, ChartEligibility,
+    ObservationCoverage, ObservationPair, PairingExclusion, PlannedObservation,
+    RunAggregate, RunComparison, RunCost, RunEvaluation, ScopeInput,
+)
+
+
+def evaluate_run(bundle: Bundle) -> RunEvaluation:
+    if not isinstance(bundle.plan, RunPlan):
+        reason = 'Legacy bundle lacks a verified single-configuration Run mapping and planned slots.'
+        return RunEvaluation(run_id=bundle.manifest['experiment_id'], aggregate=RunAggregate(reasons=[reason]),
+            cost=RunCost(known_subtotal=None, reasons=[reason]), reasons=[reason],
+            eligibility=ChartEligibility(f1_reasons=[reason], cost_reasons=[reason]))
+    slots = [PlannedObservation.model_validate(row.model_dump()) for row in bundle.plan.planned_slots]
+    results = [ResearchResult.model_validate(row) for row in bundle.results()]
+    attempts, authority_reasons = _retained_attempts(bundle)
+    lifecycle: list[dict] = [json.loads(path.read_text()) for path in (bundle.path / 'lifecycle').glob('*.json')]
+    lifecycle.sort(key=lambda row: row['at'])
+    current = lifecycle[-1] if lifecycle else {'state': 'frozen'}
+    aggregate = aggregate_observations(slots, results, _slot_statuses(slots, attempts, current, bundle.path.name))
+    cost = _bundle_cost(bundle, attempts, authority_reasons)
+    f1_reasons = [] if aggregate.f1 is not None else ['No scored planned observations.']
+    return RunEvaluation(run_id=bundle.manifest['experiment_id'], aggregate=aggregate,
+        cost=cost, scope=_benchmark_scope(bundle.plan),
+        artifact_digest=_digest({'manifest': bundle.manifest,
+            'results': [row.model_dump(mode='json') for row in results], 'attempts': attempts,
+            'authority_reasons': authority_reasons, 'lifecycle': lifecycle}),
+        eligibility=ChartEligibility(f1_by_run=aggregate.f1 is not None,
+            f1_vs_cost=aggregate.f1 is not None and cost.total is not None,
+            f1_reasons=f1_reasons, cost_reasons=[*f1_reasons, *cost.reasons]))
+
+
+def compare_runs(left: Bundle, right: Bundle) -> RunComparison:
+    first, second = evaluate_run(left), evaluate_run(right)
+    comparison = RunComparison(left_run_id=first.run_id, right_run_id=second.run_id)
+    if first.scope is None or second.scope is None:
+        comparison.reasons = ['One or both bundles lack a verified Run scope.']
+        return comparison
+    for field in ('input_mode', 'evaluator_version', 'aggregate_version'):
+        if getattr(first.scope, field) != getattr(second.scope, field):
+            comparison.scope_differences.append(f'{field} differs.')
+    comparison.scope_differences.extend(_input_scope_differences(first.scope, second.scope))
+    comparison.comparable_scope = not comparison.scope_differences
+    assert isinstance(left.plan, RunPlan) and isinstance(right.plan, RunPlan)
+    for label, a, b in (
+        ('Configuration', left.plan.resolver, right.plan.resolver),
+        ('Model/settings', left.plan.settings, right.plan.settings),
+        ('Effective model', left.plan.effective_model, right.plan.effective_model),
+        ('Code/dependency/prompt provenance', left.manifest.get('provenance'), right.manifest.get('provenance')),
+    ):
+        if a != b:
+            comparison.provenance_differences.append(f'{label} differs.')
+    _pair_exact_inputs(left, right, comparison)
+    comparison.unqualified_improvement_allowed = (comparison.comparable_scope
+        and first.aggregate.state == second.aggregate.state == 'complete'
+        and first.aggregate.coverage == second.aggregate.coverage and not comparison.exclusions)
+    if not comparison.unqualified_improvement_allowed:
+        comparison.reasons.append('Scope, complete scored coverage and verified exact pairing are required for an unqualified comparison.')
+    return comparison
 
 
 def aggregate_observations(slots: list[PlannedObservation], results: list[ResearchResult],
@@ -29,17 +87,12 @@ def aggregate_observations(slots: list[PlannedObservation], results: list[Resear
     cases = {slot.case_id: CaseAggregate(case_id=slot.case_id) for slot in slots}
     for slot in slots:
         row = indexed.get((slot.sample_id, slot.configuration, slot.repetition))
+        if row and row.case_id != slot.case_id:
+            raise ValueError('Result Case identity differs from its frozen observation slot')
         status = row.status if row else (execution_statuses or {}).get(slot.observation_id, 'not_attempted')
-        state: Literal['scored', 'pending', 'failed', 'uncertain', 'unavailable'] = ('pending' if status in ('not_attempted', 'running')
-                 else 'scored' if status == 'completed' and row and row.evaluation
-                 else 'unavailable' if status in ('completed', 'unavailable', 'result_missing')
-                 else 'uncertain' if status == 'uncertain' else 'failed')
-        invalid = bool(row and row.evaluation and min(row.evaluation.tp, row.evaluation.fp, row.evaluation.fn) < 0)
-        if invalid:
-            state = 'unavailable'
-        aggregate.observations.append(ObservationCoverage(observation_id=slot.observation_id,
-            case_id=slot.case_id, state=state, status=status,
-            reason=('Invalid evaluator counts.' if invalid else None if state == 'scored' else f'{status}: no scored evaluation.')))
+        observation = _observation_coverage(slot, row, status)
+        aggregate.observations.append(observation)
+        state = observation.state
         case = cases[slot.case_id]
         for coverage in (case.coverage, aggregate.coverage):
             coverage.planned += 1
@@ -55,12 +108,9 @@ def aggregate_observations(slots: list[PlannedObservation], results: list[Resear
         case.f1 = _f1(case.tp, case.fp, case.fn, case.coverage.scored)
     if aggregate.coverage.scored:
         aggregate.state = ('complete' if aggregate.coverage.scored == aggregate.coverage.planned else 'provisional')
+    if aggregate.state == 'provisional':
+        aggregate.reasons.append('Only scored survivors contribute; incomplete coverage can introduce selection bias.')
     return aggregate
-
-
-def _f1(tp: int, fp: int, fn: int, scored: int) -> float | None:
-    denominator = 2 * tp + fp + fn
-    return (2 * tp / denominator if denominator else 0.0) if scored else None
 
 
 def incurred_cost(attempts: list[AttemptCost]) -> RunCost:
@@ -85,23 +135,9 @@ def incurred_cost(attempts: list[AttemptCost]) -> RunCost:
         unpriced_attempts=len(unpriced), reasons=reasons)
 
 
-def evaluate_run(bundle: Bundle) -> RunEvaluation:
-    if not isinstance(bundle.plan, RunPlan):
-        reason = 'Legacy bundle lacks a verified single-configuration Run mapping and planned slots.'
-        return RunEvaluation(run_id=bundle.manifest['experiment_id'], aggregate=RunAggregate(reasons=[reason]),
-            cost=RunCost(known_subtotal=None, reasons=[reason]), reasons=[reason],
-            eligibility=ChartEligibility(f1_reasons=[reason], cost_reasons=[reason]))
-    slots = [PlannedObservation.model_validate(row.model_dump()) for row in bundle.plan.planned_slots]
-    results = [ResearchResult.model_validate(row) for row in bundle.results()]
-    aggregate = aggregate_observations(slots, results, _slot_statuses(bundle, slots))
-    cost = _bundle_cost(bundle)
-    f1_reasons = [] if aggregate.f1 is not None else ['No scored planned observations.']
-    return RunEvaluation(run_id=bundle.manifest['experiment_id'], aggregate=aggregate,
-        cost=cost, scope=_benchmark_scope(bundle.plan),
-        artifact_digest=_digest({'manifest': bundle.manifest, 'results': bundle.results(), 'attempts': bundle.attempts()}),
-        eligibility=ChartEligibility(f1_by_run=aggregate.f1 is not None,
-            f1_vs_cost=aggregate.f1 is not None and cost.total is not None,
-            f1_reasons=f1_reasons, cost_reasons=[*f1_reasons, *cost.reasons]))
+def _f1(tp: int, fp: int, fn: int, scored: int) -> float | None:
+    denominator = 2 * tp + fp + fn
+    return (2 * tp / denominator if denominator else 0.0) if scored else None
 
 
 def _benchmark_scope(plan: RunPlan) -> BenchmarkScope:
@@ -142,10 +178,9 @@ def _retained_attempts(bundle: Bundle) -> tuple[list[dict], list[str]]:
         ['Authoritative task ledger is incomplete.'] if missing else [])
 
 
-def _bundle_cost(bundle: Bundle) -> RunCost:
+def _bundle_cost(bundle: Bundle, attempts: list[dict], reasons: list[str]) -> RunCost:
     if bundle.plan.kind != 'live_experiment':
         return incurred_cost([])
-    attempts, reasons = _retained_attempts(bundle)
     pricing = bundle.plan.pricing
     costs = [AttemptCost(attempt_id=row['attempt_id'],
         cost=estimate_cost(TokenUsage.model_validate(row.get('response', {}).get('usage', {})), pricing),
@@ -158,47 +193,22 @@ def _bundle_cost(bundle: Bundle) -> RunCost:
     return value
 
 
-def _slot_statuses(bundle: Bundle, slots: list[PlannedObservation]) -> dict[str, str]:
-    attempts, _ = _retained_attempts(bundle)
+def _slot_statuses(slots: list[PlannedObservation], attempts: list[dict],
+                   current: dict, bundle_name: str) -> dict[str, str]:
     indexed = {row['attempt_id']: row for row in attempts}
     states = {}
     for slot in slots:
         attempt = indexed.get(slot.observation_id)
         upstream = indexed.get(slot.extraction_attempt_id) if slot.extraction_attempt_id else None
-        if attempt:
-            states[slot.observation_id] = attempt['status']
-        elif upstream and upstream['status'] != 'completed':
-            states[slot.observation_id] = upstream['status']
+        relevant = attempt or (upstream if upstream and upstream['status'] != 'completed' else None)
+        if relevant:
+            state = relevant['status']
+            current_authority = f"{bundle_name}-{current.get('invocation', '')}"
+            if (state == 'uncertain' and current['state'] in ('running', 'stopping')
+                    and relevant.get('authorization') == current_authority):
+                state = 'running'
+            states[slot.observation_id] = state
     return states
-
-
-def compare_runs(left: Bundle, right: Bundle) -> RunComparison:
-    first, second = evaluate_run(left), evaluate_run(right)
-    comparison = RunComparison(left_run_id=first.run_id, right_run_id=second.run_id)
-    if first.scope is None or second.scope is None:
-        comparison.reasons = ['One or both bundles lack a verified Run scope.']
-        return comparison
-    for field in ('input_mode', 'evaluator_version', 'aggregate_version'):
-        if getattr(first.scope, field) != getattr(second.scope, field):
-            comparison.scope_differences.append(f'{field} differs.')
-    comparison.scope_differences.extend(_input_scope_differences(first.scope, second.scope))
-    comparison.comparable_scope = not comparison.scope_differences
-    assert isinstance(left.plan, RunPlan) and isinstance(right.plan, RunPlan)
-    for label, a, b in (
-        ('Configuration', left.plan.resolver, right.plan.resolver),
-        ('Model/settings', left.plan.settings, right.plan.settings),
-        ('Effective model', left.plan.effective_model, right.plan.effective_model),
-        ('Code/dependency/prompt provenance', left.manifest.get('provenance'), right.manifest.get('provenance')),
-    ):
-        if a != b:
-            comparison.provenance_differences.append(f'{label} differs.')
-    _pair_exact_inputs(left, right, comparison)
-    comparison.unqualified_improvement_allowed = (comparison.comparable_scope
-        and first.aggregate.state == second.aggregate.state == 'complete'
-        and first.aggregate.coverage == second.aggregate.coverage and not comparison.exclusions)
-    if not comparison.unqualified_improvement_allowed:
-        comparison.reasons.append('Scope, complete scored coverage and verified exact pairing are required for an unqualified comparison.')
-    return comparison
 
 
 def _pair_exact_inputs(left: Bundle, right: Bundle, comparison: RunComparison) -> None:
@@ -258,3 +268,27 @@ def _input_scope_differences(left: BenchmarkScope, right: BenchmarkScope) -> lis
             if getattr(first[identity], field) != getattr(second[identity], field):
                 differences.append(f'{identity}: {field} differs.')
     return differences
+
+
+def _observation_coverage(slot: PlannedObservation, row: ResearchResult | None,
+                          status: str) -> ObservationCoverage:
+    state: Literal['scored', 'pending', 'failed', 'uncertain', 'unavailable']
+    invalid = bool(row and row.evaluation and
+                   min(row.evaluation.tp, row.evaluation.fp, row.evaluation.fn) < 0)
+    if invalid:
+        state = 'unavailable'
+    elif status in ('not_attempted', 'running'):
+        state = 'pending'
+    elif status == 'completed' and row and row.evaluation:
+        state = 'scored'
+    elif status in ('completed', 'unavailable', 'result_missing'):
+        state = 'unavailable'
+    elif status == 'uncertain':
+        state = 'uncertain'
+    else:
+        state = 'failed'
+    reason = None if state == 'scored' else f'{status}: no scored evaluation.'
+    if invalid:
+        reason = 'Invalid evaluator counts.'
+    return ObservationCoverage(observation_id=slot.observation_id, case_id=slot.case_id,
+        state=state, status=status, reason=reason)
