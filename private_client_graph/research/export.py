@@ -1,11 +1,11 @@
-"""Portable, verifiable snapshots; rendering and exporting never invoke models."""
+"""Portable, verifiable snapshots; summarizing and exporting never invoke models."""
 import json
 import zipfile
 from pathlib import Path
 
 from .artifacts import Bundle, checksum
 
-REQUIRED_EXPORT_FILES = {'manifest.json', 'manifest-checksum.json', 'summary.json', 'report.html'}
+REQUIRED_EXPORT_FILES = {'manifest.json', 'manifest-checksum.json', 'summary.json'}
 
 
 def export_bundle(bundle: Bundle, destination: Path) -> Path:
@@ -17,7 +17,7 @@ def export_bundle(bundle: Bundle, destination: Path) -> Path:
         relative_paths = {path.relative_to(bundle.path).as_posix() for path in files}
         missing = REQUIRED_EXPORT_FILES - relative_paths
         if missing:
-            raise ValueError(f"Bundle must be rendered before export; missing: {', '.join(sorted(missing))}")
+            raise ValueError(f"Bundle must be summarized before export; missing: {', '.join(sorted(missing))}")
         if any(p.is_symlink() for p in files):
             raise ValueError('Bundle exports cannot contain symlinks')
         contents = {p.relative_to(bundle.path).as_posix(): p.read_bytes() for p in files}
