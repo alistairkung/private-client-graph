@@ -7,7 +7,7 @@ from pydantic import ValidationError
 from sqlalchemy.exc import SQLAlchemyError
 
 from private_client_graph.extract import extract_relationships_from_text
-from private_client_graph.graph import build_graph
+from private_client_graph.pipeline import Pipeline, PipelineInput, PipelineExecutionError
 from private_client_graph.models import ExtractionResult
 from private_client_graph.persistence.matter_proposals import find_reference, save_proposal
 from private_client_graph.persistence.proposal_allowance import claim_slot
@@ -16,6 +16,7 @@ from private_client_graph.persistence.proposal_errors import (
     ProposalPersistenceFailure,
 )
 
+from .analysis_config import APPROVED_APPLICATION_PIPELINE_CONFIG
 from .pdf_acquisition import PdfAcquisitionError, extract_pdf_source
 from .proposal_config import ProposalAnalysisConfig
 from .proposal_contracts import MatterProposalDetail, ProposalMetadata, ReferenceOwner
@@ -32,21 +33,22 @@ def analyse_proposal(
     except PdfAcquisitionError as exc:
         raise ProposalFailure(exc.code, exc.message, retryable=exc.retryable) from exc
     _require_unclaimed_reference(metadata.external_reference)
-    extraction = _extract_proposal(source, config)
+    pipeline = Pipeline(APPROVED_APPLICATION_PIPELINE_CONFIG,
+                        extractor=lambda text: _extract_proposal(text, config))
     try:
-        graph = build_graph(
-            extraction.relationships,
-            document=metadata.source_title,
-            source_text=source,
-        )
-    except ValueError as exc:
+        result = pipeline.run(PipelineInput(source_text=source, document=metadata.source_title))
+    except PipelineExecutionError as exc:
+        if isinstance(exc.__cause__, ProposalFailure):
+            raise exc.__cause__
+        if exc.stage != 'graph' or not isinstance(exc.__cause__, ValueError):
+            raise
         raise ProposalFailure(
             'invalid_graph',
             'No valid proposal was produced. The proposed relationships or Evidence failed validation. You may try a fresh analysis.',
             retryable=True,
-        ) from exc
+        ) from exc.__cause__
     try:
-        return save_proposal(metadata, source, graph)
+        return save_proposal(metadata, source, result.graph)
     except DuplicateReference as exc:
         raise _duplicate_failure(exc.owner) from exc
     except ProposalPersistenceFailure as exc:

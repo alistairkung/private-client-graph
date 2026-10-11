@@ -47,7 +47,7 @@ def test_price_uses_cached_input_as_subset_and_does_not_invent_unknown_usage():
 
 def test_identity_diagnostics_distinguish_harmful_merge_from_correct_abstention():
     from private_client_graph.research.metrics import identity_diagnostics
-    from private_client_graph.research.resolution import apply_edits
+    from private_client_graph.resolution import apply_edits
     distinct = load_inputs()[-1]
     untouched = identity_diagnostics(distinct, distinct.extraction)
     assert untouched == {'incorrect_merges': 0, 'missed_merges': 0,

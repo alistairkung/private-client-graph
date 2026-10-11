@@ -15,7 +15,7 @@ from uuid import uuid4
 
 from .fixtures import ROOT
 from .plan import ExperimentPlan
-from .provider import RESOLUTION_PROMPT
+from private_client_graph.resolution import RESOLUTION_PROMPT
 from private_client_graph.extract import EXTRACTION_PROMPT
 
 

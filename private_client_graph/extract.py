@@ -58,12 +58,16 @@ OUTPUT CONTRACT
 """
 
 
-def build_relationship_extraction_chain(llm: ChatDeepSeek):
+def extraction_messages(source: str) -> list[tuple[str, str]]:
+    return [("system", EXTRACTION_PROMPT), ("human", source)]
+
+
+def build_relationship_extraction_chain(llm: ChatDeepSeek, *, include_raw: bool = False):
     """Compose the semantic prompt with the existing structured output contract."""
     prompt = ChatPromptTemplate.from_messages(
-        [("system", EXTRACTION_PROMPT), ("human", "{source}")]
+        extraction_messages("{source}")
     )
-    return prompt | llm.with_structured_output(ExtractionResult)
+    return prompt | llm.with_structured_output(ExtractionResult, include_raw=include_raw)
 
 
 def extract_relationships_from_text(

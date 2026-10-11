@@ -183,14 +183,16 @@ def test_graph_error_retains_prediction_and_cannot_masquerade_as_score_zero(tmp_
 
 def test_stage_timings_separate_resolution_from_graph_and_evaluation(tmp_path, monkeypatch):
     from private_client_graph.research import runner
+    from private_client_graph import resolution
     clock = [0.0]
     monkeypatch.setattr(runner.time, 'perf_counter', lambda: clock[0])
     for name, seconds in [('apply_edits', 3), ('build_graph', 100), ('evaluate_graph', 200)]:
-        original = getattr(runner, name)
+        module = resolution if name == 'apply_edits' else runner
+        original = getattr(module, name)
         def timed(*args, _original=original, _seconds=seconds, **kwargs):
             clock[0] += _seconds
             return _original(*args, **kwargs)
-        monkeypatch.setattr(runner, name, timed)
+        monkeypatch.setattr(module, name, timed)
     sample = load_inputs()[2]
     bundle = Bundle.create(tmp_path / 'timing', ExperimentPlan(inputs=[sample], repetitions=1,
                                                             fresh_extractions=1))
@@ -214,3 +216,45 @@ def test_stage_timings_separate_resolution_from_graph_and_evaluation(tmp_path, m
     fresh = next(s for s in summarize(bundle)['samples'] if s['cohort'] == 'fresh')
     assert fresh['baseline_single_pipeline_latency'] == 305
     assert fresh['single_pipeline_latency']['mean'] == 313
+
+
+def test_provider_request_mutation_cannot_contaminate_repetitions_or_frozen_input(tmp_path):
+    sample = load_inputs()[-2]
+    original = sample.extraction.model_dump()
+    bundle = Bundle.create(tmp_path / 'isolated', ExperimentPlan(inputs=[sample], repetitions=2))
+    received = []
+
+    def provider(request):
+        received.append(request.extraction.model_dump())
+        request.extraction.relationships.clear()
+        return ModelResponse(payload={'edits': []})
+
+    execute(bundle, provider=provider)
+
+    assert received == [original, original]
+    assert sample.extraction.model_dump() == original
+    assert all(row['extraction'] == original for row in bundle.results())
+
+
+def test_fresh_checkpoint_preserves_extraction_and_resumes_paired_resolution(tmp_path):
+    sample = load_inputs()[2]
+    bundle = Bundle.create(tmp_path / 'fresh-checkpoint', ExperimentPlan(
+        inputs=[sample], repetitions=1, fresh_extractions=1, max_calls=3,
+    ))
+    calls = []
+
+    def provider(request):
+        calls.append(request.stage)
+        payload = sample.extraction.model_dump() if request.stage == 'extraction' else {'edits': []}
+        return ModelResponse(payload=payload, raw_response={'retained': request.stage})
+
+    first = execute(bundle, provider=provider, max_new_attempts=2)
+    assert first['new_attempts'] == 2
+    assert calls == ['resolution', 'extraction']
+    assert (bundle.path / 'fresh_inputs' / 'fresh_01.json').exists()
+    second = execute(Bundle.open(bundle.path), provider=provider)
+    assert second['new_attempts'] == 1
+    assert calls == ['resolution', 'extraction', 'resolution']
+    assert len(bundle.results()) == 4
+    assert all(row['status'] == 'completed' for row in bundle.results())
+    assert bundle.attempts()[1]['response']['raw_response'] == {'retained': 'extraction'}
