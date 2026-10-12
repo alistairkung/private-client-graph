@@ -85,6 +85,43 @@ uv run python -m private_client_graph.extract
 
 Successful runs are saved under the Git-ignored `runs/` directory.
 
+## Research Workbench (local, synthetic-only)
+
+The React Research Workbench is the primary interface for controlled benchmark
+experiments. A named **Experiment** contains independently configured, immutable
+**Runs**. Each Run freezes its selected benchmark inputs and pipeline settings;
+results can be compared by F1 and incurred provider cost, with drill-down to
+relationship-level evaluation and exact Evidence. Legacy Issue #92 studies remain
+readable without being rewritten as new Runs.
+
+From the repository root, with Docker installed:
+
+```bash
+docker compose up --build -d
+```
+
+Open [http://127.0.0.1:8080](http://127.0.0.1:8080). The research service
+automatically applies Alembic migrations and rebuilds its index at startup.
+The artifact root is bind-mounted at `./runs/research`; PostgreSQL uses a
+separate persistent Compose volume. By default,
+`PCG_RESEARCH_LIVE_ENABLED=0`, so paid provider execution is disabled.
+Use a deterministic demonstration to try the workflow without credentials.
+
+Stop the research stack without deleting its data:
+
+```bash
+docker compose down
+```
+
+Do **not** use `docker compose down -v` when you intend to preserve the
+PostgreSQL projection. Preserve `runs/research` and its task ledgers;
+database reconstruction does not restore lost authoritative artifacts.
+
+See the [Research Workbench guide](research/README.md) for the current
+workflow, the [persistent Experiment/Run contract](docs/workflows/persistent-research-workspaces.md)
+for API and recovery details, and [the approved design](docs/design/research-workbench-approved-run-workspace.md)
+for the interaction model.
+
 ## Run unit tests
 
 ```bash
