@@ -291,33 +291,38 @@
 .insert-node:hover span,
 .insert-node:focus-visible span,
 .insert-node[aria-expanded="true"] span {
-  transform: scale(1.16);
-  background: #173e38;
-  color: white;
+  background: white;
+  color: #173e38;
 }
 .resolver-menu {
   position: absolute;
-  top: 110px;
-  left: -50px;
-  width: 260px;
+  top: 105px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 240px;
   z-index: 5;
-  padding: 16px;
+  padding: 6px;
   background: white;
   border: 1px solid #97aaa0;
-  border-radius: 12px;
-  box-shadow: 0 8px 20px #173e3822;
-}
-.resolver-menu p {
-  font-size: 12px;
+  border-radius: 4px;
 }
 .resolver-menu button {
   display: block;
-  margin: 8px 0;
+  margin: 0;
   width: 100%;
-  font-size: 12px;
+  min-height: 44px;
+  padding: 12px;
+  border: 0;
+  background: white;
+  color: #173e38;
+  text-align: left;
+  font-size: 13px;
+}
+.resolver-menu button:hover {
+  background: #edf1e8;
 }
 .pipeline-rail:has(.resolver-menu) {
-  min-height: 420px;
+  min-height: 210px;
 }
 .pipeline-evaluation {
   height: 152px;

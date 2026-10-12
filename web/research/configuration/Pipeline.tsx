@@ -1,4 +1,4 @@
-import { useId, useRef, useState, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import type { Capabilities, Proposal } from "../shared/contracts";
 import { InputFields, PipelineFields } from "./Fields";
 
@@ -30,6 +30,27 @@ export function Pipeline({
   const [menu, setMenu] = useState(false);
   const viewport = useRef<HTMLDivElement>(null);
   const add = useRef<HTMLButtonElement>(null);
+  const insertion = useRef<HTMLDivElement>(null);
+  const insertionMenu = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!menu) return;
+    const frame = viewport.current?.getBoundingClientRect();
+    const popup = insertionMenu.current?.getBoundingClientRect();
+    if (frame && popup) {
+      // Keep the entire anchored option visible in the horizontal rail on mobile.
+      viewport.current?.scrollBy({
+        left:
+          Math.max(0, popup.right - frame.right + 12) +
+          Math.min(0, popup.left - frame.left - 12),
+        behavior: "instant",
+      });
+    }
+    const dismiss = (event: PointerEvent) => {
+      if (!insertion.current?.contains(event.target as Node)) setMenu(false);
+    };
+    document.addEventListener("pointerdown", dismiss);
+    return () => document.removeEventListener("pointerdown", dismiss);
+  }, [menu]);
   const resolverHeader = useRef<HTMLButtonElement>(null);
   const mutable = !!(proposal && capabilities && update);
   const resolved = proposal
@@ -163,7 +184,10 @@ export function Pipeline({
               </>
             ),
           )}
-          <div className={`pipeline-connector ${!resolved ? "eligible" : ""}`}>
+          <div
+            ref={insertion}
+            className={`pipeline-connector ${!resolved ? "eligible" : ""}`}
+          >
             {!resolved && mutable && (
               <>
                 <button
@@ -180,6 +204,7 @@ export function Pipeline({
                 </button>
                 {menu && (
                   <div
+                    ref={insertionMenu}
                     id={`${instance}-resolver-menu`}
                     className="resolver-menu"
                     onKeyDown={(e) => {
@@ -189,27 +214,12 @@ export function Pipeline({
                       }
                     }}
                   >
-                    <strong>After extraction</strong>
-                    <p>
-                      {proposal?.execution_mode === "replay"
-                        ? "Uses recorded demonstration mode. No live calls."
-                        : "Uses the selected execution mode."}
-                    </p>
                     <button
                       type="button"
                       autoFocus
                       onClick={() => changeResolver(true)}
                     >
                       Add generative resolver
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setMenu(false);
-                        add.current?.focus();
-                      }}
-                    >
-                      Cancel
                     </button>
                   </div>
                 )}

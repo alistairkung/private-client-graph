@@ -1,20 +1,25 @@
 import { useRef, useState } from "react";
 import type { ExecutionAvailability, RunDetail } from "../shared/contracts";
 import { authorizeRun, controlRun } from "./api";
-import { PlanSummary } from "../configuration/PlanSummary";
+import { ReviewDialog } from "./ReviewDialog";
+import { ReviewSummary } from "./ReviewSummary";
 
 export function RunExecution({
   run,
   availability,
   refresh,
+  initiallyOpen = false,
+  number,
 }: {
   run: RunDetail;
   availability: ExecutionAvailability | null;
   refresh: () => void;
+  initiallyOpen?: boolean;
+  number: number;
 }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [review, setReview] = useState(false);
+  const [review, setReview] = useState(initiallyOpen);
   const [checked, setChecked] = useState(false);
   const [authorized, setAuthorized] = useState<string | null>(null);
   const command = useRef<string | null>(null);
@@ -69,13 +74,49 @@ export function RunExecution({
       setBusy(false);
     }
   }
+  const title = continuing
+    ? `Review continuation for Run ${number}`
+    : live && !authorized
+      ? `Authorize Run ${number}`
+      : `Ready to start Run ${number}`;
+  const failure = error && (
+    <p role="alert">
+      {error}{" "}
+      <button
+        disabled={busy}
+        onClick={() => {
+          command.current = null;
+          setAuthorized(null);
+          setChecked(false);
+          setError("");
+          refresh();
+        }}
+      >
+        Refresh and review again
+      </button>
+    </p>
+  );
   return (
     <section className="run-execution" aria-label="Run execution">
       <div className="section-heading">
-        <h3>Execution · {run.lifecycle}</h3>
-        <button className="secondary" disabled={busy} onClick={refresh}>
-          Refresh status
-        </button>
+        <h3>
+          Run {number} · Execution · {run.lifecycle}
+        </h3>
+        <div className="run-actions">
+          {ready && (
+            <button disabled={busy} onClick={() => setReview(true)}>
+              {continuing ? "Review continuation" : "Review frozen Run"}
+            </button>
+          )}
+          {run.lifecycle === "running" && (
+            <button disabled={busy} onClick={() => void act("stop")}>
+              Stop after current attempt
+            </button>
+          )}
+          <button className="secondary" disabled={busy} onClick={refresh}>
+            Refresh status
+          </button>
+        </div>
       </div>
       {active && (
         <p role="status">
@@ -84,19 +125,39 @@ export function RunExecution({
             : `Another Run is active: ${active}. Wait for it to finish before starting.`}
         </p>
       )}
-      {run.lifecycle === "running" && (
-        <button disabled={busy} onClick={() => void act("stop")}>
-          Stop after current attempt
-        </button>
-      )}
-      {continuing && !review && (
-        <button disabled={busy || !!active} onClick={() => setReview(true)}>
-          Review continuation
-        </button>
-      )}
-      {ready && (!continuing || review) && (
-        <>
-          <PlanSummary preview={run.plan.preview} frozen />
+      {!review && failure}
+      {ready && review && (
+        <ReviewDialog
+          title={title}
+          close={() => setReview(false)}
+          busy={busy}
+          actions={
+            <>
+              <small>
+                {live && !authorized
+                  ? "Authorization applies only to this frozen Run and invocation."
+                  : "Execution begins only when you start this invocation."}
+              </small>
+              {live && !authorized ? (
+                <button
+                  disabled={!checked || !budget || busy || !!active}
+                  onClick={() => void act("authorize")}
+                >
+                  Authorize invocation
+                </button>
+              ) : (
+                <button
+                  disabled={busy || !availability || !!active}
+                  onClick={() => void act(continuing ? "continue" : "start")}
+                >
+                  {continuing ? "Continue Run" : "Start Run"}
+                </button>
+              )}
+            </>
+          }
+        >
+          <p className="frozen-notice">Configuration frozen · Run {number}</p>
+          <ReviewSummary preview={run.plan.preview} frozen />
           {continuing && (
             <p>
               Existing results are retained. Uncertain attempts remain counted
@@ -105,26 +166,21 @@ export function RunExecution({
           )}
           {live && !authorized && (
             <section className="live-review">
-              <h3>Authorize bounded live execution</h3>
               {budget ? (
                 <>
+                  <h3>Task allowance</h3>
                   <p>{budget.label}</p>
-                  <dl>
-                    <dt>Task paid attempts used</dt>
-                    <dd>{budget.used}</dd>
-                    <dt>Current task allowance</dt>
-                    <dd>{budget.cap}</dd>
+                  <dl className="review-summary">
+                    <dt>Paid attempts used / current cap</dt>
+                    <dd>
+                      {budget.used} / {budget.cap}
+                    </dd>
                     <dt>Remaining allowance</dt>
                     <dd>{budget.remaining}</dd>
                     <dt>Proposed total task cap</dt>
                     <dd>{run.plan.preview.proposal.task_call_cap}</dd>
-                    <dt>Invocation attempt cap</dt>
-                    <dd>{run.plan.preview.invocation_cap}</dd>
                   </dl>
-                  <p>
-                    Authorization applies only to this frozen Run and
-                    invocation. A call cap is not a guaranteed dollar cap.
-                  </p>
+                  <p>A call cap is not a guaranteed dollar cap.</p>
                   <label className="approval-choice">
                     <input
                       type="checkbox"
@@ -137,12 +193,6 @@ export function RunExecution({
                       the frozen Run.
                     </span>
                   </label>
-                  <button
-                    disabled={!checked || busy || !!active}
-                    onClick={() => void act("authorize")}
-                  >
-                    Authorize invocation
-                  </button>
                 </>
               ) : (
                 <p role="alert">
@@ -155,32 +205,11 @@ export function RunExecution({
           {authorized && (
             <p role="status">Authorized. Start this invocation when ready.</p>
           )}
-          {(!live || authorized) && (
-            <button
-              disabled={busy || !availability || !!active}
-              onClick={() => void act(continuing ? "continue" : "start")}
-            >
-              {continuing ? "Continue Run" : "Start Run"}
-            </button>
-          )}
-        </>
-      )}
-      {error && (
-        <p role="alert">
-          {error}{" "}
-          <button
-            disabled={busy}
-            onClick={() => {
-              command.current = null;
-              setAuthorized(null);
-              setChecked(false);
-              setError("");
-              refresh();
-            }}
-          >
-            Refresh and review again
+          <button className="secondary" disabled={busy} onClick={refresh}>
+            Refresh task status
           </button>
-        </p>
+          {failure}
+        </ReviewDialog>
       )}
     </section>
   );

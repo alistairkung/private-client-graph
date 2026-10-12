@@ -14,7 +14,7 @@ const run = {
   plan: {
     digest: "digest",
     preview: {
-      proposal: { execution_mode: "live", task_call_cap: 4 },
+      proposal: { execution_mode: "live", task_call_cap: 4, input_ids: [] },
       invocation_cap: 2,
     },
   },
@@ -30,7 +30,7 @@ const availability: ExecutionAvailability = {
     remaining: 3,
   },
 };
-beforeEach(() => vi.clearAllMocks());
+beforeEach(() => vi.resetAllMocks());
 it("requires explicit approval, authorizes without dispatch and uses that invocation for a separate start", async () => {
   vi.mocked(api.authorizeRun).mockResolvedValue({
     authorized: true,
@@ -39,7 +39,13 @@ it("requires explicit approval, authorizes without dispatch and uses that invoca
   });
   const refresh = vi.fn();
   render(
-    <RunExecution run={run} availability={availability} refresh={refresh} />,
+    <RunExecution
+      number={2}
+      initiallyOpen
+      run={run}
+      availability={availability}
+      refresh={refresh}
+    />,
   );
   expect(
     screen.getByRole("button", { name: "Authorize invocation" }),
@@ -75,6 +81,8 @@ it("honors global active-run exclusion and displays rejected commands without re
   };
   const { rerender } = render(
     <RunExecution
+      number={2}
+      initiallyOpen
       run={offline}
       availability={{ ...availability, active_run_id: "other" }}
       refresh={() => {}}
@@ -83,6 +91,8 @@ it("honors global active-run exclusion and displays rejected commands without re
   expect(screen.getByRole("button", { name: "Start Run" })).toBeDisabled();
   rerender(
     <RunExecution
+      number={2}
+      initiallyOpen
       run={offline}
       availability={availability}
       refresh={() => {}}
@@ -93,4 +103,35 @@ it("honors global active-run exclusion and displays rejected commands without re
   await screen.findByRole("alert");
   expect(screen.getByRole("alert")).toHaveTextContent("Task budget changed");
   expect(api.controlRun).toHaveBeenCalledTimes(1);
+});
+
+it("reopens a frozen Run without dispatching and preserves authorization when its modal is dismissed", async () => {
+  vi.mocked(api.authorizeRun).mockResolvedValue({
+    authorized: true,
+    started: false,
+    invocation_id: "retained-approval",
+  });
+  render(
+    <RunExecution
+      number={2}
+      run={run}
+      availability={availability}
+      refresh={() => {}}
+    />,
+  );
+  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Review frozen Run" }));
+  fireEvent.click(screen.getByRole("checkbox"));
+  fireEvent.click(screen.getByRole("button", { name: "Authorize invocation" }));
+  await screen.findByRole("button", { name: "Start Run" });
+  fireEvent.click(screen.getByRole("button", { name: "Close review" }));
+  expect(api.controlRun).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole("button", { name: "Review frozen Run" }));
+  fireEvent.click(screen.getByRole("button", { name: "Start Run" }));
+  await waitFor(() =>
+    expect(api.controlRun).toHaveBeenCalledWith("experiment", "run", "start", {
+      request_id: "retained-approval",
+      plan_digest: "digest",
+    }),
+  );
 });

@@ -28,8 +28,8 @@ export function ObservationInspection({ run }: { run: RunDetail }) {
     (item) => item.id === relationshipId,
   );
   return (
-    <>
-      <h3>Observations &amp; Evidence</h3>
+    <details className="observation-inspection">
+      <summary>Observations &amp; Evidence</summary>
       <label>
         Observation
         <select
@@ -151,6 +151,6 @@ export function ObservationInspection({ run }: { run: RunDetail }) {
           </div>
         </>
       )}
-    </>
+    </details>
   );
 }
