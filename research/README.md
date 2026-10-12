@@ -80,11 +80,19 @@ It can still inspect a retained bundle without making provider calls:
 uv run python -m private_client_graph.research inspect runs/research/EXISTING_BUNDLE
 ```
 
-The original study's planning, paid-call budget and report/export instructions
-are historical, not the recommended way to start new experiments. In particular,
-do not repeat the paid #92 pilot simply to populate the new UI. The legacy
-standalone HTML report is being retired separately; until that cleanup is merged,
-its CLI and export requirements may still be present in the checkout.
+The original study's planning and paid-call budget instructions are historical,
+not the recommended way to start new experiments. Do not repeat the paid #92
+pilot simply to populate the new UI. The obsolete standalone HTML report has
+been removed; the legacy CLI now uses `summarize` to generate `summary.json`
+before a portable ZIP export. For an existing, unmodified legacy bundle:
+
+```bash
+uv run python -m private_client_graph.research summarize runs/research/EXISTING_BUNDLE
+uv run python -m private_client_graph.research export runs/research/EXISTING_BUNDLE runs/research/legacy-export.zip
+```
+
+The export retains the original observations and checksum verification; no live
+provider calls are made. Choose an export destination that does not already exist.
 
 ## Verification
 
