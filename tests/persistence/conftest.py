@@ -12,7 +12,7 @@ from sqlalchemy.pool import NullPool
 
 
 @pytest.fixture
-def database(monkeypatch):
+def database(monkeypatch, request):
     admin_url = os.getenv("TEST_DATABASE_URL")
     if not admin_url:
         pytest.skip("Set TEST_DATABASE_URL to a disposable PostgreSQL server with CREATEDB")
@@ -24,7 +24,7 @@ def database(monkeypatch):
     database_url = url.set(database=name).render_as_string(hide_password=False)
     monkeypatch.setenv("DATABASE_URL", database_url)
     try:
-        subprocess.run([sys.executable, "-m", "alembic", "upgrade", "head"], check=True)
+        subprocess.run([sys.executable, "-m", "alembic", "upgrade", getattr(request, "param", "head")], check=True)
         yield database_url
     finally:
         with admin.connect() as connection:

@@ -19,3 +19,6 @@ __pycache__/
 /.codex/hooks.json
 /.impeccable/*
 !/.impeccable/config.json
+
+/web/research-dist/
+/web/research/node_modules/

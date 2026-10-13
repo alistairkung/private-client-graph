@@ -1,0 +1,16 @@
+{
+  "relationships": [
+    {
+      "source_name": "Elizabeth Tan",
+      "relationship_type": "settlor_of",
+      "target_name": "Harbour Trust",
+      "supporting_text": "Elizabeth Tan is the settlor of Harbour Trust."
+    },
+    {
+      "source_name": "Beth",
+      "relationship_type": "beneficiary_of",
+      "target_name": "Harbour Trust",
+      "supporting_text": "Beth is a beneficiary of Harbour Trust."
+    }
+  ]
+}

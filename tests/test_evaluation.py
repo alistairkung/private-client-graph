@@ -221,6 +221,7 @@ def test_diagnostics_are_sorted_and_input_is_unchanged():
 
 
 CASE_01 = Path(__file__).resolve().parents[1] / "cases" / "case_01"
+CASE_02 = Path(__file__).resolve().parents[1] / "cases" / "case_02"
 
 
 def test_case_01_perfect_semantic_and_provenance_scores():
@@ -239,3 +240,44 @@ def test_case_01_approved_spans_are_verbatim_and_include_alternatives():
     for edge in expected.relationships:
         assert len(edge.approved_evidence) > 1
         assert all(quote and quote in source for quote in edge.approved_evidence)
+
+
+def test_case_02_expected_extraction_has_perfect_evaluation_result():
+    candidates = ExtractionResult.model_validate_json(
+        (CASE_02 / "expected_extraction.json").read_text()
+    )
+    graph = build_graph(
+        candidates.relationships,
+        document="source.txt",
+        source_text=(CASE_02 / "source.txt").read_text(),
+    )
+    expected = GroundTruth.model_validate_json((CASE_02 / "ground_truth.json").read_text())
+
+    expected_edges = [
+        ("Daniel Lau", "beneficiary_of", "Lakeside Family Trust"),
+        ("Daniel Lau", "sibling_of", "Elena Lau"),
+        ("Henry Lau", "parent_of", "Daniel Lau"),
+        ("Henry Lau", "parent_of", "Elena Lau"),
+        ("Henry Lau", "spouse_of", "Margaret Lau"),
+        ("Henry Lau", "trustee_of", "Lakeside Family Trust"),
+        ("Margaret Lau", "parent_of", "Daniel Lau"),
+        ("Margaret Lau", "parent_of", "Elena Lau"),
+        ("Margaret Lau", "settlor_of", "Lakeside Family Trust"),
+        ("Priya Nair", "beneficiary_of", "Lakeside Family Trust"),
+    ]
+    assert evaluate_graph(graph, expected).model_dump() == {
+        "tp": 10,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "true_positive_edges": expected_edges,
+        "false_positive_edges": [],
+        "false_negative_edges": [],
+        "provenance_passed": 10,
+        "provenance_failed": 0,
+        "provenance_accuracy": 1.0,
+        "provenance_passes": expected_edges,
+        "provenance_failures": [],
+    }

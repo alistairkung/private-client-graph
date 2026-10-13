@@ -77,6 +77,11 @@ bypass Alembic by mutating the production schema directly.
 
 Every deterministic behavioural change requires tests.
 
+Implementation work is not complete until the mandatory self-review gate in
+`docs/CODE_STYLE.md` has been performed. Implementation PR descriptions must
+include its brief `Code Quality Review` section; a clean review should say so
+rather than manufacture refactors.
+
 Before completing implementation work, run:
 
 ```bash
@@ -86,6 +91,25 @@ uv run pytest
 For web-app work, follow the testing strategy in `docs/WEB_APP_GUIDELINES.md`.
 
 Do not weaken or delete tests merely to make a change pass.
+
+## Paid provider calls and experiment control
+
+- Each development task has a default allowance of up to five paid provider
+  calls for useful integration checks, smoke tests or small diagnostic experiments.
+  The agent may use this allowance autonomously without per-call approval.
+- Count every attempted paid invocation, including failures and retries. Record
+  usage against the task so the allowance is shared across agents, sessions,
+  resumptions and test cases; none of these resets the allowance.
+- Do not make unnecessary calls to exhaust the allowance. Once it is exhausted,
+  obtain explicit user approval before making another paid call.
+- CI and automated tests must remain deterministic and must not depend on live
+  provider calls. Keep optional live development checks separate from those tests.
+- Larger evaluation experiments are separately scoped tasks with explicitly
+  approved call budgets. An explicit task budget replaces the default allowance;
+  it does not receive an extra five calls.
+- The user controls the build → evaluate → interpret → rebuild loop. Completing
+  one task does not authorize starting the next experimental iteration or changing
+  architecture in response to results. Respect separate execution gates on tasks.
 
 ## Git
 
@@ -97,6 +121,19 @@ Do not weaken or delete tests merely to make a change pass.
 - Keep changes scoped to the requested task.
 - Respect required CI checks.
 - Do not merge automatically.
+
+### CI handoff
+
+After local validation and opening a PR, hand the work back even if GitHub Actions
+checks are still running. Do not repeatedly poll or wait solely for CI to finish.
+
+The handoff must report the PR URL, local validation results, any known CI failures,
+and required checks that are still pending. Do not describe a PR with pending checks
+as merge-ready.
+
+If a CI failure is already known, investigate and fix it before declaring the
+implementation ready. Required checks must pass before merge; this handoff rule
+does not waive any quality gate or authorize automatic merging.
 
 ## Agent skills
 

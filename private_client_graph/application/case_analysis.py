@@ -9,11 +9,12 @@ from langchain_deepseek import ChatDeepSeek
 from pydantic import SecretStr
 from openai import APIConnectionError, APIStatusError
 
-from private_client_graph.extract import extract_relationships_from_text
+from private_client_graph.extraction import extract_relationships_from_text
 
-from private_client_graph.graph import build_graph
-from private_client_graph.models import CanonicalGraph, ExtractionResult
+from private_client_graph.pipeline import Pipeline, PipelineInput, PipelineExecutionError
+from private_client_graph.models import ExtractionResult
 
+from .analysis_config import APPROVED_APPLICATION_PIPELINE_CONFIG
 from .contracts import AnalysisError, AnalysisMode, CaseAnalysis, CaseDetail, Execution
 from .errors import AnalysisFailure
 from .showcase_live import LiveConfig, require_live, consume_live_slot
@@ -41,15 +42,35 @@ def get_case() -> CaseDetail:
 
 def analyse_case(mode: AnalysisMode, live_config: LiveConfig) -> CaseAnalysis:
     source = get_case().source_text
-    if mode == "live":
-        extraction, run_id = _run_live_analysis(source, live_config)
-    else:
-        extraction = _load_sample_extraction()
-        run_id = None
+    run_id: str | None = None
 
-    graph = _build_canonical_graph(extraction, source, run_id)
+    def extract_and_retain(text: str) -> ExtractionResult:
+        nonlocal run_id
+        extraction, run_id = _run_live_analysis(text, live_config)
+        return extraction
+
+    pipeline = Pipeline(APPROVED_APPLICATION_PIPELINE_CONFIG, extractor=extract_and_retain)
+    input = PipelineInput(source_text=source, document="source.txt")
+    try:
+        if mode == "live":
+            result = pipeline.run(input)
+        else:
+            result = pipeline.run_from_extraction(input, _load_sample_extraction())
+    except PipelineExecutionError as exc:
+        if isinstance(exc.__cause__, AnalysisFailure):
+            raise exc.__cause__
+        if exc.stage != 'graph' or not isinstance(exc.__cause__, ValueError):
+            raise
+        raise AnalysisFailure(
+            AnalysisError(
+                stage="graph",
+                message="The extracted relationships could not be validated. No analysis was produced.",
+                run_artifact_id=run_id,
+            ),
+            422,
+        ) from exc.__cause__
     return CaseAnalysis(
-        execution=Execution(mode=mode, run_artifact_id=run_id), graph=graph
+        execution=Execution(mode=mode, run_artifact_id=run_id), graph=result.graph
     )
 
 
@@ -94,24 +115,6 @@ def _load_sample_extraction() -> ExtractionResult:
                 stage="sample",
                 message="The sample analysis could not be loaded.",
             )
-        ) from exc
-
-
-def _build_canonical_graph(
-    extraction: ExtractionResult, source: str, run_id: str | None
-) -> CanonicalGraph:
-    try:
-        return build_graph(
-            extraction.relationships, document="source.txt", source_text=source
-        )
-    except ValueError as exc:
-        raise AnalysisFailure(
-            AnalysisError(
-                stage="graph",
-                message="The extracted relationships could not be validated. No analysis was produced.",
-                run_artifact_id=run_id,
-            ),
-            422,
         ) from exc
 
 

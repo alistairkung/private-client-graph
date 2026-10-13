@@ -1,5 +1,10 @@
 # Private Client Graph
 
+**Canonical persistence cutover:** Matters and pending Matter Proposals now use
+separate constrained relational facts. Existing deployments require a coordinated
+maintenance window; follow the [cutover and recovery procedure](docs/workflows/canonical-matter-cutover.md)
+before activating this release.
+
 Private Client Graph is an FTEC5660 MSc AI technical spike exploring whether an LLM can reconstruct **family and trust relationship graphs** from synthetic private-client-style documents while preserving **source provenance** and producing measurable evaluation results.
 
 The project is deliberately benchmark-driven: start with a known answer key, generate realistic source material, extract relationships, build a canonical graph deterministically, and evaluate the result.
@@ -80,6 +85,43 @@ uv run python -m private_client_graph.extract
 
 Successful runs are saved under the Git-ignored `runs/` directory.
 
+## Research Workbench (local, synthetic-only)
+
+The React Research Workbench is the primary interface for controlled benchmark
+experiments. A named **Experiment** contains independently configured, immutable
+**Runs**. Each Run freezes its selected benchmark inputs and pipeline settings;
+results can be compared by F1 and incurred provider cost, with drill-down to
+relationship-level evaluation and exact Evidence. Legacy Issue #92 studies remain
+readable without being rewritten as new Runs.
+
+From the repository root, with Docker installed:
+
+```bash
+docker compose up --build -d
+```
+
+Open [http://127.0.0.1:8080](http://127.0.0.1:8080). The research service
+automatically applies Alembic migrations and rebuilds its index at startup.
+The artifact root is bind-mounted at `./runs/research`; PostgreSQL uses a
+separate persistent Compose volume. By default,
+`PCG_RESEARCH_LIVE_ENABLED=0`, so paid provider execution is disabled.
+Use a deterministic demonstration to try the workflow without credentials.
+
+Stop the research stack without deleting its data:
+
+```bash
+docker compose down
+```
+
+Do **not** use `docker compose down -v` when you intend to preserve the
+PostgreSQL projection. Preserve `runs/research` and its task ledgers;
+database reconstruction does not restore lost authoritative artifacts.
+
+See the [Research Workbench guide](research/README.md) for the current
+workflow, the [persistent Experiment/Run contract](docs/workflows/persistent-research-workspaces.md)
+for API and recovery details, and [the approved design](docs/design/research-workbench-approved-run-workspace.md)
+for the interaction model.
+
 ## Run unit tests
 
 ```bash
@@ -136,7 +178,23 @@ runs/                   Local extraction/evaluation outputs (Git ignored)
 - **Answer key first.** Benchmark cases are designed from ground truth before source documents are written.
 - **One new difficulty at a time.** New cases should make failures interpretable.
 - **Architecture is earned by failures.** Add retries, verification, temporal state, entity resolution, or other complexity only when benchmark results justify it.
+- **Canonical facts live in PostgreSQL; representations are derived.** Persist enough canonical Matter state and relationships to reconstruct the current state deterministically from the database. Derived forms such as `CanonicalGraph` are representations of that state and must not contain authoritative facts that exist nowhere else in canonical persistence. A derived representation should gain independent persisted identity only when the domain gives it an independent lifecycle, history, or other semantics that cannot be reconstructed from the underlying state. This principle does not require every domain concept to have its own table; persistence structure remains earned by concrete requirements and invariants.
 - **Refactors preserve behaviour.** Deterministic rules are protected by focused tests and required CI checks.
+
+Canonical persistence must also protect the structural and referential invariants that make its facts trustworthy wherever PostgreSQL can naturally enforce them; application validation complements rather than replaces those guarantees. Provenance integrity and Matter isolation are explicit domain requirements. The [agreed canonical-persistence slice](docs/design/canonical-persistence-slice.md) and [ADR 0008](docs/adr/0008-enforce-canonical-provenance-and-aggregate-integrity.md) define the design; both accepted Matters and pending Matter Proposals now use separate relational facts with equivalent integrity guarantees.
+
+The preparatory domain boundary accepts a `CanonicalState` containing explicitly
+identified Sources, Entities, Relationships, and source-attributed Evidence.
+`single_source_state` adapts today's graph without interpreting document labels as
+Source identity; `validate_canonical_state` checks references within that single
+aggregate, and `reconstruct_graph` preserves the reviewed IDs, ordering and values.
+The legacy graph projection does not carry Source IDs, so source-aware consumers
+must retain the state for attribution. This boundary validates rather than repairs
+facts: it never resolves aliases, merges names, or normalizes a reviewed graph.
+Matter/proposal boundaries and Evergreen use it while retaining existing API
+contracts. Both Matter and proposal reads reconstruct it from relational facts. Confirmation
+copies the complete reviewed state unchanged, transfers the reference claim, and
+consumes the proposal atomically.
 
 ## Documentation
 
@@ -158,7 +216,7 @@ Docker is the only prerequisite for the normal protected-development workflow.
 From a clean checkout, run:
 
 ```bash
-docker compose up --build
+docker compose --profile practitioner up --build application
 ```
 
 Open [https://localhost:8443/app](https://localhost:8443/app) and accept the
@@ -175,13 +233,13 @@ built frontend. Database state is stored in the named Compose volume and survive
 ordinary stops and restarts. Stop the environment without deleting its data with:
 
 ```bash
-docker compose down
+docker compose --profile practitioner down
 ```
 
 Reset to a clean database by removing the volume:
 
 ```bash
-docker compose down -v
+docker compose --profile practitioner down -v
 ```
 
 This development-only, synthetically authenticated environment is strictly for
@@ -286,7 +344,9 @@ alembic upgrade head && python -m private_client_graph.persistence.seeds.evergre
 
 The image includes Alembic, migrations, the PostgreSQL driver, and seed inputs.
 Ordinary Uvicorn startup performs neither migration nor seeding. Either command
-failing stops pre-deploy, so the new application is not started.
+failing stops pre-deploy, so the new application is not started. This hook does
+not stop an old replica: upgrades from legacy canonical storage must first follow
+the [maintenance procedure](docs/workflows/canonical-matter-cutover.md).
 
 **Manual Railway setup before deploying this feature:**
 
@@ -385,10 +445,15 @@ uv run python -m private_client_graph.persistence.seeds.evergreen
 ```
 
 The ordinary commands also work with any explicitly configured PostgreSQL server.
-Migration `0001` creates `matters`: UUID primary key, non-null text columns for
+The original migration `0001` creates `matters`: UUID primary key, non-null text columns for
 external reference, title, source title and text, and a non-null JSONB
-`current_graph`. Alembic alone owns schema evolution. Never edit a merged/applied
-migration; add a new one.
+`current_graph`. Migration `0005` converts those accepted facts to constrained,
+owner-scoped Source, Entity, Evidence, Relationship and support records, verifies
+exact reconstruction, then removes the legacy graph/source columns. Migration
+`0006` does the same for pending proposals. A single upgrade from `0004` to head
+runs both conversions in one transaction. Existing-data
+upgrades require the coordinated maintenance procedure above. Alembic alone owns
+schema evolution. Never edit a merged/applied migration; add a new one.
 
 The explicit seed builds the graph from Case 01 source/extraction inputs through
 the existing deterministic graph builder and validates the graph and verbatim
@@ -398,8 +463,9 @@ left wholly unchanged, even if seed inputs later change or disappear. Fixture
 files are never consulted by Matter listing; the list API selects only the three
 summary columns. `GET /api/matters/{internal_uuid}` returns Matter identity, the embedded
 Authoritative Source (`title`, `text`), and `current_graph`. The application
-validates stored JSONB through `CanonicalGraph` and rejects Evidence absent from
-the persisted source with a safe 503 response; missing Matters return 404 and
+reconstructs and validates relational state through the canonical domain boundary;
+the database rejects broken provenance and references. Invalid or unsupported
+stored state still produces a safe 503 response; missing Matters return 404 and
 invalid UUIDs return 422. Reads never consult fixtures or invoke extraction.
 
 Opening a ledger row navigates directly to `/app/matters/{internal_uuid}`, which
@@ -538,9 +604,10 @@ it. There are no automatic model retries. Existing reviews and discard remain
 available when the allowance is exhausted.
 
 Run the existing `alembic upgrade head` and explicit Evergreen initialization
-before deployment. New immutable migrations add minimal proposal JSONB state,
-cross-resource canonical external-reference claims (including existing Matters),
-and a separate proposal allowance. Original PDFs, filenames, PDF metadata, raw
+during the coordinated cutover. Historical migrations introduced proposal JSONB
+state, cross-resource canonical external-reference claims, and a separate proposal
+allowance. Migration `0006` converts stored proposals and removes their legacy
+graph/source columns; current proposal state uses only constrained relational facts. Original PDFs, filenames, PDF metadata, raw
 extractions, submission confirmations, and review decisions are never persisted.
 
 Acquisition accepts exactly one text-layer PDF: at most 10 MiB, 50 pages, and
@@ -579,3 +646,187 @@ committed synthetic PDF fixture lives under `tests/fixtures/`; it is separate fr
 benchmark ground truth. Use the full test commands above with PostgreSQL enabled.
 Start each browser-suite run with a freshly migrated and seeded disposable database;
 the quota journey deliberately leaves its persistent allowance exhausted.
+
+
+## Local Research Workbench
+
+```bash
+docker compose up --build
+```
+
+Open [http://localhost:8080](http://localhost:8080). This separate React/TypeScript
+application and `/api/research/v1` API require no provider credentials. The default
+Compose services restore the retained Issue #91 recorded demonstration and Issue #92
+pilot exports, migrate a separate PostgreSQL database and rebuild its research index.
+No experiment starts automatically. Offline replay and recorded demonstrations require
+an explicit frozen-plan command. Practitioner services remain available through the explicit
+`practitioner` profile command above.
+
+In history, search `issue-`, select the two experiments and compare them. Inspect
+Issue #92's `case_03_fixture` baseline, select **Missing**, open the Jonathan Tan /
+Rebecca Tan relationship and choose **View expected in Source**. The expected
+quotation is highlighted in the frozen Source; **No predicted relationship** remains
+explicit. Choose a treatment repetition to inspect the repaired result.
+
+Artifacts and task ledgers persist together in `runs/research`, mounted at
+`/artifacts`. PostgreSQL persists in `pcg-research-postgres-data`; it is only a
+rebuildable projection. Never delete the artifact directory to reset an index.
+Historical absolute ledger paths remain unchanged and imports confer no execution
+authority. The portable archives' provenance is in `research/history/README.md`.
+
+To restore an additional supported schema-1 export into a **new** directory:
+
+```bash
+uv run python -m private_client_graph.workbench.restore archive.zip runs/research/new-history
+```
+
+The offline service refreshes its rebuildable index on reads. To explicitly rebuild it
+through its CLI:
+
+```bash
+docker compose exec research python -m private_client_graph.workbench /artifacts
+```
+
+The index records artifact identity, full-file digest and index time. Reads detect
+changes since indexing and withhold stale result detail. Missing, corrupt and
+unsupported artifacts remain discoverable with an explicit reason. A legacy bundle
+without an export checksum inventory validates its frozen manifest and parses its
+recorded contracts; its content digest detects subsequent changes, but cannot prove
+that an original result was never altered before import. Exported bundles additionally
+validate every file against `CHECKSUMS.json`. No evaluator is rerun while importing.
+
+History supports `q`, `kind`, `lifecycle`, `integrity`, `offset`, and `limit` (1–100).
+Detail and comparison use opaque index IDs. API schemas are available at
+`/openapi.json`; checked TypeScript contracts are generated with
+`uv run python -m private_client_graph.workbench.typescript` and verified by tests.
+Unknown costs/diagnostics remain unavailable. Comparisons require identical case,
+cohort, Source, truth and extraction digests and disclose configuration/code changes;
+ambiguous or unmatched inputs are excluded explicitly, not silently pooled.
+
+For local development without Docker, migrate an isolated PostgreSQL database,
+set `DATABASE_URL` and `PCG_RESEARCH_ARTIFACTS`, then run:
+
+```bash
+uv run alembic upgrade head
+uv run python -m private_client_graph.workbench runs/research
+uv run uvicorn private_client_graph.workbench.execution_api:app --host 127.0.0.1 --port 8080
+# In a second terminal:
+npm run dev:research --prefix web
+```
+
+Validation uses real stored historical results and PostgreSQL, with no provider calls:
+
+```bash
+TEST_DATABASE_URL=postgresql://... uv run pytest
+npm run test:research --prefix web
+npm run build:research --prefix web
+DATABASE_URL=postgresql://... npm run test:e2e:research --prefix web
+DATABASE_URL=postgresql://... npm run test:e2e:execution --prefix web
+python tests/research_compose_smoke.py
+```
+
+Use a migrated disposable database for browser tests. The Compose smoke test requires
+Docker and verifies container restart, retained artifact digests, empty-index rebuild
+and idempotence. `docker compose down` retains data; `down -v` removes the disposable
+PostgreSQL volume but retains the bind-mounted artifacts. All ports publish only to
+loopback. No public deployment is included; optional local live execution is described below.
+
+
+### Offline experiment configuration (Slice 2)
+
+Choose **New experiment**, select repository-owned saved snapshots and choose
+**Saved replay** (no resolver or provider calls) or **Recorded demonstration**.
+The recorded mode supports `none` or `generative` resolution and 1–3 resolver
+repetitions. Fresh recorded extraction supports the existing Case 03 Source with
+1–5 samples. This is the finite recording coverage, not arbitrary source ingestion.
+Each extraction is held fixed across its baseline and resolver repetitions.
+
+The server previews extraction calls, resolution calls, matrix maximum, invocation
+cap and observation count. Paid task allowance, usage and remaining authority are
+all zero: these are offline tasks. Recorded attempts have a separate invocation cap
+and do not represent live quality, latency or cost. Model settings are retained for
+provenance; the response model is explicitly a deterministic substitute.
+**Review frozen plan** writes a schema-2 manifest, code/dependency provenance,
+recorded responses and zero-paid-authority ledger. Then choose **Run replay** or
+**Run recorded demonstration**. Schema-1 study manifests and authorizations remain
+unchanged. `POST /api/research/v1/preview`, `/plans`, and
+`/plans/{id}/{start,stop,continue}` accept only local same-origin JSON requests.
+
+One experiment subprocess runs at a time, independent of the browser connection.
+**Stop after current attempt** prevents the next dispatch and retains the current
+observation. A checkpoint or interrupted worker requires **Review continuation**
+and an explicit continuation command. Repeated command IDs cannot dispatch twice;
+uncertain reservations remain counted and are never resubmitted. There are no
+provider retries, automatic resume or queue. Offline modes never dispatch live calls. Results use the same
+pipeline/evaluator and history/Evidence inspector as retained experiments.
+
+Executable artifacts and accounting use stable `/artifacts` container paths.
+Do not move bundles or ledgers, change recorded responses, or mix code/dependencies
+on continuation: execution rejects these mismatches. Inspect old results read-only
+or create a new plan after code changes; never edit an old manifest to bypass a
+rejection. Historical imports cannot start or continue execution.
+
+The strictly read-only composition remains
+`private_client_graph.workbench.api:app`; it mounts no commands and imports no
+runner. For a read-only Docker service, set `PCG_RESEARCH_APP` in the research
+service's Compose environment to that entry point. Both compositions serve the same
+frontend; creation/controls appear only when the execution capabilities endpoint is
+present. Live approval is a separately enabled capability described below.
+
+### Explicitly authorized local live research
+
+Live execution is disabled by default. The read-only composition still has no
+command endpoints. Issue #103 is demonstrated with substituted providers; starting
+an actual paid experiment requires separate user authorization.
+
+Provision one persistent task inside the same stable artifact root used by the
+service (for Compose, the container path is `/artifacts`):
+
+```bash
+docker compose run --rm research python -m private_client_graph.workbench.approval /artifacts --label 'Approved research task'
+```
+
+Provisioning creates a task identity with **zero paid allowance**. It is a one-time
+operator step, not a way to reset budgets. Keep `live-task.json` and the complete
+`task-ledgers/` directory with the experiment artifacts. Missing accounting must
+be restored from backup; copying/importing a bundle or rebuilding PostgreSQL does
+not create execution authority. A root represents one task across experiments,
+processes and sessions. Do not create another root to evade a task allowance.
+
+For an explicitly authorized experiment, set `PCG_RESEARCH_LIVE_ENABLED=1` and
+supply `DEEPSEEK_API_KEY` to the research service environment, then recreate the
+service. Credentials stay server-side; never put them in a plan, task label or
+approval reference. Host/Origin checks and loopback-only Compose publishing remain
+in force. Disable the flag again to prevent further live invocations.
+
+In **New experiment**, choose **Live provider**, configure the finite matrix and
+propose a total task call cap. Review the server's extraction/resolution maxima,
+existing task usage and invocation cap, then freeze. On the frozen page, review the
+current task budget and explicitly check the approval box before **Authorize and
+start**. Freezing cannot increase the allowance. Every continuation requires a new
+explicit approval; editing creates a new frozen plan. A stale task-budget review
+is rejected: refresh the budget and review it again. Increasing the cap requires
+freezing and explicitly approving a plan with that larger cap.
+
+Schema-3 authorizations bind the plan digest, task identity/cap, invocation ID and
+bound, approval time and validated local Origin. Durable task reservations precede
+bundle reservations and provider dispatch. Interrupted/uncertain calls keep their
+slots and are never retried. Stop means stop after the current attempt; restarting
+the service never resumes work automatically. Full authorization records remain
+inspectable under **Execution & artifacts**.
+
+The requested model is frozen and returned model names, latency and token usage
+are retained when supplied. This slice does not fetch or invent pricing: USD cost
+estimates remain unavailable without verified pricing metadata. Unknown usage is
+not zero, and a call cap is not a guaranteed dollar cap. Fresh extraction retains
+the finite Case 03 Source coverage from Slice 2.
+
+Run the live-control browser journey without paid calls:
+
+```bash
+DATABASE_URL=postgresql://... npm run test:e2e:live --prefix web
+```
+
+Its server launches a test-only worker that substitutes the DeepSeek boundary;
+the real approval, supervisor, reservation, pipeline, evaluator and index remain
+in use. Production has no provider-substitution environment switch.

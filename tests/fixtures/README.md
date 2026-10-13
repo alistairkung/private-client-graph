@@ -1,4 +1,18 @@
-# Synthetic PDF acquisition fixtures
+# Synthetic test fixtures
+
+## Canonical state
+
+`canonical-state.json` is a controlled, source-aware state fixture with explicit
+Entity identities, not extraction output or identity ground truth. Two separately
+identified Sources have matching titles and finalized text. Identical quotes in
+different Sources remain distinct; repeated occurrences within a Source share one
+Evidence item. Two same-name Entities remain distinct, one Entity is shared across
+Sources, and Evidence is shared across Relationships. Deliberately unsorted lists
+and independent legacy document labels exercise exact reconstruction. The fixture
+tests structural identity/provenance preservation, not semantic quote support or
+entity resolution.
+
+## PDF acquisition
 
 All PDFs in this directory were generated locally for deterministic intake tests.
 They contain no real client material and are not benchmark ground truth.

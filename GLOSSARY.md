@@ -17,8 +17,20 @@ The deterministic, mechanically validated representation of entities, relationsh
 _Avoid_: Raw extraction, model output
 
 **Evidence**:
-Exact text from a source document that supports an extracted relationship. Evidence is provenance for a relationship, not a graph entity or a generated explanation.
+An exact supporting quote attributable to one Source, potentially supporting multiple Relationships. Evidence is distinguished by its Source and exact text: repeated identical quotes within one Source are one Evidence item, identical quotes from different Sources are distinct, and no particular occurrence within the Source is implied.
 _Avoid_: Justification, rationale
+
+**Entity**:
+A Person or Trust identified within one Matter's relationship state. Its name describes it but does not define its identity; matching names alone do not establish that two Entities are the same participant.
+_Avoid_: Name string, globally identified person
+
+**Alias Resolution**:
+Determining whether different names or references denote the same Entity. Similar spelling alone does not establish that correspondence.
+_Avoid_: Fuzzy-name matching, identity disambiguation
+
+**Identity Disambiguation**:
+Distinguishing different Entities whose names or references could otherwise be confused, including different participants with identical names.
+_Avoid_: Alias resolution, name normalization
 
 **Professional Review**:
 Inspection by a private-client professional of AI-extracted relationships and the source evidence supporting them. It is distinct from benchmark evaluation; the existing Matter workspace is read-only, while Matter Intake requires whole-proposal confirmation without yet supporting human correction.
@@ -32,9 +44,33 @@ _Avoid_: Replay, sample analysis
 A deterministic demonstration path that loads the Case 01 ideal-extraction fixture and passes it through current graph construction. It is explicitly selected and is never a fallback from live analysis.
 _Avoid_: Live analysis, prior-run replay
 
+**Shared Analysis Pipeline**:
+The fixed Extract → Resolve → Construct Graph workflow used by Matter Intake, the Public Showcase, and research. Its configuration selects only explicitly supported semantic capabilities; consumer-specific operational policy and Benchmark Evaluation remain outside it.
+_Avoid_: Production pipeline, research pipeline, agent framework
+
 **Run Artifact**:
-A persisted raw extraction created for reproducibility and diagnosis. It is technical traceability data, not application state or a professional case history.
+A retained observation from extraction or a benchmark experiment, preserving outputs and available execution context for reproducibility and diagnosis. It is technical traceability data, not application state or a professional case history.
 _Avoid_: Saved case, analysis history
+
+**Experiment**:
+A named, persistent research workspace containing independently configured Runs used to investigate a research question.
+_Avoid_: Single execution, frozen study plan
+
+**Run**:
+One immutable execution of a selected Shared Analysis Pipeline configuration within an Experiment, retaining its input identities, configuration, provenance, results and available cost.
+_Avoid_: Experiment, provider attempt, resolver repetition
+
+**Observation**:
+An individual case, sample and repetition evaluation within a Run, retaining its result or explicit unscored outcome.
+_Avoid_: Run, provider attempt
+
+**Aggregate Evaluation**:
+A Run-level summary of its scored Observations together with coverage of the planned Observations. Its relationship F1 pools observation counts rather than averaging individual F1 scores.
+_Avoid_: Average F1, case-balanced score
+
+**Run Draft**:
+The editable configuration for a proposed next Run within an Experiment. Editing a Run Draft does not alter any previous Run.
+_Avoid_: Edited historical run, replacement result
 
 **Benchmark Evaluation**:
 Offline comparison of a canonical graph with a benchmark case's known answer key, including relationship and provenance metrics. It is separate from professional review.
@@ -49,7 +85,7 @@ A practitioner-facing identifier assigned by a firm's existing matter-management
 _Avoid_: Case ID, generated Matter reference
 
 **Authoritative Source**:
-The source text treated as authoritative for a Matter's current relationship graph. The currently supported Matter lifecycle has exactly one authoritative source, without making it a separate product hierarchy; an acquisition file is not itself the Authoritative Source.
+An explicitly identified body of source text treated as authoritative for a Matter's current relationship graph, also called a Source. Separately designated Sources within a Matter remain distinct even when their titles and text match; an acquisition file is not itself the Authoritative Source, and distinct Sources do not necessarily constitute independent corroboration.
 _Avoid_: Benchmark fixture, uploaded document
 
 **Public Showcase**:

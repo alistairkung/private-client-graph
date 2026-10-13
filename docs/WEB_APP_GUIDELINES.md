@@ -178,6 +178,8 @@ evaluation concern to the first professional-review slice.
 ## Testing strategy
 
 The goal is high-value behavioural coverage, not a unit test for every React component.
+Web implementation work must also pass the repository-wide completion and final-diff
+self-review gate in `docs/CODE_STYLE.md`.
 
 ### Usually do not unit test
 
@@ -303,11 +305,15 @@ PostgreSQL. Keep persistence concrete and scoped to current Matter operations;
 do not introduce generalized repositories, service hierarchies, dependency
 injection, or asynchronous database infrastructure.
 
-Store the current `CanonicalGraph` atomically as JSONB and validate it through
-the existing domain model at the application boundary. Also preserve the
-cross-value invariant that every Evidence span occurs verbatim in the Matter's
-authoritative source. Do not relationalise graph contents before concrete query
-or independent-mutation requirements justify it.
+ADR 0008 supersedes the original JSONB Matter storage choice: database-enforced
+provenance integrity and aggregate isolation are earned domain requirements.
+Reconstruct `CanonicalGraph` from canonical relational Matter facts and retain
+domain validation at the application boundary. Keep the existing single-source
+API contract and exact graph identity/order. Matter Proposals have separate
+relational ownership and equivalent constraints. Confirmation copies their facts
+unchanged and consumes them atomically. Deploy the complete Matter/proposal
+conversion together after quiescing old application access. Follow the
+[cutover procedure](workflows/canonical-matter-cutover.md).
 
 Every schema change requires an explicit Alembic migration. Treat merged or
 applied migrations as immutable and create a new migration for later changes.
