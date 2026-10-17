@@ -48,14 +48,21 @@ def build_public_snapshot(archive_path: Path, *,
     runs, results, inputs = _verified_runs(raw_files, report)
     _verify_pairing(inputs, results, report_files)
     cases = _public_cases(inputs, results, report, report_files)
+    scope = json.loads(report_files['B-workbench-run.json'])['evaluation']['scope']
+    control_scope = json.loads(report_files['control-workbench-run.json'])['evaluation']['scope']
+    _require(scope['identity'] == control_scope['identity'], 'Paired benchmark identity mismatch')
     snapshot = {'schema_version': 1, 'snapshot_id': 'final-heldout-a-aprime-b-v1',
                 'experiment_id': EXPERIMENT_ID,
-                'benchmark': {'case_count': len(cases),
+                'benchmark': {'identity': scope['identity'], 'identity_scope': 'paired-saved-inputs',
+                              'evaluator_version': scope['evaluator_version'],
+                              'aggregate_version': scope['aggregate_version'],
+                              'case_count': len(cases),
                               'source_count': sum(len(case['sources']) for case in cases),
                               'expected_relationships': sum(len(case['truth']['relationships']) for case in cases)},
                 'pairing': {'control_equivalent': True, 'frozen_inputs_verified': True},
                 'runs': runs, 'cases': cases}
-    _require(snapshot['benchmark'] == {'case_count': 10, 'source_count': 14, 'expected_relationships': 39},
+    _require(_pick(snapshot['benchmark'], ('case_count', 'source_count', 'expected_relationships'))
+             == {'case_count': 10, 'source_count': 14, 'expected_relationships': 39},
              'Unexpected benchmark coverage')
     snapshot['integrity'] = {'algorithm': 'sha256', 'digest': publication_digest(snapshot),
                              'scope': 'canonical-json-excluding-integrity'}
@@ -106,7 +113,8 @@ def _verified_runs(files: dict[str, bytes], report: dict) -> tuple[list[dict], d
         _require(identity['frozen_plan_digest'] == execution['digest'], 'Frozen plan mismatch')
         _require(plan['evaluator_version'] == 'semantic_edges_v1' and
                  plan['aggregate_version'] == 'observation_micro_f1_v1', 'Unexpected metric definitions')
-        retained = [json.loads(data) for name, data in sorted(files.items())
+        retained = [{**json.loads(data), '_observation_id': Path(name).stem}
+                    for name, data in sorted(files.items())
                     if name.startswith(prefix + 'results/') and name.endswith('.json')]
         slots = {slot['observation_id'] for slot in plan['planned_slots']}
         actual = {Path(name).stem for name in files if name.startswith(prefix + 'results/') and name.endswith('.json')}
@@ -114,6 +122,10 @@ def _verified_runs(files: dict[str, bytes], report: dict) -> tuple[list[dict], d
         _require(all(result['status'] == 'completed' and result['evaluation'] is not None
                      and result['state'] is not None and result['source_attribution'] is not None
                      for result in retained), 'Unscored Observation')
+        slots_by_id = {slot['observation_id']: slot for slot in plan['planned_slots']}
+        _require(all(result['sample_id'] == slots_by_id[result['_observation_id']]['sample_id']
+                     and result['case_id'] == slots_by_id[result['_observation_id']]['case_id']
+                     for result in retained), 'Observation identity mismatch')
         results[label] = {result['case_id']: result for result in retained}
         _require(len(results[label]) == 10, 'Duplicate Benchmark Case')
         if label == 'A':
@@ -180,6 +192,10 @@ def _verify_counts(label: str, results: list[dict], metrics: dict) -> None:
     expected = (37, 2, 2, 34, 37, 35, 39) if label != 'B' else (39, 0, 0, 36, 39, 37, 41)
     fields = ('tp', 'fp', 'fn', 'quote_passed', 'quote_assessed', 'source_pair_passed', 'source_pair_assessed')
     _require(tuple(metrics[field] for field in fields) == expected, 'Unexpected recorded aggregate')
+    _require(metrics['micro_f1'] == (37 / 39 if label != 'B' else 1.0)
+             and metrics['quote_accuracy'] == metrics['quote_passed'] / metrics['quote_assessed']
+             and metrics['source_pair_accuracy'] == metrics['source_pair_passed'] / metrics['source_pair_assessed'],
+             'Recorded metric differs from retained counts')
     for field in ('tp', 'fp', 'fn'):
         _require(sum(result['evaluation'][field] for result in results) == metrics[field],
                  'Recorded aggregate differs from Observations')
@@ -230,30 +246,8 @@ def _public_cases(inputs: dict, results: dict, report: dict, reports: dict[str, 
             {**_pick(edge, ('source', 'type', 'target')), 'approved_evidence': [
                 _pick(item, ('source_id', 'supporting_text')) for item in edge['approved_evidence']]}
             for edge in sample['source_evidence']['relationships']]}
-        observations = []
-        for label in RUN_IDS:
-            result = results[label][case_id]
-            attribution = _pick(result['source_attribution'], ('version', 'assessed', 'passed', 'failed', 'accuracy'))
-            attribution['failures'] = [_pick(failure, ('edge', 'evidence_id', 'source_id', 'supporting_text'))
-                                       for failure in result['source_attribution']['failures']]
-            view = retained_views[label][case_id]
-            relationships = _public_relationships(view, result, sample)
-            edits = [_pick(edit, ('candidate_index', 'endpoint', 'original_name', 'resolved_name',
-                                 'relationship_type', 'other_endpoint', 'source_id', 'supporting_text'))
-                     for edit in report['edits'] if edit['case_id'] == case_id] if label == 'B' else []
-            for edit in edits:
-                matches = [relationship for relationship in relationships
-                           if relationship['edge'][1] == edit['relationship_type']
-                           and edit['resolved_name'] in (relationship['edge'][0], relationship['edge'][2])
-                           and edit['other_endpoint'] in (relationship['edge'][0], relationship['edge'][2])]
-                _require(len(matches) == 1, 'Endpoint edit has no unique relationship')
-                edit['outcome_id'] = matches[0]['id']
-            observations.append({'run_label': label, 'observation_id': sample['sample_id'] +
-                                 ('-resolve-1' if label == 'B' else '-noop'),
-                                 'sample_id': result['sample_id'], 'status': result['status'],
-                                 'state': _public_state(result['state']),
-                                 'evaluation': _pick(result['evaluation'], EVALUATION_FIELDS),
-                                 'source_attribution': attribution, 'edits': edits, 'relationships': relationships})
+        observations = [_public_observation(label, results[label][case_id],
+                         retained_views[label][case_id], sample, report['edits']) for label in RUN_IDS]
         # Human-facing names are retained metadata, never inferred from a Source.
         metadata = retained_views['B'][case_id]['metadata']
         cases.append({'case_id': case_id, 'name': metadata.get('name', case_id),
@@ -262,6 +256,32 @@ def _public_cases(inputs: dict, results: dict, report: dict, reports: dict[str, 
                       'truth': truth, 'source_evidence': approval, 'observations': observations})
     return cases
 
+
+def _public_observation(label: str, result: dict, view: dict, sample: dict, all_edits: list[dict]) -> dict:
+    attribution = _pick(result['source_attribution'], ('version', 'assessed', 'passed', 'failed', 'accuracy'))
+    attribution['failures'] = [_pick(failure, ('edge', 'evidence_id', 'source_id', 'supporting_text'))
+                               for failure in result['source_attribution']['failures']]
+    relationships = _public_relationships(view, result, sample)
+    edits = _public_edits(all_edits, result['case_id'], relationships) if label == 'B' else []
+    return {'run_label': label, 'observation_id': result['_observation_id'],
+            'sample_id': result['sample_id'], 'status': result['status'],
+            'state': _public_state(result['state']),
+            'evaluation': _pick(result['evaluation'], EVALUATION_FIELDS),
+            'source_attribution': attribution, 'edits': edits, 'relationships': relationships}
+
+
+def _public_edits(all_edits: list[dict], case_id: str, relationships: list[dict]) -> list[dict]:
+    edits = [_pick(edit, ('candidate_index', 'endpoint', 'original_name', 'resolved_name',
+                         'relationship_type', 'other_endpoint', 'source_id', 'supporting_text'))
+             for edit in all_edits if edit['case_id'] == case_id]
+    for edit in edits:
+        matches = [relationship for relationship in relationships
+                   if relationship['edge'][1] == edit['relationship_type']
+                   and edit['resolved_name'] in (relationship['edge'][0], relationship['edge'][2])
+                   and edit['other_endpoint'] in (relationship['edge'][0], relationship['edge'][2])]
+        _require(len(matches) == 1, 'Endpoint edit has no unique relationship')
+        edit['outcome_id'] = matches[0]['id']
+    return edits
 
 
 def _public_relationships(view: dict, result: dict, sample: dict) -> list[dict]:
@@ -290,6 +310,7 @@ def _public_relationships(view: dict, result: dict, sample: dict) -> list[dict]:
     _require(sorted(row['edge'] for row in relationships if row['outcome'] not in ('missing', 'extra'))
              == sorted(evaluation['true_positive_edges']), 'Inspection true positives differ from recorded evaluation')
     return relationships
+
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
