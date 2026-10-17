@@ -11,17 +11,16 @@ test("landing navigation reaches an explicit, contained demonstration", async ({
   await page.goto("/");
   const source = page.getByLabel("Source document");
   await expect(source).toBeVisible();
-  await expect(page.getByLabel("Relationship graph")).toHaveCount(0);
+  await expect(page.getByLabel("Relationship graph")).toBeVisible();
   expect(analyses).toEqual([]);
   await page.keyboard.press("Tab");
-  await expect(page.getByRole("link", { name: "Skip to Case 01" })).toBeFocused();
+  await expect(page.getByRole("link", { name: "Skip to synthetic demonstration" })).toBeFocused();
   await page.keyboard.press("Enter");
   await expect(page.locator("#case-01")).toBeFocused();
   await expect(source).toContainText(await page.locator(".folio-source blockquote").innerText());
-  await page.getByRole("button", { name: "Load sample analysis" }).click();
   const graph = page.getByLabel("Relationship graph");
   await expect(graph).toBeVisible();
-  expect(analyses).toHaveLength(1);
+  expect(analyses).toHaveLength(0);
   const frame = await page.locator(".demonstration-frame").boundingBox();
   for (const panel of [graph, source]) {
     const bounds = await panel.boundingBox();
@@ -42,7 +41,7 @@ for (const reducedMotion of ["no-preference", "reduce"] as const) {
     );
     await expect(page.getByLabel("Source document")).toBeVisible();
     await page.evaluate(() => document.fonts.ready);
-    await page.getByRole("link", { name: "Explore Case 01", exact: true }).last().click();
+    await page.getByRole("link", { name: "Explore synthetic cases", exact: true }).last().click();
     await expect(page).toHaveURL(/#case-01$/);
     await expect.poll(() => page.locator("#case-01").evaluate((section) => {
       const target = section.getBoundingClientRect().top + window.scrollY

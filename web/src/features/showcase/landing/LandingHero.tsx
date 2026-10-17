@@ -10,7 +10,7 @@ export function LandingHero() {
       <div className="folio-invitation">
         <p>Follow a connection<br className="folio-desktop-break" /> back to the exact words<br className="folio-desktop-break" /> that support it.</p>
         <a className="folio-button" href="#case-01">
-          Explore Case 01
+          Explore synthetic cases
           <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
             <path d="M4 12h16m-6-6 6 6-6 6" />
           </svg>

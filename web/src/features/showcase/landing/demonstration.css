@@ -161,3 +161,7 @@
     padding: 20px 16px;
   }
 }
+
+.showcase-case-label { display: block; font-size: 14px; line-height: 1.5; }
+.showcase-case-choice { display: block; width: 100%; min-height: 44px; margin-top: 8px; color: #173e38; background: white; border: 1px solid #52665f; border-radius: 5px; padding: 10px; font: inherit; }
+.demonstration-caption .showcase-fixture-notice { font: 400 13px/1.65 var(--folio-sans); max-width: 40ch; margin: 24px 0; }

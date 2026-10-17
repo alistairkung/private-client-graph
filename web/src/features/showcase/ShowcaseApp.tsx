@@ -7,12 +7,12 @@ import { BrandMark } from "../../shared/brand/BrandMark";
 export function ShowcaseApp() {
   return (
     <div className="showcase-shell">
-      <a className="showcase-skip" href="#case-01">Skip to Case 01 demonstration</a>
+      <a className="showcase-skip" href="#case-01">Skip to synthetic demonstration</a>
       <header className="showcase-header folio-width">
         <a className="showcase-brand" href="/"><BrandMark />Private Client Graph</a>
         <nav aria-label="Public showcase">
           <a href="#approach">The approach</a>
-          <a href="#case-01">Explore Case 01</a>
+          <a href="#case-01">Explore synthetic cases</a>
         </nav>
         <span className="showcase-notice">Synthetic research prototype</span>
       </header>
