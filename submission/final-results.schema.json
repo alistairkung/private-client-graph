@@ -38,8 +38,7 @@
     },
     "planned_cases": {
       "type": "integer",
-      "minimum": 1,
-      "maximum": 10
+      "const": 10
     },
     "scored_cases": {
       "type": "integer",
@@ -204,7 +203,9 @@
             }
           }
         ]
-      }
+      },
+      "minItems": 10,
+      "maxItems": 10
     },
     "cost_usd": {
       "type": [

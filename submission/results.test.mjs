@@ -7,12 +7,16 @@ function retainedResults() {
   return {
     benchmark_approved: true, frozen_commit: 'a'.repeat(40), model: 'test-model',
     run_ids: ['test-run'], artifacts: ['test-artifact.json'],
-    planned_cases: 2, scored_cases: 1, attempts: 2, cost_usd: null,
+    planned_cases: 10, scored_cases: 1, attempts: 2, cost_usd: null,
     aggregate: { tp: 1, fp: 0, fn: 1, precision: 1, recall: 0.5, f1: 2 / 3,
       quote_provenance_accuracy: 1, source_attribution_accuracy: null },
     cases: [
       { id: 'heldout_01', status: 'scored', precision: 1, recall: 0.5, f1: 2 / 3 },
       { id: 'heldout_02', status: 'failed', precision: null, recall: null, f1: null },
+      ...Array.from({ length: 8 }, (_, index) => ({
+        id: `heldout_${String(index + 3).padStart(2, '0')}`, status: 'unscored',
+        precision: null, recall: null, f1: null,
+      })),
     ],
     failures: [{ case_id: 'heldout_02', stage: 'extract', description: 'Test provider failure' }],
   };
@@ -23,6 +27,13 @@ test('accepts retained mixed scored and failed coverage without changing input',
   const before = structuredClone(value);
   assert.doesNotThrow(() => validateResults(value));
   assert.deepEqual(value, before);
+});
+
+test('rejects a final export with only two held-out cases', () => {
+  const value = retainedResults();
+  value.planned_cases = 2;
+  value.cases = value.cases.slice(0, 2);
+  assert.throws(() => validateResults(value), /Case coverage/);
 });
 
 test('rejects a failed case carrying scored metrics', () => {
@@ -59,7 +70,7 @@ for (const attempts of [-1, 1.5, 31, 0, '2', null]) {
 }
 
 for (const [name, edit] of [
-  ['unknown failure case', value => { value.failures[0].case_id = 'heldout_03'; }],
+  ['unknown failure case', value => { value.failures[0].case_id = 'heldout_99'; }],
   ['empty failure stage', value => { value.failures[0].stage = ''; }],
   ['missing failure description', value => { delete value.failures[0].description; }],
   ['unidentified failed case', value => { value.failures = []; }],

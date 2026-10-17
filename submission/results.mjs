@@ -39,7 +39,7 @@ function validateLineage(value) {
 }
 
 function validateCoverage(value) {
-  if (!Number.isInteger(value.planned_cases) || value.planned_cases < 1 ||
+  if (value.planned_cases !== 10 ||
       !Number.isInteger(value.scored_cases) || value.scored_cases < 0 ||
       value.scored_cases > value.planned_cases || !Array.isArray(value.cases) ||
       value.cases.length !== value.planned_cases) {
