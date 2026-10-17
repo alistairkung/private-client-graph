@@ -9,7 +9,9 @@ from langchain_deepseek import ChatDeepSeek
 from langsmith import tracing_context
 from pydantic import BaseModel, ConfigDict, Field, SecretStr, model_validator
 
-from private_client_graph.extraction import extraction_messages, build_relationship_extraction_chain
+from private_client_graph.extraction import (extraction_messages, build_relationship_extraction_chain,
+    sourced_extraction_messages, build_sourced_relationship_extraction_chain)
+from private_client_graph.models.source import Source
 from private_client_graph.models import ExtractionResult
 from private_client_graph.resolution import EndpointEdits, resolution_messages
 
@@ -39,11 +41,14 @@ class TokenUsage(BaseModel):
 class ModelRequest(BaseModel):
     stage: Literal["extraction", "resolution"]
     source: str
+    sources: list[Source] | None = None
     extraction: ExtractionResult | None = None
     settings: ModelSettings
 
     @model_validator(mode="after")
     def stage_input(self) -> "ModelRequest":
+        if self.sources is not None and self.stage != 'extraction':
+            raise ValueError('Source-aware requests support extraction only')
         if (self.stage == "resolution") != (self.extraction is not None):
             raise ValueError("Only resolution requests require extraction input")
         return self
@@ -67,7 +72,7 @@ _SAFE_RESPONSE_METADATA = {
 
 def request_messages(request: ModelRequest) -> list[tuple[str, str]]:
     if request.stage == "extraction":
-        return extraction_messages(request.source)
+        return sourced_extraction_messages(request.sources) if request.sources is not None else extraction_messages(request.source)
     assert request.extraction is not None
     return resolution_messages(request.source, request.extraction)
 
@@ -84,8 +89,12 @@ def invoke_deepseek(request: ModelRequest, *, api_key: str,
                       extra_body={"thinking": {"type": "disabled"}})
     with tracing_context(enabled=False):
         if request.stage == "extraction":
-            chain = build_relationship_extraction_chain(llm, include_raw=True)
-            result = chain.invoke({"source": request.source})
+            if request.sources is not None:
+                chain = build_sourced_relationship_extraction_chain(llm, include_raw=True)
+                result = chain.invoke({'sources': sourced_extraction_messages(request.sources)[1][1]})
+            else:
+                chain = build_relationship_extraction_chain(llm, include_raw=True)
+                result = chain.invoke({"source": request.source})
         else:
             # Free-form source braces must never become prompt placeholders.
             messages = request_messages(request)

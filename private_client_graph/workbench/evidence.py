@@ -26,27 +26,8 @@ def _quote(identity: str, source_id: str, text: str, source: str) -> EvidenceQuo
 def relationship_outcomes(sample: ResearchInput, result: ResearchResult) -> list[RelationshipOutcome]:
     if result.evaluation is None:
         return []
-    source_id = digest_text(sample.source)
-    expected: dict[tuple, list[EvidenceQuote]] = {}
-    names = {entity.id: entity.name for entity in sample.truth.entities}
-    for relationship in sample.truth.relationships:
-        edge = _edge(names[relationship.source], relationship.type, names[relationship.target])
-        for text in relationship.approved_evidence:
-            quote = _quote(digest_text(source_id + text), source_id, text, sample.source)
-            if quote not in expected.setdefault(edge, []):
-                expected[edge].append(quote)
-
-    predicted: dict[tuple, list[EvidenceQuote]] = {}
-    if result.graph is not None:
-        names = {entity.id: entity.name for entity in result.graph.entities}
-        evidence = {item.id: item for item in result.graph.evidence}
-        for predicted_relationship in result.graph.relationships:
-            edge = _edge(names[predicted_relationship.source], predicted_relationship.type, names[predicted_relationship.target])
-            for identity in predicted_relationship.evidence_ids:
-                item = evidence[identity]
-                quote = _quote(item.id, source_id, item.supporting_text, sample.source)
-                if quote not in predicted.setdefault(edge, []):
-                    predicted[edge].append(quote)
+    expected = _expected_quotes(sample, result)
+    predicted = _predicted_quotes(sample, result)
 
     evaluation = result.evaluation
     groups: list[tuple[Literal["missing", "extra", "provenance_failure", "matched"], list[SemanticEdge]]] = [
@@ -59,3 +40,44 @@ def relationship_outcomes(sample: ResearchInput, result: ResearchResult) -> list
         id=digest_text(repr(edge)), edge=edge, outcome=outcome,
         expected=expected.get(edge, []), predicted=predicted.get(edge, []),
     ) for outcome, edges in groups for edge in edges]
+
+
+def _expected_quotes(sample: ResearchInput, result: ResearchResult) -> dict[tuple, list[EvidenceQuote]]:
+    names = {entity.id: entity.name for entity in sample.truth.entities}
+    sourced = result.state is not None and sample.source_evidence is not None
+    relationships = sample.source_evidence.relationships if sourced else sample.truth.relationships
+    sources = {source.id: source.text for source in sample.sources or []}
+    legacy_source_id = digest_text(sample.source)
+    expected: dict[tuple, list[EvidenceQuote]] = {}
+    for relationship in relationships:
+        edge = _edge(names[relationship.source], relationship.type, names[relationship.target])
+        pairs = ([(item.source_id, item.supporting_text) for item in relationship.approved_evidence]
+                 if sourced else [(legacy_source_id, text) for text in relationship.approved_evidence])
+        for source_id, text in pairs:
+            source = sources[source_id] if sourced else sample.source
+            identity = digest_text(repr((source_id, text))) if sourced else digest_text(source_id + text)
+            quote = _quote(identity, source_id, text, source)
+            if quote not in expected.setdefault(edge, []):
+                expected[edge].append(quote)
+    return expected
+
+
+def _predicted_quotes(sample: ResearchInput, result: ResearchResult) -> dict[tuple, list[EvidenceQuote]]:
+    graph = result.state if result.state is not None else result.graph
+    if graph is None:
+        return {}
+    names = {entity.id: entity.name for entity in graph.entities}
+    evidence = {item.id: item for item in graph.evidence}
+    sources = {source.id: source.text for source in result.state.sources} if result.state else {}
+    legacy_source_id = digest_text(sample.source)
+    predicted: dict[tuple, list[EvidenceQuote]] = {}
+    for relationship in graph.relationships:
+        edge = _edge(names[relationship.source], relationship.type, names[relationship.target])
+        for identity in relationship.evidence_ids:
+            item = evidence[identity]
+            source_id = item.source_id if result.state is not None else legacy_source_id
+            source = sources[source_id] if result.state is not None else sample.source
+            quote = _quote(item.id, source_id, item.supporting_text, source)
+            if quote not in predicted.setdefault(edge, []):
+                predicted[edge].append(quote)
+    return predicted

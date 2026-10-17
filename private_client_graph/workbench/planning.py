@@ -8,7 +8,8 @@ from uuid import uuid4
 from private_client_graph.research.artifacts import Bundle, checksum, write_json_once
 from private_client_graph.research.fixtures import ROOT, load_inputs
 from private_client_graph.research.plan import FiniteExperimentPlan
-from private_client_graph.research.provider import ModelSettings
+from private_client_graph.research.provider import ModelSettings, ModelRequest
+from private_client_graph.research.demo import recording_key
 from .execution_contracts import Capabilities, FrozenPlan, InputChoice, Preview, Proposal, TaskBudget
 from private_client_graph.research.live_accounting import read_task, task_state
 
@@ -108,9 +109,11 @@ def publish_plan(root: Path, identity: str, plan: FiniteExperimentPlan, reviewed
     records = json.loads((ROOT / 'research/fixtures/demonstration_responses.json').read_text())
     if getattr(plan, 'plan_version', 0) == 4:
         for sample in plan.inputs:
-            key = checksum(sample.source.encode()) + ':' + checksum(b'null')
-            assert sample.extraction is not None
-            records.setdefault('extraction', {}).setdefault(key, sample.extraction.model_dump(mode='json'))
+            key = recording_key(ModelRequest(stage='extraction', source=sample.source, sources=sample.sources,
+                                             settings=plan.settings))
+            extraction = sample.sourced_extraction if sample.sources is not None else sample.extraction
+            assert extraction is not None
+            records.setdefault('extraction', {}).setdefault(key, extraction.model_dump(mode='json'))
     write_json_once(bundle.path / 'recorded-responses.json', records)
     binding = {
         'recordings_digest': checksum((bundle.path / 'recorded-responses.json').read_bytes()),

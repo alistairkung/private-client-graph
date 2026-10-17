@@ -7,6 +7,8 @@ from uuid import uuid4
 from private_client_graph.evaluation import evaluate_graph
 from private_client_graph.graph import build_graph
 from private_client_graph.models import CanonicalGraph, ExtractionResult, RelationshipCandidate
+from private_client_graph.models import SourcedExtractionResult
+from private_client_graph.models.source import Source
 from private_client_graph.pipeline import Pipeline, PipelineConfig, PipelineInput, PipelineExecutionError
 from private_client_graph.resolution import EndpointEdits, ResolutionRequest, ResolutionProvider
 from .artifacts import Bundle, BudgetExceeded, code_snapshot, dependency_versions, utc_now, write_json_once
@@ -16,6 +18,7 @@ from .run_plan import RunPlan
 from .metrics import IdentityDiagnostics, estimate_cost, identity_diagnostics
 from .provider import ModelRequest, ModelResponse, TokenUsage
 from .results import ResearchResult
+from .source_attribution import diagnose_source_attribution
 
 Provider = Callable[[ModelRequest], ModelResponse]
 
@@ -213,7 +216,10 @@ def _pipeline_result(
     mode: Literal['live', 'replay'],
     extractor: Callable[[str], ExtractionResult] = _replay_only,
     resolution_provider: ResolutionProvider | None = None,
-) -> tuple[ResearchResult, ExtractionResult | None]:
+    source_extractor: Callable[[list[Source]], SourcedExtractionResult] | None = None,
+) -> tuple[ResearchResult, ExtractionResult | SourcedExtractionResult | None]:
+    if sample.sources is not None and config.resolver == 'none':
+        return _sourced_pipeline_result(sample, config, mode=mode, source_extractor=source_extractor)
     result = _base_result(sample)
     started = time.perf_counter()
 
@@ -274,7 +280,11 @@ def _record_pipeline_failure(result: ResearchResult, error: PipelineExecutionErr
 
 
 def _record_prediction(result: ResearchResult, sample: ResearchInput,
-                       extraction: ExtractionResult) -> None:
+                       extraction: ExtractionResult | SourcedExtractionResult) -> None:
+    if isinstance(extraction, SourcedExtractionResult):
+        result.sourced_extraction = extraction
+        result.extraction = _legacy_projection(extraction)
+        return
     result.extraction = extraction
     diagnostics = identity_diagnostics(sample, extraction)
     result.identity = IdentityDiagnostics.model_validate(diagnostics) if diagnostics is not None else None
@@ -285,6 +295,8 @@ def _evaluate(result: ResearchResult, sample: ResearchInput) -> None:
     started = time.perf_counter()
     try:
         result.evaluation = evaluate_graph(result.graph, sample.truth)
+        if result.state is not None and sample.source_evidence is not None:
+            result.source_attribution = diagnose_source_attribution(result.state, sample.truth, sample.source_evidence)
     except ValueError as error:
         result.evaluation_seconds = time.perf_counter() - started
         result.status = 'evaluation_error'
@@ -308,11 +320,22 @@ def _fresh_inputs(bundle: Bundle, provider: Provider, initial_count: int,
             observation = _observe(bundle, f'{sample_id}-extraction', request, provider, initial_count, limit, should_stop)
             return ExtractionResult.model_validate(_observed_payload(observation))
 
-        baseline, extracted = _pipeline_result(sample, PipelineConfig(), mode='live', extractor=extract)
+        def extract_sources(sources: list[Source]) -> SourcedExtractionResult:
+            request = ModelRequest(stage='extraction', source=sample.source, sources=sources,
+                                   settings=bundle.plan.settings)
+            observation = _observe(bundle, f'{sample_id}-extraction', request, provider, initial_count, limit, should_stop)
+            return SourcedExtractionResult.model_validate(_observed_payload(observation))
+
+        baseline, extracted = _pipeline_result(sample, PipelineConfig(), mode='live', extractor=extract,
+                                               source_extractor=extract_sources)
         if extracted is None:
             _save_unavailable_fresh_results(bundle, sample)
             continue
-        sample.extraction = extracted
+        if isinstance(extracted, SourcedExtractionResult):
+            sample.sourced_extraction = extracted
+            sample.extraction = _legacy_projection(extracted)
+        else:
+            sample.extraction = extracted
         _save_fresh_input_snapshot(bundle, sample)
         include_baseline = not isinstance(bundle.plan, RunPlan) or bundle.plan.resolver == 'none'
         if include_baseline and not bundle.has_result(f'{sample_id}-noop'):
@@ -335,7 +358,7 @@ def _fresh_sample(template: ResearchInput, sample_id: str) -> ResearchInput:
     origin_hashes = {
         name: digest
         for name, digest in template.origin_hashes.items()
-        if name in ('source.txt', 'ground_truth.json')
+        if name not in ('extraction.json', 'expected_source_extraction.json', 'annotations.json')
     }
     return template.model_copy(update={
         'sample_id': sample_id,
@@ -343,6 +366,7 @@ def _fresh_sample(template: ResearchInput, sample_id: str) -> ResearchInput:
         'annotations': None,
         'historical': None,
         'extraction': None,
+        'sourced_extraction': None,
         'origin_hashes': origin_hashes,
     })
 
@@ -379,3 +403,50 @@ def _save_fresh_input_snapshot(bundle: Bundle, sample: ResearchInput) -> None:
 def _checkpoint(should_stop: Callable[[], bool]) -> None:
     if should_stop():
         raise BudgetExceeded('Stopped after the current attempt; explicit continuation required')
+
+
+def _legacy_projection(extraction: SourcedExtractionResult) -> ExtractionResult:
+    """Expose legacy diagnostics without using the lossy projection for construction."""
+    return ExtractionResult(relationships=[item.model_dump(exclude={'source_id'})
+                                            for item in extraction.relationships])
+
+
+def _sourced_pipeline_result(sample: ResearchInput, config: PipelineConfig, *,
+                             mode: Literal['live', 'replay'],
+                             source_extractor: Callable[[list[Source]], SourcedExtractionResult] | None
+) -> tuple[ResearchResult, SourcedExtractionResult | None]:
+    result = _base_result(sample)
+    assert sample.sources is not None
+    started = time.perf_counter()
+    graph_started = started
+
+    def timed_extract(sources: list[Source]) -> SourcedExtractionResult:
+        nonlocal graph_started
+        assert source_extractor is not None
+        extracted = source_extractor(sources)
+        graph_started = time.perf_counter()
+        return extracted
+
+    pipeline = Pipeline(config, source_extractor=timed_extract if source_extractor is not None else None)
+    try:
+        if mode == 'live':
+            output = pipeline.run_sources(sample.sources)
+        else:
+            if sample.sourced_extraction is None:
+                raise ValueError('Source-aware replay requires explicitly attributed extraction')
+            output = pipeline.run_from_sourced_extraction(sample.sources, sample.sourced_extraction)
+    except PipelineExecutionError as error:
+        if isinstance(error.__cause__, BudgetExceeded):
+            raise error.__cause__
+        _record_pipeline_failure(result, error)
+        if error.resolved is not None:
+            _record_prediction(result, sample, error.resolved)
+        return result, error.extracted
+    result.resolution_seconds = 0
+    result.graph_seconds = time.perf_counter() - graph_started
+    result.downstream_seconds = result.graph_seconds
+    _record_prediction(result, sample, output.resolved)
+    result.state = output.state
+    result.graph = output.graph
+    _evaluate(result, sample)
+    return result, output.extracted

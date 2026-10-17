@@ -6,6 +6,7 @@ from .artifacts import Bundle
 from .plan import FiniteExperimentPlan
 from .metrics import estimate_cost
 from .provider import TokenUsage
+from .source_attribution import SourceAttributionDiagnostic, aggregate_source_attribution
 
 QUALITY = ('precision', 'recall', 'f1', 'provenance_accuracy')
 FAILURES = {'provider_error', 'parse_error', 'edit_error', 'graph_error',
@@ -38,6 +39,9 @@ def summarize(bundle: Bundle) -> dict[str, Any]:
             'planned_provider_attempts': bundle.plan.maximum_attempts,
             'call_cap': bundle.plan.max_calls, 'samples': summaries,
             'cohorts': _cohorts(summaries), 'operations': _operations(bundle, attempts),
+            'source_attribution': aggregate_source_attribution([
+                SourceAttributionDiagnostic.model_validate(row['source_attribution']) for row in rows
+                if row.get('source_attribution') is not None]).model_dump(),
             'provenance': bundle.manifest['provenance'],
             'sessions': _sessions(bundle)}
 

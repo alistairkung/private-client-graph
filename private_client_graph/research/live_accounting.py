@@ -84,6 +84,13 @@ def _validate_retained_reservations(task: dict, ledger: Path) -> None:
             if not shared.exists():
                 raise ValueError('Task ledger is incomplete; restore before live execution')
 
+    for invocation in Path(task['root']).glob('external-invocations/external-*'):
+        for attempt in (invocation / 'attempts').glob('*.started.json'):
+            attempt_id = json.loads(attempt.read_text())['attempt_id']
+            shared = ledger / 'reservations' / f'{invocation.name}-{attempt_id}.json'
+            if not shared.exists():
+                raise ValueError('Task ledger is incomplete; restore before live execution')
+
 
 def plan_digest(bundle: 'Bundle') -> str:
     return checksum((bundle.path / 'manifest.json').read_bytes()
@@ -148,4 +155,61 @@ def reserve(bundle: 'Bundle', path: Path, record: dict) -> bool:
         # A crash after the shared publication spends the slot, even if dispatch never happens.
         write_json_once(shared, record)
         write_json_once(path, record)
+        return True
+
+
+def authorize_external_invocation(root: Path, *, purpose: str, task_cap: int,
+                                  invocation_cap: int, approval_reference: str) -> dict:
+    """Explicit operator approval for non-research calls using the same task ceiling.
+
+    This records authorization; it cannot infer the human's permission. Application
+    quotas are separate and must not replace this durable pre-dispatch accounting.
+    """
+    if not purpose.strip() or not approval_reference.strip() or not 0 < invocation_cap <= task_cap <= 10000:
+        raise ValueError('External invocation requires purpose, approval and finite positive bounds')
+    task = read_task(root)
+    ledger = Path(task['ledger'])
+    with task_lock(ledger):
+        state = task_state(ledger)
+        if state['used'] > task_cap:
+            raise ValueError('Task cap cannot be below already reserved attempts')
+        identity = f'external-{uuid4().hex}'
+        record = dict(kind='external', authorization=identity, task_id=task['task_id'],
+            purpose=purpose, task_cap=task_cap, invocation_cap=invocation_cap,
+            approval_reference=approval_reference, created_at=utc_now())
+        write_json_once(ledger / 'authorizations' / f'{identity}.json', record)
+        write_json_once(Path(task['root']) / 'external-invocations' / identity / 'authorization.json', record)
+        return record
+
+
+def reserve_external_attempt(root: Path, *, authorization: str, attempt_id: str) -> bool:
+    """Reserve before application smoke dispatch; False forbids reissuing an attempt."""
+    import re
+    if not re.fullmatch(r'external-[a-f0-9]{32}', authorization) or not re.fullmatch(r'[a-zA-Z0-9_-]+', attempt_id):
+        raise ValueError('Invalid external authorization or attempt identity')
+    task = read_task(root)
+    ledger = Path(task['ledger'])
+    with task_lock(ledger):
+        state = task_state(ledger)
+        authority = json.loads((ledger / 'authorizations' / f'{authorization}.json').read_text())
+        invocation = Path(task['root']) / 'external-invocations' / authorization
+        if authority != json.loads((invocation / 'authorization.json').read_text()) or authority['kind'] != 'external':
+            raise ValueError('External authorization publication does not match task authority')
+        if authority['task_id'] != task['task_id']:
+            raise ValueError('External authorization task mismatch')
+        shared = ledger / 'reservations' / f'{authorization}-{attempt_id}.json'
+        local = invocation / 'attempts' / f'{attempt_id}.started.json'
+        if shared.exists():
+            if not local.exists():
+                write_json_once(local, json.loads(shared.read_text()))
+            return False
+        records = [json.loads(path.read_text()) for path in (ledger / 'reservations').glob('*.json')]
+        if sum(record['authorization'] == authorization for record in records) >= authority['invocation_cap']:
+            raise BudgetExceeded('External invocation allowance exhausted')
+        if state['used'] >= authority['task_cap']:
+            raise BudgetExceeded('Shared task allowance exhausted; new explicit approval required')
+        record = dict(attempt_id=attempt_id, authorization=authorization, task_id=task['task_id'],
+                      purpose=authority['purpose'], created_at=utc_now())
+        write_json_once(shared, record)
+        write_json_once(local, record)
         return True
