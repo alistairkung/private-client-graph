@@ -1,5 +1,5 @@
 import { useLocale } from "../../shared/locale";
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useState } from "react";
 import { getMatter } from "./api";
 import type { MatterDetail } from "./types";
 import { ReviewWorkspace } from "../review/ReviewWorkspace";
@@ -28,7 +28,7 @@ export function MatterWorkspace({ id }: { id: string }) {
     return () => { active = false; };
   }, [id]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     document.title = `${state.status === "ready" ? state.matter.title : t("Matter not found")} · Private Client Graph`;
   }, [state, t]);
 

@@ -1,5 +1,5 @@
 import { useLocale } from "../../shared/locale";
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useState } from "react";
 import { ReviewWorkspace } from "../review/ReviewWorkspace";
 import { SourceAwareReviewWorkspace } from "../review/SourceAwareReviewWorkspace";
 import { getProposal } from "./api";
@@ -25,7 +25,7 @@ export function ProposalWorkspace({ id, onNavigate }: { id: string; onNavigate: 
     return () => { active = false; };
   }, [id]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     document.title = `${state.status === "ready" ? state.proposal.matter_title : t("Matter Proposal not found")} · Private Client Graph`;
   }, [state, t]);
 
