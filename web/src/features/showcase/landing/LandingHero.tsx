@@ -6,11 +6,11 @@ export function LandingHero() {
   const { t } = useLocale();
   return (
     <section className="folio-hero folio-width" aria-labelledby="landing-title">
-      <h1 id="landing-title">{t("The story is")}<br />{t("in the source.")}</h1>
+      <h1 id="landing-title">{t("The story is")}<br /> {t("in the source.")}</h1>
       <SourceExcerpt />
       <EditorialRelationship />
       <div className="folio-invitation">
-        <p>{t("Follow a connection")}<br className="folio-desktop-break" />{t("back to the exact words")}<br className="folio-desktop-break" />{t("that support it.")}</p>
+        <p>{t("Follow a connection")}<br className="folio-desktop-break" /> {t("back to the exact words")}<br className="folio-desktop-break" /> {t("that support it.")}</p>
         <a className="folio-button" href="#case-01">
           {t("Explore cases")}
           <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">

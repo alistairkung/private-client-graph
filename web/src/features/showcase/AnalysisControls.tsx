@@ -46,7 +46,7 @@ export function AnalysisControls({
             : availability.state === "exhausted"
               ? t("Live analysis is unavailable for now. Sample analysis remains available.")
               : t("Live analysis is temporarily unavailable. Sample analysis remains available.")}
-          {availability.resets_at && <>{t("Try live analysis again after")}<time dateTime={availability.resets_at}>
+          {availability.resets_at && <> {t("Try live analysis again after")} <time dateTime={availability.resets_at}>
             {new Date(availability.resets_at).toLocaleString(locale, { timeZoneName: "short" })}
           </time>. {t("Reload the page to check availability.")}</>}
         </p>
