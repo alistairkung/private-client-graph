@@ -26,6 +26,7 @@ from .proposal_config import ProposalAnalysisConfig
 from .proposal_contracts import MatterProposalDetail, MatterIntakeMetadata, ProposalMetadata, ReferenceOwner
 from .proposal_sources import PdfSourceInput, acquire_proposal_sources
 from .proposal_errors import ProposalFailure
+from .proposal_provider import invoke_authorized
 
 
 def analyse_proposal(
@@ -89,7 +90,8 @@ def _raise_pipeline_failure(error: PipelineExecutionError) -> NoReturn:
 def _extract_proposal_sources(
     sources: list[Source], config: ProposalAnalysisConfig | None,
 ) -> SourcedExtractionResult:
-    return _invoke_source_extraction(sources, _analysis_model(config))
+    llm = _analysis_model(config)
+    return invoke_authorized(config, lambda: _invoke_source_extraction(sources, llm))
 
 
 def _invoke_source_extraction(sources: list[Source], llm: ChatDeepSeek) -> SourcedExtractionResult:
@@ -138,7 +140,8 @@ def _require_unclaimed_reference(reference: str) -> None:
 
 
 def _extract_proposal(source: str, config: ProposalAnalysisConfig | None) -> ExtractionResult:
-    return _invoke_extraction(source, _analysis_model(config))
+    llm = _analysis_model(config)
+    return invoke_authorized(config, lambda: _invoke_extraction(source, llm))
 
 
 def _analysis_model(config: ProposalAnalysisConfig | None) -> ChatDeepSeek:
