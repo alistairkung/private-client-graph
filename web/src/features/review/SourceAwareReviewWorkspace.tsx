@@ -34,7 +34,7 @@ export function SourceAwareReviewWorkspace({ state, practitioner = false, graphT
       const located = evidenceSource(state, active);
       if (source?.id === located.source.id) span = located.span;
     } catch (failure) {
-      error = (failure as Error).message;
+      error = t((failure as Error).message);
     }
   }
   function selectEvidence(id: string) {

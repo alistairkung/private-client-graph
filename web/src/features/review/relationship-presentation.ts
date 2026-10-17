@@ -1,4 +1,4 @@
-import { type Locale } from "../../shared/locale";
+import type { Locale } from "../../shared/locale";
 import type { CanonicalGraph, RelationshipType } from "../../shared/canonical-graph";
 
 export type TrustRole = "settlor" | "beneficiary" | "trustee";
@@ -7,6 +7,11 @@ type ConnectorPresentation = {
   label: string;
   role?: TrustRole;
   arrow: boolean;
+};
+
+const chineseLabels: Record<RelationshipType, string> = {
+  parent_of: "父母", spouse_of: "配偶", sibling_of: "兄弟姐妹",
+  settlor_of: "信托设立人", beneficiary_of: "受益人", trustee_of: "受托人",
 };
 
 const connectors: Record<RelationshipType, ConnectorPresentation> = {
@@ -23,8 +28,7 @@ export function presentRelationships(graph: CanonicalGraph, locale: Locale = "en
   const names = new Map(graph.entities.map(entity => [entity.id, entity.name]));
   const relationships = graph.relationships.map((relationship, index) => {
     const original = connectors[relationship.type];
-    const chinese: Record<RelationshipType,string> = {parent_of:"父母", spouse_of:"配偶", sibling_of:"兄弟姐妹", settlor_of:"信托设立人", beneficiary_of:"受益人", trustee_of:"受托人"};
-    const connector = {...original, label: locale === "zh-CN" ? chinese[relationship.type] : original.label};
+    const connector = {...original, label: locale === "zh-CN" ? chineseLabels[relationship.type] : original.label};
     return {
       ...relationship,
       index,

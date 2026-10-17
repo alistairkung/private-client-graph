@@ -2,6 +2,7 @@ import { demoZhCN } from "../features/demo/catalogue";
 import { showcaseZhCN } from "../features/showcase/catalogue";
 import { practitionerZhCN } from "../features/matters/catalogue";
 export const catalogue: Record<string,string> = {
+  "The Evidence Source could not be found. Reload the case.": "找不到证据来源。请重新加载案例。",
   "Language": "语言",
   "Supporting evidence": "支持证据",
   "Evidence": "证据",
