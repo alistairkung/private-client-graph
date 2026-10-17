@@ -81,8 +81,10 @@ test("Chinese demo preserves selected evidence, localises the journey and remain
   await expect(page.locator("mark")).toHaveText(quote!);
   await expect(page.locator("select").filter({ has: page.locator(`option[value="${selected}"]`) })).toHaveValue(selected);
   await expect(page).toHaveURL(/\/demo\/matter-proposals\/hillcrest$/);
+  await page.screenshot({ path: testInfo.outputPath("demo-proposal-evidence-chinese.png"), fullPage: true });
   await page.getByRole("link", { name: "预览确认", exact: true }).click();
   await expect(page.getByText("这仅为预览。不会创建或更改任何事项。", { exact: true })).toBeVisible();
+  await page.screenshot({ path: testInfo.outputPath("demo-confirmation-preview-chinese.png"), fullPage: true });
   await page.getByRole("link", { name: "查看已完成示例" }).click();
   await expect(page.getByRole("heading", { name: "Hillcrest Family Trust", exact: true })).toBeVisible();
   await page.reload();
@@ -90,9 +92,17 @@ test("Chinese demo preserves selected evidence, localises the journey and remain
   await page.screenshot({ path: testInfo.outputPath("demo-completed-chinese.png"), fullPage: true });
   await page.getByRole("link", { name: "返回事项列表", exact: true }).click();
   await expect(page.getByRole("heading", { name: "演示事项", exact: true })).toBeVisible();
+  await page.screenshot({ path: testInfo.outputPath("demo-matter-list-chinese.png"), fullPage: true });
   await page.getByRole("link", { name: "创建事项预览", exact: true }).click();
   await expect(page.locator('input[type="file"]')).toBeDisabled();
+  await page.screenshot({ path: testInfo.outputPath("demo-blank-intake-chinese.png"), fullPage: true });
   await page.getByRole("link", { name: "查看示例方案" }).click();
   await expect(page.getByRole("heading", { name: "Hillcrest Family Trust", exact: true })).toBeVisible();
+  for (const path of ["/demo", "/demo/matter-proposals/new", "/demo/matter-proposals/hillcrest", "/demo/confirmation/hillcrest", "/demo/matters/hillcrest", "/demo/matters/evergreen"]) {
+    await page.goto(path);
+    await page.reload();
+    await expect(page.locator("html")).toHaveAttribute("lang", "zh-CN");
+    await expect(page.getByRole("complementary", { name: "只读演示" })).toBeVisible();
+  }
   expect(forbidden).toEqual([]);
 });
