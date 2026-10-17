@@ -12,12 +12,16 @@ def authorize(bundle: Bundle, plan: FrozenPlan, approval: LiveApproval, origin: 
         raise ValueError('Approval does not match the frozen plan digest')
     if approval.task_id != plan.task_id or approval.task_cap != plan.preview.proposal.task_call_cap:
         raise ValueError('Approval does not match the frozen task identity and proposed cap')
+    from .replay_gate import require_replay_control
+    replay_gate_digest = require_replay_control(bundle, approval.request_id)
     key = f'{plan.id}-{approval.request_id}'
     shared = bundle.task_ledger / 'authorizations' / f'{key}.json'
     local = bundle.path / 'authorizations' / f'{approval.request_id}.json'
     with task_lock(bundle.task_ledger):
         if shared.exists():
             record = json.loads(shared.read_text())
+            if record.get('replay_gate_digest') != replay_gate_digest:
+                raise ValueError('Replay control differs from the original authorization')
             if record['request'] != approval.model_dump() or record['origin'] != origin:
                 raise ValueError('Approval replay differs from the original authorization')
         else:
@@ -34,6 +38,8 @@ def authorize(bundle: Bundle, plan: FrozenPlan, approval: LiveApproval, origin: 
                 'plan_digest': plan.digest, 'bundle_path': str(bundle.path.resolve()),
                 'invocation': approval.request_id, 'invocation_cap': plan.preview.invocation_cap,
                 'request': approval.model_dump()}
+            if replay_gate_digest is not None:
+                record['replay_gate_digest'] = replay_gate_digest
             write_json_once(shared, record)
         # Recover publication interrupted between the authoritative ledger and bundle copy.
         if not local.exists():

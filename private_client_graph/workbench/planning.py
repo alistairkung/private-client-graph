@@ -41,6 +41,8 @@ def capabilities(root: Path | None = None) -> Capabilities:
 
 
 def preview(proposal: Proposal, root: Path | None = None) -> Preview:
+    if proposal.retained_run_id or proposal.retained_experiment_id:
+        raise ValueError('Retained inputs require Experiment Run planning')
     budget = None
     if proposal.execution_mode == 'live':
         if root is None:

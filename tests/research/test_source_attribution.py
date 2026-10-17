@@ -267,3 +267,61 @@ def test_external_completion_requires_reservation_and_keeps_available_usage(tmp_
     assert retained['usage'] == dict(input_tokens=12, output_tokens=3, cached_tokens=4)
     assert retained['returned_model'] == 'test-model'
     assert retained['outcome'] == 'completed'
+
+
+def test_sourced_resolver_replay_retains_state_and_attribution_without_extraction_calls(tmp_path):
+    from private_client_graph.research.plan import ExperimentPlan
+    sample = next(sample for sample in repository_inputs() if sample.case_id == 'case_04')
+    plan = ExperimentPlan(inputs=[sample], repetitions=1, max_calls=1)
+    bundle = Bundle.create(tmp_path / 'resolved', plan)
+    requests = []
+    def provider(request):
+        requests.append(request)
+        assert request.stage == 'resolution'
+        return ModelResponse(payload={'edits': []})
+    execute(bundle, provider=provider)
+    baseline, treatment = sorted(bundle.results(), key=lambda row: row['repetition'])
+    assert len(requests) == 1
+    assert treatment['state'] == baseline['state']
+    assert treatment['sourced_extraction'] == baseline['sourced_extraction']
+    assert treatment['evaluation'] == baseline['evaluation']
+    assert treatment['source_attribution'] == baseline['source_attribution']
+    assert treatment['graph_seconds'] >= 0
+    assert treatment['resolution_seconds'] >= treatment['provider_seconds']
+
+
+@pytest.mark.parametrize(('payload', 'expected'), [
+    (None, 'provider_error'),
+    ({'edits': [{'candidate_index': 99, 'endpoint': 'source_name', 'name': 'Andrew Chan'}]}, 'edit_error'),
+    ({'edits': [{'candidate_index': 0, 'endpoint': 'source_name', 'name': 'Hillcrest Family Trust'}]}, 'graph_error'),
+])
+def test_sourced_resolution_failures_remain_unscored_and_are_not_retried(tmp_path, payload, expected):
+    from private_client_graph.research.plan import ExperimentPlan
+    sample = next(sample for sample in repository_inputs() if sample.case_id == 'case_04')
+    bundle = Bundle.create(tmp_path / expected, ExperimentPlan(inputs=[sample], repetitions=1, max_calls=1))
+    def provider(request):
+        if payload is None:
+            raise TimeoutError('synthetic timeout')
+        return ModelResponse(payload=payload)
+    execute(bundle, provider=provider)
+    treatment = next(row for row in bundle.results() if row['repetition'] == 1)
+    assert treatment['status'] == expected
+    assert treatment['evaluation'] is None
+    assert treatment['resolution_seconds'] is not None
+    assert bundle.attempt_count == 1
+    execute(bundle, provider=lambda _: pytest.fail('Retained failure must not be retried'))
+    assert bundle.attempt_count == 1
+
+
+def test_sourced_demonstration_reuses_exact_recorded_resolver_payload():
+    from private_client_graph.pipeline import Pipeline, PipelineConfig
+    from private_client_graph.research.demo import recorded_response
+    sample = next(sample for sample in repository_inputs() if sample.case_id == 'case_03')
+    def provider(request):
+        response = recorded_response(ModelRequest(stage='resolution', source=request.source,
+            extraction=request.extraction, settings=ModelSettings()))
+        return response.payload
+    output = Pipeline(PipelineConfig(resolver='generative'), resolution_provider=provider).run_from_sourced_extraction(
+        sample.sources, sample.sourced_extraction)
+    from private_client_graph.evaluation import evaluate_graph
+    assert evaluate_graph(output.graph, sample.truth).f1 == 1

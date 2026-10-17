@@ -6,6 +6,8 @@ from pydantic import BaseModel, ConfigDict, Field
 class Proposal(BaseModel):
     model_config = ConfigDict(extra='forbid')
     input_ids: list[str] = Field(min_length=1, max_length=100)
+    retained_experiment_id: str | None = Field(default=None, pattern=r'^[a-f0-9]{32}$')
+    retained_run_id: str | None = Field(default=None, pattern=r'^[a-f0-9]{32}$')
     input_mode: Literal['saved', 'fresh'] = 'saved'
     execution_mode: Literal['replay', 'recorded', 'live'] = 'replay'
     resolver: Literal['none', 'generative'] = 'none'

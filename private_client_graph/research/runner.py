@@ -5,10 +5,12 @@ from typing import Any, Literal
 from uuid import uuid4
 
 from private_client_graph.evaluation import evaluate_graph
-from private_client_graph.graph import build_graph
+from private_client_graph.graph import build_graph, build_canonical_state
 from private_client_graph.models import CanonicalGraph, ExtractionResult, RelationshipCandidate
 from private_client_graph.models import SourcedExtractionResult
 from private_client_graph.models.source import Source
+from private_client_graph.models.sourced_extraction import SourcedRelationshipCandidate
+from private_client_graph.models.canonical_state import CanonicalState
 from private_client_graph.pipeline import Pipeline, PipelineConfig, PipelineInput, PipelineExecutionError
 from private_client_graph.resolution import EndpointEdits, ResolutionRequest, ResolutionProvider
 from .artifacts import Bundle, BudgetExceeded, code_snapshot, dependency_versions, utc_now, write_json_once
@@ -218,8 +220,9 @@ def _pipeline_result(
     resolution_provider: ResolutionProvider | None = None,
     source_extractor: Callable[[list[Source]], SourcedExtractionResult] | None = None,
 ) -> tuple[ResearchResult, ExtractionResult | SourcedExtractionResult | None]:
-    if sample.sources is not None and config.resolver == 'none':
-        return _sourced_pipeline_result(sample, config, mode=mode, source_extractor=source_extractor)
+    if sample.sources is not None:
+        return _sourced_pipeline_result(sample, config, mode=mode, source_extractor=source_extractor,
+                                        resolution_provider=resolution_provider)
     result = _base_result(sample)
     started = time.perf_counter()
 
@@ -413,21 +416,35 @@ def _legacy_projection(extraction: SourcedExtractionResult) -> ExtractionResult:
 
 def _sourced_pipeline_result(sample: ResearchInput, config: PipelineConfig, *,
                              mode: Literal['live', 'replay'],
-                             source_extractor: Callable[[list[Source]], SourcedExtractionResult] | None
+                             source_extractor: Callable[[list[Source]], SourcedExtractionResult] | None,
+                             resolution_provider: ResolutionProvider | None,
 ) -> tuple[ResearchResult, SourcedExtractionResult | None]:
     result = _base_result(sample)
     assert sample.sources is not None
     started = time.perf_counter()
     graph_started = started
+    resolution_started = started
 
     def timed_extract(sources: list[Source]) -> SourcedExtractionResult:
-        nonlocal graph_started
+        nonlocal graph_started, resolution_started
         assert source_extractor is not None
         extracted = source_extractor(sources)
-        graph_started = time.perf_counter()
+        resolution_started = time.perf_counter()
+        graph_started = resolution_started
         return extracted
 
-    pipeline = Pipeline(config, source_extractor=timed_extract if source_extractor is not None else None)
+    def timed_state(candidates: list[SourcedRelationshipCandidate], *,
+                    sources: list[Source]) -> CanonicalState:
+        nonlocal graph_started
+        graph_started = time.perf_counter()
+        result.resolution_seconds = graph_started - resolution_started if config.resolver == 'generative' else 0
+        try:
+            return build_canonical_state(candidates, sources=sources)
+        finally:
+            result.graph_seconds = time.perf_counter() - graph_started
+
+    pipeline = Pipeline(config, source_extractor=timed_extract if source_extractor is not None else None,
+                        resolution_provider=resolution_provider, state_builder=timed_state)
     try:
         if mode == 'live':
             output = pipeline.run_sources(sample.sources)
@@ -436,6 +453,8 @@ def _sourced_pipeline_result(sample: ResearchInput, config: PipelineConfig, *,
                 raise ValueError('Source-aware replay requires explicitly attributed extraction')
             output = pipeline.run_from_sourced_extraction(sample.sources, sample.sourced_extraction)
     except PipelineExecutionError as error:
+        if error.stage == 'resolution':
+            result.resolution_seconds = time.perf_counter() - resolution_started
         if isinstance(error.__cause__, BudgetExceeded):
             raise error.__cause__
         _record_pipeline_failure(result, error)
@@ -443,7 +462,6 @@ def _sourced_pipeline_result(sample: ResearchInput, config: PipelineConfig, *,
             _record_prediction(result, sample, error.resolved)
         extracted = error.extracted if isinstance(error.extracted, SourcedExtractionResult) else None
         return result, extracted
-    result.resolution_seconds = 0
     result.graph_seconds = time.perf_counter() - graph_started
     result.downstream_seconds = result.graph_seconds
     _record_prediction(result, sample, output.resolved)
