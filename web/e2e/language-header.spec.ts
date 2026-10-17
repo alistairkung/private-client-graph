@@ -1,0 +1,44 @@
+import { expect, test } from "@playwright/test";
+
+for (const path of ["/demo", "/app"]) {
+  test(`language is a quiet right-aligned utility on ${path}`, async ({ page }, testInfo) => {
+    await page.goto(path);
+    const header = page.locator(".ledger-header-inner");
+    const utilities = header.locator(".app-header-utilities");
+    const language = utilities.getByRole("combobox", { name: "Language", exact: true });
+    await expect(language).toHaveValue("en");
+    await expect(header.getByRole("button", { name: "EN", exact: true })).toHaveCount(0);
+    const bounds = await header.boundingBox();
+    const utilityBounds = await utilities.boundingBox();
+    expect(Math.abs(bounds!.x + bounds!.width - utilityBounds!.x - utilityBounds!.width)).toBeLessThan(2);
+    const controlBounds = await language.boundingBox();
+    expect(controlBounds!.height).toBeGreaterThanOrEqual(44);
+    await language.focus();
+    await expect(language).toBeFocused();
+    await page.keyboard.press("Tab");
+    await expect(language).not.toBeFocused();
+    await page.keyboard.press("Shift+Tab");
+    await expect(language).toBeFocused();
+    // macOS native popup keystrokes are verified in the real browser; use the
+    // native select seam for deterministic headless option selection.
+    await language.selectOption("zh-CN");
+    await expect(page.locator("html")).toHaveAttribute("lang", "zh-CN");
+    await expect(utilities.locator(".language-dropdown-display")).toHaveText("简中");
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    await page.locator("h1").click();
+    await page.screenshot({ path: testInfo.outputPath(`${path.slice(1)}-header-zh-CN.png`) });
+    await page.reload();
+    await expect(utilities.locator("select")).toHaveValue("zh-CN");
+    await utilities.locator("select").selectOption("en");
+    await page.locator("h1").click();
+    await page.screenshot({ path: testInfo.outputPath(`${path.slice(1)}-header-en.png`) });
+  });
+}
+
+test("landing retains its existing visible language buttons", async ({ page }) => {
+  await page.goto("/");
+  const header = page.locator(".showcase-header");
+  await expect(header.getByRole("button", { name: "EN", exact: true })).toBeVisible();
+  await expect(header.getByRole("button", { name: "简体中文", exact: true })).toBeVisible();
+  await expect(header.getByRole("combobox")).toHaveCount(0);
+});

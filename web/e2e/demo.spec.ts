@@ -76,7 +76,7 @@ test("Chinese demo preserves selected evidence, localises the journey and remain
   await page.getByLabel("Find a relationship").selectOption({ index: 1 });
   const quote = await page.locator("mark").textContent();
   const selected = await page.getByLabel("Find a relationship").inputValue();
-  await page.getByRole("button", { name: "简体中文", exact: true }).click();
+  await page.locator(".language-dropdown select").selectOption("zh-CN");
   await expect(page.locator("html")).toHaveAttribute("lang", "zh-CN");
   await expect(page.locator("mark")).toHaveText(quote!);
   await expect(page.locator("select").filter({ has: page.locator(`option[value="${selected}"]`) })).toHaveValue(selected);

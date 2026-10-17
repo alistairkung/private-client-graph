@@ -42,13 +42,13 @@ test("practitioner locale switch preserves intake fields and selected PDF", asyn
   const pdf = page.locator('input[type="file"]');
   await pdf.setInputFiles(sourcePdf);
   await page.locator('input[name="source_title_0"]').fill("Original Source title");
-  await page.getByRole("button", { name: "简体中文", exact: true }).click();
+  await page.locator(".language-dropdown select").selectOption("zh-CN");
   await expect(reference).toHaveValue(referenceValue);
   await expect(title).toHaveValue("Fictional locale check");
   await expect(page.locator('input[name="source_title_0"]')).toHaveValue("Original Source title");
   expect(await pdf.evaluate((input: HTMLInputElement) => input.files?.[0]?.name)).toBe("synthetic-proposal.pdf");
   await expect(page.locator("html")).toHaveAttribute("lang", "zh-CN");
-  await page.getByRole("button", { name: "EN", exact: true }).click();
+  await page.locator(".language-dropdown select").selectOption("en");
   await expect(reference).toHaveValue(referenceValue);
   expect(await pdf.evaluate((input: HTMLInputElement) => input.files?.length)).toBe(1);
 });
@@ -58,7 +58,7 @@ test("translated accepted Matter preserves canonical data and selected quotation
   const before = await (await context.request.get(matterPath.replace("/app/", "/api/"))).json();
   await page.locator(".graph-selector select").selectOption("0");
   const quote = await page.locator("mark").innerText();
-  await page.getByRole("button", { name: "简体中文", exact: true }).click();
+  await page.locator(".language-dropdown select").selectOption("zh-CN");
   await expect(page.locator(".graph-selector select")).toHaveValue("0");
   await expect(page.locator("mark")).toHaveText(quote);
   await expect(page.getByRole("heading", { name: "Evergreen Family Trust", exact: true })).toBeVisible();
@@ -74,7 +74,7 @@ test("language switching preserves the deliberately adjusted graph viewport", as
   await page.getByRole("button", { name: "Zoom in", exact: true }).click();
   await page.waitForTimeout(400); // React Flow animates the control's viewport transition.
   const transform = await page.locator(".react-flow__viewport").getAttribute("style");
-  await page.getByRole("button", { name: "简体中文", exact: true }).click();
+  await page.locator(".language-dropdown select").selectOption("zh-CN");
   await expect(page.locator("html")).toHaveAttribute("lang", "zh-CN");
   await expect(page.locator(".react-flow__viewport")).toHaveAttribute("style", transform!);
 });
@@ -83,7 +83,7 @@ test("Chinese multi-PDF proposal confirms and reopens with unchanged Source Evid
   const reference = `中文/${testInfo.project.name}/${randomUUID()}`;
   const title = "Fictional Chinese acceptance review";
   await page.goto("/app/matter-proposals/new");
-  await page.getByRole("button", { name: "简体中文", exact: true }).click();
+  await page.locator(".language-dropdown select").selectOption("zh-CN");
   await page.locator('input[name="external_reference"]').fill(reference);
   await page.locator('input[name="matter_title"]').fill(title);
   await page.locator('input[type="file"]').setInputFiles([sourcePdf,

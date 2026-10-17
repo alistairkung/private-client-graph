@@ -26,7 +26,7 @@ export function DemoApp() {
         <a href="/demo" aria-current={path === "/demo" ? "page" : undefined}>{t("Matters")}</a>
         <a href="/app">{t("Practitioner sign-in")}</a>
       </nav>
-      <LanguageControl />
+      <div className="app-header-utilities"><LanguageControl compact /></div>
     </div></header>
     <main className="ledger-content ledger-width">
       <aside className="practitioner-access demo-notice" aria-label={t("Read-only demo")}>

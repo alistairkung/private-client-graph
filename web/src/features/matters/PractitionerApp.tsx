@@ -23,8 +23,10 @@ export function PractitionerApp({ matterId, proposalId }: { matterId?: string; p
           <nav aria-label={t("Practitioner application")}>
             <a href="/app" aria-current="page">{t("Matters")}</a>
           </nav>
-          <LanguageControl />
-          <AccountMenu />
+          <div className="app-header-utilities">
+            <LanguageControl compact />
+            <AccountMenu />
+          </div>
         </div>
       </header>
       <main className="ledger-content ledger-width">
