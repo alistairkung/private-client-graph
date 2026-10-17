@@ -1,0 +1,12 @@
+[
+  {
+    "id": "initial",
+    "title": "Initial dated factual position",
+    "path": "sources/initial.txt"
+  },
+  {
+    "id": "replacement",
+    "title": "Completed replacement confirmation",
+    "path": "sources/replacement.txt"
+  }
+]

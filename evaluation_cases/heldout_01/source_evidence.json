@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "relationships": [
+    {
+      "source": "p1",
+      "type": "settlor_of",
+      "target": "t1",
+      "approved_evidence": [
+        {
+          "source_id": "letter",
+          "supporting_text": "I, Nadia Lau, am the settlor of the Juniper Family Trust."
+        }
+      ]
+    },
+    {
+      "source": "p1",
+      "type": "spouse_of",
+      "target": "p2",
+      "approved_evidence": [
+        {
+          "source_id": "letter",
+          "supporting_text": "Nadia Lau and Owen Lau are spouses."
+        }
+      ]
+    },
+    {
+      "source": "p1",
+      "type": "parent_of",
+      "target": "p3",
+      "approved_evidence": [
+        {
+          "source_id": "letter",
+          "supporting_text": "Nadia Lau and Owen Lau are the parents of Maya Lau."
+        }
+      ]
+    },
+    {
+      "source": "p2",
+      "type": "parent_of",
+      "target": "p3",
+      "approved_evidence": [
+        {
+          "source_id": "letter",
+          "supporting_text": "Nadia Lau and Owen Lau are the parents of Maya Lau."
+        }
+      ]
+    },
+    {
+      "source": "p3",
+      "type": "beneficiary_of",
+      "target": "t1",
+      "approved_evidence": [
+        {
+          "source_id": "letter",
+          "supporting_text": "Maya Lau is a beneficiary of the Juniper Family Trust."
+        }
+      ]
+    }
+  ]
+}
