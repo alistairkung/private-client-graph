@@ -41,7 +41,7 @@ it("requires explicit approval, authorizes without dispatch and uses that invoca
   render(
     <RunExecution
       number={2}
-      initiallyOpen
+      reviewRequested
       run={run}
       availability={availability}
       refresh={refresh}
@@ -82,7 +82,7 @@ it("honors global active-run exclusion and displays rejected commands without re
   const { rerender } = render(
     <RunExecution
       number={2}
-      initiallyOpen
+      reviewRequested
       run={offline}
       availability={{ ...availability, active_run_id: "other" }}
       refresh={() => {}}
@@ -92,7 +92,7 @@ it("honors global active-run exclusion and displays rejected commands without re
   rerender(
     <RunExecution
       number={2}
-      initiallyOpen
+      reviewRequested
       run={offline}
       availability={availability}
       refresh={() => {}}
@@ -134,4 +134,31 @@ it("reopens a frozen Run without dispatching and preserves authorization when it
       plan_digest: "digest",
     }),
   );
+});
+
+it("opens when freeze confirmation arrives after polling mounted its Run", () => {
+  const props = { number: 1, run, availability, refresh: vi.fn() };
+  const { rerender } = render(<RunExecution {...props} reviewRequested={false} />);
+  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+
+  rerender(<RunExecution {...props} reviewRequested />);
+
+  expect(screen.getByRole("dialog", { name: "Authorize Run 1" })).toBeVisible();
+  expect(api.authorizeRun).not.toHaveBeenCalled();
+  expect(api.controlRun).not.toHaveBeenCalled();
+});
+
+it("keeps a dismissed request consumed during polling and accepts a new request", () => {
+  const props = { number: 1, run, availability, refresh: vi.fn() };
+  const { rerender } = render(<RunExecution {...props} reviewRequested />);
+  fireEvent.click(screen.getByRole("button", { name: "Close review" }));
+
+  rerender(<RunExecution {...props} run={{ ...run }} reviewRequested />);
+  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+
+  rerender(<RunExecution {...props} reviewRequested={false} />);
+  rerender(<RunExecution {...props} reviewRequested />);
+  expect(screen.getByRole("dialog", { name: "Authorize Run 1" })).toBeVisible();
+  expect(api.authorizeRun).not.toHaveBeenCalled();
+  expect(api.controlRun).not.toHaveBeenCalled();
 });

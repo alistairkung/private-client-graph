@@ -193,7 +193,7 @@ export function Workspace({
               key={`execution-${executionRun.id}`}
               run={executionRun}
               number={workspace.run_ids.indexOf(executionRun.id) + 1}
-              initiallyOpen={executionId === executionRun.id}
+              reviewRequested={executionId === executionRun.id}
               availability={availability}
               refresh={refresh}
             />
