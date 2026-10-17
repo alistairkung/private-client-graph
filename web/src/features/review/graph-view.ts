@@ -15,15 +15,17 @@ import dagre from "@dagrejs/dagre";
 import { MarkerType, Position, type Edge, type Node } from "@xyflow/react";
 import type { CanonicalGraph } from "../../shared/canonical-graph";
 
+import type { Locale } from "../../shared/locale";
+
 const relationshipKey = (relationship: CanonicalGraph["relationships"][number]) =>
   `${relationship.source}:${relationship.type}:${relationship.target}`;
 
-export function toGraphView(graph: CanonicalGraph): {
+export function toGraphView(graph: CanonicalGraph, locale: Locale = "en"): {
   nodes: Node[];
   edges: Edge[];
   bounds: { x: number; y: number; width: number; height: number };
 } {
-  const presentation = presentRelationships(graph);
+  const presentation = presentRelationships(graph, locale);
   const isTrust = (id: string) => graph.entities.some(entity => entity.id === id && entity.type === "trust");
   const nodeHeight = (id: string) => isTrust(id) ? TRUST_HEIGHT : PERSON_HEIGHT;
   const layout = new dagre.graphlib.Graph({ multigraph: true });

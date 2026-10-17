@@ -1,3 +1,4 @@
+import { useLocale } from "../../shared/locale";
 import { NODE_WIDTH, TRUST_HEIGHT, type RelationshipRoute } from "./node-geometry";
 import { useEffect, useMemo } from "react";
 import {
@@ -54,8 +55,9 @@ function RoutedEdge({ id, data, label, markerEnd, style, selected }: EdgeProps<R
 }
 
 function TrustNode({ data }: NodeProps) {
-  return <div className="trust-node" aria-label={`${data.label} · Trust`}>
-    <svg viewBox={`0 0 ${NODE_WIDTH} ${TRUST_HEIGHT}`} role="img" aria-label="Triangular Trust node">
+ const {t}=useLocale();
+  return <div className="trust-node" aria-label={`${data.label} · ${t("Trust")}`}>
+    <svg viewBox={`0 0 ${NODE_WIDTH} ${TRUST_HEIGHT}`} role="img" aria-label={t("Triangular Trust node")}>
       <polygon points={`${NODE_WIDTH / 2},0 ${NODE_WIDTH},${TRUST_HEIGHT} 0,${TRUST_HEIGHT}`} />
     </svg>
     <span>{String(data.label)}</span>
@@ -74,6 +76,7 @@ function FitGraph({
   bounds: { x: number; y: number; width: number; height: number };
   selectedRoute?: RelationshipRoute;
 }) {
+  const { t, locale } = useLocale();
   const { fitBounds, setCenter, getZoom, viewportInitialized } = useReactFlow();
   const width = useStore((state) => state.width);
   const height = useStore((state) => state.height);
@@ -102,14 +105,14 @@ export function GraphView({
   selected: number | null;
   onSelect: (index: number) => void;
 }) {
-  const view = useMemo(() => toGraphView(graph), [graph]);
+  const { t, locale } = useLocale();
+  const view = useMemo(() => toGraphView(graph, locale), [graph, locale]);
   if (!graph.relationships.length)
     return (
       <div className="empty-graph">
-        <h3>{emptyTitle}</h3>
+        <h3>{t(emptyTitle)}</h3>
         <p>
-          The analysis produced no supported relationships. The source remains
-          available for review.
+          {t("The analysis produced no supported relationships. The source remains available for review.")}
         </p>
       </div>
     );
@@ -129,15 +132,16 @@ export function GraphView({
   }));
   return (
     <>
-    <label className="graph-selector">Find a relationship
+    <label className="graph-selector">{t("Find a relationship")}
       <select value={selected ?? ""} onChange={event => onSelect(Number(event.target.value))}>
-        <option value="" disabled>Choose a relationship</option>
+        <option value="" disabled>{t("Choose a relationship")}</option>
         {view.edges.map((edge, index) => <option key={edge.id} value={index}>{edge.ariaLabel}</option>)}
       </select>
     </label>
-    <p className="graph-navigation-hint">Drag to pan. Use + and − to zoom. Choose a relationship above to bring it into view.</p>
-    <div className="graph-canvas" aria-label="Relationship graph">
+    <p className="graph-navigation-hint">{t("Drag to pan. Use + and \u2212 to zoom. Choose a relationship above to bring it into view.")}</p>
+    <div className="graph-canvas" aria-label={t("Relationship graph")}>
       <ReactFlow
+        ariaLabelConfig={{"controls.zoomIn.ariaLabel":t("Zoom in"), "controls.zoomOut.ariaLabel":t("Zoom out")}}
         edgeTypes={edgeTypes}
         nodeTypes={nodeTypes}
         nodes={view.nodes}

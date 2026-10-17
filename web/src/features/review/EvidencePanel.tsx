@@ -1,3 +1,4 @@
+import { useLocale } from "../../shared/locale";
 import type { Evidence } from "../../shared/canonical-graph";
 
 export function EvidencePanel({
@@ -15,9 +16,10 @@ export function EvidencePanel({
   relationship?: string;
   sourceLink?: { id: string; onActivate: () => void };
 }) {
+  const { t } = useLocale();
   return (
-    <section className="evidence-panel" aria-label="Supporting evidence">
-      <h3>{relationship ?? "Supporting evidence"}</h3>
+    <section className="evidence-panel" aria-label={t("Supporting evidence")}>
+      <h3>{relationship ?? t("Supporting evidence")}</h3>
       {items.length ? (
         <div className="evidence-list">
           {items.map((item, index) => (
@@ -27,18 +29,18 @@ export function EvidencePanel({
               aria-pressed={activeId === item.id}
               onClick={() => onSelect(item.id)}
             >
-              <span className="evidence-number">Evidence {index + 1}</span>
+              <span className="evidence-number">{t("Evidence {number}", {number:index+1})}</span>
               <q>{item.supporting_text}</q>
             </button>
           ))}
         </div>
       ) : (
-        <p>Select a relationship to follow its evidence into the source.</p>
+        <p>{t("Select a relationship to follow its evidence into the source.")}</p>
       )}
       {sourceLink && <a className="evidence-source-link" href={`#${sourceLink.id}`} onClick={event => {
         event.preventDefault();
         sourceLink.onActivate();
-      }}>View in source</a>}
+      }}>{t("View in source")}</a>}
     </section>
   );
 }

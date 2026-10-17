@@ -70,3 +70,10 @@ footer {
   display: flex;
   justify-content: space-between;
 }
+
+.language-control { display:flex; gap:.25rem; align-items:center; flex-wrap:wrap; }
+.language-control button { border:1px solid currentColor; border-radius:.25rem; padding:.3rem .45rem; background:transparent; color:inherit; font:inherit; cursor:pointer; }
+.language-control button[aria-pressed="true"] { background:#773b46; color:#fff; }
+.language-control button:focus-visible { outline:2px solid #773b46; outline-offset:3px; }
+:lang(zh-CN) { font-family: "Public Sans", "PingFang SC", "Microsoft YaHei", sans-serif; }
+.showcase-header, .ledger-header-inner { flex-wrap:wrap; }
