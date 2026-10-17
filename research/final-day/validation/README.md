@@ -114,9 +114,15 @@ and that response ordering. All 21 ordinary local execution journeys also pass,
 so a passing rerun alone must not be described as a fix for this timing race.
 
 `web/research/workspace/Workspace.tsx` and `RunExecution.tsx` are unchanged in
-this PR. The separate workbench implementation owner must fix the modal-open
-request lifecycle and cover the polling-before-response ordering. Do not weaken
-the existing browser assertion or include a workbench behavior change in this
-benchmark follow-up. No blocking fixture defect was identified, but the PR is
-**not merge-ready** until this separate CI blocker is resolved and required
-checks pass on the final head.
+this PR. The modal-open request lifecycle is fixed separately in
+[PR #126](https://github.com/alistairkung/private-client-graph/pull/126), with
+component regressions and forced polling-before-response browser coverage on
+all three viewport sizes. Existing browser assertions remain intact.
+
+PR #125 now targets the fix branch, `codex/workbench-dialog-race`, so GitHub CI
+validates the combined code without merging either PR; the benchmark diff still
+contains no workbench behavior changes. Review/merge order is #126 first, then
+retarget #125 to `main` after the user merges #126. No blocking fixture defect
+was identified. Required checks on both final PR heads must pass before merge;
+a local passing run does not replace CI or authorize merging, deployment or
+held-out execution.
