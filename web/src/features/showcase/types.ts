@@ -1,3 +1,4 @@
+import type { CanonicalState } from "../../shared/canonical-state";
 import type { CanonicalGraph } from "../../shared/canonical-graph";
 
 export type AnalysisMode = "live" | "sample";
@@ -25,4 +26,16 @@ export interface AnalysisError {
   message: string;
   retryable: boolean;
   run_artifact_id?: string | null;
+}
+
+export interface ShowcaseCaseSummary {
+  id: string;
+  title: string;
+  description: string;
+}
+
+export interface ShowcaseCase extends ShowcaseCaseSummary {
+  result_kind: "curated_ideal_fixture";
+  notice: string;
+  state: CanonicalState;
 }

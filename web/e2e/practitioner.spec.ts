@@ -72,7 +72,7 @@ test("persisted Matter opens from ledger and highlights exact Evidence after dir
   await accountMenu.press("Tab");
   await expect(showcaseLink).toBeFocused();
   await showcaseLink.press("Enter");
-  await expect(page.getByRole("button", { name: "Load sample analysis" })).toBeVisible();
+  await expect(page.getByLabel("Choose a synthetic case")).toBeVisible();
   await page.getByRole("link", { name: "Practitioner application" }).click();
   await expect(matter).toBeVisible();
 });

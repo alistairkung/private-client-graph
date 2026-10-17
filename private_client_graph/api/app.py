@@ -20,14 +20,16 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from private_client_graph.application.case_analysis import analyse_case, get_case
+from private_client_graph.application.showcase_cases import ShowcaseCase, ShowcaseCaseSummary, get_showcase_case, list_showcase_cases
 from private_client_graph.application.contracts import (
+    LiveAvailability,
     AnalysisError,
     AnalysisRequest,
     CaseAnalysis,
     CaseDetail,
 )
 from private_client_graph.application.errors import AnalysisFailure
-from private_client_graph.application.showcase_live import LiveConfig, live_availability
+from private_client_graph.application.showcase_live import LiveConfig
 from private_client_graph.application.proposal_config import ProposalAnalysisConfig
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -83,12 +85,22 @@ def matter_detail(internal_id: UUID) -> MatterDetail | JSONResponse:
 def case_detail(request: Request, response: Response) -> CaseDetail:
     response.headers["Cache-Control"] = "no-store"
     detail = get_case()
-    detail.live_analysis = live_availability(request.app.state.showcase_live)
+    # Public exploration is always provider-independent.
+    detail.live_analysis = LiveAvailability(state="disabled")
     return detail
 
 
 def case_analysis(body: AnalysisRequest, request: Request) -> CaseAnalysis:
-    return analyse_case(body.mode, request.app.state.showcase_live)
+    if body.mode == "live":
+        raise AnalysisFailure(AnalysisError(stage="availability", message="Public live analysis is disabled. Explore the curated synthetic examples."), 403)
+    return analyse_case("sample", request.app.state.showcase_live)
+
+
+def showcase_case(case_id: str) -> ShowcaseCase | JSONResponse:
+    case = get_showcase_case(case_id)
+    if case is None:
+        return JSONResponse(status_code=404, content={"error": {"message": "Synthetic case not found."}})
+    return case
 
 
 async def analysis_failure(request: Request, exc: Exception) -> JSONResponse:
@@ -133,7 +145,7 @@ def create_app(web_dist: Path = WEB_DIST) -> FastAPI:
         application.state.proposal_analysis = proposal_config
     except ValueError:
         application.state.proposal_analysis = None
-    application.state.showcase_live = LiveConfig.from_environment()
+    application.state.showcase_live = LiveConfig()
     application.include_router(proposal_router)
     application.add_exception_handler(ProposalFailure, proposal_failure)
     application.add_api_route("/health", health, methods=["GET"])
@@ -159,6 +171,8 @@ def create_app(web_dist: Path = WEB_DIST) -> FastAPI:
         methods=["POST"],
         response_model=CaseAnalysis,
     )
+    application.add_api_route("/api/showcase/cases", list_showcase_cases, methods=["GET"], response_model=list[ShowcaseCaseSummary])
+    application.add_api_route("/api/showcase/cases/{case_id}", showcase_case, methods=["GET"], response_model=ShowcaseCase)
     application.add_exception_handler(AnalysisFailure, analysis_failure)
     application.add_exception_handler(RequestValidationError, invalid_request)
     if web_dist.is_dir():
