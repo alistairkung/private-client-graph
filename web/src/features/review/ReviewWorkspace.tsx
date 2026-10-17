@@ -1,3 +1,4 @@
+import { useLocale } from "../../shared/locale";
 import "./review.css";
 import { useCallback, useId, useMemo, useRef, useState } from "react";
 import { EvidencePanel } from "./EvidencePanel";
@@ -22,13 +23,14 @@ export function ReviewWorkspace({
   emptyGraphTitle?: string;
   graph: CanonicalGraph;
 }) {
+  const { t, locale } = useLocale();
   const [selected, setSelected] = useState<number | null>(null);
   const [activeId, setActiveId] = useState<string>();
   const [activation, setActivation] = useState(0);
   const [sourceFocus, setSourceFocus] = useState(0);
   const highlightId = useId();
   const graphPanel = useRef<HTMLElement>(null);
-  const presentation = useMemo(() => presentRelationships(graph), [graph]);
+  const presentation = useMemo(() => presentRelationships(graph, locale), [graph, locale]);
   const relationship =
     selected === null ? undefined : graph.relationships[selected];
   const items =
@@ -43,12 +45,12 @@ export function ReviewWorkspace({
     (items.length !== relationship.evidence_ids.length || !active)
   ) {
     error =
-      "The selected evidence could not be located in the source. Reload the case to restore the review.";
+      t("The selected evidence could not be located in the source. Reload the case to restore the review.");
   } else if (active) {
     try {
       span = locateEvidence(source, active.supporting_text);
     } catch (failure) {
-      error = (failure as Error).message;
+      error = t((failure as Error).message);
     }
   }
   const selectRelationship = useCallback(

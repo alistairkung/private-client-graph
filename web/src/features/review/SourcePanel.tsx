@@ -1,3 +1,4 @@
+import { useLocale } from "../../shared/locale";
 import { useEffect, useRef } from "react";
 
 export function SourcePanel({
@@ -19,6 +20,7 @@ export function SourcePanel({
   focusRequest?: number;
   onReturn?: () => void;
 }) {
+  const { t } = useLocale();
   const highlight = useRef<HTMLElement>(null);
   useEffect(() => {
     highlight.current?.scrollIntoView({ behavior: "instant", block: "center" });
@@ -32,12 +34,12 @@ export function SourcePanel({
     <section className="source-panel panel">
       <div className="panel-heading">
         <div>
-          <h2>{practitioner ? "Authoritative Source" : title}</h2>
+          <h2>{practitioner ? t("Authoritative Source") : title}</h2>
         </div>
       </div>
       <div className="document-scroll">
         {practitioner && <h3 className="source-title">{title}</h3>}
-        <article aria-label="Source document" className="source-text">
+        <article aria-label={t("Source document")} className="source-text">
           {span ? (
             <>
               {source.slice(0, span.start)}
@@ -49,7 +51,7 @@ export function SourcePanel({
           )}
         </article>
       </div>
-      {span && onReturn && <button className="source-return" onClick={onReturn}>Back to selected relationship</button>}
+      {span && onReturn && <button className="source-return" onClick={onReturn}>{t("Back to selected relationship")}</button>}
     </section>
   );
 }
