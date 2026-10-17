@@ -311,3 +311,17 @@ def test_sourced_resolution_failures_remain_unscored_and_are_not_retried(tmp_pat
     assert bundle.attempt_count == 1
     execute(bundle, provider=lambda _: pytest.fail('Retained failure must not be retried'))
     assert bundle.attempt_count == 1
+
+
+def test_sourced_demonstration_reuses_exact_recorded_resolver_payload():
+    from private_client_graph.pipeline import Pipeline, PipelineConfig
+    from private_client_graph.research.demo import recorded_response
+    sample = next(sample for sample in repository_inputs() if sample.case_id == 'case_03')
+    def provider(request):
+        response = recorded_response(ModelRequest(stage='resolution', source=request.source,
+            extraction=request.extraction, settings=ModelSettings()))
+        return response.payload
+    output = Pipeline(PipelineConfig(resolver='generative'), resolution_provider=provider).run_from_sourced_extraction(
+        sample.sources, sample.sourced_extraction)
+    from private_client_graph.evaluation import evaluate_graph
+    assert evaluate_graph(output.graph, sample.truth).f1 == 1
