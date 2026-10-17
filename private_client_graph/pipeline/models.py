@@ -1,7 +1,8 @@
 """Request-local execution values, separate from persisted domain aggregates."""
 from dataclasses import dataclass
 
-from private_client_graph.models import CanonicalGraph, ExtractionResult
+from private_client_graph.models import CanonicalGraph, ExtractionResult, SourcedExtractionResult
+from private_client_graph.models.canonical_state import CanonicalState
 
 
 @dataclass(frozen=True)
@@ -14,4 +15,12 @@ class PipelineInput:
 class PipelineResult:
     extracted: ExtractionResult
     resolved: ExtractionResult
+    graph: CanonicalGraph
+
+
+@dataclass(frozen=True)
+class SourcedPipelineResult:
+    extracted: SourcedExtractionResult
+    resolved: SourcedExtractionResult
+    state: CanonicalState
     graph: CanonicalGraph
