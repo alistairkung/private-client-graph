@@ -140,4 +140,4 @@ def test_heldout_dataset_is_separate_from_development_cases():
     assert HELDOUT.is_dir()
     assert not (ROOT / 'cases' / 'heldout_01').exists()
     assert [p.name for p in sorted(HELDOUT.glob('heldout_*'))] == [
-        f'heldout_{i:02d}' for i in range(1, len(list(HELDOUT.glob('heldout_*'))) + 1)]
+        f'heldout_{i:02d}' for i in range(1, 11)]

@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "relationships": [
+    {
+      "source": "p1",
+      "type": "settlor_of",
+      "target": "t1",
+      "approved_evidence": [
+        {
+          "source_id": "archive",
+          "supporting_text": "Petra Lam is the settlor of the Alder Family Trust."
+        }
+      ]
+    },
+    {
+      "source": "p2",
+      "type": "beneficiary_of",
+      "target": "t1",
+      "approved_evidence": [
+        {
+          "source_id": "archive",
+          "supporting_text": "Quinn Lam is a beneficiary of the Alder Family Trust."
+        }
+      ]
+    },
+    {
+      "source": "p3",
+      "type": "trustee_of",
+      "target": "t1",
+      "approved_evidence": [
+        {
+          "source_id": "update",
+          "supporting_text": "Rita Yuen is the sole current trustee of the Alder Family Trust as at 28 June 2026."
+        },
+        {
+          "source_id": "update",
+          "supporting_text": "Rita Yuen became trustee of the Alder Family Trust with effect from 20 June 2026."
+        }
+      ]
+    }
+  ]
+}

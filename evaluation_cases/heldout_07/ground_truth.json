@@ -1,0 +1,79 @@
+{
+  "entities": [
+    {
+      "id": "p1",
+      "type": "person",
+      "name": "Sienna Mak"
+    },
+    {
+      "id": "p2",
+      "type": "person",
+      "name": "Tobias Mak"
+    },
+    {
+      "id": "p3",
+      "type": "person",
+      "name": "Uma Chan"
+    },
+    {
+      "id": "t1",
+      "type": "trust",
+      "name": "Birch Family Trust"
+    },
+    {
+      "id": "t2",
+      "type": "trust",
+      "name": "Elm Family Trust"
+    }
+  ],
+  "relationships": [
+    {
+      "source": "p1",
+      "type": "settlor_of",
+      "target": "t1",
+      "approved_evidence": [
+        "Sienna Mak is the settlor of the Birch Family Trust."
+      ]
+    },
+    {
+      "source": "p2",
+      "type": "beneficiary_of",
+      "target": "t1",
+      "approved_evidence": [
+        "Tobias Mak is a beneficiary of the Birch Family Trust."
+      ]
+    },
+    {
+      "source": "p3",
+      "type": "trustee_of",
+      "target": "t1",
+      "approved_evidence": [
+        "Uma Chan is a trustee of the Birch Family Trust."
+      ]
+    },
+    {
+      "source": "p2",
+      "type": "settlor_of",
+      "target": "t2",
+      "approved_evidence": [
+        "Tobias Mak is the settlor of the Elm Family Trust."
+      ]
+    },
+    {
+      "source": "p1",
+      "type": "beneficiary_of",
+      "target": "t2",
+      "approved_evidence": [
+        "Sienna Mak and Uma Chan are beneficiaries of the Elm Family Trust."
+      ]
+    },
+    {
+      "source": "p3",
+      "type": "beneficiary_of",
+      "target": "t2",
+      "approved_evidence": [
+        "Sienna Mak and Uma Chan are beneficiaries of the Elm Family Trust."
+      ]
+    }
+  ]
+}

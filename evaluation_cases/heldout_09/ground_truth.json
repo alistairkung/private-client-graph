@@ -1,0 +1,50 @@
+{
+  "entities": [
+    {
+      "id": "p1",
+      "type": "person",
+      "name": "Yasmin Fong"
+    },
+    {
+      "id": "p2",
+      "type": "person",
+      "name": "Zachary Fong"
+    },
+    {
+      "id": "p3",
+      "type": "person",
+      "name": "Adele Ip"
+    },
+    {
+      "id": "t1",
+      "type": "trust",
+      "name": "Hazel Family Trust"
+    }
+  ],
+  "relationships": [
+    {
+      "source": "p1",
+      "type": "settlor_of",
+      "target": "t1",
+      "approved_evidence": [
+        "Yasmin Fong is the settlor of the Hazel Family Trust."
+      ]
+    },
+    {
+      "source": "p2",
+      "type": "beneficiary_of",
+      "target": "t1",
+      "approved_evidence": [
+        "Zachary Fong is a beneficiary of the Hazel Family Trust."
+      ]
+    },
+    {
+      "source": "p3",
+      "type": "trustee_of",
+      "target": "t1",
+      "approved_evidence": [
+        "Adele Ip is a trustee of the Hazel Family Trust."
+      ]
+    }
+  ]
+}

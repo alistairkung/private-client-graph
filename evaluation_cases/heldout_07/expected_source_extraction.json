@@ -1,0 +1,46 @@
+{
+  "relationships": [
+    {
+      "source_name": "Sienna Mak",
+      "relationship_type": "settlor_of",
+      "target_name": "Birch Family Trust",
+      "source_id": "review",
+      "supporting_text": "Sienna Mak is the settlor of the Birch Family Trust."
+    },
+    {
+      "source_name": "Tobias Mak",
+      "relationship_type": "beneficiary_of",
+      "target_name": "Birch Family Trust",
+      "source_id": "review",
+      "supporting_text": "Tobias Mak is a beneficiary of the Birch Family Trust."
+    },
+    {
+      "source_name": "Uma Chan",
+      "relationship_type": "trustee_of",
+      "target_name": "Birch Family Trust",
+      "source_id": "review",
+      "supporting_text": "Uma Chan is a trustee of the Birch Family Trust."
+    },
+    {
+      "source_name": "Tobias Mak",
+      "relationship_type": "settlor_of",
+      "target_name": "Elm Family Trust",
+      "source_id": "review",
+      "supporting_text": "Tobias Mak is the settlor of the Elm Family Trust."
+    },
+    {
+      "source_name": "Sienna Mak",
+      "relationship_type": "beneficiary_of",
+      "target_name": "Elm Family Trust",
+      "source_id": "review",
+      "supporting_text": "Sienna Mak and Uma Chan are beneficiaries of the Elm Family Trust."
+    },
+    {
+      "source_name": "Uma Chan",
+      "relationship_type": "beneficiary_of",
+      "target_name": "Elm Family Trust",
+      "source_id": "review",
+      "supporting_text": "Sienna Mak and Uma Chan are beneficiaries of the Elm Family Trust."
+    }
+  ]
+}

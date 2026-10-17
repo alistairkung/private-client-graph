@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "relationships": [
+    {
+      "source": "p1",
+      "type": "settlor_of",
+      "target": "t1",
+      "approved_evidence": [
+        {
+          "source_id": "file",
+          "supporting_text": "Yasmin Fong is the settlor of the Hazel Family Trust."
+        }
+      ]
+    },
+    {
+      "source": "p2",
+      "type": "beneficiary_of",
+      "target": "t1",
+      "approved_evidence": [
+        {
+          "source_id": "file",
+          "supporting_text": "Zachary Fong is a beneficiary of the Hazel Family Trust."
+        }
+      ]
+    },
+    {
+      "source": "p3",
+      "type": "trustee_of",
+      "target": "t1",
+      "approved_evidence": [
+        {
+          "source_id": "file",
+          "supporting_text": "Adele Ip is a trustee of the Hazel Family Trust."
+        }
+      ]
+    }
+  ]
+}

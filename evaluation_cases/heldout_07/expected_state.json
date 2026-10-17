@@ -1,0 +1,118 @@
+{
+  "sources": [
+    {
+      "id": "review",
+      "title": "Two-trust factual review note",
+      "text": "Synthetic factual review — separate trust entries\n9 September 2026\n\nThe interview covered two trusts. Their entries are recorded separately because the capacities differ.\n\nBirch Family Trust\nSienna Mak is the settlor of the Birch Family Trust. Tobias Mak is a beneficiary of the Birch Family Trust. Uma Chan is a trustee of the Birch Family Trust.\n\nElm Family Trust\nTobias Mak is the settlor of the Elm Family Trust. Sienna Mak and Uma Chan are beneficiaries of the Elm Family Trust.\n\nNo family connections between the three people were supplied. In particular, the shared surname of Sienna Mak and Tobias Mak is not a statement of parentage, marriage or sibling status. No trustee entry for the Elm Family Trust was provided. The review team will check the scope of any further factual enquiries separately.\n"
+    }
+  ],
+  "entities": [
+    {
+      "id": "p1",
+      "type": "person",
+      "name": "Sienna Mak"
+    },
+    {
+      "id": "p2",
+      "type": "person",
+      "name": "Tobias Mak"
+    },
+    {
+      "id": "p3",
+      "type": "person",
+      "name": "Uma Chan"
+    },
+    {
+      "id": "t1",
+      "type": "trust",
+      "name": "Birch Family Trust"
+    },
+    {
+      "id": "t2",
+      "type": "trust",
+      "name": "Elm Family Trust"
+    }
+  ],
+  "relationships": [
+    {
+      "source": "p1",
+      "type": "settlor_of",
+      "target": "t1",
+      "evidence_ids": [
+        "evidence_001"
+      ]
+    },
+    {
+      "source": "p2",
+      "type": "beneficiary_of",
+      "target": "t1",
+      "evidence_ids": [
+        "evidence_002"
+      ]
+    },
+    {
+      "source": "p3",
+      "type": "trustee_of",
+      "target": "t1",
+      "evidence_ids": [
+        "evidence_003"
+      ]
+    },
+    {
+      "source": "p2",
+      "type": "settlor_of",
+      "target": "t2",
+      "evidence_ids": [
+        "evidence_004"
+      ]
+    },
+    {
+      "source": "p1",
+      "type": "beneficiary_of",
+      "target": "t2",
+      "evidence_ids": [
+        "evidence_005"
+      ]
+    },
+    {
+      "source": "p3",
+      "type": "beneficiary_of",
+      "target": "t2",
+      "evidence_ids": [
+        "evidence_005"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "id": "evidence_001",
+      "source_id": "review",
+      "document": "sources/review.txt",
+      "supporting_text": "Sienna Mak is the settlor of the Birch Family Trust."
+    },
+    {
+      "id": "evidence_002",
+      "source_id": "review",
+      "document": "sources/review.txt",
+      "supporting_text": "Tobias Mak is a beneficiary of the Birch Family Trust."
+    },
+    {
+      "id": "evidence_003",
+      "source_id": "review",
+      "document": "sources/review.txt",
+      "supporting_text": "Uma Chan is a trustee of the Birch Family Trust."
+    },
+    {
+      "id": "evidence_004",
+      "source_id": "review",
+      "document": "sources/review.txt",
+      "supporting_text": "Tobias Mak is the settlor of the Elm Family Trust."
+    },
+    {
+      "id": "evidence_005",
+      "source_id": "review",
+      "document": "sources/review.txt",
+      "supporting_text": "Sienna Mak and Uma Chan are beneficiaries of the Elm Family Trust."
+    }
+  ]
+}
