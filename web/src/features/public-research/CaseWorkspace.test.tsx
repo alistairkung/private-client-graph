@@ -1,10 +1,20 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { fireEvent, render, screen, within } from "@testing-library/react";
-import { expect, it } from "vitest";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { LocaleProvider, useLocale } from "../../shared/locale";
 import { CaseWorkspace } from "./CaseWorkspace";
 import type { PublicResearchSnapshot } from "./types";
+// Persist preference within a journey, but never inherit another test's locale.
+beforeEach(() => {
+  const values = new Map<string, string>();
+  vi.stubGlobal("localStorage", {
+    getItem: (key: string) => values.get(key) ?? null,
+    setItem: (key: string, value: string) => values.set(key, value),
+  });
+});
+afterEach(() => vi.unstubAllGlobals());
+
 const snapshot: PublicResearchSnapshot = JSON.parse(
   readFileSync(
     resolve(

@@ -64,18 +64,31 @@ for (const locale of ["en", "zh-CN"]) {
 for (const path of ["/", "/research-results"]) {
   test(`public navigation collapses to a keyboard-operable dropdown on ${path}`, async ({ page }, testInfo) => {
     await page.goto(path);
+    await page.evaluate(() => document.fonts.ready);
     const header = page.locator(".showcase-header");
     const navigation = header.getByRole("navigation");
     const menu = header.getByRole("button", { name: "Menu", exact: true });
-    for (const width of [1024, 390]) {
+    for (const width of [1024, 640, 390, 320]) {
       await page.setViewportSize({ width, height: 900 });
       await expect(menu).toBeVisible();
+      const brand = header.getByRole("link", { name: "Private Client Graph", exact: true });
+      const brandBox = (await brand.boundingBox())!;
+      const menuBox = (await menu.boundingBox())!;
+      expect(Math.abs(brandBox.y + brandBox.height / 2 - menuBox.y - menuBox.height / 2)).toBeLessThan(2);
+      expect(brandBox.x + brandBox.width).toBeLessThanOrEqual(menuBox.x);
+      expect((await header.boundingBox())!.height).toBeLessThanOrEqual(90);
+      const iconSize = await menu.locator("svg").evaluate(element => element.getBoundingClientRect().width);
+      const labelSize = await menu.evaluate(element => parseFloat(getComputedStyle(element).fontSize));
+      expect(iconSize / labelSize).toBeCloseTo(1.4, 1);
       await expect(navigation).toBeHidden();
       await expect(header.getByRole("button", { name: "EN", exact: true })).toBeHidden();
+      await page.screenshot({ path: testInfo.outputPath(`public-header-en-${width}.png`) });
       await menu.click();
       await expect(menu).toHaveAttribute("aria-expanded", "true");
       await expect(navigation.getByRole("link")).toHaveCount(4);
       for (const link of await navigation.getByRole("link").all()) await expect(link).toBeVisible();
+      expect(await navigation.getByRole("link").first().evaluate(element => getComputedStyle(element).fontSize)).toBe(`${labelSize}px`);
+      expect(await header.getByRole("button", { name: "EN", exact: true }).evaluate(element => getComputedStyle(element).fontSize)).toBe(`${labelSize}px`);
       await page.keyboard.press("Tab");
       await expect(navigation.getByRole("link").first()).toBeFocused();
       await page.keyboard.press("Escape");
@@ -86,6 +99,7 @@ for (const path of ["/", "/research-results"]) {
       await header.getByRole("button", { name: "简体中文", exact: true }).click();
       await expect(navigation).toBeHidden();
       const chineseMenu = header.getByRole("button", { name: "菜单", exact: true });
+      await page.screenshot({ path: testInfo.outputPath(`public-header-zh-CN-${width}.png`) });
       await chineseMenu.click();
       await expect(navigation.getByRole("link", { name: "研究结果", exact: true })).toBeVisible();
       await page.screenshot({ path: testInfo.outputPath(`public-menu-zh-CN-${width}.png`) });

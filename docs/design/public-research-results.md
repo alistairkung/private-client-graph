@@ -19,7 +19,9 @@ institutional validation. Disclosures are ordinary visible text in both language
 At the owner’s follow-up request, public navigation collapses into a labelled
 hamburger dropdown at 1350px and below, including language controls and the
 prototype notice. The four links and language controls remain inline on wider
-desktop layouts. Escape restores focus to the toggle;
+desktop layouts. The compact brand and Menu stay on one row; responsive brand
+and logo sizing preserves their proportions, while Menu, dropdown links and
+language buttons share one text scale. Escape restores focus to the toggle;
 route selection, outside pointer interaction and resizing close the dropdown.
 
 The standalone route uses Read mode, with eight chapters: research question;
@@ -113,10 +115,14 @@ desktop case-detail depth. Both were corrected, including the case-index flex
 shrink regression. The final targeted verdict scored those findings resolved and
 returned **ship at the scored-fix scope**. This is not a second whole-surface audit.
 
-A separate fresh header review inspected all eight compact-menu captures, the
-owner's reference, and desktop/closed-mobile context. It returned **ship for the
-combined hamburger-header refinement**, with no material fixes. Both review scopes
-are complete.
+The owner subsequently rejected the compact header because Menu dropped onto a
+second row and requested consistent scaling. The correction is confined to
+`public-header.css`: no wrapping, automatic brand width, responsive brand type and
+logo sizing, a shared 1rem navigation text scale and an em-sized hamburger. The
+fresh independent header-alignment review inspected the owner's rejected example
+and all 24 replacement captures, returning **ship for the header correction**
+with no material fixes. This separate, scoped verdict supersedes the earlier
+header review and its two-row composition.
 
 The documentation comparison checked `PRODUCT.md`, the incumbent `DESIGN.md`,
 `.impeccable/design.json`, `ResearchResultsApp.tsx`, `ResearchSummary.tsx`, their
@@ -128,15 +134,30 @@ chapter type and the landing's paired figures are local editorial adaptations,
 not additions to the global token system. The compact Menu includes all four
 links, both language controls and the prototype notice at 1350px and below.
 
-Capture evidence is indexed in `research-editorial/screenshots.json` (20 captures)
-and `research-editorial/navigation-screenshots.json` (8 captures) in the task's
-visualization directory. The documentation pass visually sampled the English
+Editorial capture evidence is indexed in `research-editorial/screenshots.json`
+(20 captures) in the task's visualization directory. The documentation pass
+visually sampled the English
 desktop and Chinese mobile landing chapters, English desktop and Chinese mobile
-full studies, English mobile and Chinese desktop graph/Evidence views, and the
-English mobile open research menu. These show the retained editorial palette,
-readable synthetic limitations, stacked mobile graph/Evidence framing and the
-single dropdown containing navigation and language controls. Browser acceptance
-separately verifies keyboard, dismissal, route, resize and locale interactions.
+full studies, and English mobile and Chinese desktop graph/Evidence views. These
+show the retained editorial palette, readable synthetic limitations and stacked
+mobile graph/Evidence framing. Their headers and the eight earlier captures in
+`research-editorial/navigation-screenshots.json` are historical evidence, not the
+final header reference.
+
+Final header evidence is indexed in `header-alignment/screenshots.json` (24
+captures): both routes and languages at 320, 390, 640 and 1024px, with open-menu
+views at 320 and 640px. The documentation follow-up compared the rejected owner
+screenshot and current CSS with four replacement samples: English research open
+menu at 320px, Chinese landing closed header at 390px, English research closed
+header at 640px and Chinese landing open menu at 640px. They show the aligned
+single-row brand/Menu and one dropdown containing both navigation and language
+controls. Fourteen focused browser tests passed with alignment, non-overlap,
+font-scale and header-height assertions; the header remains at most 90px tall
+across those tested widths. The fresh reviewer inspected the full capture set;
+this documentation pass sampled it. Full Python validation passed (752 tests),
+and the production build passed. A separate CI test locale leak was isolated in
+`CaseWorkspace.test.tsx` without a production behavior change. Browser acceptance
+also covers keyboard, dismissal, route, resize and locale interactions.
 
 `PRODUCT.md`, `DESIGN.md`, the sidecar and global configuration remain unchanged.
 The existing root layout record describes a 1440px content maximum and narrower
