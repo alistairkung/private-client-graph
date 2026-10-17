@@ -1,3 +1,4 @@
+import { useLocale } from "../../shared/locale";
 import { useEffect, useRef, useState } from "react";
 
 const fictionalSourcePrompt = `Create a realistic but completely fictional private-client source document in the genre of an attendance note, client email, or letter.
@@ -9,6 +10,7 @@ Do not include any real personal, client, legal, or confidential information.
 Return the source document only. Export it as a text-layer PDF, then upload that PDF through ordinary Matter Intake. I will separately confirm that the uploaded material is synthetic or fictional.`;
 
 export function FictionalSourcePrompt({ onClose }: { onClose: () => void }) {
+  const { t } = useLocale();
   const closeButton = useRef<HTMLButtonElement>(null);
   const copyButton = useRef<HTMLButtonElement>(null);
   const [copyStatus, setCopyStatus] = useState<"copied" | "failed">();
@@ -39,7 +41,7 @@ export function FictionalSourcePrompt({ onClose }: { onClose: () => void }) {
 
   async function copyPrompt() {
     try {
-      await navigator.clipboard.writeText(fictionalSourcePrompt);
+      await navigator.clipboard.writeText(t(fictionalSourcePrompt));
       setCopyStatus("copied");
     } catch {
       setCopyStatus("failed");
@@ -50,15 +52,15 @@ export function FictionalSourcePrompt({ onClose }: { onClose: () => void }) {
     <section className="fictional-source-prompt" role="dialog" aria-modal="true" aria-labelledby="fictional-source-heading">
       <header className="prompt-heading">
         <div>
-          <h2 id="fictional-source-heading">Create a fictional source</h2>
-          <p>Copy this prompt into an external AI assistant.</p>
+          <h2 id="fictional-source-heading">{t("Create a fictional source")}</h2>
+          <p>{t("Copy this prompt into an external AI assistant.")}</p>
         </div>
-        <button ref={closeButton} className="prompt-close" type="button" onClick={onClose} aria-label="Close prompt">×</button>
+        <button ref={closeButton} className="prompt-close" type="button" onClick={onClose} aria-label={t("Close prompt")}>×</button>
       </header>
-      <pre className="prompt-copy">{fictionalSourcePrompt}</pre>
+      <pre className="prompt-copy">{t(fictionalSourcePrompt)}</pre>
       <div className="prompt-actions">
-        <button ref={copyButton} className="intake-button secondary" type="button" onClick={copyPrompt}>Copy prompt</button>
-        {copyStatus && <p role="status">{copyStatus === "copied" ? "Prompt copied." : "Prompt could not be copied. Select and copy the text manually."}</p>}
+        <button ref={copyButton} className="intake-button secondary" type="button" onClick={copyPrompt}>{t("Copy prompt")}</button>
+        {copyStatus && <p role="status">{copyStatus === "copied" ? t("Prompt copied.") : t("Prompt could not be copied. Select and copy the text manually.")}</p>}
       </div>
     </section>
   </div>;

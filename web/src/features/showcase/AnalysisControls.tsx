@@ -1,3 +1,5 @@
+import { useLocale } from "../../shared/locale";
+import { analysisFailureMessage } from "./error-presentation";
 import type { AnalysisError, AnalysisMode, LiveAvailability } from "./types";
 
 export function AnalysisControls({
@@ -13,6 +15,7 @@ export function AnalysisControls({
   lastMode?: AnalysisMode;
   onRun: (mode: AnalysisMode) => void;
 }) {
+  const { t, locale } = useLocale();
   const available = availability.state === "available";
   const retryLive = available && error?.retryable && lastMode === "live";
   return (
@@ -23,7 +26,7 @@ export function AnalysisControls({
           disabled={!!pending}
           onClick={() => onRun("sample")}
         >
-          Load sample analysis
+          {t("Load sample analysis")}
         </button>
         <button
           className="primary"
@@ -32,41 +35,40 @@ export function AnalysisControls({
           }
           onClick={() => onRun("live")}
         >
-          {retryLive ? "Retry live analysis" : "Run live analysis"}
+          {retryLive ? t("Retry live analysis") : t("Run live analysis")}
           <span aria-hidden="true"> ↗</span>
         </button>
       </div>
       {!available && (
         <p className="live-availability">
           {availability.state === "disabled"
-            ? "Live analysis is currently disabled. Sample analysis remains available."
+            ? t("Live analysis is currently disabled. Sample analysis remains available.")
             : availability.state === "exhausted"
-              ? "Live analysis is unavailable for now. Sample analysis remains available."
-              : "Live analysis is temporarily unavailable. Sample analysis remains available."}
-          {availability.resets_at && <> Try live analysis again after <time dateTime={availability.resets_at}>
-            {new Date(availability.resets_at).toLocaleString(undefined, { timeZoneName: "short" })}
-          </time>. Reload the page to check availability.</>}
+              ? t("Live analysis is unavailable for now. Sample analysis remains available.")
+              : t("Live analysis is temporarily unavailable. Sample analysis remains available.")}
+          {availability.resets_at && <>{t("Try live analysis again after")}<time dateTime={availability.resets_at}>
+            {new Date(availability.resets_at).toLocaleString(locale, { timeZoneName: "short" })}
+          </time>. {t("Reload the page to check availability.")}</>}
         </p>
       )}
       {pending && (
         <p role="status" className="progress">
           {pending === "live"
-            ? "Running live analysis. This may take a moment…"
-            : "Loading sample analysis…"}
+            ? t("Running live analysis. This may take a moment…")
+            : t("Loading sample analysis…")}
         </p>
       )}
       {error && (
         <div role="alert" className="error-message">
           <strong>
             {error.stage === "graph"
-              ? "Relationship validation failed"
-              : "Analysis unavailable"}
+              ? t("Relationship validation failed")
+              : t("Analysis unavailable")}
           </strong>
-          <p>{error.message}</p>
+          <p>{t(analysisFailureMessage(error))}</p>
           {!error.retryable && (
             <p>
-              You can explicitly load the sample analysis to continue the
-              demonstration.
+              {t("You can explicitly load the sample analysis to continue the demonstration.")}
             </p>
           )}
         </div>

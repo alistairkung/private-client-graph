@@ -1,3 +1,4 @@
+import { useLocale } from "../../shared/locale";
 import { useEffect, useState } from "react";
 import { getMatter } from "./api";
 import type { MatterDetail } from "./types";
@@ -10,6 +11,7 @@ type MatterState =
   | { status: "ready"; matter: MatterDetail };
 
 export function MatterWorkspace({ id }: { id: string }) {
+  const { t } = useLocale();
   const [state, setState] = useState<MatterState>({ status: "loading" });
   const [created, setCreated] = useState(false);
   useEffect(() => {
@@ -19,34 +21,38 @@ export function MatterWorkspace({ id }: { id: string }) {
         if (!active) return;
         setState(matter ? { status: "ready", matter } : { status: "missing" });
         if (matter) setCreated(consumeMatterCreation(id));
-        document.title = `${matter?.title ?? "Matter not found"} · Private Client Graph`;
+
       },
       () => { if (active) setState({ status: "failed" }); },
     );
     return () => { active = false; };
   }, [id]);
 
+  useEffect(() => {
+    document.title = `${state.status === "ready" ? state.matter.title : t("Matter not found")} · Private Client Graph`;
+  }, [state, t]);
+
   return <>
-    <a className="matter-back" href="/app">Back to Matters</a>
+    <a className="matter-back" href="/app">{t("Back to Matters")}</a>
     {state.status === "ready" ? <>
       <header className="matter-context">
         <h1>{state.matter.title}</h1>
-        <p>Matter reference: {state.matter.external_reference}</p>
+        <p>{t("Matter reference: {reference}", { reference: state.matter.external_reference })}</p>
       </header>
-      {created && <p className="matter-created" role="status">Matter created. The whole proposal is now accepted current Matter state.</p>}
+      {created && <p className="matter-created" role="status">{t("Matter created. The whole proposal is now accepted current Matter state.")}</p>}
       {state.matter.state ? <SourceAwareReviewWorkspace key={id} state={state.matter.state}
-        graphTitle="Accepted relationships" practitioner />
+        graphTitle={t("Accepted relationships")} practitioner />
         : state.matter.authoritative_source ? <ReviewWorkspace
         source={state.matter.authoritative_source.text}
         sourceTitle={state.matter.authoritative_source.title}
         graph={state.matter.current_graph}
-        graphTitle="Accepted relationships"
+        graphTitle={t("Accepted relationships")}
         practitioner
-      /> : <p role="alert">The complete Source state is unavailable. Reload to try again.</p>}
-    </> : state.status === "loading" ? <p role="status">Loading Matter…</p> :
+      /> : <p role="alert">{t("The complete Source state is unavailable. Reload to try again.")}</p>}
+    </> : state.status === "loading" ? <p role="status">{t("Loading Matter…")}</p> :
       <div role="alert">
-        <h1>{state.status === "missing" ? "Matter not found" : "Matter could not be loaded."}</h1>
-        <p>{state.status === "missing" ? "Return to Matters to choose an available Matter." : "Reload the page to try again."}</p>
+        <h1>{state.status === "missing" ? t("Matter not found") : t("Matter could not be loaded.")}</h1>
+        <p>{state.status === "missing" ? t("Return to Matters to choose an available Matter.") : t("Reload the page to try again.")}</p>
       </div>}
   </>;
 }

@@ -1,3 +1,4 @@
+import { useLocale } from "../../shared/locale";
 import { useEffect, useState, type FormEvent } from "react";
 import { createProposal, ProposalRequestFailure } from "./api";
 import type { ProposalError } from "./types";
@@ -6,6 +7,7 @@ import { FictionalSourcePrompt } from "./FictionalSourcePrompt";
 import { SourceDocuments, sourceAdmissionError } from "./SourceDocuments";
 
 export function CreateMatter({ onNavigate }: { onNavigate: (path: string) => void }) {
+  const { t } = useLocale();
   const [reference, setReference] = useState("");
   const [title, setTitle] = useState("");
   const [sourceTitles, setSourceTitles] = useState<string[]>([""]);
@@ -68,43 +70,43 @@ export function CreateMatter({ onNavigate }: { onNavigate: (path: string) => voi
   }
 
   return <>
-    <a className="matter-back" href="/app">Back to Matters</a>
-    <h1>Create Matter</h1>
-    <p className="intake-intro">Upload synthetic PDFs together. Review one combined proposal before creating the Matter.</p>
+    <a className="matter-back" href="/app">{t("Back to Matters")}</a>
+    <h1>{t("Create Matter")}</h1>
+    <p className="intake-intro">{t("Upload synthetic PDFs together. Review one combined proposal before creating the Matter.")}</p>
     {showPrompt && <FictionalSourcePrompt onClose={() => setShowPrompt(false)} />}
     <div className="intake-layout">
     <form className="intake-form" onSubmit={submit}>
       <fieldset disabled={pending} onChange={() => setError(undefined)}>
-        <legend>Matter details</legend>
+        <legend>{t("Matter details")}</legend>
         <div className="intake-identity">
-          <div><label>External Matter reference<input required maxLength={100} name="external_reference" value={reference} onChange={event => setReference(event.target.value)} aria-describedby="reference-guidance" /></label>
-            <p className="field-guidance" id="reference-guidance">Use the reference from your existing Matter system.</p></div>
-          <label>Matter title<input required maxLength={200} name="matter_title" value={title} onChange={event => setTitle(event.target.value)} /></label>
+          <div><label>{t("External Matter reference")}<input required maxLength={100} name="external_reference" value={reference} onChange={event => setReference(event.target.value)} aria-describedby="reference-guidance" /></label>
+            <p className="field-guidance" id="reference-guidance">{t("Use the reference from your existing Matter system.")}</p></div>
+          <label>{t("Matter title")}<input required maxLength={200} name="matter_title" value={title} onChange={event => setTitle(event.target.value)} /></label>
         </div>
       </fieldset>
       <fieldset disabled={pending} onChange={() => setError(undefined)}>
-        <legend>Source documents</legend>
+        <legend>{t("Source documents")}</legend>
         <SourceDocuments files={pdfs} titles={sourceTitles} onFiles={selectPdfs} onTitle={editSourceTitle} />
-        <label className="synthetic-confirmation"><input type="checkbox" required checked={confirmed} onChange={event => setConfirmed(event.target.checked)} />I confirm that this material is synthetic or fictional and contains no real confidential client information.</label>
+        <label className="synthetic-confirmation"><input type="checkbox" required checked={confirmed} onChange={event => setConfirmed(event.target.checked)} />{t("I confirm that this material is synthetic or fictional and contains no real confidential client information.")}</label>
       </fieldset>
       {error && <ProposalFailureNotice error={error} />}
       <div className="intake-actions">
-      <button className="intake-button" disabled={!confirmed || !pdfs.length || !!sourceAdmissionError(pdfs) || pending || error?.retryable === false} type="submit">{error?.outcome_unknown ? "Check reference and retry" : error?.retryable ? "Retry analysis" : "Upload and analyse"}</button>
-      {!pending && <a className="decision-return" href="/app">Back to Matters</a>}
+      <button className="intake-button" disabled={!confirmed || !pdfs.length || !!sourceAdmissionError(pdfs) || pending || error?.retryable === false} type="submit">{error?.outcome_unknown ? t("Check reference and retry") : error?.retryable ? t("Retry analysis") : t("Upload and analyse")}</button>
+      {!pending && <a className="decision-return" href="/app">{t("Back to Matters")}</a>}
       </div>
-      {pending && <p role="status">Uploading and analysing… Keep this page open while the proposal is prepared.</p>}
+      {pending && <p role="status">{t("Uploading and analysing… Keep this page open while the proposal is prepared.")}</p>}
       {!pending && <p className="intake-save-guidance">{error?.outcome_unknown
-        ? "If this reference already has a proposal or Matter, we will open it. Otherwise, analysis can be tried again."
-        : "Keep this page open during analysis. A proposal is saved only after analysis succeeds."}</p>}
+        ? t("If this reference already has a proposal or Matter, we will open it. Otherwise, analysis can be tried again.")
+        : t("Keep this page open during analysis. A proposal is saved only after analysis succeeds.")}</p>}
     </form>
-    <aside className="intake-guidance" aria-label="Intake guidance">
-      <h2>{error?.outcome_unknown ? "Your entries are still here" : "What happens next"}</h2>
-      <p>{error?.outcome_unknown ? "Keep this page open to retain the selected PDFs for retry." : "We extract the text from each PDF and analyse the documents together."}</p>
-      <p>You review the proposed graph against the exact source evidence.</p>
-      <p>You decide whether to accept the whole proposal.</p>
+    <aside className="intake-guidance" aria-label={t("Intake guidance")}>
+      <h2>{error?.outcome_unknown ? t("Your entries are still here") : t("What happens next")}</h2>
+      <p>{error?.outcome_unknown ? t("Keep this page open to retain the selected PDFs for retry.") : t("We extract the text from each PDF and analyse the documents together.")}</p>
+      <p>{t("You review the proposed graph against the exact source evidence.")}</p>
+      <p>{t("You decide whether to accept the whole proposal.")}</p>
       <div className="fictional-prompt-guidance">
-        <button className="prompt-trigger" type="button" onClick={() => setShowPrompt(true)}>Need something to try?</button>
-        <p>Get a prompt for creating a fictional source.</p>
+        <button className="prompt-trigger" type="button" onClick={() => setShowPrompt(true)}>{t("Need something to try?")}</button>
+        <p>{t("Get a prompt for creating a fictional source.")}</p>
       </div>
     </aside>
     </div>
