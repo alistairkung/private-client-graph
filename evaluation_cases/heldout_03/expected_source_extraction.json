@@ -1,0 +1,25 @@
+{
+  "relationships": [
+    {
+      "source_name": "Beatrice Ng",
+      "relationship_type": "settlor_of",
+      "target_name": "Larch Family Trust",
+      "source_id": "interview",
+      "supporting_text": "Bea is the settlor of the Larch Family Trust."
+    },
+    {
+      "source_name": "Beatrice Ng",
+      "relationship_type": "parent_of",
+      "target_name": "Isaac Ng",
+      "source_id": "interview",
+      "supporting_text": "Bea is the parent of Isaac Ng."
+    },
+    {
+      "source_name": "Isaac Ng",
+      "relationship_type": "beneficiary_of",
+      "target_name": "Larch Family Trust",
+      "source_id": "interview",
+      "supporting_text": "Isaac Ng is a beneficiary of the Larch Family Trust."
+    }
+  ]
+}

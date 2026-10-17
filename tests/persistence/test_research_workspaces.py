@@ -39,7 +39,7 @@ def test_api_persistent_experiment_multiple_runs_evidence_and_rebuild(database, 
             'request_id': 'create', 'name': 'Does alias resolution improve consistency?',
             'hypothesis': 'Resolution improves relationship recall'})
         experiment = '/experiments/' + workspace['id']
-        assert len(workspace['draft']['configuration']['input_ids']) == 3
+        assert len(workspace['draft']['configuration']['input_ids']) == 5
         first = request(client, 'post', experiment + '/runs', {'request_id': 'run1', 'expected_revision': 0})
         first_path = experiment + '/runs/' + first['id']
         assert client.get(PREFIX + first_path).json()['lifecycle'] == 'frozen'
@@ -49,7 +49,7 @@ def test_api_persistent_experiment_multiple_runs_evidence_and_rebuild(database, 
         first_detail = wait_for_run(client, first_path)
         assert first_detail['lifecycle'] == 'complete'
         assert first_detail['evaluation']['run_id'] == first['id']
-        assert len(first_detail['observations']) == 3
+        assert len(first_detail['observations']) == 5
         relationship = next(r for o in first_detail['observations'] for r in o['relationships'] if r['expected'])
         assert relationship['expected'][0]['occurrences']
         retained_manifest = (tmp_path / first['id'] / 'manifest.json').read_bytes()

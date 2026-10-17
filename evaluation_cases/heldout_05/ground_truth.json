@@ -1,0 +1,59 @@
+{
+  "entities": [
+    {
+      "id": "p1",
+      "type": "person",
+      "name": "Leona Wu"
+    },
+    {
+      "id": "p2",
+      "type": "person",
+      "name": "Milo Wu"
+    },
+    {
+      "id": "p3",
+      "type": "person",
+      "name": "Nora Tse"
+    },
+    {
+      "id": "t1",
+      "type": "trust",
+      "name": "Cedar Family Trust"
+    }
+  ],
+  "relationships": [
+    {
+      "source": "p1",
+      "type": "settlor_of",
+      "target": "t1",
+      "approved_evidence": [
+        "Leona Wu is the settlor of the Cedar Family Trust."
+      ]
+    },
+    {
+      "source": "p1",
+      "type": "parent_of",
+      "target": "p2",
+      "approved_evidence": [
+        "Leona Wu is a parent of Milo Wu."
+      ]
+    },
+    {
+      "source": "p2",
+      "type": "beneficiary_of",
+      "target": "t1",
+      "approved_evidence": [
+        "Milo Wu is a beneficiary of the Cedar Family Trust."
+      ]
+    },
+    {
+      "source": "p3",
+      "type": "trustee_of",
+      "target": "t1",
+      "approved_evidence": [
+        "Nora Tse is the sole current trustee of the Cedar Family Trust as at 22 July 2026.",
+        "Nora Tse became the replacement trustee of the Cedar Family Trust with effect from 15 July 2026."
+      ]
+    }
+  ]
+}

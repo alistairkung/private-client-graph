@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "relationships": [
+    {
+      "source": "person_001",
+      "type": "settlor_of",
+      "target": "trust_001",
+      "approved_evidence": [
+        {
+          "source_id": "note_01",
+          "supporting_text": "Elaine Ho is the settlor of the Willow Family Trust."
+        }
+      ]
+    },
+    {
+      "source": "person_001",
+      "type": "spouse_of",
+      "target": "person_002",
+      "approved_evidence": [
+        {
+          "source_id": "note_01",
+          "supporting_text": "Elaine Ho and Martin Ho are spouses."
+        }
+      ]
+    },
+    {
+      "source": "person_001",
+      "type": "parent_of",
+      "target": "person_003",
+      "approved_evidence": [
+        {
+          "source_id": "note_01",
+          "supporting_text": "Elaine Ho is a parent of Sophie Ho."
+        }
+      ]
+    },
+    {
+      "source": "person_002",
+      "type": "parent_of",
+      "target": "person_003",
+      "approved_evidence": [
+        {
+          "source_id": "note_01",
+          "supporting_text": "Martin Ho is a parent of Sophie Ho."
+        }
+      ]
+    },
+    {
+      "source": "person_003",
+      "type": "beneficiary_of",
+      "target": "trust_001",
+      "approved_evidence": [
+        {
+          "source_id": "note_01",
+          "supporting_text": "Sophie Ho is a beneficiary of the Willow Family Trust."
+        }
+      ]
+    },
+    {
+      "source": "person_005",
+      "type": "trustee_of",
+      "target": "trust_001",
+      "approved_evidence": [
+        {
+          "source_id": "note_02",
+          "supporting_text": "Rachel Lim is the sole trustee of the Willow Family Trust as at 15 September 2026."
+        },
+        {
+          "source_id": "note_02",
+          "supporting_text": "Rachel Lim's appointment as replacement trustee of the Willow Family Trust took effect on the same date."
+        }
+      ]
+    }
+  ]
+}

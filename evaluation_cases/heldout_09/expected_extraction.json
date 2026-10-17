@@ -1,0 +1,22 @@
+{
+  "relationships": [
+    {
+      "source_name": "Yasmin Fong",
+      "relationship_type": "settlor_of",
+      "target_name": "Hazel Family Trust",
+      "supporting_text": "Yasmin Fong is the settlor of the Hazel Family Trust."
+    },
+    {
+      "source_name": "Zachary Fong",
+      "relationship_type": "beneficiary_of",
+      "target_name": "Hazel Family Trust",
+      "supporting_text": "Zachary Fong is a beneficiary of the Hazel Family Trust."
+    },
+    {
+      "source_name": "Adele Ip",
+      "relationship_type": "trustee_of",
+      "target_name": "Hazel Family Trust",
+      "supporting_text": "Adele Ip is a trustee of the Hazel Family Trust."
+    }
+  ]
+}

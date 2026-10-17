@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "relationships": [
+    {
+      "source": "p1",
+      "type": "spouse_of",
+      "target": "p2",
+      "approved_evidence": [
+        {
+          "source_id": "family",
+          "supporting_text": "Victor Lo and Wendy Lo are spouses."
+        }
+      ]
+    },
+    {
+      "source": "p1",
+      "type": "parent_of",
+      "target": "p3",
+      "approved_evidence": [
+        {
+          "source_id": "family",
+          "supporting_text": "Victor Lo and Wendy Lo are the parents of Xavier Lo."
+        }
+      ]
+    },
+    {
+      "source": "p2",
+      "type": "parent_of",
+      "target": "p3",
+      "approved_evidence": [
+        {
+          "source_id": "family",
+          "supporting_text": "Victor Lo and Wendy Lo are the parents of Xavier Lo."
+        }
+      ]
+    },
+    {
+      "source": "p1",
+      "type": "settlor_of",
+      "target": "t1",
+      "approved_evidence": [
+        {
+          "source_id": "trust",
+          "supporting_text": "Victor Lo is the settlor of the Rowan Family Trust."
+        }
+      ]
+    },
+    {
+      "source": "p3",
+      "type": "beneficiary_of",
+      "target": "t1",
+      "approved_evidence": [
+        {
+          "source_id": "trust",
+          "supporting_text": "Xavier Lo is a beneficiary of the Rowan Family Trust."
+        }
+      ]
+    }
+  ]
+}

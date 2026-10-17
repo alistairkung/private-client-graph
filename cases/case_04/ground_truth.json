@@ -1,0 +1,81 @@
+{
+  "entities": [
+    { "id": "person_001", "type": "person", "name": "Victoria Chan" },
+    { "id": "person_002", "type": "person", "name": "Peter Chan" },
+    { "id": "person_003", "type": "person", "name": "Andrew Chan" },
+    { "id": "person_004", "type": "person", "name": "Lucy Chan" },
+    { "id": "person_005", "type": "person", "name": "Marcus Yip" },
+    { "id": "trust_001", "type": "trust", "name": "Hillcrest Family Trust" }
+  ],
+  "relationships": [
+    {
+      "source": "person_001",
+      "type": "settlor_of",
+      "target": "trust_001",
+      "approved_evidence": [
+        "She confirmed that she is the settlor of the Hillcrest Family Trust.",
+        "Victoria Chan confirmed that she is the settlor of the Hillcrest Family Trust."
+      ]
+    },
+    {
+      "source": "person_001",
+      "type": "spouse_of",
+      "target": "person_002",
+      "approved_evidence": [
+        "Victoria Chan confirmed that she and Peter Chan are spouses.",
+        "She confirmed that she and Peter Chan are spouses and that Victoria Chan and Peter Chan are the parents of Andrew Chan."
+      ]
+    },
+    {
+      "source": "person_001",
+      "type": "parent_of",
+      "target": "person_003",
+      "approved_evidence": [
+        "Victoria Chan confirmed that Victoria Chan and Peter Chan are the parents of Andrew Chan.",
+        "She confirmed that she and Peter Chan are spouses and that Victoria Chan and Peter Chan are the parents of Andrew Chan.",
+        "In particular, the fact that Andrew Chan is a child of Victoria Chan and Peter Chan was recorded separately from the fact that Andrew Chan is a beneficiary of the Hillcrest Family Trust."
+      ]
+    },
+    {
+      "source": "person_002",
+      "type": "parent_of",
+      "target": "person_003",
+      "approved_evidence": [
+        "Victoria Chan confirmed that Victoria Chan and Peter Chan are the parents of Andrew Chan.",
+        "She confirmed that she and Peter Chan are spouses and that Victoria Chan and Peter Chan are the parents of Andrew Chan.",
+        "In particular, the fact that Andrew Chan is a child of Victoria Chan and Peter Chan was recorded separately from the fact that Andrew Chan is a beneficiary of the Hillcrest Family Trust."
+      ]
+    },
+    {
+      "source": "person_003",
+      "type": "beneficiary_of",
+      "target": "trust_001",
+      "approved_evidence": [
+        "Victoria Chan confirmed that Andrew Chan is a beneficiary of the Hillcrest Family Trust.",
+        "Victoria Chan confirmed that the factual position to be recorded for the purposes of the initial review was that Andrew Chan is a beneficiary of the Hillcrest Family Trust.",
+        "She also confirmed that Andrew Chan is a beneficiary of the Hillcrest Family Trust.",
+        "In particular, the fact that Andrew Chan is a child of Victoria Chan and Peter Chan was recorded separately from the fact that Andrew Chan is a beneficiary of the Hillcrest Family Trust.",
+        "She confirmed that Andrew Chan is a beneficiary of the Hillcrest Family Trust.",
+        "Victoria Chan confirmed that the factual position to be recorded was that Andrew Chan, Lucy Chan and Marcus Yip are beneficiaries of the Hillcrest Family Trust."
+      ]
+    },
+    {
+      "source": "person_004",
+      "type": "beneficiary_of",
+      "target": "trust_001",
+      "approved_evidence": [
+        "She confirmed that Lucy Chan is a beneficiary of the Hillcrest Family Trust.",
+        "Victoria Chan confirmed that the factual position to be recorded was that Andrew Chan, Lucy Chan and Marcus Yip are beneficiaries of the Hillcrest Family Trust."
+      ]
+    },
+    {
+      "source": "person_005",
+      "type": "beneficiary_of",
+      "target": "trust_001",
+      "approved_evidence": [
+        "Victoria Chan also confirmed that Marcus Yip is a beneficiary of the Hillcrest Family Trust.",
+        "Victoria Chan confirmed that the factual position to be recorded was that Andrew Chan, Lucy Chan and Marcus Yip are beneficiaries of the Hillcrest Family Trust."
+      ]
+    }
+  ]
+}

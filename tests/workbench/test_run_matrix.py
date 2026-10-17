@@ -64,7 +64,9 @@ def test_catalog_keeps_case_names_distinct_from_diagnostic_fixture_names():
     from private_client_graph.workbench.case_catalog import default_input_ids, load_case_catalog, frozen_case_metadata
 
     catalog = {entry.id: entry for entry in load_case_catalog()}
-    assert default_input_ids() == ['case_01_fixture', 'case_02_fixture', 'case_03_fixture']
+    assert default_input_ids() == [
+        'case_01_fixture', 'case_02_fixture', 'case_03_fixture',
+        'case_04_fixture', 'case_05_fixture']
     assert catalog['case_03_fixture'].name == 'Riverside Family Trust — varied references'
     assert catalog['alias_merge'].fixture_name == 'Nickname refers to the same person'
     assert catalog['alias_distinct'].fixture_name == 'Similar names refer to distinct people'
@@ -92,16 +94,16 @@ def test_discovered_case_defaults_and_frozen_labels_do_not_follow_repository_edi
 
     shutil.copytree(ROOT / 'cases', tmp_path / 'cases')
     shutil.copytree(ROOT / 'research/fixtures', tmp_path / 'research/fixtures')
-    shutil.copytree(tmp_path / 'cases/case_01', tmp_path / 'cases/case_04')
-    metadata_path = tmp_path / 'cases/case_04/metadata.json'
-    metadata_path.write_text(json.dumps({'id': 'case_04', 'name': 'New benchmark', 'description': 'Additional authored case.'}))
-    assert default_input_ids(tmp_path)[-1] == 'case_04_fixture'
-    inputs = [sample for sample in repository_inputs(tmp_path) if sample.case_id == 'case_04']
+    shutil.copytree(tmp_path / 'cases/case_01', tmp_path / 'cases/case_06')
+    metadata_path = tmp_path / 'cases/case_06/metadata.json'
+    metadata_path.write_text(json.dumps({'id': 'case_06', 'name': 'New benchmark', 'description': 'Additional authored case.'}))
+    assert default_input_ids(tmp_path)[-1] == 'case_06_fixture'
+    inputs = [sample for sample in repository_inputs(tmp_path) if sample.case_id == 'case_06']
     labels = frozen_case_metadata(inputs, tmp_path)
     plan = RunPlan(inputs=inputs, max_calls=0, invocation_cap=0, case_metadata=labels)
-    metadata_path.write_text(json.dumps({'id': 'case_04', 'name': 'Renamed benchmark', 'description': 'Changed description.'}))
-    assert RunPlan.model_validate_json(plan.model_dump_json()).case_metadata['case_04_fixture'].name == 'New benchmark'
-    assert frozen_case_metadata(inputs, tmp_path)['case_04_fixture'].name == 'Renamed benchmark'
+    metadata_path.write_text(json.dumps({'id': 'case_06', 'name': 'Renamed benchmark', 'description': 'Changed description.'}))
+    assert RunPlan.model_validate_json(plan.model_dump_json()).case_metadata['case_06_fixture'].name == 'New benchmark'
+    assert frozen_case_metadata(inputs, tmp_path)['case_06_fixture'].name == 'Renamed benchmark'
 
 
 def test_catalog_rejects_blank_authored_names(tmp_path):

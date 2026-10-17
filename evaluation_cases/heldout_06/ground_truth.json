@@ -1,0 +1,51 @@
+{
+  "entities": [
+    {
+      "id": "p1",
+      "type": "person",
+      "name": "Petra Lam"
+    },
+    {
+      "id": "p2",
+      "type": "person",
+      "name": "Quinn Lam"
+    },
+    {
+      "id": "p3",
+      "type": "person",
+      "name": "Rita Yuen"
+    },
+    {
+      "id": "t1",
+      "type": "trust",
+      "name": "Alder Family Trust"
+    }
+  ],
+  "relationships": [
+    {
+      "source": "p1",
+      "type": "settlor_of",
+      "target": "t1",
+      "approved_evidence": [
+        "Petra Lam is the settlor of the Alder Family Trust."
+      ]
+    },
+    {
+      "source": "p2",
+      "type": "beneficiary_of",
+      "target": "t1",
+      "approved_evidence": [
+        "Quinn Lam is a beneficiary of the Alder Family Trust."
+      ]
+    },
+    {
+      "source": "p3",
+      "type": "trustee_of",
+      "target": "t1",
+      "approved_evidence": [
+        "Rita Yuen is the sole current trustee of the Alder Family Trust as at 28 June 2026.",
+        "Rita Yuen became trustee of the Alder Family Trust with effect from 20 June 2026."
+      ]
+    }
+  ]
+}

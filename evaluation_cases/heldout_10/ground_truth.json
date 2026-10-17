@@ -1,0 +1,47 @@
+{
+  "entities": [
+    {
+      "id": "p1",
+      "type": "person",
+      "name": "Daphne Cheung"
+    },
+    {
+      "id": "p2",
+      "type": "person",
+      "name": "Evan Ho"
+    },
+    {
+      "id": "t1",
+      "type": "trust",
+      "name": "Olive Family Trust"
+    }
+  ],
+  "relationships": [
+    {
+      "source": "p1",
+      "type": "settlor_of",
+      "target": "t1",
+      "approved_evidence": [
+        "She is the settlor of the Olive Family Trust.",
+        "Daphne Cheung confirmed the following two facts about her own position. She is the settlor of the Olive Family Trust."
+      ]
+    },
+    {
+      "source": "p1",
+      "type": "trustee_of",
+      "target": "t1",
+      "approved_evidence": [
+        "She is also a trustee of the Olive Family Trust.",
+        "Daphne Cheung confirmed the following two facts about her own position. She is the settlor of the Olive Family Trust. She is also a trustee of the Olive Family Trust."
+      ]
+    },
+    {
+      "source": "p2",
+      "type": "beneficiary_of",
+      "target": "t1",
+      "approved_evidence": [
+        "Evan Ho is a beneficiary of the Olive Family Trust."
+      ]
+    }
+  ]
+}

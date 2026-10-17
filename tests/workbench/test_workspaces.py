@@ -13,7 +13,9 @@ def test_named_experiments_recover_draft_and_idempotent_identity(tmp_path):
     recovered = read_experiment(tmp_path, first.id)
     assert recovered.name == 'Alias consistency'
     assert recovered.hypothesis == 'Resolution helps'
-    assert recovered.draft.configuration.input_ids == ['case_01_fixture', 'case_02_fixture', 'case_03_fixture']
+    assert recovered.draft.configuration.input_ids == [
+        'case_01_fixture', 'case_02_fixture', 'case_03_fixture',
+        'case_04_fixture', 'case_05_fixture']
     update = DraftUpdate(request_id='draft', expected_revision=0, configuration=recovered.draft.configuration)
     saved = update_draft(tmp_path, first.id, update)
     assert saved.revision == 1

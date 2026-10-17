@@ -16,7 +16,7 @@ test("persistent Experiment: changed and repeated Runs retain frozen Evidence an
   await expect(
     page.getByRole("heading", { name: "Next run", exact: true }),
   ).toBeVisible();
-  await expect(page.getByText("3 benchmark inputs selected")).toBeVisible();
+  await expect(page.getByText("5 benchmark inputs selected")).toBeVisible();
   await page.getByRole("button", { name: "Choose cases" }).click();
   await page.getByRole("button", { name: "Clear selection" }).click();
   await page.getByRole("checkbox", { name: /case_03_fixture/ }).check();
@@ -280,4 +280,56 @@ test("compact insertion preserves rail height and keeps its option visible", asy
     });
   await page.keyboard.press("Escape");
   await expect(menu).toHaveCount(0);
+});
+
+test("opens the frozen Run review when polling arrives before its freeze response", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page
+    .getByLabel("Experiment name", { exact: true })
+    .fill("Freeze response ordering");
+  await page
+    .getByRole("button", { name: "Create experiment", exact: true })
+    .click();
+  await expect(
+    page.getByRole("heading", { name: "Next run", exact: true }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Choose cases" }).click();
+  await page.getByRole("button", { name: "Clear selection" }).click();
+  await page.getByRole("checkbox", { name: /case_01_fixture/ }).check();
+  await page.getByRole("button", { name: "Apply cases" }).click();
+  await page.getByRole("button", { name: "Run", exact: true }).click();
+  await expect(
+    page.getByRole("dialog", { name: "Review next Run" }),
+  ).toBeVisible();
+
+  await page.route("**/api/research/v2/experiments/*/runs", async (route) => {
+    if (route.request().method() !== "POST") return route.continue();
+    const response = await route.fetch();
+    // Publish the Run, then let ordinary polling mount it before acknowledging freeze.
+    await expect(
+      page.getByRole("heading", {
+        name: "Run 1 · Execution · frozen",
+        exact: true,
+      }),
+    ).toBeVisible();
+    await route.fulfill({ response });
+  });
+  await page.getByRole("button", { name: "Freeze Run", exact: true }).click();
+
+  const review = page.getByRole("dialog", {
+    name: "Ready to start Run 1",
+    exact: true,
+  });
+  await expect(review).toBeVisible();
+  await expect(
+    review.getByRole("heading", {
+      name: "Ready to start Run 1",
+      exact: true,
+    }),
+  ).toBeFocused();
+  await expect(
+    review.getByRole("button", { name: "Start Run", exact: true }),
+  ).toBeEnabled();
 });

@@ -1,0 +1,12 @@
+[
+  {
+    "id": "family",
+    "title": "Factual review note",
+    "path": "sources/family.txt"
+  },
+  {
+    "id": "trust",
+    "title": "Factual review note",
+    "path": "sources/trust.txt"
+  }
+]

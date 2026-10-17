@@ -1,0 +1,22 @@
+{
+  "relationships": [
+    {
+      "source_name": "Andrew Chan",
+      "relationship_type": "beneficiary_of",
+      "target_name": "Hillcrest Family Trust",
+      "supporting_text": "She confirmed that Andrew Chan is a beneficiary of the Hillcrest Family Trust."
+    },
+    {
+      "source_name": "Lucy Chan",
+      "relationship_type": "beneficiary_of",
+      "target_name": "Hillcrest Family Trust",
+      "supporting_text": "She confirmed that Lucy Chan is a beneficiary of the Hillcrest Family Trust."
+    },
+    {
+      "source_name": "Marcus Yip",
+      "relationship_type": "beneficiary_of",
+      "target_name": "Hillcrest Family Trust",
+      "supporting_text": "Victoria Chan also confirmed that Marcus Yip is a beneficiary of the Hillcrest Family Trust."
+    }
+  ]
+}

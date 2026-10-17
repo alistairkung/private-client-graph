@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ExecutionAvailability, RunDetail } from "../shared/contracts";
 import { authorizeRun, controlRun } from "./api";
 import { ReviewDialog } from "./ReviewDialog";
@@ -8,18 +8,21 @@ export function RunExecution({
   run,
   availability,
   refresh,
-  initiallyOpen = false,
+  reviewRequested = false,
   number,
 }: {
   run: RunDetail;
   availability: ExecutionAvailability | null;
   refresh: () => void;
-  initiallyOpen?: boolean;
+  reviewRequested?: boolean;
   number: number;
 }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [review, setReview] = useState(initiallyOpen);
+  const [review, setReview] = useState(reviewRequested);
+  useEffect(() => {
+    if (reviewRequested) setReview(true);
+  }, [reviewRequested]);
   const [checked, setChecked] = useState(false);
   const [authorized, setAuthorized] = useState<string | null>(null);
   const command = useRef<string | null>(null);

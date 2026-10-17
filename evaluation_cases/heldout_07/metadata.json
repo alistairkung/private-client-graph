@@ -1,0 +1,5 @@
+{
+  "id": "heldout_07",
+  "name": "Two trusts with different role allocations",
+  "description": "Can roles be assigned to the named trust without transferring a person’s role to the other trust?"
+}

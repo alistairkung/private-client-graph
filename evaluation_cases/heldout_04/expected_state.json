@@ -1,0 +1,89 @@
+{
+  "sources": [
+    {
+      "id": "initial",
+      "title": "Initial factual note",
+      "text": "Synthetic initial factual note\n2 September 2026\n\nThe interview concerned the Maple Family Trust. Jonas Chan is the settlor of the Maple Family Trust. Keira Chan is a beneficiary of the Maple Family Trust.\n\nThe relationship between Jonas Chan and Keira Chan was not addressed. A separate office-holder check will follow.\n"
+    },
+    {
+      "id": "followup",
+      "title": "Office-holder and beneficiary check",
+      "text": "Synthetic follow-up factual note\n4 September 2026\n\nThis note supplements the initial note; it records no change to the facts already supplied.\nLina Ho is a trustee of the Maple Family Trust.\nThe beneficiary position was checked again: Keira Chan is a beneficiary of the Maple Family Trust.\n\nNo other family or trust roles were stated. The two notes should be read together for the limited factual review.\n"
+    }
+  ],
+  "entities": [
+    {
+      "id": "p1",
+      "type": "person",
+      "name": "Jonas Chan"
+    },
+    {
+      "id": "p2",
+      "type": "person",
+      "name": "Keira Chan"
+    },
+    {
+      "id": "p3",
+      "type": "person",
+      "name": "Lina Ho"
+    },
+    {
+      "id": "t1",
+      "type": "trust",
+      "name": "Maple Family Trust"
+    }
+  ],
+  "relationships": [
+    {
+      "source": "p1",
+      "type": "settlor_of",
+      "target": "t1",
+      "evidence_ids": [
+        "evidence_001"
+      ]
+    },
+    {
+      "source": "p2",
+      "type": "beneficiary_of",
+      "target": "t1",
+      "evidence_ids": [
+        "evidence_002",
+        "evidence_003"
+      ]
+    },
+    {
+      "source": "p3",
+      "type": "trustee_of",
+      "target": "t1",
+      "evidence_ids": [
+        "evidence_004"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "id": "evidence_001",
+      "source_id": "initial",
+      "document": "sources/initial.txt",
+      "supporting_text": "Jonas Chan is the settlor of the Maple Family Trust."
+    },
+    {
+      "id": "evidence_002",
+      "source_id": "initial",
+      "document": "sources/initial.txt",
+      "supporting_text": "Keira Chan is a beneficiary of the Maple Family Trust."
+    },
+    {
+      "id": "evidence_003",
+      "source_id": "followup",
+      "document": "sources/followup.txt",
+      "supporting_text": "Keira Chan is a beneficiary of the Maple Family Trust."
+    },
+    {
+      "id": "evidence_004",
+      "source_id": "followup",
+      "document": "sources/followup.txt",
+      "supporting_text": "Lina Ho is a trustee of the Maple Family Trust."
+    }
+  ]
+}
