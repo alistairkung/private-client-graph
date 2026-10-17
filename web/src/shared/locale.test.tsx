@@ -18,3 +18,10 @@ it("switches interface language without losing entered state and restores prefer
  expect(screen.getByRole("button", {name:"简体中文"})).toHaveAttribute("aria-pressed","true");
 });
 it("defaults invalid preferences to English",()=>{window.localStorage.setItem("pcg-locale","fr");render(<LocaleProvider><Example /></LocaleProvider>);expect(screen.getByRole("button", {name:"EN"})).toHaveAttribute("aria-pressed","true");});
+it("keeps language switching usable when preference storage is unavailable", () => {
+ vi.stubGlobal("localStorage", {getItem:()=>{throw new Error("blocked")},setItem:()=>{throw new Error("blocked")}});
+ render(<LocaleProvider><Example /></LocaleProvider>);
+ expect(screen.getByRole("button", {name:"EN"})).toHaveAttribute("aria-pressed","true");
+ fireEvent.click(screen.getByRole("button", {name:"简体中文"}));
+ expect(screen.getByText("支持证据")).toBeInTheDocument();
+});
