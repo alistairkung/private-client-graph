@@ -1,3 +1,5 @@
+import { researchLandingCatalogue } from "../features/public-research/landing-catalogue";
+import { publicResearchCatalogue } from "../features/public-research/catalogue";
 import { demoZhCN } from "../features/demo/catalogue";
 import { showcaseZhCN } from "../features/showcase/catalogue";
 import { practitionerZhCN } from "../features/matters/catalogue";
@@ -51,5 +53,5 @@ export const catalogue: Record<string,string> = {
   "Synthetic material only": "仅限合成材料",
   "This prototype accepts synthetic or fictional material only. It is not suitable for real confidential client information.": "本原型仅接受合成或虚构材料，不适用于真实的客户机密信息。"
 ,
- ...demoZhCN, ...showcaseZhCN, ...practitionerZhCN
+ ...demoZhCN, ...showcaseZhCN, ...practitionerZhCN, ...publicResearchCatalogue, ...researchLandingCatalogue
 };
