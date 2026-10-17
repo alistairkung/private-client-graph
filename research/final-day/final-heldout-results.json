@@ -1,0 +1,1230 @@
+{
+  "schema_version": 1,
+  "status": "actual-completed-live-evaluation",
+  "experiment_id": "83b5778e74ba5e6e882d334fd4f87f09",
+  "run_id": "97d26d8e5f9d5964826b144c9ca45ad7",
+  "name": "Final held-out benchmark — naive full-context baseline",
+  "git_commit": "8ad73b00f44013f454ae166175d974f11f2e129d",
+  "git_dirty": false,
+  "configuration": {
+    "input_ids": [
+      "heldout_01_fixture",
+      "heldout_02_fixture",
+      "heldout_03_fixture",
+      "heldout_04_fixture",
+      "heldout_05_fixture",
+      "heldout_06_fixture",
+      "heldout_07_fixture",
+      "heldout_08_fixture",
+      "heldout_09_fixture",
+      "heldout_10_fixture"
+    ],
+    "input_mode": "fresh",
+    "execution_mode": "live",
+    "resolver": "none",
+    "extraction_samples": 1,
+    "resolver_repetitions": 1,
+    "invocation_cap": 10,
+    "temperature": null,
+    "timeout_seconds": 90.0,
+    "task_call_cap": 30,
+    "model": "deepseek-flash"
+  },
+  "model_settings": {
+    "model": "deepseek-flash",
+    "timeout_seconds": 90.0,
+    "temperature": null,
+    "max_retries": 0,
+    "thinking": "disabled"
+  },
+  "returned_models": [
+    "deepseek-flash"
+  ],
+  "dataset": {
+    "identity": "a860c038af1edfcdb1070e9ede02b1ee2b4ecd29a125e328ca2a02dad173e74f",
+    "inputs": [
+      {
+        "input_id": "heldout_01_fixture",
+        "case_id": "heldout_01",
+        "cohort": "fresh",
+        "source_digest": "3d90e356412f89f1c29625ae5b10b7a8100bd1a006879818f2a92de35d062598",
+        "truth_digest": "faa6d87a5318c120abfd7f0d9c06fd91867bbc677de7248e3b865e367d6ea104",
+        "samples": 1,
+        "repetitions": 1
+      },
+      {
+        "input_id": "heldout_02_fixture",
+        "case_id": "heldout_02",
+        "cohort": "fresh",
+        "source_digest": "e5e6d1f0ba4fa75318c162ef65d135f46ffb13e6379ce7a664c6425e3b9f88f6",
+        "truth_digest": "cec8eefa745a2685f346bf1e668150faa6f1792197be1f7c6d7e1033ecb97853",
+        "samples": 1,
+        "repetitions": 1
+      },
+      {
+        "input_id": "heldout_03_fixture",
+        "case_id": "heldout_03",
+        "cohort": "fresh",
+        "source_digest": "d9bb29953231c75848dbb7dab3fdd7012992b473b5a1ee5acf6c9a30f0864f6c",
+        "truth_digest": "778ba7662876809c042797629afb209882a6828341cc3307c988776b473c46a0",
+        "samples": 1,
+        "repetitions": 1
+      },
+      {
+        "input_id": "heldout_04_fixture",
+        "case_id": "heldout_04",
+        "cohort": "fresh",
+        "source_digest": "61f0e3d3de796a3be6ab67ecb5d83be74d88b9e65cc7c7ecba869995eaa39021",
+        "truth_digest": "f915a3cae6ac33a705240d85f49a564aa881aa2db431bc9c02b17cb0fb66d141",
+        "samples": 1,
+        "repetitions": 1
+      },
+      {
+        "input_id": "heldout_05_fixture",
+        "case_id": "heldout_05",
+        "cohort": "fresh",
+        "source_digest": "8858b13d8844d8a9c537b48e5fea8cbcc844e68eaa1049ac35223add7e51aa0b",
+        "truth_digest": "1b5b3ca5971a2476780cb070e1ae9ee1eeee07c5a9dfa898ffae2c728a8e0637",
+        "samples": 1,
+        "repetitions": 1
+      },
+      {
+        "input_id": "heldout_06_fixture",
+        "case_id": "heldout_06",
+        "cohort": "fresh",
+        "source_digest": "d9add92ca75fea416ec7d2f6dbdbc3733b0c8804459452e91c5a6730aa0c9638",
+        "truth_digest": "9e9d87722574e6e9c3cf50b1fad034b191b844e3dbf0c05807c096df85e14a0e",
+        "samples": 1,
+        "repetitions": 1
+      },
+      {
+        "input_id": "heldout_07_fixture",
+        "case_id": "heldout_07",
+        "cohort": "fresh",
+        "source_digest": "6f7a88761565a77fc2512ecad04bec396d1ca54066ff60b36bfa7b65246cf3dd",
+        "truth_digest": "80d954a403f8b09c9b993f0cebb2821a01773c8d32367b7a2fe5e50a03aabf26",
+        "samples": 1,
+        "repetitions": 1
+      },
+      {
+        "input_id": "heldout_08_fixture",
+        "case_id": "heldout_08",
+        "cohort": "fresh",
+        "source_digest": "7d8a38e3c1bfa12f26dd778e25e2a56cd40ddd1f1d11030bc25a54a962aeb482",
+        "truth_digest": "2d757992a76af49316ae4eacbf589d819c3333fa1829bc4b84d076fbd30e0af5",
+        "samples": 1,
+        "repetitions": 1
+      },
+      {
+        "input_id": "heldout_09_fixture",
+        "case_id": "heldout_09",
+        "cohort": "fresh",
+        "source_digest": "8b2a6c716d9867c314586489b6b05c2f0f593bf5e1e43207d4bb36926f2e24e0",
+        "truth_digest": "45b51263a554b5db284ebcdd598195b1ada034f75b574a53f2fb11ad2ff2a721",
+        "samples": 1,
+        "repetitions": 1
+      },
+      {
+        "input_id": "heldout_10_fixture",
+        "case_id": "heldout_10",
+        "cohort": "fresh",
+        "source_digest": "e2adf68c2d81a6ae6bf31aacdeea079dc5cfe5477283254606d1f37f72530d1d",
+        "truth_digest": "44bf258eb924f3c8c7ac499de9dd1b199bd92e10ebdbe2e155486b5e35702fc2",
+        "samples": 1,
+        "repetitions": 1
+      }
+    ],
+    "input_mode": "fresh",
+    "evaluator_version": "semantic_edges_v1",
+    "aggregate_version": "observation_micro_f1_v1",
+    "unequal_allocation": false
+  },
+  "review_inventory_digests": {
+    "batch-01-sha256.json": "1e9c961ecb438e5b8db610f367dc9291181049f679d71257c358c0b435c80285",
+    "batch-02-sha256.json": "f49197529ee3dbe468ab8eff9666038d2dd03d7f60b5e8e1a23d11cd4fd64e46"
+  },
+  "sourced_prompt_sha256": "d67afaeb19c26448a6779d9576800cc50ca399c634ad81a1a02b847be0a9dfae",
+  "coverage": {
+    "planned": 10,
+    "attempted": 10,
+    "completed": 10,
+    "failed": 0,
+    "scored": 10,
+    "uncertain": 0,
+    "unscored": 0
+  },
+  "aggregate": {
+    "tp": 37,
+    "fp": 2,
+    "fn": 2,
+    "micro_precision": 0.9487179487179487,
+    "micro_recall": 0.9487179487179487,
+    "micro_f1": 0.9487179487179487,
+    "macro_f1": 0.9333333333333333,
+    "provenance_passed": 34,
+    "provenance_failed": 3,
+    "provenance_accuracy": 0.918918918918919,
+    "source_attribution": {
+      "version": "source_attribution_v1",
+      "assessed": 39,
+      "passed": 35,
+      "failed": 4,
+      "accuracy": 0.8974358974358975,
+      "failures": [
+        {
+          "edge": [
+            "Grace Wong",
+            "beneficiary_of",
+            "Amber Family Trust"
+          ],
+          "evidence_id": "evidence_002",
+          "source_id": "recap",
+          "supporting_text": "Grace Wong and Hugo Wong are siblings and are both beneficiaries of the Amber Family Trust."
+        },
+        {
+          "edge": [
+            "Grace Wong",
+            "sibling_of",
+            "Hugo Wong"
+          ],
+          "evidence_id": "evidence_002",
+          "source_id": "recap",
+          "supporting_text": "Grace Wong and Hugo Wong are siblings and are both beneficiaries of the Amber Family Trust."
+        },
+        {
+          "edge": [
+            "Hugo Wong",
+            "beneficiary_of",
+            "Amber Family Trust"
+          ],
+          "evidence_id": "evidence_002",
+          "source_id": "recap",
+          "supporting_text": "Grace Wong and Hugo Wong are siblings and are both beneficiaries of the Amber Family Trust."
+        },
+        {
+          "edge": [
+            "Keira Chan",
+            "beneficiary_of",
+            "Maple Family Trust"
+          ],
+          "evidence_id": "evidence_002",
+          "source_id": "followup",
+          "supporting_text": "The beneficiary position was checked again: Keira Chan is a beneficiary of the Maple Family Trust."
+        }
+      ]
+    }
+  },
+  "metric_lineage": {
+    "relationship": "Existing semantic_edges_v1 persisted per-case outcomes and observation_micro_f1_v1 Run aggregate; no re-scoring.",
+    "micro_precision_recall": "Arithmetic reductions of recorded TP/FP/FN using unchanged evaluator formulas.",
+    "macro_f1": "Existing research.summary.distribution over ten recorded per-case F1 values; one observation per case.",
+    "provenance": "TP-weighted sum of recorded approved-quote pass/fail counts; exact approved quotation policy unchanged.",
+    "source_attribution": "Existing source_attribution_v1 counts approved (Source ID, exact quote) associations on true-positive edges; not a pure source-ID metric."
+  },
+  "token_usage": {
+    "input_tokens": {
+      "total": 10501,
+      "known_attempts": 10,
+      "missing_attempts": 0
+    },
+    "output_tokens": {
+      "total": 2642,
+      "known_attempts": 10,
+      "missing_attempts": 0
+    },
+    "cached_tokens": {
+      "total": 5760,
+      "known_attempts": 10,
+      "missing_attempts": 0
+    }
+  },
+  "total_input_output_tokens": 13143,
+  "costs": {
+    "total": null,
+    "known_subtotal": 0.0,
+    "currency": "USD",
+    "attempts": 10,
+    "unpriced_attempts": 10,
+    "reasons": [
+      "heldout_01_fixture_fresh_01-extraction: Retained usage or pricing unavailable.",
+      "heldout_02_fixture_fresh_01-extraction: Retained usage or pricing unavailable.",
+      "heldout_03_fixture_fresh_01-extraction: Retained usage or pricing unavailable.",
+      "heldout_04_fixture_fresh_01-extraction: Retained usage or pricing unavailable.",
+      "heldout_05_fixture_fresh_01-extraction: Retained usage or pricing unavailable.",
+      "heldout_06_fixture_fresh_01-extraction: Retained usage or pricing unavailable.",
+      "heldout_07_fixture_fresh_01-extraction: Retained usage or pricing unavailable.",
+      "heldout_08_fixture_fresh_01-extraction: Retained usage or pricing unavailable.",
+      "heldout_09_fixture_fresh_01-extraction: Retained usage or pricing unavailable.",
+      "heldout_10_fixture_fresh_01-extraction: Retained usage or pricing unavailable."
+    ]
+  },
+  "timing": {
+    "first_started_at": "2026-10-17T06:35:49.977369+00:00",
+    "last_finished_at": "2026-10-17T06:36:05.525800+00:00",
+    "wall_seconds": 15.548431,
+    "provider_seconds_sum": 15.44638216499925
+  },
+  "shared_budget": {
+    "task_id": "live-2be8e54d4832420cbfbd05a55d966aef",
+    "label": "Final build day 2026-10-17: shared 30-call ceiling",
+    "used": 10,
+    "cap": 30,
+    "remaining": 20,
+    "current_invocation_attempts_remaining": 0,
+    "further_execution_authorized": false
+  },
+  "cases": [
+    {
+      "case_id": "heldout_01",
+      "hypothesis": "Does a short client confirmation letter preserve explicit family and trust facts outside attendance-note prose?",
+      "status": "completed",
+      "evaluation": {
+        "tp": 5,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "true_positive_edges": [
+          [
+            "Maya Lau",
+            "beneficiary_of",
+            "Juniper Family Trust"
+          ],
+          [
+            "Nadia Lau",
+            "parent_of",
+            "Maya Lau"
+          ],
+          [
+            "Nadia Lau",
+            "settlor_of",
+            "Juniper Family Trust"
+          ],
+          [
+            "Nadia Lau",
+            "spouse_of",
+            "Owen Lau"
+          ],
+          [
+            "Owen Lau",
+            "parent_of",
+            "Maya Lau"
+          ]
+        ],
+        "false_positive_edges": [],
+        "false_negative_edges": [],
+        "provenance_passed": 5,
+        "provenance_failed": 0,
+        "provenance_accuracy": 1.0,
+        "provenance_passes": [
+          [
+            "Maya Lau",
+            "beneficiary_of",
+            "Juniper Family Trust"
+          ],
+          [
+            "Nadia Lau",
+            "parent_of",
+            "Maya Lau"
+          ],
+          [
+            "Nadia Lau",
+            "settlor_of",
+            "Juniper Family Trust"
+          ],
+          [
+            "Nadia Lau",
+            "spouse_of",
+            "Owen Lau"
+          ],
+          [
+            "Owen Lau",
+            "parent_of",
+            "Maya Lau"
+          ]
+        ],
+        "provenance_failures": []
+      },
+      "source_attribution": {
+        "version": "source_attribution_v1",
+        "assessed": 5,
+        "passed": 5,
+        "failed": 0,
+        "accuracy": 1.0,
+        "failures": []
+      },
+      "sources": [
+        {
+          "id": "letter",
+          "title": "Signed factual confirmation",
+          "sha256": "9785df215abd6c04cd99bb48638d5927dd67d81becd90b9595fdd386a6064ace"
+        }
+      ],
+      "origin_hashes": {
+        "source.txt": "9785df215abd6c04cd99bb48638d5927dd67d81becd90b9595fdd386a6064ace",
+        "ground_truth.json": "572ef1fef8dc43568f62486d8594b2ef2d220ca88f964edd04490bffe702965b",
+        "extraction.json": "9308c4502ea389f0cfd0eccad7e9053a49fe2fca014bd4510708768b0b4ad720",
+        "sources/letter.txt": "9785df215abd6c04cd99bb48638d5927dd67d81becd90b9595fdd386a6064ace",
+        "sources.json": "f486f81b9b7036e7745cce189beefd73064607b95ea7407e759180bdb2798828",
+        "expected_source_extraction.json": "37a17e914dd1d842523af14a13928cb8ecaabdc0e452472f803c5c294a684cb2",
+        "source_evidence.json": "221aae1b9147ceddd7339039688e271d6e9e0b987078b8be269720e2fa4fa90e"
+      },
+      "raw_extraction": "97d26d8e5f9d5964826b144c9ca45ad7/attempts/heldout_01_fixture_fresh_01-extraction.finished.json",
+      "result": "97d26d8e5f9d5964826b144c9ca45ad7/results/heldout_01_fixture_fresh_01-noop.json"
+    },
+    {
+      "case_id": "heldout_02",
+      "hypothesis": "Can one sentence be decomposed into distinct family and trust-role edges without conflating sibling and beneficiary status?",
+      "status": "completed",
+      "evaluation": {
+        "tp": 4,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "true_positive_edges": [
+          [
+            "Felix Wong",
+            "settlor_of",
+            "Amber Family Trust"
+          ],
+          [
+            "Grace Wong",
+            "beneficiary_of",
+            "Amber Family Trust"
+          ],
+          [
+            "Grace Wong",
+            "sibling_of",
+            "Hugo Wong"
+          ],
+          [
+            "Hugo Wong",
+            "beneficiary_of",
+            "Amber Family Trust"
+          ]
+        ],
+        "false_positive_edges": [],
+        "false_negative_edges": [],
+        "provenance_passed": 1,
+        "provenance_failed": 3,
+        "provenance_accuracy": 0.25,
+        "provenance_passes": [
+          [
+            "Felix Wong",
+            "settlor_of",
+            "Amber Family Trust"
+          ]
+        ],
+        "provenance_failures": [
+          [
+            "Grace Wong",
+            "beneficiary_of",
+            "Amber Family Trust"
+          ],
+          [
+            "Grace Wong",
+            "sibling_of",
+            "Hugo Wong"
+          ],
+          [
+            "Hugo Wong",
+            "beneficiary_of",
+            "Amber Family Trust"
+          ]
+        ]
+      },
+      "source_attribution": {
+        "version": "source_attribution_v1",
+        "assessed": 4,
+        "passed": 1,
+        "failed": 3,
+        "accuracy": 0.25,
+        "failures": [
+          {
+            "edge": [
+              "Grace Wong",
+              "beneficiary_of",
+              "Amber Family Trust"
+            ],
+            "evidence_id": "evidence_002",
+            "source_id": "recap",
+            "supporting_text": "Grace Wong and Hugo Wong are siblings and are both beneficiaries of the Amber Family Trust."
+          },
+          {
+            "edge": [
+              "Grace Wong",
+              "sibling_of",
+              "Hugo Wong"
+            ],
+            "evidence_id": "evidence_002",
+            "source_id": "recap",
+            "supporting_text": "Grace Wong and Hugo Wong are siblings and are both beneficiaries of the Amber Family Trust."
+          },
+          {
+            "edge": [
+              "Hugo Wong",
+              "beneficiary_of",
+              "Amber Family Trust"
+            ],
+            "evidence_id": "evidence_002",
+            "source_id": "recap",
+            "supporting_text": "Grace Wong and Hugo Wong are siblings and are both beneficiaries of the Amber Family Trust."
+          }
+        ]
+      },
+      "sources": [
+        {
+          "id": "recap",
+          "title": "Factual recap",
+          "sha256": "07609b00a81bab11a9860fda79853d2666758372b770f56bbf9d68632f0dcccd"
+        }
+      ],
+      "origin_hashes": {
+        "source.txt": "07609b00a81bab11a9860fda79853d2666758372b770f56bbf9d68632f0dcccd",
+        "ground_truth.json": "205ef8158b97d9dbd7546ba159170ec2eaa63b8fdaad90bed65641b4e05c0f47",
+        "extraction.json": "7fb6543cc72a708a2d64177b3001dc5b7f5950fccd91b76cb7baa4b9311169e4",
+        "sources/recap.txt": "07609b00a81bab11a9860fda79853d2666758372b770f56bbf9d68632f0dcccd",
+        "sources.json": "2dfa7493e9e098a7bf5341704877df83e6ba3e7d37b210c00687f6a5471785e7",
+        "expected_source_extraction.json": "fe013c6763971d68186f3c7bc320dc1f15fe2e3cd4af15f2febef9223e07dc66",
+        "source_evidence.json": "58d75fc03a80933c1b75a74eba79ac16d755e286e0c640ee7da3185e5928c60b"
+      },
+      "raw_extraction": "97d26d8e5f9d5964826b144c9ca45ad7/attempts/heldout_02_fixture_fresh_01-extraction.finished.json",
+      "result": "97d26d8e5f9d5964826b144c9ca45ad7/results/heldout_02_fixture_fresh_01-noop.json"
+    },
+    {
+      "case_id": "heldout_03",
+      "hypothesis": "Can an explicitly introduced short form be linked to its named person while preserving the supplied evidence text?",
+      "status": "completed",
+      "evaluation": {
+        "tp": 1,
+        "fp": 2,
+        "fn": 2,
+        "precision": 0.3333333333333333,
+        "recall": 0.3333333333333333,
+        "f1": 0.3333333333333333,
+        "true_positive_edges": [
+          [
+            "Isaac Ng",
+            "beneficiary_of",
+            "Larch Family Trust"
+          ]
+        ],
+        "false_positive_edges": [
+          [
+            "Bea",
+            "parent_of",
+            "Isaac Ng"
+          ],
+          [
+            "Bea",
+            "settlor_of",
+            "Larch Family Trust"
+          ]
+        ],
+        "false_negative_edges": [
+          [
+            "Beatrice Ng",
+            "parent_of",
+            "Isaac Ng"
+          ],
+          [
+            "Beatrice Ng",
+            "settlor_of",
+            "Larch Family Trust"
+          ]
+        ],
+        "provenance_passed": 1,
+        "provenance_failed": 0,
+        "provenance_accuracy": 1.0,
+        "provenance_passes": [
+          [
+            "Isaac Ng",
+            "beneficiary_of",
+            "Larch Family Trust"
+          ]
+        ],
+        "provenance_failures": []
+      },
+      "source_attribution": {
+        "version": "source_attribution_v1",
+        "assessed": 1,
+        "passed": 1,
+        "failed": 0,
+        "accuracy": 1.0,
+        "failures": []
+      },
+      "sources": [
+        {
+          "id": "interview",
+          "title": "Factual interview note",
+          "sha256": "5abe5d3e12ffc7ebece61a2e3f751b212bce1c07c82425ab82317725f2b07017"
+        }
+      ],
+      "origin_hashes": {
+        "source.txt": "5abe5d3e12ffc7ebece61a2e3f751b212bce1c07c82425ab82317725f2b07017",
+        "ground_truth.json": "5712390e801e981ce0287642d1cb26a95f79bf81bdf36a739c6a079032eab488",
+        "extraction.json": "ab2b8b463cbf4ee2a5339169dd1153b2977394d5f9293f96213e52453afbae06",
+        "sources/interview.txt": "5abe5d3e12ffc7ebece61a2e3f751b212bce1c07c82425ab82317725f2b07017",
+        "sources.json": "145e5e550b6033326dd7a511637265778b0201022f029ae30f9a7238c09c401c",
+        "expected_source_extraction.json": "a344cf274652878de4fda6aa006d8b709ec64e117ad929668e8dd1bcf82e8b96",
+        "source_evidence.json": "dfcee928839cb1fc1df0989515c87d7d38f2bc7e03b698263aea6b9947e5b643"
+      },
+      "raw_extraction": "97d26d8e5f9d5964826b144c9ca45ad7/attempts/heldout_03_fixture_fresh_01-extraction.finished.json",
+      "result": "97d26d8e5f9d5964826b144c9ca45ad7/results/heldout_03_fixture_fresh_01-noop.json"
+    },
+    {
+      "case_id": "heldout_04",
+      "hypothesis": "Can complementary Sources be combined while repeated beneficiary support remains attributed to each originating Source?",
+      "status": "completed",
+      "evaluation": {
+        "tp": 3,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "true_positive_edges": [
+          [
+            "Jonas Chan",
+            "settlor_of",
+            "Maple Family Trust"
+          ],
+          [
+            "Keira Chan",
+            "beneficiary_of",
+            "Maple Family Trust"
+          ],
+          [
+            "Lina Ho",
+            "trustee_of",
+            "Maple Family Trust"
+          ]
+        ],
+        "false_positive_edges": [],
+        "false_negative_edges": [],
+        "provenance_passed": 3,
+        "provenance_failed": 0,
+        "provenance_accuracy": 1.0,
+        "provenance_passes": [
+          [
+            "Jonas Chan",
+            "settlor_of",
+            "Maple Family Trust"
+          ],
+          [
+            "Keira Chan",
+            "beneficiary_of",
+            "Maple Family Trust"
+          ],
+          [
+            "Lina Ho",
+            "trustee_of",
+            "Maple Family Trust"
+          ]
+        ],
+        "provenance_failures": []
+      },
+      "source_attribution": {
+        "version": "source_attribution_v1",
+        "assessed": 4,
+        "passed": 3,
+        "failed": 1,
+        "accuracy": 0.75,
+        "failures": [
+          {
+            "edge": [
+              "Keira Chan",
+              "beneficiary_of",
+              "Maple Family Trust"
+            ],
+            "evidence_id": "evidence_002",
+            "source_id": "followup",
+            "supporting_text": "The beneficiary position was checked again: Keira Chan is a beneficiary of the Maple Family Trust."
+          }
+        ]
+      },
+      "sources": [
+        {
+          "id": "initial",
+          "title": "Initial factual note",
+          "sha256": "d20e0189a542d1d5b90d85d23637b22635e3175cbe56498bb214350b5d634332"
+        },
+        {
+          "id": "followup",
+          "title": "Office-holder and beneficiary check",
+          "sha256": "277b85d1e6812fe5d705058919520bc13f27180c1a1a208df28203e1b45b40d7"
+        }
+      ],
+      "origin_hashes": {
+        "source.txt": "580766fa4bcea307a653bcfbd7d6683897a6cf1f64e22e82ecc8d7f154ef3ec0",
+        "ground_truth.json": "649aed985bce734113dc17cff39c1168919125e660094cecc7fc5475c06e9ea1",
+        "extraction.json": "d3fcc0e552086e69e0f15a7d0001dc1cf26eada9afb47f9454370a532fea46f8",
+        "sources/initial.txt": "d20e0189a542d1d5b90d85d23637b22635e3175cbe56498bb214350b5d634332",
+        "sources/followup.txt": "277b85d1e6812fe5d705058919520bc13f27180c1a1a208df28203e1b45b40d7",
+        "sources.json": "4532129d59e9afb7d32d6ee63d0d5936771f214dcc84b110642c1d73b1adfbe1",
+        "expected_source_extraction.json": "0dc0708daf95f25e0885175748362971141bca8638a1d0dac4004a9f45b366d1",
+        "source_evidence.json": "55c6322d92cf5dfa5a0d6ee8776808204da97fccd11d22a70f51a9108610373f"
+      },
+      "raw_extraction": "97d26d8e5f9d5964826b144c9ca45ad7/attempts/heldout_04_fixture_fresh_01-extraction.finished.json",
+      "result": "97d26d8e5f9d5964826b144c9ca45ad7/results/heldout_04_fixture_fresh_01-noop.json"
+    },
+    {
+      "case_id": "heldout_05",
+      "hypothesis": "Does the combined final-current graph remove one superseded trustee and retain unchanged earlier family and trust facts?",
+      "status": "completed",
+      "evaluation": {
+        "tp": 4,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "true_positive_edges": [
+          [
+            "Leona Wu",
+            "parent_of",
+            "Milo Wu"
+          ],
+          [
+            "Leona Wu",
+            "settlor_of",
+            "Cedar Family Trust"
+          ],
+          [
+            "Milo Wu",
+            "beneficiary_of",
+            "Cedar Family Trust"
+          ],
+          [
+            "Nora Tse",
+            "trustee_of",
+            "Cedar Family Trust"
+          ]
+        ],
+        "false_positive_edges": [],
+        "false_negative_edges": [],
+        "provenance_passed": 4,
+        "provenance_failed": 0,
+        "provenance_accuracy": 1.0,
+        "provenance_passes": [
+          [
+            "Leona Wu",
+            "parent_of",
+            "Milo Wu"
+          ],
+          [
+            "Leona Wu",
+            "settlor_of",
+            "Cedar Family Trust"
+          ],
+          [
+            "Milo Wu",
+            "beneficiary_of",
+            "Cedar Family Trust"
+          ],
+          [
+            "Nora Tse",
+            "trustee_of",
+            "Cedar Family Trust"
+          ]
+        ],
+        "provenance_failures": []
+      },
+      "source_attribution": {
+        "version": "source_attribution_v1",
+        "assessed": 4,
+        "passed": 4,
+        "failed": 0,
+        "accuracy": 1.0,
+        "failures": []
+      },
+      "sources": [
+        {
+          "id": "initial",
+          "title": "Initial dated factual position",
+          "sha256": "5d2994147af546d1d99e53222703660397e82d90764f9bb6169169fb581b9d43"
+        },
+        {
+          "id": "replacement",
+          "title": "Completed replacement confirmation",
+          "sha256": "77957be87158eded903407ee7cd04d0d8642c58a6055a039035ed75c80aa4721"
+        }
+      ],
+      "origin_hashes": {
+        "source.txt": "a5fff023f1f925eda4d05e28b230d2d3dc8e9c4bd149a696e136ae733c4c3ff9",
+        "ground_truth.json": "240aef7d77cec91a9b2faaf2086d7d528374bf91c20d35b489eaa420c52f43f6",
+        "extraction.json": "c8d9055b6bc0e4af1a69e2e398ba82f6c3ffc7ec4f0ba23e92060ea463f20eb8",
+        "sources/initial.txt": "5d2994147af546d1d99e53222703660397e82d90764f9bb6169169fb581b9d43",
+        "sources/replacement.txt": "77957be87158eded903407ee7cd04d0d8642c58a6055a039035ed75c80aa4721",
+        "sources.json": "e57240d5473b30ccdb94e53dc515673730d1d757df919005cff4614e48ee19d8",
+        "expected_source_extraction.json": "f230ee5f5aa47c6fee363167d21378ba99dd075bb929f7b269e6a532af5b6a96",
+        "source_evidence.json": "45996307c26cf43a507e9d8832f3f3d51173679b01b015a6aad23dd7795f0906"
+      },
+      "raw_extraction": "97d26d8e5f9d5964826b144c9ca45ad7/attempts/heldout_05_fixture_fresh_01-extraction.finished.json",
+      "result": "97d26d8e5f9d5964826b144c9ca45ad7/results/heldout_05_fixture_fresh_01-noop.json"
+    },
+    {
+      "case_id": "heldout_06",
+      "hypothesis": "Does explicit effective chronology determine the current trustee even when the older document is supplied last?",
+      "status": "completed",
+      "evaluation": {
+        "tp": 3,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "true_positive_edges": [
+          [
+            "Petra Lam",
+            "settlor_of",
+            "Alder Family Trust"
+          ],
+          [
+            "Quinn Lam",
+            "beneficiary_of",
+            "Alder Family Trust"
+          ],
+          [
+            "Rita Yuen",
+            "trustee_of",
+            "Alder Family Trust"
+          ]
+        ],
+        "false_positive_edges": [],
+        "false_negative_edges": [],
+        "provenance_passed": 3,
+        "provenance_failed": 0,
+        "provenance_accuracy": 1.0,
+        "provenance_passes": [
+          [
+            "Petra Lam",
+            "settlor_of",
+            "Alder Family Trust"
+          ],
+          [
+            "Quinn Lam",
+            "beneficiary_of",
+            "Alder Family Trust"
+          ],
+          [
+            "Rita Yuen",
+            "trustee_of",
+            "Alder Family Trust"
+          ]
+        ],
+        "provenance_failures": []
+      },
+      "source_attribution": {
+        "version": "source_attribution_v1",
+        "assessed": 4,
+        "passed": 4,
+        "failed": 0,
+        "accuracy": 1.0,
+        "failures": []
+      },
+      "sources": [
+        {
+          "id": "update",
+          "title": "Effective replacement confirmation",
+          "sha256": "c029f9ae94568936f9f942e32a2c6713ec67c1767bafa446dcaf6f4d5469a88b"
+        },
+        {
+          "id": "archive",
+          "title": "Earlier factual note — retained for reference",
+          "sha256": "945a3e1f48d9d109b45d6e8fcb91a7925f8014308034b5b353080da9e18daa4c"
+        }
+      ],
+      "origin_hashes": {
+        "source.txt": "9ec672d20f92436e661369bdf60a49ae36af818fc44921afad58f09cc45d04ee",
+        "ground_truth.json": "1c37f011acce59b07cd63b830f4294a4edf114224a93572bdf32fcf736bcac19",
+        "extraction.json": "125a768390b23494b198cd49929ec171c2fe1be1674db1503b5cd979faad3bce",
+        "sources/update.txt": "c029f9ae94568936f9f942e32a2c6713ec67c1767bafa446dcaf6f4d5469a88b",
+        "sources/archive.txt": "945a3e1f48d9d109b45d6e8fcb91a7925f8014308034b5b353080da9e18daa4c",
+        "sources.json": "77579147dd214c6b179e3ef980127f45ae7ce706f32a73d755ba91967a209400",
+        "expected_source_extraction.json": "092bceacc086e41f5a06e71f2c8aeaebea3938da69e7ce6169d47c1a6ced02e9",
+        "source_evidence.json": "88f1a04cb08af1ef787ebff7597c9ebbb52fb5f2145e7993712fb8bef30dd550"
+      },
+      "raw_extraction": "97d26d8e5f9d5964826b144c9ca45ad7/attempts/heldout_06_fixture_fresh_01-extraction.finished.json",
+      "result": "97d26d8e5f9d5964826b144c9ca45ad7/results/heldout_06_fixture_fresh_01-noop.json"
+    },
+    {
+      "case_id": "heldout_07",
+      "hypothesis": "Can roles be assigned to the named trust without transferring a person’s role to the other trust?",
+      "status": "completed",
+      "evaluation": {
+        "tp": 6,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "true_positive_edges": [
+          [
+            "Sienna Mak",
+            "beneficiary_of",
+            "Elm Family Trust"
+          ],
+          [
+            "Sienna Mak",
+            "settlor_of",
+            "Birch Family Trust"
+          ],
+          [
+            "Tobias Mak",
+            "beneficiary_of",
+            "Birch Family Trust"
+          ],
+          [
+            "Tobias Mak",
+            "settlor_of",
+            "Elm Family Trust"
+          ],
+          [
+            "Uma Chan",
+            "beneficiary_of",
+            "Elm Family Trust"
+          ],
+          [
+            "Uma Chan",
+            "trustee_of",
+            "Birch Family Trust"
+          ]
+        ],
+        "false_positive_edges": [],
+        "false_negative_edges": [],
+        "provenance_passed": 6,
+        "provenance_failed": 0,
+        "provenance_accuracy": 1.0,
+        "provenance_passes": [
+          [
+            "Sienna Mak",
+            "beneficiary_of",
+            "Elm Family Trust"
+          ],
+          [
+            "Sienna Mak",
+            "settlor_of",
+            "Birch Family Trust"
+          ],
+          [
+            "Tobias Mak",
+            "beneficiary_of",
+            "Birch Family Trust"
+          ],
+          [
+            "Tobias Mak",
+            "settlor_of",
+            "Elm Family Trust"
+          ],
+          [
+            "Uma Chan",
+            "beneficiary_of",
+            "Elm Family Trust"
+          ],
+          [
+            "Uma Chan",
+            "trustee_of",
+            "Birch Family Trust"
+          ]
+        ],
+        "provenance_failures": []
+      },
+      "source_attribution": {
+        "version": "source_attribution_v1",
+        "assessed": 6,
+        "passed": 6,
+        "failed": 0,
+        "accuracy": 1.0,
+        "failures": []
+      },
+      "sources": [
+        {
+          "id": "review",
+          "title": "Two-trust factual review note",
+          "sha256": "41d34a10f894b883023f7d413fc08bf52f1b615db22a6a40f134b4e483443c1c"
+        }
+      ],
+      "origin_hashes": {
+        "source.txt": "41d34a10f894b883023f7d413fc08bf52f1b615db22a6a40f134b4e483443c1c",
+        "ground_truth.json": "99785e78a538cf0491271cc2d84f0c4b9bce709d4455d2c0f14513e3e3366cc3",
+        "extraction.json": "d43c6418e50c239dcb08790fa1f8f84a4b8b915c3479f0c2fda908955827bbb3",
+        "sources/review.txt": "41d34a10f894b883023f7d413fc08bf52f1b615db22a6a40f134b4e483443c1c",
+        "sources.json": "cb84c84818e29ce5f550224decd9a6c9a96de052511b1be3e0ae4be3c895d926",
+        "expected_source_extraction.json": "b9393f25251fc544209607ab3fd8adee473e57282bbea3eff33c65e31bc79f3b",
+        "source_evidence.json": "3e7cfd318892d1eeff7940d3bb4aaa700e8e059b18aaf4b2b39ee809dcf21dd1"
+      },
+      "raw_extraction": "97d26d8e5f9d5964826b144c9ca45ad7/attempts/heldout_07_fixture_fresh_01-extraction.finished.json",
+      "result": "97d26d8e5f9d5964826b144c9ca45ad7/results/heldout_07_fixture_fresh_01-noop.json"
+    },
+    {
+      "case_id": "heldout_08",
+      "hypothesis": "Can distinct input identities survive matching Source titles while complementary facts are combined?",
+      "status": "completed",
+      "evaluation": {
+        "tp": 5,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "true_positive_edges": [
+          [
+            "Victor Lo",
+            "parent_of",
+            "Xavier Lo"
+          ],
+          [
+            "Victor Lo",
+            "settlor_of",
+            "Rowan Family Trust"
+          ],
+          [
+            "Victor Lo",
+            "spouse_of",
+            "Wendy Lo"
+          ],
+          [
+            "Wendy Lo",
+            "parent_of",
+            "Xavier Lo"
+          ],
+          [
+            "Xavier Lo",
+            "beneficiary_of",
+            "Rowan Family Trust"
+          ]
+        ],
+        "false_positive_edges": [],
+        "false_negative_edges": [],
+        "provenance_passed": 5,
+        "provenance_failed": 0,
+        "provenance_accuracy": 1.0,
+        "provenance_passes": [
+          [
+            "Victor Lo",
+            "parent_of",
+            "Xavier Lo"
+          ],
+          [
+            "Victor Lo",
+            "settlor_of",
+            "Rowan Family Trust"
+          ],
+          [
+            "Victor Lo",
+            "spouse_of",
+            "Wendy Lo"
+          ],
+          [
+            "Wendy Lo",
+            "parent_of",
+            "Xavier Lo"
+          ],
+          [
+            "Xavier Lo",
+            "beneficiary_of",
+            "Rowan Family Trust"
+          ]
+        ],
+        "provenance_failures": []
+      },
+      "source_attribution": {
+        "version": "source_attribution_v1",
+        "assessed": 5,
+        "passed": 5,
+        "failed": 0,
+        "accuracy": 1.0,
+        "failures": []
+      },
+      "sources": [
+        {
+          "id": "family",
+          "title": "Factual review note",
+          "sha256": "dcea99b75a7cbaef4e83dc1020df221ffce89a5e09f752c6399f4f99219bcfb4"
+        },
+        {
+          "id": "trust",
+          "title": "Factual review note",
+          "sha256": "a4858662f47b6e7789388fa349e915c1b8b4c31a10ffcacf1b61db5e07f873e6"
+        }
+      ],
+      "origin_hashes": {
+        "source.txt": "5bc59d64c5bcfdb8c56c0085f9bfa616f1b8474700e411f31542abcc9bc49f49",
+        "ground_truth.json": "9336da64250f5e8ebe7c3a0a16ad67114550c2fdb9830df5c56e5fadc32c6ecc",
+        "extraction.json": "c02cda938c0e6de955dd75812c2455e8e37e07c1cddc2eed9856d3cd66c4e262",
+        "sources/family.txt": "dcea99b75a7cbaef4e83dc1020df221ffce89a5e09f752c6399f4f99219bcfb4",
+        "sources/trust.txt": "a4858662f47b6e7789388fa349e915c1b8b4c31a10ffcacf1b61db5e07f873e6",
+        "sources.json": "eedb2f29a603e79c093601b10e5fa346274d1a00fba4ea7a9c6eec0434668c93",
+        "expected_source_extraction.json": "4062bad76c634b8ba60cc3d0792f733578d59b25507d359efb386fd86328bae8",
+        "source_evidence.json": "d1897c7c7b2b55b4196c56b9643b9185158c9b2e80358ef3a98f7788deb3c441"
+      },
+      "raw_extraction": "97d26d8e5f9d5964826b144c9ca45ad7/attempts/heldout_08_fixture_fresh_01-extraction.finished.json",
+      "result": "97d26d8e5f9d5964826b144c9ca45ad7/results/heldout_08_fixture_fresh_01-noop.json"
+    },
+    {
+      "case_id": "heldout_09",
+      "hypothesis": "Can supported relationships be recovered without treating administrative participants and process descriptions as graph facts?",
+      "status": "completed",
+      "evaluation": {
+        "tp": 3,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "true_positive_edges": [
+          [
+            "Adele Ip",
+            "trustee_of",
+            "Hazel Family Trust"
+          ],
+          [
+            "Yasmin Fong",
+            "settlor_of",
+            "Hazel Family Trust"
+          ],
+          [
+            "Zachary Fong",
+            "beneficiary_of",
+            "Hazel Family Trust"
+          ]
+        ],
+        "false_positive_edges": [],
+        "false_negative_edges": [],
+        "provenance_passed": 3,
+        "provenance_failed": 0,
+        "provenance_accuracy": 1.0,
+        "provenance_passes": [
+          [
+            "Adele Ip",
+            "trustee_of",
+            "Hazel Family Trust"
+          ],
+          [
+            "Yasmin Fong",
+            "settlor_of",
+            "Hazel Family Trust"
+          ],
+          [
+            "Zachary Fong",
+            "beneficiary_of",
+            "Hazel Family Trust"
+          ]
+        ],
+        "provenance_failures": []
+      },
+      "source_attribution": {
+        "version": "source_attribution_v1",
+        "assessed": 3,
+        "passed": 3,
+        "failed": 0,
+        "accuracy": 1.0,
+        "failures": []
+      },
+      "sources": [
+        {
+          "id": "file",
+          "title": "Administrative and factual review record",
+          "sha256": "b8341c9550ca94abe9f9732079ac2509be07934c782970a1d287852475237508"
+        }
+      ],
+      "origin_hashes": {
+        "source.txt": "b8341c9550ca94abe9f9732079ac2509be07934c782970a1d287852475237508",
+        "ground_truth.json": "c1d261bfba24a3480c8c6bc0a402060fcb70c7cc739d3e12a560b394085259fc",
+        "extraction.json": "779ea3335e9ba902f1565bb1237b9bb5c62010ae7a99e8795b5ef8825ce847ae",
+        "sources/file.txt": "b8341c9550ca94abe9f9732079ac2509be07934c782970a1d287852475237508",
+        "sources.json": "6d4a1cf874761438931497fdcc29689c8bcd622d1ce2313244841fb5f5352987",
+        "expected_source_extraction.json": "05e049d384a5bfb3da1cbbbe1402ec1f2115a1fca0f3a62c7c9c7a505f72e9fe",
+        "source_evidence.json": "9490c89fc3909ce63febd752cc948ae100dbbaded18f54d9cc7bf8734380809f"
+      },
+      "raw_extraction": "97d26d8e5f9d5964826b144c9ca45ad7/attempts/heldout_09_fixture_fresh_01-extraction.finished.json",
+      "result": "97d26d8e5f9d5964826b144c9ca45ad7/results/heldout_09_fixture_fresh_01-noop.json"
+    },
+    {
+      "case_id": "heldout_10",
+      "hypothesis": "Can an unambiguous local pronoun preserve the identity of a person across two trust-role statements?",
+      "status": "completed",
+      "evaluation": {
+        "tp": 3,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "true_positive_edges": [
+          [
+            "Daphne Cheung",
+            "settlor_of",
+            "Olive Family Trust"
+          ],
+          [
+            "Daphne Cheung",
+            "trustee_of",
+            "Olive Family Trust"
+          ],
+          [
+            "Evan Ho",
+            "beneficiary_of",
+            "Olive Family Trust"
+          ]
+        ],
+        "false_positive_edges": [],
+        "false_negative_edges": [],
+        "provenance_passed": 3,
+        "provenance_failed": 0,
+        "provenance_accuracy": 1.0,
+        "provenance_passes": [
+          [
+            "Daphne Cheung",
+            "settlor_of",
+            "Olive Family Trust"
+          ],
+          [
+            "Daphne Cheung",
+            "trustee_of",
+            "Olive Family Trust"
+          ],
+          [
+            "Evan Ho",
+            "beneficiary_of",
+            "Olive Family Trust"
+          ]
+        ],
+        "provenance_failures": []
+      },
+      "source_attribution": {
+        "version": "source_attribution_v1",
+        "assessed": 3,
+        "passed": 3,
+        "failed": 0,
+        "accuracy": 1.0,
+        "failures": []
+      },
+      "sources": [
+        {
+          "id": "confirmation",
+          "title": "Role confirmation attendance note",
+          "sha256": "ecc2244fe9e2f6499e7e3e5008947f942542fcf573b24a0aa2730161502463b1"
+        }
+      ],
+      "origin_hashes": {
+        "source.txt": "ecc2244fe9e2f6499e7e3e5008947f942542fcf573b24a0aa2730161502463b1",
+        "ground_truth.json": "51083f945dbe7b5251db1f6b8ed455b62d3ca72f439549dfc974671d06536792",
+        "extraction.json": "4b835d04aa048ed4b3990db8e46c8ff13ddc31fc1bb3d31aa29b732090b50451",
+        "sources/confirmation.txt": "ecc2244fe9e2f6499e7e3e5008947f942542fcf573b24a0aa2730161502463b1",
+        "sources.json": "1a8edbb51fcc8b443a78d5d9215ce25f699ced422e3d2c58c66daff553af9e3a",
+        "expected_source_extraction.json": "04e6bfecb5d4b8988b6c8f19f22ba52326ad0433d7bda318f8f2f46eef4811a8",
+        "source_evidence.json": "4a35624a201244953263b5cc6964849e29cb8b3434f04e6a0aba571fd9b19537"
+      },
+      "raw_extraction": "97d26d8e5f9d5964826b144c9ca45ad7/attempts/heldout_10_fixture_fresh_01-extraction.finished.json",
+      "result": "97d26d8e5f9d5964826b144c9ca45ad7/results/heldout_10_fixture_fresh_01-noop.json"
+    }
+  ],
+  "artifact_root": "/Users/alistair/projects/private-client-graph/runs/final-day",
+  "bundle": "/Users/alistair/projects/private-client-graph/runs/final-day/97d26d8e5f9d5964826b144c9ca45ad7",
+  "workbench_url": "http://127.0.0.1:8080/#workspace=83b5778e74ba5e6e882d334fd4f87f09&run=97d26d8e5f9d5964826b144c9ca45ad7"
+}

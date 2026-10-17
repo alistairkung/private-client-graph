@@ -1,0 +1,7 @@
+{
+  "path": "/Users/alistair/projects/private-client-graph/runs/final-day/analysis/final-task-artifacts.zip",
+  "sha256": "4dc7d684dfed9a2718fe6449df9437aa4c5b1a078e6290c91948cdd77f14dfbe",
+  "files": 73,
+  "run_artifact_digest": "edb95eacbff00ee63f0e27db1c7cf684d191b66c839b3c34f8e62e4e67ffc3fc",
+  "format": "Complete task snapshot preserving Run, ledger, Experiment and preflight; not legacy-only Workbench export format."
+}

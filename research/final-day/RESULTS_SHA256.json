@@ -1,0 +1,19 @@
+{
+  "per-case-results.csv": "2dadccc2e559cd8e91c32b2e7e4a310f2f15bd28b6ce7c243a877745a86ab2b8",
+  "chatgpt-analysis-handoff.md": "20e1eb972f58cf292f1ea6deddac57f3d387db5cebe3733308c22bb424e59afb",
+  "relationship-diagnostics.json": "7264e3ae6ec1660646ca95fd249bc353661700375599414ea6981c85ec1db4b7",
+  "workbench-run.json": "f1f14507fb82a7b04ba8062dee3bb4afdd9f5171e4f2c2105235e202cf296280",
+  "artifact-snapshot.json": "e2e875e265ce799796d397f9722b8952eda60ce24fff6cb8dc739d72e3800aaf",
+  "final-heldout-results.json": "4d0a10aa04ab1eaca19cd0055c9d74bf70ac85a8a21d10346931c73508b520eb",
+  "screenshots/07-execution-record-identities.png": "850037cafc0296a8d50c51dc8296ed97b575a088eb3013e4cbafc08e36a91f51",
+  "screenshots/05-strict-quote-provenance-source.png": "98c8eddd944606147e83f61d5005548b1a43e0b6026120562de7c765a92e565b",
+  "screenshots/PROVENANCE.md": "80408a3dc17d5df50a6589e6cf162fb611115e6d1b2ce5b8505cbaf8437a5e57",
+  "screenshots/03b-per-case-results-lower.png": "905c5bb101a7e3ccd14460a7a7a2b2d0b7ae80d0c9c722bd29eed853cef4147e",
+  "screenshots/03a-per-case-results-upper.png": "4de091a54d80d11304d89be21b26869618c8f800d2f6bd8d40eb6e3e1dec1f1b",
+  "screenshots/04-alias-error-exact-source.png": "8f42d45880ae4cd257b3f8f2d3f9fe9f4daf6958f5b9c0b28c93354eca429997",
+  "screenshots/08-unpriced-cost-attempt-record.png": "922a1d54a5cfd60b54dcea2a584dc5a253337f7013a576c70b3bb6698a6dc84b",
+  "screenshots/01-frozen-configuration.png": "880b238c9f99308c0a44f41e34e9471acc72995ee7f3d8011f69318df3d4fc07",
+  "screenshots/09-read-only-completed-run.png": "a88f4bf490af382f356f105b84652357507ad42e2e1345e63624ca81f8e76c7d",
+  "screenshots/02-aggregate-measured-results.png": "8611df35ff32e62272b26b7c0286e24990073ffbda4138f51d84c227b483278f",
+  "screenshots/06-multisource-pair-mismatch.png": "2f7154a26bf299154315013bd9f0e7eb13721c8ca2153b99ce33fb607791edd7"
+}

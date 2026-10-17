@@ -1,0 +1,11 @@
+case,hypothesis,status,tp,fp,fn,precision,recall,f1,provenance_accuracy,source_attribution_accuracy
+heldout_01,Does a short client confirmation letter preserve explicit family and trust facts outside attendance-note prose?,completed,5,0,0,1.0,1.0,1.0,1.0,1.0
+heldout_02,Can one sentence be decomposed into distinct family and trust-role edges without conflating sibling and beneficiary status?,completed,4,0,0,1.0,1.0,1.0,0.25,0.25
+heldout_03,Can an explicitly introduced short form be linked to its named person while preserving the supplied evidence text?,completed,1,2,2,0.3333333333333333,0.3333333333333333,0.3333333333333333,1.0,1.0
+heldout_04,Can complementary Sources be combined while repeated beneficiary support remains attributed to each originating Source?,completed,3,0,0,1.0,1.0,1.0,1.0,0.75
+heldout_05,Does the combined final-current graph remove one superseded trustee and retain unchanged earlier family and trust facts?,completed,4,0,0,1.0,1.0,1.0,1.0,1.0
+heldout_06,Does explicit effective chronology determine the current trustee even when the older document is supplied last?,completed,3,0,0,1.0,1.0,1.0,1.0,1.0
+heldout_07,Can roles be assigned to the named trust without transferring a person’s role to the other trust?,completed,6,0,0,1.0,1.0,1.0,1.0,1.0
+heldout_08,Can distinct input identities survive matching Source titles while complementary facts are combined?,completed,5,0,0,1.0,1.0,1.0,1.0,1.0
+heldout_09,Can supported relationships be recovered without treating administrative participants and process descriptions as graph facts?,completed,3,0,0,1.0,1.0,1.0,1.0,1.0
+heldout_10,Can an unambiguous local pronoun preserve the identity of a person across two trust-role statements?,completed,3,0,0,1.0,1.0,1.0,1.0,1.0

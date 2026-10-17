@@ -1,0 +1,1486 @@
+{
+  "heldout_01": [
+    {
+      "id": "095565f18f28bf71267f330216e1ae8e00f24e6b327eafd3171b46a348d3061a",
+      "edge": [
+        "Maya Lau",
+        "beneficiary_of",
+        "Juniper Family Trust"
+      ],
+      "outcome": "matched",
+      "expected": [
+        {
+          "id": "b6efc31646498091877a7c1ddd93e2879865447df95c1257ea41721239821f5d",
+          "source_id": "letter",
+          "text": "Maya Lau is a beneficiary of the Juniper Family Trust.",
+          "occurrences": [
+            [
+              422,
+              476
+            ]
+          ]
+        }
+      ],
+      "predicted": [
+        {
+          "id": "evidence_002",
+          "source_id": "letter",
+          "text": "Maya Lau is a beneficiary of the Juniper Family Trust.",
+          "occurrences": [
+            [
+              422,
+              476
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "b2407b812f8cd14332cfed78d6eed02ae273a8ee5dcff0caed1f020fdaa1620b",
+      "edge": [
+        "Nadia Lau",
+        "parent_of",
+        "Maya Lau"
+      ],
+      "outcome": "matched",
+      "expected": [
+        {
+          "id": "27ff9229b667527ea8b613e7d71aec3a9239c3e29f3cfad564a49399022081a6",
+          "source_id": "letter",
+          "text": "Nadia Lau and Owen Lau are the parents of Maya Lau.",
+          "occurrences": [
+            [
+              370,
+              421
+            ]
+          ]
+        }
+      ],
+      "predicted": [
+        {
+          "id": "evidence_004",
+          "source_id": "letter",
+          "text": "Nadia Lau and Owen Lau are the parents of Maya Lau.",
+          "occurrences": [
+            [
+              370,
+              421
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "f8a00e7e616384babb365f7a0c39af4670ce44c08ec90927a9ffeb0e48b77975",
+      "edge": [
+        "Nadia Lau",
+        "settlor_of",
+        "Juniper Family Trust"
+      ],
+      "outcome": "matched",
+      "expected": [
+        {
+          "id": "0f866c30c29b5f7e33c4eeb5fb9fc605722bff3b5282b23781b94b4749c9fea0",
+          "source_id": "letter",
+          "text": "I, Nadia Lau, am the settlor of the Juniper Family Trust.",
+          "occurrences": [
+            [
+              276,
+              333
+            ]
+          ]
+        }
+      ],
+      "predicted": [
+        {
+          "id": "evidence_001",
+          "source_id": "letter",
+          "text": "I, Nadia Lau, am the settlor of the Juniper Family Trust.",
+          "occurrences": [
+            [
+              276,
+              333
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "d978a0c405e35ab8693797095d7f37a7661c219edd2ad2eff6cdf8de852991e0",
+      "edge": [
+        "Nadia Lau",
+        "spouse_of",
+        "Owen Lau"
+      ],
+      "outcome": "matched",
+      "expected": [
+        {
+          "id": "8d9a7c5cd607b14c8bb7bab413c04e2227f34d41f70c2ed36a24aaac71f0842d",
+          "source_id": "letter",
+          "text": "Nadia Lau and Owen Lau are spouses.",
+          "occurrences": [
+            [
+              334,
+              369
+            ]
+          ]
+        }
+      ],
+      "predicted": [
+        {
+          "id": "evidence_003",
+          "source_id": "letter",
+          "text": "Nadia Lau and Owen Lau are spouses.",
+          "occurrences": [
+            [
+              334,
+              369
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "739a8aab5ff0647658f299c4b43f745775181e1ed779c13d7ee66746195d727e",
+      "edge": [
+        "Owen Lau",
+        "parent_of",
+        "Maya Lau"
+      ],
+      "outcome": "matched",
+      "expected": [
+        {
+          "id": "27ff9229b667527ea8b613e7d71aec3a9239c3e29f3cfad564a49399022081a6",
+          "source_id": "letter",
+          "text": "Nadia Lau and Owen Lau are the parents of Maya Lau.",
+          "occurrences": [
+            [
+              370,
+              421
+            ]
+          ]
+        }
+      ],
+      "predicted": [
+        {
+          "id": "evidence_004",
+          "source_id": "letter",
+          "text": "Nadia Lau and Owen Lau are the parents of Maya Lau.",
+          "occurrences": [
+            [
+              370,
+              421
+            ]
+          ]
+        }
+      ]
+    }
+  ],
+  "heldout_02": [
+    {
+      "id": "3fa84d481006b50507b789a25c8e5f70c6c4cd03aca23c9a8619298c33b1aac9",
+      "edge": [
+        "Grace Wong",
+        "beneficiary_of",
+        "Amber Family Trust"
+      ],
+      "outcome": "provenance_failure",
+      "expected": [
+        {
+          "id": "dad064bda8b62f0d297789839b8e77841b79fb91ad6e622f9fc301e1705bdcb3",
+          "source_id": "recap",
+          "text": "Felix Wong is the settlor of the Amber Family Trust, and Grace Wong and Hugo Wong are siblings and are both beneficiaries of the Amber Family Trust.",
+          "occurrences": [
+            [
+              130,
+              278
+            ]
+          ]
+        }
+      ],
+      "predicted": [
+        {
+          "id": "evidence_002",
+          "source_id": "recap",
+          "text": "Grace Wong and Hugo Wong are siblings and are both beneficiaries of the Amber Family Trust.",
+          "occurrences": [
+            [
+              187,
+              278
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "58d06675620d74f92d19745367de91374366bbecaa34fba4740c9f8c32e52678",
+      "edge": [
+        "Grace Wong",
+        "sibling_of",
+        "Hugo Wong"
+      ],
+      "outcome": "provenance_failure",
+      "expected": [
+        {
+          "id": "dad064bda8b62f0d297789839b8e77841b79fb91ad6e622f9fc301e1705bdcb3",
+          "source_id": "recap",
+          "text": "Felix Wong is the settlor of the Amber Family Trust, and Grace Wong and Hugo Wong are siblings and are both beneficiaries of the Amber Family Trust.",
+          "occurrences": [
+            [
+              130,
+              278
+            ]
+          ]
+        }
+      ],
+      "predicted": [
+        {
+          "id": "evidence_002",
+          "source_id": "recap",
+          "text": "Grace Wong and Hugo Wong are siblings and are both beneficiaries of the Amber Family Trust.",
+          "occurrences": [
+            [
+              187,
+              278
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ea16c161a1cd2955d4b294d54cbec0dff89fb81b1871f19c578998ec439a19f2",
+      "edge": [
+        "Hugo Wong",
+        "beneficiary_of",
+        "Amber Family Trust"
+      ],
+      "outcome": "provenance_failure",
+      "expected": [
+        {
+          "id": "dad064bda8b62f0d297789839b8e77841b79fb91ad6e622f9fc301e1705bdcb3",
+          "source_id": "recap",
+          "text": "Felix Wong is the settlor of the Amber Family Trust, and Grace Wong and Hugo Wong are siblings and are both beneficiaries of the Amber Family Trust.",
+          "occurrences": [
+            [
+              130,
+              278
+            ]
+          ]
+        }
+      ],
+      "predicted": [
+        {
+          "id": "evidence_002",
+          "source_id": "recap",
+          "text": "Grace Wong and Hugo Wong are siblings and are both beneficiaries of the Amber Family Trust.",
+          "occurrences": [
+            [
+              187,
+              278
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "71567c3859c0a151d4713669ab3d1f36aac76fee8b813cdb47b84a969a098d09",
+      "edge": [
+        "Felix Wong",
+        "settlor_of",
+        "Amber Family Trust"
+      ],
+      "outcome": "matched",
+      "expected": [
+        {
+          "id": "dad064bda8b62f0d297789839b8e77841b79fb91ad6e622f9fc301e1705bdcb3",
+          "source_id": "recap",
+          "text": "Felix Wong is the settlor of the Amber Family Trust, and Grace Wong and Hugo Wong are siblings and are both beneficiaries of the Amber Family Trust.",
+          "occurrences": [
+            [
+              130,
+              278
+            ]
+          ]
+        }
+      ],
+      "predicted": [
+        {
+          "id": "evidence_001",
+          "source_id": "recap",
+          "text": "Felix Wong is the settlor of the Amber Family Trust, and Grace Wong and Hugo Wong are siblings and are both beneficiaries of the Amber Family Trust.",
+          "occurrences": [
+            [
+              130,
+              278
+            ]
+          ]
+        }
+      ]
+    }
+  ],
+  "heldout_03": [
+    {
+      "id": "022280906da67d6645ecb0508dd9748fdf48d94ab7922b90fff8a932d260413c",
+      "edge": [
+        "Beatrice Ng",
+        "parent_of",
+        "Isaac Ng"
+      ],
+      "outcome": "missing",
+      "expected": [
+        {
+          "id": "9a89936c05f05937de5d44cec6b0897038944d718193562f97c061edbe47c221",
+          "source_id": "interview",
+          "text": "Bea is the parent of Isaac Ng.",
+          "occurrences": [
+            [
+              260,
+              290
+            ]
+          ]
+        }
+      ],
+      "predicted": []
+    },
+    {
+      "id": "326c9bf1db33bc11b368f679d36258d8a0cd9c5bda0af3819abe9972f7ae1397",
+      "edge": [
+        "Beatrice Ng",
+        "settlor_of",
+        "Larch Family Trust"
+      ],
+      "outcome": "missing",
+      "expected": [
+        {
+          "id": "93b835801d97e46655d4be1ede7678967b1f0d27cd2a0241e174c7b082193458",
+          "source_id": "interview",
+          "text": "Bea is the settlor of the Larch Family Trust.",
+          "occurrences": [
+            [
+              214,
+              259
+            ]
+          ]
+        }
+      ],
+      "predicted": []
+    },
+    {
+      "id": "e8a0ebb54fa4398036e8cb0ff35bbbf97886130681fbae359ebd4a0706d34575",
+      "edge": [
+        "Bea",
+        "parent_of",
+        "Isaac Ng"
+      ],
+      "outcome": "extra",
+      "expected": [],
+      "predicted": [
+        {
+          "id": "evidence_001",
+          "source_id": "interview",
+          "text": "Bea is the parent of Isaac Ng.",
+          "occurrences": [
+            [
+              260,
+              290
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "91324c7b983f2d8bb87ef46301e553c60be9521ae676356da611d7e0f825de55",
+      "edge": [
+        "Bea",
+        "settlor_of",
+        "Larch Family Trust"
+      ],
+      "outcome": "extra",
+      "expected": [],
+      "predicted": [
+        {
+          "id": "evidence_002",
+          "source_id": "interview",
+          "text": "Bea is the settlor of the Larch Family Trust.",
+          "occurrences": [
+            [
+              214,
+              259
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "d5dcfe95a0f01991cfa2783b897a16a27ea75b34962ae019970db0379635b343",
+      "edge": [
+        "Isaac Ng",
+        "beneficiary_of",
+        "Larch Family Trust"
+      ],
+      "outcome": "matched",
+      "expected": [
+        {
+          "id": "56adf5e2bba8dfa09d805c044c0263801b0ff703638ca9199fda09db341c0ef8",
+          "source_id": "interview",
+          "text": "Isaac Ng is a beneficiary of the Larch Family Trust.",
+          "occurrences": [
+            [
+              291,
+              343
+            ]
+          ]
+        }
+      ],
+      "predicted": [
+        {
+          "id": "evidence_003",
+          "source_id": "interview",
+          "text": "Isaac Ng is a beneficiary of the Larch Family Trust.",
+          "occurrences": [
+            [
+              291,
+              343
+            ]
+          ]
+        }
+      ]
+    }
+  ],
+  "heldout_04": [
+    {
+      "id": "645d525491fc01bb79f228a50320ecf47b9a23c4cb8c498948f32691f4d5fd71",
+      "edge": [
+        "Jonas Chan",
+        "settlor_of",
+        "Maple Family Trust"
+      ],
+      "outcome": "matched",
+      "expected": [
+        {
+          "id": "080f18ee121ffa367e6bf5b12b537784ec5c95eb36f994da522ca0911b5563ea",
+          "source_id": "initial",
+          "text": "Jonas Chan is the settlor of the Maple Family Trust.",
+          "occurrences": [
+            [
+              97,
+              149
+            ]
+          ]
+        }
+      ],
+      "predicted": [
+        {
+          "id": "evidence_003",
+          "source_id": "initial",
+          "text": "Jonas Chan is the settlor of the Maple Family Trust.",
+          "occurrences": [
+            [
+              97,
+              149
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "9e5b76412ec047ed41180e2a83e24da0701cde48a36764b28a89d48685512ac1",
+      "edge": [
+        "Keira Chan",
+        "beneficiary_of",
+        "Maple Family Trust"
+      ],
+      "outcome": "matched",
+      "expected": [
+        {
+          "id": "eb8f846c54c33fb6429ef7cd6d19af617ba4f06dbcd3c10c7ef2b5cffe084e25",
+          "source_id": "initial",
+          "text": "Keira Chan is a beneficiary of the Maple Family Trust.",
+          "occurrences": [
+            [
+              150,
+              204
+            ]
+          ]
+        },
+        {
+          "id": "2cabca58cc1c912f9cb84da95dbb6ce8474b7f782e87f6b7d6decec8de905251",
+          "source_id": "followup",
+          "text": "Keira Chan is a beneficiary of the Maple Family Trust.",
+          "occurrences": [
+            [
+              235,
+              289
+            ]
+          ]
+        }
+      ],
+      "predicted": [
+        {
+          "id": "evidence_002",
+          "source_id": "followup",
+          "text": "The beneficiary position was checked again: Keira Chan is a beneficiary of the Maple Family Trust.",
+          "occurrences": [
+            [
+              191,
+              289
+            ]
+          ]
+        },
+        {
+          "id": "evidence_004",
+          "source_id": "initial",
+          "text": "Keira Chan is a beneficiary of the Maple Family Trust.",
+          "occurrences": [
+            [
+              150,
+              204
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "fcc154f70c056b7b2fd2a8bbd3bc30cd92e3146c959be00165bacb8e885b5e63",
+      "edge": [
+        "Lina Ho",
+        "trustee_of",
+        "Maple Family Trust"
+      ],
+      "outcome": "matched",
+      "expected": [
+        {
+          "id": "dae4ce49a5d0883d33ba2f10041729e30ed8878987f489a858f2beb669e83103",
+          "source_id": "followup",
+          "text": "Lina Ho is a trustee of the Maple Family Trust.",
+          "occurrences": [
+            [
+              143,
+              190
+            ]
+          ]
+        }
+      ],
+      "predicted": [
+        {
+          "id": "evidence_001",
+          "source_id": "followup",
+          "text": "Lina Ho is a trustee of the Maple Family Trust.",
+          "occurrences": [
+            [
+              143,
+              190
+            ]
+          ]
+        }
+      ]
+    }
+  ],
+  "heldout_05": [
+    {
+      "id": "1e650d4a984b57593b6d42a85865a62f963d47561560c82610d2d204d6fd0e1d",
+      "edge": [
+        "Leona Wu",
+        "parent_of",
+        "Milo Wu"
+      ],
+      "outcome": "matched",
+      "expected": [
+        {
+          "id": "2a26fcc476c13fd71c7ed3309c4dd5527de9b616673fc641bd62ec61d9235e1f",
+          "source_id": "initial",
+          "text": "Leona Wu is a parent of Milo Wu.",
+          "occurrences": [
+            [
+              152,
+              184
+            ]
+          ]
+        }
+      ],
+      "predicted": [
+        {
+          "id": "evidence_001",
+          "source_id": "initial",
+          "text": "Leona Wu is a parent of Milo Wu.",
+          "occurrences": [
+            [
+              152,
+              184
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "9ccd3e9a23d8dd59dc3b0c43e3075a055f926ee0f36a2707fd3d561e3fcb36b6",
+      "edge": [
+        "Leona Wu",
+        "settlor_of",
+        "Cedar Family Trust"
+      ],
+      "outcome": "matched",
+      "expected": [
+        {
+          "id": "311dfae20d2abc76e860b7d1fd92a2fa55e255fd7da32ec18418568ed5f645d1",
+          "source_id": "initial",
+          "text": "Leona Wu is the settlor of the Cedar Family Trust.",
+          "occurrences": [
+            [
+              101,
+              151
+            ]
+          ]
+        }
+      ],
+      "predicted": [
+        {
+          "id": "evidence_002",
+          "source_id": "initial",
+          "text": "Leona Wu is the settlor of the Cedar Family Trust.",
+          "occurrences": [
+            [
+              101,
+              151
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "13145856b5059206b7ecf5e8a38c19f91e22ca0d830636554225bcc35664aa22",
+      "edge": [
+        "Milo Wu",
+        "beneficiary_of",
+        "Cedar Family Trust"
+      ],
+      "outcome": "matched",
+      "expected": [
+        {
+          "id": "a804895652f3fd2fa60698d5b5daeae5baff8972ee39145c372a71a7bd3f9ef0",
+          "source_id": "initial",
+          "text": "Milo Wu is a beneficiary of the Cedar Family Trust.",
+          "occurrences": [
+            [
+              185,
+              236
+            ]
+          ]
+        }
+      ],
+      "predicted": [
+        {
+          "id": "evidence_003",
+          "source_id": "initial",
+          "text": "Milo Wu is a beneficiary of the Cedar Family Trust.",
+          "occurrences": [
+            [
+              185,
+              236
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "8404724dd55e4af241ad322c68aaf82e22191448dc1a894fb0ec02da01e31eb0",
+      "edge": [
+        "Nora Tse",
+        "trustee_of",
+        "Cedar Family Trust"
+      ],
+      "outcome": "matched",
+      "expected": [
+        {
+          "id": "67cc862d65144546a98345372ed77a09a1e6ca61c085cf22132e2d0abe4ec7ed",
+          "source_id": "replacement",
+          "text": "Nora Tse is the sole current trustee of the Cedar Family Trust as at 22 July 2026.",
+          "occurrences": [
+            [
+              240,
+              322
+            ]
+          ]
+        },
+        {
+          "id": "1cf1ff1798a9be6691dc9f26ae46284f2b48a55f4bf5d3e026cf9eefc83a128c",
+          "source_id": "replacement",
+          "text": "Nora Tse became the replacement trustee of the Cedar Family Trust with effect from 15 July 2026.",
+          "occurrences": [
+            [
+              143,
+              239
+            ]
+          ]
+        }
+      ],
+      "predicted": [
+        {
+          "id": "evidence_004",
+          "source_id": "replacement",
+          "text": "Nora Tse became the replacement trustee of the Cedar Family Trust with effect from 15 July 2026.",
+          "occurrences": [
+            [
+              143,
+              239
+            ]
+          ]
+        }
+      ]
+    }
+  ],
+  "heldout_06": [
+    {
+      "id": "109f9cb3645a8b96b8ab7a005e1e48fce40ca778c798ac3becbc0dcfc458438e",
+      "edge": [
+        "Petra Lam",
+        "settlor_of",
+        "Alder Family Trust"
+      ],
+      "outcome": "matched",
+      "expected": [
+        {
+          "id": "6f84d3d63956157ff74c2c81dc313a34991bfcc7cd9e6c001039a4c5a282033a",
+          "source_id": "archive",
+          "text": "Petra Lam is the settlor of the Alder Family Trust.",
+          "occurrences": [
+            [
+              102,
+              153
+            ]
+          ]
+        }
+      ],
+      "predicted": [
+        {
+          "id": "evidence_001",
+          "source_id": "archive",
+          "text": "Petra Lam is the settlor of the Alder Family Trust.",
+          "occurrences": [
+            [
+              102,
+              153
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "b22e12933cf93be14c38b4470688f4171fad6efe11efa5037a680770aa1b6f37",
+      "edge": [
+        "Quinn Lam",
+        "beneficiary_of",
+        "Alder Family Trust"
+      ],
+      "outcome": "matched",
+      "expected": [
+        {
+          "id": "d1cb007a85964bb0cb13733eede85c9429276a340d29e54e38b7f615979f8015",
+          "source_id": "archive",
+          "text": "Quinn Lam is a beneficiary of the Alder Family Trust.",
+          "occurrences": [
+            [
+              154,
+              207
+            ]
+          ]
+        }
+      ],
+      "predicted": [
+        {
+          "id": "evidence_002",
+          "source_id": "archive",
+          "text": "Quinn Lam is a beneficiary of the Alder Family Trust.",
+          "occurrences": [
+            [
+              154,
+              207
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "187f7bc4edf2ddc82e75d9eba70d72a1596f5f067e58270fb55870cc37599b90",
+      "edge": [
+        "Rita Yuen",
+        "trustee_of",
+        "Alder Family Trust"
+      ],
+      "outcome": "matched",
+      "expected": [
+        {
+          "id": "cd2432aa02edb0b4db3ed6c8695cffcdddd4b76fc34ffc585061d88c9a1627b3",
+          "source_id": "update",
+          "text": "Rita Yuen is the sole current trustee of the Alder Family Trust as at 28 June 2026.",
+          "occurrences": [
+            [
+              279,
+              362
+            ]
+          ]
+        },
+        {
+          "id": "d2eca99d943a67573435a533a3b2dff588c1d7134320284c68e3b0e122ae1ab8",
+          "source_id": "update",
+          "text": "Rita Yuen became trustee of the Alder Family Trust with effect from 20 June 2026.",
+          "occurrences": [
+            [
+              197,
+              278
+            ]
+          ]
+        }
+      ],
+      "predicted": [
+        {
+          "id": "evidence_003",
+          "source_id": "update",
+          "text": "Rita Yuen became trustee of the Alder Family Trust with effect from 20 June 2026.",
+          "occurrences": [
+            [
+              197,
+              278
+            ]
+          ]
+        },
+        {
+          "id": "evidence_004",
+          "source_id": "update",
+          "text": "Rita Yuen is the sole current trustee of the Alder Family Trust as at 28 June 2026.",
+          "occurrences": [
+            [
+              279,
+              362
+            ]
+          ]
+        }
+      ]
+    }
+  ],
+  "heldout_07": [
+    {
+      "id": "11d83f9b16d85efbd68ffa435257def37bfc8030fd91e70db279634d6ab785ba",
+      "edge": [
+        "Sienna Mak",
+        "beneficiary_of",
+        "Elm Family Trust"
+      ],
+      "outcome": "matched",
+      "expected": [
+        {
+          "id": "88bb9713bc7dac710bbe5fa715e1a2bf63b747b39ec6a6d1d7412e21df24c70b",
+          "source_id": "review",
+          "text": "Sienna Mak and Uma Chan are beneficiaries of the Elm Family Trust.",
+          "occurrences": [
+            [
+              417,
+              483
+            ]
+          ]
+        }
+      ],
+      "predicted": [
+        {
+          "id": "evidence_001",
+          "source_id": "review",
+          "text": "Sienna Mak and Uma Chan are beneficiaries of the Elm Family Trust.",
+          "occurrences": [
+            [
+              417,
+              483
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "1528b0eff1e16d9e315e3d6fb2914da8084ce22804f0e88a385a05961269f1f0",
+      "edge": [
+        "Sienna Mak",
+        "settlor_of",
+        "Birch Family Trust"
+      ],
+      "outcome": "matched",
+      "expected": [
+        {
+          "id": "f4865aa18caeb4f2616550147e5ee87433c10185adcfa72700dcde16cb370cf6",
+          "source_id": "review",
+          "text": "Sienna Mak is the settlor of the Birch Family Trust.",
+          "occurrences": [
+            [
+              191,
+              243
+            ]
+          ]
+        }
+      ],
+      "predicted": [
+        {
+          "id": "evidence_002",
+          "source_id": "review",
+          "text": "Sienna Mak is the settlor of the Birch Family Trust.",
+          "occurrences": [
+            [
+              191,
+              243
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "aba90eaf4c751c0c4172c9ef909b3f2f70347676a96cc6c2b509942530eb562a",
+      "edge": [
+        "Tobias Mak",
+        "beneficiary_of",
+        "Birch Family Trust"
+      ],
+      "outcome": "matched",
+      "expected": [
+        {
+          "id": "bccaa544a99cceb9ea6814d92d819c286512d8c69e2edd234e1dba1db4aa08b1",
+          "source_id": "review",
+          "text": "Tobias Mak is a beneficiary of the Birch Family Trust.",
+          "occurrences": [
+            [
+              244,
+              298
+            ]
+          ]
+        }
+      ],
+      "predicted": [
+        {
+          "id": "evidence_003",
+          "source_id": "review",
+          "text": "Tobias Mak is a beneficiary of the Birch Family Trust.",
+          "occurrences": [
+            [
+              244,
+              298
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "f3d720ac6f709d8249ecaef4554598c333bf3cca0512859d0d5552a0e552aec7",
+      "edge": [
+        "Tobias Mak",
+        "settlor_of",
+        "Elm Family Trust"
+      ],
+      "outcome": "matched",
+      "expected": [
+        {
+          "id": "ca6c8584d8ad7971b06d2ba1bfc986cb6b6c6397f43c5fdc98298778ecf6970f",
+          "source_id": "review",
+          "text": "Tobias Mak is the settlor of the Elm Family Trust.",
+          "occurrences": [
+            [
+              366,
+              416
+            ]
+          ]
+        }
+      ],
+      "predicted": [
+        {
+          "id": "evidence_004",
+          "source_id": "review",
+          "text": "Tobias Mak is the settlor of the Elm Family Trust.",
+          "occurrences": [
+            [
+              366,
+              416
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "bfd8866fd035c292a21393c1c32f9aae5a7fe131d96f9ed50cfb8525009cb901",
+      "edge": [
+        "Uma Chan",
+        "beneficiary_of",
+        "Elm Family Trust"
+      ],
+      "outcome": "matched",
+      "expected": [
+        {
+          "id": "88bb9713bc7dac710bbe5fa715e1a2bf63b747b39ec6a6d1d7412e21df24c70b",
+          "source_id": "review",
+          "text": "Sienna Mak and Uma Chan are beneficiaries of the Elm Family Trust.",
+          "occurrences": [
+            [
+              417,
+              483
+            ]
+          ]
+        }
+      ],
+      "predicted": [
+        {
+          "id": "evidence_001",
+          "source_id": "review",
+          "text": "Sienna Mak and Uma Chan are beneficiaries of the Elm Family Trust.",
+          "occurrences": [
+            [
+              417,
+              483
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "a9b3f8a2a879c13249f921605d854b75ab35a2ae5d4ced9e1a08e305a82c266e",
+      "edge": [
+        "Uma Chan",
+        "trustee_of",
+        "Birch Family Trust"
+      ],
+      "outcome": "matched",
+      "expected": [
+        {
+          "id": "8568fd9982dc84dd82717c2c5b5815f37f16918a92e6d4a26d47b574c2e1ed1d",
+          "source_id": "review",
+          "text": "Uma Chan is a trustee of the Birch Family Trust.",
+          "occurrences": [
+            [
+              299,
+              347
+            ]
+          ]
+        }
+      ],
+      "predicted": [
+        {
+          "id": "evidence_005",
+          "source_id": "review",
+          "text": "Uma Chan is a trustee of the Birch Family Trust.",
+          "occurrences": [
+            [
+              299,
+              347
+            ]
+          ]
+        }
+      ]
+    }
+  ],
+  "heldout_08": [
+    {
+      "id": "f1380b7d4481f01f9f4043876056827a0b6603192deddba873ab78f9877e52e8",
+      "edge": [
+        "Victor Lo",
+        "parent_of",
+        "Xavier Lo"
+      ],
+      "outcome": "matched",
+      "expected": [
+        {
+          "id": "c7d7425a445fea3875a5752a641a3fad7ef880d75085544d67d9792958bd97b4",
+          "source_id": "family",
+          "text": "Victor Lo and Wendy Lo are the parents of Xavier Lo.",
+          "occurrences": [
+            [
+              188,
+              240
+            ]
+          ]
+        }
+      ],
+      "predicted": [
+        {
+          "id": "evidence_002",
+          "source_id": "family",
+          "text": "Victor Lo and Wendy Lo are the parents of Xavier Lo.",
+          "occurrences": [
+            [
+              188,
+              240
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "af22c6b7a4c3dc5a7cf64dc4e92605b62e9fca744f749265e411632ab0af9a5d",
+      "edge": [
+        "Victor Lo",
+        "settlor_of",
+        "Rowan Family Trust"
+      ],
+      "outcome": "matched",
+      "expected": [
+        {
+          "id": "48cb316be9626727fd4bdde83e76f7575be5f6996c0a80c15663a08075b3d60b",
+          "source_id": "trust",
+          "text": "Victor Lo is the settlor of the Rowan Family Trust.",
+          "occurrences": [
+            [
+              138,
+              189
+            ]
+          ]
+        }
+      ],
+      "predicted": [
+        {
+          "id": "evidence_003",
+          "source_id": "trust",
+          "text": "Victor Lo is the settlor of the Rowan Family Trust.",
+          "occurrences": [
+            [
+              138,
+              189
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "802f429fa2a3250cec87d3c26eb2f3c075e13f4a18a6b1eead21871bd4cfaba1",
+      "edge": [
+        "Victor Lo",
+        "spouse_of",
+        "Wendy Lo"
+      ],
+      "outcome": "matched",
+      "expected": [
+        {
+          "id": "a1707d87fae91bb9c51b73547e3cd859e2b1aa053a000d7ea143457662af08f2",
+          "source_id": "family",
+          "text": "Victor Lo and Wendy Lo are spouses.",
+          "occurrences": [
+            [
+              152,
+              187
+            ]
+          ]
+        }
+      ],
+      "predicted": [
+        {
+          "id": "evidence_001",
+          "source_id": "family",
+          "text": "Victor Lo and Wendy Lo are spouses.",
+          "occurrences": [
+            [
+              152,
+              187
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "e920aeb994e6e8021c5d59bfec9d15571858363ef59ecef80c145064c1d343e2",
+      "edge": [
+        "Wendy Lo",
+        "parent_of",
+        "Xavier Lo"
+      ],
+      "outcome": "matched",
+      "expected": [
+        {
+          "id": "c7d7425a445fea3875a5752a641a3fad7ef880d75085544d67d9792958bd97b4",
+          "source_id": "family",
+          "text": "Victor Lo and Wendy Lo are the parents of Xavier Lo.",
+          "occurrences": [
+            [
+              188,
+              240
+            ]
+          ]
+        }
+      ],
+      "predicted": [
+        {
+          "id": "evidence_002",
+          "source_id": "family",
+          "text": "Victor Lo and Wendy Lo are the parents of Xavier Lo.",
+          "occurrences": [
+            [
+              188,
+              240
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "389324efdefa1ebbdf8b369bd2732a4f77095956f1a4935ad7427fc57f519b2e",
+      "edge": [
+        "Xavier Lo",
+        "beneficiary_of",
+        "Rowan Family Trust"
+      ],
+      "outcome": "matched",
+      "expected": [
+        {
+          "id": "7c9fde7c4caabf7150e59e8c3605c9306fa0295b570ea2f3a964c32890481591",
+          "source_id": "trust",
+          "text": "Xavier Lo is a beneficiary of the Rowan Family Trust.",
+          "occurrences": [
+            [
+              190,
+              243
+            ]
+          ]
+        }
+      ],
+      "predicted": [
+        {
+          "id": "evidence_004",
+          "source_id": "trust",
+          "text": "Xavier Lo is a beneficiary of the Rowan Family Trust.",
+          "occurrences": [
+            [
+              190,
+              243
+            ]
+          ]
+        }
+      ]
+    }
+  ],
+  "heldout_09": [
+    {
+      "id": "9aa0f8f58a74c4d8f5a0f911b8af21903eab9a4aa954436b44ce2dc0ee174a18",
+      "edge": [
+        "Adele Ip",
+        "trustee_of",
+        "Hazel Family Trust"
+      ],
+      "outcome": "matched",
+      "expected": [
+        {
+          "id": "641a9da4452d41e390a850eccf54021a8a1b0b78336340509f7b76d677e4749c",
+          "source_id": "file",
+          "text": "Adele Ip is a trustee of the Hazel Family Trust.",
+          "occurrences": [
+            [
+              643,
+              691
+            ]
+          ]
+        }
+      ],
+      "predicted": [
+        {
+          "id": "evidence_001",
+          "source_id": "file",
+          "text": "Adele Ip is a trustee of the Hazel Family Trust.",
+          "occurrences": [
+            [
+              643,
+              691
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "d2d511659a44af16c42dfda7d83c73d6e5cac12fa31959b939674e5aed9258ff",
+      "edge": [
+        "Yasmin Fong",
+        "settlor_of",
+        "Hazel Family Trust"
+      ],
+      "outcome": "matched",
+      "expected": [
+        {
+          "id": "a5325e14f28b48827fae32f3b2cf6201e3655f0524d971c8131df7ca1de1ca6c",
+          "source_id": "file",
+          "text": "Yasmin Fong is the settlor of the Hazel Family Trust.",
+          "occurrences": [
+            [
+              532,
+              585
+            ]
+          ]
+        }
+      ],
+      "predicted": [
+        {
+          "id": "evidence_002",
+          "source_id": "file",
+          "text": "Yasmin Fong is the settlor of the Hazel Family Trust.",
+          "occurrences": [
+            [
+              532,
+              585
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "52ba81d0d4c18749927ef53e118397b9aa7f12b229a57fa93292906473a1f49d",
+      "edge": [
+        "Zachary Fong",
+        "beneficiary_of",
+        "Hazel Family Trust"
+      ],
+      "outcome": "matched",
+      "expected": [
+        {
+          "id": "3e1c2d83c524e124fb07d7fbd9b16eb1254e92ace76969e3a346ffe9d0a3b14d",
+          "source_id": "file",
+          "text": "Zachary Fong is a beneficiary of the Hazel Family Trust.",
+          "occurrences": [
+            [
+              586,
+              642
+            ]
+          ]
+        }
+      ],
+      "predicted": [
+        {
+          "id": "evidence_003",
+          "source_id": "file",
+          "text": "Zachary Fong is a beneficiary of the Hazel Family Trust.",
+          "occurrences": [
+            [
+              586,
+              642
+            ]
+          ]
+        }
+      ]
+    }
+  ],
+  "heldout_10": [
+    {
+      "id": "1765fdf9850bbebe78fa967e3392a9a3b6120456b5a8dfbb0a00d9d1348277bb",
+      "edge": [
+        "Daphne Cheung",
+        "settlor_of",
+        "Olive Family Trust"
+      ],
+      "outcome": "matched",
+      "expected": [
+        {
+          "id": "b06f20c92a3032f95e3efb1456355bfc4c5da6f452a78d356c50cf63eea43c01",
+          "source_id": "confirmation",
+          "text": "She is the settlor of the Olive Family Trust.",
+          "occurrences": [
+            [
+              125,
+              170
+            ]
+          ]
+        },
+        {
+          "id": "43e3d8042f523e51ad92140efca0689be83e44e1769f7c3b77d23bc2b3c7010c",
+          "source_id": "confirmation",
+          "text": "Daphne Cheung confirmed the following two facts about her own position. She is the settlor of the Olive Family Trust.",
+          "occurrences": [
+            [
+              53,
+              170
+            ]
+          ]
+        }
+      ],
+      "predicted": [
+        {
+          "id": "evidence_003",
+          "source_id": "confirmation",
+          "text": "She is the settlor of the Olive Family Trust.",
+          "occurrences": [
+            [
+              125,
+              170
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "149195677d13db1370e6e69002d3e69b79433b483f80ae007b9ecbaedb3ade51",
+      "edge": [
+        "Daphne Cheung",
+        "trustee_of",
+        "Olive Family Trust"
+      ],
+      "outcome": "matched",
+      "expected": [
+        {
+          "id": "dbc22cece032b05702971bb004dc691217fcd2e7c2447600fbf4bca145dbeb68",
+          "source_id": "confirmation",
+          "text": "She is also a trustee of the Olive Family Trust.",
+          "occurrences": [
+            [
+              171,
+              219
+            ]
+          ]
+        },
+        {
+          "id": "6232299d4c89aaed270e8834c2f10b0340ad7e16aa134a65f22623ce79101513",
+          "source_id": "confirmation",
+          "text": "Daphne Cheung confirmed the following two facts about her own position. She is the settlor of the Olive Family Trust. She is also a trustee of the Olive Family Trust.",
+          "occurrences": [
+            [
+              53,
+              219
+            ]
+          ]
+        }
+      ],
+      "predicted": [
+        {
+          "id": "evidence_002",
+          "source_id": "confirmation",
+          "text": "She is also a trustee of the Olive Family Trust.",
+          "occurrences": [
+            [
+              171,
+              219
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "fdfb1fc6d4600901efb30a2481b90be305fe2bfd4a5bb4289aeee8244e40a21f",
+      "edge": [
+        "Evan Ho",
+        "beneficiary_of",
+        "Olive Family Trust"
+      ],
+      "outcome": "matched",
+      "expected": [
+        {
+          "id": "4ee5bc5a8572a34afacacb0ae5fc9bb0447017da3c6bed2cae722be6c130b3b3",
+          "source_id": "confirmation",
+          "text": "Evan Ho is a beneficiary of the Olive Family Trust.",
+          "occurrences": [
+            [
+              274,
+              325
+            ]
+          ]
+        }
+      ],
+      "predicted": [
+        {
+          "id": "evidence_001",
+          "source_id": "confirmation",
+          "text": "Evan Ho is a beneficiary of the Olive Family Trust.",
+          "occurrences": [
+            [
+              274,
+              325
+            ]
+          ]
+        }
+      ]
+    }
+  ]
+}
