@@ -29,7 +29,8 @@ test("multi-source curated review follows exact Evidence and demonstrates truste
 });
 
 test("landing review stacks graph above attendance when its panel is narrow", async ({ page }, testInfo) => {
-  for (const width of [390, 1024, 1280, 1600]) {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  for (const width of [390, 1024, 1280, 1402, 1600]) {
     await page.setViewportSize({ width, height: 1000 });
     await page.goto("/#case-01");
     const graph = page.locator(".demonstration .graph-panel");
@@ -39,7 +40,7 @@ test("landing review stacks graph above attendance when its panel is narrow", as
     const stage = await page.locator(".demonstration-stage").boundingBox();
     const graphBounds = await graph.boundingBox();
     const sourceBounds = await source.boundingBox();
-    if (stage!.width <= 850) {
+    if (stage!.width <= 950) {
       expect(sourceBounds!.y).toBeGreaterThanOrEqual(graphBounds!.y + graphBounds!.height);
       expect(Math.abs(graphBounds!.x - sourceBounds!.x)).toBeLessThan(2);
       expect(Math.abs(graphBounds!.width - sourceBounds!.width)).toBeLessThan(2);
@@ -50,5 +51,21 @@ test("landing review stacks graph above attendance when its panel is narrow", as
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     await graph.scrollIntoViewIfNeeded();
     await page.screenshot({ path: testInfo.outputPath(`landing-review-${width}.png`) });
+  }
+});
+
+test("landing graph overview keeps every node inside the canvas after panel resizing", async ({ page }) => {
+  await page.setViewportSize({ width: 1600, height: 1000 });
+  await page.goto("/#case-01");
+  for (const width of [1600, 1402, 1024, 390]) {
+    await page.setViewportSize({ width, height: 1000 });
+    await expect(page.locator(".react-flow__node")).toHaveCount(5);
+    await expect.poll(async () => page.locator(".graph-canvas").evaluate(canvas => {
+      const box = canvas.getBoundingClientRect();
+      return [...canvas.querySelectorAll(".react-flow__node")].every(node => {
+        const rect = node.getBoundingClientRect();
+        return rect.left >= box.left && rect.right <= box.right && rect.top >= box.top && rect.bottom <= box.bottom;
+      });
+    })).toBe(true);
   }
 });

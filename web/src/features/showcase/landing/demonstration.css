@@ -168,7 +168,7 @@
 .demonstration-caption .showcase-fixture-notice { font: 400 13px/1.65 var(--folio-sans); max-width: 40ch; margin: 24px 0; }
 
 /* The landing caption also consumes width, so respond to the review's own space. */
-@container showcase-review (max-width: 850px) {
+@container showcase-review (max-width: 950px) {
   .demonstration-frame .review-workspace {
     grid-template-columns: minmax(0, 1fr);
   }
