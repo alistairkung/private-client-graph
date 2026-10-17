@@ -88,8 +88,9 @@ TASK AND RELATIONSHIPS
 - spouse_of and sibling_of are symmetric; emit each edge once in either direction.
 - Emit one candidate per supported edge. Repeated mentions need only one candidate;
   additional support may be emitted as separate candidates for the same edge.
-- Use names from the Sources, resolving only unambiguous local pronouns. Do not
-  infer unstated relationships, merge aliases, or invent intermediate people.
+- Use names from the Sources, resolving unambiguous local pronouns and explicit
+  identity links. Similar spelling alone does not establish identity. Do not infer
+  unstated relationships or invent intermediate people.
 - Do not turn uncertain, proposed, negated, or hypothetical relationships into facts.
 
 SOURCE AND CURRENT-STATE RULES
