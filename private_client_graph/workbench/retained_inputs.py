@@ -6,6 +6,7 @@ from private_client_graph.models import ExtractionResult
 from private_client_graph.research.artifacts import Bundle, checksum
 from private_client_graph.research.case_metadata import CaseMetadata
 from private_client_graph.research.inputs import ResearchInput
+from private_client_graph.research.run_plan import RunPlan
 from private_client_graph.research.retained_inputs import RetainedInputLineage, RetainedSampleLineage, input_digests
 from .artifacts import artifact_digest
 from .run_inspection import read_run
@@ -18,6 +19,8 @@ def load_retained_inputs(root: Path, experiment_id: str, run_id: str
     if path.is_symlink():
         raise ValueError('Retained artifacts cannot be symlinks')
     bundle = Bundle.open(path)
+    if not isinstance(bundle.plan, RunPlan):
+        raise ValueError('Retained inputs require a single-configuration Run')
     if detail.lifecycle != 'complete' or bundle.plan.input_mode != 'fresh' or bundle.plan.resolver != 'none':
         raise ValueError('Retained inputs require a completed fresh no-resolution Run')
     samples, metadata, lineage = [], {}, {}
@@ -34,9 +37,11 @@ def load_retained_inputs(root: Path, experiment_id: str, run_id: str
         template_id = slot.sample_id.rsplit('_fresh_', 1)[0]
         template = templates[template_id]
         _verify_sample(path, sample, template, slot.extraction_attempt_id)
+        digests = input_digests(sample)
         lineage[sample.sample_id] = RetainedSampleLineage(original_sample_id=sample.sample_id,
             extraction_attempt_id=slot.extraction_attempt_id, snapshot_digest=checksum(sample_path.read_bytes()),
-            **input_digests(sample))
+            source_digest=digests['source_digest'], truth_digest=digests['truth_digest'],
+            extraction_digest=digests['extraction_digest'])
         samples.append(sample.model_copy(deep=True, update={'cohort': 'historical'}))
         metadata[sample.sample_id] = bundle.plan.case_metadata[template_id].model_copy(update={'id': sample.sample_id})
     if artifact_digest(path) != detail.artifact_digest:
