@@ -5,6 +5,7 @@ import * as api from "./api";
 import type { Capabilities, RunDraft, Preview } from "../shared/contracts";
 vi.mock("./api", () => ({
   saveDraft: vi.fn(),
+  getRun: vi.fn(),
   previewDraft: vi.fn(),
   freezeDraft: vi.fn(),
 }));
@@ -15,6 +16,8 @@ const draft: RunDraft = {
   revision: 3,
   copied_from_run: null,
   configuration: {
+    retained_experiment_id: null,
+    retained_run_id: null,
     input_ids: ["case_01_fixture", "case_03_fixture"],
     input_mode: "saved",
     execution_mode: "recorded",
@@ -146,4 +149,40 @@ it("dismisses the compact insertion menu with Escape or outside click and preser
   expect(
     screen.getByRole("spinbutton", { name: "Invocation attempt cap" }),
   ).toBeVisible();
+});
+
+it("selecting retained outputs saves exact observed identities as a zero-call control", async () => {
+  vi.mocked(api.getRun).mockResolvedValue({
+    lifecycle: "complete",
+    plan: { preview: { proposal: { input_mode: "fresh", resolver: "none" } } },
+    observations: [{ sample_id: "case_01_fixture_fresh_01" }],
+  } as Awaited<ReturnType<typeof api.getRun>>);
+  render(<DraftEditor id="experiment" draft={draft} cases={[]} capabilities={capabilities}
+    runIds={["baseline"]} saved={() => {}} saving={() => {}} frozen={() => {}} />);
+  fireEvent.change(screen.getByRole("combobox", { name: "Input origin" }), {
+    target: { value: "baseline" },
+  });
+  await waitFor(() => expect(api.saveDraft).toHaveBeenCalledWith("experiment",
+    expect.objectContaining({ configuration: expect.objectContaining({
+      retained_run_id: "baseline", retained_experiment_id: "experiment",
+      input_ids: ["case_01_fixture_fresh_01"], input_mode: "saved",
+      resolver: "none", execution_mode: "replay", invocation_cap: 0,
+    }) })));
+  expect(api.freezeDraft).not.toHaveBeenCalled();
+});
+
+it("rejects an unfinished retained Run without replacing the saved draft", async () => {
+  vi.mocked(api.getRun).mockResolvedValue({
+    lifecycle: "running",
+    plan: { preview: { proposal: { input_mode: "fresh", resolver: "none" } } },
+    observations: [{ sample_id: "case_01_fixture_fresh_01" }],
+  } as Awaited<ReturnType<typeof api.getRun>>);
+  render(<DraftEditor id="experiment" draft={draft} cases={[]} capabilities={capabilities}
+    runIds={["unfinished"]} saved={() => {}} saving={() => {}} frozen={() => {}} />);
+  fireEvent.change(screen.getByRole("combobox", { name: "Input origin" }), {
+    target: { value: "unfinished" },
+  });
+  await screen.findByText("Select a completed fresh no-resolution Run.");
+  expect(api.saveDraft).not.toHaveBeenCalled();
+  expect(api.freezeDraft).not.toHaveBeenCalled();
 });

@@ -1,7 +1,7 @@
 """Version 2 persistent Experiment and editable Run Draft contracts."""
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from .execution_contracts import Proposal
 from .contracts import ExperimentDetail, HistoryItem
@@ -10,6 +10,14 @@ from .case_catalog import default_input_ids
 
 class RunConfiguration(Proposal):
     input_ids: list[str] = Field(default_factory=default_input_ids, min_length=1, max_length=100)
+
+    @model_validator(mode='after')
+    def retained_saved_inputs(self) -> 'RunConfiguration':
+        if bool(self.retained_run_id) != bool(self.retained_experiment_id):
+            raise ValueError('Retained input selection requires an Experiment and Run')
+        if self.retained_run_id and (self.input_mode != 'saved' or self.extraction_samples != 1):
+            raise ValueError('Retained outputs are fixed saved inputs')
+        return self
 
 
 class WorkspaceCommand(BaseModel):

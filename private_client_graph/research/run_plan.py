@@ -5,6 +5,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from .plan import FiniteExperimentPlan
 from .case_metadata import CaseMetadata
+from .retained_inputs import RetainedInputLineage, input_digests
 
 
 class ObservationSlot(BaseModel):
@@ -27,6 +28,7 @@ class RunPlan(FiniteExperimentPlan):
     repetitions: int = Field(default=1, ge=1, le=3)
     planned_slots: list[ObservationSlot] = Field(default_factory=list)
     case_metadata: dict[str, CaseMetadata] = Field(default_factory=dict)
+    retained_input_lineage: RetainedInputLineage | None = None
     evaluator_version: str = 'semantic_edges_v1'
     aggregate_version: Literal['observation_micro_f1_v1'] = 'observation_micro_f1_v1'
 
@@ -36,8 +38,18 @@ class RunPlan(FiniteExperimentPlan):
             raise ValueError('Select distinct frozen inputs')
         if any(sample.extraction is None or sample.cohort == 'fresh' for sample in self.inputs):
             raise ValueError('Templates require repository-owned frozen inputs')
-        if any(sample.sources is not None and len(sample.sources) > 1 for sample in self.inputs) and self.resolver != 'none':
-            raise ValueError('Source-aware Runs support no resolution only')
+        if self.retained_input_lineage is not None:
+            origin = self.retained_input_lineage
+            if self.input_mode != 'saved' or (self.experiment_id and origin.experiment_id != self.experiment_id):
+                raise ValueError('Retained inputs must remain saved in the original Experiment')
+            if set(origin.samples) != {sample.sample_id for sample in self.inputs}:
+                raise ValueError('Retained lineage must cover every saved input')
+            for sample in self.inputs:
+                retained = origin.samples[sample.sample_id]
+                if sample.cohort != 'historical' or retained.original_sample_id != sample.sample_id:
+                    raise ValueError('Retained saved input identity mismatch')
+                if any(getattr(retained, key) != digest for key, digest in input_digests(sample).items()):
+                    raise ValueError('Retained saved input digest mismatch')
         if self.experiment_id or self.case_metadata:
             self._validate_case_metadata()
         if self.pricing is not None and self.pricing.model != (self.effective_model or self.settings.model):
