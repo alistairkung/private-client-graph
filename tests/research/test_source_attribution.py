@@ -206,3 +206,40 @@ def test_source_aware_recorded_response_keeps_schema_and_has_distinct_identity(t
     assert recorded_response(request, records=records).payload == sample.sourced_extraction.model_dump()
     with pytest.raises(ValueError, match='exact input'):
         recorded_response(legacy, records=records)
+
+
+def test_external_failure_outcome_retains_shared_attempt_without_refunding_or_reissuing(tmp_path):
+    from pathlib import Path
+    from private_client_graph.research.live_accounting import (
+        initialize_task, authorize_external_invocation, reserve_external_attempt,
+        finish_external_attempt, task_state,
+    )
+    from private_client_graph.research.artifacts import BudgetExceeded
+    task = initialize_task(tmp_path, 'Shared caller failure')
+    authority = authorize_external_invocation(tmp_path, purpose='Application smoke', task_cap=1,
+        invocation_cap=1, approval_reference='Deterministic explicit approval')
+    authorization = authority['authorization']
+    assert reserve_external_attempt(tmp_path, authorization=authorization, attempt_id='failed-call')
+    finish_external_attempt(tmp_path, authorization=authorization, attempt_id='failed-call',
+                            outcome='failed', error_type='TimeoutError')
+    retained = json.loads((tmp_path / 'external-invocations' / authorization /
+                          'attempts/failed-call.finished.json').read_text())
+    assert retained['outcome'] == 'failed'
+    assert retained['error_type'] == 'TimeoutError'
+    assert retained['usage'] is None
+    assert task_state(Path(task['ledger']))['used'] == 1
+    assert not reserve_external_attempt(tmp_path, authorization=authorization, attempt_id='failed-call')
+    with pytest.raises(BudgetExceeded):
+        reserve_external_attempt(tmp_path, authorization=authorization, attempt_id='retry')
+    with pytest.raises(FileExistsError):
+        finish_external_attempt(tmp_path, authorization=authorization, attempt_id='failed-call',
+                                outcome='completed')
+
+
+@pytest.mark.parametrize('authorization,attempt_id', [('external-invalid', 'call'),
+                                                       ('external-' + 'a' * 32, '../escape')])
+def test_external_completion_rejects_unsafe_identity_before_reading_task(tmp_path, authorization, attempt_id):
+    from private_client_graph.research.live_accounting import finish_external_attempt
+    with pytest.raises(ValueError, match='identity'):
+        finish_external_attempt(tmp_path, authorization=authorization, attempt_id=attempt_id,
+                                outcome='completed')

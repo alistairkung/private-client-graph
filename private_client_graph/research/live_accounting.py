@@ -6,11 +6,13 @@ index is rebuilt. Authorization records are the task's append-only cap history.
 from contextlib import contextmanager
 import fcntl
 import json
+import re
 from pathlib import Path
-from typing import Iterator, TYPE_CHECKING
+from typing import Iterator, Literal, TYPE_CHECKING
 from uuid import uuid4
 
 from .artifacts import BudgetExceeded, checksum, utc_now, write_json_once
+from .provider import TokenUsage
 
 if TYPE_CHECKING:
     from .artifacts import Bundle
@@ -184,9 +186,7 @@ def authorize_external_invocation(root: Path, *, purpose: str, task_cap: int,
 
 def reserve_external_attempt(root: Path, *, authorization: str, attempt_id: str) -> bool:
     """Reserve before application smoke dispatch; False forbids reissuing an attempt."""
-    import re
-    if not re.fullmatch(r'external-[a-f0-9]{32}', authorization) or not re.fullmatch(r'[a-zA-Z0-9_-]+', attempt_id):
-        raise ValueError('Invalid external authorization or attempt identity')
+    _validate_external_identity(authorization, attempt_id)
     task = read_task(root)
     ledger = Path(task['ledger'])
     with task_lock(ledger):
@@ -213,3 +213,38 @@ def reserve_external_attempt(root: Path, *, authorization: str, attempt_id: str)
         write_json_once(shared, record)
         write_json_once(local, record)
         return True
+
+
+def finish_external_attempt(root: Path, *, authorization: str, attempt_id: str,
+                            outcome: Literal['completed', 'failed', 'uncertain'],
+                            error_type: str | None = None, usage: TokenUsage | None = None,
+                            returned_model: str | None = None) -> None:
+    """Retain an application outcome without refunding its reserved attempt.
+
+    Exception types, rather than exception messages, avoid persisting transport
+    credentials. Missing completions remain uncertain after a process crash.
+    """
+    _validate_external_identity(authorization, attempt_id)
+    if outcome not in ('completed', 'failed', 'uncertain'):
+        raise ValueError('Invalid external attempt outcome')
+    task = read_task(root)
+    ledger = Path(task['ledger'])
+    with task_lock(ledger):
+        task_state(ledger)
+        invocation = Path(task['root']) / 'external-invocations' / authorization
+        shared = ledger / 'reservations' / f'{authorization}-{attempt_id}.json'
+        started = invocation / 'attempts' / f'{attempt_id}.started.json'
+        reservation = json.loads(shared.read_text())
+        if reservation != json.loads(started.read_text()):
+            raise ValueError('External completion requires matching retained reservations')
+        write_json_once(invocation / 'attempts' / f'{attempt_id}.finished.json', dict(
+            attempt_id=attempt_id, authorization=authorization, task_id=task['task_id'],
+            outcome=outcome, error_type=error_type,
+            usage=usage.model_dump() if usage is not None else None,
+            returned_model=returned_model, finished_at=utc_now()))
+
+
+def _validate_external_identity(authorization: str, attempt_id: str) -> None:
+    if (not re.fullmatch(r'external-[a-f0-9]{32}', authorization)
+            or not re.fullmatch(r'[a-zA-Z0-9_-]+', attempt_id)):
+        raise ValueError('Invalid external authorization or attempt identity')
