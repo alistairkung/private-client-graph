@@ -25,4 +25,3 @@ Case 04 and heldout04 have selected duplicate corroboration, but the agreed poli
 ## Reviewed artifact digests
 
 Digests freeze exactly what this independent pass inspected. If the author changes these artifacts, revalidate the changed cases before benchmark approval.
-
