@@ -3,6 +3,7 @@
 These checks establish mechanical integrity, not semantic completeness or model
 quality. Independent source/answer-key review remains an explicit benchmark gate.
 """
+import hashlib
 import json
 from pathlib import Path
 
@@ -141,3 +142,34 @@ def test_heldout_dataset_is_separate_from_development_cases():
     assert not (ROOT / 'cases' / 'heldout_01').exists()
     assert [p.name for p in sorted(HELDOUT.glob('heldout_*'))] == [
         f'heldout_{i:02d}' for i in range(1, 11)]
+
+
+@pytest.mark.parametrize(('case_id', 'counts'), [
+    ('case_01', (6, 0, 0)), ('case_02', (10, 0, 0)),
+    ('case_03', (6, 1, 1)), ('case_04', (7, 0, 0)), ('case_05', (6, 0, 0)),
+])
+def test_development_controls_preserve_existing_schema_and_known_alias_gap(case_id, counts):
+    directory = ROOT / 'cases' / case_id
+    source = (directory / 'source.txt').read_text()
+    truth = GroundTruth.model_validate(_read(directory, 'ground_truth.json'))
+    extraction = ExtractionResult.model_validate(_read(directory, 'expected_extraction.json'))
+    for edge in truth.relationships:
+        assert edge.approved_evidence
+        assert all(quote.strip() and quote in source for quote in edge.approved_evidence)
+    graph = build_graph(extraction.relationships, document='source.txt', source_text=source)
+    score = evaluate_graph(graph, truth)
+    # Case 03 deliberately preserves unresolved raw aliases; no answer-key repair.
+    assert (score.tp, score.fp, score.fn) == counts
+    assert score.provenance_passed == score.tp
+    assert score.provenance_failed == 0
+
+
+@pytest.mark.parametrize('manifest_name', ['batch-01-sha256.json', 'batch-02-sha256.json'])
+def test_independently_reviewed_artifacts_retain_their_recorded_digests(manifest_name):
+    manifest = ROOT / 'research/final-day/validation' / manifest_name
+    reviewed = json.loads(manifest.read_text())
+    assert reviewed
+    for filename, expected in reviewed.items():
+        path = ROOT / filename
+        assert path.resolve().is_relative_to(ROOT.resolve())
+        assert hashlib.sha256(path.read_bytes()).hexdigest() == expected, filename
