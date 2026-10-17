@@ -9,6 +9,7 @@ from pydantic import BaseModel, ConfigDict
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
+from private_client_graph.api.public_research import router as public_research_router
 from private_client_graph.api.auth import AuthConfig, configure_auth
 from private_client_graph.api.matter_proposals import router as proposal_router, proposal_failure
 from private_client_graph.application.matter_confirmation import confirm_matter
@@ -147,6 +148,7 @@ def create_app(web_dist: Path = WEB_DIST) -> FastAPI:
         application.state.proposal_analysis = None
     application.state.showcase_live = LiveConfig()
     application.include_router(proposal_router)
+    application.include_router(public_research_router)
     application.add_exception_handler(ProposalFailure, proposal_failure)
     application.add_api_route("/health", health, methods=["GET"])
     application.add_api_route(
@@ -189,6 +191,8 @@ def create_app(web_dist: Path = WEB_DIST) -> FastAPI:
             "/app/matter-proposals/{proposal_id}", practitioner_shell, include_in_schema=False
         )
         # Public presentation-only routes never enter the practitioner namespace.
+        application.add_api_route("/research-results", practitioner_shell, include_in_schema=False)
+        application.add_api_route("/research-results/", practitioner_shell, include_in_schema=False)
         application.add_api_route("/demo", practitioner_shell, include_in_schema=False)
         application.add_api_route("/demo/{demo_path:path}", practitioner_shell, include_in_schema=False)
         application.mount(
