@@ -18,6 +18,8 @@ export function Configuration({
 }) {
   const [proposal, setProposal] = useState<Proposal>(
     initial ?? {
+      retained_experiment_id: null,
+      retained_run_id: null,
       input_ids: capabilities.inputs.map((input) => input.id),
       input_mode: "saved",
       execution_mode: "replay",

@@ -368,6 +368,8 @@ export type Preview = {
 
 export type Proposal = {
   input_ids: Array<string>;
+  retained_experiment_id: string | null;
+  retained_run_id: string | null;
   input_mode: "saved" | "fresh";
   execution_mode: "replay" | "recorded" | "live";
   resolver: "none" | "generative";
@@ -466,6 +468,8 @@ export type RunComparison = {
 
 export type RunConfiguration = {
   input_ids: Array<string>;
+  retained_experiment_id: string | null;
+  retained_run_id: string | null;
   input_mode: "saved" | "fresh";
   execution_mode: "replay" | "recorded" | "live";
   resolver: "none" | "generative";

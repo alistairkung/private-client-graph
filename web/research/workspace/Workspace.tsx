@@ -149,6 +149,7 @@ export function Workspace({
               id={id}
               disabled={copying}
               draft={workspace.draft}
+              runIds={workspace.run_ids}
               cases={cases}
               capabilities={capabilities}
               saving={(busy) => {

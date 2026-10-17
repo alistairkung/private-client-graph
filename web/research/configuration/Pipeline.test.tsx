@@ -17,6 +17,8 @@ const capabilities: Capabilities = {
   maximum_resolver_repetitions: 3,
 };
 const initial: Proposal = {
+  retained_experiment_id: null,
+  retained_run_id: null,
   input_ids: ["case_03_fixture"],
   input_mode: "saved",
   execution_mode: "replay",
