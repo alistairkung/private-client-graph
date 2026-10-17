@@ -22,7 +22,7 @@ export function SourceAwareReviewWorkspace({ state, practitioner = false, graphT
   const relationship = selected === null ? undefined : state.relationships[selected];
   const items = relationship?.evidence_ids.flatMap(id => state.evidence.filter(item => item.id === id)) ?? [];
   const active = items.find(item => item.id === activeId);
-  let source = state.sources.find(item => item.id === sourceId) ?? state.sources[0];
+  const source = state.sources.find(item => item.id === sourceId) ?? state.sources[0];
   let span: { start: number; end: number } | undefined;
   let error: string | undefined;
   if (relationship && (items.length !== relationship.evidence_ids.length || !active)) {

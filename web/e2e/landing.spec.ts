@@ -41,7 +41,7 @@ for (const reducedMotion of ["no-preference", "reduce"] as const) {
     );
     await expect(page.getByLabel("Source document")).toBeVisible();
     await page.evaluate(() => document.fonts.ready);
-    await page.getByRole("link", { name: "Explore synthetic cases", exact: true }).last().click();
+    await page.getByRole("link", { name: "Explore cases", exact: true }).last().click();
     await expect(page).toHaveURL(/#case-01$/);
     await expect.poll(() => page.locator("#case-01").evaluate((section) => {
       const target = section.getBoundingClientRect().top + window.scrollY

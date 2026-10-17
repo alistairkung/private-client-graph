@@ -12,7 +12,7 @@ export function ShowcaseApp() {
         <a className="showcase-brand" href="/"><BrandMark />Private Client Graph</a>
         <nav aria-label="Public showcase">
           <a href="#approach">The approach</a>
-          <a href="#case-01">Explore synthetic cases</a>
+          <a href="#case-01">Explore cases</a>
         </nav>
         <span className="showcase-notice">Synthetic research prototype</span>
       </header>

@@ -31,3 +31,21 @@ test("failed case loading offers an explicit retry",async()=>{
  await userEvent.setup().click(screen.getByRole("button",{name:"Reload case"}));
  await waitFor(()=>expect(screen.getByText("case-01 source")).toBeVisible());
 });
+
+test("catalogue failure survives a successful detail response and retries explicitly",async()=>{
+ let failed=true;
+ vi.spyOn(globalThis,"fetch").mockImplementation(async url=>{
+  if(url==="/api/showcase/cases") {
+   if(failed) throw new Error("catalogue unavailable");
+   return response(summaries);
+  }
+  return response(detail("case-01"));
+ });
+ render(<App/>);
+ await screen.findByRole("alert");
+ expect(screen.getByLabelText("Choose a synthetic case")).toBeDisabled();
+ failed=false;
+ await userEvent.setup().click(screen.getByRole("button",{name:"Reload case"}));
+ await screen.findByText("case-01 source");
+ expect(screen.getByLabelText("Choose a synthetic case")).toBeEnabled();
+});

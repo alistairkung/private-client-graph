@@ -145,7 +145,7 @@ def create_app(web_dist: Path = WEB_DIST) -> FastAPI:
         application.state.proposal_analysis = proposal_config
     except ValueError:
         application.state.proposal_analysis = None
-    application.state.showcase_live = LiveConfig.from_environment()
+    application.state.showcase_live = LiveConfig()
     application.include_router(proposal_router)
     application.add_exception_handler(ProposalFailure, proposal_failure)
     application.add_api_route("/health", health, methods=["GET"])

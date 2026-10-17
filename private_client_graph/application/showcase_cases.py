@@ -42,7 +42,7 @@ def get_showcase_case(case_id: str) -> ShowcaseCase | None:
         return None
     if case_id == "case-01":
         detail = get_case()
-        graph = analyse_case("sample", LiveConfig.from_environment()).graph
+        graph = analyse_case("sample", LiveConfig()).graph
         state = single_source_state(Source(id="source_001", title="Attendance note", text=detail.source_text), graph)
     else:
         state = CanonicalState.model_validate_json((FIXTURES / f"{case_id}.json").read_text(encoding="utf-8"))

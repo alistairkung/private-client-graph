@@ -1,5 +1,4 @@
 import { render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import { expect, test, vi } from "vitest";
 import { MatterWorkspace } from "../matters/MatterWorkspace";
 import { ShowcaseApp } from "../showcase/ShowcaseApp";
@@ -13,6 +12,14 @@ vi.mock("./ReviewWorkspace", () => ({
   },
 }));
 
+const sourceAwareProps = vi.fn();
+vi.mock("./SourceAwareReviewWorkspace", () => ({
+  SourceAwareReviewWorkspace: (props: unknown) => {
+    sourceAwareProps(props);
+    return <div>Shared source-aware review</div>;
+  },
+}));
+
 const graph: CanonicalGraph = {
   entities: [{ id: "trust", name: "Evergreen Trust", type: "trust" }],
   relationships: [],
@@ -23,25 +30,14 @@ function response(body: unknown) {
   return new Response(JSON.stringify(body));
 }
 
-test("showcase analysis and Matter detail pass their Canonical Graph to the shared review", async () => {
+test("showcase passes source-aware facts and Matter detail retains its legacy graph contract", async () => {
+  const state = { ...graph, sources: [{id: "note", title: "Attendance note", text: "Shared source"}] };
   const fetcher = vi.spyOn(globalThis, "fetch")
-    .mockResolvedValueOnce(response({
-      live_analysis: { state: "available", resets_at: null },
-      title: "Case 01",
-      notice: "Synthetic case",
-      source_text: "Shared source",
-    }))
-    .mockResolvedValueOnce(response({
-      execution: { mode: "sample", run_artifact_id: null },
-      graph,
-    }));
-  const user = userEvent.setup();
+    .mockResolvedValueOnce(response([{id: "case-01",title: "Case 01",description: "Synthetic"}]))
+    .mockResolvedValueOnce(response({id: "case-01",title: "Case 01",description: "Synthetic", state}));
   const showcase = render(<ShowcaseApp />);
-
-  await screen.findByText("Shared source");
-  await user.click(screen.getByRole("button", { name: "Load sample analysis" }));
-  await screen.findByText("Shared relationship review");
-  const showcaseGraph = reviewWorkspaceProps.mock.lastCall?.[0].graph;
+  await screen.findByText("Shared source-aware review");
+  const showcaseState = sourceAwareProps.mock.lastCall?.[0].state;
 
   showcase.unmount();
   fetcher.mockResolvedValueOnce(response({
@@ -55,6 +51,6 @@ test("showcase analysis and Matter detail pass their Canonical Graph to the shar
 
   await screen.findByText("Shared relationship review");
   const matterGraph = reviewWorkspaceProps.mock.lastCall?.[0].graph;
-  expect(showcaseGraph).toEqual(graph);
+  expect(showcaseState).toEqual(state);
   expect(matterGraph).toEqual(graph);
 });
