@@ -1,3 +1,4 @@
+import { OutcomeMatrix } from "../../src/shared/research/OutcomeMatrix";
 import type { ExperimentDetail, Observation } from "../shared/contracts";
 import { number } from "../shared/presentation";
 import { EvidenceInspector } from "./EvidenceInspector";
@@ -102,61 +103,30 @@ export function ComparisonBench({
       <div className="bench-columns">
         <div className="bench-comparison">
           <div className="table-scroll">
-            <table className="outcome-matrix">
-              <caption>Relationship outcome matrix</caption>
-              <thead>
-                <tr>
-                  <th>Configuration</th>
-                  <th>Matched · TP</th>
-                  <th>Extra · FP</th>
-                  <th>Missing · FN</th>
-                </tr>
-              </thead>
-              <tbody>
-                {pair.map(([label, observation]) => (
-                  <tr key={label}>
-                    <th>
-                      {label}
-                      <small>
-                        {label === "Baseline" ? "No resolution" : "Generative"}
-                      </small>
-                    </th>
-                    {(
-                      [
-                        ["tp", "matched"],
-                        ["fp", "extra"],
-                        ["fn", "missing"],
-                      ] as const
-                    ).map(([metric, filter]) => (
-                      <td key={metric}>
-                        {observation?.evaluation ? (
-                          <a
-                            aria-label={`${label} ${filter}: ${observation.evaluation[metric]}`}
-                            aria-current={
-                              selected?.id === observation.id &&
-                              outcome === filter
-                                ? "true"
-                                : undefined
-                            }
-                            href={link({
-                              observation: observation.id,
-                              outcome: filter,
-                              relationship: "",
-                              treatment: treatment?.id ?? "",
-                            })}
-                          >
-                            {observation.evaluation[metric]}
-                            <small>Inspect {filter}</small>
-                          </a>
-                        ) : (
-                          <span>Unavailable</span>
-                        )}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <OutcomeMatrix
+              caption="Relationship outcome matrix"
+              headings={["Configuration", "Matched · TP", "Extra · FP", "Missing · FN"]}
+              rows={pair.map(([label, observation]) => ({
+                id: label,
+                label: <>{label}<small>{label === "Baseline" ? "No resolution" : "Generative"}</small></>,
+                values: ([["tp", "matched"], ["fp", "extra"], ["fn", "missing"]] as const).map(
+                  ([metric, filter]) => observation?.evaluation ? (
+                    <a
+                      aria-label={`${label} ${filter}: ${observation.evaluation[metric]}`}
+                      aria-current={selected?.id === observation.id && outcome === filter ? "true" : undefined}
+                      href={link({
+                        observation: observation.id,
+                        outcome: filter,
+                        relationship: "",
+                        treatment: treatment?.id ?? "",
+                      })}
+                    >
+                      {observation.evaluation[metric]}<small>Inspect {filter}</small>
+                    </a>
+                  ) : <span>Unavailable</span>,
+                ),
+              }))}
+            />
             <table className="bench-metrics">
               <caption>Paired observation metrics</caption>
               <thead>

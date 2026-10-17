@@ -1,0 +1,152 @@
+@import "./research-visual.css";
+
+.research-visual.run-chart {
+  background: white;
+  border: 1px solid #d5d9d2;
+  border-radius: 5px;
+  padding: 24px;
+  margin: 32px 0 24px;
+}
+.research-visual .chart-tabs {
+  display: flex;
+  border-bottom: 1px solid #d5d9d2;
+  margin: 0 -24px 20px;
+  padding: 0 24px;
+  gap: 24px;
+}
+.research-visual .chart-tabs button {
+  background: none;
+  color: #173e38;
+  border: 0;
+  border-radius: 0;
+  padding: 12px 0;
+  border-bottom: 3px solid transparent;
+}
+.research-visual .chart-tabs button[aria-selected="true"] {
+  border-bottom-color: #173e38;
+  font-weight: 600;
+}
+.research-visual .chart-legend {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 12px;
+  margin-bottom: 35px;
+  flex-wrap: wrap;
+}
+.research-visual .plot-area {
+  height: 240px;
+  position: relative;
+  margin: 20px 12px 24px 38px;
+}
+.research-visual .plot-grid {
+  position: absolute;
+  width: 100%;
+  border-top: 1px solid #e2e6df;
+}
+.research-visual .plot-grid > span {
+  position: absolute;
+  right: calc(100% + 10px);
+  font-size: 11px;
+  transform: translateY(-50%);
+}
+.research-visual .chart-point {
+  position: absolute;
+  width: 44px;
+  height: 44px;
+  min-height: 44px;
+  padding: 0;
+  transform: translate(-50%, -50%);
+  border: 1px solid transparent;
+  border-radius: 50%;
+  background: transparent;
+  display: grid;
+  place-items: center;
+}
+.research-visual .chart-point span {
+  width: 13px;
+  height: 13px;
+  background: #173e38;
+  border: 2px solid #173e38;
+  border-radius: 50%;
+}
+.research-visual .chart-point.baseline span {
+  background: white;
+  border-color: #773b46;
+  border-radius: 0;
+  transform: rotate(45deg);
+}
+.research-visual .chart-point.provisional span {
+  background: white;
+  border-style: dashed;
+}
+.research-visual .chart-point[aria-pressed="true"],
+.research-visual .chart-point:hover {
+  border-color: #173e38;
+  background: #eef1e980;
+}
+.research-visual .plot-axis {
+  text-align: center;
+  font-size: 12px;
+  margin: 26px 0;
+}
+.research-visual .chart-empty {
+  padding: 70px 0;
+  text-align: center;
+  color: #52665f;
+}
+.research-visual .chart-footnote {
+  border-top: 1px solid #d5d9d2;
+  padding-top: 16px;
+  font-size: 12px;
+}
+.research-visual .chart-inspection {
+  padding: 14px 0;
+  font-size: 13px;
+  min-height: 80px;
+}
+.research-visual .chart-inspection > span {
+  display: block;
+}
+.research-visual .run-history-list {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding: 4px 3px 12px;
+}
+.research-visual .run-history-list > div {
+  min-width: 210px;
+  max-width: 290px;
+}
+.research-visual .run-history-list button {
+  text-align: left;
+  width: 100%;
+}
+
+.research-visual .plot-tick {
+  position: absolute;
+  top: calc(100% + 10px);
+  transform: translateX(-50%);
+  font-size: 11px;
+}
+
+.research-visual .chart-filter {
+  max-width: 265px;
+  margin: 0 0 24px;
+}
+
+@media (width < 760px) {
+  .research-visual.run-chart {
+    padding: 16px;
+  }
+  .research-visual .chart-tabs {
+    margin-inline: -16px;
+    padding-inline: 16px;
+  }
+  .research-visual .plot-area {
+    height: 200px;
+    margin-right: 0;
+  }
+}
+
+.research-visual .chart-inspection { overflow-wrap: anywhere; }

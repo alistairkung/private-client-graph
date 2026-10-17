@@ -178,3 +178,5 @@
 }
 
 .showcase-brand { display: inline-flex; align-items: center; gap: 12px; }
+
+.showcase-header nav a[aria-current="page"] { text-decoration: underline; }
