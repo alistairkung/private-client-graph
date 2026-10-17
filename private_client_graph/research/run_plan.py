@@ -36,6 +36,8 @@ class RunPlan(FiniteExperimentPlan):
             raise ValueError('Select distinct frozen inputs')
         if any(sample.extraction is None or sample.cohort == 'fresh' for sample in self.inputs):
             raise ValueError('Templates require repository-owned frozen inputs')
+        if any(sample.sources is not None and len(sample.sources) > 1 for sample in self.inputs) and self.resolver != 'none':
+            raise ValueError('Source-aware Runs support no resolution only')
         if self.experiment_id or self.case_metadata:
             self._validate_case_metadata()
         if self.pricing is not None and self.pricing.model != (self.effective_model or self.settings.model):

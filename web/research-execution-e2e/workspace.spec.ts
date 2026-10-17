@@ -316,7 +316,15 @@ test("opens the frozen Run review when polling arrives before its freeze respons
     ).toBeVisible();
     await route.fulfill({ response });
   });
+  // The route deliberately waits for a polling/render cycle. Start the dialog
+  // assertion after that response, so its timeout measures the UI transition.
+  const freezeResponse = page.waitForResponse(
+    (response) =>
+      response.request().method() === "POST" &&
+      /\/api\/research\/v2\/experiments\/[^/]+\/runs$/.test(response.url()),
+  );
   await page.getByRole("button", { name: "Freeze Run", exact: true }).click();
+  await freezeResponse;
 
   const review = page.getByRole("dialog", {
     name: "Ready to start Run 1",

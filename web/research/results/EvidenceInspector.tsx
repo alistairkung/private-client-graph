@@ -32,14 +32,18 @@ export function sourceSegments(
 export function EvidenceInspector({
   relationship,
   source,
+  sources,
   onBack,
 }: {
   relationship?: RelationshipOutcome;
   source: string | null;
+  sources?: { id: string; title: string; text: string }[] | null;
   onBack?: () => void;
 }) {
   const [quote, setQuote] = useState<EvidenceQuote>();
   const sourceRef = useRef<HTMLElement>(null);
+  const selectedSource = sources?.find((item) => item.id === quote?.source_id);
+  const sourceText = sources?.length ? selectedSource?.text ?? null : source;
   useEffect(() => {
     if (quote) {
       sourceRef.current?.focus({ preventScroll: true });
@@ -109,7 +113,7 @@ export function EvidenceInspector({
                     <details>
                       <summary>Evidence identity</summary>
                       <p>{item.id}</p>
-                      <p>Source SHA-256: {item.source_id}</p>
+                      <p>Source identity: {item.source_id}</p>
                     </details>
                   </div>
                 ))
@@ -124,8 +128,8 @@ export function EvidenceInspector({
               )}
             </section>
           ))}
-          <h3>Frozen Source</h3>
-          {source === null ? (
+          <h3>Frozen Source{selectedSource ? ` · ${selectedSource.title} (${selectedSource.id})` : ""}</h3>
+          {sourceText === null ? (
             <p>Source unavailable.</p>
           ) : (
             <article
@@ -135,14 +139,14 @@ export function EvidenceInspector({
               className="frozen-source"
             >
               {quote
-                ? sourceSegments(source, quote).map((segment, index) =>
+                ? sourceSegments(sourceText, quote).map((segment, index) =>
                     segment.highlighted ? (
                       <mark key={index}>{segment.text}</mark>
                     ) : (
                       segment.text
                     ),
                   )
-                : source}
+                : sourceText}
             </article>
           )}
         </>

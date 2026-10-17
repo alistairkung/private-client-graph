@@ -4,7 +4,9 @@ from typing import Any, Literal
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from private_client_graph.graph import ENDPOINT_TYPES
-from private_client_graph.models import ExtractionResult, GroundTruth
+from private_client_graph.models import ExtractionResult, GroundTruth, SourcedExtractionResult
+from private_client_graph.models.source import Source
+from .source_attribution import SourceEvidenceApproval, validate_source_approval
 
 
 class EndpointIdentity(BaseModel):
@@ -20,11 +22,28 @@ class ResearchInput(BaseModel):
     case_id: str
     cohort: Literal["authored", "historical", "fresh"]
     source: str
+    sources: list[Source] | None = None
+    sourced_extraction: SourcedExtractionResult | None = None
+    source_evidence: SourceEvidenceApproval | None = None
     truth: GroundTruth
     extraction: ExtractionResult | None = None
     annotations: list[EndpointIdentity] | None = None
     origin_hashes: dict[str, str] = Field(default_factory=dict)
     historical: dict[str, Any] | None = None
+
+    @model_validator(mode="after")
+    def validate_sources(self) -> "ResearchInput":
+        if self.sources is not None:
+            identifiers = [source.id for source in self.sources]
+            if not identifiers or len(set(identifiers)) != len(identifiers) or any(not item.strip() for item in identifiers):
+                raise ValueError('Source bundles require non-empty unique explicit identities')
+        if self.sourced_extraction is not None and self.sources is None:
+            raise ValueError('Attributed extraction requires explicit Sources')
+        if self.source_evidence is not None:
+            if self.sources is None:
+                raise ValueError('Source approvals require explicit Sources')
+            validate_source_approval(self.source_evidence, self.truth, self.sources)
+        return self
 
     @model_validator(mode="after")
     def validate_annotations(self) -> "ResearchInput":

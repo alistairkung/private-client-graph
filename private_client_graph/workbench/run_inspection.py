@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 
 from private_client_graph.research.artifacts import Bundle, checksum
 from private_client_graph.research.inputs import ResearchInput
+from private_client_graph.models.source import Source
 from private_client_graph.research.case_metadata import CaseMetadata
 from private_client_graph.research.results import ResearchResult
 from private_client_graph.research.run_plan import RunPlan
@@ -29,6 +30,7 @@ class RunObservation(BaseModel):
     reason: str | None = None
     metadata: CaseMetadata | None = None
     source: str | None = None
+    sources: list[Source] | None = None
     result: ResearchResult | None = None
     relationships: list[RelationshipOutcome] = Field(default_factory=list)
 
@@ -101,5 +103,6 @@ def _observations(bundle: Bundle, evaluation: RunEvaluation) -> list[RunObservat
             status=outcome.status if outcome else row.status if row else 'not_attempted',
             reason=outcome.reason if outcome else 'Evaluation unavailable for this planned observation',
             metadata=metadata, source=source, result=row,
+            sources=row.state.sources if row and row.state is not None else None,
             relationships=relationship_outcomes(sample, row) if sample and row else []))
     return observations

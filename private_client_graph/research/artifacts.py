@@ -17,7 +17,7 @@ from .fixtures import ROOT
 from .plan import ExperimentPlan, FiniteExperimentPlan
 from .run_plan import RunPlan
 from private_client_graph.resolution import RESOLUTION_PROMPT
-from private_client_graph.extraction import EXTRACTION_PROMPT
+from private_client_graph.extraction import EXTRACTION_PROMPT, SOURCED_EXTRACTION_PROMPT
 
 
 class BudgetExceeded(ValueError):
@@ -76,8 +76,9 @@ def _provenance() -> dict[str, Any]:
             'dirty': bool(git('status', '--porcelain')),
             'dependencies': dependency_versions(),
             'code': code_snapshot(),
-            'prompts': {'extraction': EXTRACTION_PROMPT, 'resolution': RESOLUTION_PROMPT},
+            'prompts': {'extraction': EXTRACTION_PROMPT, 'sourced_extraction': SOURCED_EXTRACTION_PROMPT, 'resolution': RESOLUTION_PROMPT},
             'prompt_hashes': {'extraction': checksum(EXTRACTION_PROMPT.encode()),
+                              'sourced_extraction': checksum(SOURCED_EXTRACTION_PROMPT.encode()),
                               'resolution': checksum(RESOLUTION_PROMPT.encode())}}
 
 

@@ -12,7 +12,7 @@ class CaseMetadata(BaseModel):
     description: str | None
     fixture_name: str
     fixture_description: str | None
-    kind: Literal['benchmark', 'diagnostic', 'historical']
+    kind: Literal['benchmark', 'diagnostic', 'historical', 'heldout']
     metadata_available: bool
 
     @field_validator('name', 'fixture_name', 'description', 'fixture_description')

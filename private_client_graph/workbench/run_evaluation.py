@@ -8,6 +8,9 @@ from private_client_graph.research.artifacts import Bundle
 from private_client_graph.research.metrics import estimate_cost
 from private_client_graph.research.provider import TokenUsage
 from private_client_graph.research.results import ResearchResult
+from private_client_graph.research.source_attribution import (
+    SourceAttributionDiagnostic, aggregate_source_attribution,
+)
 from private_client_graph.research.run_plan import RunPlan
 
 from .run_evaluation_contracts import (
@@ -85,6 +88,7 @@ def aggregate_observations(slots: list[PlannedObservation], results: list[Resear
     if len(indexed) != len(results):
         raise ValueError('Duplicate result identity')
     cases = {slot.case_id: CaseAggregate(case_id=slot.case_id) for slot in slots}
+    attribution: dict[str, list[SourceAttributionDiagnostic]] = {case_id: [] for case_id in cases}
     for slot in slots:
         row = indexed.get((slot.sample_id, slot.configuration, slot.repetition))
         if row and row.case_id != slot.case_id:
@@ -101,10 +105,18 @@ def aggregate_observations(slots: list[PlannedObservation], results: list[Resear
             coverage.planned += 1
             setattr(coverage, state, getattr(coverage, state) + 1)
         if state == 'scored' and row and row.evaluation:
+            if row.source_attribution is not None:
+                attribution[slot.case_id].append(row.source_attribution)
             for counts in (case, aggregate):
                 counts.tp += row.evaluation.tp
                 counts.fp += row.evaluation.fp
                 counts.fn += row.evaluation.fn
+    diagnostics = [item for group in attribution.values() for item in group]
+    if diagnostics:
+        aggregate.source_attribution = aggregate_source_attribution(diagnostics)
+    for case_id, group in attribution.items():
+        if group:
+            cases[case_id].source_attribution = aggregate_source_attribution(group)
     aggregate.cases = [cases[key] for key in sorted(cases)]
     aggregate.f1 = _f1(aggregate.tp, aggregate.fp, aggregate.fn, aggregate.coverage.scored)
     for case in aggregate.cases:
@@ -146,8 +158,11 @@ def _f1(tp: int, fp: int, fn: int, scored: int) -> float | None:
 def _benchmark_scope(plan: RunPlan) -> BenchmarkScope:
     inputs = [ScopeInput(input_id=row.sample_id, case_id=row.case_id,
         cohort='fresh' if plan.input_mode == 'fresh' else row.cohort,
-        source_digest=hashlib.sha256(row.source.encode()).hexdigest(),
-        truth_digest=_digest(row.truth.model_dump(mode='json')),
+        source_digest=(_digest([source.model_dump() for source in row.sources]) if row.sources is not None
+                       else hashlib.sha256(row.source.encode()).hexdigest()),
+        truth_digest=_digest(dict(truth=row.truth.model_dump(mode='json'),
+            source_evidence=row.source_evidence.model_dump() if row.source_evidence else None)
+            if row.sources is not None else row.truth.model_dump(mode='json')),
         samples=plan.fresh_extractions if plan.input_mode == 'fresh' else 1,
         repetitions=plan.repetitions) for row in plan.inputs]
     inputs.sort(key=lambda row: row.input_id)
@@ -255,7 +270,11 @@ def _pairable_inputs(bundle: Bundle) -> dict[str, list[str]]:
             continue
         key = _digest(dict(case_id=sample.case_id, cohort=sample.cohort,
             source=sample.source, truth=sample.truth.model_dump(mode='json'),
-            extraction=sample.extraction.model_dump(mode='json')))
+            extraction=sample.extraction.model_dump(mode='json'),
+            **(dict(sources=[source.model_dump() for source in sample.sources],
+                    sourced_extraction=sample.sourced_extraction.model_dump() if sample.sourced_extraction else None,
+                    source_evidence=sample.source_evidence.model_dump() if sample.source_evidence else None)
+               if sample.sources is not None else {})))
         grouped.setdefault(key, []).append(sample.sample_id)
     return grouped
 
