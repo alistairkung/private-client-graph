@@ -57,5 +57,5 @@ export function proposalFailureMessage(error: ProposalError): string {
   if (error.code === "discard_failed" && error.outcome_unknown) {
     return "The discard outcome is unknown. Reload to check whether the intake remains.";
   }
-  return messages[error.code] ?? "The request could not be completed. Return to Matters and check the current state before retrying.";
+  return Object.hasOwn(messages, error.code) ? messages[error.code] : "The request could not be completed. Return to Matters and check the current state before retrying.";
 }
