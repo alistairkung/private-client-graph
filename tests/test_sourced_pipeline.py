@@ -130,10 +130,30 @@ def test_failure_retains_source_aware_completed_outputs():
     assert isinstance(failure.value.__cause__, ValueError)
 
 
-def test_source_aware_execution_rejects_unpromoted_generative_resolution():
-    pipeline = Pipeline(PipelineConfig(resolver='generative'), resolution_provider=lambda _: None)
-    with pytest.raises(ValueError, match='no-resolution'):
-        pipeline.run_from_sourced_extraction(sources(), extraction())
+@pytest.mark.parametrize('live', [False, True])
+def test_source_aware_resolution_changes_only_names_and_preserves_attribution(live):
+    bundle = sources()
+    bundle[1].text += ' Alice Smith is Alice.'
+    claims = extraction(candidate(), candidate('second'))
+    original = claims.model_copy(deep=True)
+    requests = []
+    def resolve(request):
+        requests.append(request)
+        assert isinstance(request.extraction, ExtractionResult)
+        assert 'source_id' not in request.extraction.model_dump()['relationships'][0]
+        return {'edits': [{'candidate_index': 0, 'endpoint': 'source_name', 'name': 'Alice Smith'}]}
+    pipeline = Pipeline(PipelineConfig(resolver='generative'), resolution_provider=resolve,
+                        source_extractor=lambda _: claims)
+    output = pipeline.run_sources(bundle) if live else pipeline.run_from_sourced_extraction(bundle, claims)
+    assert output.resolved.relationships[0].source_name == 'Alice Smith'
+    assert output.resolved.relationships[1].source_name == 'Alice'
+    assert output.resolved.relationships[0].source_id == 'first'
+    assert output.resolved.relationships[1].source_id == 'second'
+    assert [item.supporting_text for item in output.resolved.relationships] == [QUOTE, QUOTE]
+    assert claims == output.extracted == original
+    assert [item.id for item in output.state.sources] == ['first', 'second']
+    assert len(requests) == 1
+    assert [item['id'] for item in json.loads(requests[0].source)] == ['first', 'second']
 
 
 def test_context_serialization_retains_order_ids_and_data_boundaries():
@@ -174,3 +194,44 @@ def test_final_current_replay_keeps_unchanged_earlier_support_without_historical
     output = Pipeline(PipelineConfig()).run_from_sourced_extraction([initial, update], claims)
     assert {entity.name for entity in output.state.entities} == {'Elaine', 'Rachel', 'Harbour Trust'}
     assert {item.source_id for item in output.state.evidence} == {'initial', 'update'}
+
+
+@pytest.mark.parametrize('response', [
+    {'edits': [{'candidate_index': 0, 'endpoint': 'source_name', 'name': 'Repeated title'}]},
+    {'edits': [{'candidate_index': 0, 'endpoint': 'source_name', 'name': 'first'}]},
+    {'edits': [{'candidate_index': 9, 'endpoint': 'source_name', 'name': 'Alice'}]},
+    {'edits': [{'candidate_index': 0, 'endpoint': 'source_name', 'name': 'Alice'},
+               {'candidate_index': 0, 'endpoint': 'source_name', 'name': 'Alice'}]},
+    {'edits': [{'candidate_index': 0, 'endpoint': 'source_name', 'name': 'Alice', 'source_id': 'second'}]},
+])
+def test_invalid_sourced_edits_fail_atomically_and_retain_original_snapshot(response):
+    claims = extraction(candidate(), candidate('second'))
+    before = claims.model_copy(deep=True)
+    pipeline = Pipeline(PipelineConfig(resolver='generative'), resolution_provider=lambda _: response)
+    with pytest.raises(PipelineExecutionError) as failure:
+        pipeline.run_from_sourced_extraction(sources(), claims)
+    assert failure.value.stage == 'resolution'
+    assert failure.value.extracted == before == claims
+    assert failure.value.resolved is None
+
+
+def test_sourced_replacement_eligibility_uses_raw_text_without_serialization_escapes():
+    name = 'Alice "Smith"\\Jones\nSenior'
+    bundle = sources()
+    bundle[1].text += name
+    pipeline = Pipeline(PipelineConfig(resolver='generative'), resolution_provider=lambda _: {
+        'edits': [{'candidate_index': 0, 'endpoint': 'source_name', 'name': name}]})
+    output = pipeline.run_from_sourced_extraction(bundle, extraction())
+    assert output.resolved.relationships[0].source_name == name
+    assert output.state.sources == bundle
+
+
+def test_sourced_graph_failure_retains_resolved_and_extracted_snapshots():
+    claims = extraction()
+    pipeline = Pipeline(PipelineConfig(resolver='generative'), resolution_provider=lambda _: {
+        'edits': [{'candidate_index': 0, 'endpoint': 'source_name', 'name': 'Harbour Trust'}]})
+    with pytest.raises(PipelineExecutionError) as failure:
+        pipeline.run_from_sourced_extraction(sources(), claims)
+    assert failure.value.stage == 'graph'
+    assert failure.value.extracted == claims
+    assert failure.value.resolved.relationships[0].source_name == 'Harbour Trust'
