@@ -1,14 +1,20 @@
 """HTTPS and Google substitution for browser tests; never imported by production."""
 import os
+from pathlib import Path
+from tempfile import TemporaryDirectory
 
 from urllib.parse import urlencode
 from fastapi import Request
 from starlette.responses import RedirectResponse
 from google_boundary import make_google_boundary
 from local_development.https import serve_https
+from provider_task import substituted_provider_settings
+
+_provider_task = TemporaryDirectory(prefix='pcg-substituted-browser-provider-')
 
 
 def configure_browser_auth(port):
+    os.environ.update(substituted_provider_settings(Path(_provider_task.name)))
     os.environ.update({
         "PCG_GOOGLE_CLIENT_ID": "test-client.apps.googleusercontent.com",
         "PCG_GOOGLE_CLIENT_SECRET": "test-google-secret",

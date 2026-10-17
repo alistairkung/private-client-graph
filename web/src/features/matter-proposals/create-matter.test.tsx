@@ -181,3 +181,40 @@ test("allowance reset permits an explicit retry without losing the local PDF or 
     vi.useRealTimers();
   }
 });
+
+
+test("selects multiple Sources, edits matching titles and submits their displayed order", async () => {
+  const user = userEvent.setup();
+  const fetcher = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify({ id: "multi" }), { status: 201 }));
+  const navigate = vi.fn();
+  render(<CreateMatter onNavigate={navigate} />);
+  const second = new File(["%PDF-second"], "Follow-up.pdf", { type: "application/pdf" });
+  await user.upload(screen.getByLabelText("PDF"), [pdf, second]);
+  expect(screen.getByRole("textbox", { name: "Authoritative Source title" })).toHaveValue("Attendance note");
+  const nextTitle = screen.getByRole("textbox", { name: "Source 2 title" });
+  expect(nextTitle).toHaveValue("Follow-up");
+  await user.clear(nextTitle);
+  await user.type(nextTitle, "Attendance note");
+  await user.type(screen.getByRole("textbox", { name: "External Matter reference" }), "Multi/1");
+  await user.type(screen.getByRole("textbox", { name: "Matter title" }), "Combined family");
+  await user.click(screen.getByRole("checkbox", { name: /synthetic or fictional/ }));
+  fireEvent.submit(screen.getByRole("button", { name: "Upload and analyse" }).closest("form")!);
+  await waitFor(() => expect(navigate).toHaveBeenCalledWith("/app/matter-proposals/multi"));
+  const form = fetcher.mock.calls[0][1]?.body as FormData;
+  expect(JSON.parse(form.get("sources") as string)).toEqual([
+    { id: "source_001", title: "Attendance note" }, { id: "source_002", title: "Attendance note" },
+  ]);
+  expect(form.getAll("pdfs")).toEqual([pdf, second]);
+});
+
+test("too many selected PDFs cannot start analysis", async () => {
+  const user = userEvent.setup();
+  const fetcher = vi.spyOn(globalThis, "fetch");
+  render(<CreateMatter onNavigate={vi.fn()} />);
+  await user.upload(screen.getByLabelText("PDF"), Array.from({ length: 6 }, (_, index) =>
+    new File(["%PDF"], `note-${index}.pdf`, { type: "application/pdf" })));
+  await user.click(screen.getByRole("checkbox", { name: /synthetic or fictional/ }));
+  expect(screen.getByRole("alert")).toHaveTextContent("no more than five");
+  expect(screen.getByRole("button", { name: "Upload and analyse" })).toBeDisabled();
+  expect(fetcher).not.toHaveBeenCalled();
+});

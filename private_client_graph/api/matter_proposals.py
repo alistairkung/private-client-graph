@@ -3,17 +3,19 @@
 from uuid import UUID
 
 from fastapi import APIRouter, Request, Response
-from pydantic import ValidationError
+from pydantic import TypeAdapter, ValidationError
 from sqlalchemy.exc import SQLAlchemyError
 from starlette.concurrency import run_in_threadpool
-from starlette.datastructures import UploadFile
+from starlette.datastructures import FormData, UploadFile
 from starlette.responses import JSONResponse
 
-from private_client_graph.application.matter_proposals import analyse_proposal
+from private_client_graph.application.matter_proposals import analyse_proposal, analyse_proposal_sources
 from private_client_graph.application.pdf_acquisition import MAX_PDF_BYTES
 from private_client_graph.application.proposal_contracts import (
     MatterProposalDetail,
     MatterProposalSummary,
+    MatterIntakeMetadata,
+    ProposalSourceMetadata,
     ProposalMetadata,
 )
 from private_client_graph.application.proposal_errors import ProposalFailure
@@ -24,6 +26,8 @@ from private_client_graph.persistence.matter_proposals import (
 )
 from private_client_graph.persistence.proposal_errors import ProposalPersistenceFailure
 
+from private_client_graph.application.proposal_sources import MAX_PROPOSAL_SOURCES, PdfSourceInput
+
 from .proposal_upload import proposal_form
 
 router = APIRouter(prefix="/api/matter-proposals")
@@ -32,25 +36,45 @@ router = APIRouter(prefix="/api/matter-proposals")
 @router.post("", status_code=201, response_model=MatterProposalDetail)
 async def create_proposal(request: Request, response: Response) -> MatterProposalDetail:
     async with proposal_form(request) as form:
-        try:
-            metadata = ProposalMetadata.model_validate({
-                name: form[name]
-                for name in ("external_reference", "matter_title", "source_title")
-            })
-        except ValidationError as exc:
-            raise ProposalFailure(
-                "invalid_metadata",
-                "Enter a reference of 1–100 characters and titles of 1–200 characters, "
-                "without controls or line breaks.",
-            ) from exc
-        upload = form["pdf"]
-        assert isinstance(upload, UploadFile)
-        pdf = await upload.read(MAX_PDF_BYTES + 1)
-        proposal = await run_in_threadpool(
-            analyse_proposal, metadata, pdf, request.app.state.proposal_analysis
-        )
+        config = request.app.state.proposal_analysis
+        if "sources" in form:
+            metadata, source_metadata = _bundle_metadata(form)
+            uploads = form.getlist("pdfs")
+            if len(source_metadata) != len(uploads):
+                raise ProposalFailure("invalid_sources", "Supply one PDF for every listed Source, in the same order.")
+            inputs = []
+            for source, upload in zip(source_metadata, uploads, strict=True):
+                assert isinstance(upload, UploadFile)
+                inputs.append(PdfSourceInput(source, await upload.read(MAX_PDF_BYTES + 1)))
+            proposal = await run_in_threadpool(analyse_proposal_sources, metadata, inputs, config)
+        else:
+            legacy_metadata = _legacy_metadata(form)
+            upload = form["pdf"]
+            assert isinstance(upload, UploadFile)
+            pdf = await upload.read(MAX_PDF_BYTES + 1)
+            proposal = await run_in_threadpool(analyse_proposal, legacy_metadata, pdf, config)
     response.headers["Location"] = f"/api/matter-proposals/{proposal.id}"
     return proposal
+
+
+def _bundle_metadata(form: FormData) -> tuple[MatterIntakeMetadata, list[ProposalSourceMetadata]]:
+    try:
+        metadata = MatterIntakeMetadata.model_validate({name: form[name] for name in ("external_reference", "matter_title")})
+        source_json = form["sources"]
+        assert isinstance(source_json, str)  # Validated by proposal_form.
+        sources = TypeAdapter(list[ProposalSourceMetadata]).validate_json(source_json)
+    except (ValidationError, ValueError) as exc:
+        raise ProposalFailure("invalid_metadata", "Enter a valid Matter reference and a distinct identifier and title for each Source.") from exc
+    if not 1 <= len(sources) <= MAX_PROPOSAL_SOURCES or len({source.id for source in sources}) != len(sources):
+        raise ProposalFailure("invalid_sources", "Supply between one and five Sources with distinct identifiers.")
+    return metadata, sources
+
+
+def _legacy_metadata(form: FormData) -> ProposalMetadata:
+    try:
+        return ProposalMetadata.model_validate({name: form[name] for name in ("external_reference", "matter_title", "source_title")})
+    except ValidationError as exc:
+        raise ProposalFailure("invalid_metadata", "Enter a reference of 1–100 characters and titles of 1–200 characters, without controls or line breaks.") from exc
 
 
 @router.get("", response_model=list[MatterProposalSummary])

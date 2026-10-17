@@ -9,6 +9,14 @@ import pytest
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine import make_url
 from sqlalchemy.pool import NullPool
+from provider_task import substituted_provider_settings
+
+
+@pytest.fixture(autouse=True)
+def substituted_provider_authorization(monkeypatch, tmp_path_factory):
+    """Only fake model dispatches use this isolated, bounded test authority."""
+    for key, value in substituted_provider_settings(tmp_path_factory.mktemp('provider-task')).items():
+        monkeypatch.setenv(key, value)
 
 
 @pytest.fixture

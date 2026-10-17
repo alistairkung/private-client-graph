@@ -133,3 +133,43 @@ test("saved intake can be kept, resumed, then permanently discarded", async ({ p
   await expect(page.getByRole("link", { name: `${reference} Fictional discard example` })).toHaveCount(0);
   expect((await context.request.get(proposalPath.replace("/app/", "/api/"))).status()).toBe(404);
 });
+
+
+test("two synthetic PDFs retain distinct Source evidence through confirmation and reopening", async ({ page, context }, testInfo) => {
+  const reference = `Multi/${testInfo.project.name}/${randomUUID()}`;
+  await page.goto("/app/matter-proposals/new");
+  await page.getByRole("textbox", { name: "External Matter reference" }).fill(reference);
+  await page.getByRole("textbox", { name: "Matter title", exact: true }).fill("Combined fictional review");
+  await page.getByLabel("PDF", { exact: true }).setInputFiles([sourcePdf,
+    fileURLToPath(new URL("../../tests/fixtures/multiple-role-proposal.pdf", import.meta.url))]);
+  await page.getByRole("textbox", { name: "Authoritative Source title" }).fill("Fictional note");
+  await page.getByRole("textbox", { name: "Source 2 title" }).fill("Fictional note");
+  await page.getByRole("checkbox", { name: /synthetic or fictional/ }).check();
+  await page.screenshot({ path: testInfo.outputPath("multi-source-intake.png"), fullPage: true });
+  await page.getByRole("button", { name: "Upload and analyse" }).click();
+  await expect(page).toHaveURL(/\/app\/matter-proposals\/[a-f0-9-]{36}$/);
+  const proposalPath = new URL(page.url()).pathname;
+  const before = await (await context.request.get(proposalPath.replace("/app/", "/api/"))).json();
+  expect(before.state.sources.map((source: { id: string }) => source.id)).toEqual(["source_001", "source_002"]);
+  expect(before.authoritative_source).toBeNull();
+  await page.reload();
+  const trustee = page.getByRole("button", { name: "Morgan Example — Trustee of — Fictional Trust", exact: true });
+  await trustee.focus();
+  await trustee.press("Enter");
+  await expect(page.getByRole("button", { name: "Source 2 Fictional note", exact: true })).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator("mark")).toHaveText("Morgan Example is trustee of the Fictional Trust.");
+  await expect(page.getByText("Evidence from Source 2: Fictional note", { exact: true })).toBeVisible();
+  await page.screenshot({ path: testInfo.outputPath("multi-source-proposal.png"), fullPage: true });
+  await page.getByRole("button", { name: "Confirm and create Matter" }).click();
+  await expect(page).toHaveURL(/\/app\/matters\/[a-f0-9-]{36}$/);
+  const matterPath = new URL(page.url()).pathname;
+  const accepted = await (await context.request.get(matterPath.replace("/app/", "/api/"))).json();
+  expect(accepted.state).toEqual(before.state);
+  await page.reload();
+  await page.getByRole("button", { name: "Alice Example — Parent of — Ben Example", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Source 1 Fictional note", exact: true })).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator("mark")).toHaveText("Alice Example is the parent of Ben Example.");
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  await page.screenshot({ path: testInfo.outputPath("multi-source-matter.png"), fullPage: true });
+  expect((await context.request.get(proposalPath.replace("/app/", "/api/"))).status()).toBe(404);
+});

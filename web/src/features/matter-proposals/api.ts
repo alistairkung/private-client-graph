@@ -6,8 +6,13 @@ export async function createProposal(input: ProposalInput): Promise<MatterPropos
   const body = new FormData();
   body.append("external_reference", input.external_reference);
   body.append("matter_title", input.matter_title);
-  body.append("source_title", input.source_title);
-  body.append("pdf", input.pdf);
+  if (input.sources) {
+    body.append("sources", JSON.stringify(input.sources.map(({ id, title }) => ({ id, title }))));
+    for (const source of input.sources) body.append("pdfs", source.pdf);
+  } else {
+    body.append("source_title", input.source_title);
+    body.append("pdf", input.pdf);
+  }
   body.append("synthetic_confirmation", String(input.synthetic_confirmation));
   try {
     return await requestJson("/api/matter-proposals", {

@@ -118,3 +118,7 @@
   .practitioner-shell .fictional-source-prompt { max-height: calc(100vh - 24px); padding: 20px; }
   .practitioner-shell .prompt-copy { padding: 18px; }
 }
+
+.practitioner-shell .intake-sources { padding-left: 24px; margin: 0 0 24px; }
+.practitioner-shell .intake-sources li + li { margin-top: 24px; }
+.practitioner-shell .source-filename { margin: 0 0 8px; overflow-wrap: anywhere; font-size: 14px; }

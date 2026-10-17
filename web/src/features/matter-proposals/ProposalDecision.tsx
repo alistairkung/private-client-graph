@@ -47,7 +47,7 @@ export function ProposalDecision({ proposal, onNavigate }: {
     {discarding ? <section className="discard-confirmation" aria-labelledby="discard-heading">
       <h2 id="discard-heading">Discard this intake?</h2>
       <p className="discard-identity">{proposal.matter_title} · {proposal.external_reference}</p>
-      <p>This permanently removes the saved proposal, its source text and its proposed graph. No Matter will be created.</p>
+      <p>This permanently removes the saved proposal, all its source text and its proposed graph. No Matter will be created.</p>
       <p>Discarding records no judgment about the relationships.</p>
       <div className="intake-actions">
         <button ref={keepButton} className="intake-button secondary" disabled={!!pending} onClick={() => {
@@ -60,7 +60,7 @@ export function ProposalDecision({ proposal, onNavigate }: {
       </div>
     </section> : <>
       <h2>Accept this proposal?</h2>
-      <p>Confirming means the whole proposed graph becomes the professionally accepted current Matter state, together with this Authoritative Source and Matter identity.</p>
+      <p>Confirming means the whole proposed graph becomes the professionally accepted current Matter state, together with all supplied Sources and Matter identity.</p>
       <div className="decision-actions">
         <button className="intake-button" disabled={blocked} onClick={() => void decide("confirm")}>Confirm and create Matter</button>
         <a className="decision-return" href="/app">Back to Matters</a>

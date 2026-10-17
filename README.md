@@ -594,6 +594,13 @@ requires these proposal-analysis settings before `/health` reports ready:
 | `DEEPSEEK_API_KEY` | Non-empty provider credential |
 | `DEEPSEEK_MODEL` | Optional non-empty model name; defaults to `deepseek-flash` |
 
+Provider dispatch also requires `PCG_PROVIDER_TASK_ROOT` pointing to the existing
+shared task artifact root and `PCG_PROVIDER_AUTHORIZATION` naming its explicitly
+approved external invocation. Missing, inconsistent or exhausted authority blocks
+dispatch; application requests never initialize a task or grant approval. The
+application rate quota remains a separate gate. Every reserved dispatch, including
+failed or interrupted attempts, remains charged in the same ledger as research.
+
 Provider credentials/model availability are verified by the provider on invocation;
 missing or locally invalid settings fail readiness. There is no unlimited fallback.
 These settings are required even when Public Showcase live analysis is disabled.

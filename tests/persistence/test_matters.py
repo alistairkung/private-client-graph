@@ -143,7 +143,7 @@ def test_matter_detail_returns_complete_persisted_state(database, authenticated_
     response = authenticated_client(create_app()).get("/api/matters/ff985caf-60c5-4e65-a238-f3c26381c369")
     assert response.status_code == 200
     detail = response.json()
-    assert set(detail) == {"id", "external_reference", "title", "authoritative_source", "current_graph"}
+    assert set(detail) == {"id", "external_reference", "title", "authoritative_source", "current_graph", "state"}
     assert detail["external_reference"] == "PC/2026/0142"
     assert detail["title"] == "Evergreen Family Trust"
     assert set(detail["authoritative_source"]) == {"title", "text"}

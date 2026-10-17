@@ -7,11 +7,11 @@ from fastapi import Request
 from starlette.datastructures import FormData, UploadFile
 from starlette.formparsers import MultiPartException, MultiPartParser
 
-from private_client_graph.application.pdf_acquisition import MAX_PDF_BYTES
+from private_client_graph.application.proposal_sources import MAX_PROPOSAL_SOURCES, MAX_TOTAL_PDF_BYTES
 from private_client_graph.application.proposal_errors import ProposalFailure
 
 # Metadata and multipart framing are bounded separately from the PDF payload.
-MAX_REQUEST_BYTES = MAX_PDF_BYTES + 64 * 1024
+MAX_REQUEST_BYTES = MAX_TOTAL_PDF_BYTES + 64 * 1024
 
 
 @asynccontextmanager
@@ -24,9 +24,9 @@ async def proposal_form(request: Request) -> AsyncIterator[FormData]:
     parser = MultiPartParser(
         request.headers,
         _bounded_stream(request),
-        max_files=1,
+        max_files=MAX_PROPOSAL_SOURCES,
         max_fields=4,
-        max_part_size=2048,
+        max_part_size=8192,
     )
     try:
         try:
@@ -34,33 +34,31 @@ async def proposal_form(request: Request) -> AsyncIterator[FormData]:
         except MultiPartException as exc:
             raise ProposalFailure(
                 "invalid_form",
-                "Submit exactly one PDF of at most 10 MiB and the required form fields.",
+                "Submit at most five PDFs, at most 10 MiB combined, and the required form fields.",
             ) from exc
         if form.get("synthetic_confirmation") != "true":
             raise ProposalFailure(
                 "synthetic_confirmation_required",
                 "Confirm that the material is synthetic or fictional.",
             )
-        required = {
-            "external_reference",
-            "matter_title",
-            "source_title",
-            "synthetic_confirmation",
-            "pdf",
-        }
-        if set(form) != required or len(form.multi_items()) != len(required):
-            raise ProposalFailure(
-                "invalid_form", "Submit exactly one PDF and all required fields once."
-            )
-        if not isinstance(form["pdf"], UploadFile) or any(
-            not isinstance(form[name], str) for name in required - {"pdf"}
-        ):
-            raise ProposalFailure(
-                "invalid_form", "Submit exactly one PDF and the required text fields."
-            )
+        _validate_form_parts(form)
         yield form
     finally:
         _close_parser_uploads(parser)
+
+
+def _validate_form_parts(form: FormData) -> None:
+    bundle = "sources" in form
+    file_field = "pdfs" if bundle else "pdf"
+    text_fields = {"external_reference", "matter_title", "synthetic_confirmation",
+                   "sources" if bundle else "source_title"}
+    uploads = form.getlist(file_field)
+    maximum = MAX_PROPOSAL_SOURCES if bundle else 1
+    if (set(form) != text_fields | {file_field} or not 1 <= len(uploads) <= maximum
+            or len(form.multi_items()) != len(text_fields) + len(uploads)
+            or any(not isinstance(form[name], str) for name in text_fields)
+            or any(not isinstance(upload, UploadFile) for upload in uploads)):
+        raise ProposalFailure("invalid_form", "Supply each required text field once and one PDF per Source.")
 
 
 def _close_parser_uploads(parser: MultiPartParser) -> None:
@@ -83,6 +81,6 @@ async def _bounded_stream(request: Request) -> AsyncGenerator[bytes, None]:
         if size > MAX_REQUEST_BYTES:
             # The multipart parser closes temporary files when its stream raises.
             raise ProposalFailure(
-                "pdf_too_large", "The PDF upload limit is 10 MiB.", status_code=413
+                "pdf_too_large", "The combined PDF upload limit is 10 MiB.", status_code=413
             )
         yield chunk

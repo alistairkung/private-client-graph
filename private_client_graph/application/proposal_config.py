@@ -2,6 +2,7 @@
 
 import os
 from dataclasses import dataclass
+from pathlib import Path
 
 from pydantic import SecretStr
 
@@ -12,6 +13,8 @@ class ProposalAnalysisConfig:
     window_seconds: int
     api_key: SecretStr
     model: str
+    task_root: Path | None = None
+    authorization: str | None = None
 
     @classmethod
     def from_environment(cls) -> "ProposalAnalysisConfig":
@@ -26,6 +29,8 @@ class ProposalAnalysisConfig:
             window_seconds=window_seconds,
             api_key=SecretStr(api_key),
             model=model,
+            task_root=Path(root).expanduser().resolve() if (root := os.getenv("PCG_PROVIDER_TASK_ROOT", "").strip()) else None,
+            authorization=os.getenv("PCG_PROVIDER_AUTHORIZATION", "").strip() or None,
         )
 
 

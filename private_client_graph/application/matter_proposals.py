@@ -1,15 +1,19 @@
 """Synchronous synthetic intake: finalized Source, proposed graph, durable review."""
 
+from collections.abc import Callable
+from typing import NoReturn, TypeVar
+
 from langchain_core.exceptions import OutputParserException
 from langchain_deepseek import ChatDeepSeek
 from openai import APIConnectionError, APIStatusError
-from pydantic import ValidationError
+from pydantic import BaseModel, ValidationError
 from sqlalchemy.exc import SQLAlchemyError
 
-from private_client_graph.extraction import extract_relationships_from_text
+from private_client_graph.extraction import extract_relationships_from_text, extract_relationships_from_sources
 from private_client_graph.pipeline import Pipeline, PipelineInput, PipelineExecutionError
-from private_client_graph.models import ExtractionResult
-from private_client_graph.persistence.matter_proposals import find_reference, save_proposal
+from private_client_graph.models import ExtractionResult, SourcedExtractionResult
+from private_client_graph.models.source import Source
+from private_client_graph.persistence.matter_proposals import find_reference, save_proposal, save_proposal_state
 from private_client_graph.persistence.proposal_allowance import claim_slot
 from private_client_graph.persistence.proposal_errors import (
     DuplicateReference,
@@ -19,8 +23,10 @@ from private_client_graph.persistence.proposal_errors import (
 from .analysis_config import APPROVED_APPLICATION_PIPELINE_CONFIG
 from .pdf_acquisition import PdfAcquisitionError, extract_pdf_source
 from .proposal_config import ProposalAnalysisConfig
-from .proposal_contracts import MatterProposalDetail, ProposalMetadata, ReferenceOwner
+from .proposal_contracts import MatterProposalDetail, MatterIntakeMetadata, ProposalMetadata, ReferenceOwner
+from .proposal_sources import PdfSourceInput, acquire_proposal_sources
 from .proposal_errors import ProposalFailure
+from .proposal_provider import invoke_authorized
 
 
 def analyse_proposal(
@@ -38,21 +44,59 @@ def analyse_proposal(
     try:
         result = pipeline.run(PipelineInput(source_text=source, document=metadata.source_title))
     except PipelineExecutionError as exc:
-        if isinstance(exc.__cause__, ProposalFailure):
-            raise exc.__cause__
-        if exc.stage != 'graph' or not isinstance(exc.__cause__, ValueError):
-            raise
-        raise ProposalFailure(
-            'invalid_graph',
-            'No valid proposal was produced. The proposed relationships or Evidence failed validation. You may try a fresh analysis.',
-            retryable=True,
-        ) from exc.__cause__
+        _raise_pipeline_failure(exc)
     try:
         return save_proposal(metadata, source, result.graph)
     except DuplicateReference as exc:
         raise _duplicate_failure(exc.owner) from exc
     except ProposalPersistenceFailure as exc:
         raise _persistence_failure(exc) from exc
+
+
+def analyse_proposal_sources(
+    metadata: MatterIntakeMetadata,
+    inputs: list[PdfSourceInput],
+    config: ProposalAnalysisConfig | None,
+) -> MatterProposalDetail:
+    sources = acquire_proposal_sources(inputs)
+    _require_unclaimed_reference(metadata.external_reference)
+    pipeline = Pipeline(APPROVED_APPLICATION_PIPELINE_CONFIG,
+                        source_extractor=lambda bundle: _extract_proposal_sources(bundle, config))
+    try:
+        result = pipeline.run_sources(sources)
+    except PipelineExecutionError as exc:
+        _raise_pipeline_failure(exc)
+    try:
+        return save_proposal_state(metadata, result.state)
+    except DuplicateReference as exc:
+        raise _duplicate_failure(exc.owner) from exc
+    except ProposalPersistenceFailure as exc:
+        raise _persistence_failure(exc) from exc
+
+
+def _raise_pipeline_failure(error: PipelineExecutionError) -> NoReturn:
+    """Apply the same safe consumer failure policy to either extraction contract."""
+    if isinstance(error.__cause__, ProposalFailure):
+        raise error.__cause__
+    if error.stage == 'graph' and isinstance(error.__cause__, ValueError):
+        raise ProposalFailure(
+            'invalid_graph',
+            'No valid proposal was produced. The proposed relationships or Evidence failed validation. You may try a fresh analysis.',
+            retryable=True,
+        ) from error.__cause__
+    raise error
+
+
+def _extract_proposal_sources(
+    sources: list[Source], config: ProposalAnalysisConfig | None,
+) -> SourcedExtractionResult:
+    llm = _analysis_model(config)
+    return invoke_authorized(config, lambda: _invoke_source_extraction(sources, llm))
+
+
+def _invoke_source_extraction(sources: list[Source], llm: ChatDeepSeek) -> SourcedExtractionResult:
+    return _invoke_validated_extraction(lambda: extract_relationships_from_sources(sources, llm=llm),
+                                        SourcedExtractionResult)
 
 
 def _duplicate_failure(owner: ReferenceOwner) -> ProposalFailure:
@@ -95,10 +139,12 @@ def _require_unclaimed_reference(reference: str) -> None:
         raise _duplicate_failure(owner)
 
 
-def _extract_proposal(
-    source: str,
-    config: ProposalAnalysisConfig | None,
-) -> ExtractionResult:
+def _extract_proposal(source: str, config: ProposalAnalysisConfig | None) -> ExtractionResult:
+    llm = _analysis_model(config)
+    return invoke_authorized(config, lambda: _invoke_extraction(source, llm))
+
+
+def _analysis_model(config: ProposalAnalysisConfig | None) -> ChatDeepSeek:
     if config is None:
         raise ProposalFailure(
             'analysis_unavailable',
@@ -107,7 +153,7 @@ def _extract_proposal(
         )
     llm = _construct_model(config)
     _consume_attempt(config)
-    return _invoke_extraction(source, llm)
+    return llm
 
 
 def _construct_model(config: ProposalAnalysisConfig) -> ChatDeepSeek:
@@ -128,9 +174,15 @@ def _construct_model(config: ProposalAnalysisConfig) -> ChatDeepSeek:
 
 
 def _invoke_extraction(source: str, llm: ChatDeepSeek) -> ExtractionResult:
+    return _invoke_validated_extraction(lambda: extract_relationships_from_text(source, llm=llm), ExtractionResult)
+
+
+_Extraction = TypeVar('_Extraction', bound=BaseModel)
+
+
+def _invoke_validated_extraction(invoke: Callable[[], object], result_model: type[_Extraction]) -> _Extraction:
     try:
-        result = extract_relationships_from_text(source, llm=llm)
-        return ExtractionResult.model_validate(result)
+        return result_model.model_validate(invoke())
     except (ValidationError, OutputParserException, RuntimeError) as exc:
         raise ProposalFailure(
             'invalid_extraction',

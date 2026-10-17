@@ -85,7 +85,7 @@ def test_saved_proposal_is_durable_and_claims_its_canonical_reference(database):
         "id": str(proposal.id), "external_reference": "PC/Straße-01", "matter_title": "Synthetic Trust",
     }
     assert set(proposal.model_dump()) == {
-        "id", "external_reference", "matter_title", "authoritative_source", "proposed_graph",
+        "id", "external_reference", "matter_title", "authoritative_source", "proposed_graph", "state",
     }
     owner = find_reference(" pc/STRASSE-01 ")
     assert owner.model_dump(mode="json") == {
