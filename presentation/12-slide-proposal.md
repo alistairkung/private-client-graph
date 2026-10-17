@@ -2,6 +2,8 @@
 
 Planning document for review. Exactly 12 proposed slides; no slide production is authorized by this document.
 
+See the linked [motion storyboard and production plan](motion-storyboard.md) for scene beats, ASCII keyframes, silent bilingual timing, intentional PDF resting states, asset prerequisites and production priorities. P0 plans English/Simplified Chinese MP4s and twelve-page PDFs after separate approval; no implementation or rendering has begun.
+
 ## Persuasive arc
 
 This is a submitted reading deck: every essential product boundary and research qualification must be understandable without narration. Speaker notes provide optional depth, not missing context.
@@ -100,6 +102,10 @@ H and I are production prerequisites, not actions authorized by this revision. L
 
 **Unsupported claims / validation:** Practitioner value remains a hypothesis; no adoption, time-saving or market-size claim.
 
+### Motion Storyboard
+
+See [Scene 1: motion beats, final resting frame, assets and feasibility](motion-storyboard.md#scene-1). The existing static wireframe and evidence above remain the content foundation.
+
 ## Slide 2 — The facts arrive as documents. The questions span relationships.
 
 **Purpose:** Make the review problem concrete without relying on generic “too much paperwork” rhetoric.
@@ -137,6 +143,10 @@ H and I are production prerequisites, not actions authorized by this revision. L
 **Evidence:** [Case 04 specification](../cases/case_04/README.md); [public experience reasoning](../docs/design/public-landing-experience.md), whose product distinctions survive its superseded visual composition; merged [#125](https://github.com/alistairkung/private-client-graph/pull/125) and [#129](https://github.com/alistairkung/private-client-graph/pull/129).
 
 **Unsupported claims / validation:** No empirical claim about document volumes, error rates or review time. Validate workflow prevalence through practitioner research later.
+
+### Motion Storyboard
+
+See [Scene 2: motion beats, final resting frame, assets and feasibility](motion-storyboard.md#scene-2). The existing static wireframe and evidence above remain the content foundation.
 
 ## Slide 3 — Who is the current trustee—and which document establishes that?
 
@@ -177,6 +187,10 @@ H and I are production prerequisites, not actions authorized by this revision. L
 
 **Unsupported claims / validation:** No measured time saving, general temporal reasoning, conflict adjudication or incremental accepted-Matter update claim. This is the existing completed-replacement scenario, not a newly invented case.
 
+### Motion Storyboard
+
+See [Scene 3: motion beats, final resting frame, assets and feasibility](motion-storyboard.md#scene-3). The existing static wireframe and evidence above remain the content foundation.
+
 ## Slide 4 — From synthetic PDFs to a reviewable Matter.
 
 **Purpose:** Show that the product has a coherent delivered workflow, with a clear human decision point.
@@ -213,6 +227,10 @@ H and I are production prerequisites, not actions authorized by this revision. L
 **Evidence:** merged [#52](https://github.com/alistairkung/private-client-graph/pull/52), [#59](https://github.com/alistairkung/private-client-graph/pull/59), [#130](https://github.com/alistairkung/private-client-graph/pull/130), [#138](https://github.com/alistairkung/private-client-graph/pull/138), [#143](https://github.com/alistairkung/private-client-graph/pull/143); [intake design decisions](../docs/design/matter-intake-slice.md), extended by #130/#138.
 
 **Unsupported claims / validation:** No arbitrary PDF/OCR support, document-management integration, multi-firm ownership or real-client suitability claim. Screenshot providers are substituted, as recorded in asset A's provenance.
+
+### Motion Storyboard
+
+See [Scene 4: motion beats, final resting frame, assets and feasibility](motion-storyboard.md#scene-4). The existing static wireframe and evidence above remain the content foundation.
 
 ## Slide 5 — Every proposed relationship has a route back to its source.
 
@@ -252,6 +270,10 @@ H and I are production prerequisites, not actions authorized by this revision. L
 
 **Unsupported claims / validation:** Avoid “verified truth,” “hallucination-free” or “all evidence recovered.” Exact occurrence is not semantic validation.
 
+### Motion Storyboard
+
+See [Scene 5: motion beats, final resting frame, assets and feasibility](motion-storyboard.md#scene-5). The existing static wireframe and evidence above remain the content foundation.
+
 ## Slide 6 — The difficult part is deciding what the documents mean together.
 
 **Purpose:** Show why credible relationship reconstruction requires more than extracting names.
@@ -289,6 +311,10 @@ H and I are production prerequisites, not actions authorized by this revision. L
 **Evidence:** [held-out case index](../evaluation_cases/README.md), especially 03, 05, 06 and 08; [Case 05](../cases/case_05/README.md); merged [#125](https://github.com/alistairkung/private-client-graph/pull/125), [#128](https://github.com/alistairkung/private-client-graph/pull/128); [resolver experiment design](../docs/design/entity-resolution-research-experiment.md).
 
 **Unsupported claims / validation:** Do not claim a general temporal engine, contradiction adjudication, or production identity resolution. Same-title Sources remain distinct; visual labels are not identity keys.
+
+### Motion Storyboard
+
+See [Scene 6: motion beats, final resting frame, assets and feasibility](motion-storyboard.md#scene-6). The existing static wireframe and evidence above remain the content foundation.
 
 ## Slide 7 — Let AI interpret. Make the mechanics deterministic.
 
@@ -328,6 +354,10 @@ H and I are production prerequisites, not actions authorized by this revision. L
 
 **Unsupported claims / validation:** Do not imply the research resolver is enabled in the practitioner baseline, a general agent framework exists, mechanical validity proves semantics, or the refined capture is already packaged. No proven competitive moat claim.
 
+### Motion Storyboard
+
+See [Scene 7: motion beats, final resting frame, assets and feasibility](motion-storyboard.md#scene-7). The existing static wireframe and evidence above remain the content foundation.
+
 ## Slide 8 — Change one stage. Keep the evidence fixed.
 
 **Purpose:** Establish why the comparison is interpretable before showing the score.
@@ -340,7 +370,8 @@ H and I are production prerequisites, not actions authorized by this revision. L
 +----------------------------------------------------------------------+
 |  Change one stage. Keep the evidence fixed.                          |
 |                                                                      |
-|  10 synthetic cases       14 Sources       39 expected relationships  |
+|  5 development cases --> 10 held-out synthetic test cases             |
+|  Test set: 14 Sources / 39 expected relationships                      |
 |                                                                      |
 |  A: original extraction --> retained, frozen candidates               |
 |                                     |                                |
@@ -356,7 +387,7 @@ H and I are production prerequisites, not actions authorized by this revision. L
 +----------------------------------------------------------------------+
 ```
 
-**Actual slide copy:** Headline; “10 synthetic cases · 14 Sources · 39 expected relationships”; “A: original extraction”; “A′: exact zero-call replay”; “B: same saved inputs + resolver”; “One execution per case and condition. Post-hoc exploratory comparison.”; “Project-authored; separate AI-validator checks, not external review.”
+**Actual slide copy:** Headline; “5 development cases → 10 held-out synthetic test cases”; “Test set: 14 Sources · 39 expected relationships”; “A: original extraction”; “A′: exact zero-call replay”; “B: same saved inputs + resolver”; “One execution per case and condition. Post-hoc exploratory comparison.”; “Project-authored; separate AI-validator checks, not external review.”
 
 **Visual asset reference:** G's retained-input replay flow from #136; a narrow D pipeline strip may accompany it. These are method visuals, not performance evidence. Do not use earlier prototype screenshots as if they contain this final experiment.
 
@@ -365,6 +396,10 @@ H and I are production prerequisites, not actions authorized by this revision. L
 **Evidence:** merged [#125](https://github.com/alistairkung/private-client-graph/pull/125), [#128](https://github.com/alistairkung/private-client-graph/pull/128), [#136](https://github.com/alistairkung/private-client-graph/pull/136); [benchmark validation record](../research/final-day/validation/README.md) (historical pre-execution status); [aggregate design decisions](../docs/design/research-workbench-run-aggregate-evaluation.md); [retained publication identities and verification](https://github.com/alistairkung/private-client-graph/blob/21e3ff348757955df805d0d8a1d44d862e1549fd/docs/workflows/public-research-publication.md), in open [#152](https://github.com/alistairkung/private-client-graph/pull/152).
 
 **Unsupported claims / validation:** No statistical significance, external validation, unseen-test resolver generalisation or production reliability claim. The older Issue #92 pilot has different cohorts/repetitions and is not pooled into these results.
+
+### Motion Storyboard
+
+See [Scene 8: motion beats, final resting frame, assets and feasibility](motion-storyboard.md#scene-8). The existing static wireframe and evidence above remain the content foundation.
 
 ## Slide 9 — On this synthetic set, relationship F1 rose from 94.87% to 100%.
 
@@ -404,6 +439,10 @@ H and I are production prerequisites, not actions authorized by this revision. L
 
 **Unsupported claims / validation:** Required final capture is not yet verified or packaged. No repeated-run consistency, confidence interval, production accuracy, or deployed research viewer claim. Keep qualifications in readable slide copy.
 
+### Motion Storyboard
+
+See [Scene 9: motion beats, final resting frame, assets and feasibility](motion-storyboard.md#scene-9). The existing static wireframe and evidence above remain the content foundation.
+
 ## Slide 10 — Two endpoint corrections. The same original evidence.
 
 **Purpose:** Explain exactly what improved without overloading the slide with the analysis report.
@@ -427,13 +466,14 @@ H and I are production prerequisites, not actions authorized by this revision. L
 |  "Bea is the parent of Isaac Ng."  [UNCHANGED EXACT SOURCE QUOTE]     |
 |  Names changed; evidence did not. Strict evidence-check failures remain.|
 |                                                                      |
-|  +10 calls; 9.06s summed provider-call time, not end-to-end latency.    |
+|  +10 calls / 9,821 tokens / 9.06s summed provider-call time.            |
+|  Not end-to-end latency.                                              |
 |  USD cost unpriced. One execution per case; repeatability unknown.     |
 |  [Research details: distinct evidence-check populations and definitions]|
 +----------------------------------------------------------------------+
 ```
 
-**Actual slide copy:** “Two endpoint corrections. The same original evidence.”; “Bea → Beatrice Ng”; “Settlor and parent endpoints”; exact quote “Bea is the parent of Isaac Ng.”; “Names changed; evidence did not. Existing strict evidence-check failures remained.”; “+10 calls · 9.06s summed provider-call time, not end-to-end latency”; “USD cost unpriced. One execution per case; repeatability unknown.”; “Research details: evidence checks assess different populations.”
+**Actual slide copy:** “Two endpoint corrections. The same original evidence.”; “Bea → Beatrice Ng”; “Settlor and parent endpoints”; exact quote “Bea is the parent of Isaac Ng.”; “Names changed; evidence did not. Existing strict evidence-check failures remained.”; “+10 calls · 9,821 tokens · 9.06s summed provider-call time, not end-to-end latency”; “USD cost unpriced. One execution per case; repeatability unknown.”; “Research details: evidence checks assess different populations.”
 
 **Visual asset reference:** F's existing heldout_03 original/resolved graph and Evidence details, using one dominant endpoint-correction region rather than two miniature full graphs. Show both affected source endpoints mapping from the same alias to the same canonical name; these are two endpoint corrections for one person. Reuse existing recorded edit details if they show the same two changes legibly. F is a local asset requiring packaging, not a new capture request in this revision. Keep the exact quote and Source identity intact. Detailed diagnostics should link to the [pinned research publication record](https://github.com/alistairkung/private-client-graph/blob/21e3ff348757955df805d0d8a1d44d862e1549fd/docs/workflows/public-research-publication.md) and [retained snapshot](https://github.com/alistairkung/private-client-graph/blob/21e3ff348757955df805d0d8a1d44d862e1549fd/private_client_graph/published/research-results.v1.json); replace the reader-facing details link with the verified research page only when that page is available. Do not imply it is deployed now.
 
@@ -442,6 +482,10 @@ H and I are production prerequisites, not actions authorized by this revision. L
 **Evidence:** [heldout_03 source and truth](../evaluation_cases/heldout_03/README.md); [retained snapshot](https://github.com/alistairkung/private-client-graph/blob/21e3ff348757955df805d0d8a1d44d862e1549fd/private_client_graph/published/research-results.v1.json), endpoint edits, per-Run diagnostics and usage; [endpoint-edit constraints](../docs/design/entity-resolution-research-experiment.md); merged [#136](https://github.com/alistairkung/private-client-graph/pull/136); open [#152](https://github.com/alistairkung/private-client-graph/pull/152).
 
 **Unsupported claims / validation:** No claim that two different people's names changed, identity is generally solved, all provenance failures are understood, the resolver is cost-effective, or perfect relationship F1 means perfect documentary support. A future reader-facing research link requires deployment/access verification.
+
+### Motion Storyboard
+
+See [Scene 10: motion beats, final resting frame, assets and feasibility](motion-storyboard.md#scene-10). The existing static wireframe and evidence above remain the content foundation.
 
 ## Slide 11 — Next: keep the Matter current, without losing the review boundary.
 
@@ -481,6 +525,10 @@ H and I are production prerequisites, not actions authorized by this revision. L
 
 **Unsupported claims / validation:** Future direction, not a committed release plan. No delivery date, security certification, iManage integration, automated conflict adjudication or real-client readiness claim.
 
+### Motion Storyboard
+
+See [Scene 11: motion beats, final resting frame, assets and feasibility](motion-storyboard.md#scene-11). The existing static wireframe and evidence above remain the content foundation.
+
 ## Slide 12 — Make every relationship reviewable.
 
 **Purpose:** Leave judges with a clear reason to back the direction and an immediate route to inspect it.
@@ -518,6 +566,10 @@ H and I are production prerequisites, not actions authorized by this revision. L
 **Evidence:** merged [#18](https://github.com/alistairkung/private-client-graph/pull/18), [#75](https://github.com/alistairkung/private-client-graph/pull/75), [#138](https://github.com/alistairkung/private-client-graph/pull/138), [#143](https://github.com/alistairkung/private-client-graph/pull/143), [#147](https://github.com/alistairkung/private-client-graph/pull/147); [PRODUCT.md](../PRODUCT.md); [retained results](https://github.com/alistairkung/private-client-graph/blob/21e3ff348757955df805d0d8a1d44d862e1549fd/private_client_graph/published/research-results.v1.json). Railway domain was verified via read-only domain metadata; the public root returned HTTP 200 during proposal research. That establishes reachability, not complete deployed feature acceptance.
 
 **Unsupported claims / validation:** Recheck audience access and deployed routes before eventual presentation. Avoid “production-ready,” validated ROI, competitive superiority or guaranteed accuracy.
+
+### Motion Storyboard
+
+See [Scene 12: motion beats, final resting frame, assets and feasibility](motion-storyboard.md#scene-12). The existing static wireframe and evidence above remain the content foundation.
 
 ## Evidence reconciliation and material deliberately left out
 
