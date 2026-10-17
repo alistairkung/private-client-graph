@@ -32,6 +32,8 @@ it("preserves the server preview and propagates abort for stale configuration", 
   vi.stubGlobal("fetch", fetch);
   const signal = new AbortController().signal;
   const proposal: Proposal = {
+    retained_experiment_id: null,
+    retained_run_id: null,
     input_ids: ["case_03_fixture"],
     input_mode: "fresh",
     execution_mode: "recorded",

@@ -11,7 +11,7 @@ import { PipelineFields } from "../configuration/Fields";
 import { ReviewDialog } from "./ReviewDialog";
 import { ReviewSummary } from "./ReviewSummary";
 import { CasePicker } from "./CasePicker";
-import { freezeDraft, previewDraft, saveDraft } from "./api";
+import { freezeDraft, getRun, previewDraft, saveDraft } from "./api";
 import "../configuration/configuration.css";
 
 export function DraftEditor({
@@ -23,6 +23,7 @@ export function DraftEditor({
   frozen,
   saving,
   disabled = false,
+  runIds = [],
 }: {
   id: string;
   draft: RunDraft;
@@ -32,6 +33,7 @@ export function DraftEditor({
   frozen: (id: string) => void;
   saving: (busy: boolean) => void;
   disabled?: boolean;
+  runIds?: string[];
 }) {
   const [configuration, setConfiguration] = useState<RunConfiguration>(
     draft.configuration,
@@ -111,6 +113,45 @@ export function DraftEditor({
     setConfiguration((value) => ({ ...value, ...changes }));
     freezeId.current = crypto.randomUUID();
   }
+  async function selectInputOrigin(runId: string) {
+    if (!runId) {
+      update({
+        retained_experiment_id: null,
+        retained_run_id: null,
+        input_ids: cases
+          .filter((item) => item.kind === "benchmark")
+          .map((item) => item.id),
+      });
+      return;
+    }
+    setBusy(true);
+    setError("");
+    try {
+      const run = await getRun(id, runId);
+      if (
+        run.lifecycle !== "complete" ||
+        run.plan.preview.proposal.input_mode !== "fresh" ||
+        run.plan.preview.proposal.resolver !== "none"
+      ) {
+        throw new Error("Select a completed fresh no-resolution Run.");
+      }
+      update({
+        retained_experiment_id: id,
+        retained_run_id: runId,
+        input_ids: run.observations.map((item) => item.sample_id),
+        input_mode: "saved",
+        extraction_samples: 1,
+        resolver: "none",
+        execution_mode: "replay",
+        invocation_cap: 0,
+        task_call_cap: 0,
+      });
+    } catch (error) {
+      setError((error as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
   return (
     <section className="next-run" aria-label="Next Run Draft">
       <div className="section-heading">
@@ -122,12 +163,33 @@ export function DraftEditor({
           Run
         </button>
       </div>
-      <CasePicker
-        cases={cases}
-        selected={configuration.input_ids}
-        update={(input_ids) => update({ input_ids })}
-        disabled={busy}
-      />
+      <label>
+        Input origin
+        <select
+          aria-label="Input origin"
+          disabled={busy}
+          value={configuration.retained_run_id ?? ""}
+          onChange={(event) => void selectInputOrigin(event.target.value)}
+        >
+          <option value="">Repository case fixtures</option>
+          {runIds.map((runId) => (
+            <option key={runId} value={runId}>Retained extraction — {runId}</option>
+          ))}
+        </select>
+      </label>
+      {configuration.retained_run_id ? (
+        <p>
+          Using all {configuration.input_ids.length} retained extractions from Run {configuration.retained_run_id}.
+          Source order, evidence and original provider outputs are verified before freezing.
+        </p>
+      ) : (
+        <CasePicker
+          cases={cases}
+          selected={configuration.input_ids}
+          update={(input_ids) => update({ input_ids })}
+          disabled={busy}
+        />
+      )}
       <Pipeline
         persistent
         proposal={configuration}
