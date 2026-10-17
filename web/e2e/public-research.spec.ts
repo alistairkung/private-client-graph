@@ -39,6 +39,7 @@ for (const locale of ["en", "zh-CN"] as const) {
     await expect(page.locator("main")).toContainText("100.00%");
     await expect(page.locator("main")).toContainText(snapshot.snapshot_id);
     await expect(page.locator("main")).toContainText(snapshot.integrity.digest);
+    await page.locator(".research-recorded-metrics > summary").click();
     for (const section of ["comparison", "usage"]) {
       const scroller = page.locator(`#${section} .research-table-scroll`);
       if (page.viewportSize()!.width < 600) {
@@ -179,11 +180,11 @@ for (const locale of ["en", "zh-CN"] as const) {
       await index.evaluate(element => { element.scrollTop = 0; });
     }
     const architecture = page.locator("#architecture");
-    await architecture.getByRole("button", { name: locale === "en" ? "Resolver configuration" : "实体解析配置", exact: true }).click();
+    await architecture.getByRole("combobox", { name: locale === "en" ? "Inspect Run" : "查看运行", exact: true }).selectOption("B");
     const resolver = architecture.getByRole("button", { name: locale === "en" ? /Resolve aliases/ : /解析别名/ });
     await resolver.click();
     await expect(resolver).toHaveAttribute("aria-expanded", "true");
-    await expect(architecture).toContainText(locale === "en" ? "does not rewrite" : "不会改写");
+    await expect(architecture.getByRole("region", { name: locale === "en" ? "Resolve aliases settings" : "解析别名设置" })).toContainText(locale === "en" ? "Frozen configuration · Read-only" : "冻结配置 · 只读");
     const study = page.locator(".research-graph-study");
     await study.getByLabel(locale === "en" ? "Find a relationship" : "查找关系").selectOption("0");
     const canvasContainsNodes = () => study.locator(".graph-canvas").evaluate(canvas => {
@@ -210,6 +211,62 @@ for (const locale of ["en", "zh-CN"] as const) {
     await page.screenshot({ path: testInfo.outputPath(`editorial-results-${locale}.png`), fullPage: true });
     await page.locator("#failure-analysis").screenshot({ path: testInfo.outputPath(`editorial-graph-${locale}.png`) });
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+    expect(requests.every(request => request === "GET /api/research-results")).toBe(true);
+  });
+}
+
+for (const locale of ["en", "zh-CN"] as const) {
+  test(`genuine Workbench figures inspect published Runs without operational access in ${locale}`, async ({ page }, testInfo) => {
+    await page.addInitScript(value => localStorage.setItem("pcg-locale", value), locale);
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    const requests: string[] = [];
+    page.on("request", request => { if (request.url().includes("/api/")) requests.push(`${request.method()} ${new URL(request.url()).pathname}`); });
+    await page.goto("/research-results");
+    if (page.viewportSize()!.width >= 701) {
+      expect(await page.locator(".research-disclosure").evaluate(element => element.getBoundingClientRect().width)).toBeLessThanOrEqual(900);
+    }
+    const architecture = page.locator("#architecture");
+    const configuration = architecture.getByRole("combobox", { name: locale === "en" ? "Inspect Run" : "查看运行", exact: true });
+    await configuration.selectOption("A_prime");
+    await expect(architecture.getByRole("button", { name: /Resolve aliases|解析别名/ })).toHaveCount(0);
+    await configuration.selectOption("B");
+    const stage = architecture.getByRole("button", { name: /Resolve aliases|解析别名/ });
+    await stage.click();
+    await expect(stage).toHaveAttribute("aria-expanded", "true");
+    await expect(architecture.getByRole("button", { name: /Add|Bypass|Authorize|Execute|添加|跳过|授权|执行/ })).toHaveCount(0);
+    await expect(page.locator("iframe")).toHaveCount(0);
+    await stage.click();
+    await architecture.locator(".pipeline-viewport").evaluate(element => { element.scrollLeft = 0; });
+    await expect(architecture.locator(".pipeline-node").first()).toHaveCSS("width", "240px");
+    await expect(architecture.locator(".node-header").first()).toHaveCSS("height", "140px");
+    await expect(architecture.locator(".pipeline-navigation button").first()).toHaveCSS("background-color", "rgb(23, 62, 56)");
+    await page.mouse.move(0, 0);
+    await page.evaluate(() => document.fonts.ready);
+    await architecture.locator(".pipeline-workspace").screenshot({ path: testInfo.outputPath(`shared-pipeline-component-public-${locale}.png`) });
+    await architecture.screenshot({ path: testInfo.outputPath(`shared-pipeline-public-${locale}.png`) });
+    const chart = page.locator("#comparison .run-chart");
+    await expect(chart.locator(".chart-point")).toHaveCount(3);
+    await chart.screenshot({ path: testInfo.outputPath(`shared-chart-component-public-${locale}.png`) });
+    const treatment = chart.getByRole("button", { name: locale === "en" ? "Run 3, F1 1.000, complete, 10/10 scored" : "运行 3，F1 1.000，完整，已评分 10/10", exact: true });
+    await treatment.click();
+    await expect(treatment).toHaveAttribute("aria-pressed", "true");
+    await expect(chart.locator(".chart-inspection")).toContainText("841389cef51957ce8523ea41c03d2baa");
+    const inputs = chart.getByRole("combobox", { name: locale === "en" ? "Input mode" : "输入模式", exact: true });
+    await inputs.selectOption("fresh");
+    await expect(chart.locator(".chart-point")).toHaveCount(1);
+    await inputs.selectOption("all");
+    await chart.getByRole("tab", { name: locale === "en" ? "F1 vs Cost" : "F1 与成本", exact: true }).click();
+    await expect(chart.locator(".chart-point")).toHaveCount(1);
+    await expect(chart.locator(".chart-point")).toHaveAttribute("aria-label", locale === "en" ? "Run 2, F1 0.949, complete, 10/10 scored" : "运行 2，F1 0.949，完整，已评分 10/10");
+    await expect(chart.getByText(locale === "en" ? "Unpriced provider attempts; excluded from cost chart." : "提供商调用尝试未定价；不纳入成本图表。", { exact: true })).toHaveCount(2);
+    await chart.getByRole("tab", { name: locale === "en" ? "F1 by Run" : "各次运行的 F1", exact: true }).click();
+    await expect(chart.getByRole("tab", { name: locale === "en" ? "F1 by Run" : "各次运行的 F1", exact: true })).toHaveCSS("color", "rgb(23, 62, 56)");
+    await expect(treatment).toHaveAttribute("aria-pressed", "true");
+    await page.mouse.move(0, 0);
+    await page.locator("#comparison").screenshot({ path: testInfo.outputPath(`shared-chart-public-${locale}.png`) });
+    for (const frame of page.frames()) await frame.evaluate(() => document.fonts.ready);
+    await page.screenshot({ path: testInfo.outputPath(`shared-results-${locale}.png`), fullPage: true });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     expect(requests.every(request => request === "GET /api/research-results")).toBe(true);
   });
 }

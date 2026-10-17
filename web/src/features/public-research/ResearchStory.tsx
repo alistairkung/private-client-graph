@@ -8,10 +8,11 @@ import { Provenance, RunComparison } from "./RunComparison";
 import { Usage } from "./Usage";
 import type { PublicResearchSnapshot } from "./types";
 
-function Chapter({ id, title, children }: { id: string; title: string; children: ReactNode }) {
+function Chapter({ id, title, children, band = false }: { id: string; title: string; children: ReactNode; band?: boolean }) {
   const { t } = useLocale();
-  return <section id={id} className="research-section research-chapter">
-    <h2>{t(title)}</h2>{children}
+  const content = <><h2>{t(title)}</h2>{children}</>;
+  return <section id={id} className={`research-section research-chapter ${band ? "research-evidence-band" : ""}`}>
+    {band ? <div className="research-band-content">{content}</div> : content}
   </section>;
 }
 export function ResearchStory({ snapshot }: { snapshot: PublicResearchSnapshot }) {
@@ -23,7 +24,7 @@ export function ResearchStory({ snapshot }: { snapshot: PublicResearchSnapshot }
       <p>{t("Private-client analysis depends on who is connected to whom, in what capacity, and on which documentary words. A plausible graph is not enough: its relationships must remain traceable to the Sources.")}</p>
       <p>{t("Can one full-context extraction call reconstruct a provenance-aware current relationship graph from multiple documents? Can a separate generative resolver improve relationship accuracy? And what additional cost and complexity does it introduce?")}</p>
     </Chapter>
-    <Chapter id="architecture" title="Interpretation, then construction.">
+    <Chapter id="architecture" title="Interpretation, then construction." band>
       <p>{t("Ordered Sources enter semantic extraction together. The model proposes Source-attributed candidates; deterministic validation and construction produce CanonicalState. The optional resolver sits between extraction and construction, correcting supported endpoint names while leaving Evidence quotations unchanged.")}</p>
       <ResearchArchitecture runs={snapshot.runs} />
     </Chapter>

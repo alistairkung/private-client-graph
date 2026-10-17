@@ -1,3 +1,4 @@
+import { researchVisualCatalogue } from "./research/visual-catalogue";
 import { researchEditorialCatalogue } from "../features/public-research/editorial-catalogue";
 import { researchLandingCatalogue } from "../features/public-research/landing-catalogue";
 import { publicResearchCatalogue } from "../features/public-research/catalogue";
@@ -6,6 +7,7 @@ import { showcaseZhCN } from "../features/showcase/catalogue";
 import { practitionerZhCN } from "../features/matters/catalogue";
 export const catalogue: Record<string,string> = {
   ...researchEditorialCatalogue,
+  ...researchVisualCatalogue,
   "The Evidence Source could not be found. Reload the case.": "找不到证据来源。请重新加载案例。",
   "Language": "语言",
   "Supporting evidence": "支持证据",
