@@ -1,3 +1,4 @@
+import { useLocale } from "../../shared/locale";
 import { useState } from "react";
 import { csrfHeaders } from "../../shared/csrf";
 
@@ -8,6 +9,7 @@ export function SignOut({
   onPendingChange?: (pending: boolean) => void;
   onSuccess?: () => void;
 }) {
+  const { t } = useLocale();
   const [error, setError] = useState(false);
   const [pending, setPending] = useState(false);
   async function signOut() {
@@ -27,7 +29,7 @@ export function SignOut({
     }
   }
   return <div className="sign-out">
-    <button type="button" onClick={signOut} disabled={pending}>{pending ? "Signing out…" : "Sign out"}</button>
-    {error && <span role="alert">Could not sign out. Please try again.</span>}
+    <button type="button" onClick={signOut} disabled={pending}>{pending ? t("Signing out…") : t("Sign out")}</button>
+    {error && <span role="alert">{t("Could not sign out. Please try again.")}</span>}
   </div>;
 }
