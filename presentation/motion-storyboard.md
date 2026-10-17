@@ -10,7 +10,9 @@ The signature is a stable relationship and its unchanged documentary Evidence. U
 
 “Scroll-inspired” means stable visual anchors, paced disclosure and chapter continuity. It does not mean simulated scrolling of long pages, sweeping cameras or an autoplaying product walkthrough. The [Lissom site](https://lissom.ai/) provides a useful outcome → problem → product-mechanism editorial progression. Its page text was inspected; its exact motion choreography was not visually audited. The requested cinematic influence is a creative interpretation, not a claim to reproduce its implementation, imagery, customers, performance or brand.
 
-The motion plan changes how meaning is revealed, not what the product can do. No fake pointer, fabricated loading, simulated provider execution, self-updating Matter, rewired relationship, new graph layout semantics or metric count-up. Diagrams on scene 8 explain a research protocol; they are not new product screens. Synthetic/fixture labels and material research qualifications appear from each scene's initial reveal and remain readable throughout the hold.
+The motion plan changes how meaning is revealed, not what the product can do. **Scenes 3, 5 and 10 may use faithful conceptual transformations**, visibly labelled “Conceptual animation — based on the supplied synthetic documents” (3/5) or “Conceptual animation — recorded endpoint edits” (10), with localized equivalents. Editorial layers may connect, reveal and reposition documentary assertions, relationship labels or recorded endpoint edits to explain their meaning. Keep these layers visually distinct from unaltered authentic UI captures; do not pass them off as application footage. Preserve exact names, roles, Source identities and quotations, except for the two explicitly recorded endpoint substitutions in scene 10. Conceptual connectors explain correspondence, not new domain relationships.
+
+No fake pointer, fabricated loading, simulated provider execution, self-updating accepted Matter, invented relationship or metric count-up. Scenes 7 and 9 retain the **actual Workbench chain and F1 plot**; this permission does not allow their reconstruction or replacement. Scene 8's protocol diagram is also editorial, not a product screen. Synthetic/fixture labels and material research qualifications appear from each scene's initial reveal and remain readable throughout the hold.
 
 ## Consulted guidance and feasibility decisions
 
@@ -124,17 +126,17 @@ END    [Which family link?] [Which trust role?] [Which Source?]
 
 ### Motion Storyboard
 
-**A. Initial frame:** “Case 05 — documents supplied together” is explicit. Two dated source excerpts are on the left; the current-state graph region is bounded on the right. “Curated synthetic fixture; not measured model output or a saved-Matter update” remains visible.
+**A. Initial frame:** “Case 05 — documents supplied together” is explicit. Both dated source excerpts are present on the left; a distinct editorial interpretation area leads to the authentic current-state graph on the right. Show “Conceptual animation — based on the supplied synthetic documents” and “Curated synthetic fixture; not measured model output or a saved-Matter update.”
 
-**B. Animation beats:** After 1s entry: emphasize the earlier David Ng entry (2s); reveal the completed replacement's effective date and Rachel Lim statement (3s); emphasize Rachel's current edge in genuine asset C, retaining David's textual “earlier entry — historical” label beside its original document (3s). Hold 18.5s, then 0.5s exit. Do not delete David from an animated saved Matter or simulate a model call.
+**B. Animation beats:** After 1s entry: reveal an editorial “earlier assertion: David Ng — trustee” label connected to its exact passage (2s); reveal the completed replacement passage and effective date, then move the earlier assertion into a persistent “historical” position while bringing the Rachel Lim assertion forward (3s); connect the replacement assertion to Rachel's current edge in genuine asset C (3s). Both supplied documents remain visible. Hold 18.5s, then 0.5s exit. This transforms the explanation of supplied facts, not an accepted Matter or a live extraction.
 
-**C. Final resting frame:** The two supplied document excerpts, completed effective-date label, Rachel Lim → trustee of → Willow Family Trust crop, and David historical label coexist. Static state retains both the earlier assertion and the reason it is not current. Use the exact sole-trustee quotation from slide 3's copy.
+**C. Final resting frame:** Both supplied document excerpts, the completed effective-date label, Rachel Lim → trustee of → Willow Family Trust crop, and David's historical assertion coexist, with editorial connections and the conceptual-animation label retained. The static state preserves the earlier/current distinction and why Rachel is current. Use the exact sole-trustee quotation from slide 3's copy.
 
 **D. Trigger:** Timeline-driven emphasis of existing states. Optional scroll could reveal the same document interpretation, not “upload next Source.”
 
 **E. Narrative purpose:** Answer a real review question while distinguishing current state from a union of every historical statement.
 
-**F. Technical approach:** Layered genuine source/graph regions with opacity/outline changes; connect each source claim to the relevant labelled context. Reuse the actual final graph rather than inventing an intermediate application graph. A textual annotation can say “historical”; do not alter the authoritative document to strike out its valid earlier statement.
+**F. Technical approach:** Reuse genuine source excerpts and final graph; animate separate editorial assertion labels and masked correspondence connectors with frame interpolation. A restrained spatial move from “earlier assertion” to “historical” and a reveal of the effective replacement explain supersession. Do not redraw an intermediate application state, strike out the valid original document or remove a node inside a screenshot. The conceptual label remains visible during the transformation and final hold.
 
 **G. Asset dependencies:** C, Case 05 `sources/note_01.txt`, `sources/note_02.txt`, `expected_state.json` and source-aware approvals; all referenced in the proposal. Required later capture only if the current graph crop lacks a legible Rachel edge.
 
@@ -145,10 +147,11 @@ START  CASE 05 — BOTH SOURCES ALREADY SUPPLIED
 [1 Sep: David trustee]   [15 Sep: completed replacement]
 
 MID
-[earlier entry: historical]  [effective 10 Sep: Rachel appointed]
+[David assertion moves to HISTORICAL] [effective 10 Sep: Rachel assertion]
                                             |
 END                                        v
-[Both original excerpts]       [ACTUAL CURRENT GRAPH CROP]
+[Both original excerpts + labelled conceptual interpretation]
+                               [ACTUAL CURRENT GRAPH CROP]
                                Rachel Lim -- trustee_of --> Willow Family Trust
 ```
 
@@ -180,27 +183,27 @@ END                                        v
 
 ### Motion Storyboard
 
-**A. Initial frame:** The genuine graph and its selected-state UI are visible, with Evidence/Source panels alongside. Caption: “Synthetic sample; not a live-model result.” No fake pointer.
+**A. Initial frame:** Authentic selected-relationship graph and Source/Evidence panels are visible. Outside the UI, label the explanation “Conceptual animation — based on the supplied synthetic documents” and retain “Synthetic sample; not a live-model result.” No fake pointer.
 
-**B. Animation beats:** After 1s entry, emphasize the complete relationship (2s), shift emphasis to its genuine Evidence panel (3s), then emphasize the exact quote and Source identity together (4s). Hold all three regions 17.5s; exit 0.5s. Do not hide the Source title while enlarging the quotation.
+**B. Animation beats:** After 1s entry, reveal an editorial selected-relationship label anchored to the genuine edge (2s); draw a correspondence connector from that label to the identified Source, progressively revealing the Source title/ID (3s); continue the connection into the exact supporting passage, reveal its gold highlight and bring an exact-quote detail into readable focus (4s). Hold all regions 17.5s; exit 0.5s. The Source identity stays visible as quotation focus increases; the path is relationship → identified Source → exact quotation.
 
-**C. Final resting frame:** Selected graph edge left; matched Evidence and source passage right. Small numbered outside-UI captions “Select / Inspect / Read in Source” preserve the three-step logic. This is the static before/focus/after summary without three tiny screenshots.
+**C. Final resting frame:** Selected graph edge left; identified Source and matched exact quotation right, connected through clearly editorial annotations. Outside-UI captions “Selected relationship → identified Source → exact supporting quotation” and the conceptual-animation label preserve the full correspondence in one readable static view. Keep the genuine Evidence panel and complete endpoint names visible.
 
 **D. Trigger:** Deterministic timeline. A later scroll mapping may advance the emphasis; it must not require a click to reveal the essential quote.
 
 **E. Narrative purpose:** Teach where the proposed fact came from, rather than merely asserting explainability.
 
-**F. Technical approach:** P0 uses a real selected-state capture plus moving emphasis around three stable panels. If genuine overview/selection captures are later supplied, crossfade only verified corresponding states; label the recording as a demonstration. No reconstructed interaction, cursor animation or auto-extraction implication.
+**F. Technical approach:** Combine unaltered authentic product crops with separate editorial layers: a connecting-path reveal, progressive Source/quote disclosure and restrained focus transitions. An enlarged quote detail must reproduce the exact source text and remain attached to its Source identity. Use shared frame-based reveal/focus primitives, not simulated clicks or fabricated UI states. Genuine corresponding selection captures can be crossfaded; conceptual connections must remain labelled, and must not imply a provider run or a newly discovered edge.
 
 **G. Asset dependencies:** A or B with one consistent actual edge/Evidence/Source selection. Required preparation: confirm the chosen selection appears in every crop, package exact source text and capture coordinates. If missing, require later genuine captures; do not fabricate UI states.
 
 **H. Complexity:** **Moderate.** Risk: focus movement removes the relationship endpoint or attribution. Keep them visible and validate the correspondence against canonical state.
 
 ```text
-START [ACTUAL GRAPH: selected edge]     [Evidence] [Source title + text]
-MID   [edge remains visible]  -------> [EXACT QUOTE gains emphasis]
-END   [selected relationship]          [quote + named Source + context]
-      Select                           Inspect / Read in Source
+START [ACTUAL GRAPH: selected edge]     [Identified Source + Evidence]
+MID   [relationship label] ----------> [Source title / ID] --> [passage]
+END   [selected relationship] -------> [identified Source] --> [exact quote]
+      Labelled conceptual connections; authentic product crops unchanged.
 ```
 
 <a id="scene-6"></a>
@@ -324,17 +327,17 @@ END   Run 1=A        Run 2=A'       Run 3=B
 
 ### Motion Storyboard
 
-**A. Initial frame:** Actual heldout_03 context, two original Bea source endpoints, the same exact quote and Source identity. A/B labels distinguish conditions. Existing strict evidence-check failures are disclosed from entry.
+**A. Initial frame:** Actual heldout_03 context, with a separate editorial “Before: A” summary of the two original Bea source endpoints beside authentic graph/Evidence detail. Show “Conceptual animation — recorded endpoint edits.” Source identity, exact quotation and existing strict evidence-check failures are visible from entry.
 
-**B. Animation beats:** After 1s entry: focus the two recorded affected relationships (2s); reveal both recorded Bea → Beatrice Ng substitutions, keeping old labels as before-state text outside the UI (3s); settle on “Names changed. Evidence did not.” with fixed quote and unchanged roles (3s). Hold 20.5s; exit 0.5s.
+**B. Animation beats:** After 1s entry, progressively reveal the two editorial before-state relationship rows (2s); duplicate each source-name label into its “After: B” position and replace only Bea with Beatrice Ng, leaving the before-state labels visible (3s); align both before/after rows on their unchanged relationship types and targets while the shared Source/quote region remains fixed, then reveal “Names changed. Evidence did not.” (3s). Hold 20.5s; exit 0.5s. Both recorded substitutions refer to the same person; no new edge is drawn.
 
-**C. Final resting frame:** A compact before→after endpoint-edit summary for the same person beside genuine resolved detail; original quotation and Source persist. Show “Strict evidence-check failures remained” and one concise overhead block: **“+10 calls · 9,821 tokens · 9.06s summed provider-call time, not end-to-end latency.”** Cost unpriced and repeatability unknown remain visible. Detailed metric populations stay linked, as in the proposal.
+**C. Final resting frame:** Two fully labelled “Before: A / After: B” endpoint-edit rows for the same person beside genuine resolved detail; original quotation, Source attribution and conceptual-animation label persist. Show “Strict evidence-check failures remained” and one concise overhead block: **“+10 calls · 9,821 tokens · 9.06s summed provider-call time, not end-to-end latency.”** Cost unpriced and repeatability unknown remain visible. Detailed metric populations stay linked, as in the proposal.
 
 **D. Trigger:** Deterministic reveal of saved A/B states. Scroll could vary emphasis, never rerun the resolver or animate newly discovered relationships.
 
 **E. Narrative purpose:** Explain the narrow source of the score change and prevent perfect-F1 overinterpretation.
 
-**F. Technical approach:** Existing graph/Evidence regions plus recorded edit summary; crossfade only genuine A/B states if available. Otherwise use genuine resolved crop and clearly editorial before/after text from retained edits. Never overlay fabricated changed labels inside a screenshot. No moving graph nodes or rewritten quote.
+**F. Technical approach:** Use a shared editorial before/after layout with frame-driven name-label movement and replacement, populated from the two retained endpoint edits. Keep each row's type, target and attribution fixed, with one unchanged documentary Evidence region. These explanatory labels live outside authentic screenshots; do not paint replacement names into screenshots or morph product graph nodes. Genuine A/B captures may support the explanation, but conceptual transformation does not depend on fabricating a missing UI state. No new relationship discovery or rewritten quotation.
 
 **G. Asset dependencies:** F packaged original/resolved/Evidence assets; retained heldout_03 endpoint edits, original source, exact quotations and usage. This is heldout_03/Beatrice Ng, not development Case 03/Rebecca Tan or the older pilot. Overhead totals apply to the ten-case treatment, not the two edits alone.
 
@@ -344,8 +347,11 @@ END   Run 1=A        Run 2=A'       Run 3=B
 START  A: Bea -- settlor_of --> Larch Family Trust
           Bea -- parent_of  --> Isaac Ng
        [Exact Source + quotation stay fixed throughout]
-MID    [Two recorded source-endpoint substitutions; ONE person]
-END    A: Bea  --> B: Beatrice Ng  (settlor and parent endpoints)
+MID    EDITORIAL BEFORE / AFTER — two recorded edits; ONE person
+       Before: Bea -- settlor_of --> Larch Family Trust
+       After:  Beatrice Ng -- settlor_of --> Larch Family Trust
+END    Before: Bea -- parent_of --> Isaac Ng
+       After:  Beatrice Ng -- parent_of --> Isaac Ng
        Same roles. Same Source. Same quotation.
        Names changed. Evidence did not. Strict failures remained.
 ```
@@ -453,34 +459,53 @@ However, this does not solve mobile readability of a 1920×1080 chart, keyboard 
 
 If revisited: mount one active shared scene; throttle frame seeking to browser repaint; avoid React rerender loops; retain native document scrolling and explicit next/previous chapter links, pause/play and static-state controls. With reduced motion, show the twelve resting states in normal flow; also provide readable text/evidence outside a canvas and both downloadable PDFs. On mobile prefer responsive static resting states plus optional video rather than shrinking a desktop chart into a sticky postage stamp. These requirements add a distinct QA surface even with shared scenes. Budget it only after all four P0 files pass acceptance; do not begin P1 or create another deck framework during P0.
 
-## Ranked production plan and effort
+## Production checkpoint and reuse-driven completion
 
-Estimates are planning judgments for one experienced producer, excluding review turnaround. No work in this table has begun.
+The production strategy is **one representative scene first, then reuse across the remaining eleven**, after separate production authorization. The approved narrative, timing approach, four P0 outputs and static PDF contract remain. No implementation, previews or export are authorized by this text-only revision.
 
-| Rank | Explanatory sequence | Preferred bounded approach | Effort estimate |
+### Representative-scene checkpoint
+
+Recommend **scene 10**: it tests authentic screenshot handling, a meaningful conceptual transformation, exact English names/quotations, dense scientific disclosures, bilingual reflow and an intentional before/after resting state within a single bounded scene.
+
+1. Establish the shared Remotion visual system: Evidence Folio tokens, type scale, safe areas, deterministic scene clock, localized content, licensed portable CJK font loading and a shared resting-state mode.
+2. Implement scene 10 end to end, using the two recorded edits and genuine graph/Evidence assets. Build its motion from reusable primitives rather than a scene-specific animation engine.
+3. Render that scene alone as English and Simplified Chinese MP4 previews, using the planned 30s/32s scene budgets. These are checkpoint artifacts, not full-deck exports.
+4. Export and inspect its intentional PDF resting frame in both languages: one complete page per language for the checkpoint, not the final twelve-page decks.
+5. Review typography and CJK glyph coverage, exact source/name preservation, screenshot resolution at intended display size, visible scientific disclosures, truthful labelling, restrained explanatory motion and readability without narration. Verify the fixed Source/quotes and both before/after endpoints survive the static export. Check the declared frame count and hold timing against each preview.
+6. Present the two previews, two resting-page proofs, identified fixes and measured implementation effort for owner checkpoint approval. **Only after that checkpoint is approved** should the approach scale to the remaining eleven scenes. If it fails, fix the representative scene and shared primitives first; do not compensate with eleven bespoke solutions.
+
+The checkpoint proves the reusable approach, not the final Workbench assets: H and I still require authentic, readable chain/chart preparation and scene-specific acceptance. They cannot be replaced with conceptual drawings. No provider call, evaluation, application change or deployment is needed for this production checkpoint.
+
+### Shared primitives and layouts
+
+Reuse one frame-driven motion vocabulary: progressive disclosure/masked reveal; correspondence-connector reveal; focus/detail transition; editorial before/after label transformation; fixed recorded-value annotation; and stable reading hold. Share the title/qualification region, source-plus-result layout, relationship/Source/quote arrangement, recorded before/after rows and authentic full-width UI frame. One locale parameter and one evidence/metric source feed both video and intentional still output. Do not fork English/Chinese scenes or maintain a separate PDF deck implementation.
+
+Reserve bespoke choreography for the six highest-value sequences below. Most work after the checkpoint should configure approved primitives and content; quiet scenes use shared layouts and short focus changes. Use actual checkpoint effort to revise the remaining-work estimate and surface asset blockers before committing to a completion date.
+
+| Priority after checkpoint | Sequence | Reuse / bounded customization | Prior uncertain estimate |
 |---|---|---|---|
-| 1 | 7 — actual chain and control boundaries | Genuine H capture + staged external focus | 3–5 hours |
-| 2 | 9 — actual F1 and replay distinction | Genuine I plot + fixed recorded-value emphasis | 3–5 hours |
-| 3 | 5 — relationship → Evidence → Source | Genuine consistent selected-state crops | 3–4 hours |
-| 4 | 8 — frozen input → paired branches | Frame-based editorial protocol reveal | 2–3 hours |
-| 5 | 2–3 — document question → current trustee | Genuine dated excerpts/current graph; persistent fixture boundary | 4–6 hours |
-| 6 | 10 — two endpoint substitutions | Retained edit summary and unchanged exact Evidence | 3–4 hours |
+| 1 | 7 — actual chain and control boundaries | Authentic H in shared UI frame; stage-focus/reveal primitives | 3–5 hours |
+| 2 | 9 — actual F1 and replay distinction | Authentic I in same frame; fixed-value annotations, scope disclosure | 3–5 hours |
+| 3 | 5 — relationship → Source → exact quotation | Source/detail layout and connecting-reveal/focus primitives | 3–4 hours |
+| 4 | 8 — identical saved inputs → paired branches | Shared labels/connectors; only the fork needs custom choreography | 2–3 hours |
+| 5 | 2–3 — supplied documents → current trustee | Source/result layout; historical/current assertion transformation | 4–6 hours |
+| Representative | 10 — two recorded endpoint substitutions | Establishes before/after and unchanged-Evidence primitives at checkpoint | 3–4 hours |
 
-Approximately **18–27 hours** for these six sequences. Supporting work: 4–6h for scope/asset/font/translation readiness; 3–5h for scene/timing/still assembly and quiet scenes; 4–6h for bilingual reflow and copy review; 5–8h for future exports, all 24 static-page checks, silent-reading tests and corrections. **P0 total: approximately 34–52 focused hours (about 4–7 working days)** if assets and reviewed copy are obtainable. This is not a delivery commitment; missing H/I, CJK licensing or localization review can block the schedule. Unmodified component integration is not assumed free.
+These hours are **uncertain prior planning estimates, not delivery commitments or independent bookings**. The earlier 18–27h major-sequence subtotal and 34–52h overall estimate are historical planning envelopes, superseded as a scheduling method by this checkpoint. Do not add checkpoint time mechanically to them: checkpoint assets, layout, localization and primitives are reused. No calendar completion promise is made. Re-estimate remaining production, bilingual review and export QA from demonstrated reuse and checkpoint findings.
 
-Low-cost supporting motion: 1's opening emphasis; 4's workflow outline; 6's three question emphases; 11's built/future contrast; 12's reused opening callback. These use the same restrained opacity/outline grammar, not separate effects systems. Substantial reading time remains still.
+After checkpoint approval, complete the required chain/chart scenes first, then compose the remaining explanatory scenes from shared primitives and fill the quiet scenes. Inspect each resting state as its scene settles; perform final silent-reading and bilingual checks before generating the four final P0 files. Final PDFs still contain exactly twelve pages each. The optional hosted presentation remains deferred until after submission.
 
-Genuine reuse opportunities: actual `AnalysisPipeline`, `PipelineNode` and `RunPerformanceChart` visuals; approved graph/Evidence components and exact synthetic data; existing typography/tokens; same scene logic for video and still states. Evaluate read-only component rendering only after setup is approved, with no operational Workbench API, execution authority or domain/evaluator imports. Default to capture-based use if component state/effects create new scope. No application modifications are included in this plan.
+Low-cost supporting motion: 1's opening emphasis; 4's workflow focus; 6's three questions; 11's built/future contrast; and 12's reused opening callback. Genuine component reuse remains optional and read-only: `AnalysisPipeline`, `PipelineNode`, `RunPerformanceChart`, approved graph/Evidence visuals and existing tokens. If state/effects introduce scope, use faithful captures. No operational API, execution authority or domain/evaluator import is required.
 
-Cut now: simulated PDF upload or confirmation clicks; moving graph nodes that imply identity mutation; animated metric counting; invented training curves; automatic scrolling of full product pages; fake quote highlights; gold score badges; springs/bounce; parallax; scroll hosting before P0; generated mockups; and a separate presentation framework. If time tightens, cut layer motion and retain authentic visuals plus focus, never remove the required chain/plot or scientific qualifications.
+Cut fake uploads/clicks/provider runs, invented edges or statistics, metric count-ups, automatic page scrolling, decorative springs/parallax and duplicate scene-specific engines. **Keep the labelled conceptual transformations in 3, 5 and 10:** they explain supplied or recorded facts and are distinct from fabricated application behavior. If time tightens, simplify choreography while preserving the correspondence, actual Workbench chain/plot and scientific qualifications.
 
 ## Final planning self-review and acceptance
 
-- **Narrative coherence:** the approved twelve-slide arc and headline order remain. Only the requested visible dataset correction and treatment-token detail extend copy; scenes 2–3 answer a concrete question, 5 demonstrates provenance, 7 explains boundaries and 8–10 substantiate findings.
-- **Over-animation:** six major sequences; the rest quiet. A mostly stable frame carries every hold, and the opening/closing share one motif. Removed fake clicks and continuous chart/graph movement.
+- **Narrative coherence:** the approved twelve-slide arc, headline order, timing, scientific qualifications and PDF strategy remain. This focused refinement strengthens only the conceptual explanations in 3/5/10 and replaces the scheduling method with a representative-scene checkpoint followed by shared-primitives reuse.
+- **Over-animation:** six major sequences; the rest quiet. Scenes 3/5/10 now permit purposeful, persistently labelled conceptual transformations outside authentic screenshots. Reading holds stay stable; opening/closing share one motif. Fake clicks and fabricated application behavior remain excluded.
 - **Factual integrity:** Case 05 is supplied-together curated output; heldout_03 is the Bea result. A′ is zero-call exact replay. A/B metrics, Source identities, unchanged quotations, remaining strict failures, tokens, summed duration and unpriced costs retain their meanings. No production reliability or deployment guarantee.
 - **Readability:** English 4:54, Chinese allowance 5:06, closing hold 13s. Real silent-reading tests, font/glyph checks and visual verification remain future work; this Markdown cannot certify them. Caveats stay onscreen, not only in notes.
-- **Technical feasibility:** frame-based interpolation and genuine capture focus are supported planning paths. Stateful live components require isolation; no existing frame-control prop is invented. Explicit stills and ordered page assembly provide a realistic PDF path. Scroll hosting is deferred.
+- **Technical feasibility:** frame-based conceptual transformations and genuine capture focus use shared primitives. Scene 10 is the bilingual end-to-end checkpoint before scaling to eleven other scenes; prior hours are uncertain, not commitments. Authentic Workbench chain/chart requirements remain. Stateful components require isolation; no frame-control prop is invented. Explicit stills provide the PDF path; scroll hosting remains deferred.
 - **Scope:** this revision changes Markdown only. No scaffolding, dependency installation, screenshot, recording, image edit, animation code, render, export, prototype, application change, evaluation, paid provider call, merge or deployment.
 
-Approval requested at the planning boundary: review the storyboard, reading budget and asset prerequisites. Narrative/storyboard approval is not automatically approval to implement or produce any output. Stop here until the owner authorizes production separately.
+The existing narrative, timing and PDF approvals remain in place. This focused storyboard refinement still stops at the planning boundary: wait for owner approval before production, including the representative-scene checkpoint. No implementation or output production has begun.
