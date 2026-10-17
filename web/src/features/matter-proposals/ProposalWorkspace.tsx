@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { ReviewWorkspace } from "../review/ReviewWorkspace";
+import { SourceAwareReviewWorkspace } from "../review/SourceAwareReviewWorkspace";
 import { getProposal } from "./api";
 import { ProposalDecision } from "./ProposalDecision";
 import type { MatterProposalDetail } from "./types";
@@ -32,14 +33,16 @@ export function ProposalWorkspace({ id, onNavigate }: { id: string; onNavigate: 
         <p className="proposal-explanation">Awaiting confirmation. These relationships are proposed; no Matter has been created.</p>
         <p className="proposal-saved">Your proposal is saved. You can return to it from Matters.</p>
       </header>
-      <ReviewWorkspace
+      {state.proposal.state ? <SourceAwareReviewWorkspace key={id} state={state.proposal.state}
+        graphTitle="Proposed relationships" emptyGraphTitle="No supported relationships proposed" practitioner />
+        : state.proposal.authoritative_source ? <ReviewWorkspace
         source={state.proposal.authoritative_source.text}
         sourceTitle={state.proposal.authoritative_source.title}
         graph={state.proposal.proposed_graph}
         graphTitle="Proposed relationships"
         emptyGraphTitle="No supported relationships proposed"
         practitioner
-      />
+      /> : <p role="alert">The complete Source state is unavailable. Reload to try again.</p>}
       <ProposalDecision proposal={state.proposal} onNavigate={onNavigate} />
     </> : state.status === "loading" ? <p role="status">Loading Matter Proposal…</p> : <div role="alert">
       <h1>{state.status === "missing" ? "Matter Proposal not found" : "Matter Proposal could not be loaded."}</h1>

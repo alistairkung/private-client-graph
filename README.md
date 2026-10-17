@@ -227,6 +227,15 @@ authorization, application, and PostgreSQL paths. Proposal analysis also uses a
 deterministic local model substitute, so Google, DeepSeek, Railway, and external
 PostgreSQL credentials are not required.
 
+For a deterministic multi-document walkthrough, select
+`tests/fixtures/synthetic-proposal.pdf` and
+`tests/fixtures/multiple-role-proposal.pdf`. The development-only adapter supplies
+known candidates for each Source, retaining its ID, title, order and exact quotes.
+It replaces external dispatch before model construction or paid authorization;
+no provider authority or shared paid-call ledger is needed. Authentication, PDF
+validation, graph construction, confirmation and PostgreSQL persistence remain real.
+The fixtures demonstrate workflow, not extraction quality on arbitrary documents.
+
 PostgreSQL 16 is health-checked before the application starts. Startup applies
 the Alembic migrations and runs the idempotent Evergreen seed before serving the
 built frontend. Database state is stored in the named Compose volume and survives
@@ -593,6 +602,13 @@ requires these proposal-analysis settings before `/health` reports ready:
 | `PCG_PROPOSAL_ANALYSIS_WINDOW_SECONDS` | Positive 32-bit integer window duration, e.g. `86400` |
 | `DEEPSEEK_API_KEY` | Non-empty provider credential |
 | `DEEPSEEK_MODEL` | Optional non-empty model name; defaults to `deepseek-flash` |
+
+Provider dispatch also requires `PCG_PROVIDER_TASK_ROOT` pointing to the existing
+shared task artifact root and `PCG_PROVIDER_AUTHORIZATION` naming its explicitly
+approved external invocation. Missing, inconsistent or exhausted authority blocks
+dispatch; application requests never initialize a task or grant approval. The
+application rate quota remains a separate gate. Every reserved dispatch, including
+failed or interrupted attempts, remains charged in the same ledger as research.
 
 Provider credentials/model availability are verified by the provider on invocation;
 missing or locally invalid settings fail readiness. There is no unlimited fallback.

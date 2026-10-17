@@ -28,6 +28,10 @@ def test_local_app_uses_real_callback_and_session(monkeypatch):
 
     from local_development.server import create_local_app
 
+    from private_client_graph.application import matter_proposals
+
+    for name in ("_extract_proposal", "_extract_proposal_sources"):
+        monkeypatch.setattr(matter_proposals, name, getattr(matter_proposals, name))
     app = create_local_app(origin="https://localhost:8443")
     client = TestClient(app, base_url="https://localhost:8443")
 

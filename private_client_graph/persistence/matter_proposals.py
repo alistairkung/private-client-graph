@@ -9,10 +9,11 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.engine import Connection, RowMapping
 from sqlalchemy.exc import DBAPIError, SQLAlchemyError
 
-from private_client_graph.application.matters import MatterDetail
+from private_client_graph.application.matters import MatterDetail, AuthoritativeSource
 from private_client_graph.application.proposal_contracts import (
     MatterProposalDetail,
     MatterProposalSummary,
+    MatterIntakeMetadata,
     ProposalMetadata,
     ReferenceOwner,
 )
@@ -75,12 +76,22 @@ def save_proposal(
     source_text: str,
     proposed_graph: CanonicalGraph,
 ) -> MatterProposalDetail:
+    # Preserve the legacy validated-detail error contract before adapting it.
     snapshot = MatterProposalDetail.model_validate({
-        "id": uuid4(),
-        **metadata.model_dump(exclude={"source_title"}),
+        "id": uuid4(), "external_reference": metadata.external_reference,
+        "matter_title": metadata.matter_title,
         "authoritative_source": {"title": metadata.source_title, "text": source_text},
-        "proposed_graph": proposed_graph.model_dump(),
+        "proposed_graph": proposed_graph,
     })
+    state = single_source_state(Source(id="source_001", title=metadata.source_title,
+                                       text=source_text), snapshot.proposed_graph)
+    return save_proposal_state(metadata, state)
+
+
+def save_proposal_state(metadata: MatterIntakeMetadata, state: CanonicalState) -> MatterProposalDetail:
+    """Claim the reference and persist every Source and fact in one transaction."""
+    snapshot = _detail({"id": uuid4(), "external_reference": metadata.external_reference,
+                        "matter_title": metadata.matter_title}, state.model_copy(deep=True))
     with _proposal_transaction() as connection:
         _claim_reference(connection, snapshot)
         _insert_proposal(connection, snapshot)
@@ -109,14 +120,13 @@ def confirm_proposal(proposal_id: UUID) -> MatterDetail | None:
         ).mappings().one_or_none()
         if row is None:
             return None
-        # Validate the single-source presentation contract before consuming state.
         state = load_proposal_state(connection, proposal_id)
         proposal = _detail(row, state)
         matter_id = _promote_locked_proposal(connection, row, state)
         return MatterDetail(
             id=matter_id, external_reference=proposal.external_reference,
             title=proposal.matter_title, authoritative_source=proposal.authoritative_source,
-            current_graph=proposal.proposed_graph,
+            current_graph=proposal.proposed_graph, state=state,
         )
 
 
@@ -178,10 +188,8 @@ def _claim_reference(connection: Connection, snapshot: MatterProposalDetail) -> 
 
 
 def _insert_proposal(connection: Connection, snapshot: MatterProposalDetail) -> None:
-    state = single_source_state(Source(
-        id="source_001", title=snapshot.authoritative_source.title,
-        text=snapshot.authoritative_source.text,
-    ), snapshot.proposed_graph)
+    assert snapshot.state is not None
+    state = snapshot.state
     if not insert_proposal(
         connection, proposal_id=snapshot.id, external_reference=snapshot.external_reference,
         title=snapshot.matter_title, state=state,
@@ -219,14 +227,15 @@ def _find_reference(connection: Connection, external_reference: str) -> Referenc
     return ReferenceOwner.model_validate(row) if row is not None else None
 
 
-def _detail(row: RowMapping, state: CanonicalState) -> MatterProposalDetail:
-    if len(state.sources) != 1:
-        raise ValueError("The practitioner workspace requires exactly one Source")
-    source = state.sources[0]
+def _detail(row: RowMapping | dict[str, object], state: CanonicalState) -> MatterProposalDetail:
+    if not state.sources:
+        raise ValueError("A proposal must retain at least one Source")
+    source = state.sources[0] if len(state.sources) == 1 else None
     return MatterProposalDetail.model_validate({
         "id": row["id"],
         "external_reference": row["external_reference"],
         "matter_title": row["matter_title"],
-        "authoritative_source": {"title": source.title, "text": source.text},
+        "authoritative_source": AuthoritativeSource(title=source.title, text=source.text) if source else None,
         "proposed_graph": reconstruct_graph(state),
+        "state": state,
     })

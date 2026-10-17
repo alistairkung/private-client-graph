@@ -1,4 +1,5 @@
 import type { CanonicalGraph } from "../../shared/canonical-graph";
+import type { CanonicalState } from "../../shared/canonical-state";
 
 export interface MatterProposalSummary {
   id: string;
@@ -7,17 +8,27 @@ export interface MatterProposalSummary {
 }
 
 export interface MatterProposalDetail extends MatterProposalSummary {
-  authoritative_source: { title: string; text: string };
+  authoritative_source: { title: string; text: string } | null;
+  state?: CanonicalState;
   proposed_graph: CanonicalGraph;
 }
 
-export interface ProposalInput {
+interface ProposalIdentity {
   external_reference: string;
   matter_title: string;
-  source_title: string;
-  pdf: File;
   synthetic_confirmation: boolean;
 }
+
+export interface PdfSourceInput {
+  id: string;
+  title: string;
+  pdf: File;
+}
+
+export type ProposalInput = ProposalIdentity & (
+  | { source_title: string; pdf: File; sources?: never }
+  | { sources: PdfSourceInput[]; source_title?: never; pdf?: never }
+);
 
 export interface ExistingResource {
   resource_kind: "matter_proposal" | "matter";
