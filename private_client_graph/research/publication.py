@@ -8,6 +8,7 @@ import hashlib
 import io
 import json
 from pathlib import Path
+from typing import Any
 import zipfile
 
 from private_client_graph.published import canonical_bytes, publication_digest
@@ -51,7 +52,7 @@ def build_public_snapshot(archive_path: Path, *,
     scope = json.loads(report_files['B-workbench-run.json'])['evaluation']['scope']
     control_scope = json.loads(report_files['control-workbench-run.json'])['evaluation']['scope']
     _require(scope['identity'] == control_scope['identity'], 'Paired benchmark identity mismatch')
-    snapshot = {'schema_version': 1, 'snapshot_id': 'final-heldout-a-aprime-b-v1',
+    snapshot: dict[str, Any] = {'schema_version': 1, 'snapshot_id': 'final-heldout-a-aprime-b-v1',
                 'experiment_id': EXPERIMENT_ID,
                 'benchmark': {'identity': scope['identity'], 'identity_scope': 'paired-saved-inputs',
                               'evaluator_version': scope['evaluator_version'],
@@ -179,7 +180,7 @@ def _public_calls(files: dict[str, bytes], prefix: str, run_id: str, plan: dict)
 
 
 def _usage(calls: list[dict]) -> dict:
-    result = {'attempts': len(calls), 'currency': 'USD',
+    result: dict[str, Any] = {'attempts': len(calls), 'currency': 'USD',
               'unpriced_attempts': sum(call['cost'] is None for call in calls)}
     for field in ('input_tokens', 'output_tokens', 'cached_tokens', 'provider_seconds', 'cost'):
         result[field] = None if any(call[field] is None for call in calls) else sum(call[field] for call in calls)
