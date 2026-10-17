@@ -407,8 +407,8 @@ def _checkpoint(should_stop: Callable[[], bool]) -> None:
 
 def _legacy_projection(extraction: SourcedExtractionResult) -> ExtractionResult:
     """Expose legacy diagnostics without using the lossy projection for construction."""
-    return ExtractionResult(relationships=[item.model_dump(exclude={'source_id'})
-                                            for item in extraction.relationships])
+    return ExtractionResult.model_validate(dict(relationships=[
+        item.model_dump(exclude={'source_id'}) for item in extraction.relationships]))
 
 
 def _sourced_pipeline_result(sample: ResearchInput, config: PipelineConfig, *,
@@ -441,7 +441,8 @@ def _sourced_pipeline_result(sample: ResearchInput, config: PipelineConfig, *,
         _record_pipeline_failure(result, error)
         if error.resolved is not None:
             _record_prediction(result, sample, error.resolved)
-        return result, error.extracted
+        extracted = error.extracted if isinstance(error.extracted, SourcedExtractionResult) else None
+        return result, extracted
     result.resolution_seconds = 0
     result.graph_seconds = time.perf_counter() - graph_started
     result.downstream_seconds = result.graph_seconds

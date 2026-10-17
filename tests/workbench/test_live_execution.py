@@ -278,3 +278,27 @@ def test_rejected_approval_or_concurrent_start_preserves_frozen_state(live_root,
     assert supervisor.status(live_root, plan.id).state == 'frozen'
     assert live_budget(live_root).cap == 0
     assert not list((live_root / plan.id / 'authorizations').glob('*.json'))
+
+
+def test_research_and_application_dispatch_share_one_ceiling_even_after_application_failure(live_root):
+    from pathlib import Path
+    from private_client_graph.research.artifacts import BudgetExceeded
+    plan = frozen(live_root, task_call_cap=2)
+    bundle = approved_bundle(live_root, plan)
+    authority = live_accounting.authorize_external_invocation(live_root, purpose='Application smoke',
+        task_cap=2, invocation_cap=2, approval_reference='Deterministic shared approval')
+    authorization = authority['authorization']
+    assert live_accounting.reserve_external_attempt(live_root, authorization=authorization, attempt_id='app1')
+    live_accounting.finish_external_attempt(live_root, authorization=authorization, attempt_id='app1',
+                                            outcome='failed', error_type='TimeoutError')
+    calls = []
+    def provider(request):
+        assert live_budget(live_root).used == 2
+        calls.append(request)
+        return recorded_response(request)
+    execute(bundle, live=True, provider=provider)
+    assert len(calls) == 1
+    assert live_accounting.task_state(Path(bundle.task_ledger))['used'] == 2
+    with pytest.raises(BudgetExceeded, match='Shared task'):
+        live_accounting.reserve_external_attempt(live_root, authorization=authorization, attempt_id='app2')
+    execute(bundle, live=True, provider=lambda _: pytest.fail('Research cannot reset its invocation allowance'))

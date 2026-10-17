@@ -8,7 +8,9 @@ from private_client_graph.research.artifacts import Bundle
 from private_client_graph.research.metrics import estimate_cost
 from private_client_graph.research.provider import TokenUsage
 from private_client_graph.research.results import ResearchResult
-from private_client_graph.research.source_attribution import aggregate_source_attribution
+from private_client_graph.research.source_attribution import (
+    SourceAttributionDiagnostic, aggregate_source_attribution,
+)
 from private_client_graph.research.run_plan import RunPlan
 
 from .run_evaluation_contracts import (
@@ -86,7 +88,7 @@ def aggregate_observations(slots: list[PlannedObservation], results: list[Resear
     if len(indexed) != len(results):
         raise ValueError('Duplicate result identity')
     cases = {slot.case_id: CaseAggregate(case_id=slot.case_id) for slot in slots}
-    attribution = {case_id: [] for case_id in cases}
+    attribution: dict[str, list[SourceAttributionDiagnostic]] = {case_id: [] for case_id in cases}
     for slot in slots:
         row = indexed.get((slot.sample_id, slot.configuration, slot.repetition))
         if row and row.case_id != slot.case_id:
