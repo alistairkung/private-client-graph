@@ -178,3 +178,13 @@
 }
 
 .showcase-brand { display: inline-flex; align-items: center; gap: 12px; }
+
+/* Public navigation remains a document header as research adds a fourth route. */
+@media (min-width: 651px) and (max-width: 1350px) {
+  .showcase-header { flex-wrap: wrap; padding-block: 18px; gap: 8px 24px; }
+  .showcase-header nav { order: 3; width: 100%; }
+}
+@media (max-width: 650px) {
+  .showcase-header nav { width: 100%; flex-wrap: wrap; gap: 0 20px; }
+}
+.showcase-header nav a[aria-current="page"] { text-decoration: underline; }
