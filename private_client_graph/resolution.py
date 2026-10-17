@@ -5,7 +5,8 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from private_client_graph.models import ExtractionResult
+from private_client_graph.models import ExtractionResult, SourcedExtractionResult
+from private_client_graph.models.source import Source
 
 
 RESOLUTION_PROMPT = """Resolve aliases in the supplied relationship candidates using the full Source.
@@ -65,6 +66,12 @@ def resolution_messages(source: str, extraction: ExtractionResult) -> list[tuple
 def apply_edits(
     extraction: ExtractionResult, source: str, response: object
 ) -> ExtractionResult:
+    return _apply_edits(extraction, [source], response)
+
+
+def _apply_edits(
+    extraction: ExtractionResult, source_texts: list[str], response: object
+) -> ExtractionResult:
     edits = EndpointEdits.model_validate(response)
     names = {name for candidate in extraction.relationships
              for name in (candidate.source_name, candidate.target_name)}
@@ -74,8 +81,29 @@ def apply_edits(
         target = (edit.candidate_index, edit.endpoint)
         if target in targets or edit.candidate_index >= len(result.relationships):
             raise ValueError("Duplicate or unknown edit target")
-        if not edit.name.strip() or (edit.name not in source and edit.name not in names):
+        if not edit.name.strip() or (not any(edit.name in text for text in source_texts) and edit.name not in names):
             raise ValueError("Replacement must be an existing name or exact Source text")
         targets.add(target)
         setattr(result.relationships[edit.candidate_index], edit.endpoint, edit.name)
+    return result
+
+
+def resolve_sourced_generative(
+    extraction: SourcedExtractionResult, sources: list[Source], provider: ResolutionProvider,
+) -> SourcedExtractionResult:
+    """Resolve endpoint labels while keeping attributed candidates authoritative.
+
+    Context includes document boundaries; eligibility uses raw text so neither
+    metadata nor JSON escaping introduces replacement names.
+    """
+    projected = ExtractionResult.model_validate({'relationships': [
+        candidate.model_dump(exclude={'source_id'}) for candidate in extraction.relationships
+    ]})
+    context = json.dumps([source.model_dump() for source in sources], ensure_ascii=False)
+    response = provider(ResolutionRequest(source=context, extraction=projected.model_copy(deep=True)))
+    resolved = _apply_edits(projected, [source.text for source in sources], response)
+    result = extraction.model_copy(deep=True)
+    for candidate, edited in zip(result.relationships, resolved.relationships, strict=True):
+        candidate.source_name = edited.source_name
+        candidate.target_name = edited.target_name
     return result
