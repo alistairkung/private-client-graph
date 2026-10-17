@@ -1,6 +1,6 @@
 import { useLocale } from "../../shared/locale";
 import { NODE_WIDTH, TRUST_HEIGHT, type RelationshipRoute } from "./node-geometry";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import {
   Handle,
   Position,
@@ -70,19 +70,28 @@ const nodeTypes = { trust: TrustNode };
 const edgeTypes = { routed: RoutedEdge };
 
 function FitGraph({
+  graph,
+  selected,
   bounds,
   selectedRoute,
 }: {
+  graph: CanonicalGraph;
+  selected: number | null;
   bounds: { x: number; y: number; width: number; height: number };
   selectedRoute?: RelationshipRoute;
 }) {
-  const { t, locale } = useLocale();
   const { fitBounds, setCenter, getZoom, viewportInitialized } = useReactFlow();
   const width = useStore((state) => state.width);
   const height = useStore((state) => state.height);
   const focusRoute = width <= 450 ? selectedRoute : undefined;
+  const focusIndex = width <= 450 ? selected : null;
+  const previous = useRef<{ graph: CanonicalGraph; width: number; height: number; focusIndex: number | null } | null>(null);
   useEffect(() => {
     if (!viewportInitialized || !width || !height) return;
+    const last = previous.current;
+    // Translated label geometry must not reset a reviewer's chosen pan/zoom.
+    if (last?.graph === graph && last.width === width && last.height === height && last.focusIndex === focusIndex) return;
+    previous.current = { graph, width, height, focusIndex };
     if (width <= 450) {
       void setCenter(focusRoute?.x ?? bounds.x + bounds.width / 2,
         focusRoute?.y ?? bounds.y + bounds.height / 2,
@@ -90,7 +99,7 @@ function FitGraph({
     } else {
       void fitBounds(bounds, { padding: 0.08 });
     }
-  }, [viewportInitialized, width, height, bounds, focusRoute, fitBounds, setCenter, getZoom]);
+  }, [viewportInitialized, graph, width, height, bounds, focusRoute, focusIndex, fitBounds, setCenter, getZoom]);
   return null;
 }
 
@@ -156,7 +165,7 @@ export function GraphView({
         deleteKeyCode={null}
         onEdgeClick={(_, edge) => onSelect(Number(edge.id))}
       >
-        <FitGraph bounds={view.bounds} selectedRoute={selected === null ? undefined : view.edges[selected]?.data?.route as RelationshipRoute} />
+        <FitGraph graph={graph} selected={selected} bounds={view.bounds} selectedRoute={selected === null ? undefined : view.edges[selected]?.data?.route as RelationshipRoute} />
         <Controls showInteractive={false} showFitView={false} />
       </ReactFlow>
     </div>
