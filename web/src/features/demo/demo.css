@@ -1,0 +1,14 @@
+.demo-notice strong { display: block; margin-bottom: .4rem; }
+.demo-notice p { margin: 0; }
+.demo-shell .ledger-header nav { display: flex; flex-wrap: wrap; gap: 1rem; }
+.demo-shell .ledger-header-inner { flex-wrap: wrap; }
+.demo-next, .demo-confirmation { margin-top: 2rem; padding: 1.5rem; border: 1px solid var(--border, #d6d0c5); background: var(--paper, #faf8f3); }
+.demo-shell .intake-button { display: inline-block; text-decoration: none; }
+.demo-shell .intake-form fieldset { min-width: 0; }
+.demo-shell input { max-width: 100%; box-sizing: border-box; }
+.demo-shell .intake-actions { flex-wrap: wrap; gap: 1rem; }
+@media (max-width: 600px) {
+  .demo-shell .ledger-header nav { width: 100%; }
+  .demo-shell .intake-layout { grid-template-columns: 1fr; }
+  .demo-shell .ledger-brand { white-space: normal; }
+}

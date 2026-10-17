@@ -50,7 +50,7 @@ export function ReviewWorkspace({
     try {
       span = locateEvidence(source, active.supporting_text);
     } catch (failure) {
-      error = (failure as Error).message;
+      error = t((failure as Error).message);
     }
   }
   const selectRelationship = useCallback(
