@@ -44,21 +44,29 @@ def relationship_outcomes(sample: ResearchInput, result: ResearchResult) -> list
 
 def _expected_quotes(sample: ResearchInput, result: ResearchResult) -> dict[tuple, list[EvidenceQuote]]:
     names = {entity.id: entity.name for entity in sample.truth.entities}
-    sourced = result.state is not None and sample.source_evidence is not None
-    relationships = sample.source_evidence.relationships if sourced else sample.truth.relationships
-    sources = {source.id: source.text for source in sample.sources or []}
-    legacy_source_id = digest_text(sample.source)
+    # Normalize the two retained formats at the boundary; quote inspection below
+    # uses only explicit Source identities and exact text.
+    if result.state is not None and sample.source_evidence is not None:
+        sources = {source.id: source.text for source in sample.sources or []}
+        approved = [
+            (_edge(names[edge.source], edge.type, names[edge.target]),
+             item.source_id, item.supporting_text)
+            for edge in sample.source_evidence.relationships
+            for item in edge.approved_evidence
+        ]
+        quotes = [(edge, _quote(digest_text(repr((source_id, text))), source_id, text, sources[source_id]))
+                  for edge, source_id, text in approved]
+    else:
+        source_id = digest_text(sample.source)
+        quotes = [
+            (_edge(names[edge.source], edge.type, names[edge.target]),
+             _quote(digest_text(source_id + text), source_id, text, sample.source))
+            for edge in sample.truth.relationships for text in edge.approved_evidence
+        ]
     expected: dict[tuple, list[EvidenceQuote]] = {}
-    for relationship in relationships:
-        edge = _edge(names[relationship.source], relationship.type, names[relationship.target])
-        pairs = ([(item.source_id, item.supporting_text) for item in relationship.approved_evidence]
-                 if sourced else [(legacy_source_id, text) for text in relationship.approved_evidence])
-        for source_id, text in pairs:
-            source = sources[source_id] if sourced else sample.source
-            identity = digest_text(repr((source_id, text))) if sourced else digest_text(source_id + text)
-            quote = _quote(identity, source_id, text, source)
-            if quote not in expected.setdefault(edge, []):
-                expected[edge].append(quote)
+    for edge, quote in quotes:
+        if quote not in expected.setdefault(edge, []):
+            expected[edge].append(quote)
     return expected
 
 
@@ -67,17 +75,19 @@ def _predicted_quotes(sample: ResearchInput, result: ResearchResult) -> dict[tup
     if graph is None:
         return {}
     names = {entity.id: entity.name for entity in graph.entities}
-    evidence = {item.id: item for item in graph.evidence}
-    sources = {source.id: source.text for source in result.state.sources} if result.state else {}
-    legacy_source_id = digest_text(sample.source)
+    if result.state is not None:
+        sources = {source.id: source.text for source in result.state.sources}
+        quotes = {item.id: _quote(item.id, item.source_id, item.supporting_text, sources[item.source_id])
+                  for item in result.state.evidence}
+    else:
+        source_id = digest_text(sample.source)
+        quotes = {item.id: _quote(item.id, source_id, item.supporting_text, sample.source)
+                  for item in graph.evidence}
     predicted: dict[tuple, list[EvidenceQuote]] = {}
     for relationship in graph.relationships:
         edge = _edge(names[relationship.source], relationship.type, names[relationship.target])
         for identity in relationship.evidence_ids:
-            item = evidence[identity]
-            source_id = item.source_id if result.state is not None else legacy_source_id
-            source = sources[source_id] if result.state is not None else sample.source
-            quote = _quote(item.id, source_id, item.supporting_text, source)
+            quote = quotes[identity]
             if quote not in predicted.setdefault(edge, []):
                 predicted[edge].append(quote)
     return predicted

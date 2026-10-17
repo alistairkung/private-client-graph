@@ -8,7 +8,9 @@ from private_client_graph.research.inputs import ResearchInput
 from private_client_graph.research.case_metadata import CaseMetadata
 from private_client_graph.models import source_extraction_from_legacy, SourcedExtractionResult
 from private_client_graph.models.source import Source
-from private_client_graph.research.source_attribution import SourceEvidenceApproval
+from private_client_graph.research.source_attribution import (
+    ApprovedSourceEvidence, SourceEvidenceApproval, SourceEvidenceRelationship,
+)
 
 
 def default_input_ids(root: Path = ROOT) -> list[str]:
@@ -108,9 +110,9 @@ def _freeze_sources(sample: ResearchInput, directory: Path) -> None:
         sample.sources = [source]
         assert sample.extraction is not None
         sample.sourced_extraction = source_extraction_from_legacy(sample.extraction, source_id=source.id)
-        sample.source_evidence = SourceEvidenceApproval(relationships=[dict(
+        sample.source_evidence = SourceEvidenceApproval(relationships=[SourceEvidenceRelationship(
             source=edge.source, type=edge.type, target=edge.target,
-            approved_evidence=[dict(source_id=source.id, supporting_text=quote)
+            approved_evidence=[ApprovedSourceEvidence(source_id=source.id, supporting_text=quote)
                                for quote in edge.approved_evidence])
             for edge in sample.truth.relationships])
     # Revalidate after filling optional fields so malformed frozen sidecars fail discovery.
