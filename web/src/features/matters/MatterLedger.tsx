@@ -1,3 +1,4 @@
+import { useLocale } from "../../shared/locale";
 import { useEffect, useState } from "react";
 import { getMatters } from "./api";
 import type { MatterSummary } from "./types";
@@ -8,6 +9,7 @@ type CollectionState =
   | { status: "ready"; matters: MatterSummary[] };
 
 export function MatterLedger() {
+  const { t } = useLocale();
   const [state, setState] = useState<CollectionState>({ status: "loading" });
   useEffect(() => {
     let active = true;
@@ -19,9 +21,9 @@ export function MatterLedger() {
   }, []);
 
   return (
-    <table className="matter-register" aria-label="Matters">
+    <table className="matter-register" aria-label={t("Matters")}>
       <thead>
-        <tr><th scope="col">Matter reference</th><th scope="col">Matter</th></tr>
+        <tr><th scope="col">{t("Matter reference")}</th><th scope="col">{t("Matter")}</th></tr>
       </thead>
       <tbody>
         {state.status === "ready" && state.matters.length > 0
@@ -45,18 +47,19 @@ export function MatterLedger() {
 }
 
 function CollectionMessage({ state }: { state: CollectionState }) {
+  const { t } = useLocale();
   if (state.status === "loading") {
-    return <div className="ledger-empty" role="status">Loading Matters…</div>;
+    return <div className="ledger-empty" role="status">{t("Loading Matters…")}</div>;
   }
   if (state.status === "failed") {
     return <div className="ledger-empty" role="alert">
-      <p>Matters could not be loaded.</p>
-      <p>Reload the page to try again.</p>
-      <button onClick={() => window.location.reload()}>Reload page</button>
+      <p>{t("Matters could not be loaded.")}</p>
+      <p>{t("Reload the page to try again.")}</p>
+      <button onClick={() => window.location.reload()}>{t("Reload page")}</button>
     </div>;
   }
   return <div className="ledger-empty">
-    <p>No accepted Matters yet</p>
-    <p>Accepted Matters will appear here.</p>
+    <p>{t("No accepted Matters yet")}</p>
+    <p>{t("Accepted Matters will appear here.")}</p>
   </div>;
 }

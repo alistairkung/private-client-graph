@@ -1,3 +1,4 @@
+import { useLocale } from "../../shared/locale";
 import { useEffect, useId, useRef, useState } from "react";
 import { SignOut } from "./SignOut";
 
@@ -6,6 +7,7 @@ export function AccountMenu({
 }: {
   onSignOut?: () => void;
 }) {
+  const { t } = useLocale();
   const [open, setOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const panelId = useId();
@@ -42,7 +44,7 @@ export function AccountMenu({
         type="button"
         ref={triggerRef}
         className="account-menu-trigger"
-        aria-label="Account and application menu"
+        aria-label={t("Account and application menu")}
         aria-expanded={open}
         aria-controls={panelId}
         onClick={() => {
@@ -56,7 +58,7 @@ export function AccountMenu({
       </button>
       {open && (
         <div id={panelId} className="account-menu-panel">
-          <a href="/">Public showcase</a>
+          <a href="/">{t("Public showcase")}</a>
           <SignOut onPendingChange={setSigningOut} onSuccess={onSignOut} />
         </div>
       )}
