@@ -85,13 +85,13 @@ Use the actual application's desktop/mobile breakpoints as the starting point; v
 
 Tables retain semantic headers. On mobile permit a labelled local table scroller only when the comparison genuinely needs one; keep critical metrics and limitations readable without horizontal scrolling. Case/relationship/Evidence layout stacks in task order. Primary targets retain at least 44px usable height, visible focus and keyboard-operable selection. Announce changed inspection headings/status politely without repeatedly reading the complete Source. Outcomes have text labels and accessible names, not just colour. No score counters, celebratory animation or motion-dependent understanding. Respect reduced motion.
 
-The implementation screenshot matrix is English/Chinese × desktop/mobile for the landing section and results overview, with representative correction/Evidence and call metadata states. These will be genuine implementation captures later; the current decision page is only a schematic.
+The implementation screenshot matrix is English/Chinese × desktop/mobile for the landing section and results overview, with representative correction/Evidence and call metadata states. Genuine implementation captures are required for acceptance; the earlier decision page remains a schematic.
 
 ## Delivery constraints and approval status
 
 All surfaces consume one verified snapshot, with exact original Sources/identities and no live/private fallback. This design does not change the internal Workbench, practitioner application, domain semantics or extraction/resolver defaults. Contract ownership remains Lane A, viewer Lane B, shared header/catalogue/landing/combined acceptance Lane C.
 
-Design C is approved. The completed specification #148 still requires separate owner approval before implementation. This design selection alone does not authorize starting application work. Shape stops at design approval; no direction contract, UI code, public snapshot or application acceptance screenshots have been created in this planning stage.
+Design C and specification #148 are approved. The owner explicitly invoked implement-spec #148 based on this design; the implementation gate is satisfied. This contract records that approved direction. No paid calls, experiments, merges to main or deployment are authorized.
 
 ## Implementation direction contract
 

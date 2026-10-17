@@ -341,3 +341,12 @@
     padding: 18px;
   }
 }
+
+.research-source-inspection .document-scroll {
+  max-height: none;
+  overflow: visible;
+  padding: 0;
+}
+.research-source-inspection .source-text {
+  overflow-wrap: anywhere;
+}
