@@ -26,6 +26,9 @@ def test_all_development_and_heldout_ideals_replay_actual_sourced_pipeline_witho
               or sample.case_id.startswith('heldout_')]
     assert len(inputs) == 15
     assert len(default_input_ids()) == 5
+    assert {sample.sample_id for sample in inputs if sample.case_id.startswith('heldout_')} == {
+        f'heldout_{index:02d}_fixture' for index in range(1, 11)
+    }
     plan = RunPlan(inputs=inputs, max_calls=0, invocation_cap=0)
     bundle = Bundle.create(tmp_path / 'ideals', plan)
     execute(bundle, provider=lambda _: pytest.fail('Replay cannot invoke a provider'))
@@ -243,3 +246,24 @@ def test_external_completion_rejects_unsafe_identity_before_reading_task(tmp_pat
     with pytest.raises(ValueError, match='identity'):
         finish_external_attempt(tmp_path, authorization=authorization, attempt_id=attempt_id,
                                 outcome='completed')
+
+
+def test_external_completion_requires_reservation_and_keeps_available_usage(tmp_path):
+    from private_client_graph.research.live_accounting import (
+        initialize_task, authorize_external_invocation, reserve_external_attempt, finish_external_attempt,
+    )
+    from private_client_graph.research.provider import TokenUsage
+    initialize_task(tmp_path, 'Retained successful caller')
+    authority = authorize_external_invocation(tmp_path, purpose='Application smoke', task_cap=2,
+        invocation_cap=2, approval_reference='Deterministic explicit approval')
+    authorization = authority['authorization']
+    with pytest.raises(FileNotFoundError):
+        finish_external_attempt(tmp_path, authorization=authorization, attempt_id='unreserved', outcome='completed')
+    assert reserve_external_attempt(tmp_path, authorization=authorization, attempt_id='success')
+    finish_external_attempt(tmp_path, authorization=authorization, attempt_id='success', outcome='completed',
+        usage=TokenUsage(input_tokens=12, output_tokens=3, cached_tokens=4), returned_model='test-model')
+    retained = json.loads((tmp_path / 'external-invocations' / authorization /
+                          'attempts/success.finished.json').read_text())
+    assert retained['usage'] == dict(input_tokens=12, output_tokens=3, cached_tokens=4)
+    assert retained['returned_model'] == 'test-model'
+    assert retained['outcome'] == 'completed'
