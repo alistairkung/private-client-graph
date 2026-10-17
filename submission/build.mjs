@@ -1,4 +1,5 @@
 import fs from 'node:fs/promises';
+import { validateResults } from './results.mjs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createRequire } from 'node:module';
@@ -23,18 +24,6 @@ let results;
 try { results=JSON.parse(await fs.readFile(path.join(root,'final-results.json'),'utf8')); }
 catch(error) { if(error.code!=='ENOENT')throw error; }
 if(!draft) validateResults(results);
-
-export function validateResults(value) {
-  if (!value?.benchmark_approved) throw new Error('Final export requires explicit benchmark approval and actual retained results.');
-  if (!value.frozen_commit || !value.model || !value.run_ids?.length || !value.artifacts?.length) throw new Error('Final results must identify frozen code, model, Runs and retained evidence.');
-  if(!Number.isInteger(value.planned_cases)||value.planned_cases<1 || !Number.isInteger(value.scored_cases)||value.scored_cases<0 || value.scored_cases>value.planned_cases || value.cases?.length!==value.planned_cases)throw new Error('Case coverage is inconsistent.');
-  for(const key of ['precision','recall','f1','quote_provenance_accuracy','source_attribution_accuracy']) {
-    const number=value.aggregate?.[key];
-    if(key==='source_attribution_accuracy' && number===null)continue;
-    if(!Number.isFinite(number)||number<0||number>1)throw new Error(`Invalid ${key}.`);
-  }
-  if(value.cost_usd!==null && (!Number.isFinite(value.cost_usd)||value.cost_usd<0))throw new Error('Cost must be a verified USD total or null.');
-}
 
 const C={green:'#173E38',paper:'#F6F6F1',ink:'#243F39',muted:'#52665F',gold:'#EFDDA0',burgundy:'#773B46',white:'#FFFFFF'};
 const FONT='Liberation Sans';

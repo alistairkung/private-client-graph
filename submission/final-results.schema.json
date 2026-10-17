@@ -1,23 +1,276 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "type": "object",
-  "required": ["frozen_commit", "model", "run_ids", "planned_cases", "scored_cases", "attempts", "aggregate", "cases", "cost_usd", "failures", "artifacts"],
+  "required": [
+    "frozen_commit",
+    "model",
+    "run_ids",
+    "planned_cases",
+    "scored_cases",
+    "attempts",
+    "aggregate",
+    "cases",
+    "cost_usd",
+    "failures",
+    "artifacts",
+    "benchmark_approved"
+  ],
   "properties": {
-    "frozen_commit": {"type": "string"}, "model": {"type": "string"},
-    "run_ids": {"type": "array", "items": {"type": "string"}},
-    "planned_cases": {"type": "integer", "minimum": 1},
-    "scored_cases": {"type": "integer", "minimum": 0},
-    "attempts": {"type": "integer", "minimum": 0},
-    "aggregate": {"type": "object", "required": ["tp", "fp", "fn", "precision", "recall", "f1", "quote_provenance_accuracy", "source_attribution_accuracy"], "properties": {
-      "tp":{"type":"integer"},"fp":{"type":"integer"},"fn":{"type":"integer"},
-      "precision":{"type":"number"},"recall":{"type":"number"},"f1":{"type":"number"},
-      "quote_provenance_accuracy":{"type":"number"},"source_attribution_accuracy":{"type":["number","null"]}
-    }},
-    "cases": {"type":"array", "items":{"type":"object","required":["id","status"],"properties":{"id":{"type":"string"},"status":{"type":"string"},"f1":{"type":["number","null"]},"precision":{"type":["number","null"]},"recall":{"type":["number","null"]}}}},
-    "cost_usd":{"type":["number","null"]},
-    "failures":{"type":"array","items":{"type":"object","required":["case_id","stage","description"]}},
-    "artifacts":{"type":"array","items":{"type":"string"}},
-    "demo_url":{"type":"string"},"deployment_verified":{"type":"boolean"},
-    "benchmark_approved":{"const":true}
+    "frozen_commit": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "\\S"
+    },
+    "model": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "\\S"
+    },
+    "run_ids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": "\\S"
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "planned_cases": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 10
+    },
+    "scored_cases": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "attempts": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 30
+    },
+    "aggregate": {
+      "type": "object",
+      "required": [
+        "tp",
+        "fp",
+        "fn",
+        "precision",
+        "recall",
+        "f1",
+        "quote_provenance_accuracy",
+        "source_attribution_accuracy"
+      ],
+      "properties": {
+        "tp": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "fp": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "fn": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "precision": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "recall": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "f1": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "quote_provenance_accuracy": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "source_attribution_accuracy": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+    "cases": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "status"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "enum": [
+              "heldout_01",
+              "heldout_02",
+              "heldout_03",
+              "heldout_04",
+              "heldout_05",
+              "heldout_06",
+              "heldout_07",
+              "heldout_08",
+              "heldout_09",
+              "heldout_10"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "scored",
+              "failed",
+              "unscored"
+            ]
+          },
+          "f1": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 1
+          },
+          "precision": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 1
+          },
+          "recall": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 1
+          }
+        },
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "status": {
+                  "const": "scored"
+                }
+              }
+            },
+            "then": {
+              "required": [
+                "precision",
+                "recall",
+                "f1"
+              ],
+              "properties": {
+                "precision": {
+                  "type": "number"
+                },
+                "recall": {
+                  "type": "number"
+                },
+                "f1": {
+                  "type": "number"
+                }
+              }
+            },
+            "else": {
+              "properties": {
+                "precision": {
+                  "type": "null"
+                },
+                "recall": {
+                  "type": "null"
+                },
+                "f1": {
+                  "type": "null"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    "cost_usd": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "failures": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "case_id",
+          "stage",
+          "description"
+        ],
+        "properties": {
+          "case_id": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S",
+            "enum": [
+              "heldout_01",
+              "heldout_02",
+              "heldout_03",
+              "heldout_04",
+              "heldout_05",
+              "heldout_06",
+              "heldout_07",
+              "heldout_08",
+              "heldout_09",
+              "heldout_10"
+            ]
+          },
+          "stage": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          }
+        }
+      }
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": "\\S"
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "demo_url": {
+      "type": "string"
+    },
+    "deployment_verified": {
+      "type": "boolean"
+    },
+    "benchmark_approved": {
+      "const": true
+    }
   }
 }

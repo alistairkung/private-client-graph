@@ -105,6 +105,8 @@ jobs:
           node-version: '22'
           cache: npm
           cache-dependency-path: web/package-lock.json
+      - name: Test submission result contract
+        run: node --test submission/results.test.mjs
       - name: Install web dependencies
         run: npm ci --prefix web
       - name: Test and build web application
