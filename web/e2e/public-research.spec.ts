@@ -66,3 +66,64 @@ test("an unavailable publication never substitutes figures or private data", asy
   await expect(page.locator("main")).not.toContainText("94.87%");
   await expect(page.locator("main")).not.toContainText("100.00%");
 });
+
+test("paired corrections preserve the exact selected Source and Evidence across language changes", async ({ page }, testInfo) => {
+  await page.goto("/research-results");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Research results");
+  await expect(page.getByRole("article", { name: "Source document" })).toHaveCount(0);
+  await expect(page.getByRole("navigation", { name: "Benchmark cases" }).getByRole("button")).toHaveCount(10);
+  await page.getByRole("button", { name: "Inspect the two corrections", exact: true }).click();
+  const corrections = page.getByRole("button", { name: /Bea → Beatrice Ng/ });
+  await expect(corrections).toHaveCount(2);
+  for (let index = 0; index < 2; index++) {
+    await corrections.nth(index).click();
+    await expect(page.locator(".source-panel mark")).toBeVisible();
+    await expect(page.locator(".research-source-inspection")).toContainText("Selected relationship · B");
+    const quote = await page.locator(".source-panel mark").innerText();
+    const source = await page.getByLabel("Original Source", { exact: true }).inputValue();
+    await page.getByRole("button", { name: "简体中文", exact: true }).click();
+    await expect(page.locator("html")).toHaveAttribute("lang", "zh-CN");
+    await expect(page.locator(".source-panel mark")).toHaveText(quote);
+    expect(await page.locator(".research-source-inspection select").first().inputValue()).toBe(source);
+    await expect(page.locator(".research-case-index button[aria-pressed=true]")).toContainText("heldout_03");
+    await expect(page.locator(".research-pair button[aria-pressed=true]")).toHaveCount(1);
+    await expect(page.locator(".research-source-inspection")).not.toContainText("Selected relationship");
+    if (index === 0) await page.screenshot({ path: testInfo.outputPath("research-correction-zh-CN.png"), fullPage: true });
+    await page.getByRole("button", { name: "EN", exact: true }).click();
+    await expect(page.locator(".source-panel mark")).toHaveText(quote);
+  }
+  await page.getByLabel("Recorded outcome filter").selectOption("errors");
+  await expect(page.getByRole("region", { name: "Run B relationships" })).toContainText("No recorded relationship errors.");
+  await expect(page.getByRole("region", { name: "Run A′ relationships" }).getByRole("button")).toHaveCount(4);
+  await page.getByLabel("Baseline Run").selectOption("A");
+  await expect(page.getByRole("region", { name: "Run A relationships" }).getByRole("button")).toHaveCount(4);
+  await page.getByRole("navigation", { name: "Benchmark cases" }).getByRole("button").first().click();
+  await expect(page.locator(".research-case-detail")).toContainText("Unchanged relationship results across A, A′ and B.");
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+});
+
+test("provider inspection shows replay zero calls and retained metadata only", async ({ page }, testInfo) => {
+  const response = await page.request.get("/api/research-results");
+  const snapshot = await response.json();
+  const resolver = snapshot.runs.find((run: { label: string }) => run.label === "B");
+  await page.goto("/research-results");
+  const usage = page.locator("#usage");
+  await usage.getByText("Run A′: 0 provider calls", { exact: true }).click();
+  await expect(usage).toContainText("Zero provider calls. This control used deterministic replay.");
+  await usage.getByText(`Run B: ${resolver.usage.attempts} provider calls`, { exact: true }).click();
+  const call = usage.locator(".research-call-list details").first();
+  await call.locator("summary").click();
+  await expect(call).toContainText(resolver.calls[0].attempt_id);
+  await expect(call).toContainText("Input tokens");
+  await expect(call).toContainText("Output tokens");
+  await expect(call).toContainText("Cached tokens");
+  await expect(call).toContainText("Unpriced");
+  await expect(call).not.toContainText("Authorization");
+  await expect(call).not.toContainText("system_prompt");
+  await page.screenshot({ path: testInfo.outputPath("research-calls-en.png"), fullPage: true });
+  await page.getByRole("button", { name: "简体中文", exact: true }).click();
+  await expect(call).toHaveAttribute("open", "");
+  await expect(call).toContainText(resolver.calls[0].attempt_id);
+  await expect(call).toContainText("未定价");
+  await page.screenshot({ path: testInfo.outputPath("research-calls-zh-CN.png"), fullPage: true });
+});
