@@ -4,10 +4,13 @@ import { expect, test, vi } from "vitest";
 import { App } from "../../app/App";
 const summaries=[{id:"case-01",title:"Case 01",description:"One source"},{id:"case-04",title:"Case 04",description:"Two sources"}];
 const detail=(id:string)=>({...summaries.find(item=>item.id===id),notice:"Curated ideal fixture",state:{sources:[{id:"a",title:"First note",text:`${id} source`}],entities:[],relationships:[],evidence:[]}});
-const response=(body:unknown)=>new Response(JSON.stringify(body));
+const response=(body:unknown, status=200)=>new Response(JSON.stringify(body), {status});
 
 test("fixed cases load without execution and selection fetches only read-only examples",async()=>{
- const fetcher=vi.spyOn(globalThis,"fetch").mockImplementation(async url=>response(url==="/api/showcase/cases"?summaries:detail(String(url).split("/").at(-1)!)));
+ const fetcher=vi.spyOn(globalThis,"fetch").mockImplementation(async url=>{
+  if(url==="/api/research-results")return response({},503);
+  return response(url==="/api/showcase/cases"?summaries:detail(String(url).split("/").at(-1)!));
+ });
  render(<App/>);
  await screen.findByText("case-01 source");
  expect(screen.getByText(/Curated ideal fixtures/)).toBeVisible();
@@ -21,6 +24,7 @@ test("fixed cases load without execution and selection fetches only read-only ex
 test("failed case loading offers an explicit retry",async()=>{
  let fail=true;
  vi.spyOn(globalThis,"fetch").mockImplementation(async url=>{
+  if(url==="/api/research-results")return response({},503);
   if(url==="/api/showcase/cases")return response(summaries);
   if(fail)throw new Error("offline");
   return response(detail("case-01"));
@@ -35,6 +39,7 @@ test("failed case loading offers an explicit retry",async()=>{
 test("catalogue failure survives a successful detail response and retries explicitly",async()=>{
  let failed=true;
  vi.spyOn(globalThis,"fetch").mockImplementation(async url=>{
+  if(url==="/api/research-results")return response({},503);
   if(url==="/api/showcase/cases") {
    if(failed) throw new Error("catalogue unavailable");
    return response(summaries);
