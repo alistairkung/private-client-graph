@@ -188,6 +188,9 @@ def create_app(web_dist: Path = WEB_DIST) -> FastAPI:
         application.add_api_route(
             "/app/matter-proposals/{proposal_id}", practitioner_shell, include_in_schema=False
         )
+        # Public presentation-only routes never enter the practitioner namespace.
+        application.add_api_route("/demo", practitioner_shell, include_in_schema=False)
+        application.add_api_route("/demo/{demo_path:path}", practitioner_shell, include_in_schema=False)
         application.mount(
             "/", StaticFiles(directory=web_dist, html=True), name="frontend"
         )
