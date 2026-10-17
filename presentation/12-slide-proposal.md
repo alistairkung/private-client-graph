@@ -4,6 +4,8 @@ Planning document for review. Exactly 12 proposed slides; no slide production is
 
 ## Persuasive arc
 
+This is a submitted reading deck: every essential product boundary and research qualification must be understandable without narration. Speaker notes provide optional depth, not missing context.
+
 The judge should move from **“I recognise the review problem” → “I can see the product working” → “I understand why its output is inspectable” → “I can interrogate its measured result” → “This deserves a carefully governed next step.”**
 
 Slides 1–5 establish the user, opportunity and experience. Slides 6–7 explain the difficulty and trust mechanism. Slides 8–10 establish research credibility through a controlled comparison, its actual outcome and its limits. Slide 11 proposes the next product step; slide 12 invites exploration. Engineering supports those beliefs throughout, without a separate development-history chapter.
@@ -47,10 +49,19 @@ All references are text links; no assets are embedded or generated here.
 | A — Product proposal capture | [practitioner-proposal.png](https://github.com/alistairkung/private-client-graph/blob/dc668c5a31f900bf384e2fcc79a500b3f095e823/submission/assets/practitioner-proposal.png), with [provenance](https://github.com/alistairkung/private-client-graph/blob/dc668c5a31f900bf384e2fcc79a500b3f095e823/submission/assets/PROVENANCE.md). Genuine local two-PDF journey; Google/model substitutes; real construction/persistence. Preserved on open #131, not a performance observation. | Product overview and source/graph/Evidence detail. |
 | B — Multi-source sample | [showcase-case-04.png](https://github.com/alistairkung/private-client-graph/blob/dc668c5a31f900bf384e2fcc79a500b3f095e823/submission/assets/showcase-case-04.png). Genuine UI with authored ideal fixture; same provenance record as A. | Source identity and corroboration. |
 | C — Temporal sample | [showcase-case-05.png](https://github.com/alistairkung/private-client-graph/blob/dc668c5a31f900bf384e2fcc79a500b3f095e823/submission/assets/showcase-case-05.png). Genuine UI with authored ideal fixture. | Current-state example; never imply measured model success from this screenshot. |
-| D — Implemented Workbench | [desktop capture](../docs/design/assets/research-workbench-117-desktop.png), [capture record](../docs/design/research-workbench-117-implementation.md), merged #120. Deterministic synthetic observations, including intentional recovery states. | Pipeline and retained-review mechanics only. Its chart numbers are not the final experiment. |
+| D — Implemented Workbench | [desktop capture](../docs/design/assets/research-workbench-117-desktop.png), [capture record](../docs/design/research-workbench-117-implementation.md), merged #120. Deterministic synthetic observations, including intentional recovery states. | Historical UI context only. Its chart numbers are not the final experiment; it cannot substitute for the required refined chain or measured F1 capture. |
 | E — Approved visual direction | [Evidence Folio comp](../docs/design/assets/public-landing-evidence-folio.png), [design record](../docs/design/public-landing-visual-direction.md). Existing generated/approved composition reference, not product truth. | Palette, typography and spatial rhythm only; do not reuse generated interface text as evidence. |
-| F — Measured study captures | [capture index](/Users/alistair/.codex/visualizations/2026/10/17/01a14a16-72ec-7c70-bb57-228da5a981ee/research-editorial/screenshots.json), [results capture](/Users/alistair/.codex/visualizations/2026/10/17/01a14a16-72ec-7c70-bb57-228da5a981ee/research-editorial/editorial-results-en-desktop.png), [original graph](/Users/alistair/.codex/visualizations/2026/10/17/01a14a16-72ec-7c70-bb57-228da5a981ee/research-editorial/editorial-original-en-desktop.png), [resolved graph and Evidence](/Users/alistair/.codex/visualizations/2026/10/17/01a14a16-72ec-7c70-bb57-228da5a981ee/research-editorial/editorial-graph-en-desktop.png). Genuine existing local #152 implementation captures of retained results; implementation under review. Machine-local paths are not portable published assets. | Result comparison and the two endpoint corrections. Use only relevant regions; historical header treatment is irrelevant to these crops. |
-| G — Architecture and workflow schematics | Existing text diagrams in [shared pipeline design](../docs/design/shared-analysis-pipeline.md), [intake design](../docs/design/matter-intake-slice.md), [aggregate contract](../docs/design/research-workbench-run-aggregate-evaluation.md), and [publication workflow](../docs/workflows/public-research-publication.md). | Simplify their existing logic as text in the planned slides; no new rendered diagram in this task. |
+| F — Measured study captures | [capture index](/Users/alistair/.codex/visualizations/2026/10/17/01a14a16-72ec-7c70-bb57-228da5a981ee/research-editorial/screenshots.json), [results capture](/Users/alistair/.codex/visualizations/2026/10/17/01a14a16-72ec-7c70-bb57-228da5a981ee/research-editorial/editorial-results-en-desktop.png), [original graph](/Users/alistair/.codex/visualizations/2026/10/17/01a14a16-72ec-7c70-bb57-228da5a981ee/research-editorial/editorial-original-en-desktop.png), [resolved graph and Evidence](/Users/alistair/.codex/visualizations/2026/10/17/01a14a16-72ec-7c70-bb57-228da5a981ee/research-editorial/editorial-graph-en-desktop.png). Genuine existing local #152 implementation captures of retained results; implementation under review. Machine-local paths are not portable published assets. | Endpoint-correction inspection. Local assets requiring packaging before production; not verified final captures of the refined chain or Workbench F1 plot. Historical headers are irrelevant to these crops. |
+| G — Architecture and workflow schematics | Existing text diagrams in [shared pipeline design](../docs/design/shared-analysis-pipeline.md), [intake design](../docs/design/matter-intake-slice.md), [aggregate contract](../docs/design/research-workbench-run-aggregate-evaluation.md), and [publication workflow](https://github.com/alistairkung/private-client-graph/blob/21e3ff348757955df805d0d8a1d44d862e1549fd/docs/workflows/public-research-publication.md). | Workflow context for slides 4, 8 and 11. Not a substitute for the actual Workbench chain required on slide 7. |
+
+### Production asset readiness
+
+- **Available repository asset:** A–E have repository links. A–C are pinned assets on open #131; D is a historical implementation capture; E is art direction only. Availability does not make any of them measured final-experiment visuals.
+- **Local asset requiring packaging:** F exists only at the listed machine-local paths. Preserve its capture provenance and package approved crops before handing off to a production agent. Do not silently assume those paths are available on another machine.
+- **Required capture before production — H, refined Workbench chain:** capture the actual refined `AnalysisPipeline` view, as used by `web/research/configuration/Pipeline.tsx`, large enough to read Extract → optional Resolve → Build graph, with evaluation visibly outside the pipeline. The refinement currently exists in local work under review (`web/src/shared/research/AnalysisPipeline.tsx`); it is not an available packaged slide asset. Existing D does not satisfy this requirement.
+- **Required capture before production — I, retained-experiment F1 plot:** capture the actual `RunPerformanceChart` in the Workbench's Run history & performance → F1 by Run view (`web/research/workspace/RunChart.tsx`; shared refinement `web/src/shared/research/RunPerformanceChart.tsx`), displaying the retained A/A′/B experiment. Preserve its real 0–1 axis, Run-number axis, legend, coverage and scope disclosures. One point represents one Run's observation-weighted micro-F1. The local public `PublishedPerformance` view reuses that component, but is not proof that the required Workbench capture has been made. No substitute table, case plot, synthetic chart or newly drawn diagram is permitted.
+
+H and I are production prerequisites, not actions authorized by this revision. Leave their placeholders until captures are separately authorized and supplied. Keep the local refinement's eventual reviewed source commit and capture provenance with the packaged assets. The following evidence links are pinned to PR #152 commit `21e3ff348757955df805d0d8a1d44d862e1549fd`; they do not depend on #152 being merged.
 
 ## Slide 1 — See the relationships. Read the evidence.
 
@@ -127,43 +138,44 @@ All references are text links; no assets are embedded or generated here.
 
 **Unsupported claims / validation:** No empirical claim about document volumes, error rates or review time. Validate workflow prevalence through practitioner research later.
 
-## Slide 3 — A graph you can question, one relationship at a time.
+## Slide 3 — Who is the current trustee—and which document establishes that?
 
-**Purpose:** Translate the problem into a memorable product proposition before introducing architecture.
+**Purpose:** Give the judge a concrete practitioner question that the product can help inspect, before explaining its workflow.
 
-**Key takeaway:** The useful unit is a relationship with inspectable Evidence, rather than an unsupported summary.
+**Key takeaway:** The current relationship is Rachel Lim → trustee of → Willow Family Trust, supported by the completed replacement note; the earlier trustee entry is historical.
 
 **Text wireframe:**
 
 ```text
 +----------------------------------------------------------------------+
-|  A graph you can question, one relationship at a time.                |
+|  Who is the current trustee—                                          |
+|  and which document establishes that?                                |
 |                                                                      |
-|  +----------------------------------------+  SEE THE STRUCTURE        |
-|  |                                        |  People, trusts, roles.  |
-|  |     [EXISTING GRAPH UI]                |                           |
-|  |                                        |  FOLLOW THE EVIDENCE      |
-|  |     one relationship selected          |  Exact words. Named source.|
-|  |                                        |                           |
-|  |     relationship label remains legible |  KEEP THE JUDGMENT         |
-|  |                                        |  Review before acceptance.|
-|  +----------------------------------------+                           |
+|  DOCUMENTS SUPPLIED TOGETHER         CURRENT RELATIONSHIP              |
+|  +-----------------------------+    +------------------------------+ |
+|  | 1 September: David Ng       |    | [EXISTING CASE 05 GRAPH CROP] | |
+|  | earlier trustee entry       |    | Rachel Lim                    | |
+|  +-----------------------------+    |       trustee of               | |
+|  +-----------------------------+    | Willow Family Trust            | |
+|  | 15 September: replacement   |    +------------------------------+ |
+|  | effective 10 September      |                                     |
+|  | [EXACT SOURCE EXCERPT]      |    Rachel Lim is current.           |
+|  +-----------------------------+    David Ng's entry is historical.  |
 |                                                                      |
-|  Machine proposal --> professional review --> accepted Matter         |
-|                                                                      |
-|  Synthetic workflow demonstration                                     |
+|  Synthetic sample: both documents analysed together.                  |
+|  Curated fixture; not a measured model result or saved-Matter update. |
 +----------------------------------------------------------------------+
 ```
 
-**Actual slide copy:** “A graph you can question, one relationship at a time.”; “See the structure”; “Follow the Evidence”; “Keep the judgment”; “Machine proposal → professional review → accepted Matter”; “Synthetic workflow demonstration.”
+**Actual slide copy:** “Who is the current trustee—and which document establishes that?”; “Earlier note: David Ng”; “Completed replacement: effective 10 September 2026”; “Current trustee: Rachel Lim”; exact Source quotation: “Rachel Lim is the sole trustee of the Willow Family Trust as at 15 September 2026.”; “Synthetic sample: documents analysed together. Curated fixture; not a measured model result or saved-Matter update.”
 
-**Visual asset reference:** A, using the graph as approximately 60% of the content width. Three short annotations sit outside the screenshot; do not fabricate UI controls.
+**Visual asset reference:** C's existing Case 05 graph crop, showing Rachel Lim's current trustee relationship. Pair it with the actual [completed replacement note](../cases/case_05/sources/note_02.txt) and its Source title. The earlier [1 September note](../cases/case_05/sources/note_01.txt) supplies documentary context, not a second current trustee edge. Use a question-and-answer composition, reserving the interaction walkthrough for slide 5.
 
-**Speaker notes:** Explain the opportunity in practitioner terms: a navigable relationship structure with a route back to the record. Professional acceptance is a separate action after review of the complete proposal. The current workflow does not allow selective relationship approval, corrections or automatic legal conclusions.
+**Speaker notes:** The two supplied documents describe a completed replacement. The current graph includes Rachel, while the earlier document remains evidence of David's historical position. This existing synthetic sample shows the intended current-state interpretation; its authored ideal output is not measured extraction quality. Both documents are supplied in one analysis. No new Source is being added to an already accepted Matter, and no sequential update capability is implied.
 
-**Evidence:** [professional acceptance ADR](../docs/adr/0006-require-professional-confirmation-before-current-matter-state.md); [review/evaluation separation ADR](../docs/adr/0001-separate-professional-review-from-benchmark-evaluation.md); merged [#53](https://github.com/alistairkung/private-client-graph/pull/53), [#59](https://github.com/alistairkung/private-client-graph/pull/59), [#138](https://github.com/alistairkung/private-client-graph/pull/138).
+**Evidence:** [Case 05 specification and full-context annotations](../cases/case_05/README.md); [current-state fixture](../cases/case_05/expected_state.json); merged [#125](https://github.com/alistairkung/private-client-graph/pull/125), [#128](https://github.com/alistairkung/private-client-graph/pull/128), [#129](https://github.com/alistairkung/private-client-graph/pull/129); C's pinned screenshot provenance.
 
-**Unsupported claims / validation:** Inspection supports review; it does not prove correctness or establish legal assurance.
+**Unsupported claims / validation:** No measured time saving, general temporal reasoning, conflict adjudication or incremental accepted-Matter update claim. This is the existing completed-replacement scenario, not a newly invented case.
 
 ## Slide 4 — From synthetic PDFs to a reviewable Matter.
 
@@ -280,9 +292,9 @@ All references are text links; no assets are embedded or generated here.
 
 ## Slide 7 — Let AI interpret. Make the mechanics deterministic.
 
-**Purpose:** Explain the trust mechanism in terms a non-specialist judge can retain.
+**Purpose:** Explain the trust mechanism through the actual refined Workbench chain, with the practitioner/research distinction visible to a reader.
 
-**Key takeaway:** AI proposes semantic structure inside explicit boundaries; deterministic checks construct it, and the practitioner decides acceptance.
+**Key takeaway:** The practitioner baseline uses extraction and deterministic construction; research separately tests endpoint resolution.
 
 **Text wireframe:**
 
@@ -290,31 +302,31 @@ All references are text links; no assets are embedded or generated here.
 +----------------------------------------------------------------------+
 |  Let AI interpret. Make the mechanics deterministic.                  |
 |                                                                      |
-|  [Sources] --> [AI extracts] --> [Validate & build] --> [Review]       |
-|                  relationships       graph              human       |
-|                    |                    |                  |          |
-|               understands          exact quotes,      explicit       |
-|               language             types, references  acceptance     |
+|  +----------------------------------------------------------------+ |
+|  |                                                                | |
+|  | [REQUIRED: ACTUAL REFINED WORKBENCH CHAIN VISUALISATION]        | |
+|  |                                                                | |
+|  | Large readable stages; optional resolver; real connectors.      | |
+|  | Evaluation remains outside the Shared Analysis Pipeline.       | |
+|  |                                                                | |
+|  +----------------------------------------------------------------+ |
 |                                                                      |
-|          [Optional research resolver: endpoint names only]            |
-|          Same relationships. Same quotations.                         |
+|  Practitioner baseline: extraction + deterministic construction.     |
+|  Research comparison: add endpoint resolution.                        |
 |                                                                      |
-|  ---------------------------------------------------------------     |
-|  Research evaluation compares output with a frozen answer key.        |
-|                                                                      |
-|  Fixed workflow; constrained AI operations.                           |
+|  Same relationships. Same quotations. Explicit professional review.   |
 +----------------------------------------------------------------------+
 ```
 
-**Actual slide copy:** Headline; “Sources → AI extracts relationships → Validate & build graph → Professional review”; “Optional research resolver: endpoint names only”; “Same relationships. Same quotations.”; “Research evaluation uses a frozen answer key”; “Fixed workflow; constrained AI operations.”
+**Actual slide copy:** “Let AI interpret. Make the mechanics deterministic.”; “Practitioner baseline: extraction + deterministic construction.”; “Research comparison: add endpoint resolution.”; “Same relationships. Same quotations.”; “Professional acceptance remains explicit.” The actual chain retains its own stage labels and external evaluation boundary.
 
-**Visual asset reference:** G's existing shared-pipeline schematic, simplified as planned text. A small crop of D's pipeline stage can establish that the research configuration UI exists, but omit its demonstration scores.
+**Visual asset reference:** **H is required:** the refined, actual Workbench chain visualisation, occupying most of the slide width. Source/view: `AnalysisPipeline` through the Workbench `configuration/Pipeline.tsx` adapter; see the production asset readiness register. **Required capture before production.** Do not substitute a simplified text schematic, newly drawn architecture diagram, historical D crop or tiny optional pipeline thumbnail. Inspecting/capturing an existing configuration later must not start a Run or paid provider call.
 
-**Speaker notes:** The model interprets language. Code handles reference integrity, quote occurrence, type rules, IDs, ordering and canonical graph construction. Research can test a constrained resolver that substitutes endpoint names while preserving relationships and quotes. The approved practitioner pipeline uses no resolution; experimental success does not automatically promote a resolver into the product. Evaluation stays outside both the semantic pipeline and professional acceptance. This is bounded orchestration, not an autonomous legal adviser or an arbitrary agent planner.
+**Speaker notes:** AI interprets language; deterministic code checks references, quote occurrence and types, then constructs the canonical graph. In research, the optional resolver substitutes endpoint names without changing relationship candidates or quotations. The approved practitioner configuration has no resolver. Evaluation uses benchmark truth outside the pipeline; professional acceptance is a separate product action. This is bounded orchestration, not an autonomous legal adviser or arbitrary agent planner.
 
-**Evidence:** merged [#5](https://github.com/alistairkung/private-client-graph/pull/5), [#6](https://github.com/alistairkung/private-client-graph/pull/6), [#7](https://github.com/alistairkung/private-client-graph/pull/7), [#98](https://github.com/alistairkung/private-client-graph/pull/98), [#136](https://github.com/alistairkung/private-client-graph/pull/136); [shared pipeline design](../docs/design/shared-analysis-pipeline.md); [ADR 0009](../docs/adr/0009-share-one-fixed-configurable-analysis-pipeline.md).
+**Evidence:** merged [#5](https://github.com/alistairkung/private-client-graph/pull/5), [#6](https://github.com/alistairkung/private-client-graph/pull/6), [#7](https://github.com/alistairkung/private-client-graph/pull/7), [#98](https://github.com/alistairkung/private-client-graph/pull/98), [#136](https://github.com/alistairkung/private-client-graph/pull/136); [shared pipeline design](../docs/design/shared-analysis-pipeline.md); [ADR 0009](../docs/adr/0009-share-one-fixed-configurable-analysis-pipeline.md). H's refined shared component is local work under review; packaging must record its eventual reviewed commit.
 
-**Unsupported claims / validation:** Position this as the project's design differentiation, not a proven unique competitive moat. Mechanical validity does not imply semantic correctness.
+**Unsupported claims / validation:** Do not imply the research resolver is enabled in the practitioner baseline, a general agent framework exists, mechanical validity proves semantics, or the refined capture is already packaged. No proven competitive moat claim.
 
 ## Slide 8 — Change one stage. Keep the evidence fixed.
 
@@ -350,15 +362,15 @@ All references are text links; no assets are embedded or generated here.
 
 **Speaker notes:** Five development cases established the method; ten separately stored synthetic cases formed the final baseline evaluation. After seeing the baseline, resolution was explored on its saved extractions. A′ first reproduced A's outputs exactly without a new model call; B reused those inputs for ten resolver calls. There is one observation per case in each condition, not independent A/A′ replications or repeated reliability trials. Inputs, truth, configuration, usage, failures and coverage are retained. “Held-out” describes the original split; the post-hoc comparison is exploratory, and published cases cannot serve as unseen tests again.
 
-**Evidence:** merged [#125](https://github.com/alistairkung/private-client-graph/pull/125), [#128](https://github.com/alistairkung/private-client-graph/pull/128), [#136](https://github.com/alistairkung/private-client-graph/pull/136); [benchmark validation record](../research/final-day/validation/README.md) (historical pre-execution status); [aggregate design decisions](../docs/design/research-workbench-run-aggregate-evaluation.md); [retained publication identities and verification](../docs/workflows/public-research-publication.md), in open [#152](https://github.com/alistairkung/private-client-graph/pull/152).
+**Evidence:** merged [#125](https://github.com/alistairkung/private-client-graph/pull/125), [#128](https://github.com/alistairkung/private-client-graph/pull/128), [#136](https://github.com/alistairkung/private-client-graph/pull/136); [benchmark validation record](../research/final-day/validation/README.md) (historical pre-execution status); [aggregate design decisions](../docs/design/research-workbench-run-aggregate-evaluation.md); [retained publication identities and verification](https://github.com/alistairkung/private-client-graph/blob/21e3ff348757955df805d0d8a1d44d862e1549fd/docs/workflows/public-research-publication.md), in open [#152](https://github.com/alistairkung/private-client-graph/pull/152).
 
 **Unsupported claims / validation:** No statistical significance, external validation, unseen-test resolver generalisation or production reliability claim. The older Issue #92 pilot has different cohorts/repetitions and is not pooled into these results.
 
 ## Slide 9 — On this synthetic set, relationship F1 rose from 94.87% to 100%.
 
-**Purpose:** Give the judge the actual measured result, together with enough context to interpret it correctly.
+**Purpose:** Show the measured result using the actual Workbench F1 plot, with its true Run aggregation and scope visible.
 
-**Key takeaway:** A narrow resolver intervention corrected the observed exact-name errors in one case; the result covers ten synthetic cases only.
+**Key takeaway:** On identical saved inputs, a narrow resolver intervention corrected exact-name errors in one case; ten synthetic cases do not establish general reliability.
 
 **Text wireframe:**
 
@@ -367,68 +379,69 @@ All references are text links; no assets are embedded or generated here.
 |  On this synthetic set, relationship F1 rose                         |
 |  from 94.87% to 100%.                                                 |
 |                                                                      |
-|  +----------------------------------------+  A / A'       B           |
-|  | [EXISTING RETAINED-RESULT COMPARISON]   |  94.87%       100.00%     |
-|  | F1: 0-1; cases 01-10                   |  micro-F1     micro-F1    |
-|  |                                        |                           |
-|  | baseline/resolver overlap in 9 cases  |  Correct       37 -> 39    |
-|  | heldout_03: 0.3333 -> 1.0000           |  Extra          2 -> 0     |
-|  |                                        |  Missing        2 -> 0     |
-|  +----------------------------------------+                           |
+|  +--------------------------------------------+  A / A'      B        |
+|  | [REQUIRED: ACTUAL WORKBENCH F1 BY RUN PLOT] |  94.87%      100.00%  |
+|  |                                            |  micro-F1    micro-F1 |
+|  | Actual 0-1 F1 axis, Run-number axis,       |                       |
+|  | legend, scope and coverage preserved.      |  Correct    37 -> 39  |
+|  | One aggregate point per Run: A, A', B.     |  Extra       2 -> 0   |
+|  | No trend line or invented case axis.       |  Missing     2 -> 0   |
+|  +--------------------------------------------+                       |
 |                                                                      |
+|  A' exactly replays A; it is not an independent replication.          |
 |  10/10 scored per condition; no recorded execution failures.           |
-|  Post-hoc, project-authored synthetic comparison.                      |
-|  Two name corrections in one case explain the entire gain.            |
+|  Post-hoc synthetic comparison; two endpoint corrections in one case. |
 +----------------------------------------------------------------------+
 ```
 
-**Actual slide copy:** Headline; “A / A′: 94.87% micro-F1”; “B: 100.00% micro-F1”; “Correct: 37 → 39 · Extra: 2 → 0 · Missing: 2 → 0”; “10/10 scored per condition; no recorded execution failures”; “Post-hoc, project-authored synthetic comparison”; “Two name corrections in one case explain the entire gain.”
+**Actual slide copy:** Headline; “A / A′: 94.87% micro-F1”; “B: 100.00% micro-F1”; “Correct: 37 → 39 · Extra: 2 → 0 · Missing: 2 → 0”; “One aggregate point per Run; A′ exactly replays A.”; “10/10 scored per condition; no recorded execution failures.”; “Post-hoc, project-authored synthetic comparison. Two endpoint corrections in one case explain the entire gain; not production reliability.”
 
-**Visual asset reference:** F's actual retained-result comparison region. Reuse an existing case-level table or chart only if it displays the ten cases with these exact values. The existing #120 Workbench chart is demonstration data and must not substitute. If no legible final F1 chart exists, the existing measured case table is the visualisation; no new chart is commissioned in this planning task. Keep the two large micro-F1 values separate from the case-level visual; do not imply a trend across cases or show A′ as independent replication.
+**Visual asset reference:** **I is required:** the actual refined Workbench **F1 by Run** plot displaying the retained A/A′/B experiment, large enough to read the genuine axes, legend and disclosures. Source/view: `web/research/workspace/RunChart.tsx`, using shared `RunPerformanceChart`; see the readiness register. **Required capture before production.** Preserve one observation-weighted micro-F1 point per Run, with Run 1 = A, Run 2 = A′, Run 3 = B in retained order. A has a fresh-input scope; A′/B have the paired saved-input scope, bridged by verified exact replay. Keep scope differences visible. Use all-input mode so A remains visible. Do not substitute a case table, a case-index chart, the historical D demonstration chart, a newly drawn plot or an unrelated experiment. Do not use F1 vs Cost: A/B are unpriced.
 
-**Speaker notes:** Micro-F1 pools relationship counts: baseline is 74/78; B is 78/78. The change is approximately 5.13 percentage points, not “5.13% more accurate.” Nine cases have unchanged F1 of 1.0. Heldout_03 moves from one correct, two extra and two missing relationships to three correct. Exact-name scoring drives the gain. Macro-F1 is a different number: 93.33% to 100%, so do not label the displayed aggregate as a case average. These results do not establish production accuracy or reliability.
+**Speaker notes:** Micro-F1 pools relationship counts: baseline is 74/78; B is 78/78, a gain of approximately 5.13 percentage points. A′ is zero-call exact replay, not new extraction evidence. Nine cases retain F1 of 1.0; heldout_03 moves from one correct, two extra and two missing relationships to three correct. Exact-name scoring drives the gain. Macro-F1 is a different statistic, 93.33% to 100%; the plot shows Run-level micro-F1, not mean case F1. Discrete Run points do not imply a temporal improvement trend or statistically independent replications.
 
-**Evidence:** [retained snapshot](../private_client_graph/published/research-results.v1.json), snapshot `final-heldout-a-aprime-b-v1`; [verification procedure](../docs/workflows/public-research-publication.md); open [#152](https://github.com/alistairkung/private-client-graph/pull/152). Original A Run `97d26d8e5f9d5964826b144c9ca45ad7`; A′ `d67a391bc95a5ad39e1b5786a04795c0`; B `841389cef51957ce8523ea41c03d2baa`. Snapshot integrity digest: `111a22dcb092d60b6354a89ab7b69293ef492175a412315735e0379d62ab1160`.
+**Evidence:** [retained snapshot](https://github.com/alistairkung/private-client-graph/blob/21e3ff348757955df805d0d8a1d44d862e1549fd/private_client_graph/published/research-results.v1.json), snapshot `final-heldout-a-aprime-b-v1`; [verification procedure](https://github.com/alistairkung/private-client-graph/blob/21e3ff348757955df805d0d8a1d44d862e1549fd/docs/workflows/public-research-publication.md); open [#152](https://github.com/alistairkung/private-client-graph/pull/152). Original A Run `97d26d8e5f9d5964826b144c9ca45ad7`; A′ `d67a391bc95a5ad39e1b5786a04795c0`; B `841389cef51957ce8523ea41c03d2baa`. Snapshot integrity digest: `111a22dcb092d60b6354a89ab7b69293ef492175a412315735e0379d62ab1160`.
 
-**Unsupported claims / validation:** Actual retained observations are available, but the publication UI is under review. No repeated-run consistency, confidence interval or live deployment of the research viewer is claimed. Keep the qualifications onscreen at readable size.
+**Unsupported claims / validation:** Required final capture is not yet verified or packaged. No repeated-run consistency, confidence interval, production accuracy, or deployed research viewer claim. Keep qualifications in readable slide copy.
 
-## Slide 10 — Two names changed the score. The quotations stayed the same.
+## Slide 10 — Two endpoint corrections. The same original evidence.
 
-**Purpose:** Explain the improvement, then make the remaining evidence and resource trade-offs visible.
+**Purpose:** Explain exactly what improved without overloading the slide with the analysis report.
 
-**Key takeaway:** Better relationship F1 does not mean perfect provenance, and the incremental resolver has measurable overhead.
+**Key takeaway:** Two endpoint labels changed; original Evidence and existing strict evidence-check failures remained.
 
 **Text wireframe:**
 
 ```text
 +----------------------------------------------------------------------+
-|  Two names changed the score. The quotations stayed the same.         |
+|  Two endpoint corrections. The same original evidence.                |
 |                                                                      |
-|  +--------------------------+ --> +-------------------------------+  |
-|  | [EXISTING ORIGINAL GRAPH]|     | [EXISTING RESOLVED GRAPH]      |  |
-|  | Bea                      |     | Beatrice Ng                    |  |
-|  | settlor / parent edges   |     | same roles, corrected names     |  |
-|  +--------------------------+     +-------------------------------+  |
-|  "Bea is the parent of Isaac Ng."  [EXACT SOURCE EVIDENCE]           |
+|  +----------------------------------------------------------------+ |
+|  | [EXISTING ENDPOINT-EDIT / GRAPH DETAILS: HELDOUT_03]              | |
+|  |                                                                | |
+|  | Bea -- settlor of --> Larch Family Trust                        | |
+|  | Bea -- parent of  --> Isaac Ng                                 | |
+|  |          Both source endpoints: Bea --> Beatrice Ng              | |
+|  +----------------------------------------------------------------+ |
 |                                                                      |
-|  Quote checks: 36/39             Source/quote checks: 37/41            |
-|  +10 resolver calls             +9,821 tokens; 9.06s summed duration   |
+|  "Bea is the parent of Isaac Ng."  [UNCHANGED EXACT SOURCE QUOTE]     |
+|  Names changed; evidence did not. Strict evidence-check failures remain.|
 |                                                                      |
-|  B results; distinct diagnostic denominators.                         |
+|  +10 calls; 9.06s summed provider-call time, not end-to-end latency.    |
 |  USD cost unpriced. One execution per case; repeatability unknown.     |
-|                                                                      |
+|  [Research details: distinct evidence-check populations and definitions]|
 +----------------------------------------------------------------------+
 ```
 
-**Actual slide copy:** Headline; “Bea → Beatrice Ng”; “Settlor and parent endpoints corrected”; exact quote “Bea is the parent of Isaac Ng.”; “B: approved-quote checks 36/39”; “B: Source/quote checks 37/41”; “+10 resolver calls · +9,821 tokens · 9.06s summed provider duration”; “USD cost unpriced. Repeatability unknown.”
+**Actual slide copy:** “Two endpoint corrections. The same original evidence.”; “Bea → Beatrice Ng”; “Settlor and parent endpoints”; exact quote “Bea is the parent of Isaac Ng.”; “Names changed; evidence did not. Existing strict evidence-check failures remained.”; “+10 calls · 9.06s summed provider-call time, not end-to-end latency”; “USD cost unpriced. One execution per case; repeatability unknown.”; “Research details: evidence checks assess different populations.”
 
-**Visual asset reference:** F's original/resolved heldout_03 graph captures and exact Evidence region. Crop the matching settlor/parent endpoints at readable size; do not depict invented missing edges. Existing retained Source text establishes that Bea means Beatrice Ng. These are #152 implementation-under-review captures, supported by retained data rather than by merge status.
+**Visual asset reference:** F's existing heldout_03 original/resolved graph and Evidence details, using one dominant endpoint-correction region rather than two miniature full graphs. Show both affected source endpoints mapping from the same alias to the same canonical name; these are two endpoint corrections for one person. Reuse existing recorded edit details if they show the same two changes legibly. F is a local asset requiring packaging, not a new capture request in this revision. Keep the exact quote and Source identity intact. Detailed diagnostics should link to the [pinned research publication record](https://github.com/alistairkung/private-client-graph/blob/21e3ff348757955df805d0d8a1d44d862e1549fd/docs/workflows/public-research-publication.md) and [retained snapshot](https://github.com/alistairkung/private-client-graph/blob/21e3ff348757955df805d0d8a1d44d862e1549fd/private_client_graph/published/research-results.v1.json); replace the reader-facing details link with the verified research page only when that page is available. Do not imply it is deployed now.
 
-**Speaker notes:** Resolution changes two endpoint labels, without discovering new relationship candidates or rewriting quotations. Quote accuracy rises from 34/37 to 36/39; the separate saved Source-pair diagnostic rises from 35/39 to 37/41. These populations and checks differ, so the fractions cannot be compared as one score. Three approved-quote checks and four Source-pair checks still fail in B. Exact approved-quote boundaries may reject semantically adequate excerpts, but the retained Source-pair diagnostics do not classify all failure causes: do not label every failure a boundary mismatch or wrong document. B adds ten resolver calls and 9,821 total tokens, including 3,456 cached tokens within input tokens. The 9.06 seconds is summed recorded provider-call duration, not end-to-end latency or a per-user response-time promise. Dollar costs are unavailable. The earlier [Issue #92 pilot](../research/issue-92-findings.md) is separate evidence with different scope, not extra repetitions of this final comparison.
+**Speaker notes:** Resolution changes two source endpoint labels for Beatrice Ng, without adding relationship candidates or rewriting quotations. Detailed fractions are intentionally off the slide: approved-quote checks move from 34/37 to 36/39; the separate Source-pair diagnostic moves from 35/39 to 37/41. These assess different populations, not interchangeable scores. B still has three approved-quote failures and four Source-pair failures; not all causes are classified. B adds ten resolver calls and 9,821 total tokens. Summed provider duration is 9.06 seconds, not end-to-end latency or a user response-time promise. Pricing is unavailable. The earlier Issue #92 pilot has different scope and is not extra repetition of this comparison.
 
-**Evidence:** [heldout_03 source and truth](../evaluation_cases/heldout_03/README.md); [retained snapshot](../private_client_graph/published/research-results.v1.json), edits, per-Run diagnostics and usage; [endpoint-edit constraints](../docs/design/entity-resolution-research-experiment.md); merged [#136](https://github.com/alistairkung/private-client-graph/pull/136); open [#152](https://github.com/alistairkung/private-client-graph/pull/152).
+**Evidence:** [heldout_03 source and truth](../evaluation_cases/heldout_03/README.md); [retained snapshot](https://github.com/alistairkung/private-client-graph/blob/21e3ff348757955df805d0d8a1d44d862e1549fd/private_client_graph/published/research-results.v1.json), endpoint edits, per-Run diagnostics and usage; [endpoint-edit constraints](../docs/design/entity-resolution-research-experiment.md); merged [#136](https://github.com/alistairkung/private-client-graph/pull/136); open [#152](https://github.com/alistairkung/private-client-graph/pull/152).
 
-**Unsupported claims / validation:** No assertion that identity is generally solved, all provenance failures are understood, the resolver is cost-effective, or B's perfect relationship score implies perfect documentary support.
+**Unsupported claims / validation:** No claim that two different people's names changed, identity is generally solved, all provenance failures are understood, the resolver is cost-effective, or perfect relationship F1 means perfect documentary support. A future reader-facing research link requires deployment/access verification.
 
 ## Slide 11 — Next: keep the Matter current, without losing the review boundary.
 
@@ -502,7 +515,7 @@ All references are text links; no assets are embedded or generated here.
 
 **Speaker notes:** Close with the proposition, rather than repeating the perfect score: source-backed structure that a professional can interrogate. Ask judges to explore the synthetic prototype and inspect the research evidence. The next stage worth backing is practitioner validation and governed development. The repository may require access; the app is the primary exploration route. Do not promise that the open research-publication PR is deployed.
 
-**Evidence:** merged [#18](https://github.com/alistairkung/private-client-graph/pull/18), [#75](https://github.com/alistairkung/private-client-graph/pull/75), [#138](https://github.com/alistairkung/private-client-graph/pull/138), [#143](https://github.com/alistairkung/private-client-graph/pull/143), [#147](https://github.com/alistairkung/private-client-graph/pull/147); [PRODUCT.md](../PRODUCT.md); [retained results](../private_client_graph/published/research-results.v1.json). Railway domain was verified via read-only domain metadata; the public root returned HTTP 200 during proposal research. That establishes reachability, not complete deployed feature acceptance.
+**Evidence:** merged [#18](https://github.com/alistairkung/private-client-graph/pull/18), [#75](https://github.com/alistairkung/private-client-graph/pull/75), [#138](https://github.com/alistairkung/private-client-graph/pull/138), [#143](https://github.com/alistairkung/private-client-graph/pull/143), [#147](https://github.com/alistairkung/private-client-graph/pull/147); [PRODUCT.md](../PRODUCT.md); [retained results](https://github.com/alistairkung/private-client-graph/blob/21e3ff348757955df805d0d8a1d44d862e1549fd/private_client_graph/published/research-results.v1.json). Railway domain was verified via read-only domain metadata; the public root returned HTTP 200 during proposal research. That establishes reachability, not complete deployed feature acceptance.
 
 **Unsupported claims / validation:** Recheck audience access and deployed routes before eventual presentation. Avoid “production-ready,” validated ROI, competitive superiority or guaranteed accuracy.
 
@@ -513,5 +526,7 @@ The final measured A/A′/B result is distinct from both the earlier Issue #92 p
 The data snapshot, public viewer and screenshot each establish different facts. Retained observations establish what was measured. Merged PRs establish delivered capabilities. Local captures establish what the captured implementation looked like. An open PR, approved design or successful deployment metadata alone establishes neither live feature correctness nor production suitability.
 
 Deliberately omitted from the judge-facing slides: the chronological PR journey; AI-assisted coding workflow; migration numbers and relational schema details; authentication cookie mechanics; CI test-count growth; task-budget ledgers; package refactors; arbitrary agent-framework comparisons; historical HTML report tooling retired by #121; and the earlier ten-slide draft outputs in open #131. These help engineering review but consume time without strengthening the product proposition. Provenance integrity, explicit acceptance, shared semantic boundaries and frozen experimental controls remain because they explain why judges should trust the experience and evidence.
+
+Astra review revision: retained the twelve-slide structure, made refined Workbench chain/F1 captures mandatory, replaced slide 3 with the existing trustee-replacement question, moved essential distinctions into visible copy, simplified slide 10 and pinned cross-branch evidence. Narrative approval remains separate from slide-production approval.
 
 No images, mockups, interactive prototypes, slide code, rendered slides or exports were created for this proposal. This document is the stopping point pending narrative review and approval.
