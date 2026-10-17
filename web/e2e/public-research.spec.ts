@@ -38,6 +38,13 @@ for (const locale of ["en", "zh-CN"] as const) {
     await expect(page.locator("main")).toContainText("100.00%");
     await expect(page.locator("main")).toContainText(snapshot.snapshot_id);
     await expect(page.locator("main")).toContainText(snapshot.integrity.digest);
+    for (const section of ["comparison", "usage"]) {
+      const scroller = page.locator(`#${section} .research-table-scroll`);
+      if (page.viewportSize()!.width < 600) {
+        expect(await scroller.evaluate(element => element.scrollWidth > element.clientWidth)).toBe(true);
+      }
+      expect(await scroller.evaluate(element => element.getBoundingClientRect().right <= window.innerWidth)).toBe(true);
+    }
     const downloadEvent = page.waitForEvent("download");
     await page.getByRole("link", { name: locale === "en" ? "Download results" : "下载研究结果", exact: true }).first().click();
     const download = await downloadEvent;
@@ -73,6 +80,9 @@ test("paired corrections preserve the exact selected Source and Evidence across 
   await expect(page.getByRole("article", { name: "Source document" })).toHaveCount(0);
   await expect(page.getByRole("navigation", { name: "Benchmark cases" }).getByRole("button")).toHaveCount(10);
   await page.getByRole("button", { name: "Inspect the two corrections", exact: true }).click();
+  const selectedHeading = page.locator(".research-case-detail h3");
+  await expect(selectedHeading).toBeFocused();
+  await expect(selectedHeading).toBeInViewport();
   const corrections = page.getByRole("button", { name: /Bea → Beatrice Ng/ });
   await expect(corrections).toHaveCount(2);
   for (let index = 0; index < 2; index++) {
