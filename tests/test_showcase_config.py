@@ -12,7 +12,7 @@ def test_provider_key_alone_leaves_live_disabled(monkeypatch):
     assert client.get("/api/showcase/case-01").json()["live_analysis"] == {
         "state": "disabled", "resets_at": None,
     }
-    assert client.post("/api/showcase/case-01/analysis", json={"mode": "live"}).status_code == 503
+    assert client.post("/api/showcase/case-01/analysis", json={"mode": "live"}).status_code == 403
     assert client.post("/api/showcase/case-01/analysis", json={"mode": "sample"}).status_code == 200
 
 
@@ -28,7 +28,7 @@ def test_provider_key_alone_leaves_live_disabled(monkeypatch):
     ("PCG_SHOWCASE_LIVE_ENABLED", "yes"),
     ("DEEPSEEK_API_KEY", ""),
 ])
-def test_invalid_enabled_configuration_fails_when_creating_app(monkeypatch, name, value):
+def test_legacy_live_configuration_validation_does_not_block_public_examples(monkeypatch, name, value):
     monkeypatch.setenv("PCG_SHOWCASE_LIVE_ENABLED", "true")
     monkeypatch.setenv("PCG_SHOWCASE_LIVE_LIMIT", "2")
     monkeypatch.setenv("PCG_SHOWCASE_LIVE_WINDOW_SECONDS", "3600")
@@ -37,8 +37,13 @@ def test_invalid_enabled_configuration_fails_when_creating_app(monkeypatch, name
         monkeypatch.delenv(name, raising=False)
     else:
         monkeypatch.setenv(name, value)
+    from private_client_graph.application.showcase_live import LiveConfig
     with pytest.raises(ValueError, match=name):
-        create_app()
+        LiveConfig.from_environment()
+    client = TestClient(create_app())
+    assert client.get("/api/showcase/cases/case-01").status_code == 200
+    assert client.get("/api/showcase/cases/case-04").status_code == 200
+    assert client.post("/api/showcase/case-01/analysis", json={"mode": "live"}).status_code == 403
 
 
 def test_disabled_defaults_need_neither_provider_nor_quota_configuration(monkeypatch):

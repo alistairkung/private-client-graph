@@ -4,6 +4,8 @@ import type {
   AnalysisMode,
   CaseAnalysis,
   CaseDetail,
+  ShowcaseCase,
+  ShowcaseCaseSummary,
 } from "./types";
 
 const connectionError: AnalysisError = {
@@ -56,3 +58,7 @@ export const analyseCase = (mode: AnalysisMode) =>
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ mode }),
   });
+
+export const getShowcaseCases = () => request<ShowcaseCaseSummary[]>("/api/showcase/cases");
+export const getShowcaseCase = (caseId: string) =>
+  request<ShowcaseCase>(`/api/showcase/cases/${encodeURIComponent(caseId)}`);

@@ -8,12 +8,8 @@ test("sample journey uses real API and graph construction, then highlights exact
   await expect(page.getByLabel("Source document")).toContainText(
     "Attendance Note – Meeting with Alice Chen",
   );
-  await expect(page.getByText("SYNTHETIC CASE", { exact: true })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Run live analysis" })).toBeDisabled();
-  await page.getByRole("button", { name: "Load sample analysis" }).click();
-  await expect(
-    page.getByText("Sample analysis · Demonstration fixture"),
-  ).toBeVisible();
+  await expect(page.getByText(/Curated ideal fixtures/)).toBeVisible();
+  await expect(page.getByRole("button", { name: "Run live analysis" })).toHaveCount(0);
   await expect(page.getByRole("img", { name: "Triangular Trust node" })).toBeVisible();
   await expect(page.getByLabel("Graph legend")).toContainText("Parent → child");
   await expect(page.getByLabel("Graph legend")).toContainText("Spouse / sibling");
