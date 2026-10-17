@@ -16,7 +16,7 @@ test("persistent Experiment: changed and repeated Runs retain frozen Evidence an
   await expect(
     page.getByRole("heading", { name: "Next run", exact: true }),
   ).toBeVisible();
-  await expect(page.getByText("3 benchmark inputs selected")).toBeVisible();
+  await expect(page.getByText("5 benchmark inputs selected")).toBeVisible();
   await page.getByRole("button", { name: "Choose cases" }).click();
   await page.getByRole("button", { name: "Clear selection" }).click();
   await page.getByRole("checkbox", { name: /case_03_fixture/ }).check();
