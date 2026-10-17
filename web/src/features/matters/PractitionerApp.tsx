@@ -11,7 +11,7 @@ import "../matter-proposals/proposals.css";
 import { BrandMark } from "../../shared/brand/BrandMark";
 
 export function PractitionerApp({ matterId, proposalId }: { matterId?: string; proposalId?: string }) {
- const {t}=useLocale();
+  const { t } = useLocale();
   return (
     <div className="practitioner-shell">
       <header className="ledger-header">
@@ -23,7 +23,8 @@ export function PractitionerApp({ matterId, proposalId }: { matterId?: string; p
           <nav aria-label={t("Practitioner application")}>
             <a href="/app" aria-current="page">{t("Matters")}</a>
           </nav>
-          <LanguageControl /><AccountMenu />
+          <LanguageControl />
+          <AccountMenu />
         </div>
       </header>
       <main className="ledger-content ledger-width">
@@ -41,7 +42,7 @@ export function PractitionerApp({ matterId, proposalId }: { matterId?: string; p
 }
 
 function PractitionerPage({ matterId, proposalId }: { matterId?: string; proposalId?: string }) {
- const {t}=useLocale();
+  const { t } = useLocale();
   const navigate = (path: string) => window.location.assign(path);
   if (matterId) return <MatterWorkspace key={matterId} id={matterId} />;
   if (proposalId === "new") return <CreateMatter onNavigate={navigate} />;

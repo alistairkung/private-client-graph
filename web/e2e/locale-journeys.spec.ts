@@ -67,3 +67,54 @@ test("translated accepted Matter preserves canonical data and selected quotation
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   await page.screenshot({ path: testInfo.outputPath("practitioner-zh-CN.png"), fullPage: true });
 });
+
+test("language switching preserves the deliberately adjusted graph viewport", async ({ page }) => {
+  await page.goto("/demo/matter-proposals/hillcrest");
+  await expect(page.locator(".react-flow__viewport")).toBeVisible();
+  await page.getByRole("button", { name: "Zoom in", exact: true }).click();
+  await page.waitForTimeout(400); // React Flow animates the control's viewport transition.
+  const transform = await page.locator(".react-flow__viewport").getAttribute("style");
+  await page.getByRole("button", { name: "简体中文", exact: true }).click();
+  await expect(page.locator("html")).toHaveAttribute("lang", "zh-CN");
+  await expect(page.locator(".react-flow__viewport")).toHaveAttribute("style", transform!);
+});
+
+test("Chinese multi-PDF proposal confirms and reopens with unchanged Source Evidence", async ({ page, context }, testInfo) => {
+  const reference = `中文/${testInfo.project.name}/${randomUUID()}`;
+  const title = "Fictional Chinese acceptance review";
+  await page.goto("/app/matter-proposals/new");
+  await page.getByRole("button", { name: "简体中文", exact: true }).click();
+  await page.locator('input[name="external_reference"]').fill(reference);
+  await page.locator('input[name="matter_title"]').fill(title);
+  await page.locator('input[type="file"]').setInputFiles([sourcePdf,
+    fileURLToPath(new URL("../../tests/fixtures/multiple-role-proposal.pdf", import.meta.url))]);
+  await page.locator('input[name="source_title_0"]').fill("Original family note");
+  await page.locator('input[name="source_title_1"]').fill("Original trust note");
+  await page.getByRole("checkbox").check();
+  await page.getByRole("button", { name: "上传并分析", exact: true }).click();
+  await expect(page).toHaveURL(/\/app\/matter-proposals\/[a-f0-9-]{36}$/);
+  const proposalPath = new URL(page.url()).pathname;
+  const before = await (await context.request.get(proposalPath.replace("/app/", "/api/"))).json();
+  await expect(page.locator("html")).toHaveAttribute("lang", "zh-CN");
+  await expect(page.getByRole("heading", { name: title, exact: true })).toBeVisible();
+  await page.locator(".graph-selector select").selectOption({ label:"Morgan Example — 受托人 — Fictional Trust" });
+  await expect(page.locator("mark")).toHaveText("Morgan Example is trustee of the Fictional Trust.");
+  await expect(page.getByRole("button", { name:"来源 2 Original trust note", exact:true })).toHaveAttribute("aria-pressed", "true");
+  await page.screenshot({path:testInfo.outputPath("proposal-zh-CN.png"), fullPage:true});
+  await page.getByRole("button", { name:"确认并创建事项", exact:true }).click();
+  await expect(page).toHaveURL(/\/app\/matters\/[a-f0-9-]{36}$/);
+  const savedPath = new URL(page.url()).pathname;
+  const accepted = await (await context.request.get(savedPath.replace("/app/", "/api/"))).json();
+  expect(accepted.state).toEqual(before.state);
+  await page.getByRole("link", {name:"返回事项列表", exact:true}).first().click();
+  await page.getByRole("link", {name:`${reference} ${title}`, exact:true}).click();
+  await expect(page).toHaveURL(savedPath);
+  await expect(page.locator("html")).toHaveAttribute("lang", "zh-CN");
+  await page.locator(".graph-selector select").selectOption({label:"Alice Example — 父母 — Ben Example"});
+  await expect(page.locator("mark")).toHaveText("Alice Example is the parent of Ben Example.");
+  await expect(page.getByRole("button", {name:"来源 1 Original family note",exact:true})).toHaveAttribute("aria-pressed","true");
+  const reopened = await (await context.request.get(savedPath.replace("/app/", "/api/"))).json();
+  expect(reopened.state).toEqual(before.state);
+  expect((await context.request.get(proposalPath.replace("/app/", "/api/"))).status()).toBe(404);
+  await page.screenshot({path:testInfo.outputPath("reopened-matter-zh-CN.png"),fullPage:true});
+});
