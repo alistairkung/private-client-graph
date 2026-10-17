@@ -14,7 +14,7 @@ export function ResearchResultsApp() {
         {t("Skip to research results")}
       </a>
       <PublicHeader />
-      <main id="research-main" className="folio-width">
+      <main id="research-main" className="research-main">
         <header className="research-opening">
           <h1>{t("Research results")}</h1>
           <p>

@@ -1,4 +1,22 @@
 export const publicResearchCatalogue: Record<string, string> = {
+  "Published configuration": "已发布配置",
+  "Inspect Run": "查看运行",
+  "Fresh baseline": "新提取基线",
+  "Exact replay": "精确回放",
+  "With resolver": "使用解析器",
+  "The same chain.": "同一条流水线。",
+  "Inspect A, A′ or B. Select a stage to explore its frozen configuration.": "查看 A、A′ 或 B。选择阶段以查看冻结配置。",
+  "A′ reuses A’s frozen extractions. B adds resolution to those same records; construction and evaluation remain deterministic.": "A′ 复用 A 的冻结提取结果。B 在相同记录上增加解析；构建与评估仍为确定性操作。",
+  "Published A / A′ / B experiment": "已发布的 A / A′ / B 实验",
+  "Three Runs. Three points.": "三次运行，三个数据点。",
+  "Run 1 = A · Fresh extraction": "运行 1 = A · 新提取",
+  "Run 2 = A′ · Exact replay": "运行 2 = A′ · 精确回放",
+  "Run 3 = B · Resolution": "运行 3 = B · 解析",
+  "One point per Run. The 0–1 F1 scale shows recorded scores; selecting a point reveals its identity and coverage.": "每次运行对应一个点。0–1 的 F1 量尺展示已记录分数；选择数据点可查看运行标识与覆盖情况。",
+  "A and B are Unpriced. Only A′ has a known zero provider cost; missing prices are never treated as zero.": "A 与 B 未定价。只有 A′ 的提供商成本确认为零；绝不将缺失价格视为零。",
+  "Recorded metric table": "已记录的指标表",
+  "Baseline relationship micro-F1 was {baseline}*. With generative resolution it was {resolver}*. Select a retained Run to inspect its recorded score and coverage.": "基线关系微平均 F1 为 {baseline}*，加入生成式解析后为 {resolver}*。选择保留的运行以查看已记录分数与覆盖情况。",
+
   "Matched relationship; approved-quote check passed": "关系匹配；核准引文检查通过",
   "Recorded Source-pair failures": "已记录的来源配对失败",
   "Recorded Source-pair mismatch. The retained diagnostic does not classify the reason. Compare the exact Source and quote with the approved Evidence below.":

@@ -1,0 +1,59 @@
+/* Workbench presentation foundations; scoped away from the editorial document. */
+.research-visual {
+  color: #173e38;
+  font: 400 15px/1.5 "Public Sans", Arial, sans-serif;
+  min-width: 0;
+  --ink: #173e38;
+  --muted: #52665f;
+  --rule: #d5d9d2;
+  --error: #773b46;
+}
+.research-visual button, .research-visual input, .research-visual select {
+  font: inherit;
+  color: inherit;
+  accent-color: var(--ink);
+}
+.research-visual button {
+  background: var(--ink);
+  color: white;
+  border: 1px solid var(--ink);
+  border-radius: 5px;
+  padding: 10px 16px;
+  min-height: 44px;
+  cursor: pointer;
+}
+.research-visual button:hover { background: #28584f; color: white; }
+.research-visual button:disabled {
+  cursor: not-allowed;
+  background: #e6e9e2;
+  color: var(--muted);
+  border-color: var(--rule);
+}
+.research-visual input, .research-visual select {
+  min-width: 0;
+  width: 100%;
+  min-height: 44px;
+  background: white;
+  border: 1px solid #87958e;
+  border-radius: 4px;
+  padding: 9px 10px;
+  max-width: 100%;
+  caret-color: var(--ink);
+}
+.research-visual label { min-width: 0; display: grid; gap: 6px; font-size: 13px; font-weight: 600; }
+.research-visual small { display: block; color: var(--muted); font-size: 12px; margin-top: 5px; }
+.research-visual .section-heading { display: flex; justify-content: space-between; align-items: start; gap: 16px; margin-bottom: 20px; }
+.research-visual .section-heading h2 { font: 700 20px/1.2 "Public Sans", Arial, sans-serif; letter-spacing: normal; margin: 0; }
+.research-visual .section-heading > span { font-size: 12px; }
+.research-visual.research-visual p { line-height: 1.5; max-width: 75ch; margin: 1em 0; }
+.research-visual .secondary { background: white; color: #173e38; border-color: #a8b8ac; }
+.research-visual .secondary[aria-pressed="true"] { background: #173e38; color: white; }
+.research-visual .secondary[aria-pressed="true"] small { color: inherit; }
+.research-visual :focus-visible { outline: 3px solid #773b46; outline-offset: 3px; }
+@media (width < 760px) { .research-visual .section-heading { gap: 12px; } }
+
+.research-visual .pipeline-navigation button:hover,
+.research-visual .secondary:hover,
+.research-visual .remove-node:hover { background: #28584f; color: white; }
+.research-visual .chart-tabs button:hover { background: transparent; color: #173e38; }
+.research-visual .resolver-menu button:hover { color: #173e38; }

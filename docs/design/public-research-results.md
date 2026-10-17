@@ -1,10 +1,16 @@
-# Public research publication — editorial refinement
+# Public research publication — editorial refinement and shared visualizations
 
 The owner's 2026-10-17 refinement request supersedes the dashboard-like composition
 of the initial design C implementation. This remains the public presentation slice
 of [#148](https://github.com/alistairkung/private-client-graph/issues/148), on PR
 #152. The verified snapshot, export contract, semantics and security boundary are
 unchanged. No new experiment, paid provider call, merge or deployment is included.
+
+The subsequent owner-approved comp C for genuine Workbench reuse extends the
+standalone study with broad architecture and results bands. It preserves the
+editorial refinement and complete study content. The current shared ownership,
+public adapters and evidence are recorded in
+[Shared research visualizations](shared-research-visualizations.md).
 
 ## Composition and ownership
 
@@ -33,9 +39,15 @@ inspectable without turning the opening into a dashboard.
 
 Shared presentation lives in `web/src/shared/research/`:
 
-- `PipelineNode`: the Workbench's actual expandable stage, extracted without its
-  editing or execution authority. Public `ResearchArchitecture` supplies only
-  frozen narrative and approved model identity.
+- `AnalysisPipeline`: the complete Workbench stage rail, including expandable
+  `PipelineNode` stages, connectors, the separate evaluation annotation, local
+  interaction state and stage navigation. Workbench `Pipeline` supplies private
+  configuration fields and editing callbacks; public `ResearchArchitecture`
+  supplies a frozen published configuration without those callbacks.
+- `RunPerformanceChart`: the complete Workbench F1 chart, including tabs, input
+  filtering, point inspection and retained-Run selection. Workbench `RunChart`
+  adapts private Run records; public `PublishedPerformance` supplies published
+  measurements through `visual-data.ts`. Neither adapter duplicates rendering.
 - `OutcomeMatrix`: the Workbench comparison table, reused for aggregate and
   case-level results. Workbench callers retain their existing navigation links.
 - `EvidenceInspector`: the Workbench's exact frozen-Source inspector, localized
@@ -53,7 +65,23 @@ public adapters. Both routes still consume one verified publication; download
 bytes and digest remain unchanged. English and Simplified Chinese translate only
 presentation, preserving original Sources, names, quotations and identities.
 
-## Direction contract
+Architecture and results use comp C's pale sage chapter bands and broad white
+figure areas. The original Workbench figures mount directly inside them; the
+comp's iframe isolation was only a review device. Figure notes use three columns
+on desktop and stack on mobile. Stage rails and retained-Run lists retain local
+horizontal scrolling. The recorded metric table remains inspectable below the
+chart, and the graph/Evidence chapters retain their existing content.
+
+The shared pipeline retains its original stage, resolver-slot and connector width
+transitions. Shared reduced-motion rules remove those transitions and restore
+instant rail scrolling. The former public-only transition override was removed;
+public and Workbench figures now use the same animation and reduced-motion code.
+
+## Historical editorial direction contract
+
+This contract records the earlier editorial refinement. The current genuine-reuse
+extension follows the scoped comp C contract linked in
+[Shared research visualizations](shared-research-visualizations.md).
 
 ### THESIS
 
@@ -104,10 +132,23 @@ public demo, authenticated practitioner and Workbench journeys retain regression
 coverage. Full landing scroll and actual English/Chinese desktop/mobile captures
 are inspected together.
 
-The detector reported the inherited Workbench stage-width transition when its
-CSS moved into the shared component. Public stage styling disables that transition;
-the existing internal Workbench animation remains unchanged. No detector rerun
-is required.
+The genuine-reuse finish review inspected all 29 supplied current captures and
+identified one material finish defect: the opening disclosure exceeded its
+intended reading measure because a structural selector won the cascade. The
+selector now uses `:where`, allowing the 75ch paragraph limit to apply while
+keeping figures broad. The reviewer inspected all five corrected recaptures and
+returned **ship at the scored-fix scope**, with no visible regression. The full
+review found no other material defect. This verdict does not claim a numerical
+comp-diff result or completion of the Impeccable CLI phases; see the linked shared
+visualization record for validation and the remaining review-metadata limits.
+
+## Historical editorial and header reviews
+
+During the earlier editorial refinement, the detector reported the inherited
+Workbench stage-width transition when its CSS moved into the shared stage.
+Public stage styling then disabled that transition. That public-only treatment
+is historical and has been superseded by the complete shared pipeline described
+above.
 
 The fresh full editorial review confirmed Evidence Folio fidelity and the requested
 narrative composition, then identified mobile graph framing and excessive empty
