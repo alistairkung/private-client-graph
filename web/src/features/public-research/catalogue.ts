@@ -1,4 +1,8 @@
 export const publicResearchCatalogue: Record<string, string> = {
+  "Matched relationship; approved-quote check passed": "关系匹配；核准引文检查通过",
+  "Recorded Source-pair failures": "已记录的来源配对失败",
+  "Recorded Source-pair mismatch. The retained diagnostic does not classify the reason. Compare the exact Source and quote with the approved Evidence below.":
+    "已记录来源配对不匹配。保留的诊断未对原因分类。请将确切来源和引文与下方核准证据逐项比较。",
   "* Small internal development benchmark. The resolver comparison was post-hoc and exploratory; two name corrections in one case accounted for the entire improvement.":
     "* 小规模内部开发基准。实体解析比较为事后开展的探索性比较；全部提升来自同一个案例中的两处名称修正。",
   "A controlled comparison of constrained alias resolution on a small synthetic development benchmark.":

@@ -111,7 +111,10 @@ test("provider inspection shows replay zero calls and retained metadata only", a
   await usage.getByText("Run A′: 0 provider calls", { exact: true }).click();
   await expect(usage).toContainText("Zero provider calls. This control used deterministic replay.");
   await usage.getByText(`Run B: ${resolver.usage.attempts} provider calls`, { exact: true }).click();
-  const call = usage.locator(".research-call-list details").first();
+  const treatment = usage.locator(":scope > details").filter({
+    has: page.getByText(resolver.run_id, { exact: true }),
+  });
+  const call = treatment.locator(".research-call-list details").first();
   await call.locator("summary").click();
   await expect(call).toContainText(resolver.calls[0].attempt_id);
   await expect(call).toContainText("Input tokens");

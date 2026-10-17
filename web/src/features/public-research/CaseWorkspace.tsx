@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 import { useLocale } from "../../shared/locale";
 import { SourcePanel } from "../review/SourcePanel";
 import { percent, runName } from "./RunComparison";
@@ -19,6 +19,7 @@ type Filter =
   | "source_attribution_failure";
 export function CaseWorkspace({ cases }: { cases: PublicCase[] }) {
   const { t } = useLocale();
+  const sourceSelectId = useId();
   const [caseId, setCaseId] = useState("");
   const [baseline, setBaseline] = useState<RunLabel>("A_prime");
   const [filter, setFilter] = useState<Filter>("all");
@@ -33,6 +34,9 @@ export function CaseWorkspace({ cases }: { cases: PublicCase[] }) {
   const outcome = observation?.relationships.find(
     (item) => item.id === selection?.outcomeId,
   );
+  const attributionFailures = outcome
+    ? sourcePairFailures(observation, outcome)
+    : [];
   const source =
     selectedCase?.sources.find((item) => item.id === sourceId) ??
     selectedCase?.sources[0];
@@ -213,6 +217,21 @@ export function CaseWorkspace({ cases }: { cases: PublicCase[] }) {
                     </h4>
                     <p>{outcome.edge.join(" · ")}</p>
                     <p>{outcomeLabel(outcome.outcome, t)}</p>
+                    {!!attributionFailures.length && (
+                      <section aria-label={t("Recorded Source-pair failures")}>
+                        <p>
+                          {t(
+                            "Recorded Source-pair mismatch. The retained diagnostic does not classify the reason. Compare the exact Source and quote with the approved Evidence below.",
+                          )}
+                        </p>
+                        <EvidenceChoices
+                          title={t("Recorded Source-pair failures")}
+                          items={attributionFailures}
+                          active={quote}
+                          onSelect={selectQuote}
+                        />
+                      </section>
+                    )}
                     <EvidenceChoices
                       title={t("Expected approved Evidence")}
                       items={outcome.expected}
@@ -227,22 +246,21 @@ export function CaseWorkspace({ cases }: { cases: PublicCase[] }) {
                     />
                   </>
                 )}
-                <label>
-                  {t("Original Source")}
-                  <select
-                    value={source?.id ?? ""}
-                    onChange={(event) => {
-                      setSourceId(event.target.value);
-                      setOccurrence(0);
-                    }}
-                  >
-                    {selectedCase.sources.map((item) => (
-                      <option key={item.id} value={item.id}>
-                        {item.title} · {item.id}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                <label htmlFor={sourceSelectId}>{t("Original Source")}</label>
+                <select
+                  id={sourceSelectId}
+                  value={source?.id ?? ""}
+                  onChange={(event) => {
+                    setSourceId(event.target.value);
+                    setOccurrence(0);
+                  }}
+                >
+                  {selectedCase.sources.map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {item.title} · {item.id}
+                    </option>
+                  ))}
+                </select>
                 {source && (
                   <>
                     <p className="research-id">{source.id}</p>
@@ -305,13 +323,16 @@ function RelationshipList({
 }) {
   const { t } = useLocale();
   const relationships =
-    observation?.relationships.filter(
-      (item) =>
-        filter === "all" ||
-        (filter === "errors"
-          ? item.outcome === "missing" || item.outcome === "extra"
-          : item.outcome === filter),
-    ) ?? [];
+    observation?.relationships.filter((item) => {
+      if (filter === "all") return true;
+      if (filter === "errors") {
+        return item.outcome === "missing" || item.outcome === "extra";
+      }
+      if (filter === "source_attribution_failure") {
+        return sourcePairFailures(observation, item).length > 0;
+      }
+      return item.outcome === filter;
+    }) ?? [];
   return (
     <section aria-label={t("Run {run} relationships", { run: runName(label) })}>
       <h4>{t("Run {run}", { run: runName(label) })}</h4>
@@ -333,6 +354,9 @@ function RelationshipList({
           >
             <span>{item.edge.join(" · ")}</span>
             <small>{outcomeLabel(item.outcome, t)}</small>
+            {!!sourcePairFailures(observation, item).length && (
+              <small>{t("Matched relationship; Source-pair mismatch")}</small>
+            )}
           </button>
         ))
       ) : (
@@ -385,7 +409,7 @@ function outcomeLabel(
 ) {
   switch (value) {
     case "matched":
-      return t("Matched relationship and Evidence");
+      return t("Matched relationship; approved-quote check passed");
     case "missing":
       return t("False negative — expected relationship missing");
     case "extra":
@@ -395,4 +419,22 @@ function outcomeLabel(
     case "source_attribution_failure":
       return t("Matched relationship; Source-pair mismatch");
   }
+}
+
+// Join saved diagnostics by exact retained identities; no scoring or name normalization.
+function sourcePairFailures(
+  observation: PublicObservation | undefined,
+  outcome: PublicOutcome,
+): PublicQuote[] {
+  const failures = observation?.source_attribution.failures ?? [];
+  return outcome.predicted.filter((quote) =>
+    failures.some(
+      (failure) =>
+        failure.edge.length === outcome.edge.length &&
+        failure.edge.every((endpoint, index) => endpoint === outcome.edge[index]) &&
+        failure.evidence_id === quote.id &&
+        failure.source_id === quote.source_id &&
+        failure.supporting_text === quote.text,
+    ),
+  );
 }

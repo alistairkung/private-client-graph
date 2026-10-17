@@ -67,6 +67,54 @@ it("keeps the selected case, relationship and exact Source highlight when the lo
   );
   expect(document.documentElement.lang).toBe("zh-CN");
 });
+it("inspects retained Source-pair failures even when approved-quote provenance passed", () => {
+  render(
+    <LocaleProvider>
+      <CaseWorkspace cases={snapshot.cases} />
+    </LocaleProvider>,
+  );
+  fireEvent.click(screen.getByRole("button", { name: /heldout_04/ }));
+  fireEvent.change(screen.getByLabelText("Recorded outcome filter"), {
+    target: { value: "source_attribution_failure" },
+  });
+  const replay = screen.getByRole("region", { name: "Run A′ relationships" });
+  expect(within(replay).getAllByRole("button")).toHaveLength(1);
+  fireEvent.click(within(replay).getByRole("button", { name: /Keira Chan/ }));
+  expect(
+    screen.getByText("Matched relationship; approved-quote check passed", {
+      selector: "p",
+    }),
+  ).toBeInTheDocument();
+  const failures = screen.getByRole("region", {
+    name: "Recorded Source-pair failures",
+  });
+  expect(failures).toHaveTextContent("followup");
+  expect(failures).toHaveTextContent(
+    "The beneficiary position was checked again: Keira Chan is a beneficiary of the Maple Family Trust.",
+  );
+  fireEvent.click(within(failures).getByRole("button"));
+  expect(screen.getByRole("article").querySelector("mark")).toHaveTextContent(
+    "The beneficiary position was checked again: Keira Chan is a beneficiary of the Maple Family Trust.",
+  );
+  expect(screen.getByLabelText("Original Source", { exact: true })).toHaveValue(
+    "followup",
+  );
+  fireEvent.click(screen.getByRole("button", { name: /heldout_02/ }));
+  expect(within(replay).getAllByRole("button")).toHaveLength(3);
+  fireEvent.click(
+    within(replay).getByRole("button", { name: /Grace Wong · beneficiary_of/ }),
+  );
+  expect(
+    screen.getByText("Matched relationship; approved-quote mismatch", {
+      selector: "p",
+    }),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByRole("region", { name: "Recorded Source-pair failures" }),
+  ).toHaveTextContent(
+    "Grace Wong and Hugo Wong are siblings and are both beneficiaries of the Amber Family Trust.",
+  );
+});
 function LocaleSwitch() {
   const { setLocale } = useLocale();
   return <button onClick={() => setLocale("zh-CN")}>Switch locale</button>;
