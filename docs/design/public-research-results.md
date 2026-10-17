@@ -119,4 +119,4 @@ The owner selected C, the original paired-comparison structural candidate 1, exp
 
 unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
 
-Verify English and Simplified Chinese desktop/mobile captures and the representative correction, Source/Evidence and call-metadata states. The approved composition is retained; bounded implementation review found no material visual defect. This surface introduces no new shipping raster assets.
+Verify English and Simplified Chinese desktop/mobile captures and the representative correction, Source/Evidence and call-metadata states. The approved composition is retained. Final implementation review identified mobile case-selection navigation and Chinese table-header wrapping; deliberate heading focus/scroll and contained, readable-width tables address those findings and pass the browser acceptance journeys in both device classes. The targeted visual confirmation verdict is the remaining finish check. This surface introduces no new shipping raster assets.

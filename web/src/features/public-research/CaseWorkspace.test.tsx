@@ -115,6 +115,34 @@ it("inspects retained Source-pair failures even when approved-quote provenance p
     "Grace Wong and Hugo Wong are siblings and are both beneficiaries of the Amber Family Trust.",
   );
 });
+it("moves deliberate case navigation to the selected heading without stealing focus on locale changes", () => {
+  render(
+    <LocaleProvider>
+      <LocaleSwitch />
+      <CaseWorkspace cases={snapshot.cases} />
+    </LocaleProvider>,
+  );
+  expect(
+    screen.queryByRole("heading", { name: snapshot.cases[2].name }),
+  ).toBeNull();
+  const corrections = screen.getByRole("button", {
+    name: "Inspect the two corrections",
+  });
+  fireEvent.click(corrections);
+  const heading = screen.getByRole("heading", { name: snapshot.cases[2].name });
+  expect(heading).toHaveFocus();
+  corrections.focus();
+  fireEvent.click(corrections);
+  expect(heading).toHaveFocus();
+  const localeSwitch = screen.getByRole("button", { name: "Switch locale" });
+  localeSwitch.focus();
+  fireEvent.click(localeSwitch);
+  expect(localeSwitch).toHaveFocus();
+  fireEvent.click(screen.getByRole("button", { name: /heldout_01/ }));
+  expect(
+    screen.getByRole("heading", { name: snapshot.cases[0].name }),
+  ).toHaveFocus();
+});
 function LocaleSwitch() {
   const { setLocale } = useLocale();
   return <button onClick={() => setLocale("zh-CN")}>Switch locale</button>;

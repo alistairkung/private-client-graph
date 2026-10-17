@@ -1,4 +1,4 @@
-import { useId, useState } from "react";
+import { useId, useLayoutEffect, useRef, useState } from "react";
 import { useLocale } from "../../shared/locale";
 import { SourcePanel } from "../review/SourcePanel";
 import { percent, runName } from "./RunComparison";
@@ -21,6 +21,13 @@ export function CaseWorkspace({ cases }: { cases: PublicCase[] }) {
   const { t } = useLocale();
   const sourceSelectId = useId();
   const [caseId, setCaseId] = useState("");
+  const [caseNavigation, setCaseNavigation] = useState(0);
+  const caseHeading = useRef<HTMLHeadingElement>(null);
+  useLayoutEffect(() => {
+    if (!caseNavigation) return;
+    caseHeading.current?.focus({ preventScroll: true });
+    caseHeading.current?.scrollIntoView({ behavior: "instant", block: "start" });
+  }, [caseNavigation]);
   const [baseline, setBaseline] = useState<RunLabel>("A_prime");
   const [filter, setFilter] = useState<Filter>("all");
   const [selection, setSelection] = useState<Selection | null>(null);
@@ -45,6 +52,7 @@ export function CaseWorkspace({ cases }: { cases: PublicCase[] }) {
     [];
   function selectCase(id: string) {
     setCaseId(id);
+    setCaseNavigation((previous) => previous + 1);
     setSelection(null);
     setQuote(null);
     setSourceId("");
@@ -139,7 +147,9 @@ export function CaseWorkspace({ cases }: { cases: PublicCase[] }) {
         ) : (
           <div className="research-case-detail">
             <header aria-live="polite">
-              <h3>{selectedCase.name}</h3>
+              <h3 ref={caseHeading} tabIndex={-1}>
+                {selectedCase.name}
+              </h3>
               <p>{selectedCase.description}</p>
               {!edits.length && (
                 <p>{t("Unchanged relationship results across A, A′ and B.")}</p>
