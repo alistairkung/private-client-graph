@@ -1,0 +1,11 @@
+case_id,sample_id,baseline_tp,baseline_fp,baseline_fn,baseline_f1,resolver_tp,resolver_fp,resolver_fn,resolver_f1,f1_difference,endpoint_edits,baseline_quote_passed,baseline_quote_assessed,resolver_quote_passed,resolver_quote_assessed,baseline_pair_passed,baseline_pair_assessed,resolver_pair_passed,resolver_pair_assessed,status,input_tokens,output_tokens,cached_tokens,provider_seconds
+heldout_01,heldout_01_fixture_fresh_01,5,0,0,1.0,5,0,0,1.0,0.0,0,5,5,5,5,5,5,5,5,completed,937,34,0,1.04410929200003
+heldout_02,heldout_02_fixture_fresh_01,4,0,0,1.0,4,0,0,1.0,0.0,0,1,4,1,4,1,4,1,4,completed,867,34,384,0.9486134170001606
+heldout_03,heldout_03_fixture_fresh_01,1,2,2,0.3333333333333333,3,0,0,1.0,0.6666666666666667,2,1,1,3,3,1,1,3,3,completed,808,83,384,0.8553632080001989
+heldout_04,heldout_04_fixture_fresh_01,3,0,0,1.0,3,0,0,1.0,0.0,0,3,3,3,3,3,4,3,4,completed,935,34,384,0.9310322920000544
+heldout_05,heldout_05_fixture_fresh_01,4,0,0,1.0,4,0,0,1.0,0.0,0,4,4,4,4,4,4,4,4,completed,996,34,384,0.7999678750002204
+heldout_06,heldout_06_fixture_fresh_01,3,0,0,1.0,3,0,0,1.0,0.0,0,3,3,3,3,4,4,4,4,completed,1024,34,384,0.9791189159996065
+heldout_07,heldout_07_fixture_fresh_01,6,0,0,1.0,6,0,0,1.0,0.0,0,6,6,6,6,6,6,6,6,completed,1017,34,384,0.6971479590001763
+heldout_08,heldout_08_fixture_fresh_01,5,0,0,1.0,5,0,0,1.0,0.0,0,5,5,5,5,5,5,5,5,completed,961,34,384,1.1403031249992637
+heldout_09,heldout_09_fixture_fresh_01,3,0,0,1.0,3,0,0,1.0,0.0,0,3,3,3,3,3,3,3,3,completed,1073,34,384,0.8802572920003513
+heldout_10,heldout_10_fixture_fresh_01,3,0,0,1.0,3,0,0,1.0,0.0,0,3,3,3,3,3,3,3,3,completed,814,34,384,0.7837987909997537

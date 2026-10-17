@@ -1,0 +1,58 @@
+{
+  "capture_method": "Unmodified screenshots from the real local Research Workbench browser through cua_repl; no rendered substitutes or overlays.",
+  "experiment_id": "83b5778e74ba5e6e882d334fd4f87f09",
+  "run_ids": {
+    "A": {
+      "run_id": "97d26d8e5f9d5964826b144c9ca45ad7",
+      "git_commit": "8ad73b00f44013f454ae166175d974f11f2e129d",
+      "frozen_plan_digest": "6d1897fb89793649aca6064f253eb96106342a7c7c378b983bdb25fecb5f830e",
+      "artifact_digest": "edb95eacbff00ee63f0e27db1c7cf684d191b66c839b3c34f8e62e4e67ffc3fc",
+      "prompt_hashes": {
+        "extraction": "3a2cfa90eafbe514eaa6192b129a4233ba0f20af7e452e2c5435adaab073859a",
+        "sourced_extraction": "d67afaeb19c26448a6779d9576800cc50ca399c634ad81a1a02b847be0a9dfae",
+        "resolution": "b0264a7e3c85c222596d4d27b3b2d733a7285f301e664917ccea3f07702a50ab"
+      }
+    },
+    "A_prime": {
+      "run_id": "d67a391bc95a5ad39e1b5786a04795c0",
+      "git_commit": "168d64a46acfd3468cb0293b2790e095c37fd3f6",
+      "frozen_plan_digest": "71cbd2923cb0166d93382aff3b880fb75dc2a4319fbe4d462f2f8d3e5cd983e3",
+      "artifact_digest": "2bff50692aa2a647b97baa6c79c1f8a95a038249796d5da8373b2bc2a23bce6f",
+      "prompt_hashes": {
+        "extraction": "3a2cfa90eafbe514eaa6192b129a4233ba0f20af7e452e2c5435adaab073859a",
+        "sourced_extraction": "d67afaeb19c26448a6779d9576800cc50ca399c634ad81a1a02b847be0a9dfae",
+        "resolution": "b0264a7e3c85c222596d4d27b3b2d733a7285f301e664917ccea3f07702a50ab"
+      }
+    },
+    "B": {
+      "run_id": "841389cef51957ce8523ea41c03d2baa",
+      "git_commit": "168d64a46acfd3468cb0293b2790e095c37fd3f6",
+      "frozen_plan_digest": "2b5ab441e7efb0b5ad654c580113afa0ec61a7ec1e0809a206199953a7cbb85f",
+      "artifact_digest": "f493a01870035c036ad640479146b8f55e91db89c40edd2a0976bcc93742295c",
+      "prompt_hashes": {
+        "extraction": "3a2cfa90eafbe514eaa6192b129a4233ba0f20af7e452e2c5435adaab073859a",
+        "sourced_extraction": "d67afaeb19c26448a6779d9576800cc50ca399c634ad81a1a02b847be0a9dfae",
+        "resolution": "b0264a7e3c85c222596d4d27b3b2d733a7285f301e664917ccea3f07702a50ab"
+      }
+    }
+  },
+  "screenshots": [
+    "01-control-zero-call-review.png",
+    "02-control-frozen-inputs.png",
+    "03-control-completed-results.png",
+    "04-control-coverage.png",
+    "05-treatment-ten-call-review.png",
+    "06-frozen-B-awaiting-approval.png",
+    "07-B-authorized-before-start.png",
+    "08-B-completed-aggregate.png",
+    "09-exact-pairing-and-unpriced-cost.png",
+    "10-B-per-case-results.png",
+    "11-Beatrice-parent-original-Source.png",
+    "12-Beatrice-parent-matched.png",
+    "13-Beatrice-settlor-original-Source.png",
+    "14-resolved-labels-with-original-quotes.png",
+    "15-original-control-treatment-F1.png",
+    "16-F1-comparison-and-Run-labels.png",
+    "17-comparison-complete-Run-labels.png"
+  ]
+}

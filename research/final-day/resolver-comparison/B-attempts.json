@@ -1,0 +1,840 @@
+[
+  {
+    "attempt_id": "heldout_01_fixture_fresh_01-resolve-1",
+    "started_at": "2026-10-17T07:44:44.568794+00:00",
+    "request": {
+      "stage": "resolution",
+      "source": "[{\"id\": \"letter\", \"title\": \"Signed factual confirmation\", \"text\": \"Private and synthetic \u2014 factual confirmation\\n12 August 2026\\n\\nDear Review Team,\\n\\nPlease use this letter to confirm the limited background for your review of the Juniper Family Trust. I have checked the names rather than asking you to infer family links from the contact list.\\n\\nI, Nadia Lau, am the settlor of the Juniper Family Trust.\\nNadia Lau and Owen Lau are spouses.\\nNadia Lau and Owen Lau are the parents of Maya Lau.\\nMaya Lau is a beneficiary of the Juniper Family Trust.\\n\\nPlease send any factual questions in one message. This confirmation does not address assets or the trust's detailed terms.\\n\\nSigned: Nadia Lau\\n\"}]",
+      "sources": null,
+      "extraction": {
+        "relationships": [
+          {
+            "source_name": "Nadia Lau",
+            "relationship_type": "settlor_of",
+            "target_name": "Juniper Family Trust",
+            "supporting_text": "I, Nadia Lau, am the settlor of the Juniper Family Trust."
+          },
+          {
+            "source_name": "Nadia Lau",
+            "relationship_type": "spouse_of",
+            "target_name": "Owen Lau",
+            "supporting_text": "Nadia Lau and Owen Lau are spouses."
+          },
+          {
+            "source_name": "Nadia Lau",
+            "relationship_type": "parent_of",
+            "target_name": "Maya Lau",
+            "supporting_text": "Nadia Lau and Owen Lau are the parents of Maya Lau."
+          },
+          {
+            "source_name": "Owen Lau",
+            "relationship_type": "parent_of",
+            "target_name": "Maya Lau",
+            "supporting_text": "Nadia Lau and Owen Lau are the parents of Maya Lau."
+          },
+          {
+            "source_name": "Maya Lau",
+            "relationship_type": "beneficiary_of",
+            "target_name": "Juniper Family Trust",
+            "supporting_text": "Maya Lau is a beneficiary of the Juniper Family Trust."
+          }
+        ]
+      },
+      "settings": {
+        "model": "deepseek-flash",
+        "timeout_seconds": 90.0,
+        "temperature": null,
+        "max_retries": 0,
+        "thinking": "disabled"
+      }
+    },
+    "status": "completed",
+    "authorization": "841389cef51957ce8523ea41c03d2baa-3a818a12-ad1d-4c5e-a751-8e8c539b79c9",
+    "response": {
+      "payload": {
+        "edits": []
+      },
+      "raw_response": {
+        "content": "",
+        "id": "lc_run--01a148d2-0045-7622-bcfb-fb414a640510-0",
+        "tool_calls": [
+          {
+            "name": "EndpointEdits",
+            "args": {
+              "edits": []
+            },
+            "id": "call_00_QC8eMfpJci9w8f3ktVPU9573",
+            "type": "tool_call"
+          }
+        ],
+        "invalid_tool_calls": [],
+        "response_metadata": {
+          "model_name": "deepseek-flash",
+          "system_fingerprint": "e72d3c7f663d3e1383b00b3884cb4501",
+          "id": "0382b225-1d36-46ef-bdf9-21f67b00642f",
+          "finish_reason": "tool_calls"
+        }
+      },
+      "usage": {
+        "input_tokens": 937,
+        "output_tokens": 34,
+        "cached_tokens": 0
+      },
+      "returned_model": "deepseek-flash",
+      "error_type": null
+    },
+    "provider_seconds": 1.04410929200003,
+    "finished_at": "2026-10-17T07:44:45.617414+00:00"
+  },
+  {
+    "attempt_id": "heldout_02_fixture_fresh_01-resolve-1",
+    "started_at": "2026-10-17T07:44:45.621151+00:00",
+    "request": {
+      "stage": "resolution",
+      "source": "[{\"id\": \"recap\", \"title\": \"Factual recap\", \"text\": \"Synthetic review file \u2014 factual recap\\n18 August 2026\\n\\nThe following recap was checked aloud before the factual interview closed.\\n\\nFelix Wong is the settlor of the Amber Family Trust, and Grace Wong and Hugo Wong are siblings and are both beneficiaries of the Amber Family Trust.\\n\\nThe recap deliberately distinguishes the sibling connection from the two beneficiary entries. No parentage or spouse details were supplied. Further work will begin after the scope of the review is agreed.\\n\"}]",
+      "sources": null,
+      "extraction": {
+        "relationships": [
+          {
+            "source_name": "Felix Wong",
+            "relationship_type": "settlor_of",
+            "target_name": "Amber Family Trust",
+            "supporting_text": "Felix Wong is the settlor of the Amber Family Trust, and Grace Wong and Hugo Wong are siblings and are both beneficiaries of the Amber Family Trust."
+          },
+          {
+            "source_name": "Grace Wong",
+            "relationship_type": "sibling_of",
+            "target_name": "Hugo Wong",
+            "supporting_text": "Grace Wong and Hugo Wong are siblings and are both beneficiaries of the Amber Family Trust."
+          },
+          {
+            "source_name": "Grace Wong",
+            "relationship_type": "beneficiary_of",
+            "target_name": "Amber Family Trust",
+            "supporting_text": "Grace Wong and Hugo Wong are siblings and are both beneficiaries of the Amber Family Trust."
+          },
+          {
+            "source_name": "Hugo Wong",
+            "relationship_type": "beneficiary_of",
+            "target_name": "Amber Family Trust",
+            "supporting_text": "Grace Wong and Hugo Wong are siblings and are both beneficiaries of the Amber Family Trust."
+          }
+        ]
+      },
+      "settings": {
+        "model": "deepseek-flash",
+        "timeout_seconds": 90.0,
+        "temperature": null,
+        "max_retries": 0,
+        "thinking": "disabled"
+      }
+    },
+    "status": "completed",
+    "authorization": "841389cef51957ce8523ea41c03d2baa-3a818a12-ad1d-4c5e-a751-8e8c539b79c9",
+    "response": {
+      "payload": {
+        "edits": []
+      },
+      "raw_response": {
+        "content": "",
+        "id": "lc_run--01a148d2-0442-7610-a678-bac216e3bec8-0",
+        "tool_calls": [
+          {
+            "name": "EndpointEdits",
+            "args": {
+              "edits": []
+            },
+            "id": "call_00_phzl0eQb7hyVenhLeVxn7845",
+            "type": "tool_call"
+          }
+        ],
+        "invalid_tool_calls": [],
+        "response_metadata": {
+          "model_name": "deepseek-flash",
+          "system_fingerprint": "e72d3c7f663d3e1383b00b3884cb4501",
+          "id": "efbc597f-26fd-49e7-a768-6417e6519d15",
+          "finish_reason": "tool_calls"
+        }
+      },
+      "usage": {
+        "input_tokens": 867,
+        "output_tokens": 34,
+        "cached_tokens": 384
+      },
+      "returned_model": "deepseek-flash",
+      "error_type": null
+    },
+    "provider_seconds": 0.9486134170001606,
+    "finished_at": "2026-10-17T07:44:46.578806+00:00"
+  },
+  {
+    "attempt_id": "heldout_03_fixture_fresh_01-resolve-1",
+    "started_at": "2026-10-17T07:44:46.583627+00:00",
+    "request": {
+      "stage": "resolution",
+      "source": "[{\"id\": \"interview\", \"title\": \"Factual interview note\", \"text\": \"Synthetic attendance note \u2014 identity clarification\\n20 August 2026\\n\\nBeatrice Ng attended the factual interview and asked to be called Bea. In this note, Bea means Beatrice Ng; no second person is being introduced.\\n\\nBea is the settlor of the Larch Family Trust.\\nBea is the parent of Isaac Ng.\\nIsaac Ng is a beneficiary of the Larch Family Trust.\\n\\nThe short form was checked before the note was closed. No further family connections or trust offices were stated. A copy of this factual record will be sent for checking.\\n\"}]",
+      "sources": null,
+      "extraction": {
+        "relationships": [
+          {
+            "source_name": "Bea",
+            "relationship_type": "settlor_of",
+            "target_name": "Larch Family Trust",
+            "supporting_text": "Bea is the settlor of the Larch Family Trust."
+          },
+          {
+            "source_name": "Bea",
+            "relationship_type": "parent_of",
+            "target_name": "Isaac Ng",
+            "supporting_text": "Bea is the parent of Isaac Ng."
+          },
+          {
+            "source_name": "Isaac Ng",
+            "relationship_type": "beneficiary_of",
+            "target_name": "Larch Family Trust",
+            "supporting_text": "Isaac Ng is a beneficiary of the Larch Family Trust."
+          }
+        ]
+      },
+      "settings": {
+        "model": "deepseek-flash",
+        "timeout_seconds": 90.0,
+        "temperature": null,
+        "max_retries": 0,
+        "thinking": "disabled"
+      }
+    },
+    "status": "completed",
+    "authorization": "841389cef51957ce8523ea41c03d2baa-3a818a12-ad1d-4c5e-a751-8e8c539b79c9",
+    "response": {
+      "payload": {
+        "edits": [
+          {
+            "candidate_index": 0,
+            "endpoint": "source_name",
+            "name": "Beatrice Ng"
+          },
+          {
+            "candidate_index": 1,
+            "endpoint": "source_name",
+            "name": "Beatrice Ng"
+          }
+        ]
+      },
+      "raw_response": {
+        "content": "",
+        "id": "lc_run--01a148d2-0805-7a13-a691-fd9a2b6e1ff1-0",
+        "tool_calls": [
+          {
+            "name": "EndpointEdits",
+            "args": {
+              "edits": [
+                {
+                  "candidate_index": 0,
+                  "endpoint": "source_name",
+                  "name": "Beatrice Ng"
+                },
+                {
+                  "candidate_index": 1,
+                  "endpoint": "source_name",
+                  "name": "Beatrice Ng"
+                }
+              ]
+            },
+            "id": "call_00_d7otQmKeuWpMblcQwh7R2189",
+            "type": "tool_call"
+          }
+        ],
+        "invalid_tool_calls": [],
+        "response_metadata": {
+          "model_name": "deepseek-flash",
+          "system_fingerprint": "e72d3c7f663d3e1383b00b3884cb4501",
+          "id": "d04e3d71-e9cf-4d3f-b220-a068278510c9",
+          "finish_reason": "tool_calls"
+        }
+      },
+      "usage": {
+        "input_tokens": 808,
+        "output_tokens": 83,
+        "cached_tokens": 384
+      },
+      "returned_model": "deepseek-flash",
+      "error_type": null
+    },
+    "provider_seconds": 0.8553632080001989,
+    "finished_at": "2026-10-17T07:44:47.448946+00:00"
+  },
+  {
+    "attempt_id": "heldout_04_fixture_fresh_01-resolve-1",
+    "started_at": "2026-10-17T07:44:47.453750+00:00",
+    "request": {
+      "stage": "resolution",
+      "source": "[{\"id\": \"initial\", \"title\": \"Initial factual note\", \"text\": \"Synthetic initial factual note\\n2 September 2026\\n\\nThe interview concerned the Maple Family Trust. Jonas Chan is the settlor of the Maple Family Trust. Keira Chan is a beneficiary of the Maple Family Trust.\\n\\nThe relationship between Jonas Chan and Keira Chan was not addressed. A separate office-holder check will follow.\\n\"}, {\"id\": \"followup\", \"title\": \"Office-holder and beneficiary check\", \"text\": \"Synthetic follow-up factual note\\n4 September 2026\\n\\nThis note supplements the initial note; it records no change to the facts already supplied.\\nLina Ho is a trustee of the Maple Family Trust.\\nThe beneficiary position was checked again: Keira Chan is a beneficiary of the Maple Family Trust.\\n\\nNo other family or trust roles were stated. The two notes should be read together for the limited factual review.\\n\"}]",
+      "sources": null,
+      "extraction": {
+        "relationships": [
+          {
+            "source_name": "Jonas Chan",
+            "relationship_type": "settlor_of",
+            "target_name": "Maple Family Trust",
+            "supporting_text": "Jonas Chan is the settlor of the Maple Family Trust."
+          },
+          {
+            "source_name": "Keira Chan",
+            "relationship_type": "beneficiary_of",
+            "target_name": "Maple Family Trust",
+            "supporting_text": "Keira Chan is a beneficiary of the Maple Family Trust."
+          },
+          {
+            "source_name": "Lina Ho",
+            "relationship_type": "trustee_of",
+            "target_name": "Maple Family Trust",
+            "supporting_text": "Lina Ho is a trustee of the Maple Family Trust."
+          },
+          {
+            "source_name": "Keira Chan",
+            "relationship_type": "beneficiary_of",
+            "target_name": "Maple Family Trust",
+            "supporting_text": "The beneficiary position was checked again: Keira Chan is a beneficiary of the Maple Family Trust."
+          }
+        ]
+      },
+      "settings": {
+        "model": "deepseek-flash",
+        "timeout_seconds": 90.0,
+        "temperature": null,
+        "max_retries": 0,
+        "thinking": "disabled"
+      }
+    },
+    "status": "completed",
+    "authorization": "841389cef51957ce8523ea41c03d2baa-3a818a12-ad1d-4c5e-a751-8e8c539b79c9",
+    "response": {
+      "payload": {
+        "edits": []
+      },
+      "raw_response": {
+        "content": "",
+        "id": "lc_run--01a148d2-0b6e-7eb1-a7c6-785b246cbb74-0",
+        "tool_calls": [
+          {
+            "name": "EndpointEdits",
+            "args": {
+              "edits": []
+            },
+            "id": "call_00_QMxEjxJc3qZJRXnkLA186284",
+            "type": "tool_call"
+          }
+        ],
+        "invalid_tool_calls": [],
+        "response_metadata": {
+          "model_name": "deepseek-flash",
+          "system_fingerprint": "e72d3c7f663d3e1383b00b3884cb4501",
+          "id": "2fa5e7fd-bf2a-4d53-b998-3a02da6eddb8",
+          "finish_reason": "tool_calls"
+        }
+      },
+      "usage": {
+        "input_tokens": 935,
+        "output_tokens": 34,
+        "cached_tokens": 384
+      },
+      "returned_model": "deepseek-flash",
+      "error_type": null
+    },
+    "provider_seconds": 0.9310322920000544,
+    "finished_at": "2026-10-17T07:44:48.396458+00:00"
+  },
+  {
+    "attempt_id": "heldout_05_fixture_fresh_01-resolve-1",
+    "started_at": "2026-10-17T07:44:48.398556+00:00",
+    "request": {
+      "stage": "resolution",
+      "source": "[{\"id\": \"initial\", \"title\": \"Initial dated factual position\", \"text\": \"Synthetic factual attendance note\\n1 July 2026\\n\\nThis note records the position at the interview date.\\nLeona Wu is the settlor of the Cedar Family Trust. Leona Wu is a parent of Milo Wu. Milo Wu is a beneficiary of the Cedar Family Trust.\\nOscar Lee is the sole trustee of the Cedar Family Trust as at 1 July 2026.\\n\\nThese facts were checked aloud. No family link with the trustee was supplied.\\n\"}, {\"id\": \"replacement\", \"title\": \"Completed replacement confirmation\", \"text\": \"Synthetic completed office-holder update\\n22 July 2026\\n\\nOscar Lee ceased to be trustee of the Cedar Family Trust with effect from 15 July 2026. Nora Tse became the replacement trustee of the Cedar Family Trust with effect from 15 July 2026. Nora Tse is the sole current trustee of the Cedar Family Trust as at 22 July 2026.\\n\\nThis is a completed replacement, not a future proposal. The settlor, parent and beneficiary facts in the 1 July note remain unchanged. Only the trustee entry is replaced for the current factual record.\\n\"}]",
+      "sources": null,
+      "extraction": {
+        "relationships": [
+          {
+            "source_name": "Leona Wu",
+            "relationship_type": "settlor_of",
+            "target_name": "Cedar Family Trust",
+            "supporting_text": "Leona Wu is the settlor of the Cedar Family Trust."
+          },
+          {
+            "source_name": "Leona Wu",
+            "relationship_type": "parent_of",
+            "target_name": "Milo Wu",
+            "supporting_text": "Leona Wu is a parent of Milo Wu."
+          },
+          {
+            "source_name": "Milo Wu",
+            "relationship_type": "beneficiary_of",
+            "target_name": "Cedar Family Trust",
+            "supporting_text": "Milo Wu is a beneficiary of the Cedar Family Trust."
+          },
+          {
+            "source_name": "Nora Tse",
+            "relationship_type": "trustee_of",
+            "target_name": "Cedar Family Trust",
+            "supporting_text": "Nora Tse became the replacement trustee of the Cedar Family Trust with effect from 15 July 2026."
+          }
+        ]
+      },
+      "settings": {
+        "model": "deepseek-flash",
+        "timeout_seconds": 90.0,
+        "temperature": null,
+        "max_retries": 0,
+        "thinking": "disabled"
+      }
+    },
+    "status": "completed",
+    "authorization": "841389cef51957ce8523ea41c03d2baa-3a818a12-ad1d-4c5e-a751-8e8c539b79c9",
+    "response": {
+      "payload": {
+        "edits": []
+      },
+      "raw_response": {
+        "content": "",
+        "id": "lc_run--01a148d2-0f17-74a2-afe4-ca6bf991aae0-0",
+        "tool_calls": [
+          {
+            "name": "EndpointEdits",
+            "args": {
+              "edits": []
+            },
+            "id": "call_00_YMdTBuH1V7CAvX9NrXAe6165",
+            "type": "tool_call"
+          }
+        ],
+        "invalid_tool_calls": [],
+        "response_metadata": {
+          "model_name": "deepseek-flash",
+          "system_fingerprint": "e72d3c7f663d3e1383b00b3884cb4501",
+          "id": "3fde4112-45ea-437e-bc67-218f38018c26",
+          "finish_reason": "tool_calls"
+        }
+      },
+      "usage": {
+        "input_tokens": 996,
+        "output_tokens": 34,
+        "cached_tokens": 384
+      },
+      "returned_model": "deepseek-flash",
+      "error_type": null
+    },
+    "provider_seconds": 0.7999678750002204,
+    "finished_at": "2026-10-17T07:44:49.204656+00:00"
+  },
+  {
+    "attempt_id": "heldout_06_fixture_fresh_01-resolve-1",
+    "started_at": "2026-10-17T07:44:49.207982+00:00",
+    "request": {
+      "stage": "resolution",
+      "source": "[{\"id\": \"update\", \"title\": \"Effective replacement confirmation\", \"text\": \"Synthetic completed replacement confirmation\\n28 June 2026\\n\\nThe file review confirms a completed change in the Alder Family Trust. Samuel Lok ceased to be its trustee with effect from 20 June 2026. Rita Yuen became trustee of the Alder Family Trust with effect from 20 June 2026. Rita Yuen is the sole current trustee of the Alder Family Trust as at 28 June 2026.\\n\\nThe settlor and beneficiary statements in the earlier note dated 3 June 2026 remain unchanged. That older note is attached after this confirmation for reference; its trustee entry describes the earlier position only.\\n\"}, {\"id\": \"archive\", \"title\": \"Earlier factual note \u2014 retained for reference\", \"text\": \"Synthetic earlier attendance note\\n3 June 2026\\n\\nThis note records the factual position on 3 June 2026.\\nPetra Lam is the settlor of the Alder Family Trust. Quinn Lam is a beneficiary of the Alder Family Trust.\\nSamuel Lok is the sole trustee of the Alder Family Trust as at 3 June 2026.\\n\\nNo family relationship between the named people was stated. The factual entries were checked before the meeting closed.\\n\"}]",
+      "sources": null,
+      "extraction": {
+        "relationships": [
+          {
+            "source_name": "Petra Lam",
+            "relationship_type": "settlor_of",
+            "target_name": "Alder Family Trust",
+            "supporting_text": "Petra Lam is the settlor of the Alder Family Trust."
+          },
+          {
+            "source_name": "Quinn Lam",
+            "relationship_type": "beneficiary_of",
+            "target_name": "Alder Family Trust",
+            "supporting_text": "Quinn Lam is a beneficiary of the Alder Family Trust."
+          },
+          {
+            "source_name": "Rita Yuen",
+            "relationship_type": "trustee_of",
+            "target_name": "Alder Family Trust",
+            "supporting_text": "Rita Yuen became trustee of the Alder Family Trust with effect from 20 June 2026."
+          },
+          {
+            "source_name": "Rita Yuen",
+            "relationship_type": "trustee_of",
+            "target_name": "Alder Family Trust",
+            "supporting_text": "Rita Yuen is the sole current trustee of the Alder Family Trust as at 28 June 2026."
+          }
+        ]
+      },
+      "settings": {
+        "model": "deepseek-flash",
+        "timeout_seconds": 90.0,
+        "temperature": null,
+        "max_retries": 0,
+        "thinking": "disabled"
+      }
+    },
+    "status": "completed",
+    "authorization": "841389cef51957ce8523ea41c03d2baa-3a818a12-ad1d-4c5e-a751-8e8c539b79c9",
+    "response": {
+      "payload": {
+        "edits": []
+      },
+      "raw_response": {
+        "content": "",
+        "id": "lc_run--01a148d2-1242-7e31-8968-64735b50d007-0",
+        "tool_calls": [
+          {
+            "name": "EndpointEdits",
+            "args": {
+              "edits": []
+            },
+            "id": "call_00_9MVawgnzTyXf5MwrbBJC4775",
+            "type": "tool_call"
+          }
+        ],
+        "invalid_tool_calls": [],
+        "response_metadata": {
+          "model_name": "deepseek-flash",
+          "system_fingerprint": "e72d3c7f663d3e1383b00b3884cb4501",
+          "id": "643d1e9b-d3e7-4e48-a7b7-2e57426a76c5",
+          "finish_reason": "tool_calls"
+        }
+      },
+      "usage": {
+        "input_tokens": 1024,
+        "output_tokens": 34,
+        "cached_tokens": 384
+      },
+      "returned_model": "deepseek-flash",
+      "error_type": null
+    },
+    "provider_seconds": 0.9791189159996065,
+    "finished_at": "2026-10-17T07:44:50.194269+00:00"
+  },
+  {
+    "attempt_id": "heldout_07_fixture_fresh_01-resolve-1",
+    "started_at": "2026-10-17T07:44:50.198280+00:00",
+    "request": {
+      "stage": "resolution",
+      "source": "[{\"id\": \"review\", \"title\": \"Two-trust factual review note\", \"text\": \"Synthetic factual review \u2014 separate trust entries\\n9 September 2026\\n\\nThe interview covered two trusts. Their entries are recorded separately because the capacities differ.\\n\\nBirch Family Trust\\nSienna Mak is the settlor of the Birch Family Trust. Tobias Mak is a beneficiary of the Birch Family Trust. Uma Chan is a trustee of the Birch Family Trust.\\n\\nElm Family Trust\\nTobias Mak is the settlor of the Elm Family Trust. Sienna Mak and Uma Chan are beneficiaries of the Elm Family Trust.\\n\\nNo family connections between the three people were supplied. In particular, the shared surname of Sienna Mak and Tobias Mak is not a statement of parentage, marriage or sibling status. No trustee entry for the Elm Family Trust was provided. The review team will check the scope of any further factual enquiries separately.\\n\"}]",
+      "sources": null,
+      "extraction": {
+        "relationships": [
+          {
+            "source_name": "Sienna Mak",
+            "relationship_type": "settlor_of",
+            "target_name": "Birch Family Trust",
+            "supporting_text": "Sienna Mak is the settlor of the Birch Family Trust."
+          },
+          {
+            "source_name": "Tobias Mak",
+            "relationship_type": "beneficiary_of",
+            "target_name": "Birch Family Trust",
+            "supporting_text": "Tobias Mak is a beneficiary of the Birch Family Trust."
+          },
+          {
+            "source_name": "Uma Chan",
+            "relationship_type": "trustee_of",
+            "target_name": "Birch Family Trust",
+            "supporting_text": "Uma Chan is a trustee of the Birch Family Trust."
+          },
+          {
+            "source_name": "Tobias Mak",
+            "relationship_type": "settlor_of",
+            "target_name": "Elm Family Trust",
+            "supporting_text": "Tobias Mak is the settlor of the Elm Family Trust."
+          },
+          {
+            "source_name": "Sienna Mak",
+            "relationship_type": "beneficiary_of",
+            "target_name": "Elm Family Trust",
+            "supporting_text": "Sienna Mak and Uma Chan are beneficiaries of the Elm Family Trust."
+          },
+          {
+            "source_name": "Uma Chan",
+            "relationship_type": "beneficiary_of",
+            "target_name": "Elm Family Trust",
+            "supporting_text": "Sienna Mak and Uma Chan are beneficiaries of the Elm Family Trust."
+          }
+        ]
+      },
+      "settings": {
+        "model": "deepseek-flash",
+        "timeout_seconds": 90.0,
+        "temperature": null,
+        "max_retries": 0,
+        "thinking": "disabled"
+      }
+    },
+    "status": "completed",
+    "authorization": "841389cef51957ce8523ea41c03d2baa-3a818a12-ad1d-4c5e-a751-8e8c539b79c9",
+    "response": {
+      "payload": {
+        "edits": []
+      },
+      "raw_response": {
+        "content": "",
+        "id": "lc_run--01a148d2-1626-7303-9744-31bb34f20e2f-0",
+        "tool_calls": [
+          {
+            "name": "EndpointEdits",
+            "args": {
+              "edits": []
+            },
+            "id": "call_00_hzesYst47KKa2cjtOVBo8015",
+            "type": "tool_call"
+          }
+        ],
+        "invalid_tool_calls": [],
+        "response_metadata": {
+          "model_name": "deepseek-flash",
+          "system_fingerprint": "e72d3c7f663d3e1383b00b3884cb4501",
+          "id": "9d6ed422-70a1-4522-8045-7a135685c3d2",
+          "finish_reason": "tool_calls"
+        }
+      },
+      "usage": {
+        "input_tokens": 1017,
+        "output_tokens": 34,
+        "cached_tokens": 384
+      },
+      "returned_model": "deepseek-flash",
+      "error_type": null
+    },
+    "provider_seconds": 0.6971479590001763,
+    "finished_at": "2026-10-17T07:44:50.906776+00:00"
+  },
+  {
+    "attempt_id": "heldout_08_fixture_fresh_01-resolve-1",
+    "started_at": "2026-10-17T07:44:50.909404+00:00",
+    "request": {
+      "stage": "resolution",
+      "source": "[{\"id\": \"family\", \"title\": \"Factual review note\", \"text\": \"Synthetic family-information attendance note\\n7 September 2026\\n\\nThe interview recorded the limited family facts required for the current factual review.\\nVictor Lo and Wendy Lo are spouses. Victor Lo and Wendy Lo are the parents of Xavier Lo.\\n\\nTrust capacities are recorded in the separate note supplied with this one. No other family facts were stated.\\n\"}, {\"id\": \"trust\", \"title\": \"Factual review note\", \"text\": \"Synthetic trust-information attendance note\\n7 September 2026\\n\\nThe following capacities were checked during a separate factual discussion.\\nVictor Lo is the settlor of the Rowan Family Trust. Xavier Lo is a beneficiary of the Rowan Family Trust.\\n\\nThis note supplements the separate family information. No additional office-holder or beneficiary facts were supplied. The two notes concern one current factual review and record no change over time.\\n\"}]",
+      "sources": null,
+      "extraction": {
+        "relationships": [
+          {
+            "source_name": "Victor Lo",
+            "relationship_type": "spouse_of",
+            "target_name": "Wendy Lo",
+            "supporting_text": "Victor Lo and Wendy Lo are spouses."
+          },
+          {
+            "source_name": "Victor Lo",
+            "relationship_type": "parent_of",
+            "target_name": "Xavier Lo",
+            "supporting_text": "Victor Lo and Wendy Lo are the parents of Xavier Lo."
+          },
+          {
+            "source_name": "Wendy Lo",
+            "relationship_type": "parent_of",
+            "target_name": "Xavier Lo",
+            "supporting_text": "Victor Lo and Wendy Lo are the parents of Xavier Lo."
+          },
+          {
+            "source_name": "Victor Lo",
+            "relationship_type": "settlor_of",
+            "target_name": "Rowan Family Trust",
+            "supporting_text": "Victor Lo is the settlor of the Rowan Family Trust."
+          },
+          {
+            "source_name": "Xavier Lo",
+            "relationship_type": "beneficiary_of",
+            "target_name": "Rowan Family Trust",
+            "supporting_text": "Xavier Lo is a beneficiary of the Rowan Family Trust."
+          }
+        ]
+      },
+      "settings": {
+        "model": "deepseek-flash",
+        "timeout_seconds": 90.0,
+        "temperature": null,
+        "max_retries": 0,
+        "thinking": "disabled"
+      }
+    },
+    "status": "completed",
+    "authorization": "841389cef51957ce8523ea41c03d2baa-3a818a12-ad1d-4c5e-a751-8e8c539b79c9",
+    "response": {
+      "payload": {
+        "edits": []
+      },
+      "raw_response": {
+        "content": "",
+        "id": "lc_run--01a148d2-18e5-7d12-aff9-23c2f8614ed9-0",
+        "tool_calls": [
+          {
+            "name": "EndpointEdits",
+            "args": {
+              "edits": []
+            },
+            "id": "call_00_K9qevaOF7k7MD5Ldvuho0170",
+            "type": "tool_call"
+          }
+        ],
+        "invalid_tool_calls": [],
+        "response_metadata": {
+          "model_name": "deepseek-flash",
+          "system_fingerprint": "e72d3c7f663d3e1383b00b3884cb4501",
+          "id": "21b159c1-e65c-4be4-874a-416e3cc56029",
+          "finish_reason": "tool_calls"
+        }
+      },
+      "usage": {
+        "input_tokens": 961,
+        "output_tokens": 34,
+        "cached_tokens": 384
+      },
+      "returned_model": "deepseek-flash",
+      "error_type": null
+    },
+    "provider_seconds": 1.1403031249992637,
+    "finished_at": "2026-10-17T07:44:52.055543+00:00"
+  },
+  {
+    "attempt_id": "heldout_09_fixture_fresh_01-resolve-1",
+    "started_at": "2026-10-17T07:44:52.059752+00:00",
+    "request": {
+      "stage": "resolution",
+      "source": "[{\"id\": \"file\", \"title\": \"Administrative and factual review record\", \"text\": \"Synthetic private-client review record\\n11 September 2026\\n\\nThe factual interview was scheduled after the review team received a request to check the accuracy of its working note. The meeting took place by telephone. Sound quality was adequate, the participants had time to read the text aloud, and a revised copy will be circulated for factual checking. These procedural details are recorded to explain how the note was prepared, not to enlarge the relationship record.\\n\\nThe following factual entries were confirmed for this review:\\nYasmin Fong is the settlor of the Hazel Family Trust.\\nZachary Fong is a beneficiary of the Hazel Family Trust.\\nAdele Ip is a trustee of the Hazel Family Trust.\\n\\nBruno Ma handled the appointment calendar. Clara Yu checked the spelling in the covering message. Those administrative references do not state that either person has a family connection with anyone in this note or any office or beneficial position in the Hazel Family Trust. No family relationship between Yasmin Fong and Zachary Fong was supplied.\\n\\nThe team discussed the practical handling of subsequent factual questions. A single consolidated list will be sent, rather than several messages covering the same point. The document will be checked for legibility, pagination and consistency of headings. Corrections to punctuation can be made without assuming that a different name denotes a different participant. The covering message should distinguish a request for factual clarification from substantive advice.\\n\\nThe scope of this exercise remains deliberately limited. No details about investments, values or distributions were considered. A later substantive review would need a separately agreed scope and appropriate source material. The present note establishes no such conclusions. A reminder was set to check whether the factual response had arrived, and the interview concluded after the next procedural step was understood.\\n\"}]",
+      "sources": null,
+      "extraction": {
+        "relationships": [
+          {
+            "source_name": "Yasmin Fong",
+            "relationship_type": "settlor_of",
+            "target_name": "Hazel Family Trust",
+            "supporting_text": "Yasmin Fong is the settlor of the Hazel Family Trust."
+          },
+          {
+            "source_name": "Zachary Fong",
+            "relationship_type": "beneficiary_of",
+            "target_name": "Hazel Family Trust",
+            "supporting_text": "Zachary Fong is a beneficiary of the Hazel Family Trust."
+          },
+          {
+            "source_name": "Adele Ip",
+            "relationship_type": "trustee_of",
+            "target_name": "Hazel Family Trust",
+            "supporting_text": "Adele Ip is a trustee of the Hazel Family Trust."
+          }
+        ]
+      },
+      "settings": {
+        "model": "deepseek-flash",
+        "timeout_seconds": 90.0,
+        "temperature": null,
+        "max_retries": 0,
+        "thinking": "disabled"
+      }
+    },
+    "status": "completed",
+    "authorization": "841389cef51957ce8523ea41c03d2baa-3a818a12-ad1d-4c5e-a751-8e8c539b79c9",
+    "response": {
+      "payload": {
+        "edits": []
+      },
+      "raw_response": {
+        "content": "",
+        "id": "lc_run--01a148d2-1d68-7040-8fde-be7c58bb8233-0",
+        "tool_calls": [
+          {
+            "name": "EndpointEdits",
+            "args": {
+              "edits": []
+            },
+            "id": "call_00_Pkx6AHEhqAiGYbzVQboe3154",
+            "type": "tool_call"
+          }
+        ],
+        "invalid_tool_calls": [],
+        "response_metadata": {
+          "model_name": "deepseek-flash",
+          "system_fingerprint": "e72d3c7f663d3e1383b00b3884cb4501",
+          "id": "cf4144e6-706d-4d4d-b263-b50f8c22bdd1",
+          "finish_reason": "tool_calls"
+        }
+      },
+      "usage": {
+        "input_tokens": 1073,
+        "output_tokens": 34,
+        "cached_tokens": 384
+      },
+      "returned_model": "deepseek-flash",
+      "error_type": null
+    },
+    "provider_seconds": 0.8802572920003513,
+    "finished_at": "2026-10-17T07:44:52.948965+00:00"
+  },
+  {
+    "attempt_id": "heldout_10_fixture_fresh_01-resolve-1",
+    "started_at": "2026-10-17T07:44:52.951593+00:00",
+    "request": {
+      "stage": "resolution",
+      "source": "[{\"id\": \"confirmation\", \"title\": \"Role confirmation attendance note\", \"text\": \"Synthetic factual attendance note\\n14 September 2026\\n\\nDaphne Cheung confirmed the following two facts about her own position. She is the settlor of the Olive Family Trust. She is also a trustee of the Olive Family Trust.\\n\\nThe separate beneficiary statement was then checked: Evan Ho is a beneficiary of the Olive Family Trust.\\n\\nNo family connection between Daphne Cheung and Evan Ho was supplied. The two roles held by Daphne were recorded separately from the beneficiary entry. This note records current facts only; no appointment change or proposed new role was discussed.\\n\"}]",
+      "sources": null,
+      "extraction": {
+        "relationships": [
+          {
+            "source_name": "Daphne Cheung",
+            "relationship_type": "settlor_of",
+            "target_name": "Olive Family Trust",
+            "supporting_text": "She is the settlor of the Olive Family Trust."
+          },
+          {
+            "source_name": "Daphne Cheung",
+            "relationship_type": "trustee_of",
+            "target_name": "Olive Family Trust",
+            "supporting_text": "She is also a trustee of the Olive Family Trust."
+          },
+          {
+            "source_name": "Evan Ho",
+            "relationship_type": "beneficiary_of",
+            "target_name": "Olive Family Trust",
+            "supporting_text": "Evan Ho is a beneficiary of the Olive Family Trust."
+          }
+        ]
+      },
+      "settings": {
+        "model": "deepseek-flash",
+        "timeout_seconds": 90.0,
+        "temperature": null,
+        "max_retries": 0,
+        "thinking": "disabled"
+      }
+    },
+    "status": "completed",
+    "authorization": "841389cef51957ce8523ea41c03d2baa-3a818a12-ad1d-4c5e-a751-8e8c539b79c9",
+    "response": {
+      "payload": {
+        "edits": []
+      },
+      "raw_response": {
+        "content": "",
+        "id": "lc_run--01a148d2-20e2-72c1-af5e-812c01e99dee-0",
+        "tool_calls": [
+          {
+            "name": "EndpointEdits",
+            "args": {
+              "edits": []
+            },
+            "id": "call_00_TRs7D8KEAVtnzIRZq8Zy2318",
+            "type": "tool_call"
+          }
+        ],
+        "invalid_tool_calls": [],
+        "response_metadata": {
+          "model_name": "deepseek-flash",
+          "system_fingerprint": "e72d3c7f663d3e1383b00b3884cb4501",
+          "id": "bdf8255a-9a8f-40bb-bb3e-1c776f64ea43",
+          "finish_reason": "tool_calls"
+        }
+      },
+      "usage": {
+        "input_tokens": 814,
+        "output_tokens": 34,
+        "cached_tokens": 384
+      },
+      "returned_model": "deepseek-flash",
+      "error_type": null
+    },
+    "provider_seconds": 0.7837987909997537,
+    "finished_at": "2026-10-17T07:44:53.743709+00:00"
+  }
+]

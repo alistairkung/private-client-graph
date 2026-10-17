@@ -1,0 +1,12 @@
+{
+  "recorded_at": "2026-10-17T07:44:07.637188+00:00",
+  "human_response": "approved",
+  "context": "Human approval after B was frozen and reported as Run 3 with at most ten resolver calls, no extractions and no authorizations or attempts.",
+  "experiment_id": "83b5778e74ba5e6e882d334fd4f87f09",
+  "run_id": "841389cef51957ce8523ea41c03d2baa",
+  "frozen_digest": "2b5ab441e7efb0b5ad654c580113afa0ec61a7ec1e0809a206199953a7cbb85f",
+  "max_resolver_attempts": 10,
+  "max_extraction_attempts": 0,
+  "max_retries": 0,
+  "shared_task_cap": 30
+}

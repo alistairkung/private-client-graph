@@ -1,0 +1,110 @@
+{
+  "commit": "168d64a46acfd3468cb0293b2790e095c37fd3f6",
+  "experiment_id": "83b5778e74ba5e6e882d334fd4f87f09",
+  "original_run_id": "97d26d8e5f9d5964826b144c9ca45ad7",
+  "control_run_id": "d67a391bc95a5ad39e1b5786a04795c0",
+  "control_frozen_digest": "71cbd2923cb0166d93382aff3b880fb75dc2a4319fbe4d462f2f8d3e5cd983e3",
+  "input_snapshot_equivalence": true,
+  "unchanged_prompts": {
+    "extraction": "3a2cfa90eafbe514eaa6192b129a4233ba0f20af7e452e2c5435adaab073859a",
+    "sourced_extraction": "d67afaeb19c26448a6779d9576800cc50ca399c634ad81a1a02b847be0a9dfae",
+    "resolution": "b0264a7e3c85c222596d4d27b3b2d733a7285f301e664917ccea3f07702a50ab"
+  },
+  "cases": [
+    {
+      "sample_id": "heldout_01_fixture_fresh_01",
+      "case_id": "heldout_01",
+      "source_ids": [
+        "letter"
+      ],
+      "expected_relationships": 5,
+      "candidates": 5
+    },
+    {
+      "sample_id": "heldout_02_fixture_fresh_01",
+      "case_id": "heldout_02",
+      "source_ids": [
+        "recap"
+      ],
+      "expected_relationships": 4,
+      "candidates": 4
+    },
+    {
+      "sample_id": "heldout_03_fixture_fresh_01",
+      "case_id": "heldout_03",
+      "source_ids": [
+        "interview"
+      ],
+      "expected_relationships": 3,
+      "candidates": 3
+    },
+    {
+      "sample_id": "heldout_04_fixture_fresh_01",
+      "case_id": "heldout_04",
+      "source_ids": [
+        "initial",
+        "followup"
+      ],
+      "expected_relationships": 3,
+      "candidates": 4
+    },
+    {
+      "sample_id": "heldout_05_fixture_fresh_01",
+      "case_id": "heldout_05",
+      "source_ids": [
+        "initial",
+        "replacement"
+      ],
+      "expected_relationships": 4,
+      "candidates": 4
+    },
+    {
+      "sample_id": "heldout_06_fixture_fresh_01",
+      "case_id": "heldout_06",
+      "source_ids": [
+        "update",
+        "archive"
+      ],
+      "expected_relationships": 3,
+      "candidates": 4
+    },
+    {
+      "sample_id": "heldout_07_fixture_fresh_01",
+      "case_id": "heldout_07",
+      "source_ids": [
+        "review"
+      ],
+      "expected_relationships": 6,
+      "candidates": 6
+    },
+    {
+      "sample_id": "heldout_08_fixture_fresh_01",
+      "case_id": "heldout_08",
+      "source_ids": [
+        "family",
+        "trust"
+      ],
+      "expected_relationships": 5,
+      "candidates": 5
+    },
+    {
+      "sample_id": "heldout_09_fixture_fresh_01",
+      "case_id": "heldout_09",
+      "source_ids": [
+        "file"
+      ],
+      "expected_relationships": 3,
+      "candidates": 3
+    },
+    {
+      "sample_id": "heldout_10_fixture_fresh_01",
+      "case_id": "heldout_10",
+      "source_ids": [
+        "confirmation"
+      ],
+      "expected_relationships": 3,
+      "candidates": 3
+    }
+  ],
+  "sources": 14
+}

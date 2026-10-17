@@ -1,0 +1,32 @@
+[
+  {
+    "case_id": "heldout_03",
+    "sample_id": "heldout_03_fixture_fresh_01",
+    "candidate_index": 0,
+    "endpoint": "source_name",
+    "original_name": "Bea",
+    "resolved_name": "Beatrice Ng",
+    "relationship_type": "settlor_of",
+    "other_endpoint": "Larch Family Trust",
+    "source_id": "interview",
+    "supporting_text": "Bea is the settlor of the Larch Family Trust.",
+    "source_text": "Synthetic attendance note \u2014 identity clarification\n20 August 2026\n\nBeatrice Ng attended the factual interview and asked to be called Bea. In this note, Bea means Beatrice Ng; no second person is being introduced.\n\nBea is the settlor of the Larch Family Trust.\nBea is the parent of Isaac Ng.\nIsaac Ng is a beneficiary of the Larch Family Trust.\n\nThe short form was checked before the note was closed. No further family connections or trust offices were stated. A copy of this factual record will be sent for checking.\n",
+    "changed": true,
+    "outcome": "fixed"
+  },
+  {
+    "case_id": "heldout_03",
+    "sample_id": "heldout_03_fixture_fresh_01",
+    "candidate_index": 1,
+    "endpoint": "source_name",
+    "original_name": "Bea",
+    "resolved_name": "Beatrice Ng",
+    "relationship_type": "parent_of",
+    "other_endpoint": "Isaac Ng",
+    "source_id": "interview",
+    "supporting_text": "Bea is the parent of Isaac Ng.",
+    "source_text": "Synthetic attendance note \u2014 identity clarification\n20 August 2026\n\nBeatrice Ng attended the factual interview and asked to be called Bea. In this note, Bea means Beatrice Ng; no second person is being introduced.\n\nBea is the settlor of the Larch Family Trust.\nBea is the parent of Isaac Ng.\nIsaac Ng is a beneficiary of the Larch Family Trust.\n\nThe short form was checked before the note was closed. No further family connections or trust offices were stated. A copy of this factual record will be sent for checking.\n",
+    "changed": true,
+    "outcome": "fixed"
+  }
+]

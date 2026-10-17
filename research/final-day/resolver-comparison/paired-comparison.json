@@ -1,0 +1,76 @@
+{
+  "api_version": "2",
+  "left_run_id": "d67a391bc95a5ad39e1b5786a04795c0",
+  "right_run_id": "841389cef51957ce8523ea41c03d2baa",
+  "comparable_scope": true,
+  "scope_differences": [],
+  "provenance_differences": [
+    "Configuration differs."
+  ],
+  "pairs": [
+    {
+      "left_observation": "heldout_08_fixture_fresh_01-noop",
+      "right_observation": "heldout_08_fixture_fresh_01-resolve-1",
+      "left_sample": "heldout_08_fixture_fresh_01",
+      "right_sample": "heldout_08_fixture_fresh_01"
+    },
+    {
+      "left_observation": "heldout_10_fixture_fresh_01-noop",
+      "right_observation": "heldout_10_fixture_fresh_01-resolve-1",
+      "left_sample": "heldout_10_fixture_fresh_01",
+      "right_sample": "heldout_10_fixture_fresh_01"
+    },
+    {
+      "left_observation": "heldout_07_fixture_fresh_01-noop",
+      "right_observation": "heldout_07_fixture_fresh_01-resolve-1",
+      "left_sample": "heldout_07_fixture_fresh_01",
+      "right_sample": "heldout_07_fixture_fresh_01"
+    },
+    {
+      "left_observation": "heldout_05_fixture_fresh_01-noop",
+      "right_observation": "heldout_05_fixture_fresh_01-resolve-1",
+      "left_sample": "heldout_05_fixture_fresh_01",
+      "right_sample": "heldout_05_fixture_fresh_01"
+    },
+    {
+      "left_observation": "heldout_02_fixture_fresh_01-noop",
+      "right_observation": "heldout_02_fixture_fresh_01-resolve-1",
+      "left_sample": "heldout_02_fixture_fresh_01",
+      "right_sample": "heldout_02_fixture_fresh_01"
+    },
+    {
+      "left_observation": "heldout_09_fixture_fresh_01-noop",
+      "right_observation": "heldout_09_fixture_fresh_01-resolve-1",
+      "left_sample": "heldout_09_fixture_fresh_01",
+      "right_sample": "heldout_09_fixture_fresh_01"
+    },
+    {
+      "left_observation": "heldout_01_fixture_fresh_01-noop",
+      "right_observation": "heldout_01_fixture_fresh_01-resolve-1",
+      "left_sample": "heldout_01_fixture_fresh_01",
+      "right_sample": "heldout_01_fixture_fresh_01"
+    },
+    {
+      "left_observation": "heldout_03_fixture_fresh_01-noop",
+      "right_observation": "heldout_03_fixture_fresh_01-resolve-1",
+      "left_sample": "heldout_03_fixture_fresh_01",
+      "right_sample": "heldout_03_fixture_fresh_01"
+    },
+    {
+      "left_observation": "heldout_06_fixture_fresh_01-noop",
+      "right_observation": "heldout_06_fixture_fresh_01-resolve-1",
+      "left_sample": "heldout_06_fixture_fresh_01",
+      "right_sample": "heldout_06_fixture_fresh_01"
+    },
+    {
+      "left_observation": "heldout_04_fixture_fresh_01-noop",
+      "right_observation": "heldout_04_fixture_fresh_01-resolve-1",
+      "left_sample": "heldout_04_fixture_fresh_01",
+      "right_sample": "heldout_04_fixture_fresh_01"
+    }
+  ],
+  "exclusions": [],
+  "matched_inputs": 10,
+  "unqualified_improvement_allowed": true,
+  "reasons": []
+}

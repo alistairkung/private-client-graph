@@ -1,0 +1,555 @@
+{
+  "api_version": "2",
+  "run_id": "841389cef51957ce8523ea41c03d2baa",
+  "aggregate": {
+    "version": "observation_micro_f1_v1",
+    "tp": 39,
+    "fp": 0,
+    "fn": 0,
+    "f1": 1.0,
+    "source_attribution": {
+      "version": "source_attribution_v1",
+      "assessed": 41,
+      "passed": 37,
+      "failed": 4,
+      "accuracy": 0.9024390243902439,
+      "failures": [
+        {
+          "edge": [
+            "Grace Wong",
+            "beneficiary_of",
+            "Amber Family Trust"
+          ],
+          "evidence_id": "evidence_002",
+          "source_id": "recap",
+          "supporting_text": "Grace Wong and Hugo Wong are siblings and are both beneficiaries of the Amber Family Trust."
+        },
+        {
+          "edge": [
+            "Grace Wong",
+            "sibling_of",
+            "Hugo Wong"
+          ],
+          "evidence_id": "evidence_002",
+          "source_id": "recap",
+          "supporting_text": "Grace Wong and Hugo Wong are siblings and are both beneficiaries of the Amber Family Trust."
+        },
+        {
+          "edge": [
+            "Hugo Wong",
+            "beneficiary_of",
+            "Amber Family Trust"
+          ],
+          "evidence_id": "evidence_002",
+          "source_id": "recap",
+          "supporting_text": "Grace Wong and Hugo Wong are siblings and are both beneficiaries of the Amber Family Trust."
+        },
+        {
+          "edge": [
+            "Keira Chan",
+            "beneficiary_of",
+            "Maple Family Trust"
+          ],
+          "evidence_id": "evidence_002",
+          "source_id": "followup",
+          "supporting_text": "The beneficiary position was checked again: Keira Chan is a beneficiary of the Maple Family Trust."
+        }
+      ]
+    },
+    "coverage": {
+      "planned": 10,
+      "scored": 10,
+      "pending": 0,
+      "failed": 0,
+      "uncertain": 0,
+      "unavailable": 0
+    },
+    "cases": [
+      {
+        "case_id": "heldout_01",
+        "tp": 5,
+        "fp": 0,
+        "fn": 0,
+        "f1": 1.0,
+        "source_attribution": {
+          "version": "source_attribution_v1",
+          "assessed": 5,
+          "passed": 5,
+          "failed": 0,
+          "accuracy": 1.0,
+          "failures": []
+        },
+        "coverage": {
+          "planned": 1,
+          "scored": 1,
+          "pending": 0,
+          "failed": 0,
+          "uncertain": 0,
+          "unavailable": 0
+        }
+      },
+      {
+        "case_id": "heldout_02",
+        "tp": 4,
+        "fp": 0,
+        "fn": 0,
+        "f1": 1.0,
+        "source_attribution": {
+          "version": "source_attribution_v1",
+          "assessed": 4,
+          "passed": 1,
+          "failed": 3,
+          "accuracy": 0.25,
+          "failures": [
+            {
+              "edge": [
+                "Grace Wong",
+                "beneficiary_of",
+                "Amber Family Trust"
+              ],
+              "evidence_id": "evidence_002",
+              "source_id": "recap",
+              "supporting_text": "Grace Wong and Hugo Wong are siblings and are both beneficiaries of the Amber Family Trust."
+            },
+            {
+              "edge": [
+                "Grace Wong",
+                "sibling_of",
+                "Hugo Wong"
+              ],
+              "evidence_id": "evidence_002",
+              "source_id": "recap",
+              "supporting_text": "Grace Wong and Hugo Wong are siblings and are both beneficiaries of the Amber Family Trust."
+            },
+            {
+              "edge": [
+                "Hugo Wong",
+                "beneficiary_of",
+                "Amber Family Trust"
+              ],
+              "evidence_id": "evidence_002",
+              "source_id": "recap",
+              "supporting_text": "Grace Wong and Hugo Wong are siblings and are both beneficiaries of the Amber Family Trust."
+            }
+          ]
+        },
+        "coverage": {
+          "planned": 1,
+          "scored": 1,
+          "pending": 0,
+          "failed": 0,
+          "uncertain": 0,
+          "unavailable": 0
+        }
+      },
+      {
+        "case_id": "heldout_03",
+        "tp": 3,
+        "fp": 0,
+        "fn": 0,
+        "f1": 1.0,
+        "source_attribution": {
+          "version": "source_attribution_v1",
+          "assessed": 3,
+          "passed": 3,
+          "failed": 0,
+          "accuracy": 1.0,
+          "failures": []
+        },
+        "coverage": {
+          "planned": 1,
+          "scored": 1,
+          "pending": 0,
+          "failed": 0,
+          "uncertain": 0,
+          "unavailable": 0
+        }
+      },
+      {
+        "case_id": "heldout_04",
+        "tp": 3,
+        "fp": 0,
+        "fn": 0,
+        "f1": 1.0,
+        "source_attribution": {
+          "version": "source_attribution_v1",
+          "assessed": 4,
+          "passed": 3,
+          "failed": 1,
+          "accuracy": 0.75,
+          "failures": [
+            {
+              "edge": [
+                "Keira Chan",
+                "beneficiary_of",
+                "Maple Family Trust"
+              ],
+              "evidence_id": "evidence_002",
+              "source_id": "followup",
+              "supporting_text": "The beneficiary position was checked again: Keira Chan is a beneficiary of the Maple Family Trust."
+            }
+          ]
+        },
+        "coverage": {
+          "planned": 1,
+          "scored": 1,
+          "pending": 0,
+          "failed": 0,
+          "uncertain": 0,
+          "unavailable": 0
+        }
+      },
+      {
+        "case_id": "heldout_05",
+        "tp": 4,
+        "fp": 0,
+        "fn": 0,
+        "f1": 1.0,
+        "source_attribution": {
+          "version": "source_attribution_v1",
+          "assessed": 4,
+          "passed": 4,
+          "failed": 0,
+          "accuracy": 1.0,
+          "failures": []
+        },
+        "coverage": {
+          "planned": 1,
+          "scored": 1,
+          "pending": 0,
+          "failed": 0,
+          "uncertain": 0,
+          "unavailable": 0
+        }
+      },
+      {
+        "case_id": "heldout_06",
+        "tp": 3,
+        "fp": 0,
+        "fn": 0,
+        "f1": 1.0,
+        "source_attribution": {
+          "version": "source_attribution_v1",
+          "assessed": 4,
+          "passed": 4,
+          "failed": 0,
+          "accuracy": 1.0,
+          "failures": []
+        },
+        "coverage": {
+          "planned": 1,
+          "scored": 1,
+          "pending": 0,
+          "failed": 0,
+          "uncertain": 0,
+          "unavailable": 0
+        }
+      },
+      {
+        "case_id": "heldout_07",
+        "tp": 6,
+        "fp": 0,
+        "fn": 0,
+        "f1": 1.0,
+        "source_attribution": {
+          "version": "source_attribution_v1",
+          "assessed": 6,
+          "passed": 6,
+          "failed": 0,
+          "accuracy": 1.0,
+          "failures": []
+        },
+        "coverage": {
+          "planned": 1,
+          "scored": 1,
+          "pending": 0,
+          "failed": 0,
+          "uncertain": 0,
+          "unavailable": 0
+        }
+      },
+      {
+        "case_id": "heldout_08",
+        "tp": 5,
+        "fp": 0,
+        "fn": 0,
+        "f1": 1.0,
+        "source_attribution": {
+          "version": "source_attribution_v1",
+          "assessed": 5,
+          "passed": 5,
+          "failed": 0,
+          "accuracy": 1.0,
+          "failures": []
+        },
+        "coverage": {
+          "planned": 1,
+          "scored": 1,
+          "pending": 0,
+          "failed": 0,
+          "uncertain": 0,
+          "unavailable": 0
+        }
+      },
+      {
+        "case_id": "heldout_09",
+        "tp": 3,
+        "fp": 0,
+        "fn": 0,
+        "f1": 1.0,
+        "source_attribution": {
+          "version": "source_attribution_v1",
+          "assessed": 3,
+          "passed": 3,
+          "failed": 0,
+          "accuracy": 1.0,
+          "failures": []
+        },
+        "coverage": {
+          "planned": 1,
+          "scored": 1,
+          "pending": 0,
+          "failed": 0,
+          "uncertain": 0,
+          "unavailable": 0
+        }
+      },
+      {
+        "case_id": "heldout_10",
+        "tp": 3,
+        "fp": 0,
+        "fn": 0,
+        "f1": 1.0,
+        "source_attribution": {
+          "version": "source_attribution_v1",
+          "assessed": 3,
+          "passed": 3,
+          "failed": 0,
+          "accuracy": 1.0,
+          "failures": []
+        },
+        "coverage": {
+          "planned": 1,
+          "scored": 1,
+          "pending": 0,
+          "failed": 0,
+          "uncertain": 0,
+          "unavailable": 0
+        }
+      }
+    ],
+    "state": "complete",
+    "observations": [
+      {
+        "observation_id": "heldout_01_fixture_fresh_01-resolve-1",
+        "case_id": "heldout_01",
+        "state": "scored",
+        "status": "completed",
+        "reason": null
+      },
+      {
+        "observation_id": "heldout_02_fixture_fresh_01-resolve-1",
+        "case_id": "heldout_02",
+        "state": "scored",
+        "status": "completed",
+        "reason": null
+      },
+      {
+        "observation_id": "heldout_03_fixture_fresh_01-resolve-1",
+        "case_id": "heldout_03",
+        "state": "scored",
+        "status": "completed",
+        "reason": null
+      },
+      {
+        "observation_id": "heldout_04_fixture_fresh_01-resolve-1",
+        "case_id": "heldout_04",
+        "state": "scored",
+        "status": "completed",
+        "reason": null
+      },
+      {
+        "observation_id": "heldout_05_fixture_fresh_01-resolve-1",
+        "case_id": "heldout_05",
+        "state": "scored",
+        "status": "completed",
+        "reason": null
+      },
+      {
+        "observation_id": "heldout_06_fixture_fresh_01-resolve-1",
+        "case_id": "heldout_06",
+        "state": "scored",
+        "status": "completed",
+        "reason": null
+      },
+      {
+        "observation_id": "heldout_07_fixture_fresh_01-resolve-1",
+        "case_id": "heldout_07",
+        "state": "scored",
+        "status": "completed",
+        "reason": null
+      },
+      {
+        "observation_id": "heldout_08_fixture_fresh_01-resolve-1",
+        "case_id": "heldout_08",
+        "state": "scored",
+        "status": "completed",
+        "reason": null
+      },
+      {
+        "observation_id": "heldout_09_fixture_fresh_01-resolve-1",
+        "case_id": "heldout_09",
+        "state": "scored",
+        "status": "completed",
+        "reason": null
+      },
+      {
+        "observation_id": "heldout_10_fixture_fresh_01-resolve-1",
+        "case_id": "heldout_10",
+        "state": "scored",
+        "status": "completed",
+        "reason": null
+      }
+    ],
+    "reasons": []
+  },
+  "cost": {
+    "total": null,
+    "known_subtotal": 0.0,
+    "currency": "USD",
+    "attempts": 10,
+    "unpriced_attempts": 10,
+    "reasons": [
+      "heldout_01_fixture_fresh_01-resolve-1: Retained usage or pricing unavailable.",
+      "heldout_02_fixture_fresh_01-resolve-1: Retained usage or pricing unavailable.",
+      "heldout_03_fixture_fresh_01-resolve-1: Retained usage or pricing unavailable.",
+      "heldout_04_fixture_fresh_01-resolve-1: Retained usage or pricing unavailable.",
+      "heldout_05_fixture_fresh_01-resolve-1: Retained usage or pricing unavailable.",
+      "heldout_06_fixture_fresh_01-resolve-1: Retained usage or pricing unavailable.",
+      "heldout_07_fixture_fresh_01-resolve-1: Retained usage or pricing unavailable.",
+      "heldout_08_fixture_fresh_01-resolve-1: Retained usage or pricing unavailable.",
+      "heldout_09_fixture_fresh_01-resolve-1: Retained usage or pricing unavailable.",
+      "heldout_10_fixture_fresh_01-resolve-1: Retained usage or pricing unavailable."
+    ]
+  },
+  "scope": {
+    "identity": "3180ee9ad5d4f8e84376ca51158094b00a59a2f308d511e7e73326d4de32ab89",
+    "inputs": [
+      {
+        "input_id": "heldout_01_fixture_fresh_01",
+        "case_id": "heldout_01",
+        "cohort": "historical",
+        "source_digest": "3d90e356412f89f1c29625ae5b10b7a8100bd1a006879818f2a92de35d062598",
+        "truth_digest": "faa6d87a5318c120abfd7f0d9c06fd91867bbc677de7248e3b865e367d6ea104",
+        "samples": 1,
+        "repetitions": 1
+      },
+      {
+        "input_id": "heldout_02_fixture_fresh_01",
+        "case_id": "heldout_02",
+        "cohort": "historical",
+        "source_digest": "e5e6d1f0ba4fa75318c162ef65d135f46ffb13e6379ce7a664c6425e3b9f88f6",
+        "truth_digest": "cec8eefa745a2685f346bf1e668150faa6f1792197be1f7c6d7e1033ecb97853",
+        "samples": 1,
+        "repetitions": 1
+      },
+      {
+        "input_id": "heldout_03_fixture_fresh_01",
+        "case_id": "heldout_03",
+        "cohort": "historical",
+        "source_digest": "d9bb29953231c75848dbb7dab3fdd7012992b473b5a1ee5acf6c9a30f0864f6c",
+        "truth_digest": "778ba7662876809c042797629afb209882a6828341cc3307c988776b473c46a0",
+        "samples": 1,
+        "repetitions": 1
+      },
+      {
+        "input_id": "heldout_04_fixture_fresh_01",
+        "case_id": "heldout_04",
+        "cohort": "historical",
+        "source_digest": "61f0e3d3de796a3be6ab67ecb5d83be74d88b9e65cc7c7ecba869995eaa39021",
+        "truth_digest": "f915a3cae6ac33a705240d85f49a564aa881aa2db431bc9c02b17cb0fb66d141",
+        "samples": 1,
+        "repetitions": 1
+      },
+      {
+        "input_id": "heldout_05_fixture_fresh_01",
+        "case_id": "heldout_05",
+        "cohort": "historical",
+        "source_digest": "8858b13d8844d8a9c537b48e5fea8cbcc844e68eaa1049ac35223add7e51aa0b",
+        "truth_digest": "1b5b3ca5971a2476780cb070e1ae9ee1eeee07c5a9dfa898ffae2c728a8e0637",
+        "samples": 1,
+        "repetitions": 1
+      },
+      {
+        "input_id": "heldout_06_fixture_fresh_01",
+        "case_id": "heldout_06",
+        "cohort": "historical",
+        "source_digest": "d9add92ca75fea416ec7d2f6dbdbc3733b0c8804459452e91c5a6730aa0c9638",
+        "truth_digest": "9e9d87722574e6e9c3cf50b1fad034b191b844e3dbf0c05807c096df85e14a0e",
+        "samples": 1,
+        "repetitions": 1
+      },
+      {
+        "input_id": "heldout_07_fixture_fresh_01",
+        "case_id": "heldout_07",
+        "cohort": "historical",
+        "source_digest": "6f7a88761565a77fc2512ecad04bec396d1ca54066ff60b36bfa7b65246cf3dd",
+        "truth_digest": "80d954a403f8b09c9b993f0cebb2821a01773c8d32367b7a2fe5e50a03aabf26",
+        "samples": 1,
+        "repetitions": 1
+      },
+      {
+        "input_id": "heldout_08_fixture_fresh_01",
+        "case_id": "heldout_08",
+        "cohort": "historical",
+        "source_digest": "7d8a38e3c1bfa12f26dd778e25e2a56cd40ddd1f1d11030bc25a54a962aeb482",
+        "truth_digest": "2d757992a76af49316ae4eacbf589d819c3333fa1829bc4b84d076fbd30e0af5",
+        "samples": 1,
+        "repetitions": 1
+      },
+      {
+        "input_id": "heldout_09_fixture_fresh_01",
+        "case_id": "heldout_09",
+        "cohort": "historical",
+        "source_digest": "8b2a6c716d9867c314586489b6b05c2f0f593bf5e1e43207d4bb36926f2e24e0",
+        "truth_digest": "45b51263a554b5db284ebcdd598195b1ada034f75b574a53f2fb11ad2ff2a721",
+        "samples": 1,
+        "repetitions": 1
+      },
+      {
+        "input_id": "heldout_10_fixture_fresh_01",
+        "case_id": "heldout_10",
+        "cohort": "historical",
+        "source_digest": "e2adf68c2d81a6ae6bf31aacdeea079dc5cfe5477283254606d1f37f72530d1d",
+        "truth_digest": "44bf258eb924f3c8c7ac499de9dd1b199bd92e10ebdbe2e155486b5e35702fc2",
+        "samples": 1,
+        "repetitions": 1
+      }
+    ],
+    "input_mode": "saved",
+    "evaluator_version": "semantic_edges_v1",
+    "aggregate_version": "observation_micro_f1_v1",
+    "unequal_allocation": false
+  },
+  "eligibility": {
+    "f1_by_run": true,
+    "f1_vs_cost": false,
+    "f1_reasons": [],
+    "cost_reasons": [
+      "heldout_01_fixture_fresh_01-resolve-1: Retained usage or pricing unavailable.",
+      "heldout_02_fixture_fresh_01-resolve-1: Retained usage or pricing unavailable.",
+      "heldout_03_fixture_fresh_01-resolve-1: Retained usage or pricing unavailable.",
+      "heldout_04_fixture_fresh_01-resolve-1: Retained usage or pricing unavailable.",
+      "heldout_05_fixture_fresh_01-resolve-1: Retained usage or pricing unavailable.",
+      "heldout_06_fixture_fresh_01-resolve-1: Retained usage or pricing unavailable.",
+      "heldout_07_fixture_fresh_01-resolve-1: Retained usage or pricing unavailable.",
+      "heldout_08_fixture_fresh_01-resolve-1: Retained usage or pricing unavailable.",
+      "heldout_09_fixture_fresh_01-resolve-1: Retained usage or pricing unavailable.",
+      "heldout_10_fixture_fresh_01-resolve-1: Retained usage or pricing unavailable."
+    ]
+  },
+  "artifact_digest": "7b59223159f4692fef66a15c861ec5ca7dd40eb23597f4ba6fc7f0144cdbf39a",
+  "full_pipeline_cost": null,
+  "full_pipeline_cost_reason": "Run-wide reconstruction is undefined; retained individual pipeline estimates remain separate.",
+  "reasons": []
+}
