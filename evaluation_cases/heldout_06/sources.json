@@ -1,0 +1,12 @@
+[
+  {
+    "id": "update",
+    "title": "Effective replacement confirmation",
+    "path": "sources/update.txt"
+  },
+  {
+    "id": "archive",
+    "title": "Earlier factual note — retained for reference",
+    "path": "sources/archive.txt"
+  }
+]

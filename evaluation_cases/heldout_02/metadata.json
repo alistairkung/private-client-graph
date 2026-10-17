@@ -1,0 +1,5 @@
+{
+  "id": "heldout_02",
+  "name": "One dense sentence in a factual recap",
+  "description": "Can one sentence be decomposed into distinct family and trust-role edges without conflating sibling and beneficiary status?"
+}

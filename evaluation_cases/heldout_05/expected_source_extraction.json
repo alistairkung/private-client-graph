@@ -1,0 +1,39 @@
+{
+  "relationships": [
+    {
+      "source_name": "Leona Wu",
+      "relationship_type": "settlor_of",
+      "target_name": "Cedar Family Trust",
+      "source_id": "initial",
+      "supporting_text": "Leona Wu is the settlor of the Cedar Family Trust."
+    },
+    {
+      "source_name": "Leona Wu",
+      "relationship_type": "parent_of",
+      "target_name": "Milo Wu",
+      "source_id": "initial",
+      "supporting_text": "Leona Wu is a parent of Milo Wu."
+    },
+    {
+      "source_name": "Milo Wu",
+      "relationship_type": "beneficiary_of",
+      "target_name": "Cedar Family Trust",
+      "source_id": "initial",
+      "supporting_text": "Milo Wu is a beneficiary of the Cedar Family Trust."
+    },
+    {
+      "source_name": "Nora Tse",
+      "relationship_type": "trustee_of",
+      "target_name": "Cedar Family Trust",
+      "source_id": "replacement",
+      "supporting_text": "Nora Tse is the sole current trustee of the Cedar Family Trust as at 22 July 2026."
+    },
+    {
+      "source_name": "Nora Tse",
+      "relationship_type": "trustee_of",
+      "target_name": "Cedar Family Trust",
+      "source_id": "replacement",
+      "supporting_text": "Nora Tse became the replacement trustee of the Cedar Family Trust with effect from 15 July 2026."
+    }
+  ]
+}

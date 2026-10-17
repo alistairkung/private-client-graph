@@ -1,0 +1,134 @@
+{
+  "schema_version": 1,
+  "relationships": [
+    {
+      "source": "person_001",
+      "type": "settlor_of",
+      "target": "trust_001",
+      "approved_evidence": [
+        {
+          "source_id": "note_01",
+          "supporting_text": "She confirmed that she is the settlor of the Hillcrest Family Trust."
+        },
+        {
+          "source_id": "note_01",
+          "supporting_text": "Victoria Chan confirmed that she is the settlor of the Hillcrest Family Trust."
+        }
+      ]
+    },
+    {
+      "source": "person_001",
+      "type": "spouse_of",
+      "target": "person_002",
+      "approved_evidence": [
+        {
+          "source_id": "note_01",
+          "supporting_text": "Victoria Chan confirmed that she and Peter Chan are spouses."
+        },
+        {
+          "source_id": "note_01",
+          "supporting_text": "She confirmed that she and Peter Chan are spouses and that Victoria Chan and Peter Chan are the parents of Andrew Chan."
+        }
+      ]
+    },
+    {
+      "source": "person_001",
+      "type": "parent_of",
+      "target": "person_003",
+      "approved_evidence": [
+        {
+          "source_id": "note_01",
+          "supporting_text": "Victoria Chan confirmed that Victoria Chan and Peter Chan are the parents of Andrew Chan."
+        },
+        {
+          "source_id": "note_01",
+          "supporting_text": "She confirmed that she and Peter Chan are spouses and that Victoria Chan and Peter Chan are the parents of Andrew Chan."
+        },
+        {
+          "source_id": "note_01",
+          "supporting_text": "In particular, the fact that Andrew Chan is a child of Victoria Chan and Peter Chan was recorded separately from the fact that Andrew Chan is a beneficiary of the Hillcrest Family Trust."
+        }
+      ]
+    },
+    {
+      "source": "person_002",
+      "type": "parent_of",
+      "target": "person_003",
+      "approved_evidence": [
+        {
+          "source_id": "note_01",
+          "supporting_text": "Victoria Chan confirmed that Victoria Chan and Peter Chan are the parents of Andrew Chan."
+        },
+        {
+          "source_id": "note_01",
+          "supporting_text": "She confirmed that she and Peter Chan are spouses and that Victoria Chan and Peter Chan are the parents of Andrew Chan."
+        },
+        {
+          "source_id": "note_01",
+          "supporting_text": "In particular, the fact that Andrew Chan is a child of Victoria Chan and Peter Chan was recorded separately from the fact that Andrew Chan is a beneficiary of the Hillcrest Family Trust."
+        }
+      ]
+    },
+    {
+      "source": "person_003",
+      "type": "beneficiary_of",
+      "target": "trust_001",
+      "approved_evidence": [
+        {
+          "source_id": "note_01",
+          "supporting_text": "Victoria Chan confirmed that Andrew Chan is a beneficiary of the Hillcrest Family Trust."
+        },
+        {
+          "source_id": "note_01",
+          "supporting_text": "Victoria Chan confirmed that the factual position to be recorded for the purposes of the initial review was that Andrew Chan is a beneficiary of the Hillcrest Family Trust."
+        },
+        {
+          "source_id": "note_01",
+          "supporting_text": "She also confirmed that Andrew Chan is a beneficiary of the Hillcrest Family Trust."
+        },
+        {
+          "source_id": "note_01",
+          "supporting_text": "In particular, the fact that Andrew Chan is a child of Victoria Chan and Peter Chan was recorded separately from the fact that Andrew Chan is a beneficiary of the Hillcrest Family Trust."
+        },
+        {
+          "source_id": "note_02",
+          "supporting_text": "She confirmed that Andrew Chan is a beneficiary of the Hillcrest Family Trust."
+        },
+        {
+          "source_id": "note_02",
+          "supporting_text": "Victoria Chan confirmed that the factual position to be recorded was that Andrew Chan, Lucy Chan and Marcus Yip are beneficiaries of the Hillcrest Family Trust."
+        }
+      ]
+    },
+    {
+      "source": "person_004",
+      "type": "beneficiary_of",
+      "target": "trust_001",
+      "approved_evidence": [
+        {
+          "source_id": "note_02",
+          "supporting_text": "She confirmed that Lucy Chan is a beneficiary of the Hillcrest Family Trust."
+        },
+        {
+          "source_id": "note_02",
+          "supporting_text": "Victoria Chan confirmed that the factual position to be recorded was that Andrew Chan, Lucy Chan and Marcus Yip are beneficiaries of the Hillcrest Family Trust."
+        }
+      ]
+    },
+    {
+      "source": "person_005",
+      "type": "beneficiary_of",
+      "target": "trust_001",
+      "approved_evidence": [
+        {
+          "source_id": "note_02",
+          "supporting_text": "Victoria Chan also confirmed that Marcus Yip is a beneficiary of the Hillcrest Family Trust."
+        },
+        {
+          "source_id": "note_02",
+          "supporting_text": "Victoria Chan confirmed that the factual position to be recorded was that Andrew Chan, Lucy Chan and Marcus Yip are beneficiaries of the Hillcrest Family Trust."
+        }
+      ]
+    }
+  ]
+}

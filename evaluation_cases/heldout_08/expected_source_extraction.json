@@ -1,0 +1,39 @@
+{
+  "relationships": [
+    {
+      "source_name": "Victor Lo",
+      "relationship_type": "spouse_of",
+      "target_name": "Wendy Lo",
+      "source_id": "family",
+      "supporting_text": "Victor Lo and Wendy Lo are spouses."
+    },
+    {
+      "source_name": "Victor Lo",
+      "relationship_type": "parent_of",
+      "target_name": "Xavier Lo",
+      "source_id": "family",
+      "supporting_text": "Victor Lo and Wendy Lo are the parents of Xavier Lo."
+    },
+    {
+      "source_name": "Wendy Lo",
+      "relationship_type": "parent_of",
+      "target_name": "Xavier Lo",
+      "source_id": "family",
+      "supporting_text": "Victor Lo and Wendy Lo are the parents of Xavier Lo."
+    },
+    {
+      "source_name": "Victor Lo",
+      "relationship_type": "settlor_of",
+      "target_name": "Rowan Family Trust",
+      "source_id": "trust",
+      "supporting_text": "Victor Lo is the settlor of the Rowan Family Trust."
+    },
+    {
+      "source_name": "Xavier Lo",
+      "relationship_type": "beneficiary_of",
+      "target_name": "Rowan Family Trust",
+      "source_id": "trust",
+      "supporting_text": "Xavier Lo is a beneficiary of the Rowan Family Trust."
+    }
+  ]
+}

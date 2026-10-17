@@ -54,3 +54,16 @@ failures remain diagnosable.
 | 19 | Can it handle a source that describes historical relationships (former spouse, deceased settlor) without treating them as current? | historical vs current state | temporal from Case 05 understood |
 | 20 | Composite stress test — deliberately combines several earlier difficulties at once. | composite | nothing held stable |
 
+## Cases 04 and 05
+
+Case 04 supplies two unchanged, complementary Hillcrest source notes, including
+one shared beneficiary edge with evidence in both documents. Case 05 follows the
+original temporal hypothesis with a completed Willow trustee replacement. Its
+dated notes define an initial and a final current graph, retaining unchanged
+facts from the earlier document. Supersession is isolated to one trustee edge;
+conflicting evidence remains Case 06.
+
+Both cases include the existing loader's single-text compatibility artifacts and
+separate document-aware expectations. Loading the combined text does not test
+sequential processing. See each case's authoring notes for snapshot scope, source
+attribution, deterministic controls and current infrastructure limitations.

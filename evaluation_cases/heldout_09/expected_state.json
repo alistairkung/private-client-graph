@@ -1,0 +1,77 @@
+{
+  "sources": [
+    {
+      "id": "file",
+      "title": "Administrative and factual review record",
+      "text": "Synthetic private-client review record\n11 September 2026\n\nThe factual interview was scheduled after the review team received a request to check the accuracy of its working note. The meeting took place by telephone. Sound quality was adequate, the participants had time to read the text aloud, and a revised copy will be circulated for factual checking. These procedural details are recorded to explain how the note was prepared, not to enlarge the relationship record.\n\nThe following factual entries were confirmed for this review:\nYasmin Fong is the settlor of the Hazel Family Trust.\nZachary Fong is a beneficiary of the Hazel Family Trust.\nAdele Ip is a trustee of the Hazel Family Trust.\n\nBruno Ma handled the appointment calendar. Clara Yu checked the spelling in the covering message. Those administrative references do not state that either person has a family connection with anyone in this note or any office or beneficial position in the Hazel Family Trust. No family relationship between Yasmin Fong and Zachary Fong was supplied.\n\nThe team discussed the practical handling of subsequent factual questions. A single consolidated list will be sent, rather than several messages covering the same point. The document will be checked for legibility, pagination and consistency of headings. Corrections to punctuation can be made without assuming that a different name denotes a different participant. The covering message should distinguish a request for factual clarification from substantive advice.\n\nThe scope of this exercise remains deliberately limited. No details about investments, values or distributions were considered. A later substantive review would need a separately agreed scope and appropriate source material. The present note establishes no such conclusions. A reminder was set to check whether the factual response had arrived, and the interview concluded after the next procedural step was understood.\n"
+    }
+  ],
+  "entities": [
+    {
+      "id": "p1",
+      "type": "person",
+      "name": "Yasmin Fong"
+    },
+    {
+      "id": "p2",
+      "type": "person",
+      "name": "Zachary Fong"
+    },
+    {
+      "id": "p3",
+      "type": "person",
+      "name": "Adele Ip"
+    },
+    {
+      "id": "t1",
+      "type": "trust",
+      "name": "Hazel Family Trust"
+    }
+  ],
+  "relationships": [
+    {
+      "source": "p1",
+      "type": "settlor_of",
+      "target": "t1",
+      "evidence_ids": [
+        "evidence_001"
+      ]
+    },
+    {
+      "source": "p2",
+      "type": "beneficiary_of",
+      "target": "t1",
+      "evidence_ids": [
+        "evidence_002"
+      ]
+    },
+    {
+      "source": "p3",
+      "type": "trustee_of",
+      "target": "t1",
+      "evidence_ids": [
+        "evidence_003"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "id": "evidence_001",
+      "source_id": "file",
+      "document": "sources/file.txt",
+      "supporting_text": "Yasmin Fong is the settlor of the Hazel Family Trust."
+    },
+    {
+      "id": "evidence_002",
+      "source_id": "file",
+      "document": "sources/file.txt",
+      "supporting_text": "Zachary Fong is a beneficiary of the Hazel Family Trust."
+    },
+    {
+      "id": "evidence_003",
+      "source_id": "file",
+      "document": "sources/file.txt",
+      "supporting_text": "Adele Ip is a trustee of the Hazel Family Trust."
+    }
+  ]
+}

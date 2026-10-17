@@ -1,0 +1,58 @@
+{
+  "entities": [
+    {
+      "id": "p1",
+      "type": "person",
+      "name": "Felix Wong"
+    },
+    {
+      "id": "p2",
+      "type": "person",
+      "name": "Grace Wong"
+    },
+    {
+      "id": "p3",
+      "type": "person",
+      "name": "Hugo Wong"
+    },
+    {
+      "id": "t1",
+      "type": "trust",
+      "name": "Amber Family Trust"
+    }
+  ],
+  "relationships": [
+    {
+      "source": "p1",
+      "type": "settlor_of",
+      "target": "t1",
+      "approved_evidence": [
+        "Felix Wong is the settlor of the Amber Family Trust, and Grace Wong and Hugo Wong are siblings and are both beneficiaries of the Amber Family Trust."
+      ]
+    },
+    {
+      "source": "p2",
+      "type": "sibling_of",
+      "target": "p3",
+      "approved_evidence": [
+        "Felix Wong is the settlor of the Amber Family Trust, and Grace Wong and Hugo Wong are siblings and are both beneficiaries of the Amber Family Trust."
+      ]
+    },
+    {
+      "source": "p2",
+      "type": "beneficiary_of",
+      "target": "t1",
+      "approved_evidence": [
+        "Felix Wong is the settlor of the Amber Family Trust, and Grace Wong and Hugo Wong are siblings and are both beneficiaries of the Amber Family Trust."
+      ]
+    },
+    {
+      "source": "p3",
+      "type": "beneficiary_of",
+      "target": "t1",
+      "approved_evidence": [
+        "Felix Wong is the settlor of the Amber Family Trust, and Grace Wong and Hugo Wong are siblings and are both beneficiaries of the Amber Family Trust."
+      ]
+    }
+  ]
+}

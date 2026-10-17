@@ -1,0 +1,40 @@
+{
+  "relationships": [
+    {
+      "source_name": "Elaine Ho",
+      "relationship_type": "settlor_of",
+      "target_name": "Willow Family Trust",
+      "supporting_text": "Elaine Ho is the settlor of the Willow Family Trust."
+    },
+    {
+      "source_name": "Elaine Ho",
+      "relationship_type": "spouse_of",
+      "target_name": "Martin Ho",
+      "supporting_text": "Elaine Ho and Martin Ho are spouses."
+    },
+    {
+      "source_name": "Elaine Ho",
+      "relationship_type": "parent_of",
+      "target_name": "Sophie Ho",
+      "supporting_text": "Elaine Ho is a parent of Sophie Ho."
+    },
+    {
+      "source_name": "Martin Ho",
+      "relationship_type": "parent_of",
+      "target_name": "Sophie Ho",
+      "supporting_text": "Martin Ho is a parent of Sophie Ho."
+    },
+    {
+      "source_name": "Sophie Ho",
+      "relationship_type": "beneficiary_of",
+      "target_name": "Willow Family Trust",
+      "supporting_text": "Sophie Ho is a beneficiary of the Willow Family Trust."
+    },
+    {
+      "source_name": "David Ng",
+      "relationship_type": "trustee_of",
+      "target_name": "Willow Family Trust",
+      "supporting_text": "David Ng is the sole trustee of the Willow Family Trust as at 1 September 2026."
+    }
+  ]
+}

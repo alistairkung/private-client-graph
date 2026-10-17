@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "relationships": [
+    {
+      "source": "p1",
+      "type": "settlor_of",
+      "target": "t1",
+      "approved_evidence": [
+        {
+          "source_id": "initial",
+          "supporting_text": "Jonas Chan is the settlor of the Maple Family Trust."
+        }
+      ]
+    },
+    {
+      "source": "p2",
+      "type": "beneficiary_of",
+      "target": "t1",
+      "approved_evidence": [
+        {
+          "source_id": "initial",
+          "supporting_text": "Keira Chan is a beneficiary of the Maple Family Trust."
+        },
+        {
+          "source_id": "followup",
+          "supporting_text": "Keira Chan is a beneficiary of the Maple Family Trust."
+        }
+      ]
+    },
+    {
+      "source": "p3",
+      "type": "trustee_of",
+      "target": "t1",
+      "approved_evidence": [
+        {
+          "source_id": "followup",
+          "supporting_text": "Lina Ho is a trustee of the Maple Family Trust."
+        }
+      ]
+    }
+  ]
+}

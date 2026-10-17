@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "relationships": [
+    {
+      "source": "p1",
+      "type": "settlor_of",
+      "target": "t1",
+      "approved_evidence": [
+        {
+          "source_id": "interview",
+          "supporting_text": "Bea is the settlor of the Larch Family Trust."
+        }
+      ]
+    },
+    {
+      "source": "p1",
+      "type": "parent_of",
+      "target": "p2",
+      "approved_evidence": [
+        {
+          "source_id": "interview",
+          "supporting_text": "Bea is the parent of Isaac Ng."
+        }
+      ]
+    },
+    {
+      "source": "p2",
+      "type": "beneficiary_of",
+      "target": "t1",
+      "approved_evidence": [
+        {
+          "source_id": "interview",
+          "supporting_text": "Isaac Ng is a beneficiary of the Larch Family Trust."
+        }
+      ]
+    }
+  ]
+}

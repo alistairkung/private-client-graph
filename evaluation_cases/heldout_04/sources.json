@@ -1,0 +1,12 @@
+[
+  {
+    "id": "initial",
+    "title": "Initial factual note",
+    "path": "sources/initial.txt"
+  },
+  {
+    "id": "followup",
+    "title": "Office-holder and beneficiary check",
+    "path": "sources/followup.txt"
+  }
+]

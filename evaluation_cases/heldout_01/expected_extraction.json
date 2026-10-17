@@ -1,0 +1,34 @@
+{
+  "relationships": [
+    {
+      "source_name": "Nadia Lau",
+      "relationship_type": "settlor_of",
+      "target_name": "Juniper Family Trust",
+      "supporting_text": "I, Nadia Lau, am the settlor of the Juniper Family Trust."
+    },
+    {
+      "source_name": "Nadia Lau",
+      "relationship_type": "spouse_of",
+      "target_name": "Owen Lau",
+      "supporting_text": "Nadia Lau and Owen Lau are spouses."
+    },
+    {
+      "source_name": "Nadia Lau",
+      "relationship_type": "parent_of",
+      "target_name": "Maya Lau",
+      "supporting_text": "Nadia Lau and Owen Lau are the parents of Maya Lau."
+    },
+    {
+      "source_name": "Owen Lau",
+      "relationship_type": "parent_of",
+      "target_name": "Maya Lau",
+      "supporting_text": "Nadia Lau and Owen Lau are the parents of Maya Lau."
+    },
+    {
+      "source_name": "Maya Lau",
+      "relationship_type": "beneficiary_of",
+      "target_name": "Juniper Family Trust",
+      "supporting_text": "Maya Lau is a beneficiary of the Juniper Family Trust."
+    }
+  ]
+}
