@@ -65,7 +65,11 @@ test("public demo deep links refresh and missing examples return to the demo lis
 
 test("Chinese demo preserves selected evidence, localises the journey and remains isolated when signed in", async ({ page, context }, testInfo) => {
   // Establish the ordinary synthetic test session first; demo traffic observation starts afterwards.
-  await page.goto("/app");
+  await Promise.all([
+    page.waitForResponse(response => new URL(response.url()).pathname === "/api/matters"),
+    page.waitForResponse(response => new URL(response.url()).pathname === "/api/matter-proposals"),
+    page.goto("/app"),
+  ]);
   expect((await context.cookies()).some(cookie => cookie.name === "__Host-pcg-session")).toBe(true);
   const forbidden: string[] = [];
   page.on("request", request => {

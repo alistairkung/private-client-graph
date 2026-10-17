@@ -24,7 +24,6 @@ export function DemoApp() {
       <a href="/" className="ledger-brand"><BrandMark />Private Client Graph</a>
       <nav aria-label={t("Demo application")}>
         <a href="/demo" aria-current={path === "/demo" ? "page" : undefined}>{t("Matters")}</a>
-        <a href="/app">{t("Practitioner sign-in")}</a>
       </nav>
       <div className="app-header-utilities"><LanguageControl compact /></div>
     </div></header>
@@ -35,7 +34,13 @@ export function DemoApp() {
       </aside>
       <DemoPage path={path} />
     </main>
-    <footer className="ledger-footer ledger-width"><span>Private Client Graph</span><a href="/">{t("Back to public showcase")}</a></footer>
+    <footer className="ledger-footer ledger-width">
+      <span>Private Client Graph</span>
+      <div className="demo-footer-links">
+        <a href="/">{t("Back to public showcase")}</a>
+        <a href="/app">{t("Practitioner sign-in")}</a>
+      </div>
+    </footer>
   </div>;
 }
 

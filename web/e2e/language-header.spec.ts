@@ -42,3 +42,19 @@ test("landing retains its existing visible language buttons", async ({ page }) =
   await expect(header.getByRole("button", { name: "简体中文", exact: true })).toBeVisible();
   await expect(header.getByRole("combobox")).toHaveCount(0);
 });
+
+for (const locale of ["en", "zh-CN"]) {
+  test(`demo sign-in is a quiet footer link in ${locale}`, async ({ page }, testInfo) => {
+    await page.goto("/demo/matters/hillcrest");
+    await page.getByRole("combobox", { name: "Language", exact: true }).selectOption(locale);
+    await expect(page.locator("header a[href='/app']")).toHaveCount(0);
+    const signIn = page.locator("footer").getByRole("link", {
+      name: locale === "en" ? "Practitioner sign-in" : "专业用户登录", exact: true,
+    });
+    await signIn.scrollIntoViewIfNeeded();
+    await expect(signIn).toBeVisible();
+    await expect(signIn).toHaveAttribute("href", "/app");
+    await page.screenshot({ path: testInfo.outputPath(`demo-footer-${locale}.png`) });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  });
+}
