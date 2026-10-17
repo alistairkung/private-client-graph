@@ -388,6 +388,13 @@ and redeploy:
 | `PCG_SHOWCASE_LIVE_WINDOW_SECONDS` | Unset | Positive integer window in seconds, e.g. `86400` for UTC days. |
 | `DEEPSEEK_API_KEY` | Unset | Required provider credential. A key alone never enables live analysis. |
 | `DEEPSEEK_MODEL` | `deepseek-flash` | Optional backend-only model selection. |
+
+Provider dispatch also requires `PCG_PROVIDER_TASK_ROOT` pointing to the existing
+shared task artifact root and `PCG_PROVIDER_AUTHORIZATION` naming its explicitly
+approved external invocation. Missing, inconsistent or exhausted authority blocks
+dispatch; application requests never initialize a task or grant approval. The
+application rate quota remains a separate gate. Every reserved dispatch, including
+failed or interrupted attempts, remains charged in the same ledger as research.
 | `DATABASE_URL` | Existing PostgreSQL connection | Use the existing private-network reference. |
 
 Limit and duration must fit positive 32-bit integers. Enabled deployments fail

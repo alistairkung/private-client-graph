@@ -1,11 +1,12 @@
 """Pre-dispatch task accounting for authenticated synthetic provider invocations."""
 
 from collections.abc import Callable
-from typing import TypeVar
+from pathlib import Path
+from typing import Literal, TypeVar
 from uuid import uuid4
 
 from private_client_graph.research.artifacts import BudgetExceeded
-from private_client_graph.research.live_accounting import reserve_external_attempt
+from private_client_graph.research.live_accounting import finish_external_attempt, reserve_external_attempt
 
 from .proposal_config import ProposalAnalysisConfig
 from .proposal_errors import ProposalFailure
@@ -29,7 +30,26 @@ def invoke_authorized(config: ProposalAnalysisConfig | None, invoke: Callable[[]
         raise _unavailable() from exc
     if not reserved:
         raise _unavailable()
-    return invoke()
+    try:
+        result = invoke()
+    except BaseException as exc:
+        outcome: Literal['failed', 'uncertain'] = 'failed' if isinstance(exc, Exception) else 'uncertain'
+        _finish(config.task_root, config.authorization, attempt_id, outcome,
+            error_type=type(exc.__cause__ or exc).__name__)
+        raise
+    _finish(config.task_root, config.authorization, attempt_id, 'completed')
+    return result
+
+
+def _finish(root: Path, authorization: str, attempt_id: str,
+            outcome: Literal['completed', 'failed', 'uncertain'], *, error_type: str | None = None) -> None:
+    try:
+        finish_external_attempt(root, authorization=authorization, attempt_id=attempt_id,
+            outcome=outcome, error_type=error_type)
+    except (OSError, ValueError, KeyError, TypeError) as exc:
+        raise ProposalFailure('provider_outcome_unknown',
+            'The provider outcome could not be retained. Contact the operator before retrying.',
+            status_code=503, outcome_unknown=True) from exc
 
 
 def _unavailable() -> ProposalFailure:
