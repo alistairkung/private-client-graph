@@ -77,10 +77,10 @@ def test_failed_fact_copy_retains_the_complete_source_aware_proposal(database):
     engine.dispose()
 
 
-def test_single_source_api_does_not_consume_a_multisource_proposal(database):
-    import pytest
-    from private_client_graph.persistence.proposal_state import insert_proposal, load_proposal_state
-    from private_client_graph.persistence.matter_proposals import confirm_proposal, get_proposal
+def test_practitioner_api_loads_and_confirms_the_complete_multisource_proposal(database):
+    from private_client_graph.persistence.proposal_state import insert_proposal
+    from private_client_graph.persistence.matter_proposals import confirm_proposal, get_proposal, reference_claims
+    from private_client_graph.application.matters import get_matter
 
     state = CanonicalState.model_validate_json(
         (Path(__file__).resolve().parents[2] / 'tests/fixtures/canonical-state.json').read_text()
@@ -89,10 +89,13 @@ def test_single_source_api_does_not_consume_a_multisource_proposal(database):
     proposal_id = uuid4()
     with engine.begin() as connection:
         insert_proposal(connection, proposal_id=proposal_id, external_reference='R-85', title='Synthetic', state=state)
-    for operation in [get_proposal, confirm_proposal]:
-        with pytest.raises(ValueError, match='exactly one Source'):
-            operation(proposal_id)
-    with engine.connect() as connection:
-        assert load_proposal_state(connection, proposal_id) == state
-        assert connection.scalar(text('SELECT count(*) FROM matters')) == 0
+        connection.execute(reference_claims.insert().values(canonical_reference='r-85', resource_kind='matter_proposal', resource_id=proposal_id))
+    proposal = get_proposal(proposal_id)
+    assert proposal.state == state
+    assert proposal.authoritative_source is None
+    matter = confirm_proposal(proposal_id)
+    assert matter.state == state
+    assert matter.authoritative_source is None
+    assert get_matter(matter.id).state == state
+    assert get_proposal(proposal_id) is None
     engine.dispose()

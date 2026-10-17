@@ -61,6 +61,7 @@ def test_confirmation_creates_the_matter_resource_and_accepts_only_a_proposal_id
         "title": proposal.matter_title,
         "authoritative_source": proposal.authoritative_source.model_dump(),
         "current_graph": proposal.proposed_graph.model_dump(mode="json"),
+        "state": proposal.state.model_dump(mode="json"),
     }
     assert matter["id"] != str(proposal.id)
     assert proposal_client.get(response.headers["location"]).json() == matter

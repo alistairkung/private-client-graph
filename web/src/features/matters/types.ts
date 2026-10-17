@@ -1,4 +1,5 @@
 import type { CanonicalGraph } from "../../shared/canonical-graph";
+import type { CanonicalState } from "../../shared/canonical-state";
 
 export interface MatterSummary {
   id: string;
@@ -7,6 +8,7 @@ export interface MatterSummary {
 }
 
 export interface MatterDetail extends MatterSummary {
-  authoritative_source: { title: string; text: string };
+  authoritative_source: { title: string; text: string } | null;
+  state?: CanonicalState;
   current_graph: CanonicalGraph;
 }

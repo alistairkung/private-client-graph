@@ -208,8 +208,11 @@ def test_relational_state_cannot_be_presented_against_an_arbitrary_single_source
     with engine.begin() as connection:
         insert_matter(connection, matter_id=matter_id, external_reference="A", title="A", state=state)
     response = authenticated_client(create_app()).get(f"/api/matters/{matter_id}")
-    assert response.status_code == 503
-    assert response.json() == {"error": {"message": "Matter could not be loaded."}}
+    assert response.status_code == 200
+    detail = response.json()
+    assert detail["authoritative_source"] is None
+    assert detail["state"] == state.model_dump(mode="json")
+    assert detail["current_graph"] == reconstruct_graph(state).model_dump(mode="json")
     engine.dispose()
 
 

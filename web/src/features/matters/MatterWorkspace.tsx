@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { getMatter } from "./api";
 import type { MatterDetail } from "./types";
 import { ReviewWorkspace } from "../review/ReviewWorkspace";
+import { SourceAwareReviewWorkspace } from "../review/SourceAwareReviewWorkspace";
 import { consumeMatterCreation } from "./creation-notice";
 
 type MatterState =
@@ -33,13 +34,15 @@ export function MatterWorkspace({ id }: { id: string }) {
         <p>Matter reference: {state.matter.external_reference}</p>
       </header>
       {created && <p className="matter-created" role="status">Matter created. The whole proposal is now accepted current Matter state.</p>}
-      <ReviewWorkspace
+      {state.matter.state ? <SourceAwareReviewWorkspace key={id} state={state.matter.state}
+        graphTitle="Accepted relationships" practitioner />
+        : state.matter.authoritative_source ? <ReviewWorkspace
         source={state.matter.authoritative_source.text}
         sourceTitle={state.matter.authoritative_source.title}
         graph={state.matter.current_graph}
         graphTitle="Accepted relationships"
         practitioner
-      />
+      /> : <p role="alert">The complete Source state is unavailable. Reload to try again.</p>}
     </> : state.status === "loading" ? <p role="status">Loading Matter…</p> :
       <div role="alert">
         <h1>{state.status === "missing" ? "Matter not found" : "Matter could not be loaded."}</h1>

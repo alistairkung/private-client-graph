@@ -7,6 +7,7 @@ from sqlalchemy import select
 
 from private_client_graph.canonical_state import reconstruct_graph
 from private_client_graph.models import CanonicalGraph
+from private_client_graph.models.canonical_state import CanonicalState
 from private_client_graph.persistence.database import database_engine
 from private_client_graph.persistence.matters import matters
 from private_client_graph.persistence.matter_state import load_matter_state
@@ -32,8 +33,9 @@ class AuthoritativeSource(BaseModel):
 
 
 class MatterDetail(MatterSummary):
-    authoritative_source: AuthoritativeSource
+    authoritative_source: AuthoritativeSource | None
     current_graph: CanonicalGraph
+    state: CanonicalState | None = None
 
 
 def get_matter(internal_id: UUID) -> MatterDetail | None:
@@ -44,13 +46,11 @@ def get_matter(internal_id: UUID) -> MatterDetail | None:
         if row is None:
             return None
         state = load_matter_state(connection, internal_id)
-    # The current practitioner contract is deliberately single-source. Never
-    # display a multi-source graph against one arbitrarily chosen source panel.
-    if len(state.sources) != 1:
-        raise ValueError("The practitioner workspace requires exactly one Source")
-    source = state.sources[0]
+    if not state.sources:
+        raise ValueError("A Matter must retain at least one Source")
+    source = state.sources[0] if len(state.sources) == 1 else None
     return MatterDetail(
         id=row["id"], external_reference=row["external_reference"], title=row["title"],
-        authoritative_source=AuthoritativeSource(title=source.title, text=source.text),
-        current_graph=reconstruct_graph(state),
+        authoritative_source=AuthoritativeSource(title=source.title, text=source.text) if source else None,
+        current_graph=reconstruct_graph(state), state=state,
     )

@@ -88,3 +88,17 @@ test("confirmation preserves typed failures and treats a lost response as an unk
     message: expect.stringContaining("Matter Ledger"),
   } });
 });
+
+
+test("multi-PDF creation pairs explicit ordered Source identities with their files", async () => {
+  const fetcher = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify(proposal), { status: 201 }));
+  const first = new File(["first"], "one.pdf", { type: "application/pdf" });
+  const second = new File(["second"], "two.pdf", { type: "application/pdf" });
+  await createProposal({ external_reference: "Multi/1", matter_title: "Combined", synthetic_confirmation: true,
+    sources: [{ id: "second_supplied_first", title: "Note", pdf: first }, { id: "other", title: "Note", pdf: second }] });
+  const form = fetcher.mock.calls[0][1]?.body as FormData;
+  expect(JSON.parse(form.get("sources") as string)).toEqual([{ id: "second_supplied_first", title: "Note" }, { id: "other", title: "Note" }]);
+  expect(form.getAll("pdfs")).toEqual([first, second]);
+  expect(form.has("pdf")).toBe(false);
+  expect(form.get("synthetic_confirmation")).toBe("true");
+});
