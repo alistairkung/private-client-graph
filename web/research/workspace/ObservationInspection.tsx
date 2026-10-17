@@ -146,6 +146,7 @@ export function ObservationInspection({ run }: { run: RunDetail }) {
                 key={`${observation.id}-${relationship?.id ?? ""}`}
                 relationship={relationship}
                 source={observation.source}
+                sources={observation.sources}
               />
             </div>
           </div>

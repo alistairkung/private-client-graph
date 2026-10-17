@@ -2,6 +2,7 @@
 from typing import Literal
 
 from pydantic import BaseModel, Field
+from private_client_graph.research.source_attribution import SourceAttributionDiagnostic
 
 
 # Compatibility name for the same research-owned frozen observation contract.
@@ -31,6 +32,7 @@ class CaseAggregate(BaseModel):
     fp: int = 0
     fn: int = 0
     f1: float | None = None
+    source_attribution: SourceAttributionDiagnostic | None = None
     coverage: Coverage = Field(default_factory=Coverage)
 
 
@@ -40,6 +42,7 @@ class RunAggregate(BaseModel):
     fp: int = 0
     fn: int = 0
     f1: float | None = None
+    source_attribution: SourceAttributionDiagnostic | None = None
     coverage: Coverage = Field(default_factory=Coverage)
     cases: list[CaseAggregate] = Field(default_factory=list)
     state: Literal['complete', 'provisional', 'unavailable'] = 'unavailable'

@@ -1,4 +1,4 @@
-"""Deterministic construction of a single-document relationship graph."""
+"""Deterministic single-document graphs and explicitly sourced canonical state."""
 
 from collections.abc import Sequence
 from private_client_graph.models import (
@@ -9,7 +9,12 @@ from private_client_graph.models import (
     Relationship,
     RelationshipCandidate,
     RelationshipType,
+    SourcedRelationshipCandidate,
 )
+
+from private_client_graph.models.source import Source
+from private_client_graph.models.canonical_state import CanonicalState
+from private_client_graph.models.sourced_evidence import SourcedEvidence
 
 ENDPOINT_TYPES: dict[RelationshipType, tuple[EntityType, EntityType]] = {
     "parent_of": ("person", "person"),
@@ -35,7 +40,8 @@ def build_graph(
     entity_types = _validate_candidates(candidates, source_text)
     entities = _build_entities(entity_types)
     evidence = _build_evidence(candidates, document)
-    relationships = _build_relationships(candidates, entities, evidence)
+    relationships = _build_relationships(
+        candidates, entities, [evidence[item.supporting_text].id for item in candidates])
 
     return CanonicalGraph(
         entities=list(entities.values()),
@@ -89,15 +95,15 @@ def _build_evidence(
 def _build_relationships(
     candidates: Sequence[RelationshipCandidate],
     entities: dict[str, Entity],
-    evidence: dict[str, Evidence],
+    evidence_ids: Sequence[str],
 ) -> list[Relationship]:
     edges: dict[tuple[str, RelationshipType, str], set[str]] = {}
-    for candidate in candidates:
+    for candidate, evidence_id in zip(candidates, evidence_ids, strict=True):
         source, target = candidate.source_name, candidate.target_name
         if candidate.relationship_type in SYMMETRIC_TYPES:
             source, target = sorted((source, target))
         key = (source, candidate.relationship_type, target)
-        edges.setdefault(key, set()).add(evidence[candidate.supporting_text].id)
+        edges.setdefault(key, set()).add(evidence_id)
 
     return [
         Relationship(
@@ -108,3 +114,58 @@ def _build_relationships(
         )
         for source, relationship_type, target in sorted(edges)
     ]
+
+
+def build_canonical_state(
+    candidates: Sequence[SourcedRelationshipCandidate], *, sources: Sequence[Source]
+) -> CanonicalState:
+    """Validate attributed final-current claims and construct one deterministic state.
+
+    Source order is retained. Temporal interpretation belongs to extraction; this
+    boundary never drops claims or infers attribution from titles or quote matches.
+    """
+    from private_client_graph.canonical_state import validate_canonical_state
+
+    sources = [source.model_copy(deep=True) for source in sources]
+    source_lookup = _validated_sources(sources)
+    entities = _build_entities(_sourced_entity_types(candidates, source_lookup))
+    evidence = _build_sourced_evidence(candidates, source_lookup)
+    relationships = _build_relationships(candidates, entities,
+        [evidence[(item.source_id, item.supporting_text)].id for item in candidates])
+    state = CanonicalState(sources=sources, entities=list(entities.values()),
+                           relationships=relationships, evidence=list(evidence.values()))
+    validate_canonical_state(state)
+    return state
+
+
+def _validated_sources(sources: Sequence[Source]) -> dict[str, Source]:
+    source_lookup = {source.id: source for source in sources}
+    if not sources or len(source_lookup) != len(sources) or any(not source.id.strip() for source in sources):
+        raise ValueError('Sources require non-empty unique IDs and at least one Source')
+    return source_lookup
+
+
+def _sourced_entity_types(
+    candidates: Sequence[SourcedRelationshipCandidate], sources: dict[str, Source]
+) -> dict[str, EntityType]:
+    entity_types: dict[str, EntityType] = {}
+    for candidate in candidates:
+        if candidate.source_id not in sources:
+            raise ValueError(f'Unresolved candidate Source reference: {candidate.source_id!r}')
+        types = _validate_candidates([candidate], sources[candidate.source_id].text)
+        for name, entity_type in types.items():
+            if name in entity_types and entity_types[name] != entity_type:
+                raise ValueError(f'Conflicting entity types for {name!r}')
+            entity_types[name] = entity_type
+    return entity_types
+
+
+def _build_sourced_evidence(
+    candidates: Sequence[SourcedRelationshipCandidate], sources: dict[str, Source]
+) -> dict[tuple[str, str], SourcedEvidence]:
+    keys = sorted({(item.source_id, item.supporting_text) for item in candidates})
+    return {
+        key: SourcedEvidence(id=f'evidence_{index:03d}', source_id=key[0],
+                            document=sources[key[0]].title, supporting_text=key[1])
+        for index, key in enumerate(keys, start=1)
+    }

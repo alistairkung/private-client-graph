@@ -3,7 +3,9 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict
 
-from private_client_graph.models import CanonicalGraph, EvaluationResult, ExtractionResult
+from private_client_graph.models import CanonicalGraph, EvaluationResult, ExtractionResult, SourcedExtractionResult
+from private_client_graph.models.canonical_state import CanonicalState
+from .source_attribution import SourceAttributionDiagnostic
 
 from .metrics import IdentityDiagnostics
 from .provider import TokenUsage
@@ -27,6 +29,9 @@ class ResearchResult(BaseModel):
     ] = "completed"
     stage: Literal["provider", "parse", "edits", "graph", "evaluation", "extraction"] | None = None
     graph: CanonicalGraph | None = None
+    state: CanonicalState | None = None
+    sourced_extraction: SourcedExtractionResult | None = None
+    source_attribution: SourceAttributionDiagnostic | None = None
     evaluation: EvaluationResult | None = None
     identity: IdentityDiagnostics | None = None
     extraction: ExtractionResult | None = None

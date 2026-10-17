@@ -43,3 +43,29 @@ it("keeps missing predictions separate and focuses exact Source after selection"
   expect(source.querySelectorAll("mark")).toHaveLength(2);
   expect(screen.getByText(/no authoritative occurrence/)).toBeVisible();
 });
+
+it("uses explicit Source identity when titles and quotes repeat", async () => {
+  const row: RelationshipOutcome = {
+    id: "sourced-rel",
+    edge: ["Beth", "spouse_of", "John"],
+    outcome: "matched",
+    expected: [],
+    predicted: [{ ...quote, source_id: "second", occurrences: [[7, 11]] }],
+  };
+  Element.prototype.scrollIntoView = vi.fn();
+  render(
+    <EvidenceInspector
+      relationship={row}
+      source="legacy combined view must not be used"
+      sources={[
+        { id: "first", title: "Note", text: "First Beth" },
+        { id: "second", title: "Note", text: "Second Beth" },
+      ]}
+    />,
+  );
+  await userEvent.click(screen.getByRole("button", { name: "View predicted in Source" }));
+  const article = screen.getByRole("article", { name: "Frozen Source" });
+  expect(article.textContent).toBe("Second Beth");
+  expect(article.querySelector("mark")?.textContent).toBe("Beth");
+  expect(screen.getByText("Frozen Source · Note (second)")).toBeVisible();
+});
