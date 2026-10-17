@@ -27,3 +27,28 @@ test("multi-source curated review follows exact Evidence and demonstrates truste
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   await page.screenshot({ path: testInfo.outputPath("case-05.png"), fullPage: true });
 });
+
+test("landing review stacks graph above attendance when its panel is narrow", async ({ page }, testInfo) => {
+  for (const width of [390, 1024, 1280, 1600]) {
+    await page.setViewportSize({ width, height: 1000 });
+    await page.goto("/#case-01");
+    const graph = page.locator(".demonstration .graph-panel");
+    const source = page.locator(".demonstration .source-panel");
+    await expect(graph).toBeVisible();
+    await expect(source).toBeVisible();
+    const stage = await page.locator(".demonstration-stage").boundingBox();
+    const graphBounds = await graph.boundingBox();
+    const sourceBounds = await source.boundingBox();
+    if (stage!.width <= 850) {
+      expect(sourceBounds!.y).toBeGreaterThanOrEqual(graphBounds!.y + graphBounds!.height);
+      expect(Math.abs(graphBounds!.x - sourceBounds!.x)).toBeLessThan(2);
+      expect(Math.abs(graphBounds!.width - sourceBounds!.width)).toBeLessThan(2);
+    } else {
+      expect(sourceBounds!.x).toBeGreaterThan(graphBounds!.x);
+      expect(Math.abs(graphBounds!.y - sourceBounds!.y)).toBeLessThan(2);
+    }
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    await graph.scrollIntoViewIfNeeded();
+    await page.screenshot({ path: testInfo.outputPath(`landing-review-${width}.png`) });
+  }
+});
