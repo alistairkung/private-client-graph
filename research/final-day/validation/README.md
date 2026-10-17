@@ -126,3 +126,7 @@ retarget #125 to `main` after the user merges #126. No blocking fixture defect
 was identified. Required checks on both final PR heads must pass before merge;
 a local passing run does not replace CI or authorize merging, deployment or
 held-out execution.
+
+PR #126 also enables pull-request CI for stacked base branches; push-triggered
+checks remain limited to `main`. Combined local validation passed 67 focused
+benchmark tests, 22 frontend tests and all 24 execution browser checks.
