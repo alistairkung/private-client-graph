@@ -37,20 +37,6 @@
   padding-top: 64px;
   max-width: 75ch;
 }
-.research-headline {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 32px 80px;
-  padding-top: 20px;
-}
-.research-headline p {
-  font-size: 14px;
-  margin-bottom: 10px;
-}
-.research-headline strong {
-  font: 400 clamp(40px, 5vw, 64px)/1.1 var(--folio-serif);
-  font-variant-numeric: tabular-nums;
-}
 .research-caveat {
   margin-top: 28px;
   font-weight: 600;
@@ -363,4 +349,72 @@
 }
 .research-source-inspection .source-text {
   overflow-wrap: anywhere;
+}
+
+/* Editorial chapters frame shared evidence tools without the operational shell. */
+.research-opening { max-width: 980px; padding-block: clamp(64px, 8vw, 112px) 20px; }
+.research-shell h1 { font-size: clamp(52px, 6.2vw, 88px); max-width: 15ch; }
+.research-opening > p { font: 400 clamp(22px, 2.4vw, 32px)/1.35 var(--folio-serif); max-width: 42ch; }
+.research-contents { margin-top: 44px; border-top: 0; }
+.research-chapter { margin-top: clamp(72px, 9vw, 128px); padding-top: 40px; }
+.research-chapter > h2 { max-width: 25ch; font-size: clamp(36px, 4vw, 56px); margin: 0 0 28px; }
+.research-chapter > p { max-width: 72ch; font-size: 18px; line-height: 1.75; }
+.research-chapter > .research-section { margin-top: 48px; }
+.research-caption { font-size: 14px; color: #52665f; }
+.research-architecture { margin-top: 36px; }
+.research-chain-scroll { overflow-x: auto; background: #e8ede5; scrollbar-color: #718a7a #e8ede5; }
+.research-chain { display: flex; width: max-content; min-width: 100%; padding: 36px 28px; }
+.research-chain-stage { display: flex; align-items: flex-start; }
+.research-chain-connector { width: 52px; height: 172px; display: grid; place-items: center; font-size: 28px; }
+.research-chain .pipeline-node { width: 250px; border-radius: 5px; }
+.research-chain .pipeline-node.expanded { width: 340px; }
+.research-chain .node-header { border: 0; border-radius: 5px; height: 172px; padding: 20px; }
+.research-chain .node-header strong { font-size: 18px; }
+.research-chain .node-header small, .research-chain .node-header span, .research-chain .node-header u { font-size: 13px; }
+.research-chain .node-settings p { font-size: 15px; margin-top: 0; }
+.research-chain-scroll:focus-visible, .research-shell button:focus-visible { outline: 3px solid var(--folio-burgundy); outline-offset: 3px; }
+.research-graph-study { margin-top: 40px; }
+.research-graph-evidence { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 32px; align-items: start; }
+.research-graph-evidence > section { min-width: 0; }
+.research-graph-evidence .graph-canvas { height: 480px; border: 1px solid #b6c5bd; background: white; }
+.research-graph-evidence .evidence-inspector { min-width: 0; border-top: 1px solid #98aca1; padding-top: 16px; }
+.research-graph-evidence .evidence-inspector h2 { font-size: 28px; margin-top: 12px; }
+.research-graph-evidence .evidence-inspector h3 { font: 600 16px/1.4 "Public Sans", sans-serif; margin-top: 28px; }
+.research-graph-evidence .evidence-inspector p { font-size: 14px; }
+.research-graph-evidence .evidence-inspector .mobile-back { display: none; }
+.research-graph-evidence blockquote { margin: 16px 0; font: 400 22px/1.5 var(--folio-serif); }
+.research-graph-evidence .evidence-group button { padding: 10px 16px; }
+.research-graph-evidence .frozen-source { white-space: pre-wrap; font-size: 15px; line-height: 1.8; padding: 24px; background: white; max-height: 480px; overflow-y: auto; }
+.research-graph-evidence mark { background: var(--folio-gold); color: var(--folio-green); }
+.research-graph-evidence .frozen-source:focus { outline: 3px solid var(--folio-burgundy); outline-offset: 3px; }
+.research-chapter .research-workspace { grid-template-columns: 190px minmax(0, 1fr); }
+#comparison .outcome-matrix { min-width: 36rem; }
+#comparison .outcome-matrix caption { text-align: left; padding-bottom: 16px; }
+@media (max-width: 900px) {
+  .research-graph-evidence { grid-template-columns: 1fr; }
+  .research-chapter .research-workspace { grid-template-columns: 1fr; }
+}
+@media (max-width: 700px) {
+  .research-opening { padding-top: 48px; }
+  .research-chapter > p { font-size: 17px; }
+  .research-graph-evidence .graph-canvas { height: 420px; }
+  .research-chain { padding: 24px 16px; }
+  .research-chain .pipeline-node { width: 240px; }
+  .research-chain .pipeline-node.expanded { width: 280px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .research-chain .pipeline-node { transition: none; }
+  .research-shell { scroll-behavior: auto; }
+}
+/* Frozen public stages expand immediately; the Workbench owns its existing transition. */
+.research-chain .pipeline-node { transition: none; }
+
+@media (min-width: 701px) {
+  .research-case-index button { flex: 0 0 auto; }
+  .research-case-index {
+    max-height: 32rem;
+    overflow-y: auto;
+    scrollbar-color: #758f83 var(--folio-paper);
+    border-bottom: 1px solid #b6c5bd;
+  }
 }

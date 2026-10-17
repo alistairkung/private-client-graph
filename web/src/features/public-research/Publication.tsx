@@ -9,34 +9,6 @@ export function Publication({
   const { t } = useLocale();
   return (
     <>
-      <section id="methodology" className="research-section research-reading">
-        <h2>{t("Methodology and limitations")}</h2>
-        <p>
-          {t(
-            "The question was whether constrained alias resolution improved retained relationship results when the extraction inputs were held fixed. A′ is the no-resolver replay control; B uses the same frozen extractions with resolution. This publication reports stored results without new execution or rescoring.",
-          )}
-        </p>
-        <p>
-          {t(
-            "The ten held-out cases were authored by this project and checked with separate AI validators as an internal development tool. This was not independent human or institutional validation. The resolver comparison was post-hoc and exploratory. There are no repeated trials, uncertainty estimates or evidence of production generalisation.",
-          )}
-        </p>
-        <p>
-          {t(
-            "All relationship improvement came from two Bea → Beatrice Ng endpoint-name corrections in one case. Nine cases were unchanged and no relationship regressions were observed in this dataset. This does not establish broader identity-disambiguation performance.",
-          )}
-        </p>
-        <p>
-          {t(
-            "These cases were held out for this completed experiment. The full synthetic Sources and expected answers are now published; subsequent work informed by them cannot treat them as unseen evaluation data. Fresh undisclosed cases are needed for a future independent evaluation.",
-          )}
-        </p>
-        <p>
-          {t(
-            "Original case names, Sources, entity names and Evidence remain in their original language. Interface translation does not alter the published artifacts.",
-          )}
-        </p>
-      </section>
       <section id="publication" className="research-section">
         <h2>{t("Published artifact")}</h2>
         <a

@@ -1,3 +1,4 @@
+import { openPublicMenu, selectPublicLanguage } from "./public-navigation";
 import { expect, test } from "@playwright/test";
 
 for (const path of ["/demo", "/app"]) {
@@ -35,9 +36,10 @@ for (const path of ["/demo", "/app"]) {
   });
 }
 
-test("landing retains its existing visible language buttons", async ({ page }) => {
+test("public language controls remain available in the header navigation", async ({ page }) => {
   await page.goto("/");
   const header = page.locator(".showcase-header");
+  await openPublicMenu(page);
   await expect(header.getByRole("button", { name: "EN", exact: true })).toBeVisible();
   await expect(header.getByRole("button", { name: "简体中文", exact: true })).toBeVisible();
   await expect(header.getByRole("combobox")).toHaveCount(0);
@@ -55,6 +57,51 @@ for (const locale of ["en", "zh-CN"]) {
     await expect(signIn).toBeVisible();
     await expect(signIn).toHaveAttribute("href", "/app");
     await page.screenshot({ path: testInfo.outputPath(`demo-footer-${locale}.png`) });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  });
+}
+
+for (const path of ["/", "/research-results"]) {
+  test(`public navigation collapses to a keyboard-operable dropdown on ${path}`, async ({ page }, testInfo) => {
+    await page.goto(path);
+    const header = page.locator(".showcase-header");
+    const navigation = header.getByRole("navigation");
+    const menu = header.getByRole("button", { name: "Menu", exact: true });
+    for (const width of [1024, 390]) {
+      await page.setViewportSize({ width, height: 900 });
+      await expect(menu).toBeVisible();
+      await expect(navigation).toBeHidden();
+      await expect(header.getByRole("button", { name: "EN", exact: true })).toBeHidden();
+      await menu.click();
+      await expect(menu).toHaveAttribute("aria-expanded", "true");
+      await expect(navigation.getByRole("link")).toHaveCount(4);
+      for (const link of await navigation.getByRole("link").all()) await expect(link).toBeVisible();
+      await page.keyboard.press("Tab");
+      await expect(navigation.getByRole("link").first()).toBeFocused();
+      await page.keyboard.press("Escape");
+      await expect(menu).toBeFocused();
+      await expect(navigation).toBeHidden();
+      await menu.click();
+      await page.screenshot({ path: testInfo.outputPath(`public-menu-en-${width}.png`) });
+      await header.getByRole("button", { name: "简体中文", exact: true }).click();
+      await expect(navigation).toBeHidden();
+      const chineseMenu = header.getByRole("button", { name: "菜单", exact: true });
+      await chineseMenu.click();
+      await expect(navigation.getByRole("link", { name: "研究结果", exact: true })).toBeVisible();
+      await page.screenshot({ path: testInfo.outputPath(`public-menu-zh-CN-${width}.png`) });
+      await page.mouse.click(4, 300);
+      await expect(navigation).toBeHidden();
+      await selectPublicLanguage(page, "en");
+    }
+    await page.setViewportSize({ width: 1440, height: 1100 });
+    await expect(menu).toBeHidden();
+    await expect(navigation.getByRole("link", { name: "Research results", exact: true })).toBeVisible();
+    await page.setViewportSize({ width: 884, height: 900 });
+    await menu.click();
+    await navigation.getByRole("link", { name: "The approach", exact: true }).click();
+    await expect(page).toHaveURL(/\/#approach$/);
+    await expect(page.locator("#approach")).toBeInViewport();
+    await expect(page.locator(".showcase-header nav")).toBeHidden();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   });
 }

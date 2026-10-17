@@ -1,124 +1,147 @@
-# Public research publication — design for review
+# Public research publication — editorial refinement
 
-Status: design C approved by the owner in conversation on 2026-10-17 (Asia/Hong_Kong). Specification and implementation approved by the owner invoking implement-spec #148. No new experiment, paid call or deployment is included. Governing specification: [#148](https://github.com/alistairkung/private-client-graph/issues/148); implementation lanes [#149](https://github.com/alistairkung/private-client-graph/issues/149), [#150](https://github.com/alistairkung/private-client-graph/issues/150), [#151](https://github.com/alistairkung/private-client-graph/issues/151).
+The owner's 2026-10-17 refinement request supersedes the dashboard-like composition
+of the initial design C implementation. This remains the public presentation slice
+of [#148](https://github.com/alistairkung/private-client-graph/issues/148), on PR
+#152. The verified snapshot, export contract, semantics and security boundary are
+unchanged. No new experiment, paid provider call, merge or deployment is included.
 
-## Job and audience
+## Composition and ownership
 
-Competition judges arrive from the public landing page with limited time and a reasonable question: what was actually measured, and can I inspect the evidence? The results page uses Read mode, with an Operate-style evidence inspector inside it. The landing section uses Persuade mode within the approved Evidence Folio composition. Success is a short, truthful reading path from measured relationship improvement to the exact two edits, original Sources and limitations.
+The landing page tells the story in Persuade mode: hero → relationship/Evidence
+approach → full-width measured research chapter → existing synthetic demonstration.
+The research chapter pairs large editorial type with the two measured F1 values,
+then explains the narrow name corrections, exploratory comparison and synthetic
+data limits. The independently reviewed wording is immediately qualified: checks
+used separate AI validators within internal development, not external human or
+institutional validation. Disclosures are ordinary visible text in both languages.
 
-## Outcome and proof
+At the owner’s follow-up request, public navigation collapses into a labelled
+hamburger dropdown at 1350px and below, including language controls and the
+prototype notice. The four links and language controls remain inline on wider
+desktop layouts. Escape restores focus to the toggle;
+route selection, outside pointer interaction and resizing close the dropdown.
 
-The publication answers five questions in order: what was measured; what changed; where the Evidence is; what the execution used; and what cannot be concluded. Its distinctive fact is narrow: A/A′ relationship micro-F1 was 94.87%; B was 100.00%; two canonical-name edits in one case explain all improvement. These are retained outcomes from ten project-authored synthetic development cases, not a fresh model run or production validation.
+The standalone route uses Read mode, with eight chapters: research question;
+extraction architecture; evaluation methodology and A′ control; measured results;
+Case 03 failure analysis; additional case findings; limitations and resource
+trade-offs; reproducibility. Writing introduces each interactive component. The
+full ten-case comparison, saved diagnostic failures and per-call usage remain
+inspectable without turning the opening into a dashboard.
 
-Both prominent figures get an asterisk. The full internal-development disclosure and the post-hoc/two-edits explanation remain visible immediately below, including on mobile. Source text is original selectable text. Gold marks exact Evidence, never a performance badge. Do not put perfect-score celebration, green success stamps or an accuracy gauge around 100.00%.
+Shared presentation lives in `web/src/shared/research/`:
 
-## Visual authority
+- `PipelineNode`: the Workbench's actual expandable stage, extracted without its
+  editing or execution authority. Public `ResearchArchitecture` supplies only
+  frozen narrative and approved model identity.
+- `OutcomeMatrix`: the Workbench comparison table, reused for aggregate and
+  case-level results. Workbench callers retain their existing navigation links.
+- `EvidenceInspector`: the Workbench's exact frozen-Source inspector, localized
+  through the existing catalogue. Its original import remains a compatibility
+  re-export for internal consumers and tests.
 
-Extend the approved Evidence Folio from the existing landing direction, PRODUCT.md, DESIGN.md and actual public source. Keep Newsreader Display for editorial headings, Public Sans for interface/body copy, deep ledger green #173e38, paper #f6f6f1, white, restrained burgundy #773b46 and Evidence gold #efdda0. Use the public application's implemented fluid gutters and shared fonts; DESIGN.md's nominal width is not authority to override current component layout. Chinese uses the existing catalogue and glyph fallback; permit shorter headings, taller text and natural wrapping without reducing the caveat to small print.
+`RecordedGraph` narrowly adapts published canonical state to the existing shared
+`GraphView`, joining selected edges to retained outcomes by exact endpoint names
+and relationship type. It does not construct or score graphs. The Workbench does
+not currently have its own separate graph canvas; this renderer is shared with
+the public demonstration and practitioner review.
 
-No new identity, illustration, paper texture asset, display metaphor or framework is required. Existing gold quote highlighting and the professional Evidence inspector provide the signature. The public results page has the familiar brand/navigation/language control; its primary task is reading, so do not reuse the landing hero's oversized type in controls or metrics tables.
-
-## Common landing composition
-
-Sequence remains hero → deep-green approach chapter → new light research section → contained demonstration. The new section uses one editorial heading, a small internal-benchmark label, two adjacent labelled figures and one reading-width caveat/disclosure block. There is no dashboard card grid or separate chart just to repeat two numbers.
-
-Desktop: heading occupies the left editorial column; baseline and resolver micro-F1 sit on a common baseline in the right area, with the visible asterisk explanation directly below both. Supporting context and full disclosure span a comfortable reading measure. End with Explore the research results →. Tablet: the heading moves above the figures. Mobile: figures stack, each with its complete label; the shared asterisk paragraph follows immediately, then the full disclosure and link. The existing contained demonstration begins as a separate framed section below.
-
-English heading: Measured against a controlled synthetic benchmark.
-
-Chinese heading: 基于受控合成基准数据集的评估.
-
-English disclosure: Evaluated on ten project-authored, held-out synthetic cases used as an internal development benchmark. No real client data was used. These results do not establish production accuracy or reliability.
-
-Chinese disclosure: 本次评估使用项目自行编制的十个留出合成测试案例，作为内部开发基准。未使用真实客户数据。这些结果不代表系统在实际生产环境中的准确率或可靠性。
-
-Asterisk: Small internal development benchmark. The resolver comparison was post-hoc and exploratory; two name corrections in one case accounted for the entire improvement.
-
-Chinese asterisk: 小规模内部开发基准。实体解析比较为事后开展的探索性比较；全部提升来自同一个案例中的两处名称修正。
-
-## Results composition choices
-
-**Selected: C — Paired comparison and Evidence workspace.** The owner approved C; A/B below are archived alternatives, not implementation directions. The common landing, disclosure, bilingual, responsive and inspection requirements remain part of the approved design.
-
-The identity, content, landing section and all inspection capabilities are fixed across these alternatives. Only page topology and reading path vary. These are wireframe schematics for composition review, not screenshots of a built application. Image generation is excluded by this task's no-paid-calls constraint; the repository's standing comp-first preference remains unchanged.
-
-### A — Research report with section navigation
-
-A slim numbered contents rail sits beside a calm report column. The opening answers the research question with paired figures and adjacent caveat, followed by a compact three-Run comparison. Findings, Cases and Evidence, Provenance, Usage, Methodology and Limitations are ordinary anchored sections; the full disclosure is also present at the top.
-
-The signature moment is an inline link, Inspect the two corrections, which moves to heldout_03 and selects the retained endpoint-edit view beside exact Source Evidence. Section navigation makes usage/methodology reachable without hiding the reading column behind application tabs. Lower inspection sections may be denser while the introduction stays readable. On mobile the rail becomes a compact contents disclosure above the article; the scientific caveat never goes inside it.
-
-Strength: the most natural scientific reading sequence, with familiar document wayfinding. Risk: the page is long; the jump links and a clear return to summary must earn their place.
-
-### B — Tabbed research reference
-
-The top keeps the title, paired result, caveat and disclosure visible before four plain tabs: Findings; Cases and Evidence; Usage; Methodology and Limits. Findings shows A/A′/B relationship and provenance tables. Cases and Evidence exposes the full ten-case index and the shared inspector. Usage exposes Run totals and individual call rows. The methodology tab holds full detail, while its essential limitations remain outside the tabs.
-
-The signature moment is persistent selection: switch between the case, provenance and usage context without losing which case/Run/relationship was selected. On mobile tabs wrap into a conventional labelled control without sideways page overflow; each panel has a heading and a clear reading order. Tab changes do not reset the case inspector or locale.
-
-Strength: shortest page and clear separation of reference material. Risk: deeper content is less discoverable until a judge chooses a tab; essential claims/limits must stay in the shared opening.
-
-### C — Paired comparison and Evidence workspace
-
-A concise opening and visible caveat lead directly into a compact A/A′/B comparison table. Beneath it, a ten-case index and paired baseline/replay-versus-treatment relationship view sit beside the original Source inspector. Use baseline A′ and treatment B for the direct paired inspection; A remains accessible with its exact replay-equivalence explanation. Do not misrepresent A/A′ as independent replications.
-
-The signature moment is linked inspection: choosing either of the two endpoint edits exposes the before/after name, corresponding relationship outcome and exact quote/Source in one place. An unchanged-case selection shows an explicit unchanged result. Provenance, usage and methodology remain ordinary anchored sections below. On mobile the case selector precedes the relationship list and the Source follows the selected relationship inline; no three-column miniaturization or narrow nested scrolling.
-
-Strength: fastest route from aggregate score to the actual difference. Risk: the first working section is denser and can feel closer to the internal Workbench; strict editorial framing and the curated contract prevent that drift.
-
-## Shared interaction and state design
-
-- Comparison: compact rows for A, A′ and B, with exact Run IDs available as copyable/wrapping text in run details. Show precision, recall and micro-/macro-F1, TP/FP/FN and scored coverage without compressed acronym-only labels. A/A′ share outcomes, not identity. Explain zero-call replay separately.
-- Case selector: all ten named case identities with per-Run results and change status. Default overview covers all cases; the deliberate Inspect the two corrections action selects the changed case. No silent selection implying that one case represents the whole dataset.
-- Relationship inspection: expected and retained predicted relationships are explicitly labelled. Outcome filters such as false positives/false negatives operate on saved results. B's zero-error view says No recorded relationship errors, while still allowing all expected/predicted relationships to be inspected.
-- Corrections: render two recorded edits as before/after endpoint names tied to their actual relationships. The display establishes exact-label changes, not unmeasured identity-disambiguation success. Do not invent or paraphrase an evidence quote for a mockup.
-- Source/Evidence: show original Source title/ID and exact quote, with a full-Source reading area and existing quote highlight behavior. Source switching is visible when multiple Sources apply. Identical quotation strings from distinct Sources remain distinct records. Distinguish expected approved Evidence from predicted Evidence and show exact-boundary diagnostics honestly.
-- Provenance: use two separately named rows/definitions with numerator and denominator visible. Explain why relationship corrections change the evaluated population. A wrong Source and an exact-boundary mismatch are distinguishable diagnostic reasons. Colour alone never identifies outcomes.
-- Usage: a small Run totals table above a read-only call list. Stage/case/model/status lead; token breakdown, provider duration and Unpriced follow. Per-call detail is expandable for metadata density only, with no raw payload area. A′ explicitly shows 0 calls, with an explanatory zero-call control state. Missing metadata says Unavailable; unavailable pricing says Unpriced. Cached tokens are a subset, never a new additive total.
-- Publication identity: Download results / 下载研究结果 is a modest secondary action near the title and publication metadata. Show schema version, snapshot identity and digest in a plain metadata section; long digests wrap/copy without expanding page width. Download uses the exact artifact shown, not a separately generated export. No giant JSON block or generic log browser in the default view.
-- Loading/unavailable: quiet labelled loading region if needed; an unavailable artifact replaces claims/figures with safe translated explanation. No stale numerical fallback or zero-valued pseudo-results. Optional missing per-call fields remain distinguishable from a missing publication.
-- Navigation and state: native document links for route/section navigation, no publication-management sidebar. Locale changes preserve current case, Run/comparison, relationship, Source, Evidence and active tab/section context. Back/refresh follow established routing; deep-linking every ephemeral selection is not newly required.
-
-## Responsive and accessibility acceptance
-
-Use the actual application's desktop/mobile breakpoints as the starting point; verify at representative 1440px and 390px widths in both languages. Reading text stays around 16px with a comfortable 60–75-character measure on desktop. Full original Sources can use existing professional-review density. Avoid fixed-height text containers and fixed-width Chinese controls.
-
-Tables retain semantic headers. On mobile permit a labelled local table scroller only when the comparison genuinely needs one; keep critical metrics and limitations readable without horizontal scrolling. Case/relationship/Evidence layout stacks in task order. Primary targets retain at least 44px usable height, visible focus and keyboard-operable selection. Announce changed inspection headings/status politely without repeatedly reading the complete Source. Outcomes have text labels and accessible names, not just colour. No score counters, celebratory animation or motion-dependent understanding. Respect reduced motion.
-
-The implementation screenshot matrix is English/Chinese × desktop/mobile for the landing section and results overview, with representative correction/Evidence and call metadata states. Genuine implementation captures are required for acceptance; the earlier decision page remains a schematic.
-
-## Delivery constraints and approval status
-
-All surfaces consume one verified snapshot, with exact original Sources/identities and no live/private fallback. This design does not change the internal Workbench, practitioner application, domain semantics or extraction/resolver defaults. Contract ownership remains Lane A, viewer Lane B, shared header/catalogue/landing/combined acceptance Lane C.
-
-Design C and specification #148 are approved. The owner explicitly invoked implement-spec #148 based on this design; the implementation gate is satisfied. This contract records that approved direction. No paid calls, experiments, merges to main or deployment are authorized.
+No operational Workbench shell, client or execution control is imported by the
+public adapters. Both routes still consume one verified publication; download
+bytes and digest remain unchanged. English and Simplified Chinese translate only
+presentation, preserving original Sources, names, quotations and identities.
 
 ## Direction contract
 
 ### THESIS
 
-Make a narrow measured improvement easy to inspect, with its limitations visible before the visitor reaches the Evidence workspace. Read mode leads; Operate mode serves the linked inspection.
+The landing tells the story; the standalone study explains it; interactive
+retained evidence substantiates it. Narrative leads, and the tools appear where
+they resolve a reader's question.
 
 ### OWN-WORLD
 
-Preserve Evidence Folio: editorial Newsreader headings, Public Sans body and controls, ledger green, paper, restrained burgundy and gold only for exact quotations. The incumbent public shell and professional SourcePanel provide the visual and interaction authority.
+Preserve Evidence Folio: ledger green and warm paper, Newsreader editorial type,
+Public Sans controls, fine rules and gold only on exact Evidence. No new identity,
+framework, icon language, raster or global design tokens.
 
 ### STORY
 
-The reader moves from the paired headline and internal-benchmark disclosure through A/A′/B aggregate results, the ten-case index and the paired A′/B relationship workspace, then provenance, usage and methodology. Choosing a recorded endpoint correction links the before/after names, retained relationship and exact original Source Evidence. No internal Workbench operations or styles enter the public surface.
+Problem → approach → measurable graph → narrow correction → limitations →
+inspect/download. A perfect F1 is qualified by the small synthetic dataset,
+post-hoc comparison and exact-name scoring.
 
 ### FIRST VIEWPORT
 
-The implemented opening contains the title, paired relationship micro-F1 figures, adjacent asterisk caveat and full disclosure, section links and the aggregate comparison introduction. The case workspace follows this editorial opening. Neither a dense inspector nor an unqualified perfect score displaces the limitations.
+The study opens with its title, a readable research premise, visible synthetic
+limitations and section navigation. The research question precedes results.
+The landing chapter has a full-width green ground, large headline and shared
+baseline for the two measured values, followed by readable limitations and CTA.
 
 ### FORM
 
-The owner selected C, the original paired-comparison structural candidate 1, explicitly in conversation. The design exploration seed was 3d55ccce. Use a selectable case index, paired baseline/replay and treatment relationships, and an original Source inspector; stack them in task order on mobile. Keep provenance, usage and methodology as ordinary anchored sections below. Follow the saved artifact exactly, with no browser evaluation or invented outcomes. Gold highlights exact quotation occurrences; missing exact matches receive an explicit explanation.
+A focused owner-directed editorial refinement of C (original seed 3d55ccce), with
+its paired case inspection retained below the explanation. The signature moment
+is selecting Bea in the original graph, then Beatrice Ng in the resolved graph,
+and finding the same documentary quote. One restrained scroll-linked landing
+reveal is progressive enhancement, disabled under reduced motion; no scroll
+hijacking. This is a code-led refinement of the supplied composition, with no
+new generated comp or paid asset work.
 
 ### FINISH
 
 unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
 
-English and Simplified Chinese desktop/mobile captures and representative correction, Source/Evidence and call-metadata states support the approved composition. The first full implementation review identified two mobile findings: case-selection navigation and Chinese table-header wrapping. The targeted visual verdict reviewed fresh captures of `11e4aaf`, scored both findings resolved with no introduced regressions, and returned **SHIP at the scored fix scope**. Deliberate heading focus/scroll and contained, readable-width tables also pass the browser acceptance journeys in both device classes.
+## Acceptance and review
 
-Documentation comparison checked PRODUCT.md, DESIGN.md, the public-research styles and components, and the implementation screenshot manifest. This is an ordinary extension of Evidence Folio and approved direction C; its editorial hierarchy, restrained palette, exact-quotation emphasis and responsive workspace require no new global design-system tokens. This surface introduces no new shipping raster assets; the inherited source-paper asset and existing system documentation remain unchanged.
+Tests cover read-only pipeline exploration, canonical-state adaptation, selected
+edge → retained outcome → exact Source highlighting, unchanged quotes across
+conditions, bilingual narrative order, snapshot values/download identity, public
+network isolation, local table scrolling and both viewport classes. Existing
+public demo, authenticated practitioner and Workbench journeys retain regression
+coverage. Full landing scroll and actual English/Chinese desktop/mobile captures
+are inspected together.
+
+The detector reported the inherited Workbench stage-width transition when its
+CSS moved into the shared component. Public stage styling disables that transition;
+the existing internal Workbench animation remains unchanged. No detector rerun
+is required.
+
+The fresh full editorial review confirmed Evidence Folio fidelity and the requested
+narrative composition, then identified mobile graph framing and excessive empty
+desktop case-detail depth. Both were corrected, including the case-index flex
+shrink regression. The final targeted verdict scored those findings resolved and
+returned **ship at the scored-fix scope**. This is not a second whole-surface audit.
+
+A separate fresh header review inspected all eight compact-menu captures, the
+owner's reference, and desktop/closed-mobile context. It returned **ship for the
+combined hamburger-header refinement**, with no material fixes. Both review scopes
+are complete.
+
+The documentation comparison checked `PRODUCT.md`, the incumbent `DESIGN.md`,
+`.impeccable/design.json`, `ResearchResultsApp.tsx`, `ResearchSummary.tsx`, their
+stylesheets, the shared pipeline presentation, and `PublicHeader.tsx` with its
+stylesheet against the owner's refinement request. The build preserves Evidence
+Folio's ledger-green/paper palette, Newsreader Display/Public Sans pairing,
+burgundy focus treatment and gold exact-Evidence emphasis. The study's larger
+chapter type and the landing's paired figures are local editorial adaptations,
+not additions to the global token system. The compact Menu includes all four
+links, both language controls and the prototype notice at 1350px and below.
+
+Capture evidence is indexed in `research-editorial/screenshots.json` (20 captures)
+and `research-editorial/navigation-screenshots.json` (8 captures) in the task's
+visualization directory. The documentation pass visually sampled the English
+desktop and Chinese mobile landing chapters, English desktop and Chinese mobile
+full studies, English mobile and Chinese desktop graph/Evidence views, and the
+English mobile open research menu. These show the retained editorial palette,
+readable synthetic limitations, stacked mobile graph/Evidence framing and the
+single dropdown containing navigation and language controls. Browser acceptance
+separately verifies keyboard, dismissal, route, resize and locale interactions.
+
+`PRODUCT.md`, `DESIGN.md`, the sidecar and global configuration remain unchanged.
+The existing root layout record describes a 1440px content maximum and narrower
+fluid gutter, while the incumbent public CSS uses a 1280px maximum and
+`clamp(24px, 8vw, 128px)` gutter. The sidecar also retains earlier header breakpoint
+and navigation examples. These pre-existing documentation differences are
+reported without repair or canonization in this ordinary focused extension.
+No new raster, asset or global design token was introduced.

@@ -1,10 +1,7 @@
 import { useLocale } from "../../shared/locale";
 import { PublicHeader } from "../../shared/public/PublicHeader";
 import { PUBLIC_RESEARCH_DOWNLOAD, usePublicResearchSnapshot } from "./api";
-import { CaseWorkspace } from "./CaseWorkspace";
-import { Publication } from "./Publication";
-import { percent, Provenance, RunComparison } from "./RunComparison";
-import { Usage } from "./Usage";
+import { ResearchStory } from "./ResearchStory";
 import "./public-research.css";
 export function ResearchResultsApp() {
   const { t } = useLocale();
@@ -22,7 +19,7 @@ export function ResearchResultsApp() {
           <h1>{t("Research results")}</h1>
           <p>
             {t(
-              "A controlled comparison of constrained alias resolution on a small synthetic development benchmark.",
+              "A full-context baseline. The same frozen extractions, with entity resolution. A narrow improvement we can trace to the original words.",
             )}
           </p>
         </header>
@@ -41,21 +38,6 @@ export function ResearchResultsApp() {
         )}
         {snapshot && baseline && treatment && (
           <>
-            <div className="research-headline">
-              <div>
-                <p>{t("Baseline replay A′ · relationship micro-F1")}</p>
-                <strong>{percent(baseline.metrics.micro_f1)}*</strong>
-              </div>
-              <div>
-                <p>{t("With resolver B · relationship micro-F1")}</p>
-                <strong>{percent(treatment.metrics.micro_f1)}*</strong>
-              </div>
-            </div>
-            <p className="research-caveat">
-              {t(
-                "* Small internal development benchmark. The resolver comparison was post-hoc and exploratory; two name corrections in one case accounted for the entire improvement.",
-              )}
-            </p>
             <p className="research-disclosure">
               {t(
                 "Evaluated on ten project-authored, held-out synthetic cases used as an internal development benchmark. No real client data was used. These results do not establish production accuracy or reliability.",
@@ -65,10 +47,14 @@ export function ResearchResultsApp() {
               className="research-contents"
               aria-label={t("Results sections")}
             >
+              <a href="#question">{t("Research question")}</a>
+              <a href="#architecture">{t("Architecture")}</a>
+              <a href="#comparison">{t("Experimental results")}</a>
+              <a href="#failure-analysis">{t("Failure analysis")}</a>
               <a href="#cases">{t("Cases and Evidence")}</a>
-              <a href="#provenance">{t("Provenance")}</a>
+              <a href="#limitations">{t("Limitations and trade-offs")}</a>
               <a href="#usage">{t("Usage")}</a>
-              <a href="#methodology">{t("Methodology and limitations")}</a>
+              <a href="#reproducibility">{t("Reproducibility")}</a>
               <a href={PUBLIC_RESEARCH_DOWNLOAD} download>
                 {t("Download results")}
               </a>
@@ -83,11 +69,7 @@ export function ResearchResultsApp() {
                 },
               )}
             </p>
-            <RunComparison runs={snapshot.runs} />
-            <CaseWorkspace cases={snapshot.cases} />
-            <Provenance runs={snapshot.runs} />
-            <Usage runs={snapshot.runs} />
-            <Publication snapshot={snapshot} />
+            <ResearchStory snapshot={snapshot} />
           </>
         )}
       </main>

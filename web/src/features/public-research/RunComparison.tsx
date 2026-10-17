@@ -1,3 +1,4 @@
+import { OutcomeMatrix } from "../../shared/research/OutcomeMatrix";
 import { useLocale } from "../../shared/locale";
 import type { PublicRun, RunLabel } from "./types";
 export const runName = (label: RunLabel) =>
@@ -5,9 +6,11 @@ export const runName = (label: RunLabel) =>
 export const percent = (value: number) => `${(value * 100).toFixed(2)}%`;
 export function RunComparison({ runs }: { runs: PublicRun[] }) {
   const { t } = useLocale();
+  const baseline = runs.find(run => run.label === "A")!;
+  const resolver = runs.find(run => run.label === "B")!;
   return (
     <section id="comparison" className="research-section">
-      <h2>{t("Three Runs, one paired comparison")}</h2>
+      <h2>{t("Experimental results")}</h2>
       <p>
         {t(
           "A is the extraction baseline. A′ deterministically replays the same frozen extractions without resolution. B adds constrained alias resolution to those extractions. A and A′ have equivalent outcomes; they are not independent replications.",
@@ -19,39 +22,27 @@ export function RunComparison({ runs }: { runs: PublicRun[] }) {
         aria-label={t("Run comparison")}
         tabIndex={0}
       >
-        <table>
-          <thead>
-            <tr>
-              <th>{t("Run")}</th>
-              <th>{t("Precision")}</th>
-              <th>{t("Recall")}</th>
-              <th>{t("Relationship micro-F1")}</th>
-              <th>{t("Macro-F1")}</th>
-              <th>{t("True positives")}</th>
-              <th>{t("False positives")}</th>
-              <th>{t("False negatives")}</th>
-              <th>{t("Scored / planned")}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {runs.map((run) => (
-              <tr key={run.label}>
-                <th scope="row">{runName(run.label)}</th>
-                <td>{percent(run.metrics.micro_precision)}</td>
-                <td>{percent(run.metrics.micro_recall)}</td>
-                <td>{percent(run.metrics.micro_f1)}</td>
-                <td>{percent(run.metrics.macro_f1)}</td>
-                <td>{run.metrics.tp}</td>
-                <td>{run.metrics.fp}</td>
-                <td>{run.metrics.fn}</td>
-                <td>
-                  {run.coverage.scored} / {run.coverage.planned}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <OutcomeMatrix
+          caption={t("Run comparison")}
+          headings={[t("Metric"), `${t("Naive full-context baseline")} · A`, `${t("With generative entity resolution")} · B`]}
+          rows={([
+            ["True positives", "tp", false],
+            ["False positives", "fp", false],
+            ["False negatives", "fn", false],
+            ["Relationship micro-F1", "micro_f1", true],
+            ["Macro-F1", "macro_f1", true],
+            ["Approved-quote provenance", "quote_accuracy", true],
+            ["Source-pair attribution", "source_pair_accuracy", true],
+          ] as const).map(([label, key, ratio]) => ({
+            id: key,
+            label: t(label),
+            values: [baseline, resolver].map(run => ratio
+              ? `${percent(run.metrics[key])}${key === "micro_f1" ? "*" : ""}`
+              : run.metrics[key]),
+          }))}
+        />
       </div>
+      <p className="research-caveat">{t("* Small internal development benchmark. The resolver comparison was post-hoc and exploratory; two name corrections in one case accounted for the entire improvement.")}</p>
       <p>
         {t(
           "Coverage is complete only when every planned Observation is scored. Pending, failed, uncertain and unavailable counts remain explicit below.",

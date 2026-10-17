@@ -1,3 +1,4 @@
+import { selectPublicLanguage } from "./public-navigation";
 import { readFile } from "node:fs/promises";
 import { expect, test } from "@playwright/test";
 
@@ -91,7 +92,7 @@ test("paired corrections preserve the exact selected Source and Evidence across 
     await expect(page.locator(".research-source-inspection")).toContainText("Selected relationship · B");
     const quote = await page.locator(".source-panel mark").innerText();
     const source = await page.getByLabel("Original Source", { exact: true }).inputValue();
-    await page.getByRole("button", { name: "简体中文", exact: true }).click();
+    await selectPublicLanguage(page, "zh-CN");
     await expect(page.locator("html")).toHaveAttribute("lang", "zh-CN");
     await expect(page.locator(".source-panel mark")).toHaveText(quote);
     expect(await page.locator(".research-source-inspection select").first().inputValue()).toBe(source);
@@ -99,7 +100,7 @@ test("paired corrections preserve the exact selected Source and Evidence across 
     await expect(page.locator(".research-pair button[aria-pressed=true]")).toHaveCount(1);
     await expect(page.locator(".research-source-inspection")).not.toContainText("Selected relationship");
     if (index === 0) await page.screenshot({ path: testInfo.outputPath("research-correction-zh-CN.png"), fullPage: true });
-    await page.getByRole("button", { name: "EN", exact: true }).click();
+    await selectPublicLanguage(page, "en");
     await expect(page.locator(".source-panel mark")).toHaveText(quote);
   }
   await page.getByLabel("Recorded outcome filter").selectOption("errors");
@@ -134,9 +135,81 @@ test("provider inspection shows replay zero calls and retained metadata only", a
   await expect(call).not.toContainText("Authorization");
   await expect(call).not.toContainText("system_prompt");
   await page.screenshot({ path: testInfo.outputPath("research-calls-en.png"), fullPage: true });
-  await page.getByRole("button", { name: "简体中文", exact: true }).click();
+  await selectPublicLanguage(page, "zh-CN");
   await expect(call).toHaveAttribute("open", "");
   await expect(call).toContainText(resolver.calls[0].attempt_id);
   await expect(call).toContainText("未定价");
   await page.screenshot({ path: testInfo.outputPath("research-calls-zh-CN.png"), fullPage: true });
 });
+
+for (const locale of ["en", "zh-CN"] as const) {
+  test(`editorial pipeline and recorded graph evidence remain read-only in ${locale}`, async ({ page }, testInfo) => {
+    await page.addInitScript(value => localStorage.setItem("pcg-locale", value), locale);
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    const requests: string[] = [];
+    page.on("request", request => { if (request.url().includes("/api/")) requests.push(`${request.method()} ${new URL(request.url()).pathname}`); });
+    await page.goto("/");
+    const chapter = page.locator("#research-summary");
+    await expect(chapter).toContainText(locale === "en" ? "We didn’t just build it" : "我们不仅构建了系统");
+    expect(await chapter.evaluate(element => Math.round(element.getBoundingClientRect().width))).toBe(page.viewportSize()!.width);
+    await chapter.scrollIntoViewIfNeeded();
+    await page.screenshot({ path: testInfo.outputPath(`editorial-landing-${locale}.png`), fullPage: true });
+    await chapter.screenshot({ path: testInfo.outputPath(`editorial-chapter-${locale}.png`) });
+    expect(await chapter.locator(".research-summary-metrics").evaluate(element => getComputedStyle(element).animationName)).toBe("none");
+    await page.emulateMedia({ reducedMotion: "no-preference" });
+    for (const selector of ["#approach", "#research-summary", "#case-01"]) {
+      await page.locator(selector).scrollIntoViewIfNeeded();
+      await expect(page.locator(selector).getByRole("heading", { level: 2 }).first()).toBeVisible();
+    }
+    await chapter.scrollIntoViewIfNeeded();
+    await expect(chapter.getByRole("link")).toBeVisible();
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    requests.length = 0;
+    await chapter.getByRole("link").click();
+    await expect(page.locator("main > .research-section")).toHaveCount(8);
+    const sectionIds = ["question", "architecture", "methodology", "comparison", "failure-analysis", "findings", "limitations", "reproducibility"];
+    expect(await page.locator("main > .research-section").evaluateAll(elements => elements.map(element => element.id))).toEqual(sectionIds);
+    if (page.viewportSize()!.width >= 701) {
+      const index = page.getByRole("navigation", { name: locale === "en" ? "Benchmark cases" : "基准案例" });
+      expect(await index.evaluate(element => element.clientHeight)).toBeLessThanOrEqual(512);
+      expect(await index.evaluate(element => element.scrollHeight > element.clientHeight)).toBe(true);
+      expect(await index.getByRole("button").evaluateAll(buttons => buttons.every(button => button.scrollHeight <= button.clientHeight + 1))).toBe(true);
+      await index.getByRole("button").last().scrollIntoViewIfNeeded();
+      await expect(index.getByRole("button").last()).toBeVisible();
+      await index.evaluate(element => { element.scrollTop = 0; });
+    }
+    const architecture = page.locator("#architecture");
+    await architecture.getByRole("button", { name: locale === "en" ? "Resolver configuration" : "实体解析配置", exact: true }).click();
+    const resolver = architecture.getByRole("button", { name: locale === "en" ? /Resolve aliases/ : /解析别名/ });
+    await resolver.click();
+    await expect(resolver).toHaveAttribute("aria-expanded", "true");
+    await expect(architecture).toContainText(locale === "en" ? "does not rewrite" : "不会改写");
+    const study = page.locator(".research-graph-study");
+    await study.getByLabel(locale === "en" ? "Find a relationship" : "查找关系").selectOption("0");
+    const canvasContainsNodes = () => study.locator(".graph-canvas").evaluate(canvas => {
+      const frame = canvas.getBoundingClientRect();
+      return Array.from(canvas.querySelectorAll(".react-flow__node")).every(node => {
+        const box = node.getBoundingClientRect();
+        return box.left >= frame.left && box.right <= frame.right && box.top >= frame.top && box.bottom <= frame.bottom;
+      });
+    });
+    await expect.poll(canvasContainsNodes).toBe(true);
+    const inspector = study.locator(".evidence-inspector");
+    await expect(inspector).toContainText("Bea · parent_of · Isaac Ng");
+    await inspector.getByRole("button", { name: locale === "en" ? "View predicted in Source" : "在来源中查看预测证据", exact: true }).click();
+    const quote = await inspector.locator("mark").first().innerText();
+    await page.locator("#failure-analysis").screenshot({ path: testInfo.outputPath(`editorial-original-${locale}.png`) });
+    await expect(inspector.locator("article")).toBeFocused();
+    await study.getByRole("button", { name: locale === "en" ? "Resolved relationships · B" : "解析后关系 · B", exact: true }).click();
+    await study.getByLabel(locale === "en" ? "Find a relationship" : "查找关系").selectOption("0");
+    await expect.poll(canvasContainsNodes).toBe(true);
+    await expect(inspector).toContainText("Beatrice Ng · parent_of · Isaac Ng");
+    await inspector.getByRole("button", { name: locale === "en" ? "View predicted in Source" : "在来源中查看预测证据", exact: true }).click();
+    await expect(inspector.locator("mark").first()).toHaveText(quote);
+    await page.locator("#failure-analysis").scrollIntoViewIfNeeded();
+    await page.screenshot({ path: testInfo.outputPath(`editorial-results-${locale}.png`), fullPage: true });
+    await page.locator("#failure-analysis").screenshot({ path: testInfo.outputPath(`editorial-graph-${locale}.png`) });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+    expect(requests.every(request => request === "GET /api/research-results")).toBe(true);
+  });
+}

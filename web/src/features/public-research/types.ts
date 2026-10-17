@@ -1,3 +1,4 @@
+import type { Entity, RelationshipType } from "../../shared/canonical-graph";
 export type RunLabel = "A" | "A_prime" | "B";
 export interface PublicSource {
   id: string;
@@ -6,12 +7,12 @@ export interface PublicSource {
 }
 export interface PublicEntity {
   id: string;
-  type: string;
+  type: Entity["type"];
   name: string;
 }
 export interface PublicRelationship {
   source: string;
-  type: string;
+  type: RelationshipType;
   target: string;
   evidence_ids: string[];
 }

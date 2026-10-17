@@ -1,3 +1,4 @@
+import { PipelineNode } from "../../src/shared/research/PipelineNode";
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import type { Capabilities, Proposal } from "../shared/contracts";
 import { InputFields, PipelineFields } from "./Fields";
@@ -90,50 +91,30 @@ export function Pipeline({
     summary: string,
     settings: ReactNode,
   ) {
-    const open = expanded === id;
+    const optional = id === "resolve";
+    const requirement = optional ? "Optional" : id === "extract" ? "Required for source" : "Required";
     return (
-      <section className={`pipeline-node ${open ? "expanded" : ""}`} key={id}>
-        <button
-          ref={id === "resolve" ? resolverHeader : undefined}
-          type="button"
-          className="node-header"
-          aria-expanded={open}
-          aria-controls={`${instance}-stage-${id}`}
-          onClick={() => setExpanded(open ? null : id)}
-        >
-          <strong>{title}</strong>
-          <small>
-            {type} ·{" "}
-            {id === "resolve"
-              ? "Optional"
-              : id === "extract"
-                ? "Required for source"
-                : "Required"}
-          </small>
-          <span>{summary}</span>
-          <u>{open ? "Collapse settings" : "Expand settings"}</u>
-        </button>
-        {id === "resolve" && mutable && (
+      <PipelineNode
+        key={id}
+        id={`${instance}-stage-${id}`}
+        title={title}
+        type={`${type} · ${requirement}`}
+        summary={summary}
+        open={expanded === id}
+        onToggle={() => setExpanded(expanded === id ? null : id)}
+        headerRef={optional ? resolverHeader : undefined}
+        action={optional && mutable ? (
           <button
             type="button"
             className="remove-node"
             disabled={busy}
             aria-label="Bypass alias resolution"
             onClick={() => changeResolver(false)}
-          >
-            ×
-          </button>
-        )}
-        <div
-          id={`${instance}-stage-${id}`}
-          role="region"
-          aria-label={`${title} settings`}
-          hidden={!open}
-          className="node-settings"
-        >
-          {settings}
-        </div>
-      </section>
+          >×</button>
+        ) : undefined}
+      >
+        {settings}
+      </PipelineNode>
     );
   }
   const readOnly = (

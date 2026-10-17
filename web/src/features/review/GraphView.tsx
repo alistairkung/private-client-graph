@@ -23,10 +23,11 @@ type ReviewEdge = Edge<{
   description: string;
   connectorClass: string;
   onSelect: () => void;
+  preserveContext: boolean;
 }>;
 
 function RoutedEdge({ id, data, label, markerEnd, style, selected }: EdgeProps<ReviewEdge>) {
-  const { route, description, connectorClass, onSelect } = data!;
+  const { route, description, connectorClass, onSelect, preserveContext } = data!;
   const { setCenter, getZoom } = useReactFlow();
   const canvasWidth = useStore(state => state.width);
   const path = route.points
@@ -42,7 +43,7 @@ function RoutedEdge({ id, data, label, markerEnd, style, selected }: EdgeProps<R
         aria-label={description}
         aria-pressed={!!selected}
         onFocus={event => {
-          if (canvasWidth <= 450 && event.currentTarget.matches(":focus-visible")) void setCenter(route.x, route.y, { zoom: Math.max(1, getZoom()) });
+          if (!preserveContext && canvasWidth <= 450 && event.currentTarget.matches(":focus-visible")) void setCenter(route.x, route.y, { zoom: Math.max(1, getZoom()) });
         }}
         onClick={onSelect}
         style={{
@@ -74,16 +75,18 @@ function FitGraph({
   selected,
   bounds,
   selectedRoute,
+  preserveContext,
 }: {
   graph: CanonicalGraph;
   selected: number | null;
   bounds: { x: number; y: number; width: number; height: number };
   selectedRoute?: RelationshipRoute;
+  preserveContext: boolean;
 }) {
   const { fitBounds, setCenter, getZoom, viewportInitialized } = useReactFlow();
   const width = useStore((state) => state.width);
   const height = useStore((state) => state.height);
-  const focusRoute = width <= 450 ? selectedRoute : undefined;
+  const focusRoute = width <= 450 && !preserveContext ? selectedRoute : undefined;
   const focusIndex = width <= 450 ? selected : null;
   const previous = useRef<{ graph: CanonicalGraph; width: number; height: number; focusIndex: number | null } | null>(null);
   useEffect(() => {
@@ -107,8 +110,10 @@ export function GraphView({
   selected,
   onSelect,
   emptyTitle = "No relationships found",
+  preserveContext = false,
 }: {
   emptyTitle?: string;
+  preserveContext?: boolean;
   graph: CanonicalGraph;
   selected: number | null;
   onSelect: (index: number) => void;
@@ -136,6 +141,7 @@ export function GraphView({
       description: edge.ariaLabel,
       connectorClass: edge.className,
       onSelect: () => onSelect(index),
+      preserveContext,
     },
   }));
   return (
@@ -164,7 +170,7 @@ export function GraphView({
         deleteKeyCode={null}
         onEdgeClick={(_, edge) => onSelect(Number(edge.id))}
       >
-        <FitGraph graph={graph} selected={selected} bounds={view.bounds} selectedRoute={selected === null ? undefined : view.edges[selected]?.data?.route as RelationshipRoute} />
+        <FitGraph preserveContext={preserveContext} graph={graph} selected={selected} bounds={view.bounds} selectedRoute={selected === null ? undefined : view.edges[selected]?.data?.route as RelationshipRoute} />
         <Controls showInteractive={false} showFitView={false} />
       </ReactFlow>
     </div>

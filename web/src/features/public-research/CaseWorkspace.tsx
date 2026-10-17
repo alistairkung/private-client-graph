@@ -1,3 +1,4 @@
+import { OutcomeMatrix } from "../../shared/research/OutcomeMatrix";
 import { useId, useLayoutEffect, useRef, useState } from "react";
 import { useLocale } from "../../shared/locale";
 import { SourcePanel } from "../review/SourcePanel";
@@ -171,6 +172,16 @@ export function CaseWorkspace({ cases }: { cases: PublicCase[] }) {
                 ))}
               </div>
             )}
+            <div className="research-table-scroll">
+              <OutcomeMatrix caption={t("Relationship outcome matrix")}
+                headings={[t("Configuration"), t("Matched · TP"), t("Extra · FP"), t("Missing · FN")]}
+                rows={[baseline, "B" as const].map(label => {
+                  const result = selectedCase.observations.find(item => item.run_label === label)!;
+                  return { id: label, label: runName(label),
+                    values: (["tp", "fp", "fn"] as const).map(metric => result.evaluation[metric]),
+                  };
+                })} />
+            </div>
             <div className="research-controls">
               <label>
                 {t("Baseline Run")}
