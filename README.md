@@ -227,6 +227,15 @@ authorization, application, and PostgreSQL paths. Proposal analysis also uses a
 deterministic local model substitute, so Google, DeepSeek, Railway, and external
 PostgreSQL credentials are not required.
 
+For a deterministic multi-document walkthrough, select
+`tests/fixtures/synthetic-proposal.pdf` and
+`tests/fixtures/multiple-role-proposal.pdf`. The development-only adapter supplies
+known candidates for each Source, retaining its ID, title, order and exact quotes.
+It replaces external dispatch before model construction or paid authorization;
+no provider authority or shared paid-call ledger is needed. Authentication, PDF
+validation, graph construction, confirmation and PostgreSQL persistence remain real.
+The fixtures demonstrate workflow, not extraction quality on arbitrary documents.
+
 PostgreSQL 16 is health-checked before the application starts. Startup applies
 the Alembic migrations and runs the idempotent Evergreen seed before serving the
 built frontend. Database state is stored in the named Compose volume and survives
