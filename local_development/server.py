@@ -3,22 +3,24 @@
 from urllib.parse import urlencode
 
 from fastapi import FastAPI, Request
-from langchain_deepseek import ChatDeepSeek
 from starlette.responses import RedirectResponse
 
 from local_development.google import GoogleBoundary
 from local_development.https import serve_https
-from local_development.model import extract_fixture
+from local_development.model import extract_fixture, extract_source_fixtures
 from private_client_graph.api.app import create_app
 from private_client_graph.application import matter_proposals
 from private_client_graph.application.proposal_config import ProposalAnalysisConfig
+from private_client_graph.models import ExtractionResult, SourcedExtractionResult
+from private_client_graph.models.source import Source
 
 DEFAULT_ORIGIN = "https://localhost:8443"
 
 
 def create_local_app(origin: str = DEFAULT_ORIGIN) -> FastAPI:
-    matter_proposals.extract_relationships_from_text = extract_fixture
-    matter_proposals._construct_model = _deterministic_model
+    # Substitute the complete external-dispatch boundary, never grant live authority.
+    matter_proposals._extract_proposal = _local_extraction
+    matter_proposals._extract_proposal_sources = _local_source_extraction
     application = create_app()
     if application.state.auth_config is None:
         raise RuntimeError("Local authentication configuration is missing or invalid")
@@ -47,9 +49,16 @@ def _place_development_provider_before_static_files(application: FastAPI) -> Non
     application.router.routes.insert(0, development_provider)
 
 
-def _deterministic_model(config: ProposalAnalysisConfig) -> ChatDeepSeek:
+def _local_extraction(source: str, config: ProposalAnalysisConfig | None) -> ExtractionResult:
     del config
-    return ChatDeepSeek.model_construct()
+    return extract_fixture(source, llm=None)
+
+
+def _local_source_extraction(
+    sources: list[Source], config: ProposalAnalysisConfig | None,
+) -> SourcedExtractionResult:
+    del config
+    return extract_source_fixtures(sources)
 
 
 def serve() -> None:

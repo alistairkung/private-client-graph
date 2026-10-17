@@ -1,6 +1,8 @@
 """Deterministic model substitute for synthetic protected local development."""
 
-from private_client_graph.models import ExtractionResult, RelationshipCandidate
+from private_client_graph.models import ExtractionResult, RelationshipCandidate, SourcedExtractionResult
+from private_client_graph.models.source import Source
+from private_client_graph.models.sourced_extraction import source_extraction_from_legacy
 from private_client_graph.models.types import RelationshipType
 
 
@@ -31,3 +33,12 @@ def extract_fixture(source: str, *, llm: object) -> ExtractionResult:
             )
         ]
     return ExtractionResult(relationships=relationships)
+
+
+def extract_source_fixtures(sources: list[Source]) -> SourcedExtractionResult:
+    """Apply the known local fixtures independently, retaining explicit Source identity."""
+    relationships = []
+    for source in sources:
+        fixture = extract_fixture(source.text, llm=None)
+        relationships.extend(source_extraction_from_legacy(fixture, source_id=source.id).relationships)
+    return SourcedExtractionResult(relationships=relationships)
