@@ -93,6 +93,30 @@ All surfaces consume one verified snapshot, with exact original Sources/identiti
 
 Design C and specification #148 are approved. The owner explicitly invoked implement-spec #148 based on this design; the implementation gate is satisfied. This contract records that approved direction. No paid calls, experiments, merges to main or deployment are authorized.
 
-## Implementation direction contract
+## Direction contract
 
-Preserve Evidence Folio and selected C: editorial opening, paired A′/B comparison, selectable case index, recorded relationship outcomes and original Source inspector. SourcePanel is the shared safe presentation seam; no internal Workbench operations or styles enter the public surface. Gold marks exact quotations, including selectable occurrences; a missing exact match is explicitly reported. Read mode with Operate inspection. Use plain anchored provenance, usage and methodology below the workspace. Follow the source artifact exactly, with no browser evaluation or invented outcomes.
+### THESIS
+
+Make a narrow measured improvement easy to inspect, with its limitations visible before the visitor reaches the Evidence workspace. Read mode leads; Operate mode serves the linked inspection.
+
+### OWN-WORLD
+
+Preserve Evidence Folio: editorial Newsreader headings, Public Sans body and controls, ledger green, paper, restrained burgundy and gold only for exact quotations. The incumbent public shell and professional SourcePanel provide the visual and interaction authority.
+
+### STORY
+
+The reader moves from the paired headline and internal-benchmark disclosure through A/A′/B aggregate results, the ten-case index and the paired A′/B relationship workspace, then provenance, usage and methodology. Choosing a recorded endpoint correction links the before/after names, retained relationship and exact original Source Evidence. No internal Workbench operations or styles enter the public surface.
+
+### FIRST VIEWPORT
+
+The implemented opening contains the title, paired relationship micro-F1 figures, adjacent asterisk caveat and full disclosure, section links and the aggregate comparison introduction. The case workspace follows this editorial opening. Neither a dense inspector nor an unqualified perfect score displaces the limitations.
+
+### FORM
+
+The owner selected C, the original paired-comparison structural candidate 1, explicitly in conversation. The design exploration seed was 3d55ccce. Use a selectable case index, paired baseline/replay and treatment relationships, and an original Source inspector; stack them in task order on mobile. Keep provenance, usage and methodology as ordinary anchored sections below. Follow the saved artifact exactly, with no browser evaluation or invented outcomes. Gold highlights exact quotation occurrences; missing exact matches receive an explicit explanation.
+
+### FINISH
+
+unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
+
+Verify English and Simplified Chinese desktop/mobile captures and the representative correction, Source/Evidence and call-metadata states. The approved composition is retained; bounded implementation review found no material visual defect. This surface introduces no new shipping raster assets.
