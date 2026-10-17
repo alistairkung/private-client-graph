@@ -12,3 +12,6 @@
   .demo-shell .intake-layout { grid-template-columns: 1fr; }
   .demo-shell .ledger-brand { white-space: normal; }
 }
+
+.demo-footer-links { display: flex; flex-wrap: wrap; gap: .5rem 1.5rem; }
+.demo-footer-links a { display: inline-flex; align-items: center; min-height: 44px; color: inherit; text-underline-offset: 3px; }

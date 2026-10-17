@@ -92,9 +92,8 @@ function FitGraph({
     // Translated label geometry must not reset a reviewer's chosen pan/zoom.
     if (last?.graph === graph && last.width === width && last.height === height && last.focusIndex === focusIndex) return;
     previous.current = { graph, width, height, focusIndex };
-    if (width <= 450) {
-      void setCenter(focusRoute?.x ?? bounds.x + bounds.width / 2,
-        focusRoute?.y ?? bounds.y + bounds.height / 2,
+    if (focusRoute) {
+      void setCenter(focusRoute.x, focusRoute.y,
         { zoom: Math.max(1, getZoom()) });
     } else {
       void fitBounds(bounds, { padding: 0.08 });

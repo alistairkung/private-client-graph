@@ -7,3 +7,9 @@ test("maps provider failures to safe presentation without exposing returned diag
   expect(proposalFailureMessage({ code: "unexpected", message: "secret diagnostic", retryable: true }))
     .toBe("The request could not be completed. Return to Matters and check the current state before retrying.");
 });
+
+
+test("unknown error codes cannot resolve inherited Object properties", () => {
+  expect(proposalFailureMessage({ code: "constructor", message: "internal", retryable: false }))
+    .toBe("The request could not be completed. Return to Matters and check the current state before retrying.");
+});
