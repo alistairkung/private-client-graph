@@ -58,9 +58,12 @@ The reviewer does not spawn a second review team.
 
 ## Repository boundaries
 
-Own agent organisation guidance in `docs/agents/`, native `.codex/` role/default
-configuration and `tools/validate_agent_teams.py` with its tests. Shared engineering
-rules in root AGENTS and CODE_STYLE require explicit review of policy changes.
+Own shared agent organisation guidance, the native role format,
+`.codex/config.toml` defaults, this team's contract/roles and
+`tools/validate_agent_teams.py` with its tests. Each registered team owns its own
+contract, adjacent workflow/reference material and role instruction content.
+Coordinate shared convention changes here; a team owns its scoped implementation.
+Shared engineering rules in root AGENTS and CODE_STYLE require explicit review of policy changes.
 Existing portable skills keep their current procedures and entry points; coordinate
 before changing them. Pipeline/application/UI/domain semantics are outside scope.
 
