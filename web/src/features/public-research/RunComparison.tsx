@@ -23,6 +23,7 @@ export function RunComparison({ runs }: { runs: PublicRun[] }) {
         <p className="research-caveat">{t("* Small internal development benchmark. The resolver comparison was post-hoc and exploratory; two name corrections in one case accounted for the entire improvement.")}</p>
         <details className="research-recorded-metrics">
           <summary>{t("Recorded metric table")}</summary>
+          <p className="research-table-hint">{t("Scroll horizontally to inspect all recorded columns.")}</p>
           <div
             className="research-table-scroll"
             role="region"

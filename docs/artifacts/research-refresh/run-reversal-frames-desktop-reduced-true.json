@@ -1,0 +1,282 @@
+[
+  {
+    "ms": 1.6000000089406967,
+    "selected": "B \u00b7 With resolver",
+    "surfaceLeft": 1235.25,
+    "targetLeft": 1235.25,
+    "resolverVisible": true
+  },
+  {
+    "ms": 17.900000005960464,
+    "selected": "B \u00b7 With resolver",
+    "surfaceLeft": 1235.25,
+    "targetLeft": 1235.25,
+    "resolverVisible": true
+  },
+  {
+    "ms": 50.900000005960464,
+    "selected": "A\u2032 \u00b7 Exact replay",
+    "surfaceLeft": 1104.390625,
+    "targetLeft": 1104.390625,
+    "resolverVisible": false
+  },
+  {
+    "ms": 51.400000005960464,
+    "selected": "A\u2032 \u00b7 Exact replay",
+    "surfaceLeft": 1104.390625,
+    "targetLeft": 1104.390625,
+    "resolverVisible": false
+  },
+  {
+    "ms": 68.40000000596046,
+    "selected": "B \u00b7 With resolver",
+    "surfaceLeft": 1235.25,
+    "targetLeft": 1235.25,
+    "resolverVisible": true
+  },
+  {
+    "ms": 85,
+    "selected": "B \u00b7 With resolver",
+    "surfaceLeft": 1235.25,
+    "targetLeft": 1235.25,
+    "resolverVisible": true
+  },
+  {
+    "ms": 101.80000001192093,
+    "selected": "A\u2032 \u00b7 Exact replay",
+    "surfaceLeft": 1104.390625,
+    "targetLeft": 1104.390625,
+    "resolverVisible": false
+  },
+  {
+    "ms": 117.5,
+    "selected": "A\u2032 \u00b7 Exact replay",
+    "surfaceLeft": 1104.390625,
+    "targetLeft": 1104.390625,
+    "resolverVisible": false
+  },
+  {
+    "ms": 135,
+    "selected": "A\u2032 \u00b7 Exact replay",
+    "surfaceLeft": 1104.390625,
+    "targetLeft": 1104.390625,
+    "resolverVisible": false
+  },
+  {
+    "ms": 151.5,
+    "selected": "A\u2032 \u00b7 Exact replay",
+    "surfaceLeft": 1104.390625,
+    "targetLeft": 1104.390625,
+    "resolverVisible": false
+  },
+  {
+    "ms": 168.1000000089407,
+    "selected": "A\u2032 \u00b7 Exact replay",
+    "surfaceLeft": 1104.390625,
+    "targetLeft": 1104.390625,
+    "resolverVisible": false
+  },
+  {
+    "ms": 184.20000000298023,
+    "selected": "A\u2032 \u00b7 Exact replay",
+    "surfaceLeft": 1104.390625,
+    "targetLeft": 1104.390625,
+    "resolverVisible": false
+  },
+  {
+    "ms": 201.70000000298023,
+    "selected": "A\u2032 \u00b7 Exact replay",
+    "surfaceLeft": 1104.390625,
+    "targetLeft": 1104.390625,
+    "resolverVisible": false
+  },
+  {
+    "ms": 217.40000000596046,
+    "selected": "A\u2032 \u00b7 Exact replay",
+    "surfaceLeft": 1104.390625,
+    "targetLeft": 1104.390625,
+    "resolverVisible": false
+  },
+  {
+    "ms": 234.6000000089407,
+    "selected": "A\u2032 \u00b7 Exact replay",
+    "surfaceLeft": 1104.390625,
+    "targetLeft": 1104.390625,
+    "resolverVisible": false
+  },
+  {
+    "ms": 251,
+    "selected": "A\u2032 \u00b7 Exact replay",
+    "surfaceLeft": 1104.390625,
+    "targetLeft": 1104.390625,
+    "resolverVisible": false
+  },
+  {
+    "ms": 267.6000000089407,
+    "selected": "A\u2032 \u00b7 Exact replay",
+    "surfaceLeft": 1104.390625,
+    "targetLeft": 1104.390625,
+    "resolverVisible": false
+  },
+  {
+    "ms": 285,
+    "selected": "A\u2032 \u00b7 Exact replay",
+    "surfaceLeft": 1104.390625,
+    "targetLeft": 1104.390625,
+    "resolverVisible": false
+  },
+  {
+    "ms": 301.70000000298023,
+    "selected": "A\u2032 \u00b7 Exact replay",
+    "surfaceLeft": 1104.390625,
+    "targetLeft": 1104.390625,
+    "resolverVisible": false
+  },
+  {
+    "ms": 317.6000000089407,
+    "selected": "A\u2032 \u00b7 Exact replay",
+    "surfaceLeft": 1104.390625,
+    "targetLeft": 1104.390625,
+    "resolverVisible": false
+  },
+  {
+    "ms": 334.20000000298023,
+    "selected": "A\u2032 \u00b7 Exact replay",
+    "surfaceLeft": 1104.390625,
+    "targetLeft": 1104.390625,
+    "resolverVisible": false
+  },
+  {
+    "ms": 351.40000000596046,
+    "selected": "A\u2032 \u00b7 Exact replay",
+    "surfaceLeft": 1104.390625,
+    "targetLeft": 1104.390625,
+    "resolverVisible": false
+  },
+  {
+    "ms": 367.90000000596046,
+    "selected": "A\u2032 \u00b7 Exact replay",
+    "surfaceLeft": 1104.390625,
+    "targetLeft": 1104.390625,
+    "resolverVisible": false
+  },
+  {
+    "ms": 385.1000000089407,
+    "selected": "A\u2032 \u00b7 Exact replay",
+    "surfaceLeft": 1104.390625,
+    "targetLeft": 1104.390625,
+    "resolverVisible": false
+  },
+  {
+    "ms": 401.80000001192093,
+    "selected": "A\u2032 \u00b7 Exact replay",
+    "surfaceLeft": 1104.390625,
+    "targetLeft": 1104.390625,
+    "resolverVisible": false
+  },
+  {
+    "ms": 417.70000000298023,
+    "selected": "A\u2032 \u00b7 Exact replay",
+    "surfaceLeft": 1104.390625,
+    "targetLeft": 1104.390625,
+    "resolverVisible": false
+  },
+  {
+    "ms": 435.20000000298023,
+    "selected": "A\u2032 \u00b7 Exact replay",
+    "surfaceLeft": 1104.390625,
+    "targetLeft": 1104.390625,
+    "resolverVisible": false
+  },
+  {
+    "ms": 451.80000001192093,
+    "selected": "A\u2032 \u00b7 Exact replay",
+    "surfaceLeft": 1104.390625,
+    "targetLeft": 1104.390625,
+    "resolverVisible": false
+  },
+  {
+    "ms": 468.20000000298023,
+    "selected": "A\u2032 \u00b7 Exact replay",
+    "surfaceLeft": 1104.390625,
+    "targetLeft": 1104.390625,
+    "resolverVisible": false
+  },
+  {
+    "ms": 484.30000001192093,
+    "selected": "A\u2032 \u00b7 Exact replay",
+    "surfaceLeft": 1104.390625,
+    "targetLeft": 1104.390625,
+    "resolverVisible": false
+  },
+  {
+    "ms": 501.70000000298023,
+    "selected": "A\u2032 \u00b7 Exact replay",
+    "surfaceLeft": 1104.390625,
+    "targetLeft": 1104.390625,
+    "resolverVisible": false
+  },
+  {
+    "ms": 518.4000000059605,
+    "selected": "A\u2032 \u00b7 Exact replay",
+    "surfaceLeft": 1104.390625,
+    "targetLeft": 1104.390625,
+    "resolverVisible": false
+  },
+  {
+    "ms": 535,
+    "selected": "A\u2032 \u00b7 Exact replay",
+    "surfaceLeft": 1104.390625,
+    "targetLeft": 1104.390625,
+    "resolverVisible": false
+  },
+  {
+    "ms": 551.7000000029802,
+    "selected": "A\u2032 \u00b7 Exact replay",
+    "surfaceLeft": 1104.390625,
+    "targetLeft": 1104.390625,
+    "resolverVisible": false
+  },
+  {
+    "ms": 567.6000000089407,
+    "selected": "A\u2032 \u00b7 Exact replay",
+    "surfaceLeft": 1104.390625,
+    "targetLeft": 1104.390625,
+    "resolverVisible": false
+  },
+  {
+    "ms": 585.1000000089407,
+    "selected": "A\u2032 \u00b7 Exact replay",
+    "surfaceLeft": 1104.390625,
+    "targetLeft": 1104.390625,
+    "resolverVisible": false
+  },
+  {
+    "ms": 601.4000000059605,
+    "selected": "A\u2032 \u00b7 Exact replay",
+    "surfaceLeft": 1104.390625,
+    "targetLeft": 1104.390625,
+    "resolverVisible": false
+  },
+  {
+    "ms": 618.4000000059605,
+    "selected": "A\u2032 \u00b7 Exact replay",
+    "surfaceLeft": 1104.390625,
+    "targetLeft": 1104.390625,
+    "resolverVisible": false
+  },
+  {
+    "ms": 634.3000000119209,
+    "selected": "A\u2032 \u00b7 Exact replay",
+    "surfaceLeft": 1104.390625,
+    "targetLeft": 1104.390625,
+    "resolverVisible": false
+  },
+  {
+    "ms": 651.7000000029802,
+    "selected": "A\u2032 \u00b7 Exact replay",
+    "surfaceLeft": 1104.390625,
+    "targetLeft": 1104.390625,
+    "resolverVisible": false
+  }
+]

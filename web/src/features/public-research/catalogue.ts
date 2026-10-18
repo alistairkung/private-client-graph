@@ -1,6 +1,7 @@
 export const publicResearchCatalogue: Record<string, string> = {
   "Published configuration": "已发布配置",
   "Inspect Run": "查看运行",
+  "{name}, F1 {f1}, {state}, {scored}/{planned} scored": "{name}，F1 {f1}，{state}，已评分 {scored}/{planned}",
   "Fresh baseline": "新提取基线",
   "Exact replay": "精确回放",
   "With resolver": "使用解析器",
