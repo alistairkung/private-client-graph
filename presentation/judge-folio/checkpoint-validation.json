@@ -1,0 +1,36 @@
+{
+  "scope": "creative checkpoint only",
+  "pages": 4,
+  "bytes": 399533,
+  "decimal_mb": 0.399533,
+  "size_limit_bytes": 20000000,
+  "page_points": [
+    720,
+    900
+  ],
+  "all_pages_rendered_and_inspected": true,
+  "fonts_embedded": [
+    "/AAAAAA+Newsreader16pt72pt-Regular",
+    "/AAAAAA+PublicSansThin-Regular",
+    "/AAAAAA+PublicSansThin-SemiBold"
+  ],
+  "hyperlink_targets": [
+    "https://github.com/alistairkung/private-client-graph/tree/main/cases/case_01",
+    "https://github.com/alistairkung/private-client-graph/pull/160",
+    "https://github.com/alistairkung/private-client-graph/blob/d5130917b32ba03e41d6345a8c3d604f4c906432/private_client_graph/published/research-results.v1.json",
+    "https://private-client-graph-production.up.railway.app/research-results#comparison"
+  ],
+  "source_sha256": {
+    "presentation/judge-folio/assets/production-research-chart.jpg": "91f015a42947c5ffed9e1e236bc5f96ff3280618bf732c85e81fc6fcc5115784",
+    "docs/artifacts/ui-consolidation/practitioner-evidence-desktop.png": "995b63f47f524787ef9b693b36a3cd071641140631383494c8d62cb2cb544a2e",
+    "private_client_graph/published/research-results.v1.json": "7f2c9370e0799aa639ca5cfbd08826591c81f6186da1d928d2ef190c3ff5b927"
+  },
+  "pdf_sha256": "a22ac00df3e48ab37a2fb071f56e37fc7ddad730364285883bd68cfa81f4e18d",
+  "provider_calls": 0,
+  "independent_review": "SHIP at sample scope; four material findings resolved",
+  "limitations": [
+    "Sample, not complete submission",
+    "Not a tagged PDF/UA document",
+    "Product screenshot retains slight raster softness"
+  ]
+}
