@@ -150,3 +150,25 @@ An independent complete-source/deletion review and the lead's final-diff review
 found no remaining material readability or scope concern. Review restored the
 font license notice, record-specific title ownership and phone query-menu
 behavior. No backend, domain, schema, fixture or migration changes are included.
+
+## PR 160 browser CI follow-up
+
+The first CI run passed Python and Docker checks but failed the narrow-phone
+landing geometry check (81 application browser tests passed). The check compared
+transformed DOMRect dimensions with an exact 44px boundary. A focused browser
+probe reproduced a CSS 44px target being reported as `43.9999847px` after a
+fractional translation; target clipping and caption/label collisions stayed absent.
+
+The narrow-width journey now checks both ordinary and fractional positioning at
+320px, 390px and 700px. This regression failed before the fix. Minimum-size
+comparison allows 0.001px of numerical error, below one Chromium layout unit,
+while viewport containment and collision checks retain their existing bounds.
+Failures report the offending dimensions and condition rather than just `false`.
+Ten consecutive focused regressions passed after the fix. Production application,
+Source data, authentication and motion code are unchanged by this follow-up.
+
+Follow-up validation passed: all **82** application browser tests against a fresh
+migrated/seeded disposable database, all **739** Python tests, and the production
+build/TypeScript check. Final two-file diff review found no material readability
+or scope issue; no paid provider calls were used. CI results for the new commit
+are reported separately at handoff.

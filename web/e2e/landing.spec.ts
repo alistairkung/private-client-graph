@@ -45,18 +45,34 @@ async function clearPhoneLabels(page: Page) {
         const overlaps = (a: DOMRect, b: DOMRect) =>
           Math.min(a.right, b.right) - Math.max(a.left, b.left) > 0.5 &&
           Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > 0.5;
-        return labels.every(
-          (label, index) =>
-            label.height >= 44 &&
-            label.width >= 44 &&
-            label.left >= 0 &&
-            label.right <= window.innerWidth &&
-            captions.every((caption) => !overlaps(label, caption)) &&
-            labels.slice(index + 1).every((other) => !overlaps(label, other)),
-        );
+        // Fractional translations can report a CSS 44px box as 43.9999847px.
+        // This allowance is smaller than one Chromium layout unit (1/64px).
+        const minimumTargetSize = 44 - 0.001;
+        return labels.flatMap((label, index) => {
+          const undersized =
+            label.height < minimumTargetSize || label.width < minimumTargetSize;
+          const clipped = label.left < 0 || label.right > window.innerWidth;
+          const captionOverlap = captions.some((caption) =>
+            overlaps(label, caption),
+          );
+          const labelOverlap = labels
+            .slice(index + 1)
+            .some((other) => overlaps(label, other));
+          return undersized || clipped || captionOverlap || labelOverlap
+            ? [{
+                index,
+                width: label.width,
+                height: label.height,
+                undersized,
+                clipped,
+                captionOverlap,
+                labelOverlap,
+              }]
+            : [];
+        });
       }),
     )
-    .toBe(true);
+    .toEqual([]);
 }
 async function openReview(page: Page) {
   await page
@@ -405,6 +421,14 @@ test("phone graph captions and all six relationship targets remain separate at n
     await page.setViewportSize({ width, height: 844 });
     await openReview(page);
     await clearPhoneLabels(page);
+    // A real CSS translation exposes DOMRect precision differences between runners.
+    await page.locator(".landing-story-drawing").evaluate(element => {
+      (element as HTMLElement).style.transform = "translateY(0.3px)";
+    });
+    await clearPhoneLabels(page);
+    await page.locator(".landing-story-drawing").evaluate(element => {
+      (element as HTMLElement).style.removeProperty("transform");
+    });
   }
 });
 
