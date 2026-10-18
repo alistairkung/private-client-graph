@@ -6,6 +6,12 @@ test("curated multi-source examples preserve corroboration, trustee replacement 
   await expect(page.getByLabel("Choose a synthetic case")).toHaveValue("case-04");
   await page.reload();
   await expect(page.getByLabel("Choose a synthetic case")).toHaveValue("case-04");
+  await page.getByRole("button", { name: "Previous example", exact: true }).click();
+  await expect(page.getByLabel("Choose a synthetic case")).toHaveValue("case-01");
+  await expect(page.getByRole("button", { name: "Previous example", exact: true })).toBeDisabled();
+  await page.getByRole("button", { name: "Next example", exact: true }).focus();
+  await page.keyboard.press("Enter");
+  await expect(page.getByLabel("Choose a synthetic case")).toHaveValue("case-04");
   const case04 = await page.request.get("/api/showcase/cases/case-04");
   const state: CanonicalState = (await case04.json()).state;
   const beneficiary = state.relationships.findIndex(edge => edge.type === "beneficiary_of"
@@ -30,6 +36,7 @@ test("curated multi-source examples preserve corroboration, trustee replacement 
 
   await page.getByLabel("Choose a synthetic case").selectOption("case-05");
   await expect(page).toHaveURL(/example=case-05$/);
+  await expect(page.getByRole("button", { name: "Next example", exact: true })).toBeDisabled();
   await page.getByRole("tab", { name: "List", exact: true }).click();
   await expect(page.locator(".relationship-row").filter({ hasText: /David Ng.*trustee/i })).toHaveCount(0);
   const trustee = page.locator(".relationship-row").filter({ hasText: /Rachel Lim.*trustee.*Willow Family Trust/i });

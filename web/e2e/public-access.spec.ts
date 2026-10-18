@@ -13,7 +13,7 @@ test("first anonymous visit has persisted sample content and exact Evidence with
   expect(await access.json()).toEqual({ can_write: false, sign_in_available: true });
   await page.goto("/app");
   await expect(page.getByRole("link", { name: /PC\/2026\/0142/ })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Sign in to make changes", exact: true }).first()).toBeVisible();
+  await expect(page.locator('.page-heading a[href="/app/matter-proposals/new"]')).toBeVisible();
   await page.getByRole("link", { name: /PC\/2026\/0142/ }).click();
   await page.reload();
   await expect(page).toHaveURL(evergreen);
@@ -26,6 +26,28 @@ test("first anonymous visit has persisted sample content and exact Evidence with
   expect((await context.request.post("/api/matters", {
     data: {}, headers: { origin: "https://127.0.0.1:4173", "x-csrftoken": csrf },
   })).status()).toBe(401);
+});
+
+test("anonymous visitors can open intake, see its requirements and sign in before uploading", async ({ page }) => {
+  const writes: string[] = [];
+  page.on("request", request => {
+    if (request.method() !== "GET" && new URL(request.url()).pathname.startsWith("/api/")) writes.push(request.url());
+  });
+  await page.goto("/app");
+  await page.locator('.page-heading a[href="/app/matter-proposals/new"]').click();
+  await expect(page).toHaveURL(/\/app\/matter-proposals\/new$/);
+  await page.reload();
+  await expect(page.getByRole("heading", { name: "New proposal", exact: true })).toBeVisible();
+  await expect(page.getByLabel("External Matter reference", { exact: true })).toBeDisabled();
+  await expect(page.getByLabel("PDF sources", { exact: true })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Upload and analyse", exact: true })).toBeDisabled();
+  await expect(page.getByText(/Saving a proposal publishes every Source title/)).toBeVisible();
+  expect(writes).toEqual([]);
+  await page.getByRole("link", { name: "Sign in to make changes", exact: true }).click();
+  await expect(page).toHaveURL(/\/app\/matter-proposals\/new$/);
+  await expect(page.getByLabel("External Matter reference", { exact: true })).toBeEnabled();
+  await expect(page.getByLabel("PDF sources", { exact: true })).toBeEnabled();
+  await expect(page.getByRole("button", { name: "Upload and analyse", exact: true })).toBeDisabled();
 });
 
 test("a real pending proposal exposes its full Source publicly while decisions stay protected", async ({ page, context }) => {

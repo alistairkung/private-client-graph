@@ -5,7 +5,6 @@ import type { MatterSummary, ProposalSummary } from "../../shared/contracts";
 import { ErrorNotice, Loading } from "../../shared/Feedback";
 import { Icon } from "../../shared/Icon";
 import { useLocale } from "../../shared/locale";
-import { WriteGate } from "../../shared/access";
 import { useSessionState } from "../../shared/session-state";
 
 export function Ledger() {
@@ -57,10 +56,10 @@ export function Ledger() {
           <h1>{t("Matters")}</h1>
           <p>{t("Your relationships, grounded in their sources.")}</p>
         </div>
-        <WriteGate><a className="button primary" href="/app/matter-proposals/new">
+        <a className="button primary" href="/app/matter-proposals/new">
           <Icon name="plus" />
           {t("New proposal")}
-        </a></WriteGate>
+        </a>
       </div>
       <label className="search-field">
         <Icon name="search" />
