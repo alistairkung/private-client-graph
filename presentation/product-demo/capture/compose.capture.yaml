@@ -1,0 +1,18 @@
+# Local capture only. Keep the existing localhost:8443 stack untouched.
+# Use with: docker compose -p pcg-product-demo -f compose.yaml -f presentation/product-demo/capture/compose.capture.yaml --profile practitioner up --build -d application
+services:
+  application:
+    environment:
+      PCG_TRUSTED_ORIGIN: https://localhost:8444
+    ports: !override
+      - "127.0.0.1:8444:8443"
+    labels:
+      pcg.capture.source-commit: a83b0e4af14fa79a899cadea7cf833c5ad7a96c8
+      pcg.capture.purpose: synthetic-practitioner-product-demo
+    command:
+      - sh
+      - -c
+      - >-
+        alembic upgrade head &&
+        python -m private_client_graph.persistence.seeds.evergreen &&
+        exec python -c 'from local_development.server import create_local_app; from local_development.https import serve_https; serve_https(create_local_app(origin="https://localhost:8444"), host="0.0.0.0", port=8443)'
