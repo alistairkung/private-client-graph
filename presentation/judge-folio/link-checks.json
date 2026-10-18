@@ -1,0 +1,76 @@
+[
+  {
+    "url": "https://github.com/alistairkung/private-client-graph",
+    "status": 200
+  },
+  {
+    "url": "https://github.com/alistairkung/private-client-graph/blob/d5130917b32ba03e41d6345a8c3d604f4c906432/PRODUCT.md",
+    "status": 200
+  },
+  {
+    "url": "https://github.com/alistairkung/private-client-graph/blob/d5130917b32ba03e41d6345a8c3d604f4c906432/README.md",
+    "status": 200
+  },
+  {
+    "url": "https://github.com/alistairkung/private-client-graph/blob/d5130917b32ba03e41d6345a8c3d604f4c906432/cases/README.md",
+    "status": 200
+  },
+  {
+    "url": "https://github.com/alistairkung/private-client-graph/blob/d5130917b32ba03e41d6345a8c3d604f4c906432/cases/case_01/ground_truth.json",
+    "status": 200
+  },
+  {
+    "url": "https://github.com/alistairkung/private-client-graph/blob/d5130917b32ba03e41d6345a8c3d604f4c906432/cases/case_01/source.txt",
+    "status": 200
+  },
+  {
+    "url": "https://github.com/alistairkung/private-client-graph/blob/d5130917b32ba03e41d6345a8c3d604f4c906432/cases/case_04/sources/note_02.txt",
+    "status": 200
+  },
+  {
+    "url": "https://github.com/alistairkung/private-client-graph/blob/d5130917b32ba03e41d6345a8c3d604f4c906432/docs/adr/0005-treat-extracted-pdf-text-as-the-authoritative-source.md",
+    "status": 200
+  },
+  {
+    "url": "https://github.com/alistairkung/private-client-graph/blob/d5130917b32ba03e41d6345a8c3d604f4c906432/docs/adr/0009-share-one-fixed-configurable-analysis-pipeline.md",
+    "status": 200
+  },
+  {
+    "url": "https://github.com/alistairkung/private-client-graph/blob/d5130917b32ba03e41d6345a8c3d604f4c906432/docs/artifacts/ui-consolidation/README.md",
+    "status": 200
+  },
+  {
+    "url": "https://github.com/alistairkung/private-client-graph/blob/d5130917b32ba03e41d6345a8c3d604f4c906432/presentation/product-demo/PROVENANCE.md",
+    "status": 200
+  },
+  {
+    "url": "https://github.com/alistairkung/private-client-graph/blob/d5130917b32ba03e41d6345a8c3d604f4c906432/private_client_graph/published/research-results.v1.json",
+    "status": 200
+  },
+  {
+    "url": "https://github.com/alistairkung/private-client-graph/pull/160",
+    "status": 200
+  },
+  {
+    "url": "https://github.com/alistairkung/private-client-graph/tree/d5130917b32ba03e41d6345a8c3d604f4c906432/research/final-day/validation",
+    "status": 200
+  },
+  {
+    "url": "https://github.com/alistairkung/private-client-graph/tree/main/cases/case_01",
+    "status": 200
+  },
+  {
+    "url": "https://private-client-graph-production.up.railway.app/",
+    "status": 200
+  },
+  {
+    "url": "https://private-client-graph-production.up.railway.app/research-results",
+    "status": 200,
+    "method": "GET with browser HTML Accept"
+  },
+  {
+    "url": "https://private-client-graph-production.up.railway.app/research-results#comparison",
+    "status": 200,
+    "method": "GET with browser HTML Accept"
+  }
+]
