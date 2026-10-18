@@ -40,7 +40,7 @@ def research_method(canvas, number, evidence):
         page.paragraph(explanation, 100, top+33, 572, 14, 20, max_height=44)
     page.paragraph(
         "<b>Hackathon scope:</b> baseline extraction plus constrained alias resolution. "
-        "The following roadmap sets out the broader programme; it is not a list of completed experiments.",
+        "The roadmap on page 19 sets out the broader programme; it is not a list of completed experiments.",
         48, 791, 624, 13, 18)
     page.footer("Author's methodology; case hypotheses, held-out records and Workbench implementation.", ROADMAP)
 
@@ -156,15 +156,15 @@ def alias_correction(canvas, number, evidence):
     text = source["text"].replace("\\n", "\n")
     introduction = text.split("\n\n")[1]
     page.text("Heldout_03: factual interview note", 48, 201, 11.5, MUTED, "SansBold")
-    page.rect(48, 237, 624, 176, YELLOW)
+    page.rect(48, 237, 624, 148, YELLOW)
     page.paragraph("“" + escape(introduction) + "”", 70, 259, 580, 25, 31, INK, "Serif")
     page.paragraph("Exact Source excerpt from the synthetic held-out case. Editorial figure.",
-                   48, 427, 624, 11.5, 16, MUTED)
+                   48, 399, 624, 11.5, 16, MUTED)
     edits = _observation(case, "B")["edits"]
-    page.text("Endpoint correction", 48, 462, 10.5, MUTED)
-    page.text("Unchanged target", 372, 462, 10.5, MUTED)
+    page.text("Endpoint correction", 48, 434, 10.5, MUTED)
+    page.text("Unchanged target", 372, 434, 10.5, MUTED)
     for index, edit in enumerate(edits):
-        y = 481 + index * 114
+        y = 453 + index * 104
         page.text(edit["relationship_type"].replace("_", " ").capitalize(), 48, y, 13, MUTED, "SansBold")
         page.text(edit["original_name"], 48, y + 28, 24, BURGUNDY, "Serif")
         page.line(102, y + 42, 154, y + 42, FOREST, 1)
@@ -173,12 +173,15 @@ def alias_correction(canvas, number, evidence):
         page.text(edit["resolved_name"], 174, y + 28, 24, FOREST, "Serif")
         page.text(edit["other_endpoint"], 372, y + 33, 16, INK)
         page.paragraph("“" + escape(edit["supporting_text"]) + "”", 48, y + 66, 624, 15, 21, INK, "Serif")
-    page.line(48, 719, 672, 719)
+    page.paragraph("The already-correct Isaac Ng beneficiary relationship remains unchanged.",
+                   48, 665, 624, 13, 18)
+    page.line(48, 703, 672, 703)
     page.paragraph(
-        "Exactly two endpoint names change from Bea to Beatrice Ng: the settlor "
-        "of Larch Family Trust and the parent of Isaac Ng. Their quotations remain "
-        "unchanged. The already-correct Isaac Ng beneficiary relationship also remains.",
-        48, 744, 624, 15, 22)
+        "<b>The resolver returns endpoint-name edits only.</b> Code preserves "
+        "candidate count, relationship types, directions and quotations. Replacement "
+        "names must occur in the Sources or extracted endpoints. Whether two names "
+        "identify the same person remains a model judgment.",
+        48, 725, 624, 14, 20)
     page.footer("Retained heldout_03 Source, endpoint edits and relationship observations.", PUBLICATION)
 
 

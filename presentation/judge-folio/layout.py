@@ -1,6 +1,7 @@
 """Small vector-first page vocabulary for the judge's reading document."""
 
 from pathlib import Path
+from html import unescape
 import re
 
 from fontTools.ttLib import TTFont as FontToolsFont
@@ -10,6 +11,8 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.platypus import Paragraph
 from reportlab.lib.utils import ImageReader
+
+from localization import translate
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -42,6 +45,19 @@ def register_fonts():
         pdfmetrics.registerFont(TTFont(name, target))
     pdfmetrics.registerFontFamily("Sans", normal="Sans", bold="SansBold")
     pdfmetrics.registerFontFamily("Serif", normal="Serif", italic="SerifItalic")
+    for name, filename in (
+        ("SansSC", "noto-sans-sc-chinese-simplified-400-normal.woff2"),
+        ("SansBoldSC", "noto-sans-sc-chinese-simplified-600-normal.woff2"),
+        ("SerifSC", "noto-serif-sc-chinese-simplified-400-normal.woff2"),
+    ):
+        target = destination / f"{name}.ttf"
+        font = FontToolsFont(ROOT / "presentation/product-demo/public/fonts" / filename,
+                            recalcTimestamp=False)
+        font.flavor = None
+        font.save(target)
+        pdfmetrics.registerFont(TTFont(name, target))
+    pdfmetrics.registerFontFamily("SansSC", normal="SansSC", bold="SansBoldSC")
+    pdfmetrics.registerFontFamily("SerifSC", normal="SerifSC", italic="SerifSC")
 
 
 class Page:
@@ -51,6 +67,7 @@ class Page:
         self.canvas = canvas
         self.number = number
         self.dark = dark
+        self.language = getattr(canvas, "folio_language", "en")
         self.rect(0, 0, WIDTH, HEIGHT, FOREST if dark else WHITE)
         self.text("Private Client Graph", 48, 29, 10.5,
                   WHITE if dark else MUTED, "SansBold")
@@ -76,6 +93,9 @@ class Page:
         c.restoreState()
 
     def text(self, text, x, y, size=16, color=INK, font="Sans", align="left"):
+        text = translate(text, self.language)
+        font = self._font(font, text)
+        self._check_glyphs(text, font)
         c = self.canvas
         c.setFillColor(HexColor(color))
         # The project's Latin Public Sans subset omits the mathematical prime.
@@ -91,8 +111,12 @@ class Page:
 
     def paragraph(self, text, x, y, width, size=16, leading=23,
                   color=INK, font="Sans", max_height=None):
+        text = translate(text, self.language)
+        font = self._font(font, text)
+        self._check_glyphs(text, font)
         style = ParagraphStyle("body", fontName=font, fontSize=size,
-                               leading=leading, textColor=HexColor(color))
+                               leading=leading, textColor=HexColor(color),
+                               wordWrap="CJK" if self._has_chinese(text) else None)
         text = text.replace("′", '<font name="Serif">′</font>')
         paragraph = Paragraph(text, style)
         _, height = paragraph.wrap(width, HEIGHT)
@@ -132,8 +156,28 @@ class Page:
 
     def link(self, label, url, x, y, size=11.5, color=MUTED):
         self.text(label, x, y, size, color)
-        width = pdfmetrics.stringWidth(label, "Sans", size)
+        label = translate(label, self.language)
+        width = sum(pdfmetrics.stringWidth(part, "Serif" if part == "′" else self._font("Sans", label), size)
+                    for part in re.split("(′)", label))
         self.canvas.linkURL(url, (x, HEIGHT-y-size-3, x+width, HEIGHT-y+2), relative=0)
+
+    def _font(self, font, text):
+        if self.language == "en" or not self._has_chinese(text):
+            return font
+        return {"Sans": "SansSC", "SansBold": "SansBoldSC",
+                "Serif": "SerifSC", "SerifItalic": "SerifSC"}[font]
+
+    @staticmethod
+    def _has_chinese(text):
+        return bool(re.search(r"[\u3400-\u9fff]", text))
+
+    def _check_glyphs(self, text, font):
+        plain = unescape(re.sub(r"<[^>]+>", "", text))
+        available = pdfmetrics.getFont(font).face.charWidths
+        missing = {character for character in plain
+                   if not character.isspace() and character != "′" and ord(character) not in available}
+        if missing:
+            raise ValueError(f"Page {self.number}: missing {font} glyphs {sorted(missing)}")
 
     def footer(self, source=None, url=None):
         color = WHITE if self.dark else MUTED

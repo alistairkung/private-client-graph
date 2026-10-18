@@ -12,10 +12,10 @@ def original_problem(canvas, number, evidence):
     page = Page(canvas, number, "The original problem")
     page.heading("Reconstruct the facts.<br/>Keep the words within reach.", y=83, size=43)
     page.paragraph(
-        "A private-client solicitor or adviser needs a factual starting point: "
-        "who belongs to the family, who holds a Trust role, and which document "
-        "supports each connection. The work begins in documentary language, "
-        "before substantive advice can follow.",
+        "Before an estate-planning or trust review, a Private Wealth solicitor or "
+        "adviser needs to establish the family relationships, recorded Trust roles "
+        "and documents supporting each connection. PCG makes that factual map "
+        "inspectable before advice.",
         48, 198, 624, 16, 23)
 
     page.rect(48, 329, 624, 208, CHALK)
@@ -28,20 +28,21 @@ def original_problem(canvas, number, evidence):
     page.text("Exact passage · Attendance Note – Meeting with Alice Chen", 69, 514, 11.5, MUTED)
 
     page.paragraph(
-        "Across documents, the same person may appear under another name; a "
-        "later note may confirm a fact or describe a changed role. A useful "
-        "relationship map must preserve those distinctions and the route back "
-        "to the text. A plausible connection alone is insufficient.",
+        "Across documents, a person may appear under another name and a later note "
+        "may confirm or change a role. A <b>Matter</b> is the review workspace; "
+        "<b>Sources</b> are its documents; <b>Evidence</b> is the quoted text behind "
+        "each relationship. The map preserves the route back to those words.",
         48, 550, 624, 16, 23)
     page.paragraph(
-        "Private Client Graph explores this workflow with synthetic material. "
-        "Its proposition is an inspectable machine proposal that the professional "
-        "can review before accepting it as current Matter state. This is an "
-        "intended use, not evidence of practitioner adoption or time saved.",
+        "<b>Built for this hackathon:</b> a relationship workspace, an AI-to-graph "
+        "pipeline with deterministic checks, and a Workbench for controlled "
+        "comparisons. The proposed benefit is a clearer factual handover: preparer "
+        "and reviewer can inspect the same claims and supporting words. "
+        "Practitioner usefulness remains to be tested.",
         48, 669, 624, 16, 23)
     page.line(48, 789, 672, 789)
     page.text("Reading route", 48, 803, 10.5, MUTED, "SansBold")
-    page.text("Product 3–7  /  Method 8–13  /  Findings 14–18  /  Next 19–20", 169, 803, 11.5, MUTED)
+    page.text("Product 3-7  /  Method 8-12  /  Findings 13-17  /  Next 18-20", 169, 803, 11.5, MUTED)
     page.footer("Intended workflow: PRODUCT.md. Exact passage: Case 01 Source.",
                 PIN + "cases/case_01/source.txt")
 
@@ -150,10 +151,10 @@ def professional_acceptance(canvas, number, evidence):
     page.line(651, 589, 644, 594, WHITE, 1)
 
     page.paragraph(
-        "Confirmation persists the entire proposed graph, all supplied "
-        "Sources and Matter identity as professionally accepted current "
-        "Matter state. In the recorded demonstration, the accepted Matter "
-        "was reopened and its parent relationship inspected without reanalysis.",
+        "Confirmation records the practitioner's decision to adopt the whole "
+        "proposed map for the Matter; each claim retains its Sources for further "
+        "checking. The recorded demonstration saves that state, reopens the Matter "
+        "and inspects a parent relationship without reanalysis.",
         48, 666, 624, 16, 23)
     page.paragraph(
         "This is whole-proposal acceptance. Per-relationship editing and "
