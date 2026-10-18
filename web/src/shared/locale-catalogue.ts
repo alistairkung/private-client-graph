@@ -1,9 +1,10 @@
+import { chinese } from "./translations";
 import { researchVisualCatalogue } from "./research/visual-catalogue";
 import { researchEditorialCatalogue } from "../features/public-research/editorial-catalogue";
 import { researchLandingCatalogue } from "../features/public-research/landing-catalogue";
 import { publicResearchCatalogue } from "../features/public-research/catalogue";
-import { showcaseZhCN } from "../features/showcase/catalogue";
-import { practitionerZhCN } from "../features/matters/catalogue";
+import { showcaseZhCN } from "./public/catalogue";
+
 export const catalogue: Record<string,string> = {
   ...researchEditorialCatalogue,
   ...researchVisualCatalogue,
@@ -56,5 +57,17 @@ export const catalogue: Record<string,string> = {
   "Synthetic material only": "仅限合成材料",
   "This prototype accepts synthetic or fictional material only. It is not suitable for real confidential client information.": "本原型仅接受合成或虚构材料，不适用于真实的客户机密信息。"
 ,
- ...showcaseZhCN, ...practitionerZhCN, ...publicResearchCatalogue, ...researchLandingCatalogue
+ ...showcaseZhCN, ...publicResearchCatalogue, ...researchLandingCatalogue, ...chinese,
+ "Checking sign-in and editing access…": "正在检查登录和编辑权限…",
+ "Sign-in and editing access could not be checked. You can still read Matters and proposals.": "无法检查登录和编辑权限。您仍可阅读事项和提案。",
+ "Retry access check": "重新检查权限",
+ "Sign in to make changes": "登录以进行更改",
+ "Sign-in is currently unavailable. You can still read Matters and proposals.": "目前无法登录。您仍可阅读事项和提案。",
+ "Sources, Matter Proposals and Matters are publicly readable, including proposals awaiting confirmation.": "来源、事项提案和事项均可公开阅读，包括等待确认的提案。",
+ "Saving a proposal publishes every Source title and its entire extracted text, proposed relationships and Matter reference to anyone, before confirmation. Discard cannot retract copies already read or downloaded.": "保存提案即会在确认前向所有人公开每份来源的标题和完整提取文本、拟议关系和事项编号。丢弃无法收回已被阅读或下载的副本。",
+ "Loading…": "正在加载…",
+ "Curated examples": "精选案例",
+ "Curated example": "精选案例",
+ "Choose a synthetic case": "选择合成案例",
+ "Curated ideal fixtures, not live extraction or accepted Matter state.": "精选理想样例，并非实时提取结果或已接受的事项状态。"
 };

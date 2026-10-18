@@ -1,10 +1,15 @@
+import { useEffect } from "react";
 import { useLocale } from "../../shared/locale";
 import { PublicHeader } from "../../shared/public/PublicHeader";
 import { PUBLIC_RESEARCH_DOWNLOAD, usePublicResearchSnapshot } from "./api";
 import { ResearchStory } from "./ResearchStory";
+import "../../styles/global.css";
 import "./public-research.css";
 export function ResearchResultsApp() {
   const { t } = useLocale();
+  useEffect(() => {
+    document.title = `${t("Research results")} · Private Client Graph`;
+  }, [t]);
   const { snapshot, status } = usePublicResearchSnapshot();
   const baseline = snapshot?.runs.find((run) => run.label === "A_prime");
   const treatment = snapshot?.runs.find((run) => run.label === "B");

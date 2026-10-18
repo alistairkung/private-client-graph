@@ -32,7 +32,7 @@ they hold authoritative artifacts and execution accounting. PostgreSQL is a
 rebuildable research index. See the [Research Workbench guide](research/README.md)
 for the current workflow and recovery details.
 
-### Practitioner application
+### Landing and practitioner application
 
 Upload synthetic PDFs, inspect proposed relationships and their evidence, then
 confirm the whole graph to create a Matter:
@@ -41,7 +41,8 @@ confirm the whole graph to create a Matter:
 docker compose --profile practitioner up --build application
 ```
 
-Open [https://localhost:8443/app](https://localhost:8443/app) and accept the warning
+Open [https://localhost:8443/](https://localhost:8443/) for the landing or
+[https://localhost:8443/app](https://localhost:8443/app) for Matters, and accept the warning
 for the temporary development certificate. The local environment substitutes
 Google identity and model responses, so no external credentials are needed.
 Authentication, PDF validation, graph construction, and PostgreSQL persistence
@@ -52,6 +53,11 @@ Source text and Evidence. Sign in with an allowlisted identity to upload, analys
 confirm or discard. Signed-in submissions are publicly readable too; the app
 remains unsuitable for real client information. Legacy `/demo` links redirect
 to this same application.
+
+The approved landing and Forest & Chalk review workspace share one production
+frontend. Explore [curated multi-source examples](https://localhost:8443/app?example=case-04)
+or the retained [research results](https://localhost:8443/research-results).
+See the [UI consolidation and parity guide](docs/workflows/ui-consolidation.md).
 
 For a deterministic walkthrough, use `tests/fixtures/synthetic-proposal.pdf` and
 `tests/fixtures/multiple-role-proposal.pdf`. These demonstrate the review workflow;

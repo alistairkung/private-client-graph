@@ -1,128 +1,38 @@
 ---
 name: Private Client Graph
-description: Evidence-led editorial presentation with a contained professional review workspace.
+description: Forest & Chalk, from documents to relationships and exact Evidence.
 colors:
-  ledger-green: "#173e38"
-  paper: "#f6f6f1"
-  white: "#ffffff"
-  burgundy: "#773b46"
-  evidence-gold: "#efdda0"
-  muted-ink: "#52665f"
-  green-hover: "#28584f"
-  frame-border: "#d5d9d2"
-typography:
-  display:
-    fontFamily: '"Newsreader Display", "Newsreader", Georgia, serif'
-    fontSize: "clamp(64px, 8.2vw, 130px)"
-    fontWeight: 400
-    lineHeight: 0.98
-    letterSpacing: "-0.035em"
-  body:
-    fontFamily: '"Public Sans", Arial, sans-serif'
-    fontSize: "15px"
-    fontWeight: 400
-    lineHeight: 1.5
-rounded:
-  action: "22px"
-  frame: "5px"
-spacing:
-  gutter: "clamp(24px, 4.5vw, 72px)"
-  frame-inset: "18px"
-components:
-  public-primary-action:
-    backgroundColor: "{colors.ledger-green}"
-    textColor: "{colors.white}"
-    rounded: "{rounded.action}"
-    padding: "12px 25px"
-  public-primary-action-hover:
-    backgroundColor: "{colors.green-hover}"
-  demonstration-frame:
-    backgroundColor: "{colors.paper}"
-    rounded: "{rounded.frame}"
-    padding: "{spacing.frame-inset}"
+  forest: "#173F31"
+  action: "#1E6249"
+  ink: "#20372B"
+  frame: "#E9F0EA"
+  surface: "#FFFFFF"
+  border: "#C7D3C8"
+  practitioner-evidence: "#FFF0A6"
+  landing-evidence: "#D4E6A5"
 ---
 
-# Design System: Private Client Graph
+# Design system: Private Client Graph
 
-## Overview
+The approved **Forest & Chalk** design now belongs to the single production
+frontend in `web/`. Phase two carries the approved designs from drafts 157/158
+into the existing application build; it does not introduce another visual direction.
 
-**Creative North Star: "Evidence Folio"**
+- [Working Atlas](docs/design/practitioner-working-atlas.md) defines the
+  practitioner workspace, graph/list interaction, Source reader and Evidence.
+- [Document story](docs/design/landing-document-story.md) defines the landing's
+  document montage, scroll-drawn graph and final split Source view.
+- [Consolidation guide](docs/workflows/ui-consolidation.md) records routes,
+  public-read/protected-write behavior, parity coverage and local launch.
 
-A precise, document-led editorial world pairs warm paper and large serif type
-with restrained professional controls. Exact Evidence supplies the visual
-emphasis; space and full-width tonal changes establish hierarchy.
+The landing uses self-hosted Public Sans; the practitioner uses Segoe UI with
+Arial/sans-serif fallback. Source text, names, relationship identities and
+Evidence remain backend authoritative. Animation acknowledges work and preserves
+context. Reduced-motion preferences expose the complete story without scroll
+choreography and make Source reveals immediate.
 
-This record captures the implemented Public Showcase foundations. It does not
-replace the practitioner interface's existing density or component styles. The
-approved first surface and its intentional adaptations remain in
-[the landing direction](docs/design/public-landing-visual-direction.md).
-
-**Key Characteristics:**
-
-- Document texture alongside live, selectable text.
-- Generous editorial spacing around a bounded working interface.
-- Restrained annotation and Evidence emphasis.
-
-## Colors
-
-Ledger green anchors headings, primary actions, and dark editorial surfaces.
-Paper and white separate the document and surrounding canvas. Burgundy identifies
-editorial annotations and visible keyboard focus; Evidence gold highlights exact
-supporting source words. Muted ink supports captions and availability text.
-
-## Typography
-
-Newsreader Display supplies public display text, source excerpts, and italic
-annotations at weight 400. Public Sans supplies navigation and interface text.
-Self-hosted font declarations and assets live in `web/src/styles/fonts.css` and
-`web/src/styles/fonts/`. The existing Newsreader weight 500 remains available for
-the practitioner shell; the new display faces do not replace it.
-
-The display token describes the desktop hero. Individual chapter headings and
-mobile layouts have their own observed responsive sizes; do not apply the hero
-scale to product controls.
-
-## Layout
-
-Public content uses a maximum width of 1440px and fluid outer gutters. Full-width
-editorial backgrounds can surround that constrained content. Keep substantial
-space around the actual review workspace so it remains a distinct working
-surface. The demonstration stacks its caption above its frame at 1100px; mobile
-layouts further simplify at 700px and 650px according to the component.
-
-## Elevation & Depth
-
-Depth comes from the paper image, tonal surfaces, and fine borders. The public
-frame and actions do not add box shadows. The paper texture is decorative;
-readable source text remains HTML.
-
-## Shapes
-
-Actions have softly rounded corners, while the demonstration frame uses a small
-radius. Person notation is circular; Trust notation is triangular. Editorial
-Trust-role connectors are fine lines without arrowheads or implied flow.
-
-## Components
-
-The public primary action uses Newsreader Display with a green fill and a
-minimum desktop height of 58px. Hover deepens its fill; keyboard focus uses a
-visible burgundy outline. Mobile actions retain a minimum height of 48px.
-Navigation links have at least 44px height and underline on hover.
-
-Evidence highlights preserve wrapping with cloned box decoration. The synthetic
-case label is small, spaced uppercase text. The demonstration frame reuses
-`SourceAwareReviewWorkspace` and curated case selection; its local styling
-adjusts spacing without replacing review behavior. Each case loads its curated
-Sources, graph and exact Evidence without requesting analysis.
-
-Public anchor links use native smooth scrolling. Reduced-motion preferences
-restore instant anchor navigation and remove the action's brief color transition.
-
-## Do's and Don'ts
-
-- Do retain exact source text as selectable HTML.
-- Do preserve readable product controls inside editorial framing.
-- Do retain the Trust triangle and visible keyboard focus.
-- Don't use the hero illustration as a substitute for the working review UI.
-- Don't imply direction or flow on editorial Trust-role connectors.
-- Don't convert synthetic demonstration content into production or accuracy claims.
+Public research retains its existing editorial typography, recorded comparison
+renderers and original artifact download. Its required older renderers live
+under `web/src/features/public-research/recorded-review/`; they are not a second
+practitioner application. The earlier [public landing direction](docs/design/public-landing-visual-direction.md)
+remains a historical record of the replaced landing.

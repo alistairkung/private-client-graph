@@ -6,7 +6,7 @@ import type { CanonicalGraph } from "../../shared/canonical-graph";
 import { RecordedGraph, recordedGraph } from "./RecordedGraph";
 import type { PublicResearchSnapshot } from "./types";
 
-vi.mock("../review/GraphView", () => ({
+vi.mock("./recorded-review/GraphView", () => ({
   GraphView: ({ graph, onSelect }: { graph: CanonicalGraph; onSelect: (index: number) => void }) =>
     <button onClick={() => onSelect(0)}>{graph.entities[0].name}</button>,
 }));

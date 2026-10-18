@@ -2,9 +2,9 @@ import { useMemo, useState } from "react";
 import { useLocale } from "../../shared/locale";
 import { EvidenceInspector } from "../../shared/research/EvidenceInspector";
 import type { CanonicalGraph } from "../../shared/canonical-graph";
-import { GraphView } from "../review/GraphView";
+import { GraphView } from "./recorded-review/GraphView";
 import type { PublicCase, PublicObservation } from "./types";
-import "../review/review.css";
+import "./recorded-review/review.css";
 
 // Project retained canonical state into the existing renderer; never construct or score it.
 export function recordedGraph(observation: PublicObservation): CanonicalGraph {

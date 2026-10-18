@@ -1,169 +1,380 @@
 import { expect, test } from "@playwright/test";
-import { openPublicMenu } from "./public-navigation";
+import { fileURLToPath } from "node:url";
 
-const matterPath = "/app/matters/ff985caf-60c5-4e65-a238-f3c26381c369";
+const familyPdf = fileURLToPath(
+  new URL("../../tests/fixtures/synthetic-proposal.pdf", import.meta.url),
+);
+const trustPdf = fileURLToPath(
+  new URL("../../tests/fixtures/multiple-role-proposal.pdf", import.meta.url),
+);
+const evergreen = "/app/matters/ff985caf-60c5-4e65-a238-f3c26381c369";
 
-test("persisted Matter opens from ledger and highlights exact Evidence after direct entry and refresh", async ({ page }, testInfo) => {
-  const apiRequests: string[] = [];
-  page.on("request", request => {
-    const path = new URL(request.url()).pathname;
-    if (path.startsWith("/api/")) apiRequests.push(path);
-  });
-  await page.goto("/app");
-  await expect(page).toHaveTitle("Matters · Private Client Graph");
-  const matter = page.getByRole("link", { name: "PC/2026/0142 Evergreen Family Trust" });
-  await expect(matter).toHaveAttribute("href", matterPath);
-  await page.screenshot({ path: testInfo.outputPath("matters-register.png"), fullPage: true });
-  await matter.focus();
-  await matter.press("Enter");
-  await expect(page).toHaveURL(matterPath);
-  await expect(page.getByRole("heading", { name: "Evergreen Family Trust", exact: true })).toBeVisible();
-  await expect(page.getByText("Matter reference: PC/2026/0142")).toBeVisible();
-  await page.goto(matterPath);
-  await page.reload();
-  await expect(page).toHaveTitle("Evergreen Family Trust · Private Client Graph");
-  await expect(page.getByRole("img", { name: "Triangular Trust node" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Matters", exact: true })).toHaveAttribute("aria-current", "page");
-  const edge = page.getByRole("button", { name: "Alice Chen — Spouse of — David Chen", exact: true });
-  await page.getByLabel("Find a relationship").selectOption({ label: "Alice Chen — Spouse of — David Chen" });
-  await edge.getByText("Spouse of", { exact: true }).click();
-  await expect(edge).toHaveClass(/selected/);
-  if (testInfo.project.name === "narrow") {
-    const scale = await page.locator(".react-flow__viewport").evaluate(element => new DOMMatrix(getComputedStyle(element).transform).a);
-    expect(scale).toBeGreaterThanOrEqual(1);
-    const canvas = await page.getByLabel("Relationship graph").boundingBox();
-    const label = await edge.boundingBox();
-    expect(label!.x).toBeGreaterThanOrEqual(canvas!.x);
-    expect(label!.x + label!.width).toBeLessThanOrEqual(canvas!.x + canvas!.width);
-  }
-  const highlight = page.locator("mark");
-  await expect(highlight).toHaveText("Alice Chen confirmed that she and David Chen are spouses.");
-  await expect(highlight).toBeInViewport();
-  await expect(page.getByRole("button", { name: /Evidence 1/ })).toHaveAttribute("aria-pressed", "true");
-  const parent = page.getByRole("button", { name: "Alice Chen — Parent of — Bob Chen", exact: true });
-  await parent.focus();
-  await parent.press("Enter");
-  await expect(parent).toHaveClass(/selected/);
-  await expect(edge).not.toHaveClass(/selected/);
-  await expect(highlight).toHaveText("Alice Chen confirmed that Alice Chen and David Chen are the parents of Bob Chen.");
-  await expect(highlight).toBeInViewport();
-  await page.getByRole("link", { name: "View in source" }).click();
-  await expect(highlight).toBeFocused();
-  await page.getByRole("button", { name: "Back to selected relationship" }).click();
-  await expect(parent).toBeFocused();
-  await page.getByLabel("Find a relationship").selectOption({ label: "Alice Chen — Spouse of — David Chen" });
-  await expect(edge).toHaveClass(/selected/);
-  expect(apiRequests).toContain(matterPath.replace("/app/", "/api/"));
-  expect(apiRequests.every(path => path.startsWith("/api/matters") || path === "/api/matter-proposals" || path === "/api/access")).toBe(true);
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
-  await page.screenshot({ path: testInfo.outputPath("matter-workspace.png"), fullPage: true });
-  const mattersNavigation = page.getByRole("link", { name: "Matters", exact: true });
-  await mattersNavigation.focus();
-  await mattersNavigation.press("Enter");
-  await expect(matter).toBeVisible();
-  const accountMenu = page.getByRole("button", { name: "Account and application menu" });
-  await accountMenu.focus();
-  await accountMenu.press("Enter");
-  await expect(accountMenu).toHaveAttribute("aria-expanded", "true");
-  const showcaseLink = page.getByRole("link", { name: "Public showcase" });
-  const menuBounds = await showcaseLink.locator("..").boundingBox();
-  expect(menuBounds).not.toBeNull();
-  expect(menuBounds!.x).toBeGreaterThanOrEqual(20);
-  expect(menuBounds!.x + menuBounds!.width).toBeLessThanOrEqual(await page.evaluate(() => window.innerWidth - 20));
-  await accountMenu.press("Tab");
-  await expect(showcaseLink).toBeFocused();
-  await showcaseLink.press("Enter");
-  await expect(page.getByLabel("Choose a synthetic case")).toBeVisible();
-  await openPublicMenu(page);
-  await page.getByRole("navigation", { name: "Public showcase" }).getByRole("link", { name: "Practitioner application", exact: true }).click();
-  await expect(matter).toBeVisible();
-});
-
-test("unknown Matter direct route stays in the practitioner shell", async ({ page }) => {
-  await page.goto("/app/matters/00000000-0000-0000-0000-000000000000");
-  await expect(page.getByRole("alert")).toContainText("Matter not found");
-  await page.getByRole("link", { name: "Back to Matters" }).click();
-  await expect(page.getByRole("heading", { name: "Matters", exact: true })).toBeVisible();
-});
-
-test("retrying a failed access check preserves public Matter reading and restores signed-in creation", async ({ page }) => {
+test.beforeEach(async ({ page }) => {
   await page.goto("/auth/login?next=/app");
-  await expect(page.getByRole("link", { name: "Create Matter" })).toBeVisible();
-  let releaseAccess!: () => void;
-  const delayedAccess = new Promise<void>(resolve => { releaseAccess = resolve; });
-  let checks = 0;
-  await page.route("**/api/access", async route => {
-    checks += 1;
-    if (checks === 1) return route.abort();
-    if (checks === 2) await delayedAccess;
+  await expect(
+    page.getByRole("heading", { name: "Matters", exact: true }),
+  ).toBeVisible();
+});
+
+async function intake(
+  page: import("@playwright/test").Page,
+  reference: string,
+  files = [familyPdf],
+) {
+  await page.goto("/app/matter-proposals/new");
+  await page.locator('input[name="external_reference"]').fill(reference);
+  await page
+    .locator('input[name="matter_title"]')
+    .fill("Fictional family review");
+  await page.locator('input[type="file"]').setInputFiles(files);
+  await page.getByRole("checkbox").check();
+  await page
+    .getByRole("button", { name: "Upload and analyse", exact: true })
+    .click();
+  await expect(page).toHaveURL(/\/app\/matter-proposals\/[a-f0-9-]+$/);
+  await expect(
+    page.getByRole("heading", { name: "Fictional family review", exact: true }),
+  ).toBeVisible();
+}
+
+test("ledger search, direct Matter entry and refresh preserve accepted review", async ({
+  page,
+}, info) => {
+  await page.getByRole("searchbox").fill("PC/2026/0142");
+  await page.getByRole("link", { name: /PC\/2026\/0142/ }).click();
+  await expect(page).toHaveURL(evergreen);
+  await expect(
+    page.getByRole("heading", { name: "Evergreen Family Trust", exact: true }),
+  ).toBeVisible();
+  await page.reload();
+  await expect(
+    page.getByRole("heading", { name: "Evergreen Family Trust", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("Current", { exact: true }).first(),
+  ).toBeVisible();
+  if (info.project.name === "desktop") {
+    const label = page
+      .locator(".entity-node strong")
+      .filter({ hasText: /^Alice Chen$/ });
+    const lines = await label.evaluate(
+      (element) =>
+        element.clientHeight / parseFloat(getComputedStyle(element).lineHeight),
+    );
+    expect(lines).toBeLessThan(1.1);
+  }
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth,
+    ),
+  ).toBe(true);
+  await page.screenshot({
+    path: `artifacts/${info.project.name}-workspace.png`,
+    fullPage: true,
+  });
+});
+
+test("keyboard relationship selection locates exact Evidence and restores focus", async ({
+  page,
+}, info) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto(evergreen);
+  await page.getByRole("tab", { name: "List", exact: true }).click();
+  const relationship = page.locator("#relationship-0");
+  await relationship.focus();
+  await relationship.press("Enter");
+  const evidence = page.locator(".evidence-item").first();
+  const quote = await evidence.locator("q").textContent();
+  if (info.project.name === "desktop") await evidence.click();
+  await expect(page.locator(".source-text mark")).toBeVisible();
+  expect(await page.locator(".source-text mark").textContent()).toBe(quote);
+  await page.screenshot({
+    path: `artifacts/${info.project.name}-evidence.png`,
+    fullPage: true,
+  });
+  await page
+    .getByRole("button", { name: "Back to relationship", exact: true })
+    .click();
+  await expect(relationship).toBeFocused();
+});
+
+test("single-PDF proposal requires explicit confirmation and reopens as current Matter", async ({
+  page,
+}, info) => {
+  const reference = `NEXT/UI/${info.project.name}/${crypto.randomUUID()}`;
+  await intake(page, reference);
+  let releaseConfirmation = () => {};
+  const confirmationGate = new Promise<void>((resolve) => {
+    releaseConfirmation = resolve;
+  });
+  await page.route("**/api/matters", async (route) => {
+    if (route.request().method() === "POST") await confirmationGate;
     await route.continue();
   });
+  await page
+    .getByRole("button", { name: "Confirm proposal", exact: true })
+    .click();
+  const dialog = page.getByRole("dialog");
+  await expect(dialog).toBeVisible();
+  await dialog
+    .getByRole("button", { name: "Confirm and create Matter", exact: true })
+    .click();
+  await expect(
+    dialog.getByRole("button", { name: "Confirming…", exact: true }),
+  ).toBeDisabled();
+  await page.goBack();
+  await expect(page).toHaveURL(/\/app\/matter-proposals\/[a-f0-9-]+$/);
+  await expect(dialog).toBeVisible();
+  releaseConfirmation();
+  await expect(page).toHaveURL(/\/app\/matters\/[a-f0-9-]+$/);
+  const url = page.url();
+  await expect(
+    page.getByRole("heading", { name: "Fictional family review", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Confirm proposal", exact: true }),
+  ).toHaveCount(0);
   await page.goto("/app");
-  await expect(page.getByRole("alert")).toContainText("Sign-in and editing access could not be checked.");
-  const evergreen = page.getByRole("link", { name: "PC/2026/0142 Evergreen Family Trust" });
-  await expect(evergreen).toBeVisible();
-  await expect(page.getByRole("link", { name: "Create Matter" })).toHaveCount(0);
-  await page.getByRole("button", { name: "Retry access check" }).click();
-  await expect(page.getByText("Checking sign-in and editing access…")).toBeVisible();
-  await expect(page.getByText(/Sign-in is currently unavailable/)).toHaveCount(0);
-  await expect(evergreen).toBeVisible();
-  releaseAccess();
-  await expect(page.getByRole("link", { name: "Create Matter" })).toBeVisible();
-  await page.getByRole("link", { name: "Create Matter" }).click();
-  await expect(page.getByRole("checkbox", { name: /synthetic or fictional/ })).toBeVisible();
+  await page.getByRole("searchbox").fill(reference);
+  await page.getByRole("link", { name: new RegExp(reference) }).click();
+  await expect(page).toHaveURL(url);
+  await page
+    .getByRole("link", { name: /Back to Matters$|^Matters$/ })
+    .filter({ visible: true })
+    .last()
+    .click();
+  await page
+    .getByRole("link", { name: "New proposal", exact: true })
+    .filter({ visible: true })
+    .last()
+    .click();
+  await expect(page.locator('input[name="external_reference"]')).toHaveValue(
+    "",
+  );
+  await expect(page.locator('input[name="matter_title"]')).toHaveValue("");
+  await expect(page.locator(".source-uploads li")).toHaveCount(0);
 });
 
-
-test("public direct navigation needs no sign-in and logout removes only write access", async ({ page, context }) => {
-  const googleRequests: string[] = [];
-  page.on("request", request => {
-    if (new URL(request.url()).pathname === "/_test/google") googleRequests.push(request.url());
+test("multi-PDF proposal retains each Source and can be explicitly discarded", async ({
+  page,
+}, info) => {
+  const reference = `NEXT/MULTI/${info.project.name}/${crypto.randomUUID()}`;
+  await intake(page, reference, [familyPdf, trustPdf]);
+  const response = await page.request.get(page.url().replace("/app/", "/api/"));
+  const proposal = await response.json();
+  expect(proposal.state.sources).toHaveLength(2);
+  const secondSource = proposal.state.sources[1].id;
+  const relationshipIndex = proposal.state.relationships.findIndex(
+    (edge: { evidence_ids: string[] }) =>
+      edge.evidence_ids.some((id) =>
+        proposal.state.evidence.some(
+          (item: { id: string; source_id: string }) =>
+            item.id === id && item.source_id === secondSource,
+        ),
+      ),
+  );
+  expect(relationshipIndex).toBeGreaterThanOrEqual(0);
+  await page.getByRole("tab", { name: "List", exact: true }).click();
+  await page.locator(`#relationship-${relationshipIndex}`).click();
+  const secondEvidence = proposal.state.relationships[
+    relationshipIndex
+  ].evidence_ids.find((id: string) =>
+    proposal.state.evidence.some(
+      (item: { id: string; source_id: string }) =>
+        item.id === id && item.source_id === secondSource,
+    ),
+  );
+  const quote = proposal.state.evidence.find(
+    (item: { id: string }) => item.id === secondEvidence,
+  ).supporting_text;
+  if (info.project.name === "desktop")
+    await page
+      .locator(".evidence-item")
+      .filter({ hasText: secondEvidence })
+      .click();
+  else await page.locator(".source-tabs > button").nth(1).click();
+  await expect(page.locator(".source-text mark")).toBeVisible();
+  expect(await page.locator(".source-text mark").textContent()).toBe(quote);
+  await page.screenshot({
+    path: `artifacts/${info.project.name}-proposal.png`,
+    fullPage: true,
   });
-  expect((await context.request.get("/api/matters")).status()).toBe(200);
-  await page.goto(matterPath);
-  await expect(page.getByRole("heading", { name: "Evergreen Family Trust", exact: true })).toBeVisible();
-  expect(googleRequests).toHaveLength(0);
-  await page.reload();
-  expect(googleRequests).toHaveLength(0);
-  await page.goto("/auth/login?next=" + matterPath);
-  await expect(page.getByRole("heading", { name: "Evergreen Family Trust", exact: true })).toBeVisible();
-  expect(googleRequests).toHaveLength(1);
-  await expect(page.getByText(/not suitable for real confidential client information/)).toBeVisible();
-  const session = (await context.cookies()).find(cookie => cookie.name === "__Host-pcg-session")!;
-  expect(session.httpOnly).toBe(true);
-  expect(session.secure).toBe(true);
-  const accountMenu = page.getByRole("button", { name: "Account and application menu" });
-  await accountMenu.focus();
-  await accountMenu.press("Enter");
-  await accountMenu.press("Tab");
-  await page.getByRole("link", { name: "Public showcase" }).press("Tab");
-  const signOut = page.getByRole("button", { name: "Sign out" });
-  await expect(signOut).toBeFocused();
-  await signOut.press("Enter");
-  await expect(page).toHaveURL("/");
-  expect((await context.request.get("/api/matters")).status()).toBe(200);
-  await page.goto(matterPath);
-  await expect(page.getByRole("heading", { name: "Evergreen Family Trust", exact: true })).toBeVisible();
-  expect(googleRequests).toHaveLength(1);
-  expect((await (await context.request.get("/api/access")).json()).can_write).toBe(false);
+  if (info.project.name === "phone")
+    await page
+      .getByRole("button", { name: "Back to relationship", exact: true })
+      .click();
+  await page
+    .getByRole("button", { name: "Discard proposal", exact: true })
+    .click();
+  await page
+    .getByRole("dialog")
+    .getByRole("button", { name: "Discard entire proposal", exact: true })
+    .click();
+  await expect(page).toHaveURL(/\/app$/);
+  await page.getByRole("searchbox").fill(reference);
+  await expect(
+    page.getByRole("link", { name: new RegExp(reference) }),
+  ).toHaveCount(0);
 });
 
-for (const failure of ["network", "server"] as const) {
-  test(`sign-out ${failure} failure keeps the session and permits retry`, async ({ page, context }) => {
-    await page.goto("/auth/login?next=/app");
-    await page.getByRole("button", { name: "Account and application menu" }).click();
-    const signOut = page.getByRole("button", { name: "Sign out" });
-    await expect(signOut).toBeEnabled();
-    await page.route("**/auth/logout", async route => {
-      if (failure === "network") await route.abort();
-      else await route.fulfill({ status: 503, body: "Unavailable" });
-    }, { times: 1 });
-    await signOut.click();
-    await expect(page.getByRole("alert")).toHaveText("Could not sign out. Please try again.");
-    await expect(signOut).toBeEnabled();
-    expect((await context.request.get("/api/matters")).status()).toBe(200);
-    await signOut.click();
-    await expect(page).toHaveURL("/");
-    expect((await context.request.get("/api/matters")).status()).toBe(200);
+test("intake keeps user input across language changes and enforces PDF admission", async ({
+  page,
+}, info) => {
+  await page.goto("/app/matter-proposals/new");
+  await page.locator('input[name="external_reference"]').fill("NEXT/LOCALE");
+  await page.locator('input[name="matter_title"]').fill("Original title");
+  await page.locator('input[type="file"]').setInputFiles(familyPdf);
+  await page
+    .locator('input[name="source_title_0"]')
+    .fill("Original Source title");
+  if (info.project.name === "phone")
+    await page.getByRole("button", { name: "Menu", exact: true }).click();
+  await page
+    .getByRole("combobox", { name: "Language", exact: true })
+    .selectOption("zh-CN");
+  await expect(page.locator("html")).toHaveAttribute("lang", "zh-CN");
+  await expect(page.locator('input[name="external_reference"]')).toHaveValue(
+    "NEXT/LOCALE",
+  );
+  await expect(page.locator('input[name="matter_title"]')).toHaveValue(
+    "Original title",
+  );
+  await expect(page.locator('input[name="source_title_0"]')).toHaveValue(
+    "Original Source title",
+  );
+  await page
+    .getByRole("combobox")
+    .filter({ visible: true })
+    .first()
+    .selectOption("en");
+  if (info.project.name === "phone")
+    await page.getByRole("button", { name: "Menu", exact: true }).click();
+  await page.getByRole("checkbox").check();
+  await page.screenshot({
+    path: `artifacts/${info.project.name}-intake.png`,
+    fullPage: true,
   });
-}
+  await page.locator('input[type="file"]').setInputFiles({
+    name: "notes.txt",
+    mimeType: "text/plain",
+    buffer: Buffer.from("fictional source"),
+  });
+  await expect(page.getByRole("alert")).toContainText(
+    "Select a valid text-layer PDF.",
+  );
+  await expect(
+    page.getByRole("button", { name: "Upload and analyse", exact: true }),
+  ).toBeDisabled();
+});
+
+// Deliberate isolated UI error substitutions; successful journeys above use real APIs.
+test("duplicate reference links to the existing record without losing form entries", async ({
+  page,
+}) => {
+  await page.route("**/api/matter-proposals", (route) =>
+    route.request().method() === "POST"
+      ? route.fulfill({
+          status: 409,
+          json: {
+            error: {
+              code: "duplicate_reference",
+              message: "diagnostic must not render",
+              retryable: false,
+              existing_resource: {
+                resource_kind: "matter",
+                resource_id: "ff985caf-60c5-4e65-a238-f3c26381c369",
+                location: "/api/matters/ff985caf-60c5-4e65-a238-f3c26381c369",
+              },
+            },
+          },
+        })
+      : route.continue(),
+  );
+  await page.goto("/app/matter-proposals/new");
+  await page.locator('input[name="external_reference"]').fill("PC/2026/0142");
+  await page.locator('input[name="matter_title"]').fill("Preserved title");
+  await page.locator('input[type="file"]').setInputFiles(familyPdf);
+  await page.getByRole("checkbox").check();
+  await page
+    .getByRole("button", { name: "Upload and analyse", exact: true })
+    .click();
+  await expect(page.getByRole("alert")).toContainText("already exists");
+  await expect(page.locator('input[name="matter_title"]')).toHaveValue(
+    "Preserved title",
+  );
+  await expect(page.getByText("diagnostic must not render")).toHaveCount(0);
+  await page
+    .getByRole("link", { name: "Open existing record", exact: true })
+    .click();
+  await expect(
+    page.getByRole("heading", { name: "Evergreen Family Trust", exact: true }),
+  ).toBeVisible();
+});
+
+test("missing Matter has recovery and expired sessions keep reading with sign-in for changes", async ({
+  page, context,
+}) => {
+  await page.goto("/app/matters/00000000-0000-0000-0000-000000000000");
+  await expect(
+    page.getByRole("heading", { name: "Matter not found", exact: true }),
+  ).toBeVisible();
+  await context.clearCookies();
+  await page.goto("/app");
+  await expect(
+    page.getByRole("link", { name: "Sign in to make changes", exact: true }).first(),
+  ).toHaveAttribute("href", /\/auth\/login\?next=/);
+});
+
+test("fictional prompt and account controls close accessibly; sign out ends the session", async ({
+  page,
+}, info) => {
+  await page.goto("/app/matter-proposals/new");
+  const prompt = page.getByRole("button", {
+    name: "Need a fictional source?",
+    exact: true,
+  });
+  await prompt.click();
+  await expect(page.getByRole("dialog")).toContainText(
+    "Create a fictional source",
+  );
+  await expect(
+    page
+      .getByRole("dialog")
+      .getByRole("button", { name: "Copy prompt", exact: true }),
+  ).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(prompt).toBeFocused();
+  await page
+    .locator('input[name="external_reference"]')
+    .fill("SYNTHETIC/LOGOUT");
+  await page
+    .locator('input[name="matter_title"]')
+    .fill("Fictional draft to clear");
+  await page.locator('input[type="file"]').setInputFiles(familyPdf);
+  let unloadPrompts = 0;
+  page.on("dialog", async (dialog) => {
+    unloadPrompts++;
+    await dialog.dismiss();
+  });
+  if (info.project.name === "phone")
+    await page.getByRole("button", { name: "Menu", exact: true }).click();
+  const account = page.getByRole("button", {
+    name: "Account menu",
+    exact: true,
+  });
+  await account.click();
+  await expect(
+    page.getByRole("link", { name: "Public showcase", exact: true }),
+  ).toHaveAttribute("href", "/");
+  await page.keyboard.press("Escape");
+  await expect(account).toBeFocused();
+  await account.click();
+  await page.getByRole("button", { name: "Sign out", exact: true }).click();
+  await expect(
+    page.getByRole("link", { name: "Sign in to make changes", exact: true }).first(),
+  ).toBeVisible();
+  expect(unloadPrompts).toBe(0);
+  await expect(page.locator('input[name="matter_title"]')).toHaveCount(0);
+  expect((await page.request.get("/api/matters")).status()).toBe(200);
+});

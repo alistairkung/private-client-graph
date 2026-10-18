@@ -11,27 +11,14 @@ for (const locale of ["en", "zh-CN"] as const) {
     const bytes = await publication.body();
     const snapshot = JSON.parse(bytes.toString());
     await page.goto("/");
-    const summary = page.locator("#research-summary");
-    await expect(summary).toContainText("94.87%");
-    await expect(summary).toContainText("100.00%");
-    await expect(summary.locator("dd span")).toHaveCount(2);
-    await expect(summary).toContainText(locale === "en" ? "post-hoc and exploratory" : "事后开展的探索性比较");
-    await expect(summary).toContainText(locale === "en" ? "No real client data was used" : "未使用真实客户数据");
-    await expect(summary).toContainText(locale === "en" ? "do not establish production accuracy or reliability" : "不代表系统在实际生产环境中的准确率或可靠性");
-    expect(await summary.evaluate(section => {
-      const approach = document.querySelector("#approach")!;
-      const demo = document.querySelector("#case-01")!;
-      return !!(approach.compareDocumentPosition(section) & Node.DOCUMENT_POSITION_FOLLOWING)
-        && !!(section.compareDocumentPosition(demo) & Node.DOCUMENT_POSITION_FOLLOWING);
-    })).toBe(true);
-    await summary.scrollIntoViewIfNeeded();
-    await page.screenshot({ path: testInfo.outputPath(`landing-research-${locale}.png`), fullPage: true });
-
+    const researchLink = page.locator(".landing-research").getByRole("link");
+    await expect(researchLink).toHaveAttribute("href", "/research-results");
+    await expect(page.locator(".landing-research")).toContainText(locale === "en" ? "research" : "研究");
     const requests: string[] = [];
     page.on("request", request => {
       if (request.url().includes("/api/")) requests.push(`${request.method()} ${new URL(request.url()).pathname}`);
     });
-    await summary.getByRole("link").click();
+    await researchLink.click();
     await expect(page).toHaveURL(/\/research-results$/);
     await expect(page.locator("html")).toHaveAttribute("lang", locale);
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
@@ -66,10 +53,6 @@ test("an unavailable publication never substitutes figures or private data", asy
   await page.route("**/api/research-results", route => route.fulfill({
     status: 503, contentType: "application/json", body: JSON.stringify({ error: { message: "Publication unavailable" } }),
   }));
-  await page.goto("/");
-  const summary = page.locator("#research-summary");
-  await expect(summary.getByRole("status")).toContainText("unavailable");
-  await expect(summary.locator("dd")).toHaveCount(0);
   await page.goto("/research-results/");
   await expect(page.getByRole("alert")).toBeVisible();
   await expect(page.locator("main")).not.toContainText("94.87%");
@@ -149,24 +132,7 @@ for (const locale of ["en", "zh-CN"] as const) {
     await page.emulateMedia({ reducedMotion: "reduce" });
     const requests: string[] = [];
     page.on("request", request => { if (request.url().includes("/api/")) requests.push(`${request.method()} ${new URL(request.url()).pathname}`); });
-    await page.goto("/");
-    const chapter = page.locator("#research-summary");
-    await expect(chapter).toContainText(locale === "en" ? "We didn’t just build it" : "我们不仅构建了系统");
-    expect(await chapter.evaluate(element => Math.round(element.getBoundingClientRect().width))).toBe(page.viewportSize()!.width);
-    await chapter.scrollIntoViewIfNeeded();
-    await page.screenshot({ path: testInfo.outputPath(`editorial-landing-${locale}.png`), fullPage: true });
-    await chapter.screenshot({ path: testInfo.outputPath(`editorial-chapter-${locale}.png`) });
-    expect(await chapter.locator(".research-summary-metrics").evaluate(element => getComputedStyle(element).animationName)).toBe("none");
-    await page.emulateMedia({ reducedMotion: "no-preference" });
-    for (const selector of ["#approach", "#research-summary", "#case-01"]) {
-      await page.locator(selector).scrollIntoViewIfNeeded();
-      await expect(page.locator(selector).getByRole("heading", { level: 2 }).first()).toBeVisible();
-    }
-    await chapter.scrollIntoViewIfNeeded();
-    await expect(chapter.getByRole("link")).toBeVisible();
-    await page.emulateMedia({ reducedMotion: "reduce" });
-    requests.length = 0;
-    await chapter.getByRole("link").click();
+    await page.goto("/research-results");
     await expect(page.locator("main > .research-section")).toHaveCount(8);
     const sectionIds = ["question", "architecture", "methodology", "comparison", "failure-analysis", "findings", "limitations", "reproducibility"];
     expect(await page.locator("main > .research-section").evaluateAll(elements => elements.map(element => element.id))).toEqual(sectionIds);

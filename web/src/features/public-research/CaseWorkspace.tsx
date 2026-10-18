@@ -1,7 +1,7 @@
 import { OutcomeMatrix } from "../../shared/research/OutcomeMatrix";
 import { useId, useLayoutEffect, useRef, useState } from "react";
 import { useLocale } from "../../shared/locale";
-import { SourcePanel } from "../review/SourcePanel";
+import { SourcePanel } from "./recorded-review/SourcePanel";
 import { percent, runName } from "./RunComparison";
 import type {
   PublicCase,

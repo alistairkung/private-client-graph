@@ -1,71 +1,46 @@
 import { expect, test } from "@playwright/test";
+import type { CanonicalState } from "../src/shared/contracts";
 
-test("multi-source curated review follows exact Evidence and demonstrates trustee replacement", async ({ page }, testInfo) => {
-  await page.goto("/");
-  const relationships = page.getByLabel("Find a relationship");
-  const sources = page.getByRole("navigation", { name: "Sources" });
-
-  await page.getByLabel("Choose a synthetic case").selectOption("case-04");
-  await relationships.selectOption({ label: "Andrew Chan — Beneficiary of — Hillcrest Family Trust" });
-  await expect(page.getByRole("button", { name: /Evidence 2/ })).toBeVisible();
-  await page.getByRole("button", { name: /Evidence 2/ }).click();
-  await expect(sources.getByRole("button", { name: /Source 2/ })).toHaveAttribute("aria-pressed", "true");
-  await expect(page.locator("mark")).toContainText("Andrew Chan");
-  await page.getByRole("link", { name: "View in source" }).click();
-  await expect(page.locator("mark")).toBeFocused();
-  await page.screenshot({ path: testInfo.outputPath("case-04.png"), fullPage: true });
+test("curated multi-source examples preserve corroboration, trustee replacement and direct links", async ({ page }, info) => {
+  await page.goto("/app?example=case-04");
+  await expect(page.getByLabel("Choose a synthetic case")).toHaveValue("case-04");
+  await page.reload();
+  await expect(page.getByLabel("Choose a synthetic case")).toHaveValue("case-04");
+  const case04 = await page.request.get("/api/showcase/cases/case-04");
+  const state: CanonicalState = (await case04.json()).state;
+  const beneficiary = state.relationships.findIndex(edge => edge.type === "beneficiary_of"
+    && state.entities.find(entity => entity.id === edge.source)?.name === "Andrew Chan");
+  expect(beneficiary).toBeGreaterThanOrEqual(0);
+  expect(state.relationships[beneficiary].evidence_ids).toHaveLength(2);
+  await page.getByRole("tab", { name: "List", exact: true }).click();
+  await page.locator(`#relationship-${beneficiary}`).click();
+  const sourceTabs = page.locator(".source-tabs button");
+  await expect(sourceTabs).toHaveCount(2);
+  await sourceTabs.nth(1).click();
+  await expect(sourceTabs.nth(1)).toHaveAttribute("aria-pressed", "true");
+  const expected = state.evidence.find(item => item.source_id === state.sources[1].id
+    && state.relationships[beneficiary].evidence_ids.includes(item.id))!;
+  await expect(page.locator(".source-text mark")).toHaveText(expected.supporting_text);
+  await expect(page.locator(".source-text mark")).toHaveAttribute("data-evidence-id", expected.id);
+  if (info.project.name === "desktop") {
+    const inspector = await page.locator(".evidence-inspector").boundingBox();
+    expect(inspector!.y + inspector!.height).toBeLessThanOrEqual(page.viewportSize()!.height + 1);
+  }
+  await page.screenshot({ path: info.outputPath("case-04.png"), fullPage: true });
 
   await page.getByLabel("Choose a synthetic case").selectOption("case-05");
-  await expect(relationships).not.toContainText("David Ng — Trustee");
-  await expect(relationships).toContainText("Rachel Lim — Trustee of — Willow Family Trust");
-  await relationships.selectOption({ label: "Rachel Lim — Trustee of — Willow Family Trust" });
-  await expect(page.locator("mark")).toHaveText(
+  await expect(page).toHaveURL(/example=case-05$/);
+  await page.getByRole("tab", { name: "List", exact: true }).click();
+  await expect(page.locator(".relationship-row").filter({ hasText: /David Ng.*trustee/i })).toHaveCount(0);
+  const trustee = page.locator(".relationship-row").filter({ hasText: /Rachel Lim.*trustee.*Willow Family Trust/i });
+  await expect(trustee).toHaveCount(1);
+  await trustee.click();
+  await expect(page.locator(".source-text mark")).toHaveText(
     "Rachel Lim is the sole trustee of the Willow Family Trust as at 15 September 2026.",
   );
-  await expect(sources.getByRole("button", { name: /Source 2/ })).toHaveAttribute("aria-pressed", "true");
-  await expect(sources.getByRole("button")).toHaveCount(2);
+  await expect(sourceTabs.nth(1)).toHaveAttribute("aria-pressed", "true");
+  await expect(sourceTabs).toHaveCount(2);
+  await expect(page.getByRole("button", { name: "Confirm proposal", exact: true })).toHaveCount(0);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
-  await page.screenshot({ path: testInfo.outputPath("case-05.png"), fullPage: true });
-});
-
-test("landing review stacks graph above attendance when its panel is narrow", async ({ page }, testInfo) => {
-  await page.emulateMedia({ reducedMotion: "reduce" });
-  for (const width of [390, 1024, 1280, 1402, 1600]) {
-    await page.setViewportSize({ width, height: 1000 });
-    await page.goto("/#case-01");
-    const graph = page.locator(".demonstration .graph-panel");
-    const source = page.locator(".demonstration .source-panel");
-    await expect(graph).toBeVisible();
-    await expect(source).toBeVisible();
-    const stage = await page.locator(".demonstration-stage").boundingBox();
-    const graphBounds = await graph.boundingBox();
-    const sourceBounds = await source.boundingBox();
-    if (stage!.width <= 950) {
-      expect(sourceBounds!.y).toBeGreaterThanOrEqual(graphBounds!.y + graphBounds!.height);
-      expect(Math.abs(graphBounds!.x - sourceBounds!.x)).toBeLessThan(2);
-      expect(Math.abs(graphBounds!.width - sourceBounds!.width)).toBeLessThan(2);
-    } else {
-      expect(sourceBounds!.x).toBeGreaterThan(graphBounds!.x);
-      expect(Math.abs(graphBounds!.y - sourceBounds!.y)).toBeLessThan(2);
-    }
-    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-    await graph.scrollIntoViewIfNeeded();
-    await page.screenshot({ path: testInfo.outputPath(`landing-review-${width}.png`) });
-  }
-});
-
-test("landing graph overview keeps every node inside the canvas after panel resizing", async ({ page }) => {
-  await page.setViewportSize({ width: 1600, height: 1000 });
-  await page.goto("/#case-01");
-  for (const width of [1600, 1402, 1024, 390]) {
-    await page.setViewportSize({ width, height: 1000 });
-    await expect(page.locator(".react-flow__node")).toHaveCount(5);
-    await expect.poll(async () => page.locator(".graph-canvas").evaluate(canvas => {
-      const box = canvas.getBoundingClientRect();
-      return [...canvas.querySelectorAll(".react-flow__node")].every(node => {
-        const rect = node.getBoundingClientRect();
-        return rect.left >= box.left && rect.right <= box.right && rect.top >= box.top && rect.bottom <= box.bottom;
-      });
-    })).toBe(true);
-  }
+  await page.screenshot({ path: info.outputPath("case-05.png"), fullPage: true });
 });

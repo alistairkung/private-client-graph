@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useMemo, useState, type ReactNode
 import { catalogue } from "./locale-catalogue";
 
 export type Locale = "en" | "zh-CN";
+export type Translate = (key: string, values?: Record<string, string | number>) => string;
 type Values = Record<string, string | number>;
 
 export function translate(locale: Locale, key: string, values: Values = {}) {
