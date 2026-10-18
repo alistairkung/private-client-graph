@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import type { CanonicalState } from "../shared/contracts";
-import { landingPositions, sourceContext } from "./landing-layout";
+import {
+  landingPositions,
+  sourceContext,
+  sourceEntitySpans,
+  canonicalSourceExcerpts,
+} from "./landing-layout";
 const graph: CanonicalState = {
   entities: [
     { id: "uuid-trust", name: "Trust", type: "trust" },
@@ -105,5 +110,75 @@ describe("public drawing identity", () => {
         prefix.length + quote.length,
       ),
     ).toBe(quote);
+  });
+});
+
+describe("source entity emphasis", () => {
+  it("preserves exact source text, matches literal names and prefers the complete name", () => {
+    const text = "A. Reed and A. Reed Jr have a trust (+).";
+    const spans = sourceEntitySpans(text, [
+      "A. Reed",
+      "A. Reed Jr",
+      "trust (+)",
+      "",
+      "A. Reed",
+    ]);
+    expect(spans.map((span) => span.text).join("")).toBe(text);
+    expect(
+      spans.filter((span) => span.entity).map((span) => span.text),
+    ).toEqual(["A. Reed", "A. Reed Jr", "trust (+)"]);
+    expect(sourceEntitySpans(text, [])).toEqual([{ text, entity: false }]);
+  });
+});
+
+describe("canonical source excerpts", () => {
+  it("deduplicates exact supported passages in source order and excludes different or missing sources", () => {
+    const state = {
+      ...graph,
+      sources: [
+        {
+          id: "source-a",
+          title: "Source",
+          text: "First complete sentence. Second complete sentence.",
+        },
+      ],
+      evidence: [
+        {
+          id: "e-2",
+          document: "Source",
+          source_id: "source-a",
+          supporting_text: "Second complete sentence.",
+        },
+        {
+          id: "e-1",
+          document: "Source",
+          source_id: "source-a",
+          supporting_text: "First complete sentence.",
+        },
+        {
+          id: "e-3",
+          document: "Source",
+          source_id: "source-a",
+          supporting_text: "First complete sentence.",
+        },
+        {
+          id: "e-4",
+          document: "Other",
+          source_id: "source-b",
+          supporting_text: "Unrelated text.",
+        },
+        {
+          id: "e-5",
+          document: "Source",
+          source_id: "source-a",
+          supporting_text: "Unlocated text.",
+        },
+      ],
+    };
+    expect(canonicalSourceExcerpts(state, "source-a")).toEqual([
+      "First complete sentence.",
+      "Second complete sentence.",
+    ]);
+    expect(canonicalSourceExcerpts(state, "source-missing")).toEqual([]);
   });
 });

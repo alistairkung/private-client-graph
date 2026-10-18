@@ -5,7 +5,11 @@ puts the relationship drawing and exact source Evidence alongside each other.
 The original `web/` app and production deployment remain unchanged.
 
 The independent public landing page at `/` introduces the same Evidence-led
-workflow through a selectable synthetic example and a short animated story.
+workflow through two connected demonstrations: **Build the trust structure**
+and **Trace the Evidence**. The first reveals the actual example entities and
+proposed relationships; the second opens exact supporting words. Replay and
+Pause/Resume let visitors control the sequence; reduced motion shows the complete
+structure immediately.
 It reads the existing public curated-example API; visiting the page never runs
 analysis. The original full public demo and research pages remain linked on the
 existing site. The practitioner application continues at `/app`.
@@ -111,8 +115,8 @@ Regenerate it against the disposable backend with
 `PCG_RECORD_DEMO=1 npm --prefix practitioner-next run test:e2e -- walkthrough --project=desktop`
 from the repository root.
 
-The new [landing recording](artifacts/landing-walkthrough.webm) shows its opening
-and claim-to-Evidence interaction. Regenerate it with
+The new [landing recording](artifacts/landing-walkthrough.webm) shows construction,
+the capability switch and claim-to-Evidence interaction. Regenerate it with
 `PCG_RECORD_LANDING=1 npm --prefix practitioner-next run test:e2e -- landing-walkthrough --project=desktop`.
 See the [landing direction](../docs/agents/practitioner-next/landing-direction.md),
 [Motion research](../docs/agents/practitioner-next/landing-motion.md), and
@@ -123,7 +127,7 @@ application design remains separate.
 ## Scope and structure
 
 - `src/app`: independent navigation, language/account shell and styling.
-- `src/landing`: public introduction, curated Evidence example and narrative.
+- `src/landing`: public introduction, synthetic construction and Evidence showcase.
 - `src/ledger`, `src/intake`, `src/review`: complete practitioner capabilities.
 - `src/shared`: new-app contracts, request/auth helpers and shared UI language.
 - `scripts/synthetic_backend.py`: local composition of existing substitutes/API.
@@ -136,11 +140,11 @@ create individual-edge acceptance, or expose benchmark evaluation. Motion uses
 free `motion/react`, informed by authenticated premium Motion+ source research.
 No private registry token or premium runtime dependency is needed.
 
-Verified locally: 752 repository Python tests, 81 new-app unit tests, typecheck,
-production build, formatting and 46 real-backend desktop/phone checks.
-The landing recording and affected browser checks passed again after the final
-connector-style correction. Graph coverage includes Evergreen
-family placement, complete bounds, connector spacing, exact Evidence selection,
+Verified locally: 752 repository Python tests, 89 new-app unit tests, typecheck,
+production build, formatting and 52 real-backend desktop/phone checks.
+The landing recording and 16 affected browser checks passed after the final
+capability, focus and reduced-motion corrections. Graph coverage includes
+Evergreen family placement, complete bounds, connector spacing, exact Evidence selection,
 return focus, stable camera and language switching. Geometry regressions cover
 reciprocal claims, multiple roles and graphs with no Trust or multiple Trusts.
 

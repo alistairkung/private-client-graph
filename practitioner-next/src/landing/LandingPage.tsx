@@ -9,7 +9,6 @@ import {
   type PublicExample,
 } from "./landing-api";
 import { EvidenceDemo } from "./EvidenceDemo";
-import { TraceWalkthrough } from "./TraceWalkthrough";
 import "./landing.css";
 export default function LandingPage() {
   return (
@@ -42,7 +41,7 @@ function LandingContent() {
   useEffect(() => {
     document.title =
       locale === "en"
-        ? "Every relationship. Back to its source. | Private Client Graph"
+        ? "Build the structure. Keep the Evidence. | Private Client Graph"
         : "追溯每项关系的来源 | Private Client Graph";
   }, [locale]);
   return (
@@ -115,7 +114,6 @@ function LandingContent() {
             </div>
           )}
         </section>
-        <TraceWalkthrough />
         <section className="landing-acceptance">
           <div>
             <h2>{copy.acceptance}</h2>

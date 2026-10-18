@@ -4,10 +4,11 @@ const en = {
   enter: "Open practitioner prototype",
   explore: "Explore the example",
   language: "Language",
-  headline: "Every relationship.\nBack to its source.",
-  intro: "Read the words. Inspect the relationship. Keep the decision yours.",
+  headline: "Build the structure.\nKeep the Evidence.",
+  intro:
+    "AI-assisted trust structure building, with the words behind every proposed relationship.",
   description:
-    "An Evidence-led workspace for reviewing family and trust relationships in private-client matters.",
+    "Turn synthetic source material into a structure you can inspect. Trace each connection to exact Evidence, then make your own decision.",
   boundary:
     "Synthetic or fictional material only. Do not upload real client or personal information.",
   example: "Explore the synthetic example",
@@ -15,6 +16,7 @@ const en = {
   curatedNote:
     "A curated synthetic example, not live analysis or a measured model result.",
   source: "Source fragment",
+  sourceExcerpts: "Source excerpts",
   evidence: "Exact supporting Evidence",
   diagram: "Family and trust relationships",
   choose: "Choose a relationship to follow its Evidence.",
@@ -26,24 +28,22 @@ const en = {
   noClaims: "No relationships are available in this example.",
   missing:
     "The exact Evidence could not be located. Open the full demo to inspect the source.",
-  traceTitle: "A clear path through\na complicated picture.",
-  traceIntro:
-    "Names connect a drawing. Evidence connects the drawing to what was actually said.",
-  words: "Start with the words",
-  wordsBody:
-    "Read the source before relying on a relationship. Exact passages stay attached to the claims they support.",
-  claim: "Inspect the connection",
-  claimBody:
-    "Family relationships and roles in a trust describe different facts. Explore each connection on its own terms.",
-  return: "Follow the Evidence back",
-  returnBody:
-    "Move from a claim to its exact supporting words, with the source and Evidence identifier still in view.",
-  step: "Walkthrough step",
-  person: "Person",
-  trust: "Trust",
-  role: "Trust role",
-  parent: "Parent to child",
-  family: "Spouse or sibling",
+  capabilities: "Explore two capabilities",
+  buildTitle: "Build the trust structure",
+  buildBody:
+    "LLM-driven structure building turns source material into proposed people, trust roles and connections.",
+  traceTitle: "Trace the Evidence",
+  traceBody:
+    "Inspect the same structure. Follow each proposed relationship to its exact supporting words.",
+  illustrative: "Illustrative synthetic sequence — not live analysis",
+  phaseSource: "Synthetic source",
+  phaseEntities: "People and trust identified",
+  phaseRelationships: "Building proposed relationships",
+  phaseComplete: "Six proposed relationships. Ready to inspect.",
+  sequenceControls: "Illustration playback",
+  replay: "Replay construction",
+  pause: "Pause construction",
+  resume: "Resume construction",
   acceptance: "A proposal is a starting point.\nAcceptance is your decision.",
   acceptanceBody:
     "The practitioner prototype puts the proposed relationships beside their Evidence. Review the complete proposal, then explicitly confirm or discard it.",
@@ -67,7 +67,6 @@ const en = {
   active: "Selected relationship",
   locator: "Evidence identifier",
   exampleSource: "Source",
-  currentStep: "Current step",
 };
 type Copy = typeof en;
 const zh: Copy = {
@@ -75,8 +74,8 @@ const zh: Copy = {
   enter: "打开实务原型",
   explore: "探索示例",
   language: "语言",
-  headline: "每一项关系。\n追溯其来源。",
-  intro: "阅读原文。核查关系。由您判断。",
+  headline: "构建关系结构。\n保留支持证据。",
+  intro: "由 AI 辅助构建信托关系结构，保留每项提议关系的原文依据。",
   description:
     "以证据为依据的工作空间，用于审阅私人客户事务中的家庭与信托关系。",
   boundary: "仅限合成或虚构资料。请勿上传真实客户或个人信息。",
@@ -84,6 +83,7 @@ const zh: Copy = {
   curated: "精选合成示例",
   curatedNote: "由后端提供的理想示例，并非实时分析或模型评测结果。",
   source: "来源片段",
+  sourceExcerpts: "来源摘录",
   evidence: "确切支持证据",
   diagram: "家庭与信托关系",
   choose: "选择一项关系，追溯其支持证据。",
@@ -93,20 +93,20 @@ const zh: Copy = {
   fullDemo: "打开完整公开演示",
   noClaims: "此示例没有可用关系。",
   missing: "无法定位确切证据。请打开完整演示以核查来源。",
-  traceTitle: "理清复杂关系，\n保留清晰脉络。",
-  traceIntro: "姓名连接关系图。证据将关系图与原文相连。",
-  words: "从原文开始",
-  wordsBody: "在依赖某项关系之前，先阅读来源。确切段落始终与其支持的主张相连。",
-  claim: "核查连接",
-  claimBody: "家庭关系与信托角色描述不同的事实。请分别核查每项连接。",
-  return: "沿证据追溯",
-  returnBody: "从关系回到确切的支持原文，同时保留来源和证据标识。",
-  step: "讲解步骤",
-  person: "个人",
-  trust: "信托",
-  role: "信托角色",
-  parent: "父母至子女",
-  family: "配偶或手足",
+  capabilities: "探索两项功能",
+  buildTitle: "构建信托结构",
+  buildBody: "由语言模型辅助构建，将来源资料转为提议的个人、信托角色和关系。",
+  traceTitle: "追溯支持证据",
+  traceBody: "核查同一结构，将每项提议关系追溯至确切的支持原文。",
+  illustrative: "合成示意序列，并非实时分析",
+  phaseSource: "合成来源",
+  phaseEntities: "已识别个人与信托",
+  phaseRelationships: "正在构建提议关系",
+  phaseComplete: "六项提议关系，可供核查。",
+  sequenceControls: "示意序列播放",
+  replay: "重新播放构建",
+  pause: "暂停构建",
+  resume: "继续构建",
   acceptance: "提案是起点。\n是否接受，由您决定。",
   acceptanceBody:
     "实务原型将提议的关系与支持证据并列显示。审阅完整提案后，明确选择确认或丢弃。",
@@ -129,7 +129,6 @@ const zh: Copy = {
   active: "所选关系",
   locator: "证据标识",
   exampleSource: "来源",
-  currentStep: "当前步骤",
 };
 export function useLandingCopy() {
   const { locale } = useLocale();

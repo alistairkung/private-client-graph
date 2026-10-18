@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 
 test.use({ video: { mode: "on", size: { width: 1512, height: 982 } } });
 
-test("record the public Evidence story", async ({ page }, info) => {
+test("record construction and Evidence inspection", async ({ page }, info) => {
   test.skip(
     !process.env.PCG_RECORD_LANDING || info.project.name !== "desktop",
     "Opt-in landing recording, separate from the functional gates.",
@@ -11,6 +11,15 @@ test("record the public Evidence story", async ({ page }, info) => {
   const demo = page.getByRole("region", {
     name: "Explore the synthetic example",
   });
+  await demo.locator(".landing-drawing").scrollIntoViewIfNeeded();
+  await page
+    .getByRole("button", { name: "Replay construction", exact: true })
+    .click();
+  await expect(demo).toHaveAttribute("data-playback", "complete");
+  await page.waitForTimeout(1200);
+  await page
+    .getByRole("tab", { name: "Trace the Evidence", exact: true })
+    .click();
   const claim = demo.getByRole("button", {
     name: "Alice Chen — parent of — Bob Chen",
     exact: true,

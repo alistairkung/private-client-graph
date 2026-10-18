@@ -1,75 +1,83 @@
-# Landing redesign
+# Landing direction: build the structure, keep the Evidence
 
-Scope: independent public `/` in practitioner-next, branched from PR #157 at
-97e1d990. Original web, APIs, domain, database, tests and deployment stay intact.
-Visitor mode: Persuade. Audience: private-client practitioners encountering PCG
-for the first time. Job: understand evidence-led relationship review and explore
-a synthetic example, then enter the existing practitioner or public research flow.
+Scope: independent public `/` in practitioner-next, stacked on PR #157 at
+97e1d990. Existing web, practitioner components, backend, APIs, domain, database,
+original tests and deployment stay intact. Visitor mode: **Persuade**. Audience:
+private-client practitioners discovering PCG. Job: understand the two core
+capabilities, explore a synthetic example, then choose the existing product or
+public research flow.
 
-## Reference review
+## Reference and user steering
 
-Inspected https://lissom.ai/ in Chrome and read its current page on 2026-10-18.
-Its strongest transferable devices are outcome-led language, a memorable animated
-mechanism, small task demonstrations, deliberate changes in scale and background,
-and clear professional responsibility. PCG can prove traceability directly through
-an explorable source/relationship example. Customer outcomes, trust logos, banking
-statistics and compliance claims belong to Lissom and are not PCG evidence.
-Its long multi-capability tour would dilute PCG's single strongest mechanism;
-keep this page shorter, with the interaction available immediately.
+Inspected https://lissom.ai/ in Chrome and read its page on 2026-10-18. Its
+outcome-first language, animated product mechanisms, deliberate scale and color
+fields, and clear professional responsibility transfer well. Customer logos,
+banking metrics and compliance claims do not belong to PCG.
+
+The user subsequently supplied Lissom's org-chart feature showcase and named
+PCG's two core capabilities: LLM-driven trust structure building, then returning
+to Evidence. This overrides the earlier finished-graph opening and repetitive
+three-step walkthrough. The transferable pattern is a **tabbed feature
+showcase**: a short feature rail and a generous working demonstration.
 
 ## Direction contract
 
-THESIS: Every relationship can be traced back to the words that support it.
-An explorable Evidence thread leads the page, rather than a feature-card grid.
+THESIS: Build a proposed family and trust structure from source material, then
+inspect the words behind every relationship.
 
-OWN-WORLD: Forest & Chalk carries across from the selected practitioner design:
-forest #173F31, ink #20372B, chalk #FFFFFF, frame #E9F0EA, selection #1E6249;
-amber #FFF0A6 means exact Evidence. Self-hosted Public Sans supplies one clear,
-confident typographic voice. Green owns a whole demonstration region.
+OWN-WORLD: Preserve the user's selected Forest & Chalk: forest #173F31,
+ink #20372B, white #FFFFFF, frame #E9F0EA and action #1E6249. Amber #FFF0A6
+means exact Evidence. Self-hosted Public Sans supplies a clear, professional
+voice. Geometry and readable source text carry the product story.
 
-STORY: See words become inspectable relationships. Choose a claim, read its exact
-Evidence, understand that professional acceptance remains an explicit decision.
-Explore a curated public synthetic example or open the practitioner prototype.
+STORY: Two tabs, **Build the trust structure** and **Trace the Evidence**. The
+first animates source → entities → six proposed relationships. The second
+exposes an actual selectable claim and its exact canonical source passage. Both
+share the same source, graph geometry and selection. Professional acceptance
+remains an explicit decision in a separate chapter.
 
-FIRST VIEWPORT: A compact masthead precedes a large, left-aligned two-line offer.
-The action and short explanation remain beside the headline's lower edge.
-A broad green stage, visible in the first screen, connects a readable source
-fragment to a stable family/trust drawing. The selected claim links both. The
-demonstration is a working geometry/text composition, not a picture of an app.
+FIRST VIEWPORT: Compact masthead, a large two-line builder-first offer and a
+clear exploration action. The green demonstration begins within the opening
+screen. Desktop places the two-item capability rail left of a stable source and
+graph stage. Phone puts the tabs above the stacked stage. No simulated browser
+chrome, fake cursor or upload control.
 
-FORM: Continuous Evidence thread, candidate 3 of seven grounded structures,
-surface seed a5859a78. Candidates 4 (chapter spotlight) and 6 (guided review)
-contribute progressive explanation beneath the opening. Other candidates were
-case-first atlas, before/after comparison, source field and family constellation.
-The user delegated creative direction and autonomous delivery; use a code-led
-build for the interactive diagram rather than a separate comp approval round.
+FORM: Continuous source-to-structure-to-Evidence story. The original grounded
+concept roll used seed a5859a78 (seven options; selected continuous Evidence
+thread). The user's later two-capability reference is the explicit composition
+update; no new identity or concept tournament is needed. This is a code-led
+geometry/text build, not a raster comp reproduction.
 
-FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
+FINISH: unreviewed and undocumented is unfinished; end with a finish review,
+verdict, local DESIGN.md and provenance on shipping raster captures.
 
-## Motion and proof
+## Motion and truth
 
-Read authenticated Motion+ Scroll Spotlight source and the free Path Drawing
-example. Exact references and choreography are in landing-motion.md. A single
-short opening sequence settles into an explorable diagram. New visitor input
-wins over choreography. Bounded scroll emphasis explains the journey without
-controlling a visitor's chosen relationship. Reduced motion shows the complete
-state immediately; essential content never depends on completing an animation.
+A ~four-second, once-per-arrival illustration reveals the actual returned graph.
+Replay and Pause/Resume are real controls. Switching to Evidence or choosing a
+claim settles construction immediately. Offscreen/document-hidden playback
+pauses; a deliberate user pause persists. Reduced motion shows the complete
+structure immediately, including if the preference changes during playback.
+Keyboard tabs use arrow keys and Home/End. Keep stable layout and focus.
 
-GET `/api/showcase/cases/case-01` supplies backend-owned curated ideal state;
-label it clearly as synthetic and not measured/live model output. No automatic
-analysis or mutation. Canonical IDs, relationship kinds and exact Evidence remain
-unchanged. Loading/error/retry are honest, with ordinary existing-site routes.
-Original public demo, sample/live analysis and research remain available through
-the existing site's links. No invented contact, signup, security or accuracy claim.
+GET `/api/showcase/cases/case-01` supplies backend-owned curated ideal state.
+Persistently label the sequence synthetic and illustrative, not live analysis.
+No upload, model call, analysis POST, invented entity or automatic acceptance.
+Canonical IDs, types, directions and exact Evidence remain unchanged. The
+original public demo, research and practitioner routes remain linked. Errors
+provide real retry without fabricated fallback data. See landing-motion.md for
+actual inspected Motion+ references and choreography.
 
-## Verification and usage
+## Verification and budget
 
-One initial desktop/phone inspection batch, one correction batch and confirmation.
-Test meaningful claim-to-Evidence interaction, manual-selection continuity,
-keyboard/reduced-motion behavior, retries and working destinations. Run the
-existing frontend gates and mandatory repository Python suite. Independent final
-source and visual review, then a stacked draft PR targeting the PR157 branch.
-No merge or deploy. Paid application-provider usage starts and remains **0/5**;
-no live call is needed. Motion research: two concept queries, one source lookup,
-one premium and one free source read. At most two children, one implementation
-writer; root owns entry integration, browser tests, docs and delivery.
+One batched desktop/phone inspection, one correction batch and confirmation.
+Verify progressive construction, pause/resume/replay, interruption, keyboard and
+reduced motion, all six claims and exact Evidence, canonical connector geometry
+and dash/arrow roles, language continuity, retry and destinations. Run new-app
+units/build/format/browser gates and mandatory `uv run pytest`, then independent
+complete-diff review and draft PR handoff. No merge/deploy.
+
+At most two active children, one runtime writer; root owns browser tests, docs
+and integration. No nested delegation. Shared paid application-provider usage
+remains **0/5**, including this continuation; no live call is needed. The new
+motion specification reuses already inspected sources without further lookups.

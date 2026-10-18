@@ -74,3 +74,39 @@ export function sourceContext(text: string, start: number, length: number) {
       text.slice(start + length, after) + (after < text.length ? " …" : ""),
   };
 }
+
+/** Match backend entity names verbatim without interpreting the source. */
+export function sourceEntitySpans(text: string, names: string[]) {
+  const exactNames = [...new Set(names.filter(Boolean))].sort(
+    (a, b) => b.length - a.length,
+  );
+  if (!exactNames.length) return [{ text, entity: false }];
+  const pattern = new RegExp(
+    `(${exactNames.map((name) => name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")})`,
+    "g",
+  );
+  return text
+    .split(pattern)
+    .filter(Boolean)
+    .map((part) => ({ text: part, entity: exactNames.includes(part) }));
+}
+
+/** Curated source excerpts are verbatim canonical Evidence, in source order. */
+export function canonicalSourceExcerpts(
+  state: CanonicalState,
+  sourceId: string,
+) {
+  const source = state.sources.find((item) => item.id === sourceId);
+  if (!source) return [];
+  return [
+    ...new Set(
+      state.evidence
+        .filter((item) => item.source_id === sourceId)
+        .map((item) => item.supporting_text),
+    ),
+  ]
+    .filter((text) => text.length > 0 && source.text.includes(text))
+    .sort(
+      (left, right) => source.text.indexOf(left) - source.text.indexOf(right),
+    );
+}

@@ -1,32 +1,72 @@
-# Landing motion: source → relationship → exact Evidence
+# Landing motion: build the structure, trace the Evidence
 
-Use a synthetic microdemo labelled “Illustrative synthetic example”; Forest strokes and Chalk paper. Use selectable text, two Person circles and one Trust triangle. Final state remains explorable. Explicit professional acceptance is a separate visible decision, never an automated green tick.
+The finished-graph opening underplayed construction. The replacement reveals
+the actual returned entities and six canonical connections, then yields to
+selectable exact Evidence. It remains an illustrative synthetic sequence; no
+model runs when it plays.
 
-## Choreography
+## One frame, two capabilities
 
-| Trigger | Action / timings |
+Tabs are **Build the trust structure** and **Trace the Evidence**. A scoped
+shared indicator uses spring stiffness 700, damping 53 and mass 1. Tabs support
+pointer, Enter/Space, arrows and Home/End with roving focus. Source identity,
+graph geometry and selected relationship persist across switches. The caption
+uses a 160ms opacity transition; source content changes directly within the
+same paper so reading does not wait for an exit animation.
+
+Canonical excerpt paragraphs remain fully readable, with pale-green verbatim
+entity-name emphasis. Evidence mode keeps that natural paper height and shows
+an independently scrollable exact passage and locator. The internal reader
+resets on selection, without moving focus or scrolling the outer page.
+
+## Construction clock
+
+One retained Motion `animate` control drives a four-second MotionValue clock.
+Derived values update the diagram without per-frame React rendering.
+
+| Clock | Visible result |
 | --- | --- |
-| First hero view, once | Headline and CTA readable immediately. Paper lifts y:12→0/opacity over 360ms ease [0.22,1,0.36,1]. At 200ms, reveal the exact source highlight with scaleX:0→1, origin left, 280ms. At 430ms, labelled entities settle y:8→0/opacity over 240ms. At 600ms, draw the single relevant connector pathLength:0→1 over 380ms. At 900ms, reveal its relationship label and Evidence locator over 160ms. Finish by ~1.1s; no autoplay loop or cursor pantomime. |
-| Claim/source fragment activated | Highlight that text, corresponding relationship and Evidence together. Immediate selected state, 140ms colour/opacity. Inspector quotation is the same exact synthetic substring; source identity and locator stay visible. Label buttons are real buttons; pointer, Enter and Space work. Latest interaction cancels the intro and wins. |
-| Scroll walkthrough | Three real content sections: identify words; inspect relationship; return to source. One sticky desktop product stage follows whichever section crosses a central reading band. Keep stable entity positions; change emphasis, selected relationship and quote. 180ms panel opacity, 240ms small transforms only where identity moves. No scroll hijacking. |
-| Explicit walkthrough step clicked | Select stage directly and scroll its corresponding section into view; manual choice wins until the next actual user scroll. Retain focus on the activating button. Show the current step textually, not only by colour. |
+| 0–0.6s | Readable Source excerpts; graph geometry reserved and empty. Caption: Synthetic source. |
+| 0.6–1.5s | Person circles and Trust triangle reveal opacity 0→1 and y 8→0, 260ms each with 90ms stagger. Names remain attached. |
+| 1.5–3.3s | Six connections and corresponding claim controls reveal in backend order, 300ms each starting 300ms apart. |
+| 3.3–4s | Complete diagram holds; at four seconds the caption becomes Six proposed relationships. Ready to inspect. |
 
-## Adaptation and safeguards
+Canonical paths animate opacity only. Their geometry, family dash patterns and
+parent arrows remain unchanged; no pathLength normalization or duplicate overlay
+can overwrite those roles. Each diagram scopes its marker IDs independently.
+Invisible claim controls stay disabled until their reveal begins.
 
-Desktop: compact sticky stage, normal scrolling copy. Phone/reduced motion: three inline illustrations, all copy readable, no long pinned region. Reduced motion skips intro draw/translation and shows complete diagram immediately; interaction changes are immediate or ≤80ms opacity. Do not let MotionConfig alone govern imperative animation. Hidden visual states must be noninteractive/aria-hidden; provide a concise textual relationship equivalent. No auto-announcements on scroll.
+## Lifecycle and accessibility
 
-Use useAnimate-scoped sequences; retain controls and stop on interaction/unmount, clear timers/listeners and disconnect any custom observers. Opacity/transform via MotionValues, no per-frame React state; SVG path drawing limited to this tiny illustration. No live provider calls or product mutations.
+Playback starts when at least 20% of the drawing is visible, including on phones.
+Offscreen/document-hidden playback pauses. Return resumes eligible playback;
+a deliberate user pause persists. Pause and Resume operate the same clock.
+Replay resets presentation only. Evidence/tab/claim input settles construction
+immediately, and return to Builder retains completion until explicit Replay.
 
-Final implementation keeps the six canonical connector paths static, including
-their family dash patterns and parent arrows. A temporary nested overlay traces
-the selected claim during the intro, then disappears. Early input and reduced
-motion remove that overlay and settle the source/entity/locator transforms.
-This avoids Motion's pathLength normalization changing canonical stroke styles.
+An explicit reactive media-query subscription handles initial and live reduced
+motion: the complete graph appears immediately, and Replay remains static.
+The browser regression asserts settling within 500ms. When completion removes a
+focused Pause/Resume button, focus moves to Replay; unrelated focus stays put.
+Generations guard stale completion callbacks; observers, listeners and controls
+clean up on unmount and React StrictMode remount.
 
-## Actual inspected references
+## Actual inspected sources
 
-- Premium **Scroll spotlight**, full component plus theme source read: https://motion.dev/ui/components/scroll-spotlight (`motion://ui/react/scroll-spotlight`, motion-plus). Uses reading-band viewport entry, shared active item, stable stage and responsive inline/sticky visual modes. Adapt these mechanisms; retain readable inactive copy rather than its 0.4 opacity. Free motion dependency only.
-- Free **Path drawing**, full source read: https://examples.motion.dev/react/path-drawing (`motion://examples/react/path-drawing`). Replace repeated sample shapes with one meaningful connector; no perpetual drawing.
-- Official docs read: https://motion.dev/docs/react-svg-animation and https://motion.dev/docs/react-use-scroll . Installed package verified 14.3.0; declarations confirm useAnimate/useScroll/useTransform/useReducedMotion exports from motion/react. No upgrade or motion-plus runtime required.
+- [Smooth Tabs](https://examples.motion.dev/react/smooth-tabs): scoped shared
+  indicator and continuous panels; reused already inspected source.
+- [Path Drawing](https://examples.motion.dev/react/path-drawing): actual source
+  previously read. Final construction uses per-edge opacity to preserve canonical
+  dash/arrow roles rather than its pathLength technique.
+- Premium [Scroll Spotlight](https://motion.dev/ui/components/scroll-spotlight):
+  full component/theme source was read during initial landing research. Its
+  viewport eligibility and stable stage informed this design; the former long
+  scroll walkthrough has been removed.
+- Official [SVG animation docs](https://motion.dev/docs/react-svg-animation) and
+  [useScroll docs](https://motion.dev/docs/react-use-scroll) were inspected earlier.
+  Installed free `motion/react` is 14.3.0. No upgrade or premium runtime is needed.
 
-Usage: 2 targeted concept searches, 1 source lookup, 1 actual premium resource read, 1 free source read. No account writes, providers, browser or app edits.
+This continuation made no new Motion query or source read. Initial landing
+research used two concept queries, one source lookup, one premium and one free
+source read. Paid application-provider calls remain **0/5** across continuations.
+No account writes, private registry token, live model or MotionScore audit.

@@ -13,13 +13,16 @@ test("public example traces every canonical claim to exact Evidence without anal
       requests.push(request.method() + " " + new URL(request.url()).pathname);
   });
   await page.goto("/");
-  await expect(page.locator("h1")).toContainText("Every relationship.");
+  await expect(page.locator("h1")).toContainText("Build the structure.");
   const response = await page.request.get(publicCase);
   expect(response.ok()).toBe(true);
   const { state } = (await response.json()) as { state: CanonicalState };
   const demo = page.getByRole("region", {
     name: "Explore the synthetic example",
   });
+  await page
+    .getByRole("tab", { name: "Trace the Evidence", exact: true })
+    .click();
   await expect(demo).toBeVisible();
   await expect(demo.locator(".landing-connectors > path")).toHaveCount(
     state.relationships.length,
@@ -147,6 +150,9 @@ test("keyboard claim selection survives narrative scrolling and reduced motion",
   const demo = page.getByRole("region", {
     name: "Explore the synthetic example",
   });
+  await page
+    .getByRole("tab", { name: "Trace the Evidence", exact: true })
+    .click();
   const claim = demo.getByRole("button", {
     name: "Carol Wong — beneficiary of — Evergreen Family Trust",
     exact: true,
@@ -183,6 +189,9 @@ test("public example failure can retry the unchanged backend without a fabricate
   await expect(page.locator("mark[data-evidence-id]")).toHaveCount(0);
   await page.unroute("**" + publicCase);
   await retry.click();
+  await page
+    .getByRole("tab", { name: "Trace the Evidence", exact: true })
+    .click();
   await expect(
     page.getByRole("button", {
       name: "Alice Chen — parent of — Bob Chen",
@@ -214,6 +223,9 @@ test("language changes preserve the selected canonical relationship and source w
   page,
 }) => {
   await page.goto("/");
+  await page
+    .getByRole("tab", { name: "Trace the Evidence", exact: true })
+    .click();
   const claim = page.getByRole("button", {
     name: "Carol Wong — beneficiary of — Evergreen Family Trust",
     exact: true,
@@ -233,4 +245,175 @@ test("language changes preserve the selected canonical relationship and source w
   ).toContainText("Carol Wong");
   await page.reload();
   await expect(page.locator("html")).toHaveAttribute("lang", "zh-CN");
+});
+
+async function visibleConnections(page: import("@playwright/test").Page) {
+  return page
+    .locator(".landing-connectors > path")
+    .evaluateAll(
+      (paths) =>
+        paths.filter((path) => Number(getComputedStyle(path).opacity) >= 0.8)
+          .length,
+    );
+}
+
+test("construction reveals the actual graph and can pause, resume, replay and yield to Evidence", async ({
+  page,
+}, info) => {
+  await page.goto("/");
+  const demo = page.getByRole("region", {
+    name: "Explore the synthetic example",
+  });
+  await demo.locator(".landing-drawing").scrollIntoViewIfNeeded();
+  const replay = page.getByRole("button", {
+    name: "Replay construction",
+    exact: true,
+  });
+  await expect(demo).toHaveAttribute("data-capability", "builder");
+  const response = await page.request.get(publicCase);
+  const { state } = (await response.json()) as { state: CanonicalState };
+  const sourceId = await demo
+    .locator(".landing-paper")
+    .getAttribute("data-source-id");
+  const excerpts = await demo
+    .locator(".landing-source-excerpt")
+    .allTextContents();
+  const source = state.sources.find((source) => source.id === sourceId)!;
+  expect(excerpts.length).toBeGreaterThan(0);
+  expect(new Set(excerpts)).toEqual(
+    new Set(
+      state.evidence
+        .filter((item) => item.source_id === sourceId)
+        .map((item) => item.supporting_text),
+    ),
+  );
+  excerpts.forEach((excerpt) => expect(source.text).toContain(excerpt));
+  await replay.click();
+  await expect(demo).toHaveAttribute("data-playback", "playing");
+  await expect.poll(() => visibleConnections(page)).toBe(0);
+  await expect
+    .poll(() => visibleConnections(page), { intervals: [100] })
+    .toBeGreaterThan(0);
+  await page
+    .getByRole("button", { name: "Pause construction", exact: true })
+    .click();
+  await expect(demo).toHaveAttribute("data-playback", "paused");
+  const paused = await visibleConnections(page);
+  expect(paused).toBeLessThan(6);
+  // Actual elapsed time is necessary to show the user pause freezes playback.
+  await page.waitForTimeout(500);
+  expect(await visibleConnections(page)).toBe(paused);
+  await page
+    .getByRole("button", { name: "Resume construction", exact: true })
+    .click();
+  await expect(demo).toHaveAttribute("data-playback", "complete");
+  await expect(replay).toBeFocused();
+  expect(await visibleConnections(page)).toBe(6);
+  await page.screenshot({
+    path: `artifacts/landing-builder-${info.project.name}.png`,
+    fullPage: true,
+    animations: "disabled",
+  });
+  await replay.click();
+  await page
+    .getByRole("tab", { name: "Trace the Evidence", exact: true })
+    .click();
+  await expect(demo).toHaveAttribute("data-playback", "complete");
+  expect(await visibleConnections(page)).toBe(6);
+  const claim = demo.getByRole("button", {
+    name: "Carol Wong — beneficiary of — Evergreen Family Trust",
+    exact: true,
+  });
+  await claim.click();
+  const quote = await demo.locator("mark[data-evidence-id]").innerText();
+  await page
+    .getByRole("tab", { name: "Build the trust structure", exact: true })
+    .click();
+  await expect(demo).toHaveAttribute("data-playback", "complete");
+  await page
+    .getByRole("tab", { name: "Trace the Evidence", exact: true })
+    .click();
+  await expect(claim).toHaveAttribute("aria-pressed", "true");
+  await expect(demo.locator("mark[data-evidence-id]")).toHaveText(quote);
+  await expect(page.getByText(/Illustrative synthetic sequence/)).toBeVisible();
+});
+
+test("capability tabs support keyboard selection and reduced motion settles construction", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const skip = page.getByRole("link", { name: "Skip to content", exact: true });
+  await expect(page.locator("h1")).toBeVisible();
+  await page.keyboard.press("Tab");
+  await expect(skip).toBeFocused();
+  expect(
+    await skip.evaluate((element) => getComputedStyle(element).clipPath),
+  ).toBe("none");
+  await page.keyboard.press("Tab");
+  await expect(skip).not.toBeFocused();
+  expect(
+    await skip.evaluate((element) => getComputedStyle(element).clipPath),
+  ).not.toBe("none");
+  const demo = page.getByRole("region", {
+    name: "Explore the synthetic example",
+  });
+  await demo.locator(".landing-drawing").scrollIntoViewIfNeeded();
+  const builder = page.getByRole("tab", {
+    name: "Build the trust structure",
+    exact: true,
+  });
+  const evidence = page.getByRole("tab", {
+    name: "Trace the Evidence",
+    exact: true,
+  });
+  await builder.focus();
+  await builder.press("End");
+  await expect(evidence).toBeFocused();
+  await expect(evidence).toHaveAttribute("aria-selected", "true");
+  await evidence.press("Home");
+  await expect(builder).toBeFocused();
+  await expect(builder).toHaveAttribute("aria-selected", "true");
+  await page
+    .getByRole("button", { name: "Replay construction", exact: true })
+    .click();
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await expect(demo).toHaveAttribute("data-playback", "complete", {
+    timeout: 500,
+  });
+  expect(await visibleConnections(page)).toBe(6);
+  await page
+    .getByRole("button", { name: "Replay construction", exact: true })
+    .click();
+  await expect(demo).toHaveAttribute("data-playback", "complete", {
+    timeout: 500,
+  });
+  expect(await visibleConnections(page)).toBe(6);
+});
+
+test("offscreen construction pauses and a deliberate pause stays paused on return", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const demo = page.getByRole("region", {
+    name: "Explore the synthetic example",
+  });
+  await demo.locator(".landing-drawing").scrollIntoViewIfNeeded();
+  const replay = page.getByRole("button", {
+    name: "Replay construction",
+    exact: true,
+  });
+  await replay.click();
+  await page.getByRole("contentinfo").scrollIntoViewIfNeeded();
+  await expect(demo).toHaveAttribute("data-playback", "paused");
+  await demo.locator(".landing-drawing").scrollIntoViewIfNeeded();
+  await expect(demo).toHaveAttribute("data-playback", "playing");
+  await page
+    .getByRole("button", { name: "Pause construction", exact: true })
+    .click();
+  await page.getByRole("contentinfo").scrollIntoViewIfNeeded();
+  await demo.locator(".landing-drawing").scrollIntoViewIfNeeded();
+  await expect(demo).toHaveAttribute("data-playback", "paused");
+  await expect(
+    page.getByRole("button", { name: "Resume construction", exact: true }),
+  ).toBeVisible();
 });
