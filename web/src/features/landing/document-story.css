@@ -42,6 +42,9 @@
   width: 100%;
   margin: 0 auto 60px;
 }
+.landing-story:not(.landing-story-static) .landing-story-montage-intro {
+  margin-bottom: 84px;
+}
 .landing-story .landing-story-montage-intro h2 {
   font-size: clamp(30px, 3.6vw, 50px);
   line-height: 1.12;
@@ -457,6 +460,9 @@
   }
   .landing-story .landing-story-montage-intro {
     margin-bottom: 52px;
+  }
+  .landing-story:not(.landing-story-static) .landing-story-montage-intro {
+    margin-bottom: 76px;
   }
   .landing-story .landing-story-montage-disclosure {
     font-size: 10px;

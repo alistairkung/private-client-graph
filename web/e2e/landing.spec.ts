@@ -306,6 +306,44 @@ test("scroll scrubs document fronts, measured name movement and masked drawing; 
   );
 });
 
+test("paper flick lifts before its layer handoff, settles and reverses without delaying review", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const email = page.locator('[data-document-kind="email"]');
+  const pose = () => email.evaluate(element => {
+    const style = getComputedStyle(element);
+    const matrix = new DOMMatrix(style.transform);
+    return {
+      x: matrix.m41,
+      y: matrix.m42,
+      rotation: Math.atan2(matrix.m12, matrix.m11) * 180 / Math.PI,
+      front: style.zIndex === "5",
+    };
+  });
+  await storyProgress(page, 0.065);
+  await expect.poll(async () => {
+    const value = await pose();
+    return value.x > 80 && value.y < -26 && !value.front;
+  }).toBe(true);
+  const formatBottom = await page.locator(".landing-story-format-list")
+    .evaluate(element => element.getBoundingClientRect().bottom);
+  expect((await email.boundingBox())!.y).toBeGreaterThan(formatBottom + 4);
+  await storyProgress(page, 0.12);
+  await expect.poll(async () => {
+    const value = await pose();
+    return value.front && Math.abs(value.x) < 1 && Math.abs(value.rotation) < 0.2;
+  }).toBe(true);
+  await storyProgress(page, 0.065);
+  await expect.poll(async () => {
+    const value = await pose();
+    return value.y < -26 && !value.front;
+  }).toBe(true);
+  await openReview(page);
+  await expect(email).toHaveCSS("opacity", "0");
+  await expect(page.locator("#landing-story-review")).not.toHaveAttribute("inert");
+});
+
 test("keyboard skip and live reduced motion expose an in-flow review while preserving selection", async ({
   page,
 }) => {
