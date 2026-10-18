@@ -272,3 +272,34 @@ PR #157 and its existing branch; no original frontend or backend changes.
   no material correctness/accessibility/readability issues. No material readability
   concern deliberately retained. Main bundle **672.08 kB / 219.09 kB gzip**, with
   the existing nonblocking size/directive warnings. No runtime MotionScore claim.
+
+## Forest & Chalk palette selection
+
+The user selected Forest & Chalk from four isolated browser renders of the same
+synthetic Matter. The selected palette is now applied to the real independent
+frontend: deep forest rail, pale green frame, white reading surfaces and green
+actions/selection. Exact Evidence remains amber; error and workflow-state meaning
+are preserved. Layout, typography, motion and application behavior are unchanged.
+
+- Reused Sol/medium implementer and Sol/high independent engineering review;
+  root owned rendered contrast checks and delivery. At most two active children,
+  no nested delegation. Paid application-provider usage remains **0 of 5**.
+- Central semantic CSS roles cover shell, forms, dialogs, switch and SVG drawing.
+  The dark rail has light text and focus; its white account popover explicitly
+  restores dark ink and green focus. Form boundaries and graph leaders retain
+  sufficient contrast. No premium runtime dependency or new backend behavior.
+- One batched desktop/phone visual inspection covered graph, multi-source reader
+  and intake; live Chrome confirmed the actual Evergreen relationship selection
+  and smooth exact-source reveal. Screenshots and walkthrough were refreshed.
+- Final validation: **752 Python tests passed** in 109.49s with isolated
+  PostgreSQL; **72 frontend unit tests in 16 files**, typecheck, production build
+  and formatting passed. Chromium: **36 desktop/phone functional checks plus one
+  refreshed recording passed** in 41.1s; only the redundant phone recording
+  skipped. New checks calculate contrast from actual computed colors, composited
+  backgrounds, keyboard focus, controls and SVG strokes rather than token values.
+- Code Quality Review: complete source diff and new test independently reviewed;
+  no material correctness, accessibility or readability findings. Semantic roles
+  centralize the palette; scoped focus/foreground rules handle nested surfaces.
+  No material readability concern deliberately retained. Main bundle **672.15 kB
+  minified / 219.08 kB gzip**, with existing nonblocking size/directive warnings.
+  Original frontend/backend/domain/database/tests/deployment remain unchanged.

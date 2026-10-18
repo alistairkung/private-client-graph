@@ -4,16 +4,18 @@ The independent practitioner application uses the **Working Atlas** direction
 in Operate mode. This document applies only to `practitioner-next/`; the root
 DESIGN.md remains the Public Showcase's visual authority.
 
-A cool slate application frame surrounds two different working surfaces: a
-relationship drawing and a persistent, selectable source reader. Cobalt marks a
-deliberate selection; warm yellow identifies only the active exact Evidence
+A pale green application frame and deep forest rail surround two different
+working surfaces: a relationship drawing and a persistent, selectable source
+reader. The user-selected **Forest & Chalk** palette uses green for deliberate
+selection; warm yellow identifies only the active exact Evidence
 span. No image, activity metric, invented status or decorative animation competes
 with the work.
 
 ## Foundations
 
-- Ink `#1D2B3C`, secondary ink `#536579`, frame `#EAF0F5`, surface `#FFFFFF`.
-- Structural border `#CCD7E1`, action/selection `#2358BA`,
+- Ink `#20372B`, secondary ink `#566B5D`, frame `#E9F0EA`, surface `#FFFFFF`.
+- Rail `#173F31` with text `#E5EFE7` and secondary text `#C0D4C6`.
+- Structural border `#C7D3C8`, control border `#7D9283`, action/selection `#1E6249`,
   Evidence `#FFF0A6`, error `#B42332`.
 - One humanist system family: Segoe UI, then Arial/sans-serif, as permitted by the
   approved direction. Proper names, source titles and exact quotations remain
@@ -21,7 +23,8 @@ with the work.
 - Main interface 15px; secondary metadata 12–13px; source reading 16px with
   generous leading; Matter title 22px; ledger title 28px.
 - Straight panel boundaries, 6px controls, 8px dialogs. Elevation is reserved for
-  menus, the mobile rail and dialogs. Focus uses a cobalt 2px outline.
+  menus, the mobile rail and dialogs. Focus uses a green 2px outline; the dark
+  rail uses a light outline. White account menus restore dark text and green focus.
 - Content wraps, including long names and filenames. Controls are at least 44px
   except the compact secondary view switch, whose surrounding region is separate
   from primary workflow actions.

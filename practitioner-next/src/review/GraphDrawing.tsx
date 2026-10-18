@@ -75,7 +75,11 @@ function RelationshipEdge({ id, selected, data, label }: EdgeProps) {
     .map((point, index) => (index ? "L " : "M ") + point.x + " " + point.y)
     .join(" ");
   const emphasized = selected || Boolean(data?.emphasized);
-  const color = emphasized ? "#2358BA" : data?.trust ? "#425c78" : "#708297";
+  const color = emphasized
+    ? "var(--accent)"
+    : data?.trust
+      ? "var(--graph-line)"
+      : "var(--graph-family-line)";
   return (
     <>
       <path
@@ -91,7 +95,7 @@ function RelationshipEdge({ id, selected, data, label }: EdgeProps) {
           route.y
         }
         fill="none"
-        stroke={emphasized ? "#2358ba" : "#a7b6c6"}
+        stroke={emphasized ? "var(--accent)" : "var(--graph-leader)"}
         strokeWidth={1}
         pointerEvents="none"
       />
@@ -99,7 +103,7 @@ function RelationshipEdge({ id, selected, data, label }: EdgeProps) {
         <path
           d={path}
           fill="none"
-          stroke="#fbfcfe"
+          stroke="var(--graph-canvas)"
           strokeWidth={7}
           pointerEvents="none"
         />
@@ -269,7 +273,7 @@ function Drawing({
               refY="4"
               orient="auto"
             >
-              <path d="m0 0 8 4-8 4" fill="none" stroke="#536579" />
+              <path d="m0 0 8 4-8 4" fill="none" stroke="var(--muted)" />
             </marker>
           </defs>
         </svg>

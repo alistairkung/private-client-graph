@@ -4,6 +4,11 @@ An independent practitioner frontend for Private Client Graph. **Working Atlas**
 puts the relationship drawing and exact source Evidence alongside each other.
 The original `web/` app and production deployment remain unchanged.
 
+The selected **Forest & Chalk** palette pairs a deep green rail and pale green
+frame with white reading surfaces. Green actions and graph selections share
+semantic color roles; amber remains the exact Evidence highlight. Desktop/phone
+browser checks cover text, focus rings, account menus, controls and graph contrast.
+
 This frontend consumes the existing Matter and Matter Proposal APIs. It supports
 only the existing synthetic prototype workflows; never enter real client or
 personal information. No live model call is needed for the local setup below.
@@ -114,7 +119,7 @@ free `motion/react`, informed by authenticated premium Motion+ source research.
 No private registry token or premium runtime dependency is needed.
 
 Verified locally: 752 repository Python tests, 72 new-app unit tests, typecheck,
-production build, formatting and 32 real-backend desktop/phone parity tests.
+production build, formatting and 36 real-backend desktop/phone parity tests.
 A separate refreshed walkthrough also passed. Graph coverage includes Evergreen
 family placement, complete bounds, connector spacing, exact Evidence selection,
 return focus, stable camera and language switching. Geometry regressions cover

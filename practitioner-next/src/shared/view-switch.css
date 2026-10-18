@@ -6,7 +6,7 @@
   width: max-content;
   padding: 4px;
   border-radius: 9px;
-  background: #e4ebf3;
+  background: var(--surface-hover);
   user-select: none;
   touch-action: pan-y;
 }
@@ -17,8 +17,8 @@
   top: 4px;
   bottom: 4px;
   border-radius: 6px;
-  background: #fff;
-  box-shadow: 0 1px 3px #213c5b18;
+  background: var(--surface);
+  box-shadow: 0 1px 3px var(--shadow-soft);
   pointer-events: none;
 }
 .view-switch > button {
@@ -30,15 +30,15 @@
   font-weight: 500;
   line-height: 22px;
   background: transparent;
-  color: #536579;
+  color: var(--muted);
   touch-action: pan-y;
 }
 .view-switch > button:hover:not(:disabled) {
   background: transparent;
-  color: #2358ba;
+  color: var(--accent);
 }
 .view-switch > button[aria-selected="true"] {
-  color: #2358ba;
+  color: var(--accent);
 }
 .view-switch[data-dragging] {
   cursor: grabbing;
@@ -47,7 +47,7 @@
   cursor: grabbing;
 }
 .view-switch > button:focus-visible {
-  outline: 2px solid #2358ba;
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 @media (max-width: 480px) {

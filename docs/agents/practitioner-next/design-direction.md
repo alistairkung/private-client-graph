@@ -2,13 +2,13 @@
 
 ## Decision: Working Atlas
 
-Operate mode. A solicitor's working atlas of a Matter: a calm blue-grey application frame surrounds a bright relationship drawing and a persistent source reading surface. The memorable element is the connected relationship-and-Evidence workspace, not a decorative brand header. Matter identity, state and source context remain visible while the practitioner moves between assertions and their support.
+Operate mode. A solicitor's working atlas of a Matter: the user-selected **Forest & Chalk** palette combines a deep green navigation rail, pale green frame and white relationship drawing and source reading surfaces. The memorable element is the connected relationship-and-Evidence workspace, not a decorative brand header. Matter identity, state and source context remain visible while the practitioner moves between assertions and their support.
 
 This is an independent visual world for `practitioner-next/`. PRODUCT.md supplies product truth; DESIGN.md describes the separate Public Showcase and is context only. Existing `web/` supplies workflow truth, not styling. This planning deliverable creates no UI, comps or existing design-file changes. The lead's explicit selected-direction assignment replaces the skill's interactive concept tournament. Existing Impeccable sidecar drift is reported, not repaired.
 
 ## Why this direction
 
-The product's unique mechanism is the reversible journey from a proposed relationship to exact supporting source text and back. Give that journey most of the viewport. Replace the public site's paper/serif/green editorial world with cool mineral surfaces, compact humanist type, disciplined rows and a decisive cobalt selection. Avoid dashboard metric cards, oversized welcome text, ornamental gradients and status colors that imply professional acceptance.
+The product's unique mechanism is the reversible journey from a proposed relationship to exact supporting source text and back. Give that journey most of the viewport. Use chalk-white reading surfaces, compact humanist type, disciplined rows and a decisive forest green selection. Forest & Chalk was selected after four isolated renders; it supersedes the initial cobalt palette while retaining the Working Atlas composition. Avoid dashboard metric cards, oversized welcome text, ornamental gradients and status colors that imply professional acceptance.
 
 The source panel is a reading surface, the graph a drawing surface, and the application frame a navigation surface. Their different densities communicate their jobs. No decorative imagery is needed.
 
@@ -79,14 +79,15 @@ Provide a relationship list equivalent to the graph at every width, especially p
 
 | Role | Value | Use |
 | --- | --- | --- |
-| Ink | `#1D2B3C` | Main text and diagram labels |
-| Secondary ink | `#536579` | Supporting text; never disabled primary information |
-| Frame | `#EAF0F5` | Application surround and secondary toolbar |
+| Ink | `#20372B` | Main text and diagram labels |
+| Secondary ink | `#566B5D` | Supporting text; never disabled primary information |
+| Frame | `#E9F0EA` | Application surround and secondary toolbar |
 | Surface | `#FFFFFF` | Graph, forms, lists and source surface |
-| Cobalt | `#2358BA` | Primary action, selected relationship, focus-related emphasis |
+| Forest | `#1E6249` | Primary action, selected relationship, focus-related emphasis |
+| Rail | `#173F31` | Navigation with `#E5EFE7` text and `#C0D4C6` secondary text |
 | Evidence | `#FFF0A6` | Exact source highlight with dark ink |
 
-Use `#CCD7E1` for structural borders, `#B42332` for errors/destructive actions, `#216748` for completed outcomes, and `#8A5B12` for warnings. Status always includes text/icon, never color alone. Primary focus uses a 2px cobalt outline offset 3px; on a cobalt button use a white separation ring plus the cobalt outer ring. Verify actual text/background pairs against WCAG AA.
+Use `#C7D3C8` for structural borders, `#7D9283` for control boundaries, `#B42332` for errors/destructive actions, `#216748` for completed outcomes, and `#8A5B12` for warnings. Status always includes text/icon, never color alone. Primary focus uses a 2px forest outline offset 3px; the dark rail uses a light outline. White account popovers restore dark text and green focus. Verify actual rendered text/background pairs against WCAG AA, including nested surfaces and keyboard focus.
 
 Typography: IBM Plex Sans where a licensed/self-hostable font asset is available; otherwise `"Segoe UI", Arial, sans-serif` with identical hierarchy. Use this one family throughout, including headings and source text; do not block implementation on a font download. 13px secondary metadata, 14px navigation/compact labels, 15px main UI, 16px source prose at 1.65 line height, 22px Matter title, 28px ledger title. Source measure 60–72ch. At phone width keep inputs at least 16px. Use tabular numerals for Evidence position and technical numeric references only, never monospace as decoration.
 
@@ -96,7 +97,7 @@ Spacing: 4/8/12/16/24/32px; 24px content gutters desktop and 16px phone. Control
 
 Use one visible node per canonical entity. Person is a compact circular marker with adjacent name; Trust is a larger triangle marker and adjacent name. Keep all supplied family relationships visible. For exactly one Trust, provisional role placement puts settlors above, beneficiaries below and trustees alongside; multiple roles remain one person with separate selectable connectors. No Trust or multiple Trusts use the existing generic layout rules.
 
-Trust-role connectors have labels and no arrowheads. `parent_of` retains parent-to-child direction. Spouse/sibling connectors remain symmetric. Family links use slate strokes; Trust-role links use stronger ink. Selection adds cobalt plus increased stroke/label emphasis, while unselected relationships remain readable. Never infer assets, ownership, priority, absence of a trustee, or additional legal meaning from placement. Every relationship retains an accessible full textual equivalent.
+Trust-role connectors have labels and no arrowheads. `parent_of` retains parent-to-child direction. Spouse/sibling connectors remain symmetric. Family links use muted green strokes; Trust-role links use stronger ink. Selection adds forest green plus increased stroke/label emphasis, while unselected relationships remain readable. Never infer assets, ownership, priority, absence of a trustee, or additional legal meaning from placement. Every relationship retains an accessible full textual equivalent.
 
 Evidence detail starts with the full relationship statement and exact source title, then selectable Evidence entries and exact quotes. Selecting a quote does not modify its text. Highlight only the active matched span; a numbered position such as “Evidence 1 of 3” is navigation, not a quality score. If an exact match cannot be located, show the quote with a clear source-location error rather than an approximate highlight.
 

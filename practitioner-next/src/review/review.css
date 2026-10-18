@@ -4,7 +4,7 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  background: #fff;
+  background: var(--surface);
 }
 .matter-heading {
   display: flex;
@@ -13,7 +13,7 @@
   gap: 20px;
   flex: none;
   padding: 10px 24px;
-  background: #f4f7fb;
+  background: var(--surface-subtle);
   border-bottom: 1px solid var(--border);
 }
 .matter-identity {
@@ -49,8 +49,8 @@
 }
 .proposal-notice {
   flex: none;
-  background: #edf3fc;
-  color: #425b7a;
+  background: var(--selection);
+  color: var(--muted);
   padding: 8px 24px;
   font-size: 12px;
   border-bottom: 1px solid var(--border);
@@ -64,7 +64,7 @@
   grid-template-columns: minmax(0, 1.2fr) minmax(340px, 0.9fr);
   flex: 1;
   min-height: 0;
-  background: #fff;
+  background: var(--surface);
 }
 .relationships-panel {
   display: flex;
@@ -80,7 +80,7 @@
   padding: 8px 20px;
   gap: 16px;
   flex: none;
-  border-bottom: 1px solid #dfe7ef;
+  border-bottom: 1px solid var(--surface-hover);
 }
 .panel-toolbar h2 {
   font-size: 15px;
@@ -96,7 +96,7 @@
   flex: 1;
   min-height: 260px;
   overflow: hidden;
-  background: #fbfcfe;
+  background: var(--graph-canvas);
 }
 .review-mode {
   position: absolute;
@@ -128,7 +128,7 @@
   min-height: 160px;
   position: relative;
   overflow: hidden;
-  background: #fbfcfe;
+  background: var(--graph-canvas);
 }
 .graph-defs {
   position: absolute;
@@ -142,7 +142,7 @@
   position: relative;
   width: 100%;
   height: 100%;
-  color: #1d2b3c;
+  color: var(--ink);
 }
 .entity-node .react-flow__handle {
   opacity: 0;
@@ -169,8 +169,8 @@
   justify-content: center;
   gap: 9px;
   padding: 8px 10px;
-  background: #f1f5f9;
-  border: 1px solid #aebdcc;
+  background: var(--surface-muted);
+  border: 1px solid var(--control-border);
   border-radius: 6px;
   transition:
     background-color 120ms,
@@ -179,22 +179,22 @@
 .person-entity > svg {
   width: 18px;
   height: 18px;
-  fill: #d4e0ee;
-  stroke: #526b86;
+  fill: var(--graph-fill);
+  stroke: var(--graph-line);
   stroke-width: 1.4;
   flex: none;
 }
 .person-entity.selected {
-  border-color: #2358ba;
-  background: #e2edff;
+  border-color: var(--accent);
+  background: var(--selection-strong);
 }
 .trust-entity > svg {
   display: block;
   width: 170px;
   height: 96px;
   overflow: visible;
-  fill: #e3ebf5;
-  stroke: #526b86;
+  fill: var(--graph-fill);
+  stroke: var(--graph-line);
   stroke-width: 1.6;
   transition:
     fill 120ms,
@@ -212,8 +212,8 @@
   font-weight: 600;
 }
 .trust-entity.selected > svg {
-  fill: #d6e5ff;
-  stroke: #2358ba;
+  fill: var(--selection-strong);
+  stroke: var(--accent);
   stroke-width: 2.5;
 }
 .edge-label {
@@ -223,9 +223,9 @@
   height: 32px;
   min-height: 32px;
   padding: 4px 8px;
-  background: #fbfcfe;
+  background: var(--graph-canvas);
   font-size: 16px;
-  color: #425c78;
+  color: var(--graph-line);
   border: 1px solid transparent;
   border-radius: 4px;
   line-height: 22px;
@@ -237,18 +237,18 @@
 }
 .edge-label:hover,
 .edge-label.emphasized {
-  color: #2358ba;
-  border-color: #a4bde4;
-  background: #edf3fd;
+  color: var(--accent);
+  border-color: var(--selection-border);
+  background: var(--selection);
 }
 .edge-label.selected {
-  background: #e2ecfc;
-  border-color: #98b6e5;
-  color: #2358ba;
+  background: var(--selection-strong);
+  border-color: var(--selection-border);
+  color: var(--accent);
   font-weight: 600;
 }
 .edge-label:focus-visible {
-  outline: 2px solid #2358ba;
+  outline: 2px solid var(--accent);
   outline-offset: 3px;
 }
 .react-flow__edge-path {
@@ -261,9 +261,9 @@
   left: 14px;
   bottom: 14px;
   display: flex;
-  background: #fff;
+  background: var(--surface);
   border-radius: 6px;
-  box-shadow: 0 2px 8px #1d2b3c12;
+  box-shadow: 0 2px 8px var(--shadow-soft);
 }
 .graph-tools button {
   border-radius: 0;
@@ -285,10 +285,10 @@
   align-items: center;
   gap: 6px 16px;
   padding: 9px 20px;
-  border-top: 1px solid #e5ebf1;
+  border-top: 1px solid var(--border);
   color: var(--muted);
   font-size: 11px;
-  background: #f5f8fb;
+  background: var(--surface-subtle);
   flex: none;
 }
 .graph-key > span {
@@ -300,13 +300,13 @@
   width: 26px;
   height: 18px;
   fill: none;
-  stroke: #526b86;
+  stroke: var(--graph-line);
   stroke-width: 1.5;
 }
 .graph-key > span:first-child svg,
 .graph-key > span:nth-child(2) svg {
   width: 18px;
-  fill: #dce6f2;
+  fill: var(--graph-fill);
 }
 .evidence-inspector {
   flex: 0 0 180px;
@@ -314,9 +314,9 @@
   max-height: 42%;
   display: flex;
   flex-direction: column;
-  border-top: 1px solid #b7c9dd;
+  border-top: 1px solid var(--border);
   padding: 13px 20px 14px;
-  background: #f5f8fd;
+  background: var(--surface-subtle);
   overflow: hidden;
 }
 .inspector-title {
@@ -359,7 +359,7 @@
 .inspector-empty > svg {
   width: 24px;
   height: 28px;
-  color: #8197ad;
+  color: var(--icon-muted);
 }
 .inspector-empty p {
   max-width: 42ch;
@@ -376,14 +376,14 @@
   width: 100%;
   padding: 12px 14px;
   text-align: left;
-  border: 1px solid #cbd8e8;
-  background: #fff;
+  border: 1px solid var(--border);
+  background: var(--surface);
   border-radius: 6px;
   line-height: 1.55;
 }
 .evidence-item.active {
-  border-color: #9ab7e1;
-  background: #edf4ff;
+  border-color: var(--selection-border);
+  background: var(--selection);
 }
 .evidence-meta {
   display: flex;
@@ -419,7 +419,7 @@
   content: none;
 }
 .evidence-jump {
-  color: var(--cobalt);
+  color: var(--accent);
   display: flex;
   gap: 8px;
   align-items: center;
@@ -484,13 +484,13 @@
   border-radius: 0;
   padding: 10px 14px;
   font-size: 12px;
-  background: #f0f4f9;
+  background: var(--surface-muted);
   color: var(--muted);
   overflow-wrap: anywhere;
 }
 .source-tabs > button.active {
-  background: #fff;
-  color: var(--cobalt);
+  background: var(--surface);
+  color: var(--accent);
 }
 .source-number {
   height: 21px;
@@ -508,7 +508,7 @@
   position: absolute;
   bottom: 0;
   height: 2px;
-  background: var(--cobalt);
+  background: var(--accent);
   inset-inline: 20px;
 }
 .source-scroll {
@@ -517,7 +517,7 @@
   flex: 1;
   min-height: 0;
   scrollbar-width: thin;
-  scrollbar-color: #b6c5d4 #fff;
+  scrollbar-color: var(--scrollbar) var(--surface);
 }
 .source-document {
   padding: 24px 30px 48px;
@@ -527,7 +527,7 @@
 .document-heading {
   padding-bottom: 20px;
   margin-bottom: 24px;
-  border-bottom: 1px solid #e3eaf1;
+  border-bottom: 1px solid var(--border);
 }
 .document-heading h3 {
   font-size: 17px;
@@ -559,7 +559,7 @@
   border-top: 1px solid var(--border);
   font-size: 10px;
   color: var(--muted);
-  background: #f7f9fc;
+  background: var(--surface-subtle);
   overflow-wrap: anywhere;
 }
 .source-relationship-context {
@@ -571,7 +571,7 @@
   flex-direction: column;
   min-height: 0;
   padding: 16px 20px 0;
-  background: #fff;
+  background: var(--surface);
 }
 .relationship-search {
   flex: none;
@@ -596,19 +596,19 @@
   text-align: left;
   border: 0;
   border-radius: 0;
-  border-bottom: 1px solid #dfe7ef;
+  border-bottom: 1px solid var(--surface-hover);
   padding: 16px 10px;
   font-size: 14px;
   line-height: 1.5;
   overflow-wrap: anywhere;
 }
 .relationship-row.active {
-  background: #e8f0fd;
-  color: var(--cobalt);
+  background: var(--selection);
+  color: var(--accent);
 }
 .relationship-type {
   font-size: 13px;
-  color: #435b74;
+  color: var(--muted);
   align-self: center;
   text-align: center;
 }
@@ -616,7 +616,7 @@
   flex: none;
   border-top: 1px solid var(--border);
   padding: 12px 20px;
-  background: #f0f5fd;
+  background: var(--selection);
   max-height: 155px;
   overflow: auto;
 }
@@ -689,7 +689,7 @@
   .mobile-workspace-tabs {
     display: flex;
     flex: none;
-    background: #fff;
+    background: var(--surface);
     border-bottom: 1px solid var(--border);
   }
   .mobile-workspace-tabs > button {
@@ -702,9 +702,9 @@
     color: var(--muted);
   }
   .mobile-workspace-tabs > button[aria-pressed="true"] {
-    color: var(--cobalt);
-    box-shadow: inset 0 -2px var(--cobalt);
-    background: #f5f8fe;
+    color: var(--accent);
+    box-shadow: inset 0 -2px var(--accent);
+    background: var(--surface-subtle);
   }
   .review-grid {
     display: block;
@@ -768,8 +768,8 @@
     display: block;
     flex: none;
     padding: 10px 16px 12px;
-    background: #edf3fd;
-    border-block: 1px solid #d6e2f3;
+    background: var(--selection);
+    border-block: 1px solid var(--border);
     max-height: 150px;
     overflow-y: auto;
   }
@@ -831,5 +831,5 @@
   min-height: 14px;
   font-size: 10px;
   line-height: 1.4;
-  color: var(--cobalt);
+  color: var(--accent);
 }
