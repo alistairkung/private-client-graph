@@ -17,7 +17,7 @@ import type { CanonicalState } from "../../shared/contracts";
 import { LocaleProvider, useLocale } from "../../shared/locale";
 
 const diagramStyles = readFileSync(
-  join(dirname(fileURLToPath(import.meta.url)), "review.css"),
+  join(dirname(fileURLToPath(import.meta.url)), "graph-drawing.css"),
   "utf8",
 );
 

@@ -1,0 +1,16 @@
+.research-roadmap-directions { margin-block: 32px; }
+.research-roadmap-directions > section {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+  gap: 24px 48px;
+  padding-block: 24px;
+  border-top: 1px solid var(--research-line);
+}
+.research-roadmap-directions h3 { font-size: 20px; max-width: 23ch; }
+.research-roadmap-directions p { font-size: 15px; }
+.research-roadmap-directions p:last-child { margin-bottom: 0; }
+.research-roadmap-directions strong { display: block; margin-bottom: 6px; color: var(--folio-green); font-size: 13px; }
+@media (max-width: 700px) {
+  .research-roadmap-directions > section { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .research-roadmap-directions h3 { max-width: none; }
+}

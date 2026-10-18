@@ -111,203 +111,6 @@
   pointer-events: auto;
   opacity: 1;
 }
-.graph-workspace {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-}
-.graph-navigation-hint {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-}
-.graph-container {
-  flex: 1;
-  min-height: 160px;
-  position: relative;
-  overflow: hidden;
-  background: var(--graph-canvas);
-}
-.graph-defs {
-  position: absolute;
-}
-.graph-container .react-flow__node {
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-}
-.entity-node {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  color: var(--ink);
-}
-.entity-node .react-flow__handle {
-  opacity: 0;
-  width: 1px;
-  height: 1px;
-  min-width: 1px;
-  min-height: 1px;
-}
-.entity-node strong {
-  min-width: 0;
-  font-size: 17px;
-  font-weight: 500;
-  line-height: 20px;
-  max-height: 40px;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  overflow: hidden;
-  overflow-wrap: anywhere;
-}
-.person-entity {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 9px;
-  padding: 8px 10px;
-  background: var(--surface-muted);
-  border: 1px solid var(--control-border);
-  border-radius: 6px;
-  transition:
-    background-color 120ms,
-    border-color 120ms;
-}
-.person-entity > svg {
-  width: 18px;
-  height: 18px;
-  fill: var(--graph-fill);
-  stroke: var(--graph-line);
-  stroke-width: 1.4;
-  flex: none;
-}
-.person-entity.selected {
-  border-color: var(--accent);
-  background: var(--selection-strong);
-}
-.trust-entity > svg {
-  display: block;
-  width: 170px;
-  height: 96px;
-  overflow: visible;
-  fill: var(--graph-fill);
-  stroke: var(--graph-line);
-  stroke-width: 1.6;
-  transition:
-    fill 120ms,
-    stroke 120ms;
-}
-.trust-entity > strong {
-  line-height: 22px;
-  max-height: 44px;
-  position: absolute;
-  top: 108px;
-  left: 0;
-  width: 170px;
-  text-align: center;
-  font-size: 16px;
-  font-weight: 600;
-}
-.trust-entity.selected > svg {
-  fill: var(--selection-strong);
-  stroke: var(--accent);
-  stroke-width: 2.5;
-}
-.edge-label {
-  position: absolute;
-  pointer-events: all;
-  text-align: center;
-  height: 32px;
-  min-height: 32px;
-  padding: 4px 8px;
-  background: var(--graph-canvas);
-  font-size: 16px;
-  color: var(--graph-line);
-  border: 1px solid transparent;
-  border-radius: 4px;
-  line-height: 22px;
-  white-space: nowrap;
-  transition:
-    color 120ms,
-    background-color 120ms,
-    border-color 120ms;
-}
-.edge-label:hover,
-.edge-label.emphasized {
-  color: var(--accent);
-  border-color: var(--selection-border);
-  background: var(--selection);
-}
-.edge-label.selected {
-  background: var(--selection-strong);
-  border-color: var(--selection-border);
-  color: var(--accent);
-  font-weight: 600;
-}
-.edge-label:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 3px;
-}
-.react-flow__edge-path {
-  transition:
-    stroke 120ms,
-    stroke-width 120ms;
-}
-.graph-tools {
-  position: absolute;
-  left: 14px;
-  bottom: 14px;
-  display: flex;
-  background: var(--surface);
-  border-radius: 6px;
-  box-shadow: 0 2px 8px var(--shadow-soft);
-}
-.graph-tools button {
-  border-radius: 0;
-  min-width: 44px;
-  border-right: 0;
-  font-size: 13px;
-  padding: 7px 10px;
-}
-.graph-tools button:first-child {
-  border-radius: 6px 0 0 6px;
-}
-.graph-tools button:last-child {
-  border-right: 1px solid var(--border);
-  border-radius: 0 6px 6px 0;
-}
-.graph-key {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px 16px;
-  padding: 9px 20px;
-  border-top: 1px solid var(--border);
-  color: var(--muted);
-  font-size: 11px;
-  background: var(--surface-subtle);
-  flex: none;
-}
-.graph-key > span {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-.graph-key svg {
-  width: 26px;
-  height: 18px;
-  fill: none;
-  stroke: var(--graph-line);
-  stroke-width: 1.5;
-}
-.graph-key > span:first-child svg,
-.graph-key > span:nth-child(2) svg {
-  width: 18px;
-  fill: var(--graph-fill);
-}
 .evidence-inspector {
   flex: 0 0 180px;
   min-height: 160px;
@@ -646,10 +449,6 @@
   .source-document {
     padding-inline: 22px;
   }
-  .graph-key {
-    gap: 4px 10px;
-    padding-inline: 16px;
-  }
 }
 @media (max-width: 900px) {
   .review-page {
@@ -794,18 +593,9 @@
   .source-footer {
     padding: 8px 16px;
   }
-  .graph-key {
-    padding: 7px 16px;
-    font-size: 10px;
-    gap: 4px 12px;
-  }
 }
 @media (prefers-reduced-motion: reduce) {
-  .review-mode,
-  .react-flow__edge-path,
-  .edge-label,
-  .person-entity,
-  .trust-entity > svg {
+  .review-mode {
     transition: none;
   }
 }

@@ -48,8 +48,7 @@ body:has(.landing) {
   color: inherit;
   text-underline-offset: 5px;
 }
-.landing button,
-.landing select {
+.landing button {
   font: inherit;
   cursor: pointer;
 }
@@ -68,13 +67,6 @@ body:has(.landing) {
 .landing ::selection {
   background: #fff0a6;
   color: var(--landing-ink);
-}
-.landing-sr {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
 }
 .landing-skip {
   position: fixed;
@@ -96,15 +88,6 @@ body:has(.landing) {
   overflow: visible;
   clip-path: none;
 }
-.landing-masthead {
-  height: 82px;
-  margin: 0 5%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border-bottom: 1px solid var(--landing-line);
-  gap: 24px;
-}
 .landing-brand {
   display: flex;
   align-items: center;
@@ -119,27 +102,7 @@ body:has(.landing) {
   height: 30px;
   color: var(--landing-accent);
 }
-.landing-masthead nav {
-  display: flex;
-  align-items: center;
-  gap: 32px;
-  font-size: 13px;
-}
-.landing-masthead nav > a {
-  text-decoration: none;
-}
-.landing-enter {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.landing select {
-  border: 0;
-  background: transparent;
-  color: var(--landing-ink);
-  padding: 8px;
-  min-height: 44px;
-}
+
 .landing-opening {
   padding: 42px 5% 30px;
   display: grid;
@@ -375,13 +338,6 @@ body:has(.landing) {
   }
 }
 @media (max-width: 1000px) {
-  .landing-masthead {
-    margin: 0 4%;
-    gap: 15px;
-  }
-  .landing-masthead nav {
-    gap: 20px;
-  }
   .landing-opening {
     padding: 35px 4% 28px;
     grid-template-columns: 1.2fr 1fr;
@@ -403,9 +359,6 @@ body:has(.landing) {
   }
 }
 @media (max-width: 700px) {
-  .landing-masthead {
-    height: 70px;
-  }
   .landing-brand {
     font-size: 14px;
     max-width: 170px;
@@ -415,24 +368,7 @@ body:has(.landing) {
     width: 23px;
     height: 26px;
   }
-  .landing-masthead nav {
-    gap: 10px;
-  }
-  .landing-masthead nav > a:first-child {
-    display: none;
-  }
-  .landing-enter {
-    font-size: 11px;
-    max-width: 125px;
-    gap: 5px;
-  }
-  .landing-enter svg {
-    width: 16px;
-  }
-  .landing select {
-    font-size: 12px;
-    padding: 8px 0;
-  }
+
   .landing-opening {
     display: block;
     padding: 32px 5% 24px;
