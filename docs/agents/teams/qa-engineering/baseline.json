@@ -1,0 +1,326 @@
+{
+  "revision": "39fe75b6ad9791725c601a48edd6ad40aa6970ff",
+  "date": "2026-10-19",
+  "environment": {
+    "platform": "macOS-26.2-arm64-arm-64bit-Mach-O",
+    "python": "3.11.17",
+    "node": "26.10.0",
+    "npm": "11.19.1",
+    "playwright": "1.63.0",
+    "postgres": "isolated local PostgreSQL 16, synthetic database",
+    "dependency_state": "already installed, warm caches; build time measured separately",
+    "python_source": "PYTHONPATH pins audited repository for final application/pytest commands"
+  },
+  "method": "One local run per final suite, sequential test-suite commands; no inference or live providers. Browser command wall includes server lifecycle; summed case time is not wall time. Baseline product/test sources unchanged; new governance definitions included in pytest.",
+  "suites": [
+    {
+      "suite": "component",
+      "command": [
+        "npm",
+        "test",
+        "--",
+        "--reporter=json",
+        "--outputFile=/private/tmp/pcg-qa-baseline/component-results.json"
+      ],
+      "wall_seconds": 3.727,
+      "exit_code": 0,
+      "files": 36,
+      "collected": 160,
+      "passed": 160,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "research-component",
+      "command": [
+        "npm",
+        "run",
+        "test:research",
+        "--",
+        "--reporter=json",
+        "--outputFile=/private/tmp/pcg-qa-baseline/research-component-results.json"
+      ],
+      "wall_seconds": 1.826,
+      "exit_code": 0,
+      "files": 10,
+      "collected": 26,
+      "passed": 26,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "build",
+      "command": [
+        "npm",
+        "run",
+        "build"
+      ],
+      "wall_seconds": 3.535,
+      "exit_code": 0
+    },
+    {
+      "suite": "research-build",
+      "command": [
+        "npm",
+        "run",
+        "build:research"
+      ],
+      "wall_seconds": 3.025,
+      "exit_code": 0
+    },
+    {
+      "suite": "application",
+      "command": [
+        "npx",
+        "playwright",
+        "test",
+        "--reporter=json"
+      ],
+      "wall_seconds": 97.577,
+      "exit_code": 0,
+      "logical_groups": 49,
+      "collected": 114,
+      "passed": 104,
+      "skipped": 10,
+      "failed": 0,
+      "flaky": 0,
+      "summed_case_seconds": 187.178,
+      "reporter_elapsed_seconds": 97.086,
+      "workers": 2,
+      "retries": [
+        0
+      ]
+    },
+    {
+      "suite": "history",
+      "command": [
+        "npx",
+        "playwright",
+        "test",
+        "--config",
+        "playwright.research.config.ts",
+        "--reporter=json"
+      ],
+      "wall_seconds": 7.663,
+      "exit_code": 0,
+      "logical_groups": 6,
+      "collected": 18,
+      "passed": 16,
+      "skipped": 2,
+      "failed": 0,
+      "flaky": 0,
+      "summed_case_seconds": 17.551,
+      "reporter_elapsed_seconds": 7.297,
+      "workers": 5,
+      "retries": [
+        0
+      ]
+    },
+    {
+      "suite": "execution",
+      "command": [
+        "npx",
+        "playwright",
+        "test",
+        "--config",
+        "playwright.execution.config.ts",
+        "--reporter=json"
+      ],
+      "wall_seconds": 129.899,
+      "exit_code": 0,
+      "logical_groups": 9,
+      "collected": 27,
+      "passed": 27,
+      "skipped": 0,
+      "failed": 0,
+      "flaky": 0,
+      "summed_case_seconds": 127.459,
+      "reporter_elapsed_seconds": 129.529,
+      "workers": 1,
+      "retries": [
+        0
+      ]
+    },
+    {
+      "suite": "live",
+      "command": [
+        "npx",
+        "playwright",
+        "test",
+        "--config",
+        "playwright.live.config.ts",
+        "--reporter=json"
+      ],
+      "wall_seconds": 49.989,
+      "exit_code": 0,
+      "logical_groups": 2,
+      "collected": 6,
+      "passed": 6,
+      "skipped": 0,
+      "failed": 0,
+      "flaky": 0,
+      "summed_case_seconds": 46.445,
+      "reporter_elapsed_seconds": 49.274,
+      "workers": 1,
+      "retries": [
+        0
+      ]
+    },
+    {
+      "suite": "pytest",
+      "command": [
+        "uv",
+        "run",
+        "pytest",
+        "--durations=25",
+        "--junitxml=/private/tmp/pcg-qa-baseline/pytest-results.xml"
+      ],
+      "wall_seconds": 110.263,
+      "exit_code": 0,
+      "files": 58,
+      "collected": 760,
+      "passed": 760,
+      "skipped": 0,
+      "failed": 0,
+      "summed_case_seconds": 108.552
+    }
+  ],
+  "inventory_reconciliation": {
+    "groups": 66,
+    "expanded_cases": 165,
+    "missing_or_extra": 0,
+    "configured_count_mismatches": 0
+  },
+  "slowest_pytest_phases": [
+    {
+      "seconds": 1.87,
+      "phase": "call",
+      "test": "tests/persistence/test_research_execution.py::test_stop_current_attempt_and_crash_require_continuation"
+    },
+    {
+      "seconds": 1.77,
+      "phase": "call",
+      "test": "tests/persistence/test_research_execution.py::test_api_subprocess_checkpoint_continue_and_rebuild"
+    },
+    {
+      "seconds": 1.43,
+      "phase": "call",
+      "test": "tests/persistence/test_research_live.py::test_explicit_live_http_subprocess_restart_and_empty_index"
+    },
+    {
+      "seconds": 1.35,
+      "phase": "call",
+      "test": "tests/persistence/test_research_workspaces.py::test_api_persistent_experiment_multiple_runs_evidence_and_rebuild"
+    },
+    {
+      "seconds": 1.32,
+      "phase": "call",
+      "test": "tests/persistence/test_workspace_live.py::test_other_run_spending_invalidates_pending_start_and_budget_survives_new_experiment"
+    },
+    {
+      "seconds": 0.9,
+      "phase": "call",
+      "test": "tests/persistence/test_research_index.py::test_migration_rebuild_restart_search_and_readonly_api"
+    },
+    {
+      "seconds": 0.77,
+      "phase": "call",
+      "test": "tests/persistence/test_research_execution.py::test_concurrent_duplicate_start_and_global_exclusion"
+    },
+    {
+      "seconds": 0.69,
+      "phase": "setup",
+      "test": "tests/persistence/test_research_execution.py::test_api_subprocess_checkpoint_continue_and_rebuild"
+    },
+    {
+      "seconds": 0.65,
+      "phase": "call",
+      "test": "tests/persistence/test_workspace_live.py::test_authorization_does_not_dispatch_and_copy_does_not_transfer_authority"
+    },
+    {
+      "seconds": 0.57,
+      "phase": "call",
+      "test": "tests/workbench/test_workbench_artifacts.py::test_read_only_composition_has_no_runner_or_mutation_routes"
+    },
+    {
+      "seconds": 0.48,
+      "phase": "setup",
+      "test": "tests/persistence/test_public_access.py::test_every_reader_gets_complete_persisted_matters_and_pending_proposals[tampered]"
+    },
+    {
+      "seconds": 0.47,
+      "phase": "call",
+      "test": "tests/workbench/test_replay_gate.py::test_ten_snapshot_controls_pair_and_treatment_never_reextracts"
+    },
+    {
+      "seconds": 0.46,
+      "phase": "setup",
+      "test": "tests/persistence/test_matter_proposals.py::test_discard_removes_whole_proposal_releases_reference_and_creates_no_matter"
+    },
+    {
+      "seconds": 0.44,
+      "phase": "setup",
+      "test": "tests/persistence/test_proposal_intake.py::test_known_confirmation_rollback_is_safe_and_leaves_the_proposal_reviewable"
+    },
+    {
+      "seconds": 0.44,
+      "phase": "setup",
+      "test": "tests/persistence/test_public_access.py::test_every_reader_gets_complete_persisted_matters_and_pending_proposals[expired]"
+    },
+    {
+      "seconds": 0.41,
+      "phase": "setup",
+      "test": "tests/persistence/test_multisource_intake.py::test_bundle_admission_fails_before_provider_quota_reference_or_persistence[missing_pdf-invalid_sources]"
+    },
+    {
+      "seconds": 0.4,
+      "phase": "setup",
+      "test": "tests/persistence/test_proposal_shared_accounting.py::test_successful_dispatch_is_reserved_before_provider_and_retained[False]"
+    },
+    {
+      "seconds": 0.4,
+      "phase": "setup",
+      "test": "tests/persistence/test_multisource_intake.py::test_bundle_admission_fails_before_provider_quota_reference_or_persistence[invalid_second-invalid_pdf]"
+    },
+    {
+      "seconds": 0.39,
+      "phase": "setup",
+      "test": "tests/persistence/test_multisource_intake.py::test_bundle_admission_fails_before_provider_quota_reference_or_persistence[duplicate_ids-invalid_sources]"
+    },
+    {
+      "seconds": 0.39,
+      "phase": "setup",
+      "test": "tests/persistence/test_protected_local_integration.py::test_local_pdf_proposal_confirm_and_reopen_without_provider_authority[single]"
+    },
+    {
+      "seconds": 0.38,
+      "phase": "call",
+      "test": "tests/test_package_compatibility.py::test_existing_module_cli_help_needs_no_credentials[research]"
+    },
+    {
+      "seconds": 0.38,
+      "phase": "setup",
+      "test": "tests/persistence/test_matters.py::test_repeat_seed_preserves_complete_existing_snapshot"
+    },
+    {
+      "seconds": 0.38,
+      "phase": "setup",
+      "test": "tests/persistence/test_multisource_intake.py::test_bundle_retains_authentication_origin_and_csrf_checks"
+    },
+    {
+      "seconds": 0.38,
+      "phase": "teardown",
+      "test": "tests/persistence/test_matter_migration.py::test_migration_preserves_reviewed_state_and_claim_without_fixtures[0004]"
+    },
+    {
+      "seconds": 0.37,
+      "phase": "setup",
+      "test": "tests/persistence/test_multisource_intake.py::test_bundle_admission_fails_before_provider_quota_reference_or_persistence[unconfirmed-synthetic_confirmation_required]"
+    }
+  ],
+  "attempt_notes": [
+    "An initial shell redirection preceded temporary-directory creation; no component tests ran in that launch. The recorded component results are the subsequent complete runs.",
+    "An initial restricted browser server launch failed and left the local test port occupied. The identified test process was stopped before fresh launches; these are setup failures, not test flakiness.",
+    "An earlier application run reported 94 passed, 10 skipped and 10 landing failures inconsistent with the audited built assets (missing old hint and changed motion stages). A stale editable source path was suspected. The environment was resynced, the audited repository was explicitly pinned with PYTHONPATH, assets rebuilt, and the unchanged full suite passed on a fresh server. Only that final controlled run supplies current group timings; no flakiness conclusion is drawn from the earlier environment-mismatched attempt."
+  ]
+}
