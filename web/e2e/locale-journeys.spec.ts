@@ -1,3 +1,4 @@
+import { selectPublicLanguage } from "./public-navigation";
 import { randomUUID } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
@@ -16,7 +17,7 @@ test("locale changes retain showcase case, selected relationship and exact Evide
   const quote = await page.locator("mark").innerText();
   const originalSource = await page.locator(".source-panel").innerText();
   const beforePath = page.url();
-  await page.getByRole("button", { name: "简体中文", exact: true }).click();
+  await selectPublicLanguage(page, "zh-CN");
   await expect(page.locator("html")).toHaveAttribute("lang", "zh-CN");
   expect(page.url()).toBe(beforePath);
   await expect(caseChoice).toHaveValue("case-04");
@@ -28,7 +29,7 @@ test("locale changes retain showcase case, selected relationship and exact Evide
   await page.screenshot({ path: testInfo.outputPath("showcase-zh-CN.png"), fullPage: true });
   await page.reload();
   await expect(page.locator("html")).toHaveAttribute("lang", "zh-CN");
-  await page.getByRole("button", { name: "EN", exact: true }).click();
+  await selectPublicLanguage(page, "en");
   await expect(page.locator("html")).toHaveAttribute("lang", "en");
 });
 

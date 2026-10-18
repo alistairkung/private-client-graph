@@ -104,3 +104,14 @@ it("frozen pipelines expose configuration without mutation controls", async () =
     ).getByText(/Frozen configuration · Read-only. No execution/),
   ).toBeVisible();
 });
+
+it("returns focus to insertion when the resolver field bypasses its stage", async () => {
+  const user = userEvent.setup();
+  render(<Draft />);
+  await user.click(screen.getByRole("button", { name: "Add alias resolution" }));
+  await user.click(screen.getByRole("button", { name: "Add generative resolver" }));
+  await user.selectOptions(screen.getByRole("combobox", { name: "Resolver" }), "none");
+  const insertion = await screen.findByRole("button", { name: "Add alias resolution" });
+  expect(insertion).toHaveFocus();
+  expect(screen.queryByRole("region", { name: "Resolve aliases settings" })).not.toBeInTheDocument();
+});

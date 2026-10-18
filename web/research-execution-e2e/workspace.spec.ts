@@ -107,6 +107,17 @@ test("persistent Experiment: changed and repeated Runs retain frozen Evidence an
   await run();
   await run();
   await expect(page.locator(".chart-point")).toHaveCount(3);
+  const pipeline = page.locator(".next-run .pipeline-workspace");
+  const expandedResolver = pipeline.getByRole("button", { name: /Resolve aliases/ });
+  if (await expandedResolver.getAttribute("aria-expanded") === "true") await expandedResolver.click();
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.evaluate(() => document.fonts.ready);
+  await pipeline.locator(".pipeline-viewport").evaluate(element => { element.scrollLeft = 0; });
+  await expect(pipeline.locator(".pipeline-node").first()).toHaveCSS("width", "240px");
+  await expect(pipeline.locator(".node-header").first()).toHaveCSS("height", "140px");
+  await page.mouse.move(0, 0);
+  await pipeline.screenshot({ path: info.outputPath("shared-pipeline-workbench.png") });
+  await page.locator(".run-chart").screenshot({ path: info.outputPath("shared-chart-workbench.png") });
   const history = await (
     await page.request.get(`/api/research/v2/experiments/${experiment}/runs`)
   ).json();

@@ -32,21 +32,30 @@ function response(body: unknown) {
 
 test("showcase passes source-aware facts and Matter detail retains its legacy graph contract", async () => {
   const state = { ...graph, sources: [{id: "note", title: "Attendance note", text: "Shared source"}] };
-  const fetcher = vi.spyOn(globalThis, "fetch")
-    .mockResolvedValueOnce(response([{id: "case-01",title: "Case 01",description: "Synthetic"}]))
-    .mockResolvedValueOnce(response({id: "case-01",title: "Case 01",description: "Synthetic", state}));
+  vi.spyOn(globalThis, "fetch").mockImplementation(async url => {
+    if (url === "/api/research-results") return new Response("{}", { status: 503 });
+    if (url === "/api/showcase/cases") {
+      return response([{ id: "case-01", title: "Case 01", description: "Synthetic" }]);
+    }
+    if (url === "/api/showcase/cases/case-01") {
+      return response({ id: "case-01", title: "Case 01", description: "Synthetic", state });
+    }
+    if (url === "/api/matters/ff985caf-60c5-4e65-a238-f3c26381c369") {
+      return response({
+        id: "ff985caf-60c5-4e65-a238-f3c26381c369",
+        external_reference: "PC/2026/0142",
+        title: "Evergreen Family Trust",
+        authoritative_source: { title: "Attendance note", text: "Shared source" },
+        current_graph: graph,
+      });
+    }
+    throw new Error(`Unexpected request: ${url}`);
+  });
   const showcase = render(<ShowcaseApp />);
   await screen.findByText("Shared source-aware review");
   const showcaseState = sourceAwareProps.mock.lastCall?.[0].state;
 
   showcase.unmount();
-  fetcher.mockResolvedValueOnce(response({
-    id: "ff985caf-60c5-4e65-a238-f3c26381c369",
-    external_reference: "PC/2026/0142",
-    title: "Evergreen Family Trust",
-    authoritative_source: { title: "Attendance note", text: "Shared source" },
-    current_graph: graph,
-  }));
   render(<MatterWorkspace id="ff985caf-60c5-4e65-a238-f3c26381c369" />);
 
   await screen.findByText("Shared relationship review");
