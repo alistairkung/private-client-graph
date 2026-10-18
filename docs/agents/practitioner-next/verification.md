@@ -76,7 +76,7 @@ and video capture. Actual UI evidence and parity results are recorded in
 - Codex account usage is separate; no precise credit cost is observable here.
 - Visual cycles and final reviewer results are appended below after validation.
 
-## Final validation and review
+## Initial delivery validation and review
 
 - Required `uv run pytest` with disposable PostgreSQL: **752 passed** (104.61s),
   including persistence coverage; no tests skipped for a missing database.
@@ -117,3 +117,48 @@ reviewer, with a bounded engineering follow-up; one implementer context reused
 for the review fixes. At most two child agents active concurrently, no recursive
 spawns and **zero paid application-provider calls** throughout. The walkthrough
 and final screenshots are in `practitioner-next/artifacts/`.
+
+## Graph correction after practitioner feedback
+
+The user identified the new graph as a regression. Compared the original live
+Evergreen drawing with the new application, then reused one Sol/medium
+implementer, one Sol/medium UX assessment, one Luna/low mechanical assessment and
+one Sol/high engineering reviewer. At most two children ran concurrently; no
+recursive delegation or paid application-provider invocation occurred.
+
+- Replaced the quadratic connector pipeline with local presentation modules for
+  relationship metadata, Trust/family placement, node geometry and general graph
+  layout. Original `web/` files were read-only references; no cross-app imports.
+- Restored spouse alignment and family context around a full Trust triangle.
+  Separate canonical routes retain parent direction, distinct multiple roles
+  and reciprocal claims. Node, caption, route-point and connector-label extents
+  all participate in Fit graph. Selection/locale preserve the camera; ordinary
+  page scrolling no longer changes zoom.
+- Actual desktop inspection found beneficiary routes crossing the Trust caption;
+  bottom-role routes now clear the caption through side corridors. The final
+  desktop and phone screenshots were visually inspected after this correction.
+- Engineering review found unbounded names escaping fixed footprints. Bounded
+  two-line diagram previews now retain full names in DOM text, title, accessible
+  names and the existing inspector/List. The Trust footprint reserves the gap
+  and both caption lines. Focused regression tests cover this policy.
+- Real-backend browser checks exposed stale graph-label DOM references during
+  return from Evidence. Focus now resolves the selected canonical relationship
+  in its originating view after the current label portal mounts.
+- Impeccable's independent baseline layout detector returned no source findings;
+  it cannot validate rendered graph routing. One attempted new-app baseline
+  screenshot was blank and was excluded from delivered evidence. The original
+  graph reference and actual corrected screenshots are retained.
+- Final required `uv run pytest`: **752 passed** in 110.50s with disposable
+  PostgreSQL. New frontend: **41 unit tests**, typecheck and production build
+  passed. Final browser run: **20 parity checks plus one refreshed recording
+  passed** in 21.3s; the extra phone recording was intentionally skipped.
+- Code Quality Review: reviewed the complete graph follow-up diff and all new
+  modules against repository boundaries. Removed superseded routing code and
+  kept layout, geometry, rendering and Evidence focus responsibilities clear.
+  Finite route candidates remain a deliberate limit for unusually dense graphs;
+  the complete relationship list remains available. Build warning: approximately
+  645 kB minified / 209 kB gzip main bundle. No runtime performance claim.
+
+The original frontend, backend, database, domain contracts, original tests,
+deployment and existing CI remain unchanged. Refreshed screenshots and the
+walkthrough live in `practitioner-next/artifacts/`.

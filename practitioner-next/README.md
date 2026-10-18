@@ -113,14 +113,24 @@ create individual-edge acceptance, or expose benchmark evaluation. Motion uses
 free `motion/react`, informed by authenticated premium Motion+ source research.
 No private registry token or premium runtime dependency is needed.
 
-Verified locally: 752 repository Python tests, 33 new-app unit tests, typecheck,
-production build, formatting and 18 real-backend desktop/phone parity tests.
-A separate opt-in walkthrough also passed. The engineering review's decision-lock
-and reciprocal-connector findings were fixed with regression coverage. Initial
-phone graph readability and Evidence-footer overlap were corrected.
+Verified locally: 752 repository Python tests, 41 new-app unit tests, typecheck,
+production build, formatting and 20 real-backend desktop/phone parity tests.
+A separate opt-in walkthrough also passed. Graph coverage includes Evergreen
+family placement, complete bounds, connector spacing, exact Evidence selection,
+return focus, stable camera and language switching. Geometry regressions cover
+reciprocal claims, multiple roles and graphs with no Trust or multiple Trusts.
+
+The graph now restores the reference application's family structure within the
+new visual system: spouses together, a prominent Trust, separate parent and
+Trust-role connectors, and selectable labels. Caption routes and bounded name
+previews prevent text from spilling into adjacent drawing space. Compare the
+[original graph reference](artifacts/original-graph-reference.png) with the
+[corrected Chrome view](artifacts/graph-corrected-chrome.png), or inspect the
+[desktop](artifacts/desktop-corrected-graph.png) and
+[phone](artifacts/phone-corrected-graph.png) interaction captures.
 
 Known limits: finite graph routing can still overlap connectors in larger/dense
 states; use pan/zoom and the complete searchable relationship list. The production
-build reports a nonblocking main-bundle size warning (about 206 kB gzip). No
+build reports a nonblocking main-bundle size warning (about 209 kB gzip). No
 runtime MotionScore or production Google-provider check was performed. Local
 OIDC and extraction use existing deterministic synthetic substitutes.

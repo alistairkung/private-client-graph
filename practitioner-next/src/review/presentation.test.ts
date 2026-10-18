@@ -1,10 +1,6 @@
 import { describe, expect, it } from "vitest";
-import {
-  exactSpan,
-  graphDrawing,
-  relationshipStatement,
-  reviewState,
-} from "./presentation";
+import { exactSpan, relationshipStatement, reviewState } from "./presentation";
+import { graphDrawing } from "./graph-layout";
 import type { CanonicalState, ReviewRecord } from "../shared/contracts";
 const state: CanonicalState = {
   sources: [
@@ -91,7 +87,9 @@ describe("authoritative review presentation", () => {
     const drawing = graphDrawing(state, (key) => key);
     expect(drawing.nodes.map((node) => node.id)).toEqual(["person", "trust"]);
     expect(drawing.edges).toHaveLength(2);
-    expect(drawing.edges[0].data?.lane).not.toBe(drawing.edges[1].data?.lane);
+    expect(drawing.edges[0].data?.route).not.toEqual(
+      drawing.edges[1].data?.route,
+    );
     expect(drawing.edges.every((edge) => edge.data?.parent === false)).toBe(
       true,
     );

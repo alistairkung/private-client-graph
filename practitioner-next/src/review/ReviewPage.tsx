@@ -92,7 +92,11 @@ function Workspace({
   const [decision, setDecision] = useState<"confirm" | "discard">();
   const [decisionError, setDecisionError] = useState<unknown>();
   const decisionBlocked = decisionIsBlocked(decisionError);
-  const focusReturn = useRef<HTMLElement | SVGElement | null>(null);
+  const selectionView = useRef<"graph" | "list">("graph");
+  const [focusRequest, setFocusRequest] = useState<{
+    index: number;
+    view: "graph" | "list";
+  }>();
   const inspector = useRef<HTMLHeadingElement>(null);
   const relationship =
     selected === null ? undefined : state.relationships[selected];
@@ -102,6 +106,10 @@ function Workspace({
   const statement = relationship
     ? relationshipStatement(state, relationship, t)
     : undefined;
+  useEffect(() => {
+    if (!focusRequest || tab !== "relationships") return;
+    return restoreRelationshipFocus(focusRequest);
+  }, [focusRequest, tab]);
   function selectRelationship(index: number) {
     const edge = state.relationships[index];
     const item = state.evidence.find(
@@ -111,7 +119,8 @@ function Workspace({
     setEntity(null);
     setEvidenceId(item?.id ?? null);
     setSourceId(item?.source_id ?? null);
-    focusReturn.current = document.activeElement as HTMLElement | SVGElement;
+    selectionView.current = view;
+    setFocusRequest(undefined);
   }
   function selectEvidence(id: string, jump: boolean) {
     const item = state.evidence.find((item) => item.id === id);
@@ -130,16 +139,9 @@ function Workspace({
   }
   function returnToRelationship() {
     setTab("relationships");
-    requestAnimationFrame(() => {
-      const target = focusReturn.current;
-      if (target?.isConnected && target !== document.body) target.focus();
-      else if (selected !== null) {
-        setView("list");
-        requestAnimationFrame(() =>
-          document.getElementById("relationship-" + selected)?.focus(),
-        );
-      }
-    });
+    if (selected === null) return;
+    setView(selectionView.current);
+    setFocusRequest({ index: selected, view: selectionView.current });
   }
   return (
     <div className="review-page">
@@ -357,4 +359,36 @@ function Workspace({
       )}
     </div>
   );
+}
+
+function restoreRelationshipFocus(request: {
+  index: number;
+  view: "graph" | "list";
+}) {
+  const panel = document.getElementById("relationships-panel");
+  if (!panel) return;
+  const selector =
+    request.view === "graph"
+      ? `.edge-label[data-edge-id="${request.index}"]`
+      : `#relationship-${request.index}`;
+  // React Flow may recreate its label portal while the phone source view is open.
+  // Resolve the canonical relationship's current button once it mounts.
+  let frame: number;
+  const scheduleFocus = () => {
+    cancelAnimationFrame(frame);
+    frame = requestAnimationFrame(focus);
+  };
+  const observer = new MutationObserver(scheduleFocus);
+  function focus() {
+    const target = panel!.querySelector<HTMLElement>(selector);
+    if (!target) return;
+    target.focus();
+    observer.disconnect();
+  }
+  observer.observe(panel, { childList: true, subtree: true });
+  scheduleFocus();
+  return () => {
+    observer.disconnect();
+    cancelAnimationFrame(frame);
+  };
 }

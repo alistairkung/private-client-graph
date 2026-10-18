@@ -31,17 +31,27 @@ with the work.
 The desktop rail is 224px (190px at compact desktop widths); the shell heading
 is 64px. The ledger is a divided list with pending proposals first. The review
 workspace gives its width to the graph and source text. Canonical Person nodes
-use circular notation; Trust nodes use triangular notation. One-Trust layout
-groups displayed roles around the Trust without inventing additional domain
-meaning. The generic layout uses Dagre. Selection preserves positions and camera.
+use circular notation; Trust nodes use a full-size triangle with its name below.
+One-Trust layout places settlors above, beneficiaries below, trustees beside the
+Trust and direct family context near its role holder. These are presentation
+preferences without additional domain meaning. Separate polylines preserve each
+canonical relationship; parent arrows differ from arrowless Trust roles and
+symmetric family connectors. Routes clear the Trust caption and unrelated nodes;
+label placement reserves space for earlier labels. The generic layout uses Dagre.
+Fit includes nodes, captions, all route points and connector labels. Selection
+and language changes preserve the camera. Page scrolling does not zoom the graph.
 
-Every connector has a keyboard-accessible textual equivalent in List view.
+Each connector label is a keyboard-operable button with the full relationship
+as its accessible name. Diagram entity names use bounded two-line previews;
+the full canonical name remains in the title, accessible name, entity inspector
+and List view. Every connector also has a textual equivalent in List view.
 Selecting a relationship atomically selects its first Evidence ID and its Source
 ID. Evidence entries preserve backend order, text, titles and identifiers.
 Identically titled sources remain distinct by ID. The source reader highlights
 the first exact occurrence only; an unlocatable quote produces an explicit
 location error rather than an approximate match. Returning to the relationship
-restores its initiating keyboard focus.
+restores its originating view and the current canonical relationship button,
+including when the diagram renderer has recreated its label portal.
 
 Below 900px, Relationships and Sources become separate views. The readable
 relationship list opens by default; the complete pannable graph remains available. Evidence activation

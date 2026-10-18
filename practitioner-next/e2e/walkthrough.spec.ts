@@ -24,8 +24,7 @@ test("record the synthetic practitioner walkthrough", async ({
   ).toBeVisible();
   await expect(page.locator(".react-flow__node")).toHaveCount(5);
   await page.waitForTimeout(1500);
-  await page.getByRole("button", { name: "List", exact: true }).click();
-  await page.locator("#relationship-0").click();
+  await page.locator('button.edge-label[data-edge-id="0"]').click();
   await page.locator(".evidence-item").first().click();
   await expect(page.locator(".source-text mark")).toBeVisible();
   await page.waitForTimeout(1500);

@@ -9,8 +9,8 @@ files were changed. See `verification.md` for environment and execution limits.
 | --- | --- |
 | Accepted Matters and pending proposals | Independent ledger; real GET collections, titles/references, separate states and local search. Browser ledger/search/deep-link/refresh test. |
 | Matter and saved proposal direct entry | `/app/matters/:id`, `/app/matter-proposals/:id`; loading, missing and failed states. Browser refresh and not-found tests. |
-| Full canonical relationship drawing | All returned entities/relationships, Trust triangles and Person markers, parent direction, non-directional Trust roles. New presentation unit tests and graph rendering. |
-| Graph exploration | Pan/zoom, zoom buttons, fit graph, entity selection and connected relationship list; searchable keyboard-operable list provides a diagram equivalent. |
+| Full canonical relationship drawing | All returned entities/relationships; full-size Trust triangles, role-aware placement and family context; distinct canonical connectors, parent arrows and arrowless Trust roles. Geometry tests cover Evergreen, reciprocal claims, multiple roles and fallback layouts. |
+| Graph exploration | Pan/pinch and zoom controls, complete-drawing fit, keyboard-selectable connector labels, stable selection/locale camera, entity selection and connected relationship list. Real-backend desktop/phone graph tests verify family structure, fit, label spacing, exact Evidence and return focus. |
 | Exact Evidence inspection | All Evidence IDs/quotes and source titles; selected relationship, source highlight, explicit return-to-relationship focus. Keyboard/reduced-motion browser test. |
 | Multiple Sources | Distinct source IDs/titles/text and Evidence attribution; source switching and exact highlight. Real multi-PDF browser/API tests. |
 | Single PDF intake | External reference, Matter title, Source title, synthetic consent, existing multipart contract. Real UI proposal/confirmation test. |
@@ -46,8 +46,8 @@ UI errors; they do not replace successful integration coverage. No provider
 quality, production tenancy, real-data admission, new backend workflow or
 runtime MotionScore performance certification is claimed.
 
-Validation result: 752 repository tests, 33 new-app unit tests, typecheck/build,
-formatting and 18 desktop/phone parity checks passed; the separate short recording
+Validation result after graph refinement: 752 repository tests, 41 new-app unit tests, typecheck/build,
+formatting and 20 desktop/phone parity checks passed; the separate short recording
 also passed. The new CI workflow repeats the new-app gates; its remote status is
 reported at PR handoff. See verification.md for the finite graph-routing and
 runtime/model-observability limits.

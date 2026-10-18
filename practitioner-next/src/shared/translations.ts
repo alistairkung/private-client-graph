@@ -1,5 +1,18 @@
 import { fictionalPrompt } from "../intake/prompt";
 export const chinese: Record<string, string> = {
+  Settlor: "设立人",
+  Trustee: "受托人",
+  Beneficiary: "受益人",
+  "Parent of": "父母关系",
+  "Spouse of": "配偶关系",
+  "Sibling of": "兄弟姐妹关系",
+  "Graph legend": "图谱图例",
+  "Trust role": "信托角色",
+  "Parent to child": "父母至子女",
+  "Spouse or sibling": "配偶或兄弟姐妹",
+  "Drag to pan. Use the controls to zoom, or select a connector label to inspect Evidence.":
+    "拖动以平移，使用控件缩放，或选择连线标签以查看证据。",
+
   "Skip to content": "跳至内容",
   "Working Atlas": "工作图谱",
   "Practitioner application": "执业工作区",
