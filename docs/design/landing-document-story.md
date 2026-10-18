@@ -35,7 +35,7 @@ rounded:
   relationship: "22px"
 spacing:
   gutter: "5%"
-  fan-clearance: "60px"
+  fan-clearance: "84px animated / 60px static"
 ---
 
 ## Overview
@@ -68,6 +68,13 @@ legal documents. Consistent authored SVG icons identify the formats. Each paper 
 its own internal structure: canonical attendance excerpts, email headers, activity
 rows or deed clauses. The fan reserves space above and below so surrounding text
 stays readable. The compact product-vision disclosure belongs below the heading.
+
+The scrolling papers lift and sweep from alternating sides before changing front
+order, then settle with a small counter-movement. A shared spring softens abrupt
+scroll input for the papers alone; their exit opacity and the graph handoff remain
+directly tied to scroll position. Animated layouts reserve 84px above the fan on
+desktop and 76px on phones so the lifted corners clear the format labels. Static
+and reduced-motion layouts keep their original spacing.
 
 The illustrative formats never create Source or Evidence identifiers. Only the
 actual attendance excerpts carry measured canonical entity-name anchors.
