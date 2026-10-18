@@ -1,6 +1,6 @@
 import { useStoryCopy } from "./story-copy";
 import type { ReactNode, RefObject } from "react";
-import { motion, useTransform, type MotionValue } from "motion/react";
+import { cubicBezier, motion, useSpring, useTransform, type MotionValue } from "motion/react";
 import type { CanonicalState } from "../../shared/contracts";
 import { canonicalSourceExcerpts, sourceEntitySpans } from "./landing-layout";
 
@@ -51,12 +51,14 @@ function DocumentSheet({
   kind,
   index,
   progress,
+  paperProgress,
   reduced,
   children,
 }: {
   kind: DocumentKind;
   index: number;
   progress: MotionValue<number>;
+  paperProgress: MotionValue<number>;
   reduced: boolean;
   children: ReactNode;
 }) {
@@ -64,20 +66,34 @@ function DocumentSheet({
   const restingX = [0, 62, -58, 28][index];
   const restingY = [0, -12, 14, -5][index];
   const restingRotate = [0, 8, -7, 4][index];
+  const side = restingX < 0 ? -1 : 1;
+  const sweep = [
+    0,
+    Math.max(0, active - 0.028),
+    Math.max(0.001, active),
+    active + 0.028,
+    active + 0.047,
+    0.3,
+    0.36,
+  ];
+  const easing = { ease: cubicBezier(0.22, 1, 0.36, 1) };
   const x = useTransform(
-    progress,
-    [0, active, active + 0.025, 0.3, 0.36],
-    [restingX, restingX, 0, 0, 0],
+    paperProgress,
+    sweep,
+    [restingX, restingX, side * 84, -side * 4, 0, 0, 0],
+    easing,
   );
   const y = useTransform(
-    progress,
-    [0, active, active + 0.025, 0.3, 0.36],
-    [restingY, restingY, -5, -5, 0],
+    paperProgress,
+    sweep,
+    [restingY, restingY, -28, -8, -5, -5, 0],
+    easing,
   );
   const rotate = useTransform(
-    progress,
-    [0, active, active + 0.025, 0.3, 0.36],
-    [restingRotate, restingRotate, 0, 0, 0],
+    paperProgress,
+    sweep,
+    [restingRotate, restingRotate, side * 10, -side * 0.8, 0, 0, 0],
+    easing,
   );
   const opacity = useTransform(
     progress,
@@ -85,8 +101,8 @@ function DocumentSheet({
     [1, 1, 0],
   );
   const zIndex = useTransform(() => {
-    const time = progress.get();
-    const front = time >= 0.3 ? 0 : Math.min(3, Math.floor(time / 0.075));
+    const time = paperProgress.get();
+    const front = time >= 0.36 ? 0 : Math.min(3, Math.floor(time / 0.075));
     return front === index ? 5 : 4 - index;
   });
   return (
@@ -124,6 +140,14 @@ export function DocumentMontage({
   hidden: boolean;
 }) {
   const copy = useStoryCopy();
+  const paperProgress = useSpring(progress, {
+    stiffness: 180,
+    damping: 26,
+    mass: 0.8,
+    restDelta: 0.0001,
+    restSpeed: 0.001,
+    skipInitialAnimation: true,
+  });
   const source = state.sources[0];
   const excerpts = source ? canonicalSourceExcerpts(state, source.id) : [];
   const titleOpacity = useTransform(progress, [0, 0.35, 0.48], [1, 1, 0]);
@@ -153,6 +177,7 @@ export function DocumentMontage({
           kind="attendance"
           index={0}
           progress={progress}
+          paperProgress={paperProgress}
           reduced={reduced}
         >
           <div className="landing-story-document-title">
@@ -189,6 +214,7 @@ export function DocumentMontage({
           kind="email"
           index={1}
           progress={progress}
+          paperProgress={paperProgress}
           reduced={reduced}
         >
           <div className="landing-story-document-title">
@@ -214,6 +240,7 @@ export function DocumentMontage({
           kind="timesheet"
           index={2}
           progress={progress}
+          paperProgress={paperProgress}
           reduced={reduced}
         >
           <div className="landing-story-document-title">
@@ -253,6 +280,7 @@ export function DocumentMontage({
           kind="legal"
           index={3}
           progress={progress}
+          paperProgress={paperProgress}
           reduced={reduced}
         >
           <div className="landing-story-document-title">
