@@ -1,4 +1,6 @@
 node_modules
-output/
+output/*
+!output/private-client-graph-demo-en.mp4
+!output/private-client-graph-demo-zh-CN.mp4
 qa/
 build/

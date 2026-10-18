@@ -12,7 +12,7 @@ The authenticated workflow was captured in Chrome on 18 October 2026 using one
 synthetic proposal and its accepted Matter. Both locale edits are 84 seconds,
 1920×1080, 30 fps, with burned-in captions and no audio track.
 
-Outputs (generated locally, ignored by Git):
+Finished outputs (included in the repository):
 
 - `output/private-client-graph-demo-en.mp4`
 - `output/private-client-graph-demo-zh-CN.mp4`
@@ -116,7 +116,8 @@ npm run render:video
 `dev` opens the local Remotion preview. `test` checks deterministic story and
 presentation contracts; it is not a substitute for inspecting the actual captures.
 `lint` runs ESLint and TypeScript. QA and video export are gated on the complete
-capture set. Rendered output belongs in the ignored `qa/` and `output/` directories.
+capture set. The two final MP4s in `output/` are tracked. QA intermediates and render metadata
+remain ignored.
 The scripts must report missing captures and stop rather than emit a misleading
 video.
 

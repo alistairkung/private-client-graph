@@ -16,7 +16,8 @@ without errors using the pinned Remotion FFmpeg and its rawvideo encoder.
 Files are in `output/private-client-graph-demo-{en,zh-CN}.mp4`.
 `output/render-video.json` records the complete input capture hashes and output
 hashes. `qa/demo/media-verification.json` records independent ffprobe counts and
-decode results. Generated media and QA intermediates are local ignored outputs.
+decode results. The two final MP4s are tracked. Render metadata and QA intermediates remain local
+ignored outputs.
 
 ## Visual inspection
 
