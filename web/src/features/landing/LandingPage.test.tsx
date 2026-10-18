@@ -20,6 +20,7 @@ vi.mock("./landing-api", async (original) => ({
 vi.mock("motion/react", async (original) => ({
   ...(await original<typeof import("motion/react")>()),
   useScroll: vi.fn(),
+  useInView: () => true,
 }));
 import { useScroll } from "motion/react";
 const example: PublicExample = {
@@ -172,39 +173,45 @@ describe("document-to-review landing", () => {
       container.querySelector(".landing-story-source-text")?.textContent,
     ).toBe(example.state.sources[0].text);
   });
-  it("opens review only at the end, then preserves an explicit relationship when scrolling backwards", async () => {
+  it("holds the completed review before inviting exploration and preserves an explicit relationship when scrolling backwards", async () => {
     const { container } = render(<DocumentStory state={example.state} />);
     setProgress(0.7);
-    expect(screen.queryByText("Try this relationship")).not.toBeInTheDocument();
+    expect(container.querySelector("[data-inviting]")).toBeNull();
+    expect(container.querySelector(".landing-story-invitation-trace")).toBeNull();
     expect(container.querySelector("#landing-story-review")).toHaveAttribute(
       "inert",
     );
-    setProgress(0.99);
-    await waitFor(() => expect(screen.getByText("Try this relationship")).toBeVisible());
+    setProgress(0.78);
+    expect(container.querySelector("#landing-story-review")).not.toHaveAttribute("inert");
+    expect(container.querySelector("[data-inviting]")).toBeNull();
+    setProgress(0.82);
     const claim = screen.getByRole("button", {
       name: "Bob — beneficiary of — Trust",
     });
     expect(claim).toHaveAttribute("data-inviting", "true");
-    expect(claim).toHaveAccessibleDescription("Try this relationship");
+    expect(claim).not.toHaveAttribute("aria-describedby");
+    expect(screen.queryByText("Try this relationship")).not.toBeInTheDocument();
     expect(claim).toHaveAttribute("aria-pressed", "false");
     expect(screen.getByRole("button", { name: "Alice — parent of — Bob" }))
       .toHaveAttribute("aria-pressed", "true");
     expect(container.querySelector("mark")).toHaveTextContent("Alice is Bob’s parent.");
+    expect(container.querySelector("mark")).not.toHaveAttribute("data-reveal");
     await userEvent.click(claim);
-    expect(screen.queryByText("Try this relationship")).not.toBeInTheDocument();
+    expect(container.querySelector(".landing-story-invitation-trace")).toBeNull();
     expect(claim).not.toHaveAttribute("data-inviting");
     expect(claim).toHaveAttribute("aria-pressed", "true");
     expect(container.querySelector("mark")).toHaveAttribute(
       "data-evidence-ids",
       "two three",
     );
+    expect(container.querySelector("mark")).toHaveAttribute("data-reveal", "true");
     expect(container.querySelector(".landing-story-note")).toHaveAttribute(
       "aria-hidden",
       "true",
     );
     setProgress(0.1);
     setProgress(0.99);
-    expect(screen.queryByText("Try this relationship")).not.toBeInTheDocument();
+    expect(container.querySelector("[data-inviting]")).toBeNull();
     expect(claim).toHaveAttribute("aria-pressed", "true");
     expect(container.querySelector("mark")).toHaveTextContent(
       "Bob is a beneficiary of Trust.",
@@ -216,7 +223,8 @@ describe("document-to-review landing", () => {
       <DocumentStory state={example.state} />,
     );
     reduced(true);
-    await waitFor(() => expect(screen.getByText("Try this relationship")).toBeVisible());
+    expect(container.querySelector("[data-inviting]")).not.toBeNull();
+    expect(container.querySelector(".landing-story-invitation-trace")).toBeNull();
     expect(container.querySelector(".landing-story")).toHaveAttribute(
       "data-story-mode",
       "static",
@@ -252,17 +260,39 @@ describe("document-to-review landing", () => {
       expect.objectContaining({ behavior: "instant" }),
     );
   });
-  it.each(["{Enter}", " "])("dismisses the hint when keyboard selection %s reaffirms the initial relationship", async (key) => {
-    render(<DocumentStory state={example.state} />);
+  it.each(["{Enter}", " "])("ends the invitation when keyboard selection %s reaffirms the initial relationship", async (key) => {
+    const { container } = render(<DocumentStory state={example.state} />);
     setProgress(0.99);
     const initial = screen.getByRole("button", { name: "Alice — parent of — Bob" });
     initial.focus();
     await userEvent.keyboard(key);
-    expect(screen.queryByText("Try this relationship")).not.toBeInTheDocument();
+    expect(container.querySelector("[data-inviting]")).toBeNull();
     expect(initial).toHaveAttribute("aria-pressed", "true");
     setProgress(0.1);
     setProgress(0.99);
-    expect(screen.queryByText("Try this relationship")).not.toBeInTheDocument();
+    expect(container.querySelector("[data-inviting]")).toBeNull();
+  });
+  it.each(["pointer", "keyboard"])("%s exploration ends the invitation without selecting or scrolling Evidence", (input) => {
+    const { container } = render(<DocumentStory state={example.state} />);
+    setProgress(0.99);
+    const claim = screen.getByRole("button", {
+      name: "Bob — beneficiary of — Trust",
+    });
+    expect(claim).toHaveAttribute("data-inviting", "true");
+    const evidence = container.querySelector("mark");
+    scrollTo.mockClear();
+    if (input === "pointer") fireEvent.pointerEnter(claim, { pointerType: "mouse" });
+    else fireEvent.focus(claim);
+    expect(container.querySelector("[data-inviting]")).toBeNull();
+    expect(container.querySelector(".landing-story-invitation-trace")).toBeNull();
+    expect(claim).toHaveAttribute("aria-pressed", "false");
+    expect(evidence).toBe(container.querySelector("mark"));
+    expect(evidence).toHaveTextContent("Alice is Bob’s parent.");
+    expect(evidence).not.toHaveAttribute("data-reveal");
+    expect(scrollTo).not.toHaveBeenCalled();
+    setProgress(0.1);
+    setProgress(0.99);
+    expect(container.querySelector("[data-inviting]")).toBeNull();
   });
   it("cleans up StrictMode measurement observers and does not call a provider", async () => {
     const { unmount } = render(
@@ -323,12 +353,13 @@ describe("document-to-review landing", () => {
     const claim = await screen.findByRole("button", {
       name: "Bob — beneficiary of — Trust",
     });
-    await waitFor(() => expect(screen.getByText("Try this relationship")).toBeVisible());
+    expect(claim).toHaveAttribute("data-inviting", "true");
     await userEvent.selectOptions(
       screen.getByRole("combobox", { name: "Language" }),
       "zh-CN",
     );
-    expect(screen.getByText("试着选择这项关系")).toBeVisible();
+    expect(claim).toHaveAttribute("data-inviting", "true");
+    expect(screen.queryByText("试着选择这项关系")).not.toBeInTheDocument();
     await userEvent.click(claim);
     await userEvent.selectOptions(
       screen.getByRole("combobox", { name: "语言" }),
@@ -338,7 +369,7 @@ describe("document-to-review landing", () => {
       screen.getByRole("combobox", { name: "Language" }),
       "zh-CN",
     );
-    expect(screen.queryByText("试着选择这项关系")).not.toBeInTheDocument();
+    expect(container.querySelector("[data-inviting]")).toBeNull();
     expect(
       screen.getByRole("heading", { name: "从您的文件开始" }),
     ).toBeVisible();

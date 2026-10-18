@@ -92,25 +92,45 @@ statements and visible selection/focus. The full source preserves all text and
 whitespace; exact supporting occurrences have their canonical Evidence identifiers.
 Only the document pane moves when selecting a relationship. Reader input cancels
 that movement, and selection survives reverse scrolling and language changes.
-When review becomes interactive, a small contextual “Try this relationship” hint
-points to one unselected relationship button. It sits beside that button on desktop
-and above it on phones, clear of captions, labels and Evidence controls at 320px.
-A 220ms fade and 4px arrival then rest directs attention once; reduced motion uses
-opacity only. The first pointer, touch or keyboard relationship selection dismisses
-it for the mounted page, including reverse scrolling and language changes. The
-hint never changes the initial selection or captures scrolling or focus.
+When review becomes interactive and an unselected relationship is visible, the
+connection offers one tactile invitation. After a 350ms pause, a short chalk trace
+travels from its source toward the label over 600ms. The capsule outline draws in
+as its surface expands 4.5% and settles without overshoot. The capsule then breathes
+at a 1.8-second rhythm with a soft chalk halo and 4% expansion; its connection stays
+brighter. The outline remains distinct from the filled selected relationship.
+The travelling trace plays once; the breathing emphasis continues while visible
+until the visitor interacts. The cue never selects a relationship or changes
+Evidence. The travelling trace cannot replay after reverse
+scrolling or a language change, including when interrupted before completion.
 
-Motion's authenticated Base UI Tooltip example informed the anchored pointer and
-opacity/translation composition. The proactive hint uses the existing `motion/react`
-package; it needs no tooltip dependency, hover trigger, spring overshoot or portal.
+Every relationship responds to mouse or pen attention with at most 2px of spring
+movement and a small surface expansion. Its connection sharpens at the same time.
+The 44px button and its hit area remain fixed; only the inner surface moves.
+Keyboard focus receives the same emphasis, and pointer, touch or keyboard presses
+compress the surface before selection reveals the exact Evidence with a 500ms
+highlighter sweep. First hover, focus or selection permanently ends the invitation
+for the mounted page. Touch has no emulated hover. The static/reduced-motion
+alternative keeps a brighter outline, with immediate selection and no spatial
+motion or highlighter sweep. No speech bubble or automatic relationship selection
+is used.
+
+The interaction uses the existing `motion/react` path drawing and springs. Only
+presentation changes; canonical connector paths, family dashes, arrowheads, source
+text and Evidence identifiers remain intact.
+
 Phone labels clear measured captions and retain 44px targets, with short leaders
 associating displaced labels to their connections. Text reflow keeps the selected
 passage visible until the reader takes control.
 
 ## Control and responsive alternatives
 
-The sequence is driven entirely by scrolling, without a playback clock. A persistent
-“Skip to relationship review” link reaches the finished state and transfers keyboard
+The document and graph sequence is driven entirely by scrolling. Its 440svh track
+finishes the composition at 78% progress, leaving about 75svh of additional scroll
+with the completed graph and Source pinned in place. Further scrolling to 82%
+triggers the invitation inside that held frame. The graph does not keep translating
+or drawing during this hold; scrolling can continue naturally into the next section.
+The skip link lands at this invitation point rather than the track's far end.
+A persistent “Skip to relationship review” link reaches the finished state and transfers keyboard
 focus. Reduced motion, very short viewports and compact phones show the formats,
 finished graph and source in normal document flow. Phones at most 800px tall need
 that alternative to preserve readable captions and 44px targets. Taller phones

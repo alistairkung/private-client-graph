@@ -1,6 +1,5 @@
 import { useLocale } from "../../shared/locale";
 import { relationshipWords, useLandingCopy } from "./copy";
-import { useStoryCopy } from "./story-copy";
 import { useId, useLayoutEffect, useState, type RefObject } from "react";
 import {
   directionalTarget,
@@ -8,8 +7,9 @@ import {
   type GlyphSize,
 } from "./story-geometry";
 import { motion, useTransform, type MotionValue } from "motion/react";
-import type { CanonicalState, Entity, Relationship } from "../../shared/contracts";
+import type { CanonicalState, Entity } from "../../shared/contracts";
 import { landingPositions, type LandingPoint } from "./landing-layout";
+import { StoryRelationship } from "./StoryRelationship";
 
 export type EntityOrigins = Map<string, readonly [number, number]>;
 
@@ -82,164 +82,6 @@ function GraphEntity({
   );
 }
 
-function GraphEdge({
-  edge,
-  index,
-  from,
-  to,
-  end,
-  labelAt,
-  selected,
-  inviting,
-  progress,
-  reduced,
-  onSelect,
-  label,
-  scope,
-}: {
-  edge: Relationship;
-  index: number;
-  from: LandingPoint;
-  to: LandingPoint;
-  end: LandingPoint;
-  labelAt: LandingPoint;
-  selected: boolean;
-  inviting: boolean;
-  progress: MotionValue<number>;
-  reduced: boolean;
-  onSelect: () => void;
-  label: string;
-  scope: string;
-}) {
-  const { locale } = useLocale();
-  const copy = useStoryCopy();
-  const hintId = `${scope}-relationship-hint`;
-  const start = 0.65 + index * 0.025;
-  const draw = useTransform(progress, [start, start + 0.08], [0, 1]);
-  const maskOpacity = useTransform(draw, [0, 0.015], [0, 1]);
-  const labelOpacity = useTransform(
-    progress,
-    [start + 0.06, start + 0.09],
-    [0, 1],
-  );
-  const family = ["parent_of", "spouse_of", "sibling_of"].includes(edge.type);
-  const path = `M${from.join(" ")} L${end.join(" ")}`;
-  const mask = `${scope}-mask-${index}`;
-  const arrow = `${scope}-arrow-${index}`;
-  return (
-    <>
-      <svg
-        className="landing-story-edge-layer"
-        viewBox="0 0 660 420"
-        preserveAspectRatio="none"
-        aria-hidden="true"
-      >
-        <defs>
-          <marker
-            id={arrow}
-            viewBox="0 0 8 8"
-            refX="7"
-            refY="4"
-            markerWidth="6"
-            markerHeight="6"
-            orient="auto"
-          >
-            <path
-              d="m1 1 5 3-5 3"
-              fill="none"
-              stroke={selected ? "#e3f1b4" : "#8cae99"}
-            />
-          </marker>
-          <mask
-            id={mask}
-            maskUnits="userSpaceOnUse"
-            x="-60"
-            y="-60"
-            width="780"
-            height="540"
-          >
-            <motion.path
-              d={path}
-              fill="none"
-              stroke="white"
-              strokeWidth="36"
-              strokeLinecap="round"
-              style={{
-                pathLength: reduced ? 1 : draw,
-                opacity: reduced ? 1 : maskOpacity,
-              }}
-            />
-          </mask>
-        </defs>
-        <path
-          d={path}
-          data-source={edge.source}
-          data-target={edge.target}
-          className={selected ? "landing-story-edge-selected" : ""}
-          strokeDasharray={family ? "5 5" : undefined}
-          markerEnd={
-            edge.type === "spouse_of" || edge.type === "sibling_of"
-              ? undefined
-              : `url(#${arrow})`
-          }
-          mask={`url(#${mask})`}
-        />
-        {["beneficiary_of", "settlor_of"].includes(edge.type) &&
-          labelAt[0] !== (from[0] + to[0]) / 2 && (
-            <motion.line
-              x1={(from[0] + to[0]) / 2}
-              y1={(from[1] + to[1]) / 2}
-              x2={labelAt[0]}
-              y2={labelAt[1]}
-              stroke="#729582"
-              strokeWidth="1"
-              vectorEffect="non-scaling-stroke"
-              style={{ opacity: reduced ? 1 : labelOpacity }}
-            />
-          )}
-      </svg>
-      <div
-        className="landing-story-edge-anchor"
-        style={{
-          left: `${(labelAt[0] / 660) * 100}%`,
-          top: `${(labelAt[1] / 420) * 100}%`,
-        }}
-      >
-        <motion.button
-          className="landing-story-edge-label"
-          data-relationship-index={index}
-          aria-label={label}
-          aria-pressed={selected}
-          aria-describedby={inviting ? hintId : undefined}
-          data-inviting={inviting || undefined}
-          onClick={onSelect}
-          style={{
-            opacity: reduced ? 1 : labelOpacity,
-          }}
-        >
-          {relationshipWords[locale][edge.type]}
-        </motion.button>
-        {inviting && (
-          <span className="landing-story-hint-anchor">
-            <motion.span
-              id={hintId}
-              className="landing-story-relationship-hint"
-              initial={{ opacity: 0, y: reduced ? 0 : 4 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-            >
-              {copy.tryRelationship}
-              <svg viewBox="0 0 8 8" aria-hidden="true">
-                <path d="m7 1-6 3 6 3" />
-              </svg>
-            </motion.span>
-          </span>
-        )}
-      </div>
-    </>
-  );
-}
-
 export function StoryGraph({
   state,
   progress,
@@ -247,6 +89,7 @@ export function StoryGraph({
   selected,
   inviting,
   onSelect,
+  onInteract,
   origins,
   drawingRef,
 }: {
@@ -256,6 +99,7 @@ export function StoryGraph({
   selected: number;
   inviting: boolean;
   onSelect: (index: number) => void;
+  onInteract: () => void;
   origins: EntityOrigins;
   drawingRef: RefObject<HTMLDivElement | null>;
 }) {
@@ -335,7 +179,7 @@ export function StoryGraph({
       aria-label={copy.diagram}
     >
       {state.relationships.map((edge, index) => (
-        <GraphEdge
+        <StoryRelationship
           key={`${edge.source}-${edge.type}-${edge.target}`}
           edge={edge}
           index={index}
@@ -367,6 +211,7 @@ export function StoryGraph({
           progress={progress}
           reduced={reduced}
           onSelect={() => onSelect(index)}
+          onInteract={onInteract}
           label={`${name(edge.source)} — ${relationshipWords[locale][edge.type]} — ${name(edge.target)}`}
           scope={scope}
         />

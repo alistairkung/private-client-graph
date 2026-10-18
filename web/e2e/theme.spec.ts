@@ -12,75 +12,83 @@ type ContrastTarget = {
   minimum?: number;
 };
 async function checkContrast(page: Page, targets: ContrastTarget[]) {
-  const results = await page.evaluate((targets) => {
-    type Color = [number, number, number, number];
-    function parse(value: string): Color {
-      const parts = value.match(/[\d.]+/g)?.map(Number);
-      if (!parts || parts.length < 3)
-        throw new Error("Unsupported computed color: " + value);
-      return [parts[0], parts[1], parts[2], parts[3] ?? 1];
-    }
-    function composite(front: Color, back: Color): Color {
-      return [
-        front[0] * front[3] + back[0] * (1 - front[3]),
-        front[1] * front[3] + back[1] * (1 - front[3]),
-        front[2] * front[3] + back[2] * (1 - front[3]),
-        1,
-      ];
-    }
-    function background(element: Element | null): Color {
-      if (!element) return [255, 255, 255, 1];
-      return composite(
-        parse(getComputedStyle(element).backgroundColor),
-        background(element.parentElement),
-      );
-    }
-    function luminance(color: Color) {
-      return color
-        .slice(0, 3)
-        .map((value) => {
-          const channel = value / 255;
-          return channel <= 0.04045
-            ? channel / 12.92
-            : ((channel + 0.055) / 1.055) ** 2.4;
-        })
-        .reduce(
-          (total, value, index) =>
-            total + value * [0.2126, 0.7152, 0.0722][index],
-          0,
+  // Buttons transition between disabled and enabled colors after form input.
+  await expect(async () => {
+    const results = await page.evaluate((targets) => {
+      type Color = [number, number, number, number];
+      function parse(value: string): Color {
+        const parts = value.match(/[\d.]+/g)?.map(Number);
+        if (!parts || parts.length < 3)
+          throw new Error("Unsupported computed color: " + value);
+        return [parts[0], parts[1], parts[2], parts[3] ?? 1];
+      }
+      function composite(front: Color, back: Color): Color {
+        return [
+          front[0] * front[3] + back[0] * (1 - front[3]),
+          front[1] * front[3] + back[1] * (1 - front[3]),
+          front[2] * front[3] + back[2] * (1 - front[3]),
+          1,
+        ];
+      }
+      function background(element: Element | null): Color {
+        if (!element) return [255, 255, 255, 1];
+        return composite(
+          parse(getComputedStyle(element).backgroundColor),
+          background(element.parentElement),
         );
+      }
+      function luminance(color: Color) {
+        return color
+          .slice(0, 3)
+          .map((value) => {
+            const channel = value / 255;
+            return channel <= 0.04045
+              ? channel / 12.92
+              : ((channel + 0.055) / 1.055) ** 2.4;
+          })
+          .reduce(
+            (total, value, index) =>
+              total + value * [0.2126, 0.7152, 0.0722][index],
+            0,
+          );
+      }
+      return targets.map((target) => {
+        const element = document.querySelector(target.selector);
+        if (!element) throw new Error("Missing contrast target: " + target.label);
+        const style = getComputedStyle(
+          element,
+          target.part === "placeholder" ? "::placeholder" : null,
+        );
+        const foreground =
+          target.part === "outline"
+            ? style.outlineColor
+            : target.part === "border"
+              ? style.borderTopColor
+              : target.part === "stroke"
+                ? style.stroke
+                : style.color;
+        const surface = background(element);
+        const a = luminance(composite(parse(foreground), surface));
+        const b = luminance(surface);
+        return {
+          label: target.label,
+          foreground,
+          transitioning: element.getAnimations().some(
+            (animation) => animation instanceof CSSTransition,
+          ),
+          ratio: (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05),
+          minimum: target.minimum ?? 4.5,
+        };
+      });
+    }, targets);
+    for (const result of results) {
+      expect(result.transitioning, `${result.label} CSS transition`).toBe(false);
+      expect(
+        result.ratio,
+        `${result.label} (${result.foreground}) contrast`,
+      ).toBeGreaterThanOrEqual(result.minimum);
     }
-    return targets.map((target) => {
-      const element = document.querySelector(target.selector);
-      if (!element) throw new Error("Missing contrast target: " + target.label);
-      const style = getComputedStyle(
-        element,
-        target.part === "placeholder" ? "::placeholder" : null,
-      );
-      const foreground =
-        target.part === "outline"
-          ? style.outlineColor
-          : target.part === "border"
-            ? style.borderTopColor
-            : target.part === "stroke"
-              ? style.stroke
-              : style.color;
-      const surface = background(element);
-      const a = luminance(composite(parse(foreground), surface));
-      const b = luminance(surface);
-      return {
-        label: target.label,
-        foreground,
-        ratio: (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05),
-        minimum: target.minimum ?? 4.5,
-      };
-    });
-  }, targets);
-  for (const result of results)
-    expect(
-      result.ratio,
-      `${result.label} (${result.foreground}) contrast`,
-    ).toBeGreaterThanOrEqual(result.minimum);
+  }).toPass({ timeout: 10_000 });
 }
 
 test("Forest & Chalk keeps navigation, forms and account surfaces readable", async ({
@@ -131,11 +139,7 @@ test("Forest & Chalk keeps navigation, forms and account surfaces readable", asy
     { selector: ".account-panel > button", label: "account sign out" },
   ]);
   await page.keyboard.press("Escape");
-  await page
-    .getByRole("link", { name: "New proposal", exact: true })
-    .filter({ visible: true })
-    .last()
-    .click();
+  await next.click();
   await expect(page.locator("main")).toHaveCSS("opacity", "1");
   await page
     .locator('input[name="external_reference"]')
@@ -145,6 +149,9 @@ test("Forest & Chalk keeps navigation, forms and account surfaces readable", asy
     .fill("Fictional palette check");
   await page.locator('input[type="file"]').setInputFiles(pdf);
   await page.getByRole("checkbox").check();
+  await expect(
+    page.getByRole("button", { name: "Upload and analyse", exact: true }),
+  ).toBeEnabled();
   await checkContrast(page, [
     { selector: ".field-help", label: "field guidance" },
     { selector: ".source-help", label: "source assistance" },
