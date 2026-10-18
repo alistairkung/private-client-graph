@@ -1,5 +1,6 @@
 import { useLocale } from "../../shared/locale";
 import type { PublicCall, PublicRun } from "./types";
+import { ResearchAccordion } from "./ResearchAccordion";
 import { runName } from "./RunComparison";
 export function Usage({ runs }: { runs: PublicRun[] }) {
   const { t } = useLocale();
@@ -57,14 +58,7 @@ export function Usage({ runs }: { runs: PublicRun[] }) {
           "A′ made zero provider calls. B reused the retained A extractions; its recorded calls are resolution attempts only. Reused extraction is lineage, not newly executed usage.",
         )}
       </p>
-      {runs.map((run) => (
-        <details key={run.label}>
-          <summary>
-            {t("Run {run}: {count} provider calls", {
-              run: runName(run.label),
-              count: run.usage.attempts,
-            })}
-          </summary>
+      <ResearchAccordion items={runs.map(run => ({ id: run.label, title: t("Run {run}: {count} provider calls", { run: runName(run.label), count: run.usage.attempts }), content: <>
           <p className="research-id">{run.run_id}</p>
           {run.calls.length ? (
             <div className="research-call-list">
@@ -84,8 +78,7 @@ export function Usage({ runs }: { runs: PublicRun[] }) {
               )}
             </p>
           )}
-        </details>
-      ))}
+        </> }))} />
     </section>
   );
 }
@@ -107,10 +100,7 @@ function Call({
         ? t("Failed")
         : call.status;
   return (
-    <details>
-      <summary>
-        {call.case_id} · {stage} · {call.model ?? t("Unavailable")} · {status}
-      </summary>
+    <ResearchAccordion items={[{ id: call.attempt_id, title: <>{call.case_id} · {stage} · {call.model ?? t("Unavailable")} · {status}</>, content: <>
       <dl className="research-metadata">
         <dt>{t("Attempt ID")}</dt>
         <dd>{call.attempt_id}</dd>
@@ -129,6 +119,6 @@ function Call({
         <dt>{t("Recorded cost")}</dt>
         <dd>{price(call.cost)}</dd>
       </dl>
-    </details>
+    </> }]} />
   );
 }

@@ -626,14 +626,14 @@ test("contextual hint clears graph labels, captions and Evidence in both languag
   const source = await page.locator(".landing-story-source-text").textContent();
   const widths = info.project.name === "phone" ? [320, 390, 700] : [701, 900, 1512];
   for (const reducedMotion of ["no-preference", "reduce"] as const) {
-    await page.locator(".landing-masthead select").selectOption("en");
+    await page.locator(".public-header select").selectOption("en");
     await page.emulateMedia({ reducedMotion });
     await page.goto("/");
     await openReview(page);
     for (const width of widths) {
       await page.setViewportSize({ width, height: info.project.name === "phone" ? 844 : 982 });
       for (const locale of ["en", "zh-CN"]) {
-        await page.locator(".landing-masthead select").selectOption(locale);
+        await page.locator(".public-header select").selectOption(locale);
         if (reducedMotion === "no-preference") await storyProgress(page, 1);
         const hint = page.locator(".landing-story-relationship-hint");
         await expect(hint).toHaveCSS("opacity", "1");
@@ -655,7 +655,7 @@ test("contextual hint clears graph labels, captions and Evidence in both languag
     await target.press("Space");
   }
   await expect(page.locator(".landing-story-relationship-hint")).toHaveCount(0);
-  await page.locator(".landing-masthead select").selectOption("en");
+  await page.locator(".public-header select").selectOption("en");
   await expect(page.locator(".landing-story-relationship-hint")).toHaveCount(0);
   expect(errors).toEqual([]);
 });

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLocale } from "../../shared/locale";
 import { Icon } from "../../shared/Icon";
+import { PublicHeader } from "../../shared/public/PublicHeader";
 import { useLandingCopy } from "./copy";
 import {
   getPublicExample,
@@ -16,7 +17,7 @@ export default function LandingPage() {
 export { LandingPage };
 function LandingContent() {
   const copy = useLandingCopy();
-  const { locale, setLocale } = useLocale();
+  const { locale } = useLocale();
   const [example, setExample] = useState<PublicExample>();
   const [failed, setFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
@@ -43,31 +44,7 @@ function LandingContent() {
       <a className="landing-skip" href="#landing-main">
         {locale === "en" ? "Skip to content" : "跳至内容"}
       </a>
-      <header className="landing-masthead">
-        <a className="landing-brand" href="/" aria-label="Private Client Graph">
-          <Icon name="atlas" />
-          <span>Private Client Graph</span>
-        </a>
-        <nav aria-label={locale === "en" ? "Main navigation" : "主导航"}>
-          <a href={publicDestination("/research-results")}>{copy.research}</a>
-          <a className="landing-enter" href="/app">
-            {copy.enter}
-            <Icon name="arrow" />
-          </a>
-          <label>
-            <span className="landing-sr">{copy.language}</span>
-            <select
-              value={locale}
-              onChange={(event) =>
-                setLocale(event.target.value as "en" | "zh-CN")
-              }
-            >
-              <option value="en">EN</option>
-              <option value="zh-CN">中文</option>
-            </select>
-          </label>
-        </nav>
-      </header>
+      <PublicHeader />
       <main id="landing-main">
         <section className="landing-opening">
           <h1>{copy.headline}</h1>

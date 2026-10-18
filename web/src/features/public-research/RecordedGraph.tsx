@@ -1,27 +1,21 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useLocale } from "../../shared/locale";
 import { EvidenceInspector } from "../../shared/research/EvidenceInspector";
-import type { CanonicalGraph } from "../../shared/canonical-graph";
-import { GraphView } from "./recorded-review/GraphView";
+import { GraphDrawing } from "../review/GraphDrawing";
 import { ResearchRunSwitch } from "./ResearchRunSwitch";
-import type { PublicCase, PublicObservation, RunLabel } from "./types";
-import "./recorded-review/review.css";
-
-// Project retained canonical state into the existing renderer; never construct or score it.
-export function recordedGraph(observation: PublicObservation): CanonicalGraph {
-  return {
-    entities: observation.state.entities,
-    relationships: observation.state.relationships,
-    evidence: observation.state.evidence,
-  };
+import type { PublicCase, RunLabel } from "./types";
+export function RecordedGraph({ sample }: { sample: PublicCase }) {
+  return <RecordedGraphCase key={sample.case_id} sample={sample} />;
 }
 
-export function RecordedGraph({ sample }: { sample: PublicCase }) {
+function RecordedGraphCase({ sample }: { sample: PublicCase }) {
   const { t } = useLocale();
   const [run, setRun] = useState<RunLabel>("A");
   const [selected, setSelected] = useState<number | null>(null);
   const observation = sample.observations.find(item => item.run_label === run)!;
-  const graph = useMemo(() => recordedGraph(observation), [observation]);
+  const graph = observation.state;
+  const [entityId, setEntity] = useState<string | null>(null);
+  const entity = graph.entities.find(item => item.id === entityId);
   const edge = graph.relationships[selected ?? -1];
   const sourceName = graph.entities.find(entity => entity.id === edge?.source)?.name;
   const targetName = graph.entities.find(entity => entity.id === edge?.target)?.name;
@@ -37,6 +31,7 @@ export function RecordedGraph({ sample }: { sample: PublicCase }) {
       next.state.entities.find(entity => entity.id === relationship.source)?.name === sourceName &&
       next.state.entities.find(entity => entity.id === relationship.target)?.name === targetName,
     ) : -1;
+    setEntity(null);
     setRun(label);
     setSelected(index < 0 ? null : index);
   }
@@ -56,14 +51,36 @@ export function RecordedGraph({ sample }: { sample: PublicCase }) {
       </div>
       <div className="research-graph-evidence">
         <section aria-label={t("Recorded relationship graph")}>
-          <GraphView preserveContext graph={graph} selected={selected} onSelect={setSelected} />
+          <label className="research-graph-selector">{t("Find a relationship")}
+            <select value={selected ?? ""} onChange={event => { setEntity(null); setSelected(event.target.value === "" ? null : Number(event.target.value)); }}>
+              <option value="">{t("Select a relationship")}</option>
+              {graph.relationships.map((relationship, index) => <option key={index} value={index}>
+                {graph.entities.find(item => item.id === relationship.source)?.name} — {t(relationship.type)} — {graph.entities.find(item => item.id === relationship.target)?.name}
+              </option>)}
+            </select>
+          </label>
+          <GraphDrawing state={graph} selected={selected} selectedEntity={entityId}
+            memoryKey={`research:recorded:${sample.case_id}`}
+            onSelect={index => { setEntity(null); setSelected(index); }}
+            onEntity={id => { setSelected(null); setEntity(id); }} />
         </section>
-        <EvidenceInspector
+        {entity ? <aside className="research-entity-inspector" aria-label={t("Entity relationships")}>
+          <h3>{entity.name}</h3>
+          <p>{t("Select a relationship to inspect its Evidence.")}</p>
+          {graph.relationships.map((relationship, index) => {
+            if (relationship.source !== entityId && relationship.target !== entityId) return null;
+            const source = graph.entities.find(item => item.id === relationship.source)!;
+            const target = graph.entities.find(item => item.id === relationship.target)!;
+            return <button key={index} onClick={() => { setEntity(null); setSelected(index); }}>
+              {source.name} · {t(relationship.type)} · {target.name}
+            </button>;
+          })}
+        </aside> : <EvidenceInspector
           key={JSON.stringify(outcome ?? null)}
           relationship={outcome}
           source={null}
           sources={sample.sources}
-        />
+        />}
       </div>
     </div>
   );
