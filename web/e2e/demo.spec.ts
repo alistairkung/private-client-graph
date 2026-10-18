@@ -9,6 +9,8 @@ test("public demo journey is isolated, read-only, and reopens a fixed completed 
     }
   });
   await page.goto("/");
+  const menu = page.getByRole("button", { name: "Menu", exact: true });
+  if (await menu.isVisible()) await menu.click();
   await page.getByRole("link", { name: "Demo application", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Demo Matters", exact: true })).toBeVisible();
   await page.screenshot({ path: testInfo.outputPath("demo-matter-list.png"), fullPage: true });
