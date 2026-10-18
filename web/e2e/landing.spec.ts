@@ -289,17 +289,22 @@ test("scroll scrubs document fronts, measured name movement and masked drawing; 
       }),
     );
   expect(partial).toBe(true);
+  await expect(page.getByText("Try a relationship to reveal its Evidence.", { exact: true })).toHaveCount(0);
+  await storyProgress(page, 1);
+  await expect(page.getByText("Try a relationship to reveal its Evidence.", { exact: true })).toBeVisible();
   await openReview(page);
   const claim = page.getByRole("button", {
     name: "Carol Wong — beneficiary of — Evergreen Family Trust",
     exact: true,
   });
   await claim.click();
+  await expect(page.locator(".landing-story-edge-label[data-inviting]")).toHaveCount(0);
   const evidence = await page
     .locator(".landing-story-source-meta")
     .textContent();
   await storyProgress(page, 0.1);
   await storyProgress(page, 1);
+  await expect(page.getByText("Try a relationship to reveal its Evidence.", { exact: true })).toHaveCount(0);
   await expect(claim).toHaveAttribute("aria-pressed", "true");
   await expect(page.locator(".landing-story-source-meta")).toHaveText(
     evidence!,
@@ -352,12 +357,19 @@ test("keyboard skip and live reduced motion expose an in-flow review while prese
   await skip.focus();
   await skip.press("Enter");
   await expect(page.locator("#landing-story-review")).toBeFocused();
+  await expect(page.getByText("Try a relationship to reveal its Evidence.", { exact: true })).toBeVisible();
+  await expect(page.locator(".landing-story-edge-label[data-inviting]")).toHaveCount(1);
+  const hint = await page.locator(".landing-story-interaction-hint").boundingBox();
+  const heading = await page.locator(".landing-story-graph-heading").boundingBox();
+  expect(hint!.y + hint!.height).toBeLessThanOrEqual(heading!.y + heading!.height + 1);
   const claim = page.getByRole("button", {
     name: "Carol Wong — beneficiary of — Evergreen Family Trust",
     exact: true,
   });
   await claim.focus();
   await claim.press("Enter");
+  await expect(page.locator(".landing-story-edge-label[data-inviting]")).toHaveCount(0);
+  await expect(page.getByText("Try a relationship to reveal its Evidence.", { exact: true })).toHaveCount(0);
   await page.emulateMedia({ reducedMotion: "reduce" });
   await expect(page.locator(".landing-story")).toHaveAttribute(
     "data-story-mode",
@@ -368,6 +380,7 @@ test("keyboard skip and live reduced motion expose an in-flow review while prese
     "relative",
   );
   await expect(claim).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator(".landing-story-edge-label[data-inviting]")).toHaveCount(0);
   await expect(page.locator("[data-document-kind]")).toHaveCount(4);
   for (const doc of await page.locator("[data-document-kind]").all()) {
     await expect(doc).toHaveCSS("position", "relative");
@@ -395,6 +408,8 @@ test("initial reduced motion shows all documents and keeps graph/source readable
     "data-story-mode",
     "static",
   );
+  await expect(page.getByText("Try a relationship to reveal its Evidence.", { exact: true })).toBeVisible();
+  expect(await page.locator(".landing-story-edge-label[data-inviting]").evaluate(element => getComputedStyle(element, "::after").animationName)).toBe("none");
   const source = page.locator(".landing-story-source-text");
   const text = await source.textContent();
   await page.setViewportSize({ width: 390, height: 844 });

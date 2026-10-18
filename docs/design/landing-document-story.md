@@ -92,6 +92,11 @@ statements and visible selection/focus. The full source preserves all text and
 whitespace; exact supporting occurrences have their canonical Evidence identifiers.
 Only the document pane moves when selecting a relationship. Reader input cancels
 that movement, and selection survives reverse scrolling and language changes.
+When review becomes interactive, a short pointer cue invites the visitor to try a
+relationship, and one alternative relationship receives a single outline reveal.
+The cue and outline disappear after the first pointer or keyboard selection and
+stay dismissed while scrolling back or changing language. Static/reduced-motion
+review shows the same invitation and outline without animation.
 Phone labels clear measured captions and retain 44px targets, with short leaders
 associating displaced labels to their connections. Text reflow keeps the selected
 passage visible until the reader takes control.

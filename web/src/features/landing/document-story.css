@@ -243,6 +243,24 @@
   font-size: 12px;
   color: var(--story-soft);
 }
+.landing-story .landing-story-graph-heading .landing-story-interaction-hint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #e3f1b4;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+.landing-story .landing-story-interaction-hint svg {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.4;
+  stroke-linejoin: round;
+}
 .landing-story-drawing {
   position: relative;
   width: 100%;
@@ -327,6 +345,24 @@
   background: #e3f1b4;
   color: #173f31;
   border-color: #e3f1b4;
+}
+.landing-story-edge-label[data-inviting]::after {
+  content: "";
+  position: absolute;
+  inset: -5px;
+  border: 1px solid #e3f1b4;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0.65;
+  animation: landing-story-invite 1600ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes landing-story-invite {
+  0% { opacity: 0; transform: scale(0.94); }
+  30% { opacity: 0.85; transform: scale(1); }
+  100% { opacity: 0.65; transform: scale(1); }
+}
+.landing-story-static .landing-story-edge-label[data-inviting]::after {
+  animation: none;
 }
 .landing-story-source-holder {
   position: absolute;
@@ -545,6 +581,14 @@
   }
   .landing-story .landing-story-graph-heading p {
     font-size: 10px;
+  }
+  .landing-story .landing-story-graph-heading .landing-story-interaction-hint {
+    font-size: 11px;
+    gap: 6px;
+  }
+  .landing-story .landing-story-interaction-hint svg {
+    width: 14px;
+    height: 14px;
   }
   .landing-story-drawing {
     height: calc(100% - 55px);

@@ -175,14 +175,19 @@ describe("document-to-review landing", () => {
   it("opens review only at the end, then preserves an explicit relationship when scrolling backwards", async () => {
     const { container } = render(<DocumentStory state={example.state} />);
     setProgress(0.7);
+    expect(screen.queryByText("Try a relationship to reveal its Evidence.")).not.toBeInTheDocument();
     expect(container.querySelector("#landing-story-review")).toHaveAttribute(
       "inert",
     );
     setProgress(0.99);
+    await waitFor(() => expect(screen.getByText("Try a relationship to reveal its Evidence.")).toBeVisible());
     const claim = screen.getByRole("button", {
       name: "Bob — beneficiary of — Trust",
     });
+    expect(claim).toHaveAttribute("data-inviting", "true");
     await userEvent.click(claim);
+    expect(screen.queryByText("Try a relationship to reveal its Evidence.")).not.toBeInTheDocument();
+    expect(claim).not.toHaveAttribute("data-inviting");
     expect(claim).toHaveAttribute("aria-pressed", "true");
     expect(container.querySelector("mark")).toHaveAttribute(
       "data-evidence-ids",
@@ -194,6 +199,7 @@ describe("document-to-review landing", () => {
     );
     setProgress(0.1);
     setProgress(0.99);
+    expect(screen.queryByText("Try a relationship to reveal its Evidence.")).not.toBeInTheDocument();
     expect(claim).toHaveAttribute("aria-pressed", "true");
     expect(container.querySelector("mark")).toHaveTextContent(
       "Bob is a beneficiary of Trust.",
@@ -205,6 +211,7 @@ describe("document-to-review landing", () => {
       <DocumentStory state={example.state} />,
     );
     reduced(true);
+    await waitFor(() => expect(screen.getByText("Try a relationship to reveal its Evidence.")).toBeVisible());
     expect(container.querySelector(".landing-story")).toHaveAttribute(
       "data-story-mode",
       "static",

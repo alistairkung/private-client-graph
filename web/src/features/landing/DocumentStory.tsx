@@ -31,10 +31,12 @@ export function DocumentStory({ state }: { state: CanonicalState }) {
   });
   const [exploring, setExploring] = useState(false);
   const [selected, setSelected] = useState(0);
+  const [hasChosenRelationship, setHasChosenRelationship] = useState(false);
   useMotionValueEvent(scrollYProgress, "change", (value) =>
     setExploring(value >= 0.96),
   );
   const active = reduced || exploring;
+  const inviting = active && !hasChosenRelationship && state.relationships.length > 0;
   const headingOpacity = useTransform(scrollYProgress, [0.62, 0.69], [0, 1]);
   const graphX = useTransform(scrollYProgress, [0.86, 0.96], ["46%", "0%"]);
   const sourceOpacity = useTransform(scrollYProgress, [0.87, 0.97], [0, 1]);
@@ -121,17 +123,29 @@ export function DocumentStory({ state }: { state: CanonicalState }) {
             >
               <motion.div
                 className="landing-story-graph-heading"
-                style={reduced ? undefined : { opacity: headingOpacity }}
+                style={{ opacity: reduced ? 1 : headingOpacity }}
               >
                 <h2>{copy.graphTitle}</h2>
-                <p>{copy.working}</p>
+                <p
+                  id="landing-story-interaction-hint"
+                  className={inviting ? "landing-story-interaction-hint" : undefined}
+                >
+                  {inviting && <svg viewBox="0 0 20 20" aria-hidden="true">
+                    <path d="m4 2 12 8-6 1-2 6-4-15Z" />
+                  </svg>}
+                  {inviting ? copy.tryRelationship : copy.working}
+                </p>
               </motion.div>
               <StoryGraph
                 state={state}
                 progress={scrollYProgress}
                 reduced={reduced}
                 selected={selected}
-                onSelect={setSelected}
+                inviting={inviting}
+                onSelect={index => {
+                  setSelected(index);
+                  setHasChosenRelationship(true);
+                }}
                 origins={origins}
                 drawingRef={drawing}
               />

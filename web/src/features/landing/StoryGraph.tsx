@@ -89,6 +89,7 @@ function GraphEdge({
   end,
   labelAt,
   selected,
+  inviting,
   progress,
   reduced,
   onSelect,
@@ -102,6 +103,7 @@ function GraphEdge({
   end: LandingPoint;
   labelAt: LandingPoint;
   selected: boolean;
+  inviting: boolean;
   progress: MotionValue<number>;
   reduced: boolean;
   onSelect: () => void;
@@ -198,6 +200,8 @@ function GraphEdge({
         data-relationship-index={index}
         aria-label={label}
         aria-pressed={selected}
+        aria-describedby={inviting ? "landing-story-interaction-hint" : undefined}
+        data-inviting={inviting || undefined}
         onClick={onSelect}
         style={{
           left: `${(labelAt[0] / 660) * 100}%`,
@@ -216,6 +220,7 @@ export function StoryGraph({
   progress,
   reduced,
   selected,
+  inviting,
   onSelect,
   origins,
   drawingRef,
@@ -224,6 +229,7 @@ export function StoryGraph({
   progress: MotionValue<number>;
   reduced: boolean;
   selected: number;
+  inviting: boolean;
   onSelect: (index: number) => void;
   origins: EntityOrigins;
   drawingRef: RefObject<HTMLDivElement | null>;
@@ -293,6 +299,7 @@ export function StoryGraph({
   }, [drawingRef, state, reduced]);
   const name = (id: string) =>
     state.entities.find((item) => item.id === id)?.name ?? id;
+  const invitationIndex = state.relationships.length > 1 ? 1 : 0;
   return (
     <div
       ref={drawingRef}
@@ -329,6 +336,7 @@ export function StoryGraph({
             geometry.labelWidths.get(index) ?? 74,
           )}
           selected={index === selected}
+          inviting={inviting && index === invitationIndex}
           progress={progress}
           reduced={reduced}
           onSelect={() => onSelect(index)}
