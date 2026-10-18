@@ -86,6 +86,33 @@ test("unknown Matter direct route stays in the practitioner shell", async ({ pag
   await expect(page.getByRole("heading", { name: "Matters", exact: true })).toBeVisible();
 });
 
+test("retrying a failed access check preserves public Matter reading and restores signed-in creation", async ({ page }) => {
+  await page.goto("/auth/login?next=/app");
+  await expect(page.getByRole("link", { name: "Create Matter" })).toBeVisible();
+  let releaseAccess!: () => void;
+  const delayedAccess = new Promise<void>(resolve => { releaseAccess = resolve; });
+  let checks = 0;
+  await page.route("**/api/access", async route => {
+    checks += 1;
+    if (checks === 1) return route.abort();
+    if (checks === 2) await delayedAccess;
+    await route.continue();
+  });
+  await page.goto("/app");
+  await expect(page.getByRole("alert")).toContainText("Sign-in and editing access could not be checked.");
+  const evergreen = page.getByRole("link", { name: "PC/2026/0142 Evergreen Family Trust" });
+  await expect(evergreen).toBeVisible();
+  await expect(page.getByRole("link", { name: "Create Matter" })).toHaveCount(0);
+  await page.getByRole("button", { name: "Retry access check" }).click();
+  await expect(page.getByText("Checking sign-in and editing access…")).toBeVisible();
+  await expect(page.getByText(/Sign-in is currently unavailable/)).toHaveCount(0);
+  await expect(evergreen).toBeVisible();
+  releaseAccess();
+  await expect(page.getByRole("link", { name: "Create Matter" })).toBeVisible();
+  await page.getByRole("link", { name: "Create Matter" }).click();
+  await expect(page.getByRole("checkbox", { name: /synthetic or fictional/ })).toBeVisible();
+});
+
 
 test("public direct navigation needs no sign-in and logout removes only write access", async ({ page, context }) => {
   const googleRequests: string[] = [];

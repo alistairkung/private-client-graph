@@ -22,7 +22,9 @@ test("direct Matter entry loads its persisted source and graph without analysis"
 
 test.each([404, 503])("Matter %s offers a return route without fallback data", async status => {
   window.history.replaceState(null, "", `/app/matters/${id}`);
-  vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response("{}", { status }));
+  vi.spyOn(globalThis, "fetch").mockImplementation(async url => url === "/api/access"
+    ? new Response(JSON.stringify({ can_write: false, sign_in_available: true }))
+    : new Response("{}", { status }));
   render(<App />);
   expect(await screen.findByRole("alert")).toHaveTextContent(status === 404 ? "Matter not found" : "Matter could not be loaded.");
   expect(screen.getByRole("link", { name: "Back to Matters" })).toHaveAttribute("href", "/app");

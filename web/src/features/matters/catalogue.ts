@@ -1,4 +1,7 @@
 export const practitionerZhCN: Record<string, string> = {
+  "Checking sign-in and editing access…": "正在检查登录和编辑权限…",
+  "Sign-in and editing access could not be checked. You can still read Matters and proposals.": "无法检查登录和编辑权限。您仍可查看事项和提案。",
+  "Retry access check": "重试权限检查",
   "Sources, Matter Proposals and Matters are publicly readable, including proposals awaiting confirmation.": "资料、事项提案和事项均可公开查看，包括等待确认的提案。",
   "Uploaded Source text and the resulting proposal will be publicly readable before confirmation. Confirmed Matters are public too.": "上传的资料文本及生成的提案在确认前即可公开查看。确认后的事项也会公开。",
   "Sign in to make changes": "登录以进行更改",

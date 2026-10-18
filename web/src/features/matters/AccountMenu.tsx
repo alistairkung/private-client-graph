@@ -4,7 +4,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { SignOut } from "./SignOut";
 
 export function AccountMenu({
-  access = { can_write: false, sign_in_available: false },
+  access,
   onSignOut = () => window.location.assign("/"),
 }: {
   onSignOut?: () => void;
@@ -62,9 +62,9 @@ export function AccountMenu({
       {open && (
         <div id={panelId} className="account-menu-panel">
           <a href="/">{t("Public showcase")}</a>
-          {access.can_write ? <SignOut onPendingChange={setSigningOut} onSuccess={onSignOut} />
+          {access && (access.can_write ? <SignOut onPendingChange={setSigningOut} onSuccess={onSignOut} />
             : access.sign_in_available ? <a href="/auth/login?next=/app">{t("Sign in to make changes")}</a>
-            : <p>{t("Sign-in is currently unavailable. You can still read Matters and proposals.")}</p>}
+            : <p>{t("Sign-in is currently unavailable. You can still read Matters and proposals.")}</p>)}
         </div>
       )}
     </div>

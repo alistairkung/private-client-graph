@@ -106,7 +106,7 @@ test("anonymous readers see sign-in and never a signed-in account action", async
 });
 
 test("unavailable authentication leaves public navigation usable", async () => {
-  render(<AccountMenu />);
+  render(<AccountMenu access={{ can_write: false, sign_in_available: false }} />);
   await userEvent.click(screen.getByRole("button", { name: "Account and application menu" }));
   expect(screen.getByRole("link", { name: "Public showcase" })).toBeVisible();
   expect(screen.getByText(/Sign-in is currently unavailable/)).toBeVisible();

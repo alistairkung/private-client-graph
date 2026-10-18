@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { expect, test, vi } from "vitest";
 import { App } from "./App";
@@ -89,4 +89,44 @@ test("anonymous direct intake entry offers sign-in without exposing uploads", as
   render(<App />);
   expect(await screen.findByRole("link", { name: "Sign in to make changes" })).toHaveAttribute("href", "/auth/login?next=/app/matter-proposals/new");
   expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
+});
+
+test.each(["/app", "/app/matter-proposals/new"])(
+  "%s distinguishes pending access from unavailable sign-in and reveals signed-in creation",
+  async path => {
+    window.history.replaceState(null, "", path);
+    let resolveAccess!: (response: Response) => void;
+    vi.spyOn(globalThis, "fetch").mockImplementation(url => url === "/api/access"
+      ? new Promise(resolve => { resolveAccess = resolve; })
+      : Promise.resolve(new Response(JSON.stringify([]))));
+    render(<App />);
+    expect(screen.getByText("Checking sign-in and editing access…")).toBeVisible();
+    await userEvent.click(screen.getByRole("button", { name: "Account and application menu" }));
+    expect(screen.queryByText(/Sign-in is currently unavailable/)).not.toBeInTheDocument();
+    expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
+
+    await act(async () => resolveAccess(new Response(JSON.stringify({ can_write: true, sign_in_available: true }))));
+    expect(screen.queryByText("Checking sign-in and editing access…")).not.toBeInTheDocument();
+    if (path === "/app") expect(screen.getByRole("link", { name: "Create Matter" })).toBeVisible();
+    else expect(screen.getByRole("checkbox", { name: /synthetic or fictional/ })).toBeVisible();
+    expect(screen.getByRole("button", { name: "Sign out" })).toBeVisible();
+  },
+);
+
+test("failed access checks keep public reading and can recover signed-in creation without reloading", async () => {
+  window.history.replaceState(null, "", "/app");
+  let attempts = 0;
+  vi.spyOn(globalThis, "fetch").mockImplementation(async url => {
+    if (url !== "/api/access") return new Response(JSON.stringify([]));
+    if (++attempts === 1) throw new TypeError("Unavailable");
+    return new Response(JSON.stringify({ can_write: true, sign_in_available: true }));
+  });
+  render(<App />);
+  expect(await screen.findByText("No accepted Matters yet")).toBeVisible();
+  expect(await screen.findByText("Sign-in and editing access could not be checked. You can still read Matters and proposals.")).toBeVisible();
+  expect(screen.queryByText(/Sign-in is currently unavailable/)).not.toBeInTheDocument();
+  expect(screen.queryByRole("link", { name: "Create Matter" })).not.toBeInTheDocument();
+  await userEvent.click(screen.getByRole("button", { name: "Retry access check" }));
+  expect(await screen.findByRole("link", { name: "Create Matter" })).toBeVisible();
+  expect(attempts).toBe(2);
 });

@@ -112,10 +112,11 @@ feature. Avoid barrel files and import aliases unless the dependency graph is
 large enough for them to improve navigation demonstrably.
 
 Use a thin FastAPI backend and a React/TypeScript frontend in this repository.
-Keep showcase Case 01 fixtures backend-authoritative: the browser reads the source
-and requests an explicit execution mode, but never submits or modifies the
-document. Practitioner Matter requests read complete current state from
-PostgreSQL and never use benchmark fixtures as runtime fallback storage.
+Keep showcase fixtures backend-authoritative: the browser reads the curated
+case catalogue and Source/Canonical Graph state, without requesting analysis or
+submitting or modifying documents. Practitioner Matter requests read complete
+current state from PostgreSQL and never use benchmark fixtures as runtime
+fallback storage.
 
 ## Backend style
 
