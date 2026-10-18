@@ -1,0 +1,103 @@
+.landing-story-edge-anchor {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  z-index: 1;
+}
+.landing-story .landing-story-edge-label {
+  position: relative;
+  display: block;
+  padding: 0;
+  border: 0;
+  border-radius: 22px;
+  background: transparent;
+  color: #e3ede1;
+  font-size: 12px;
+  min-height: 44px;
+  min-width: 44px;
+  white-space: nowrap;
+  cursor: pointer;
+  pointer-events: auto;
+}
+.landing-story-relationship-surface {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 8px 12px;
+  border: 1px solid #729582;
+  border-radius: inherit;
+  background: #173f31;
+  pointer-events: none;
+  transition: border-color 120ms ease-out, background-color 120ms ease-out, color 120ms ease-out;
+}
+.landing-story-edge-label[data-attentive] .landing-story-relationship-surface {
+  border-color: #dce8ca;
+  background: #214d3c;
+  color: #f2f5ef;
+}
+.landing-story-edge-label[aria-pressed="true"] .landing-story-relationship-surface {
+  border-color: #e3f1b4;
+  background: #e3f1b4;
+  color: #173f31;
+}
+.landing-story-edge-layer > path.landing-story-edge-attentive {
+  stroke: #dce8ca;
+  stroke-width: 2;
+}
+.landing-story-edge-layer > path.landing-story-edge-inviting {
+  stroke: #dce8ca;
+  stroke-width: 2.5;
+}
+.landing-story-edge-label[data-inviting][data-invitation-visible]
+  .landing-story-relationship-surface::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border: 1px solid #dce8ca;
+  border-radius: 26px;
+  box-shadow: 0 0 16px 3px #d4e6a54d;
+  opacity: 0;
+  pointer-events: none;
+}
+.landing-story-edge-label[data-invitation-state="settled"]
+  .landing-story-relationship-surface::after {
+  animation: landing-relationship-glow 1.8s ease-in-out infinite;
+}
+@keyframes landing-relationship-glow {
+  0%, 100% { opacity: 0.25; }
+  50% { opacity: 0.85; }
+}
+.landing-story-static .landing-story-edge-label[data-inviting]
+  .landing-story-relationship-surface::after {
+  animation: none;
+  opacity: 0.55;
+}
+.landing-story-invitation-trace {
+  stroke: #dce8ca;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  fill: none;
+  vector-effect: non-scaling-stroke;
+}
+.landing-story .landing-story-invitation-outline {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  fill: none;
+  stroke: #dce8ca;
+  stroke-width: 1.5;
+}
+.landing-story-invitation-outline rect {
+  vector-effect: non-scaling-stroke;
+}
+@media (prefers-reduced-motion: reduce) {
+  .landing-story-relationship-surface { transition: none; }
+  .landing-story .landing-story-relationship-surface::after {
+    animation: none;
+    opacity: 0.55;
+  }
+}

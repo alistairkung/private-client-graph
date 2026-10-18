@@ -2,7 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 import type { CanonicalState } from "../src/shared/contracts";
 import { relationshipStatement } from "../src/features/review/presentation";
 const publicCase = "/api/showcase/cases/case-01";
-async function storyProgress(page: Page, progress: number) {
+async function trackProgress(page: Page, progress: number) {
   await page.locator(".landing-story-track").evaluate((track, fraction) => {
     window.scrollTo({
       top:
@@ -18,6 +18,9 @@ async function storyProgress(page: Page, progress: number) {
         requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
       ),
   );
+}
+async function storyProgress(page: Page, progress: number) {
+  await trackProgress(page, progress * 0.78);
 }
 async function selectedQuoteVisible(page: Page) {
   await expect
@@ -73,28 +76,6 @@ async function clearPhoneLabels(page: Page) {
       }),
     )
     .toEqual([]);
-}
-async function clearRelationshipHint(page: Page) {
-  await expect
-    .poll(() => page.locator(".landing-story-relationship-hint").evaluate(element => {
-      const box = element.getBoundingClientRect();
-      const obstacles = document.querySelectorAll(
-        ".landing-story-edge-label, .landing-story-entity span, .landing-story-entity svg, .landing-story-source-holder, .landing-story-graph-heading",
-      );
-      const overlaps = [...obstacles].filter(other => {
-        const bounds = other.getBoundingClientRect();
-        return (
-          Math.min(box.right, bounds.right) - Math.max(box.left, bounds.left) > 0.5 &&
-          Math.min(box.bottom, bounds.bottom) - Math.max(box.top, bounds.top) > 0.5
-        );
-      });
-      return {
-        overlaps: overlaps.map(other => other.getAttribute("class")),
-        clipped: box.left < 0 || box.right > window.innerWidth,
-        capturesInput: getComputedStyle(element).pointerEvents !== "none",
-      };
-    }))
-    .toEqual({ overlaps: [], clipped: false, capturesInput: false });
 }
 async function openReview(page: Page) {
   await page
@@ -311,9 +292,11 @@ test("scroll scrubs document fronts, measured name movement and masked drawing; 
       }),
     );
   expect(partial).toBe(true);
-  await expect(page.getByText("Try this relationship", { exact: true })).toHaveCount(0);
+  await expect(page.locator(".landing-story-edge-label[data-inviting]")).toHaveCount(0);
   await storyProgress(page, 1);
-  await expect(page.getByText("Try this relationship", { exact: true })).toBeVisible();
+  await expect(page.locator(".landing-story-edge-label[data-inviting]")).toHaveCount(0);
+  await trackProgress(page, 0.83);
+  await expect(page.locator(".landing-story-edge-label[data-inviting]")).toHaveCount(1);
   await openReview(page);
   const claim = page.getByRole("button", {
     name: "Carol Wong — beneficiary of — Evergreen Family Trust",
@@ -326,11 +309,54 @@ test("scroll scrubs document fronts, measured name movement and masked drawing; 
     .textContent();
   await storyProgress(page, 0.1);
   await storyProgress(page, 1);
-  await expect(page.getByText("Try this relationship", { exact: true })).toHaveCount(0);
+  await expect(page.locator(".landing-story-edge-label[data-inviting]")).toHaveCount(0);
   await expect(claim).toHaveAttribute("aria-pressed", "true");
   await expect(page.locator(".landing-story-source-meta")).toHaveText(
     evidence!,
   );
+});
+
+test("continued scrolling holds the completed graph in place and reveals its invitation", async ({ page }, info) => {
+  await page.goto("/");
+  const stage = page.locator(".landing-story-stage");
+  await expect(page.locator(".landing-story")).toHaveAttribute("data-story-mode", "scroll");
+  await storyProgress(page, 1);
+  await expect(page.locator("#landing-story-review")).not.toHaveAttribute("inert");
+  await expect(page.locator(".landing-story-edge-label[data-inviting]")).toHaveCount(0);
+  await expect(page.locator(".landing-story-source-holder")).toHaveCSS("opacity", "1");
+  const finalFrame = () => page.locator("#landing-story-review").evaluate(review => {
+    const selectors = [
+      ".landing-story-graph-holder",
+      ".landing-story-source-holder",
+      ".landing-story-entity",
+      ".landing-story-edge-label",
+    ];
+    return [...review.querySelectorAll(selectors.join(","))].map(element => {
+      const bounds = element.getBoundingClientRect();
+      return [bounds.x, bounds.y, bounds.width, bounds.height];
+    });
+  });
+  const completed = await finalFrame();
+  const pageScroll = await page.evaluate(() => window.scrollY);
+  for (const fraction of [0.83, 0.9, 0.96]) {
+    await trackProgress(page, fraction);
+    expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(pageScroll);
+    await expect(stage).toHaveCSS("position", "sticky");
+    expect(await stage.evaluate(element => element.getBoundingClientRect().top)).toBeCloseTo(0, 1);
+    const held = await finalFrame();
+    expect(held).toHaveLength(completed.length);
+    for (let element = 0; element < held.length; element++)
+      for (let coordinate = 0; coordinate < held[element].length; coordinate++)
+        expect(held[element][coordinate]).toBeCloseTo(completed[element][coordinate], 1);
+    await expect(page.locator(".landing-story-edge-label[data-inviting]")).toHaveCount(1);
+  }
+  await expect(page.getByRole("button", {
+    name: "Alice Chen — settlor of — Evergreen Family Trust",
+    exact: true,
+  })).toHaveAttribute("aria-pressed", "false");
+  await expect(page.locator(".landing-story-edge-label[data-inviting]"))
+    .toHaveAttribute("data-invitation-state", "settled");
+  await page.screenshot({ path: info.outputPath("held-review.png"), animations: "allow" });
 });
 
 test("paper flick lifts before its layer handoff, settles and reverses without delaying review", async ({
@@ -379,18 +405,17 @@ test("keyboard skip and live reduced motion expose an in-flow review while prese
   await skip.focus();
   await skip.press("Enter");
   await expect(page.locator("#landing-story-review")).toBeFocused();
-  await expect(page.getByText("Try this relationship", { exact: true })).toBeVisible();
   await expect(page.locator(".landing-story-edge-label[data-inviting]")).toHaveCount(1);
   await expect(page.locator(".landing-story-edge-label[data-inviting]"))
-    .toHaveAccessibleDescription("Try this relationship");
+    .not.toHaveAttribute("aria-describedby");
   const claim = page.getByRole("button", {
     name: "Carol Wong — beneficiary of — Evergreen Family Trust",
     exact: true,
   });
   await claim.focus();
-  await claim.press("Enter");
   await expect(page.locator(".landing-story-edge-label[data-inviting]")).toHaveCount(0);
-  await expect(page.getByText("Try this relationship", { exact: true })).toHaveCount(0);
+  await expect(claim).toHaveAttribute("aria-pressed", "false");
+  await claim.press("Enter");
   await page.emulateMedia({ reducedMotion: "reduce" });
   await expect(page.locator(".landing-story")).toHaveAttribute(
     "data-story-mode",
@@ -429,8 +454,10 @@ test("initial reduced motion shows all documents and keeps graph/source readable
     "data-story-mode",
     "static",
   );
-  await expect(page.getByText("Try this relationship", { exact: true })).toBeVisible();
-  await expect(page.locator(".landing-story-relationship-hint")).toHaveCSS("transform", "none");
+  await expect(page.locator(".landing-story-edge-label[data-inviting]")).toHaveCount(1);
+  await expect(page.locator(".landing-story-invitation-trace")).toHaveCount(0);
+  await expect(page.locator(".landing-story-edge-label[data-inviting] .landing-story-relationship-surface"))
+    .toHaveCSS("transform", "none");
   await expect(page.locator(".landing-story-graph-heading")).toHaveCSS("opacity", "1");
   const source = page.locator(".landing-story-source-text");
   const text = await source.textContent();
@@ -616,46 +643,197 @@ test("language changes keep exact source and canonical selection; public and pra
   await expect(page.locator(".atlas")).toBeVisible();
 });
 
-test("contextual hint clears graph labels, captions and Evidence in both languages and dismisses on selection", async ({ page }, info) => {
+test("the invitation keeps clear, fixed targets in both languages and reduced motion; touch selects canonical Evidence", async ({ page }, info) => {
   const errors: string[] = [];
   page.on("pageerror", error => errors.push(error.message));
+  await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/");
   await openReview(page);
+  const target = page.getByRole("button", {
+    name: "Alice Chen — settlor of — Evergreen Family Trust",
+    exact: true,
+  });
+  const targetIndex = await target.getAttribute("data-relationship-index");
   const selection = page.locator('.landing-story-edge-label[aria-pressed="true"]');
   const initial = await selection.getAttribute("data-relationship-index");
   const source = await page.locator(".landing-story-source-text").textContent();
   const widths = info.project.name === "phone" ? [320, 390, 700] : [701, 900, 1512];
-  for (const reducedMotion of ["no-preference", "reduce"] as const) {
-    await page.locator(".landing-masthead select").selectOption("en");
-    await page.emulateMedia({ reducedMotion });
-    await page.goto("/");
-    await openReview(page);
-    for (const width of widths) {
-      await page.setViewportSize({ width, height: info.project.name === "phone" ? 844 : 982 });
-      for (const locale of ["en", "zh-CN"]) {
-        await page.locator(".landing-masthead select").selectOption(locale);
-        if (reducedMotion === "no-preference") await storyProgress(page, 1);
-        const hint = page.locator(".landing-story-relationship-hint");
-        await expect(hint).toHaveCSS("opacity", "1");
-        await expect(hint).toHaveText(locale === "en" ? "Try this relationship" : "试着选择这项关系");
-        await expect(selection).toHaveAttribute("data-relationship-index", initial!);
-        await expect(page.locator(".landing-story-edge-label[data-inviting]")).toHaveAttribute("aria-pressed", "false");
-        await clearRelationshipHint(page);
-        if (width <= 700) await clearPhoneLabels(page);
-        if (reducedMotion === "reduce") await expect(hint).toHaveCSS("transform", "none");
-        await page.locator(".landing-story-graph-holder").screenshot({ path: info.outputPath(`hint-${width}-${locale}-${reducedMotion}.png`) });
-      }
+  for (const width of widths) {
+    await page.setViewportSize({ width, height: info.project.name === "phone" ? 844 : 982 });
+    for (const locale of ["en", "zh-CN"]) {
+      await page.locator(".landing-masthead select").selectOption(locale);
+      const invited = page.locator(".landing-story-edge-label[data-inviting]");
+      await expect(invited).toHaveAttribute("data-relationship-index", targetIndex!);
+      await expect(invited).toHaveAttribute("aria-pressed", "false");
+      await expect(selection).toHaveAttribute("data-relationship-index", initial!);
+      await expect(page.locator(".landing-story-invitation-trace")).toHaveCount(0);
+      await expect(invited.locator(".landing-story-relationship-surface")).toHaveCSS("transform", "none");
+      await expect(page.locator(".landing-story-relationship-hint")).toHaveCount(0);
+      const bounds = await invited.boundingBox();
+      expect(bounds!.width).toBeGreaterThanOrEqual(44 - 0.001);
+      expect(bounds!.height).toBeGreaterThanOrEqual(44 - 0.001);
+      expect(bounds!.x).toBeGreaterThanOrEqual(0);
+      expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(width);
+      const capsule = await invited.evaluate(button => {
+        const surface = button.querySelector(".landing-story-relationship-surface")!.getBoundingClientRect();
+        const outline = button.querySelector(".landing-story-invitation-outline")!.getBoundingClientRect();
+        return {
+          widthInset: surface.width - outline.width,
+          heightInset: surface.height - outline.height,
+          xInset: Math.abs(outline.x - surface.x),
+          yInset: Math.abs(outline.y - surface.y),
+        };
+      });
+      // Capture both rects together while locale changes can still reposition the label.
+      // The absolute outline fills the capsule inside its 1px border.
+      expect(capsule.widthInset).toBeLessThanOrEqual(2.1);
+      expect(capsule.heightInset).toBeLessThanOrEqual(2.1);
+      expect(capsule.xInset).toBeLessThanOrEqual(1.1);
+      expect(capsule.yInset).toBeLessThanOrEqual(1.1);
+      if (width <= 700) await clearPhoneLabels(page);
     }
   }
   expect(await page.locator(".landing-story-source-text").textContent()).toBe(source);
-  const target = page.locator(".landing-story-edge-label[data-inviting]");
+  await page.locator(".landing-masthead select").selectOption("en");
   if (info.project.name === "phone") await target.tap();
   else {
     await target.focus();
+    await expect(target).toHaveAttribute("aria-pressed", "false");
     await target.press("Space");
   }
-  await expect(page.locator(".landing-story-relationship-hint")).toHaveCount(0);
-  await page.locator(".landing-masthead select").selectOption("en");
-  await expect(page.locator(".landing-story-relationship-hint")).toHaveCount(0);
+  await expect(target).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator(".landing-story-edge-label[data-inviting]")).toHaveCount(0);
+  await selectedQuoteVisible(page);
+  const response = await page.request.get(publicCase);
+  const { state } = (await response.json()) as { state: CanonicalState };
+  const relationship = state.relationships[Number(targetIndex)];
+  for (const id of relationship.evidence_ids) {
+    const evidence = state.evidence.find(item => item.id === id)!;
+    await expect(page.locator(`mark[data-evidence-ids~="${id}"]`)).toHaveText(evidence.supporting_text);
+  }
+  await page.locator(".landing-masthead select").selectOption("zh-CN");
+  await expect(page.locator(".landing-story-edge-label[data-inviting]")).toHaveCount(0);
   expect(errors).toEqual([]);
+});
+
+test("the chalk invitation plays once, keeps its hit target fixed, and does not select Evidence", async ({ page }) => {
+  await page.goto("/");
+  await openReview(page);
+  const invited = page.locator(".landing-story-edge-label[data-inviting]");
+  await expect(invited).toHaveAccessibleName("Alice Chen — settlor of — Evergreen Family Trust");
+  await expect(page.locator(".landing-story-relationship-hint")).toHaveCount(0);
+  const initialSelection = await page.locator('.landing-story-edge-label[aria-pressed="true"]')
+    .getAttribute("data-relationship-index");
+  const initialEvidence = await page.locator(".landing-story-source-meta").textContent();
+  const initialBounds = await invited.boundingBox();
+  await expect(invited).toHaveAttribute("data-invitation-state", "playing");
+  await expect(page.locator(".landing-story-invitation-trace")).toHaveCount(1);
+  const movingHitTarget = await invited.evaluate(async element => {
+    const origin = element.getBoundingClientRect();
+    let moved = false;
+    while (element.getAttribute("data-invitation-state") === "playing") {
+      await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
+      const bounds = element.getBoundingClientRect();
+      moved ||= (["x", "y", "width", "height"] as const).some(key =>
+        Math.abs(bounds[key] - origin[key]) > 0.1,
+      );
+    }
+    return moved;
+  });
+  expect(movingHitTarget).toBe(false);
+  await expect(invited).toHaveAttribute("data-invitation-state", "settled");
+  await expect(page.locator(".landing-story-invitation-trace")).toHaveCount(0);
+  const pulse = await invited.evaluate(async button => {
+    const surface = button.querySelector(".landing-story-relationship-surface")!;
+    const scales: number[] = [];
+    const glow: number[] = [];
+    const origin = button.getBoundingClientRect();
+    let moved = false;
+    for (let frame = 0; frame < 30; frame++) {
+      await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
+      scales.push(new DOMMatrix(getComputedStyle(surface).transform).m11);
+      glow.push(Number(getComputedStyle(surface, "::after").opacity));
+      const bounds = button.getBoundingClientRect();
+      moved ||= (["x", "y", "width", "height"] as const).some(key =>
+        Math.abs(bounds[key] - origin[key]) > 0.1,
+      );
+    }
+    return {
+      scaleRange: Math.max(...scales) - Math.min(...scales),
+      glowRange: Math.max(...glow) - Math.min(...glow),
+      moved,
+    };
+  });
+  expect(pulse.scaleRange).toBeGreaterThan(0.003);
+  expect(pulse.glowRange).toBeGreaterThan(0.05);
+  expect(pulse.moved).toBe(false);
+  const settledBounds = await invited.boundingBox();
+  for (const key of ["x", "y", "width", "height"] as const)
+    expect(settledBounds![key]).toBeCloseTo(initialBounds![key], 1);
+  await expect(invited).toHaveAttribute("aria-pressed", "false");
+  await expect(page.locator('.landing-story-edge-label[aria-pressed="true"]'))
+    .toHaveAttribute("data-relationship-index", initialSelection!);
+  await expect(page.locator(".landing-story-source-meta")).toHaveText(initialEvidence!);
+  await storyProgress(page, 0.1);
+  await expect(page.locator(".landing-story-edge-label[data-inviting]")).toHaveCount(0);
+  await trackProgress(page, 0.83);
+  expect(await invited.getAttribute("data-invitation-state")).toBe("settled");
+  await expect(page.locator(".landing-story-invitation-trace")).toHaveCount(0);
+  await page.locator(".landing-masthead select").selectOption("zh-CN");
+  expect(await invited.getAttribute("data-invitation-state")).toBe("settled");
+});
+
+test("pointer exploration cancels the cue without selecting or moving Evidence and leaves the button fixed", async ({ page }, info) => {
+  test.skip(info.project.name !== "desktop", "Pointer movement uses the desktop project.");
+  await page.goto("/");
+  await openReview(page);
+  const claim = page.getByRole("button", {
+    name: "Carol Wong — beneficiary of — Evergreen Family Trust",
+    exact: true,
+  });
+  const source = page.locator(".landing-story-source-scroll");
+  await expect(page.locator(".landing-story-edge-label[data-inviting]")).toHaveCount(1);
+  const invitationIndex = await page.locator(".landing-story-edge-label[data-inviting]")
+    .getAttribute("data-relationship-index");
+  const formerInvitation = page.locator(`.landing-story-edge-label[data-relationship-index="${invitationIndex}"] .landing-story-relationship-surface`);
+  const initialEvidence = await page.locator(".landing-story-source-meta").textContent();
+  // Opening review starts a smooth source reveal; measure after that existing movement ends.
+  const revealSettled = await source.evaluate(async element => {
+    let previous = element.scrollTop;
+    let stableFrames = 0;
+    for (let frame = 0; frame < 120; frame++) {
+      await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
+      const current = element.scrollTop;
+      stableFrames = current === previous ? stableFrames + 1 : 0;
+      if (stableFrames >= 6) return true;
+      previous = current;
+    }
+    return false;
+  });
+  expect(revealSettled).toBe(true);
+  const scroll = await source.evaluate(element => element.scrollTop);
+  const outerScroll = await page.evaluate(() => window.scrollY);
+  const bounds = await claim.boundingBox();
+  await claim.hover();
+  await expect(page.locator(".landing-story-edge-label[data-inviting]")).toHaveCount(0);
+  await expect(page.locator(".landing-story-invitation-trace")).toHaveCount(0);
+  expect(await formerInvitation.evaluate(element => getComputedStyle(element, "::after").animationName))
+    .toBe("none");
+  await expect.poll(() => formerInvitation.evaluate(element =>
+    new DOMMatrix(getComputedStyle(element).transform).m11,
+  )).toBeCloseTo(1, 3);
+  await expect(claim).toHaveAttribute("aria-pressed", "false");
+  await expect.poll(() => claim.locator(".landing-story-relationship-surface").evaluate(element => {
+    const matrix = new DOMMatrix(getComputedStyle(element).transform);
+    return Math.abs(matrix.m11 - 1) + Math.abs(matrix.m41) + Math.abs(matrix.m42) > 0.001;
+  })).toBe(true);
+  await expect(page.locator(".landing-story-source-meta")).toHaveText(initialEvidence!);
+  expect(await source.evaluate(element => element.scrollTop)).toBe(scroll);
+  expect(await page.evaluate(() => window.scrollY)).toBe(outerScroll);
+  const hovered = await claim.boundingBox();
+  for (const key of ["x", "y", "width", "height"] as const)
+    expect(hovered![key]).toBeCloseTo(bounds![key], 1);
+  await storyProgress(page, 0.1);
+  await storyProgress(page, 1);
+  await expect(page.locator(".landing-story-edge-label[data-inviting]")).toHaveCount(0);
 });

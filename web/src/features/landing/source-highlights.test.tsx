@@ -74,6 +74,7 @@ describe("exact full-source Evidence", () => {
         source={source}
         evidence={evidence}
         relationship="First relationship"
+        selectionVersion={0}
         reduced={false}
         active={false}
       />,
@@ -84,6 +85,7 @@ describe("exact full-source Evidence", () => {
         source={source}
         evidence={evidence}
         relationship="First relationship"
+        selectionVersion={0}
         reduced={false}
         active
       />,
@@ -123,6 +125,40 @@ describe("exact full-source Evidence", () => {
     fireEvent(pane, new Event("wheel"));
     expect(scrollTo).toHaveBeenCalledTimes(count);
   });
+  it("sweeps only explicitly selected Evidence and preserves exact text when motion is reduced", () => {
+    const props = { source, evidence, relationship: "Relationship", active: true };
+    const { container, rerender } = render(
+      <SourceReview {...props} reduced={false} selectionVersion={0} />,
+    );
+    expect(container.querySelectorAll("mark").length).toBeGreaterThan(0);
+    expect(container.querySelector("mark[data-reveal]")).toBeNull();
+    rerender(<SourceReview {...props} reduced={false} selectionVersion={1} />);
+    expect(container.querySelectorAll("mark[data-reveal]")).toHaveLength(
+      container.querySelectorAll("mark").length,
+    );
+    expect(container.querySelector(".landing-story-source-text")?.textContent).toBe(source.text);
+    rerender(<SourceReview {...props} reduced selectionVersion={2} />);
+    expect(container.querySelector("mark[data-reveal]")).toBeNull();
+    expect(container.querySelector(".landing-story-source-text")?.textContent).toBe(source.text);
+    expect(container.querySelectorAll('[data-evidence-ids~="one"]').length)
+      .toBeGreaterThan(0);
+  });
+  it("reselecting the same relationship follows its current Evidence mark on later source resize", () => {
+    const props = { source, evidence, relationship: "Relationship", active: true, reduced: false };
+    const { container, rerender } = render(
+      <SourceReview {...props} selectionVersion={1} />,
+    );
+    const firstMark = container.querySelector("mark")!;
+    vi.spyOn(firstMark, "getBoundingClientRect").mockReturnValue(new DOMRect(0, 100, 10, 10));
+    rerender(<SourceReview {...props} selectionVersion={2} />);
+    const currentMark = container.querySelector("mark")!;
+    expect(currentMark).not.toBe(firstMark);
+    vi.spyOn(currentMark, "getBoundingClientRect").mockReturnValue(new DOMRect(0, 400, 10, 10));
+    resizeSource();
+    expect(scrollTo).toHaveBeenLastCalledWith({ top: 365, behavior: "smooth" });
+    expect(disconnectSource).toHaveBeenCalledOnce();
+    expect(container.querySelector(".landing-story-source-text")?.textContent).toBe(source.text);
+  });
   it("uses instant scrolling for reduced motion and excludes Evidence from another source", () => {
     const { container } = render(
       <SourceReview
@@ -132,6 +168,7 @@ describe("exact full-source Evidence", () => {
           { ...quote("other", "End"), source_id: "another" },
         ]}
         relationship="Relationship"
+        selectionVersion={1}
         reduced
         active
       />,

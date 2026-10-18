@@ -9,12 +9,14 @@ export function SourceReview({
   reduced,
   relationship,
   active,
+  selectionVersion,
 }: {
   source: Source;
   evidence: Evidence[];
   reduced: boolean;
   relationship: string;
   active: boolean;
+  selectionVersion: number;
 }) {
   const copy = useStoryCopy();
   const pane = useRef<HTMLDivElement>(null);
@@ -77,7 +79,7 @@ export function SourceReview({
       container.removeEventListener("pointerdown", cancelScroll);
       container.removeEventListener("keydown", cancelOnKey);
     };
-  }, [active, parts, reduced]);
+  }, [active, parts, reduced, selectionVersion]);
   return (
     <aside className="landing-story-source-review" aria-label={copy.sourcePane}>
       <div className="landing-story-source-header">
@@ -100,7 +102,11 @@ export function SourceReview({
         <div className="landing-story-source-text">
           {parts.map((part) =>
             part.ids.length ? (
-              <mark key={part.start} data-evidence-ids={part.ids.join(" ")}>
+              <mark
+                key={`${selectionVersion}-${part.start}`}
+                data-evidence-ids={part.ids.join(" ")}
+                data-reveal={(selectionVersion > 0 && !reduced) || undefined}
+              >
                 {part.text}
               </mark>
             ) : (
