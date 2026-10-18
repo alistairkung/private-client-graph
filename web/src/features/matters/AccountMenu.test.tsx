@@ -5,7 +5,7 @@ import { AccountMenu } from "./AccountMenu";
 
 test("reveals only the authenticated practitioner's secondary actions", async () => {
   const user = userEvent.setup();
-  render(<AccountMenu />);
+  render(<AccountMenu access={{ can_write: true, sign_in_available: true }} />);
 
   const trigger = screen.getByRole("button", { name: "Account and application menu" });
   expect(trigger).toHaveAttribute("aria-expanded", "false");
@@ -21,7 +21,7 @@ test("reveals only the authenticated practitioner's secondary actions", async ()
 
 test("supports keyboard toggling and returns focus after Escape", async () => {
   const user = userEvent.setup();
-  render(<AccountMenu />);
+  render(<AccountMenu access={{ can_write: true, sign_in_available: true }} />);
   const trigger = screen.getByRole("button", { name: "Account and application menu" });
 
   trigger.focus();
@@ -42,7 +42,7 @@ test("supports keyboard toggling and returns focus after Escape", async () => {
 
 test("closes when the user clicks or moves focus outside the control", async () => {
   const user = userEvent.setup();
-  render(<><AccountMenu /><button type="button">Other action</button></>);
+  render(<><AccountMenu access={{ can_write: true, sign_in_available: true }} /><button type="button">Other action</button></>);
   const trigger = screen.getByRole("button", { name: "Account and application menu" });
   const other = screen.getByRole("button", { name: "Other action" });
 
@@ -65,7 +65,7 @@ test("keeps failed sign-out in the menu and permits a protected retry", async ()
     .mockResolvedValueOnce(new Response("Unavailable", { status: 503 }))
     .mockImplementationOnce(() => new Promise(resolve => { finishRetry = resolve; }));
   const user = userEvent.setup();
-  render(<AccountMenu />);
+  render(<AccountMenu access={{ can_write: true, sign_in_available: true }} />);
 
   await user.click(screen.getByRole("button", { name: "Account and application menu" }));
   await user.click(screen.getByRole("button", { name: "Sign out" }));
@@ -89,10 +89,26 @@ test("completes successful sign-out through the supplied navigation boundary", a
   vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(null, { status: 204 }));
   const signedOut = vi.fn();
   const user = userEvent.setup();
-  render(<AccountMenu onSignOut={signedOut} />);
+  render(<AccountMenu access={{ can_write: true, sign_in_available: true }} onSignOut={signedOut} />);
 
   await user.click(screen.getByRole("button", { name: "Account and application menu" }));
   await user.click(screen.getByRole("button", { name: "Sign out" }));
 
   await waitFor(() => expect(signedOut).toHaveBeenCalledOnce());
+});
+
+
+test("anonymous readers see sign-in and never a signed-in account action", async () => {
+  render(<AccountMenu access={{ can_write: false, sign_in_available: true }} />);
+  await userEvent.click(screen.getByRole("button", { name: "Account and application menu" }));
+  expect(screen.getByRole("link", { name: "Sign in to make changes" })).toHaveAttribute("href", "/auth/login?next=/app");
+  expect(screen.queryByRole("button", { name: "Sign out" })).not.toBeInTheDocument();
+});
+
+test("unavailable authentication leaves public navigation usable", async () => {
+  render(<AccountMenu access={{ can_write: false, sign_in_available: false }} />);
+  await userEvent.click(screen.getByRole("button", { name: "Account and application menu" }));
+  expect(screen.getByRole("link", { name: "Public showcase" })).toBeVisible();
+  expect(screen.getByText(/Sign-in is currently unavailable/)).toBeVisible();
+  expect(screen.queryByRole("button", { name: "Sign out" })).not.toBeInTheDocument();
 });

@@ -10,27 +10,18 @@ from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
 from private_client_graph.api.public_research import router as public_research_router
-from private_client_graph.api.auth import AuthConfig, configure_auth
+from private_client_graph.api.auth import configure_auth
 from private_client_graph.api.matter_proposals import router as proposal_router, proposal_failure
 from private_client_graph.application.matter_confirmation import confirm_matter
 from private_client_graph.application.proposal_errors import ProposalFailure
 from private_client_graph.application.matters import MatterDetail, MatterSummary, get_matter, list_matters
 from private_client_graph.persistence.database import database_engine
+from private_client_graph.pipeline import PipelineExecutionError
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
-from private_client_graph.application.case_analysis import analyse_case, get_case
 from private_client_graph.application.showcase_cases import ShowcaseCase, ShowcaseCaseSummary, get_showcase_case, list_showcase_cases
-from private_client_graph.application.contracts import (
-    LiveAvailability,
-    AnalysisError,
-    AnalysisRequest,
-    CaseAnalysis,
-    CaseDetail,
-)
-from private_client_graph.application.errors import AnalysisFailure
-from private_client_graph.application.showcase_live import LiveConfig
 from private_client_graph.application.proposal_config import ProposalAnalysisConfig
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -38,11 +29,7 @@ WEB_DIST = ROOT / "web" / "dist"
 
 
 def health(request: Request) -> JSONResponse:
-    if request.app.state.auth_config is None or request.app.state.proposal_analysis is None:
-        return JSONResponse(status_code=503, content={"status": "unavailable"})
     try:
-        AuthConfig.from_environment()
-        ProposalAnalysisConfig.from_environment()
         with database_engine().connect() as connection:
             connection.execute(text("SELECT 1"))
     except (SQLAlchemyError, ValueError):
@@ -83,32 +70,14 @@ def matter_detail(internal_id: UUID) -> MatterDetail | JSONResponse:
     return matter
 
 
-def case_detail(request: Request, response: Response) -> CaseDetail:
-    response.headers["Cache-Control"] = "no-store"
-    detail = get_case()
-    # Public exploration is always provider-independent.
-    detail.live_analysis = LiveAvailability(state="disabled")
-    return detail
-
-
-def case_analysis(body: AnalysisRequest, request: Request) -> CaseAnalysis:
-    if body.mode == "live":
-        raise AnalysisFailure(AnalysisError(stage="availability", message="Public live analysis is disabled. Explore the curated synthetic examples."), 403)
-    return analyse_case("sample", request.app.state.showcase_live)
-
-
 def showcase_case(case_id: str) -> ShowcaseCase | JSONResponse:
-    case = get_showcase_case(case_id)
+    try:
+        case = get_showcase_case(case_id)
+    except (OSError, UnicodeError, ValueError, PipelineExecutionError):
+        return JSONResponse(status_code=503, content={"error": {"message": "Synthetic case could not be loaded."}})
     if case is None:
         return JSONResponse(status_code=404, content={"error": {"message": "Synthetic case not found."}})
     return case
-
-
-async def analysis_failure(request: Request, exc: Exception) -> JSONResponse:
-    assert isinstance(exc, AnalysisFailure)
-    return JSONResponse(
-        status_code=exc.status_code, content={"error": exc.error.model_dump(mode="json")}
-    )
 
 
 async def invalid_request(
@@ -130,10 +99,7 @@ async def invalid_request(
         }})
     if request.url.path.startswith("/api/matters/"):
         return JSONResponse(status_code=422, content={"error": {"message": "Invalid Matter UUID."}})
-    error = AnalysisError(
-        stage="request", message="Choose live or sample analysis only."
-    )
-    return JSONResponse(status_code=422, content={"error": error.model_dump()})
+    return JSONResponse(status_code=422, content={"error": {"message": "Invalid request."}})
 
 
 def create_app(web_dist: Path = WEB_DIST) -> FastAPI:
@@ -146,7 +112,6 @@ def create_app(web_dist: Path = WEB_DIST) -> FastAPI:
         application.state.proposal_analysis = proposal_config
     except ValueError:
         application.state.proposal_analysis = None
-    application.state.showcase_live = LiveConfig()
     application.include_router(proposal_router)
     application.include_router(public_research_router)
     application.add_exception_handler(ProposalFailure, proposal_failure)
@@ -164,18 +129,8 @@ def create_app(web_dist: Path = WEB_DIST) -> FastAPI:
     application.add_api_route(
         "/api/matters/{internal_id}", matter_detail, methods=["GET"], response_model=MatterDetail
     )
-    application.add_api_route(
-        "/api/showcase/case-01", case_detail, methods=["GET"], response_model=CaseDetail
-    )
-    application.add_api_route(
-        "/api/showcase/case-01/analysis",
-        case_analysis,
-        methods=["POST"],
-        response_model=CaseAnalysis,
-    )
     application.add_api_route("/api/showcase/cases", list_showcase_cases, methods=["GET"], response_model=list[ShowcaseCaseSummary])
     application.add_api_route("/api/showcase/cases/{case_id}", showcase_case, methods=["GET"], response_model=ShowcaseCase)
-    application.add_exception_handler(AnalysisFailure, analysis_failure)
     application.add_exception_handler(RequestValidationError, invalid_request)
     if web_dist.is_dir():
         def practitioner_shell() -> FileResponse:
@@ -193,8 +148,11 @@ def create_app(web_dist: Path = WEB_DIST) -> FastAPI:
         # Public presentation-only routes never enter the practitioner namespace.
         application.add_api_route("/research-results", practitioner_shell, include_in_schema=False)
         application.add_api_route("/research-results/", practitioner_shell, include_in_schema=False)
-        application.add_api_route("/demo", practitioner_shell, include_in_schema=False)
-        application.add_api_route("/demo/{demo_path:path}", practitioner_shell, include_in_schema=False)
+        def legacy_demo(demo_path: str = "") -> RedirectResponse:
+            return RedirectResponse("/app", status_code=308)
+
+        application.add_api_route("/demo", legacy_demo, include_in_schema=False)
+        application.add_api_route("/demo/{demo_path:path}", legacy_demo, include_in_schema=False)
         application.mount(
             "/", StaticFiles(directory=web_dist, html=True), name="frontend"
         )

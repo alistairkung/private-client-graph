@@ -89,7 +89,7 @@ An explicitly identified body of source text treated as authoritative for a Matt
 _Avoid_: Benchmark fixture, uploaded document
 
 **Public Showcase**:
-The explicitly synthetic demonstration journey that exposes live or sample analysis of fixed Case 01 material. It is separate from the persisted practitioner application.
+The explicitly synthetic demonstration journey that presents curated examples of relationship structures and their supporting Evidence. It is separate from the durable Matter state in the Practitioner Application.
 _Avoid_: Matter workspace, practitioner application
 
 **Practitioner Application**:
@@ -105,5 +105,5 @@ Durable pre-Matter review state created after successful synchronous analysis, c
 _Avoid_: Intake job, proposed Matter, draft Matter, analysis job, analysis run
 
 **Prototype Tenant**:
-The single organizational boundary assumed by an isolated synthetic prototype environment. Every allowlisted practitioner within it can access every Matter Proposal and Matter; it is not a production firm or multi-firm tenancy model.
+The single organizational boundary assumed by an isolated synthetic prototype environment. Its Matter Proposals and Matters are publicly readable, while only allowlisted practitioners can change shared state; it is not a production firm or multi-firm tenancy model.
 _Avoid_: Firm, production tenant

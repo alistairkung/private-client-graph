@@ -1,5 +1,9 @@
 # Practitioner Matter workspace slice
 
+The current public-read/authenticated-action policy is recorded in
+[ADR 0011](../adr/0011-make-synthetic-matter-reads-public.md), superseding this
+slice's historical access and executable-showcase requirements.
+
 > **Status:** Accepted design; implementation pending.
 
 ## Goal

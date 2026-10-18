@@ -1,5 +1,7 @@
 # Use the deployment as the synthetic prototype tenant
 
+The authorization boundary below is superseded by [ADR 0011](0011-make-synthetic-matter-reads-public.md). The single-deployment synthetic Prototype Tenant remains in effect.
+
 The Matter Intake prototype is limited to synthetic material and uses one isolated deployment as its tenancy boundary. Named allowlisted practitioners authenticate through Google OIDC at the Practitioner Application boundary, and every allowed practitioner can access all Matter Proposals and Matters in that deployment; the prototype therefore introduces no persisted Firm or Tenant model, per-user ownership, assignments, roles, or per-resource access-control lists.
 
 ## Consequences

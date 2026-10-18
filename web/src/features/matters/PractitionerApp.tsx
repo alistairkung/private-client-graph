@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+import { getAccess, type Access } from "./access";
 import { useLocale } from "../../shared/locale";
 import { LanguageControl } from "../../shared/LanguageControl";
 import "./practitioner.css";
@@ -10,8 +12,25 @@ import { ProposalWorkspace } from "../matter-proposals/ProposalWorkspace";
 import "../matter-proposals/proposals.css";
 import { BrandMark } from "../../shared/brand/BrandMark";
 
+type AccessState = { status: "loading" | "error" } | { status: "ready"; access: Access };
+
 export function PractitionerApp({ matterId, proposalId }: { matterId?: string; proposalId?: string }) {
   const { t } = useLocale();
+  const [accessState, setAccessState] = useState<AccessState>({ status: "loading" });
+  const [accessAttempt, setAccessAttempt] = useState(0);
+  useEffect(() => {
+    let active = true;
+    getAccess().then(
+      access => { if (active) setAccessState({ status: "ready", access }); },
+      () => { if (active) setAccessState({ status: "error" }); },
+    );
+    return () => { active = false; };
+  }, [accessAttempt]);
+  const access = accessState.status === "ready" ? accessState.access : undefined;
+  function retryAccess() {
+    setAccessState({ status: "loading" });
+    setAccessAttempt(attempt => attempt + 1);
+  }
   return (
     <div className="practitioner-shell">
       <header className="ledger-header">
@@ -25,15 +44,21 @@ export function PractitionerApp({ matterId, proposalId }: { matterId?: string; p
           </nav>
           <div className="app-header-utilities">
             <LanguageControl compact />
-            <AccountMenu />
+            <AccountMenu access={access} />
           </div>
         </div>
       </header>
       <main className="ledger-content ledger-width">
         <div className="practitioner-access">
           <p>{t("This prototype accepts synthetic or fictional material only. It is not suitable for real confidential client information.")}</p>
+          <p>{t("Sources, Matter Proposals and Matters are publicly readable, including proposals awaiting confirmation.")}</p>
         </div>
-        <PractitionerPage matterId={matterId} proposalId={proposalId} />
+        {accessState.status === "loading" && <p role="status">{t("Checking sign-in and editing access…")}</p>}
+        {accessState.status === "error" && <div role="alert">
+          <p>{t("Sign-in and editing access could not be checked. You can still read Matters and proposals.")}</p>
+          <button type="button" onClick={retryAccess}>{t("Retry access check")}</button>
+        </div>}
+        <PractitionerPage matterId={matterId} proposalId={proposalId} access={access} />
       </main>
       <footer className="ledger-footer ledger-width">
         <span>Private Client Graph</span>
@@ -43,14 +68,23 @@ export function PractitionerApp({ matterId, proposalId }: { matterId?: string; p
   );
 }
 
-function PractitionerPage({ matterId, proposalId }: { matterId?: string; proposalId?: string }) {
+function PractitionerPage({ matterId, proposalId, access }: { matterId?: string; proposalId?: string; access?: Access }) {
   const { t } = useLocale();
   const navigate = (path: string) => window.location.assign(path);
   if (matterId) return <MatterWorkspace key={matterId} id={matterId} />;
-  if (proposalId === "new") return <CreateMatter onNavigate={navigate} />;
-  if (proposalId) return <ProposalWorkspace key={proposalId} id={proposalId} onNavigate={navigate} />;
+  if (proposalId === "new") {
+    if (!access) return null;
+    if (access.can_write) return <CreateMatter onNavigate={navigate} />;
+    return <p>{access.sign_in_available
+      ? <a href="/auth/login?next=/app/matter-proposals/new">{t("Sign in to make changes")}</a>
+      : t("Sign-in is currently unavailable. You can still read Matters and proposals.")}</p>;
+  }
+  if (proposalId) return <ProposalWorkspace key={proposalId} id={proposalId} onNavigate={navigate} canWrite={access?.can_write ?? false} />;
   return <>
-    <div className="ledger-title-row"><h1>{t("Matters")}</h1><a className="intake-button" href="/app/matter-proposals/new">{t("Create Matter")}</a></div>
+    <div className="ledger-title-row">
+      <h1>{t("Matters")}</h1>
+      <MatterCreationLink access={access} />
+    </div>
     <p className="ledger-intro">{t("Open a Matter or return to a proposal awaiting confirmation.")}</p>
     <ProposalCollection />
     <section className="matter-collection" aria-labelledby="accepted-matters">
@@ -59,4 +93,13 @@ function PractitionerPage({ matterId, proposalId }: { matterId?: string; proposa
       <MatterLedger />
     </section>
   </>;
+}
+
+
+function MatterCreationLink({ access }: { access?: Access }) {
+  const { t } = useLocale();
+  if (!access) return null;
+  if (access.can_write) return <a className="intake-button" href="/app/matter-proposals/new">{t("Create Matter")}</a>;
+  if (access.sign_in_available) return <a href="/auth/login?next=/app">{t("Sign in to make changes")}</a>;
+  return null;
 }

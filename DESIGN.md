@@ -111,9 +111,9 @@ Navigation links have at least 44px height and underline on hover.
 
 Evidence highlights preserve wrapping with cloned box decoration. The synthetic
 case label is small, spaced uppercase text. The demonstration frame reuses
-`ReviewWorkspace`, `SourcePanel`, and `AnalysisControls`; its local styling
-adjusts spacing without replacing review behavior. Analysis remains an explicit
-choice, with sample and live outcomes identified separately.
+`SourceAwareReviewWorkspace` and curated case selection; its local styling
+adjusts spacing without replacing review behavior. Each case loads its curated
+Sources, graph and exact Evidence without requesting analysis.
 
 Public anchor links use native smooth scrolling. Reduced-motion preferences
 restore instant anchor navigation and remove the action's brief color transition.

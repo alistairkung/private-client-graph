@@ -11,7 +11,7 @@ test("synthetic PDF becomes a reviewed proposal and confirms into the accepted M
   page.on("request", request => {
     if (request.method() === "POST" && new URL(request.url()).pathname === "/api/matter-proposals") creationRequests.push(request.url());
   });
-  await page.goto("/app");
+  await page.goto("/auth/login?next=/app");
   await page.getByRole("link", { name: "Create Matter", exact: true }).click();
   await expect(page).toHaveURL("/app/matter-proposals/new");
   await expect(page.getByText(/not suitable for real confidential client information/)).toBeVisible();
@@ -51,7 +51,7 @@ test("synthetic PDF becomes a reviewed proposal and confirms into the accepted M
   await page.getByRole("button", { name: "Confirm and create Matter" }).click();
   await expect(page).toHaveURL(/\/app\/matters\/[a-f0-9-]{36}$/);
   const matterPath = new URL(page.url()).pathname;
-  await expect(page.getByRole("status")).toContainText("Matter created.");
+  await expect(page.getByRole("status").filter({ hasText: "Matter created." })).toContainText("Matter created.");
   await page.screenshot({ path: testInfo.outputPath("accepted-matter.png"), fullPage: true });
   await expect(page.getByRole("heading", { name: title, exact: true })).toBeVisible();
   const acceptedParent = page.getByRole("button", { name: "Alice Example — Parent of — Ben Example", exact: true });
@@ -77,7 +77,7 @@ test("synthetic PDF becomes a reviewed proposal and confirms into the accepted M
 
 
 test("multiple Trust roles remain independently selectable in the real review canvas", async ({ page }, testInfo) => {
-  await page.goto("/app");
+  await page.goto("/auth/login?next=/app");
   await page.getByRole("link", { name: "Create Matter", exact: true }).click();
   await page.getByRole("textbox", { name: "External Matter reference" }).fill(`Roles/${randomUUID()}`);
   await page.getByRole("textbox", { name: "Matter title", exact: true }).fill("Fictional multiple roles");
@@ -109,7 +109,7 @@ test("multiple Trust roles remain independently selectable in the real review ca
 
 test("saved intake can be kept, resumed, then permanently discarded", async ({ page, context }, testInfo) => {
   const reference = `Discard/${randomUUID()}`;
-  await page.goto("/app/matter-proposals/new");
+  await page.goto("/auth/login?next=/app/matter-proposals/new");
   await page.getByRole("textbox", { name: "External Matter reference" }).fill(reference);
   await page.getByRole("textbox", { name: "Matter title", exact: true }).fill("Fictional discard example");
   await page.getByLabel("PDF", { exact: true }).setInputFiles(sourcePdf);
@@ -137,7 +137,7 @@ test("saved intake can be kept, resumed, then permanently discarded", async ({ p
 
 test("two synthetic PDFs retain distinct Source evidence through confirmation and reopening", async ({ page, context }, testInfo) => {
   const reference = `Multi/${testInfo.project.name}/${randomUUID()}`;
-  await page.goto("/app/matter-proposals/new");
+  await page.goto("/auth/login?next=/app/matter-proposals/new");
   await page.getByRole("textbox", { name: "External Matter reference" }).fill(reference);
   await page.getByRole("textbox", { name: "Matter title", exact: true }).fill("Combined fictional review");
   await page.getByLabel("PDF", { exact: true }).setInputFiles([sourcePdf,

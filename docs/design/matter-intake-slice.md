@@ -2,6 +2,12 @@
 
 > **Status:** Accepted design; implementation pending and not yet authorized.
 
+> **Access-policy revision:** [ADR 0011](../adr/0011-make-synthetic-matter-reads-public.md)
+> supersedes this document's whole-application authentication, combined readiness
+> and public-navigation requirements. Matter/proposal reads are public; actions
+> retain allowlisted authentication, origin and CSRF protection. The original
+> design below records the intake workflow and its historical access boundary.
+
 ## Goal
 
 Design the smallest coherent practitioner workflow that begins before a Matter exists in Private Client Graph and ends with one complete persisted Matter open in the existing review workspace:

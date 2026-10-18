@@ -1,9 +1,8 @@
 from datetime import datetime, timezone
 
 
-def test_proposal_attempts_use_separate_persistent_fixed_windows(database):
+def test_proposal_attempts_use_persistent_fixed_windows(database):
     from private_client_graph.persistence.proposal_allowance import claim_slot, quota_reset
-    from private_client_graph.persistence.showcase_quota import claim_slot as showcase_claim
 
     now = datetime(2026, 10, 5, 12, 0, 15, tzinfo=timezone.utc)
     reset = datetime(2026, 10, 5, 12, 1, tzinfo=timezone.utc)
@@ -12,7 +11,6 @@ def test_proposal_attempts_use_separate_persistent_fixed_windows(database):
     assert claim_slot(limit=2, window_seconds=60, at=now) is None
     assert claim_slot(limit=2, window_seconds=60, at=now) == reset
     assert quota_reset(limit=2, window_seconds=60, at=now) == reset
-    assert showcase_claim(limit=1, window_seconds=60, at=now) is None
     assert claim_slot(limit=2, window_seconds=60, at=reset) is None
 
 

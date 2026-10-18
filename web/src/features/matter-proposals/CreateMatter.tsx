@@ -73,6 +73,7 @@ export function CreateMatter({ onNavigate }: { onNavigate: (path: string) => voi
     <a className="matter-back" href="/app">{t("Back to Matters")}</a>
     <h1>{t("Create Matter")}</h1>
     <p className="intake-intro">{t("Upload synthetic PDFs together. Review one combined proposal before creating the Matter.")}</p>
+    <p>{t("Uploaded Source text and the resulting proposal will be publicly readable before confirmation. Confirmed Matters are public too.")}</p>
     {showPrompt && <FictionalSourcePrompt onClose={() => setShowPrompt(false)} />}
     <div className="intake-layout">
     <form className="intake-form" onSubmit={submit}>

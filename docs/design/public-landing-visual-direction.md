@@ -52,10 +52,11 @@ or security claims are approved here.
 `LandingHero` implements the paper excerpt, independent editorial Person/Trust
 notation, and Case 01 anchor. `EvidenceChapter` implements the green chapter and
 exact spouse Evidence. `ShowcaseDemonstration` contains the existing
-`ReviewWorkspace`, `SourcePanel`, `AnalysisControls`, and `useCaseAnalysis`
-workflow. It initially displays the synthetic source; sample or live analysis is
-an explicit user action. Relationship selection and exact Evidence inspection
-remain the real review experience, with execution mode visible below the frame.
+`SourceAwareReviewWorkspace` and `useShowcaseCases` workflow. It loads curated
+synthetic Sources and their Canonical Graph through read-only case selection.
+Relationship selection and exact Evidence inspection remain the real review
+experience. The fixture notice distinguishes intended examples from measured
+model results; no showcase execution endpoint is used.
 
 The approved comp remains the visual source of truth. Intentional adaptations
 needed to preserve product truth and usable responsive behavior are:
@@ -65,8 +66,8 @@ needed to preserve product truth and usable responsive behavior are:
   over a decorative paper image.
 - The editorial illustration depicts Bob Chen's beneficiary relationship to the
   Evergreen Family Trust using a Trust triangle and connectors without arrows.
-- The demonstration retains its loading, availability, error, and explicit
-  analysis controls. These working states take precedence over static comp text.
+- The demonstration retains its loading, error, retry and curated case-selection
+  controls. These working states take precedence over static comp text.
 - At 1100px the demonstration caption moves above the frame to preserve review
   width. At mobile widths the hero and chapter reflow, and frame insets tighten
   while the shared workspace retains its responsive behavior.

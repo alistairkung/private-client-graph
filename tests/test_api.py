@@ -1,13 +1,8 @@
-from pathlib import Path
-
-import pytest
-
 from fastapi.testclient import TestClient
 
 from private_client_graph.api.app import app, create_app
 
 
-CASE = Path(__file__).resolve().parents[1] / "cases" / "case_01"
 client = TestClient(app)
 
 
@@ -33,48 +28,17 @@ def test_built_frontend_is_served_from_the_application(tmp_path, authenticated_c
     assert deployed_client.get("/unknown").status_code == 404
 
 
-def test_case_detail_is_authoritative_and_sample_builds_real_graph(
-    tmp_path, monkeypatch
-):
-    monkeypatch.setenv("PCG_RUN_DIR", str(tmp_path / "runs"))
-    detail = client.get("/api/showcase/case-01")
-    assert detail.status_code == 200
-    assert detail.json()["source_text"] == (CASE / "source.txt").read_text()
-    assert "synthetic" in detail.json()["notice"].lower()
-    response = client.post("/api/showcase/case-01/analysis", json={"mode": "sample"})
-    assert response.status_code == 200
-    result = response.json()
-    assert set(result) == {"execution", "graph"}
-    assert result["execution"] == {"mode": "sample", "run_artifact_id": None}
-    assert len(result["graph"]["relationships"]) == 6
-    assert len(result["graph"]["entities"]) == 5
-    assert all(item["document"] == "source.txt" for item in result["graph"]["evidence"])
-    assert not (tmp_path / "runs").exists()
+def test_retired_showcase_analysis_routes_are_unavailable(monkeypatch):
+    from private_client_graph.pipeline import Pipeline
 
+    def forbidden(*args, **kwargs):
+        raise AssertionError("Retired HTTP routes must not execute analysis")
 
-@pytest.mark.parametrize(
-    "body", [{}, {"mode": "other"}, {"mode": "sample", "source_text": "changed"}]
-)
-def test_request_accepts_only_an_explicit_mode(body):
-    response = client.post("/api/showcase/case-01/analysis", json=body)
-    assert response.status_code == 422
-    assert response.json()["error"]["stage"] == "request"
-
-
-@pytest.mark.parametrize(
-    "missing_file,stage",
-    [("source.txt", "source"), ("expected_extraction.json", "sample")],
-)
-def test_unavailable_case_files_have_stage_aware_errors(
-    tmp_path, monkeypatch, missing_file, stage
-):
-    from private_client_graph.application import case_analysis
-
-    for filename in ("source.txt", "expected_extraction.json"):
-        if filename != missing_file:
-            (tmp_path / filename).write_text((CASE / filename).read_text())
-    monkeypatch.setattr(case_analysis, "CASE", tmp_path)
-    response = client.post("/api/showcase/case-01/analysis", json={"mode": "sample"})
-    assert response.status_code == 500
-    assert response.json()["error"]["stage"] == stage
-    assert response.json()["error"]["retryable"] is False
+    monkeypatch.setattr(Pipeline, "run", forbidden)
+    monkeypatch.setattr(Pipeline, "run_from_extraction", forbidden)
+    paths = client.get("/openapi.json").json()["paths"]
+    for path in ("/api/showcase/case-01", "/api/showcase/case-01/analysis"):
+        assert path not in paths
+        assert client.get(path).status_code == 404
+        for mode in ("sample", "live"):
+            assert client.post(path, json={"mode": mode}).status_code in {404, 405}

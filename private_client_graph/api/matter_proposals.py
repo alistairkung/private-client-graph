@@ -1,4 +1,4 @@
-"""Authenticated HTTP boundary for proposal intake and review."""
+"""Public proposal review and authenticated synthetic intake and decisions."""
 
 from uuid import UUID
 

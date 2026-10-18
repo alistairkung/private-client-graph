@@ -34,7 +34,7 @@ test("locale changes retain showcase case, selected relationship and exact Evide
 });
 
 test("practitioner locale switch preserves intake fields and selected PDF", async ({ page }) => {
-  await page.goto("/app/matter-proposals/new");
+  await page.goto("/auth/login?next=/app/matter-proposals/new");
   const reference = page.locator('input[name="external_reference"]');
   const title = page.locator('input[name="matter_title"]');
   await reference.fill(`Locale/${randomUUID()}`);
@@ -70,7 +70,7 @@ test("translated accepted Matter preserves canonical data and selected quotation
 });
 
 test("language switching preserves the deliberately adjusted graph viewport", async ({ page }) => {
-  await page.goto("/demo/matter-proposals/hillcrest");
+  await page.goto(matterPath);
   await expect(page.locator(".react-flow__viewport")).toBeVisible();
   await page.getByRole("button", { name: "Zoom in", exact: true }).click();
   await page.waitForTimeout(400); // React Flow animates the control's viewport transition.
@@ -83,7 +83,7 @@ test("language switching preserves the deliberately adjusted graph viewport", as
 test("Chinese multi-PDF proposal confirms and reopens with unchanged Source Evidence", async ({ page, context }, testInfo) => {
   const reference = `中文/${testInfo.project.name}/${randomUUID()}`;
   const title = "Fictional Chinese acceptance review";
-  await page.goto("/app/matter-proposals/new");
+  await page.goto("/auth/login?next=/app/matter-proposals/new");
   await page.locator(".language-dropdown select").selectOption("zh-CN");
   await page.locator('input[name="external_reference"]').fill(reference);
   await page.locator('input[name="matter_title"]').fill(title);
