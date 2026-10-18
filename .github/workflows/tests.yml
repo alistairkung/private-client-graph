@@ -62,9 +62,22 @@ jobs:
         run: uv run mypy private_client_graph/application private_client_graph/api private_client_graph/persistence private_client_graph/research private_client_graph/pipeline private_client_graph/extraction private_client_graph/resolution.py private_client_graph/extract.py private_client_graph/workbench --follow-imports=silent
 
   browser_e2e:
-    name: browser-e2e
+    name: browser-e2e (${{ matrix.suite }})
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - suite: application
+            config: playwright.config.ts
+          - suite: research-history
+            config: playwright.research.config.ts
+          - suite: research-execution
+            config: playwright.execution.config.ts
+          - suite: research-substituted-live
+            config: playwright.live.config.ts
+    # Each matrix job owns its runner, PostgreSQL service and temporary test state.
     services:
       postgres:
         image: postgres:16
@@ -121,23 +134,19 @@ jobs:
         run: |
           uv run alembic upgrade head
           uv run python -m private_client_graph.persistence.seeds.evergreen
-      - name: Test professional-review journey
+      - name: Test ${{ matrix.suite }} journey
         working-directory: web
-        run: npx playwright test
-      - name: Test research history and Evidence journey
-        working-directory: web
-        run: npx playwright test --config playwright.research.config.ts
-      - name: Test offline research execution journey
-        working-directory: web
-        run: npx playwright test --config playwright.execution.config.ts
-      - name: Test explicitly authorized research execution with substituted providers
-        working-directory: web
-        run: npx playwright test --config playwright.live.config.ts
+        env:
+          PLAYWRIGHT_CONFIG: ${{ matrix.config }}
+          PLAYWRIGHT_JSON_OUTPUT_NAME: playwright-results.json
+        run: npx playwright test --config "$PLAYWRIGHT_CONFIG" --reporter=line,json
       - uses: actions/upload-artifact@v4
-        if: failure()
+        if: always()
         with:
-          name: browser-test-results
-          path: web/test-results/
+          name: browser-test-results-${{ matrix.suite }}
+          path: |
+            web/test-results/
+            web/playwright-results.json
 
   docker_smoke:
     name: docker-smoke
