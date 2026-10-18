@@ -34,7 +34,7 @@ export function ResearchStory({ snapshot }: { snapshot: PublicResearchSnapshot }
       <p>{t("The comparison was post-hoc and exploratory. These are project-created cases, not an external benchmark. Publishing their Sources and answer key means they can no longer serve as unseen cases for subsequent work informed by this publication.")}</p>
     </Chapter>
     <RunComparison runs={snapshot.runs} />
-    <Chapter id="failure-analysis" title="Two names changed the score.">
+    <Chapter id="failure-analysis" title="One person. Two corrected endpoints.">
       <p>{t("In Case 03, the Source explicitly establishes that Bea refers to Beatrice Ng. The baseline nevertheless used Bea as the endpoint of two relationships. Resolution changed those endpoints to Beatrice Ng, moving both relationships from false-positive / false-negative pairs to true positives. The supporting documentary quotations did not change.")}</p>
       <p>{t("Switch between the recorded graphs, select a relationship, then open its expected or predicted Evidence in the original Source. The graph shows retained canonical state; missing expected relationships remain inspectable in the case comparison below.")}</p>
       {correction && <RecordedGraph sample={correction} />}
@@ -51,7 +51,7 @@ export function ResearchStory({ snapshot }: { snapshot: PublicResearchSnapshot }
       <Provenance runs={snapshot.runs} />
       <Usage runs={snapshot.runs} />
     </Chapter>
-    <Chapter id="reproducibility" title="Reproduce the published record.">
+    <Chapter id="reproducibility" title="Inspect the published record.">
       <p>{t("Micro F1 pools true positives, false positives and false negatives across cases; macro F1 averages case-level F1. Neither defines true negatives. Approved-quote provenance checks exact approved text on matched relationships; Source-pair attribution additionally checks the recorded Source identity.")}</p>
       <p>{t("Original case names, Sources, entity names and Evidence remain in their original language. Interface translation does not alter the published artifacts.")}</p>
       <Publication snapshot={snapshot} />

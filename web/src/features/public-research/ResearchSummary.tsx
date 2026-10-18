@@ -25,7 +25,7 @@ export function ResearchSummary() {
           <div className="research-summary-reading">
             <p>{t("{cases} held-out cases · {relationships} expected relationships", { cases: snapshot.benchmark.case_count, relationships: snapshot.benchmark.expected_relationships })}</p>
             <p className="research-summary-caveat">{t("* Small internal development benchmark. The resolver comparison was post-hoc and exploratory; two name corrections in one case accounted for the entire improvement.")}</p>
-            <p>{t("Evaluated on ten independently reviewed, held-out synthetic cases created for this research project. No real client data was used. These results do not establish production accuracy or reliability.")}</p>
+            <p>{t("Evaluated on ten project-authored, held-out synthetic cases created for this research project. No real client data was used. These results do not establish production accuracy or reliability.")}</p>
             <p>{t("Review used separate AI validators within the project’s internal development process, not independent human or institutional validation.")}</p>
           </div>
         </div>

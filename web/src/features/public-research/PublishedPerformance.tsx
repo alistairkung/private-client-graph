@@ -9,8 +9,9 @@ export function PublishedPerformance({ runs }: { runs: PublicRun[] }) {
   const [selected, select] = useState<string | null>(null);
   return <div className="research-figure">
     <RunPerformanceChart
+      tactile
       experiment={{ name: t("Published A / A′ / B experiment"), runIds: runs.map(run => run.run_id) }}
-      runs={publishedPerformanceRuns(runs)} selected={selected} select={select} t={t}
+      runs={publishedPerformanceRuns(runs, t)} selected={selected} select={select} t={t}
     />
     <aside className="research-figure-notes">
       <strong>{t("Three Runs. Three points.")}</strong>
