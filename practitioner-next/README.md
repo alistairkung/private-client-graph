@@ -4,6 +4,12 @@ An independent practitioner frontend for Private Client Graph. **Working Atlas**
 puts the relationship drawing and exact source Evidence alongside each other.
 The original `web/` app and production deployment remain unchanged.
 
+The independent public landing page at `/` introduces the same Evidence-led
+workflow through a selectable synthetic example and a short animated story.
+It reads the existing public curated-example API; visiting the page never runs
+analysis. The original full public demo and research pages remain linked on the
+existing site. The practitioner application continues at `/app`.
+
 The selected **Forest & Chalk** palette pairs a deep green rail and pale green
 frame with white reading surfaces. Green actions and graph selections share
 semantic color roles; amber remains the exact Evidence highlight. Desktop/phone
@@ -45,7 +51,9 @@ In another terminal:
 npm --prefix practitioner-next run dev
 ```
 
-Open **https://127.0.0.1:5443/app**. The local certificate is self-signed; accept it
+Open **https://127.0.0.1:5443/** for the landing page or
+**https://127.0.0.1:5443/app** for the practitioner application.
+The local certificate is self-signed; accept it
 in your development browser if prompted. The sign-in button follows the existing
 OIDC/session flow using the repository's synthetic Google boundary. The backend
 runs on loopback port 8001 and the new frontend on 5443; neither replaces the
@@ -103,9 +111,19 @@ Regenerate it against the disposable backend with
 `PCG_RECORD_DEMO=1 npm --prefix practitioner-next run test:e2e -- walkthrough --project=desktop`
 from the repository root.
 
+The new [landing recording](artifacts/landing-walkthrough.webm) shows its opening
+and claim-to-Evidence interaction. Regenerate it with
+`PCG_RECORD_LANDING=1 npm --prefix practitioner-next run test:e2e -- landing-walkthrough --project=desktop`.
+See the [landing direction](../docs/agents/practitioner-next/landing-direction.md),
+[Motion research](../docs/agents/practitioner-next/landing-motion.md), and
+[landing verification](../docs/agents/practitioner-next/landing-verification.md).
+Its surface design record lives in `src/landing/DESIGN.md`; the Working Atlas
+application design remains separate.
+
 ## Scope and structure
 
 - `src/app`: independent navigation, language/account shell and styling.
+- `src/landing`: public introduction, curated Evidence example and narrative.
 - `src/ledger`, `src/intake`, `src/review`: complete practitioner capabilities.
 - `src/shared`: new-app contracts, request/auth helpers and shared UI language.
 - `scripts/synthetic_backend.py`: local composition of existing substitutes/API.
@@ -118,9 +136,10 @@ create individual-edge acceptance, or expose benchmark evaluation. Motion uses
 free `motion/react`, informed by authenticated premium Motion+ source research.
 No private registry token or premium runtime dependency is needed.
 
-Verified locally: 752 repository Python tests, 72 new-app unit tests, typecheck,
-production build, formatting and 36 real-backend desktop/phone parity tests.
-A separate refreshed walkthrough also passed. Graph coverage includes Evergreen
+Verified locally: 752 repository Python tests, 81 new-app unit tests, typecheck,
+production build, formatting and 46 real-backend desktop/phone checks.
+The landing recording and affected browser checks passed again after the final
+connector-style correction. Graph coverage includes Evergreen
 family placement, complete bounds, connector spacing, exact Evidence selection,
 return focus, stable camera and language switching. Geometry regressions cover
 reciprocal claims, multiple roles and graphs with no Trust or multiple Trusts.
@@ -161,7 +180,7 @@ repeated changes. See the [desktop](artifacts/desktop-multiple-sources.png) and
 [phone](artifacts/phone-multiple-sources.png) captures.
 
 Known limits: finite graph routing can still overlap connectors in larger/dense
-states; use pan/zoom and the complete searchable relationship list. The production
-build reports a nonblocking main-bundle size warning (about 219 kB gzip). No
+states; use pan/zoom and the complete searchable relationship list. The two entry
+points load separate page bundles; dependency-directive build warnings remain. No
 runtime MotionScore or production Google-provider check was performed. Local
 OIDC and extraction use existing deterministic synthetic substitutes.
