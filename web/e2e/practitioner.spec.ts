@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { openPublicMenu } from "./public-navigation";
 
 const matterPath = "/app/matters/ff985caf-60c5-4e65-a238-f3c26381c369";
 
@@ -53,7 +54,7 @@ test("persisted Matter opens from ledger and highlights exact Evidence after dir
   await page.getByLabel("Find a relationship").selectOption({ label: "Alice Chen — Spouse of — David Chen" });
   await expect(edge).toHaveClass(/selected/);
   expect(apiRequests).toContain(matterPath.replace("/app/", "/api/"));
-  expect(apiRequests.every(path => path.startsWith("/api/matters") || path === "/api/matter-proposals")).toBe(true);
+  expect(apiRequests.every(path => path.startsWith("/api/matters") || path === "/api/matter-proposals" || path === "/api/access")).toBe(true);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   await page.screenshot({ path: testInfo.outputPath("matter-workspace.png"), fullPage: true });
   const mattersNavigation = page.getByRole("link", { name: "Matters", exact: true });
@@ -73,7 +74,8 @@ test("persisted Matter opens from ledger and highlights exact Evidence after dir
   await expect(showcaseLink).toBeFocused();
   await showcaseLink.press("Enter");
   await expect(page.getByLabel("Choose a synthetic case")).toBeVisible();
-  await page.getByRole("link", { name: "Practitioner application" }).click();
+  await openPublicMenu(page);
+  await page.getByRole("navigation", { name: "Public showcase" }).getByRole("link", { name: "Practitioner application", exact: true }).click();
   await expect(matter).toBeVisible();
 });
 
@@ -85,16 +87,19 @@ test("unknown Matter direct route stays in the practitioner shell", async ({ pag
 });
 
 
-test("direct navigation requires Google sign-in and logout removes access", async ({ page, context }) => {
+test("public direct navigation needs no sign-in and logout removes only write access", async ({ page, context }) => {
   const googleRequests: string[] = [];
   page.on("request", request => {
     if (new URL(request.url()).pathname === "/_test/google") googleRequests.push(request.url());
   });
-  expect((await context.request.get("/api/matters")).status()).toBe(401);
+  expect((await context.request.get("/api/matters")).status()).toBe(200);
   await page.goto(matterPath);
   await expect(page.getByRole("heading", { name: "Evergreen Family Trust", exact: true })).toBeVisible();
-  expect(googleRequests).toHaveLength(1);
+  expect(googleRequests).toHaveLength(0);
   await page.reload();
+  expect(googleRequests).toHaveLength(0);
+  await page.goto("/auth/login?next=" + matterPath);
+  await expect(page.getByRole("heading", { name: "Evergreen Family Trust", exact: true })).toBeVisible();
   expect(googleRequests).toHaveLength(1);
   await expect(page.getByText(/not suitable for real confidential client information/)).toBeVisible();
   const session = (await context.cookies()).find(cookie => cookie.name === "__Host-pcg-session")!;
@@ -109,15 +114,16 @@ test("direct navigation requires Google sign-in and logout removes access", asyn
   await expect(signOut).toBeFocused();
   await signOut.press("Enter");
   await expect(page).toHaveURL("/");
-  expect((await context.request.get("/api/matters")).status()).toBe(401);
+  expect((await context.request.get("/api/matters")).status()).toBe(200);
   await page.goto(matterPath);
   await expect(page.getByRole("heading", { name: "Evergreen Family Trust", exact: true })).toBeVisible();
-  expect(googleRequests).toHaveLength(2);
+  expect(googleRequests).toHaveLength(1);
+  expect((await (await context.request.get("/api/access")).json()).can_write).toBe(false);
 });
 
 for (const failure of ["network", "server"] as const) {
   test(`sign-out ${failure} failure keeps the session and permits retry`, async ({ page, context }) => {
-    await page.goto("/app");
+    await page.goto("/auth/login?next=/app");
     await page.getByRole("button", { name: "Account and application menu" }).click();
     const signOut = page.getByRole("button", { name: "Sign out" });
     await expect(signOut).toBeEnabled();
@@ -131,6 +137,6 @@ for (const failure of ["network", "server"] as const) {
     expect((await context.request.get("/api/matters")).status()).toBe(200);
     await signOut.click();
     await expect(page).toHaveURL("/");
-    expect((await context.request.get("/api/matters")).status()).toBe(401);
+    expect((await context.request.get("/api/matters")).status()).toBe(200);
   });
 }

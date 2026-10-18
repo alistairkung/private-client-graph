@@ -60,7 +60,7 @@ export function PublicHeader() {
           <a href={home ? "#approach" : "/#approach"}>{t("The approach")}</a>
           <a href={home ? "#case-01" : "/#case-01"}>{t("Explore cases")}</a>
           <a href="/research-results" aria-current={research ? "page" : undefined}>{t("Research results")}</a>
-          <a href="/demo">{t("Demo application")}</a>
+          <a href="/app">{t("Practitioner application")}</a>
         </nav>
         {compact && <div className="public-navigation-language" onClick={event => {
           if ((event.target as Element).closest("button")) {

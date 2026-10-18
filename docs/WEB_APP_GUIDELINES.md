@@ -25,44 +25,37 @@ API code should call the existing domain functions rather than duplicate their l
 
 Changes to core semantics require explicit review under `AGENTS.md`.
 
-## Implemented Case 01 showcase boundary
+## Public showcase and practitioner boundaries
 
-The first web slice is the professional-review path documented in
-`docs/design/case-01-professional-review-web-slice.md`:
-
-```text
-read-only synthetic source
-   -> explicit live or sample extraction
-   -> deterministic graph construction
-   -> read-only relationship and evidence review
-```
-
-It ends at canonical graph construction. The web application does not invoke or
-expose benchmark evaluation, even though the existing evaluator remains available
-for offline benchmark and development work. A benchmark/evaluation web surface is
-deferred to a separate future slice.
-
-The professional-facing analysis response contains execution metadata and the
-`CanonicalGraph`. Raw `ExtractionResult` data is persisted for technical
-traceability but is not returned to the browser. `EvaluationResult` is neither
-produced nor returned by this web workflow.
-
-The next application slice preserves that flow as a public showcase under the
-`/api/showcase` namespace and adds a separate persisted practitioner journey.
-The authoritative design is
-`docs/design/practitioner-matter-workspace-slice.md`:
+The public showcase presents backend-owned curated synthetic examples:
 
 ```text
-public showcase
-    -> transient live or sample Case 01 analysis
-
-practitioner application
-    -> persisted Matter list
-    -> complete current Matter review state
+curated Source + Canonical Graph
+    -> read-only relationship and Evidence inspection
 ```
 
-Do not make either journey call through the other. They share only appropriate
-lower-level domain capabilities.
+The Practitioner Application reads durable Matter and pending Matter Proposal
+state from PostgreSQL. Both are public under ADR 0011. Creating a proposal invokes
+the existing pipeline only after authenticated intake gates; confirmation accepts
+the complete reviewed state, and discard removes the pending proposal.
+
+```text
+public reading
+    -> persisted Matters and pending proposals
+    -> complete Source, graph and Evidence review
+
+allowlisted actions
+    -> synthetic intake and analysis
+    -> explicit whole-proposal confirmation or discard
+```
+
+The showcase never reads or mutates persisted Matter state, and practitioner
+operations never call through the showcase. They share appropriate lower-level
+domain capabilities. The legacy live/sample showcase HTTP interface is retired.
+Raw extraction and benchmark evaluation do not enter the practitioner contract;
+the existing evaluators remain available for offline research and development.
+Historical slice designs remain context, with their access requirements
+superseded by ADR 0011.
 
 ## Repository structure
 
@@ -264,9 +257,8 @@ The guiding rule is:
 Retain the Case 01 browser E2E test covering the core showcase journey:
 
 ```text
-open Case 01
+choose a curated synthetic case
 → source is visible
-→ load sample analysis
 → graph is displayed
 → select a relationship
 → supporting evidence is shown
@@ -339,12 +331,16 @@ service. The practitioner slice adds PostgreSQL over private networking and runs
 Alembic plus explicit synthetic seeding in a pre-deploy command. The readiness
 endpoint must verify database connectivity.
 
-The public showcase keeps fixed backend-owned synthetic input. Live showcase
-analysis is disabled by default and, when explicitly enabled, is protected by a
-persistent global fixed-window quota. This operational control is separate from
-practitioner authentication and authorization.
+The public showcase presents fixed backend-owned curated synthetic examples.
+Its legacy live/sample analysis HTTP interface is retired. Executable analysis
+belongs to authenticated Matter Intake or the separately authorized local
+Research Workbench; visiting the public showcase makes no provider call.
 
-The practitioner journey requires Google OIDC, a deployment subject allowlist,
-and a short-lived backend session. It remains strictly synthetic. This prototype
-authentication boundary does not authorize real client data; non-synthetic use
-still requires an explicit data-handling, tenancy, and Matter-authorization design.
+The practitioner journey permits public reads of synthetic Matters and pending
+Matter Proposals. Creating, uploading, analysing, confirming, discarding and all
+other shared-state mutations require Google OIDC, the current deployment subject
+allowlist and a short-lived backend session, retaining origin and CSRF checks.
+Read access remains available when sign-in is unavailable or a session expires.
+ADR 0011 supersedes the former whole-application authentication boundary. This
+prototype still does not authorize real client data; non-synthetic use requires
+an explicit data-handling, tenancy and Matter-authorization design.

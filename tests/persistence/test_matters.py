@@ -87,8 +87,7 @@ def test_readiness_without_seed_and_unavailable_database(database, monkeypatch, 
     response = client.get("/api/matters")
     assert response.status_code == 503
     assert response.json() == {"error": {"message": "Matters could not be loaded."}}
-    assert client.get("/api/showcase/case-01").status_code == 200
-    assert client.post("/api/showcase/case-01/analysis", json={"mode": "sample"}).status_code == 200
+    assert client.get("/api/showcase/cases/case-01").status_code == 200
 
 
 def test_seed_contains_domain_valid_graph_and_verbatim_source_evidence(database):

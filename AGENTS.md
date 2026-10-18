@@ -50,9 +50,10 @@ explicitly designed. This includes Matter creation, source upload or ingestion,
 source editing, non-synthetic Matter data, graph mutation, and persisted
 practitioner review-state mutation.
 
-The current unauthenticated practitioner application is permitted only while it
-remains read-only and synthetic. This guardrail does not require authentication
-for the current slice.
+The practitioner application remains strictly synthetic. Matter and Matter
+Proposal reads are public; creation, upload, analysis and every shared-state
+mutation require a currently allowlisted identity, with origin and CSRF checks.
+Public reading does not authorize real client data. See ADR 0011.
 
 ### Database migrations
 

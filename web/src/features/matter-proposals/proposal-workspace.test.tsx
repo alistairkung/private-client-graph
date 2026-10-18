@@ -14,7 +14,7 @@ test("empty proposed graph remains reviewable and discard requires a separate de
     .mockResolvedValueOnce(new Response(JSON.stringify(proposal)))
     .mockResolvedValueOnce(new Response(null, { status: 204 }));
   const navigate = vi.fn();
-  render(<ProposalWorkspace id="proposal-42" onNavigate={navigate} />);
+  render(<ProposalWorkspace canWrite id="proposal-42" onNavigate={navigate} />);
   expect(await screen.findByRole("heading", { name: "Fictional family" })).toBeVisible();
   expect(screen.getByRole("heading", { name: "Proposed relationships" })).toBeVisible();
   expect(screen.getByRole("heading", { name: "No supported relationships proposed" })).toBeVisible();
@@ -40,7 +40,7 @@ test("confirmation blocks competing discard and repeat requests while pending", 
   const fetcher = vi.spyOn(globalThis, "fetch")
     .mockResolvedValueOnce(new Response(JSON.stringify(proposal)))
     .mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
-  render(<ProposalWorkspace id={proposal.id} onNavigate={vi.fn()} />);
+  render(<ProposalWorkspace canWrite id={proposal.id} onNavigate={vi.fn()} />);
   const confirm = await screen.findByRole("button", { name: "Confirm and create Matter" });
   await userEvent.click(confirm);
   expect(confirm).toBeDisabled();
@@ -57,7 +57,7 @@ test("a lost discard response preserves review and directs the practitioner to c
     .mockResolvedValueOnce(new Response(JSON.stringify(proposal)))
     .mockRejectedValueOnce(new TypeError("Connection lost"));
   const navigate = vi.fn();
-  render(<ProposalWorkspace id="proposal-42" onNavigate={navigate} />);
+  render(<ProposalWorkspace canWrite id="proposal-42" onNavigate={navigate} />);
   await screen.findByRole("heading", { name: "Fictional family" });
   const user = userEvent.setup();
   await user.click(screen.getByRole("button", { name: "Discard intake" }));
@@ -79,7 +79,7 @@ test("confirmation explicitly accepts the whole proposed graph and opens the cre
       current_graph: proposal.proposed_graph,
     }), { status: 201, headers: { Location: "/api/matters/matter-49" } }));
   const navigate = vi.fn();
-  render(<ProposalWorkspace id="proposal-42" onNavigate={navigate} />);
+  render(<ProposalWorkspace canWrite id="proposal-42" onNavigate={navigate} />);
   await screen.findByRole("heading", { name: "Fictional family" });
   expect(screen.getByText(/whole proposed graph becomes the professionally accepted current Matter state/i)).toBeVisible();
 
@@ -95,7 +95,7 @@ test("an unknown confirmation outcome keeps the review visible and directs the p
     .mockResolvedValueOnce(new Response(JSON.stringify(proposal)))
     .mockRejectedValueOnce(new TypeError("Connection lost after confirmation"));
   const navigate = vi.fn();
-  render(<ProposalWorkspace id="proposal-42" onNavigate={navigate} />);
+  render(<ProposalWorkspace canWrite id="proposal-42" onNavigate={navigate} />);
   await screen.findByRole("heading", { name: "Fictional family" });
 
   await userEvent.click(screen.getByRole("button", { name: "Confirm and create Matter" }));
@@ -108,9 +108,20 @@ test("an unknown confirmation outcome keeps the review visible and directs the p
 
 test.each([404, 503])("proposal detail %s offers return without stale or fallback data", async status => {
   vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response("{}", { status }));
-  render(<ProposalWorkspace id="unavailable" onNavigate={vi.fn()} />);
+  render(<ProposalWorkspace canWrite id="unavailable" onNavigate={vi.fn()} />);
   expect(await screen.findByRole("alert")).toHaveTextContent(status === 404 ? "Matter Proposal not found" : "Matter Proposal could not be loaded.");
   expect(screen.getByRole("link", { name: "Back to Matters" })).toHaveAttribute("href", "/app");
   expect(screen.queryByLabelText("Source document")).not.toBeInTheDocument();
   expect(screen.queryByRole("button", { name: "Discard intake" })).not.toBeInTheDocument();
+});
+
+
+test("public readers can inspect a pending proposal without confirmation or discard controls", async () => {
+  const fetcher = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify(proposal)));
+  render(<ProposalWorkspace id={proposal.id} onNavigate={vi.fn()} />);
+  expect(await screen.findByRole("heading", { name: "Fictional family" })).toBeVisible();
+  expect(screen.getByLabelText("Source document")).toHaveTextContent(proposal.authoritative_source.text);
+  expect(screen.queryByRole("button", { name: "Confirm and create Matter" })).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Discard intake" })).not.toBeInTheDocument();
+  expect(fetcher).toHaveBeenCalledOnce();
 });

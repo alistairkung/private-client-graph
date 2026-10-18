@@ -10,7 +10,7 @@ type ProposalState =
   | { status: "loading" | "missing" | "failed" }
   | { status: "ready"; proposal: MatterProposalDetail };
 
-export function ProposalWorkspace({ id, onNavigate }: { id: string; onNavigate: (path: string) => void }) {
+export function ProposalWorkspace({ id, onNavigate, canWrite = false }: { id: string; onNavigate: (path: string) => void; canWrite?: boolean }) {
   const { t } = useLocale();
   const [state, setState] = useState<ProposalState>({ status: "loading" });
   useEffect(() => {
@@ -48,7 +48,7 @@ export function ProposalWorkspace({ id, onNavigate }: { id: string; onNavigate: 
         emptyGraphTitle={t("No supported relationships proposed")}
         practitioner
       /> : <p role="alert">{t("The complete Source state is unavailable. Reload to try again.")}</p>}
-      <ProposalDecision proposal={state.proposal} onNavigate={onNavigate} />
+      {canWrite && <ProposalDecision proposal={state.proposal} onNavigate={onNavigate} />}
     </> : state.status === "loading" ? <p role="status">{t("Loading Matter Proposal…")}</p> : <div role="alert">
       <h1>{state.status === "missing" ? t("Matter Proposal not found") : t("Matter Proposal could not be loaded.")}</h1>
       <p>{state.status === "missing" ? t("This intake is no longer available. Return to Matters to view the current collections.") : t("Reload the page to try again.")}</p>

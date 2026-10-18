@@ -4,9 +4,11 @@ Run the synthetic practitioner application locally, configure its production
 services, and verify database and authentication behavior. All commands run from
 the repository root unless a step explicitly changes directory.
 
-For a first run, use the protected Docker environment below. Production deployment
-requires PostgreSQL, Google authentication, and the proposal-analysis settings in
-this guide. Use only synthetic or fictional material.
+For a first run, use the Docker environment below. Public reading requires
+PostgreSQL. Allowlisted actions additionally require Google authentication;
+analysis also requires the proposal-analysis settings in this guide. Use only
+synthetic or fictional material. Full Source text, proposals and Matters are
+publicly readable, including signed-in submissions. See ADR 0011.
 
 Existing deployments moving from legacy canonical storage require a coordinated
 maintenance window. Follow the [cutover and recovery procedure](canonical-matter-cutover.md)
@@ -14,7 +16,7 @@ before activating that release.
 
 - [Protected local development](#protected-local-development)
 - [Lower-level local setup and web checks](#lower-level-local-professional-review-setup)
-- [Railway deployment and public live analysis](#deploy-to-railway)
+- [Railway deployment](#deploy-to-railway)
 - [PostgreSQL initialization and integration tests](#postgresql-initialization-and-integration-tests)
 - [Google authentication](#google-authentication)
 - [Synthetic Matter Intake](#synthetic-matter-intake)
@@ -30,9 +32,10 @@ docker compose --profile practitioner up --build application
 ```
 
 Open [https://localhost:8443/app](https://localhost:8443/app) and accept the
-expected warning for the temporary self-signed development certificate. Follow
-the normal sign-in journey; the local environment substitutes a synthetic
-allowlisted Google identity while retaining the real callback, secure session,
+expected warning for the temporary self-signed development certificate. Read
+Matters and pending proposals without signing in. Sign in before creating,
+uploading, analysing, confirming or discarding; the local environment substitutes
+a synthetic allowlisted Google identity while retaining the real callback, secure session,
 authorization, application, and PostgreSQL paths. Proposal analysis also uses a
 deterministic local model substitute, so Google, DeepSeek, Railway, and external
 PostgreSQL credentials are not required.
@@ -84,46 +87,29 @@ npm ci
 npm run dev
 ```
 
-Open http://127.0.0.1:5173. Vite proxies `/api` to the local backend. The fixed
-synthetic Case 01 source is available immediately. **Run live analysis** invokes
-the model; **Load sample analysis** explicitly loads the ideal-extraction fixture.
-Both use the existing graph builder. Select a relationship (by click or keyboard)
-to highlight its exact evidence in the persistent source panel.
+Open http://127.0.0.1:5173. Vite proxies `/api` to the local backend. The
+Public Showcase reads curated synthetic examples through
+`GET /api/showcase/cases` and `GET /api/showcase/cases/{case_id}`. Select a
+relationship to inspect its exact supporting Evidence; opening an example never
+runs analysis or consumes a provider allowance.
 
-The practitioner application at `/app` requires an allowlisted Google identity and
-opens persisted synthetic Matters from PostgreSQL. Configure authentication and
-initialize PostgreSQL as described in this guide before using the practitioner application.
-The plain HTTP Vite server above is for the Public Showcase; practitioner use
-requires the combined build behind HTTPS at the configured trusted origin.
-Both journeys link to each other; direct entry and refresh at `/app` are supported
-by the combined deployment. The previous `/api/case-01` routes are removed.
+The Practitioner Application at `/app` reads persisted synthetic Matters and
+pending Matter Proposals from PostgreSQL. Initialize the database as described
+below. No session is needed for full Source text, graphs or Evidence. Reads
+remain available with expired or invalid sessions and unavailable authentication.
+`GET /api/access` returns only `can_write` and `sign_in_available`, with no
+identity information; this advises the UI and never authorizes an action itself.
 
-Live showcase analysis is disabled by default, even with `DEEPSEEK_API_KEY`.
-Enable it explicitly with the configuration below, in the backend environment or
-root `.env`.
-The optional backend-only `DEEPSEEK_MODEL` defaults to `deepseek-flash`.
-No key is needed for sample analysis. No automatic retries or fallback occur.
-Disabled live analysis needs no key and leaves sample analysis available.
-An enabled deployment with a missing key fails startup. Non-transient live errors
-leave the explicit sample action available; transient provider failures offer
-**Retry live analysis** while the global allowance remains available.
+To create, upload, analyse, confirm or discard, configure Google authentication
+and use the combined build behind HTTPS at the exact trusted origin. The current
+allowlist, absolute session expiry, CSRF and Origin checks are enforced again by
+the backend. Provider credentials and the existing allowance/task authority are
+additional gates for analysis. Failed writes never fall back to anonymous access.
 
-Successful live extractions are saved before graph construction to
-`runs/case_01/<timestamp>-<unique-id>.json`. The API's execution metadata (or graph
-error) identifies that file, including when graph validation fails. For isolated
-test environments, `PCG_RUN_DIR` overrides the output directory. Sample analysis
-creates no artifact. Evaluate live artifacts offline using the existing command:
-
-```bash
-uv run python -m private_client_graph.evaluate runs/case_01/<run>.json
-```
-
-The web API exposes `GET /api/showcase/case-01` and `POST /api/showcase/case-01/analysis` with body
-`{"mode":"live"}` or `{"mode":"sample"}` only. Analysis returns `execution` and
-`graph`; failures return an `error` with stage, safe message, retryability, and
-optional run-artifact identifier. Source text and fixture selection remain
-backend-authoritative. Raw extraction and benchmark evaluation are never returned
-to the professional workspace.
+The separate simulated `/demo` journey is retired; its old links redirect to
+`/app`. Legacy `/api/showcase/case-01` and its live/sample analysis endpoint are
+retired too. Curated example fixtures, research publication and the shared
+analysis/domain pipeline remain available through their appropriate consumers.
 
 ### Web checks
 
@@ -138,14 +124,13 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-Browser tests build the production frontend and serve it through FastAPI,
-exercising the real sample path and practitioner navigation/refresh at desktop
-and phone widths. The test servers use ports 4173 (disabled production app) and 4174 (enabled
-quota journey with only the model boundary substituted). Start each E2E run with
-a freshly migrated and seeded disposable database: the quota journey deliberately
-consumes its one persisted slot. API tests substitute the provider boundary for deterministic live
-coverage; CI never requires model credentials. `npm run build` creates the static
-frontend in `web/dist`.
+Browser tests build the production frontend and serve it through FastAPI at
+HTTPS port 4173. They exercise anonymous reading, explicit sign-in, protected
+proposal actions and sign-out at desktop and phone widths. Use a freshly migrated
+and seeded disposable database. Only existing Google/model boundaries are
+substituted; API orchestration, PDF acquisition, graph construction and
+PostgreSQL persistence remain real. CI never needs live provider credentials.
+`npm run build` creates the static frontend in `web/dist`.
 
 ## Deploy to Railway
 
@@ -178,7 +163,7 @@ the [maintenance procedure](canonical-matter-cutover.md).
    and `/health` healthcheck. Keep the existing GitHub deployment source and
    Dockerfile start command. Apply these variables before deploying the PR.
 4. After deployment, confirm `/health` returns 200, `/app` shows Evergreen with
-   reference `PC/2026/0142`, and `/` still loads sample analysis. A redeploy must
+   reference `PC/2026/0142`, and `/` still opens curated examples. A redeploy must
    leave persisted Matter values unchanged.
 
 The web service writes no Matter data to its filesystem. `/health` runs `SELECT 1`
@@ -190,65 +175,18 @@ See Railway's [pre-deploy documentation](https://docs.railway.com/deployments/pr
 and [configuration reference](https://docs.railway.com/config-as-code/reference).
 No Railway account provisioning is performed by repository code.
 
-### Enabling public live analysis
+### Public reading and action availability
 
-Public live analysis is disabled by default and needs no Showcase-specific
-configuration. The practitioner application still requires the authentication and
-proposal-analysis settings in this guide. Migration
-`0002` adds the separate `showcase_live_quota` table through the existing
-`alembic upgrade head` pre-deploy step; the Matter migration and seed are unchanged.
+The public application does not execute showcase analysis. Its curated fixtures
+and the research publication remain read-only. Old `PCG_SHOWCASE_LIVE_*` settings
+no longer enable a public analysis route. Historical quota migrations remain
+immutable; this refactor changes no database schema or stored facts.
 
-To enable live analysis, set these variables on the Railway application service
-and redeploy:
-
-| Variable | Default | Enabled configuration |
-|---|---|---|
-| `PCG_SHOWCASE_LIVE_ENABLED` | `false` | Set explicitly to `true` (`true`/`false` only, case insensitive). |
-| `PCG_SHOWCASE_LIVE_LIMIT` | Unset | Positive integer provider-attempt allowance, e.g. `10`. |
-| `PCG_SHOWCASE_LIVE_WINDOW_SECONDS` | Unset | Positive integer window in seconds, e.g. `86400` for UTC days. |
-| `DEEPSEEK_API_KEY` | Unset | Required provider credential. A key alone never enables live analysis. |
-| `DEEPSEEK_MODEL` | `deepseek-flash` | Optional backend-only model selection. |
-| `DATABASE_URL` | Existing PostgreSQL connection | Use the existing private-network reference. |
-
-Limit and duration must fit positive 32-bit integers. Enabled deployments fail
-configuration at startup for missing/invalid quota values, missing credentials,
-or missing/non-PostgreSQL database configuration. Disabled deployments do not
-require any live settings. Keep all replicas on the same configuration and database.
-To turn live analysis off, set `PCG_SHOWCASE_LIVE_ENABLED=false` and redeploy.
-
-Buckets are aligned to Unix epoch UTC using PostgreSQL's clock. Each row contains
-only window duration, bucket start, and consumed attempts; it is operational state,
-not Matter state. A single `INSERT … ON CONFLICT DO UPDATE … WHERE attempts < limit`
-claims a slot under PostgreSQL's row lock and commits before invoking the provider.
-Provider, extraction, graph, or artifact failures never refund it. Invalid requests,
-unreadable source, and provider setup failures occur before consumption. Database
-failures prevent provider invocation while sample analysis remains usable.
-
-The allowance bounds attempts per fixed window, not tokens or currency; two
-adjacent windows each have their own allowance. Restarts and additional replicas
-share the persisted count. Changing the duration selects a different bucket series;
-treat quota changes as an operator budget change, avoid mixed configurations during
-rollout, and do not delete quota rows to restart an allowance. Old buckets are
-retained; this slice introduces no cleanup job or usage-history endpoint.
-
-`GET /api/showcase/case-01` adds `live_analysis` with `state` (`disabled`,
-`available`, `exhausted`, or `unavailable`) and nullable ISO timestamp `resets_at`.
-Only exhausted responses include a reset time. The extra `unavailable` state
-covers a quota database outage. This response is uncached and advisory: the POST
-atomically claims its own slot. POST rejects disabled/unavailable live requests
-with 503 and exhausted requests with 429, with safe `error.live_analysis` metadata.
-No counters or visitor identifiers are exposed. The UI refreshes availability after
-live attempts and invites a reload after the reset time.
-
-After deployment, check sample analysis and `/app` with live disabled. When you
-choose to enable it, verify the live action, exhaustion messaging, and continued
-sample/Matter access against your chosen allowance. No Railway-specific logic is
-part of quota enforcement.
-
-Live run artifacts use the container filesystem and are therefore ephemeral by
-default. To retain them, attach a Railway volume at `/app/runs`; the existing
-default path will then persist `runs/case_01/*.json` without additional
-configuration.
+`GET /health` checks database-backed read availability. Missing or invalid Google
+or proposal-analysis configuration leaves reads usable, while protected actions
+return a safe failure. Configure and verify sign-in and the analysis settings
+before expecting writes to work; a healthy reading service alone does not certify
+those external integrations.
 
 ## PostgreSQL initialization and integration tests
 
@@ -304,7 +242,7 @@ Confirm the new deployment uses the committed pre-deploy command above. The firs
 #22 deployment may predate Railway detecting that command; the new deployment
 must run the normal idempotent seed before startup. After deployment, verify
 `/app` → Evergreen → relationship selection → source Evidence, refresh the Matter
-route, and check the Public Showcase sample journey. Do not seed through request
+route, and check the curated Public Showcase. Do not seed through request
 handlers or use fixture fallbacks.
 
 For the complete test suite, use a disposable server with a role allowed to create
@@ -334,9 +272,10 @@ are made by CI.
 
 ## Google authentication
 
-One deployment is one synthetic Prototype Tenant: every allowlisted Google subject
-can read every Matter. Google OIDC is the only identity provider. No user or
-session records are persisted, and no schema migration is needed for this feature.
+One deployment is one synthetic Prototype Tenant: everyone can read all Matters
+and pending proposals; only current allowlisted Google subjects can change them.
+Google OIDC is the only identity provider. No user or session records are
+persisted, and no schema migration is needed for this feature.
 The application remains unsuitable for real confidential client information.
 
 Before deploying, configure a Google OAuth **Web application** client and register
@@ -354,20 +293,20 @@ backend variables in Railway (or your local environment); never commit credentia
 
 Obtain each subject from a Google-validated identity through your deployment's
 controlled enrollment process. There is no public enrollment or email-based access
-fallback. The service validates configuration before reporting ready: missing or
-invalid values return `/health` 503 and cannot open private paths. Google validates
-the actual client credentials during the authorization-code exchange; configure
-and verify a real allowlisted sign-in before release. The combined deployment's
-readiness check also requires PostgreSQL connectivity. Public routes remain public,
-but a misconfigured combined service must not be released as healthy.
+fallback. Invalid authentication configuration closes sign-in and all protected
+actions without preventing public reading. The capability endpoint reports
+`sign_in_available: false` and `can_write: false`; readiness still requires
+PostgreSQL connectivity. Google validates actual client credentials during the
+authorization-code exchange, so verify a real allowlisted sign-in before relying
+on authenticated actions.
 
-Use the combined frontend build behind HTTPS for practitioner development and
-production. `/app` and its entire subtree redirect unauthenticated navigation to
-Google; all `/api/matters*` and `/api/matter-proposals*` routes enforce authentication
-independently. API clients receive 401 for missing/expired sessions and 403 for a
-subject removed from the allowlist. The current environment allowlist is checked on
-every private request; applying deployment environment changes may require the
-platform to restart the process. Email never grants access.
+Use the combined frontend build behind HTTPS for authenticated development and
+production. `/app`, `/api/matters*` and `/api/matter-proposals*` permit reads
+without a session. Their state-changing operations independently enforce
+allowlisting, session expiry, Origin and CSRF. Missing/expired sessions cannot
+write; removed subjects cannot write either. Configuration failure fails closed.
+The current allowlist is checked for every action; applying deployment environment
+changes may require a platform restart. Email never grants access.
 
 Authlib validates Google identity signature, issuer, audience, expiry and nonce;
 OAuth state and PKCE protect the code flow. Google tokens are discarded after the
@@ -380,8 +319,8 @@ the allowlist or rotating the session secret invalidates its access.
 Practitioner writes, including `POST /auth/logout`, require the exact configured
 `Origin` and the signed double-submit CSRF cookie in the `x-csrftoken` header.
 The readable `__Host-pcg-csrf` cookie is a CSRF value, never an identity token.
-The Public Showcase and sample/live showcase POST behavior remain public and
-unchanged. Google login/callback use the OIDC state/nonce mechanisms.
+Public reading requires no CSRF token or login. The legacy showcase analysis
+POST is removed. Google login/callback use OIDC state/nonce mechanisms.
 
 Deterministic tests use synthetic settings and replace only Google's HTTP boundary
 with generated signed identities; they do not introduce a production bypass.
@@ -392,9 +331,10 @@ mounted only by test code, which is not copied into the deployment image.
 
 ## Synthetic Matter Intake
 
-The authenticated `/app` entry offers **Create Matter** and a separate **Awaiting
-confirmation** collection. Upload and analyse produces a durable machine-proposed
-graph for review; it does not create a Matter. **Confirm whole graph and create
+The public `/app` entry shows accepted Matters and an **Awaiting confirmation**
+collection. **Create Matter**, confirmation and discard require allowlisted
+sign-in. Upload and analyse produces a durable machine-proposed graph for review;
+it does not create a Matter. **Confirm whole graph and create
 Matter** copies the reviewed identity, Authoritative Source, and proposed graph
 unchanged into a complete Matter, consumes the proposal, and opens the existing
 Matter workspace. **Discard intake** asks for destructive confirmation, then removes
@@ -405,7 +345,7 @@ synthetic deployment. Each submission requires confirmation that its material is
 synthetic or fictional. Never submit real personal or client information.
 
 In addition to Google/session and PostgreSQL settings, the combined service now
-requires these proposal-analysis settings before `/health` reports ready:
+requires these proposal-analysis settings before analysis can execute:
 
 | Variable | Required value |
 | --- | --- |
@@ -422,11 +362,10 @@ application rate quota remains a separate gate. Every reserved dispatch, includi
 failed or interrupted attempts, remains charged in the same ledger as research.
 
 Provider credentials/model availability are verified by the provider on invocation;
-missing or locally invalid settings fail readiness. There is no unlimited fallback.
-These settings are required even when Public Showcase live analysis is disabled.
-The proposal allowance is persistent, deployment-wide, and independent of Showcase
-quota. Keep every replica on the same configuration and database. Each attempt
-commits immediately before provider invocation; downstream failure never refunds
+missing or locally invalid settings block analysis. There is no unlimited
+fallback. Public reading remains available. The proposal allowance is persistent
+and deployment-wide. Keep every replica on the same configuration and database.
+Each attempt commits immediately before provider invocation; downstream failure never refunds
 it. There are no automatic model retries. Existing reviews and discard remain
 available when the allowance is exhausted.
 
@@ -477,8 +416,8 @@ PDF acquisition, graph construction, PostgreSQL, and browser review, confirmatio
 and discard. The
 committed synthetic PDF fixture lives under `tests/fixtures/`; it is separate from
 benchmark ground truth. Use the full test commands above with PostgreSQL enabled.
-Start each browser-suite run with a freshly migrated and seeded disposable database;
-the quota journey deliberately leaves its persistent allowance exhausted.
+Start each browser-suite run with a freshly migrated and seeded disposable database.
+Tests may create and consume synthetic proposals and Matters.
 
 
 ## Canonical persistence

@@ -1,7 +1,7 @@
 import { openPublicMenu, selectPublicLanguage } from "./public-navigation";
 import { expect, test } from "@playwright/test";
 
-for (const path of ["/demo", "/app"]) {
+for (const path of ["/app"]) {
   test(`language is a quiet right-aligned utility on ${path}`, async ({ page }, testInfo) => {
     await page.goto(path);
     const header = page.locator(".ledger-header-inner");
@@ -44,22 +44,6 @@ test("public language controls remain available in the header navigation", async
   await expect(header.getByRole("button", { name: "简体中文", exact: true })).toBeVisible();
   await expect(header.getByRole("combobox")).toHaveCount(0);
 });
-
-for (const locale of ["en", "zh-CN"]) {
-  test(`demo sign-in is a quiet footer link in ${locale}`, async ({ page }, testInfo) => {
-    await page.goto("/demo/matters/hillcrest");
-    await page.getByRole("combobox", { name: "Language", exact: true }).selectOption(locale);
-    await expect(page.locator("header a[href='/app']")).toHaveCount(0);
-    const signIn = page.locator("footer").getByRole("link", {
-      name: locale === "en" ? "Practitioner sign-in" : "专业用户登录", exact: true,
-    });
-    await signIn.scrollIntoViewIfNeeded();
-    await expect(signIn).toBeVisible();
-    await expect(signIn).toHaveAttribute("href", "/app");
-    await page.screenshot({ path: testInfo.outputPath(`demo-footer-${locale}.png`) });
-    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-  });
-}
 
 for (const path of ["/", "/research-results"]) {
   test(`public navigation collapses to a keyboard-operable dropdown on ${path}`, async ({ page }, testInfo) => {

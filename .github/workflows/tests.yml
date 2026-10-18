@@ -185,9 +185,9 @@ jobs:
             -e DEEPSEEK_API_KEY pcg-test
           trap 'docker logs pcg-app; docker stop pcg-app' EXIT
           curl --fail --retry 15 --retry-connrefused --retry-delay 1 http://127.0.0.1:8000/health
-          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8000/api/matters)" = 401
-          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8000/app)" = 303
-          curl --fail http://127.0.0.1:8000/api/showcase/case-01 > /dev/null
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8000/api/matters)" = 200
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8000/app)" = 200
+          curl --fail http://127.0.0.1:8000/api/showcase/cases > /dev/null
 
   tests:
     name: tests

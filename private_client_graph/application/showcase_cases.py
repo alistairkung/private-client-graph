@@ -7,10 +7,12 @@ from pydantic import BaseModel
 from private_client_graph.canonical_state import single_source_state, validate_canonical_state
 from private_client_graph.models.canonical_state import CanonicalState
 from private_client_graph.models.source import Source
-from .case_analysis import analyse_case, get_case
-from .showcase_live import LiveConfig
+from private_client_graph.models import ExtractionResult
+from private_client_graph.pipeline import Pipeline, PipelineInput
+from .analysis_config import APPROVED_APPLICATION_PIPELINE_CONFIG
 
 FIXTURES = Path(__file__).with_name("showcase_fixtures")
+EVERGREEN = Path(__file__).resolve().parents[2] / "cases" / "case_01"
 
 
 class ShowcaseCaseSummary(BaseModel):
@@ -41,10 +43,22 @@ def get_showcase_case(case_id: str) -> ShowcaseCase | None:
     if summary is None:
         return None
     if case_id == "case-01":
-        detail = get_case()
-        graph = analyse_case("sample", LiveConfig()).graph
-        state = single_source_state(Source(id="source_001", title="Attendance note", text=detail.source_text), graph)
+        state = _evergreen_state()
     else:
         state = CanonicalState.model_validate_json((FIXTURES / f"{case_id}.json").read_text(encoding="utf-8"))
         validate_canonical_state(state)
     return ShowcaseCase(**summary.model_dump(), state=state)
+
+
+def _evergreen_state() -> CanonicalState:
+    source = Source(
+        id="source_001", title="Attendance note",
+        text=(EVERGREEN / "source.txt").read_text(encoding="utf-8"),
+    )
+    extraction = ExtractionResult.model_validate_json(
+        (EVERGREEN / "expected_extraction.json").read_text(encoding="utf-8")
+    )
+    result = Pipeline(APPROVED_APPLICATION_PIPELINE_CONFIG).run_from_extraction(
+        PipelineInput(source_text=source.text, document="source.txt"), extraction,
+    )
+    return single_source_state(source, result.graph)

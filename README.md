@@ -47,6 +47,12 @@ Google identity and model responses, so no external credentials are needed.
 Authentication, PDF validation, graph construction, and PostgreSQL persistence
 remain real.
 
+Anyone can read synthetic Matters and pending proposals, including their full
+Source text and Evidence. Sign in with an allowlisted identity to upload, analyse,
+confirm or discard. Signed-in submissions are publicly readable too; the app
+remains unsuitable for real client information. Legacy `/demo` links redirect
+to this same application.
+
 For a deterministic walkthrough, use `tests/fixtures/synthetic-proposal.pdf` and
 `tests/fixtures/multiple-role-proposal.pdf`. These demonstrate the review workflow;
 the local model substitute does not measure extraction quality on arbitrary PDFs.

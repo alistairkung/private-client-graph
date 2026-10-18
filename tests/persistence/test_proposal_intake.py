@@ -233,7 +233,8 @@ def test_security_and_validation_rejections_do_not_spend_an_attempt(proposal_cli
     anonymous.get('/api/matter-proposals')
     assert submit(anonymous).status_code == 401
     monkeypatch.setenv('PCG_GOOGLE_SUB_ALLOWLIST', 'someone-else')
-    assert proposal_client.get('/api/matter-proposals').status_code == 403
+    assert proposal_client.get('/api/matter-proposals').status_code == 200
+    assert submit(proposal_client).status_code == 403
     monkeypatch.setenv('PCG_GOOGLE_SUB_ALLOWLIST', 'test-subject')
     from google_boundary import sign_in
     assert sign_in(proposal_client).status_code == 303

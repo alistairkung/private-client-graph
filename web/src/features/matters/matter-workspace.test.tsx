@@ -15,8 +15,7 @@ test("direct Matter entry loads its persisted source and graph without analysis"
   expect(screen.getByText("Matter reference: Firm/42")).toBeVisible();
   expect(screen.getByLabelText("Source document")).toHaveTextContent("Persisted source text");
   expect(screen.getByRole("heading", { name: "Persisted source title" })).toBeVisible();
-  expect(fetcher).toHaveBeenCalledOnce();
-  expect(fetcher.mock.calls[0][0]).toBe(`/api/matters/${id}`);
+  expect(fetcher.mock.calls.map(call => call[0]).sort()).toEqual(["/api/access", `/api/matters/${id}`]);
   expect(screen.queryByRole("button", { name: /analysis/i })).not.toBeInTheDocument();
   expect(document.title).toBe("Persisted Matter · Private Client Graph");
 });

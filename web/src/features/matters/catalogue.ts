@@ -1,4 +1,8 @@
 export const practitionerZhCN: Record<string, string> = {
+  "Sources, Matter Proposals and Matters are publicly readable, including proposals awaiting confirmation.": "资料、事项提案和事项均可公开查看，包括等待确认的提案。",
+  "Uploaded Source text and the resulting proposal will be publicly readable before confirmation. Confirmed Matters are public too.": "上传的资料文本及生成的提案在确认前即可公开查看。确认后的事项也会公开。",
+  "Sign in to make changes": "登录以进行更改",
+  "Sign-in is currently unavailable. You can still read Matters and proposals.": "当前无法登录。您仍可查看事项和提案。",
   "The Matter could not be created. The Matter Proposal remains available. You may retry confirmation.": "无法创建事项。事项提案仍可查看，您可以重试确认。",
   "The Matter Proposal could not be confirmed because its stored state is invalid. It remains available for review or discard.": "提案的存储状态无效，无法确认。您仍可审阅或丢弃此提案。",
   "Shared provider authorization is unavailable. No analysis was started.": "共享服务调用授权不可用，未启动分析。",

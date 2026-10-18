@@ -21,7 +21,7 @@ from starlette_csrf import CSRFMiddleware
 
 SESSION_COOKIE = "__Host-pcg-session"
 CSRF_COOKIE = "__Host-pcg-csrf"
-PRIVATE_PATH_PATTERN = r"(?:/app(?:/|$)|/api/matters|/api/matter-proposals)"
+MATTER_PATH_PATTERN = r"(?:/app(?:/|$)|/api/matters|/api/matter-proposals)"
 
 
 def allowed_subjects() -> set[str]:
@@ -60,16 +60,16 @@ class AuthConfig:
         return cls(client_id, client_secret, secret, origin, seconds)
 
 
-def protected_path(path: str) -> bool:
-    return re.match(PRIVATE_PATH_PATTERN, path) is not None
+def matter_path(path: str) -> bool:
+    return re.match(MATTER_PATH_PATTERN, path) is not None
 
 
 class PractitionerTrustedHost(TrustedHostMiddleware):
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         # Public routes, including platform readiness probes, keep their existing
-        # host behavior. Trust the configured host only at the private boundary.
+        # host behavior. Enforce the configured host for writes and sign-in.
         path = scope.get("path", "")
-        if protected_path(path) or path.startswith("/auth/"):
+        if (matter_path(path) and scope.get("method") not in {"GET", "HEAD", "OPTIONS"}) or path.startswith("/auth/"):
             await super().__call__(scope, receive, send)
         else:
             await self.app(scope, receive, send)
@@ -78,18 +78,18 @@ class PractitionerTrustedHost(TrustedHostMiddleware):
 class PractitionerBoundary(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         response = await self._dispatch(request, call_next)
-        if protected_path(request.url.path) or request.url.path.startswith("/auth/"):
+        if matter_path(request.url.path) or request.url.path.startswith("/auth/"):
             response.headers["Cache-Control"] = "no-store"
             response.headers["Referrer-Policy"] = "no-referrer"
         return response
 
     async def _dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         path = request.url.path
-        private = protected_path(path)
+        private = matter_path(path) and request.method not in {"GET", "HEAD", "OPTIONS"}
         auth_route = path.startswith("/auth/")
         if not private and not auth_route:
             return await call_next(request)
-        config = request.app.state.auth_config
+        config = available_auth_config(request)
         if config is None:
             return JSONResponse({"error": {"message": "Authentication is unavailable."}}, status_code=503)
         try:
@@ -104,13 +104,38 @@ class PractitionerBoundary(BaseHTTPMiddleware):
             expires = request.session.get("expires", 0)
             if not subject or not isinstance(expires, (float, int)) or time.time() >= expires:
                 request.session.clear()
-                if path == "/app" or path.startswith("/app/"):
-                    return RedirectResponse("/auth/login?" + urlencode({"next": path}), status_code=303)
                 return JSONResponse({"error": {"message": "Sign in required."}}, status_code=401)
             if subject not in subjects:
                 request.session.clear()
                 return JSONResponse({"error": {"message": "Access is not allowed."}}, status_code=403)
         return await call_next(request)
+
+
+def available_auth_config(request: Request) -> AuthConfig | None:
+    configured = request.app.state.auth_config
+    if configured is None:
+        return None
+    try:
+        current = AuthConfig.from_environment()
+    except ValueError:
+        return None
+    return configured if current == configured else None
+
+
+def access(request: Request) -> JSONResponse:
+    config = available_auth_config(request)
+    session = request.scope.get("session", {})
+    expires = session.get("expires", 0)
+    can_write = bool(
+        config is not None
+        and isinstance(expires, (int, float))
+        and time.time() < expires
+        and session.get("sub") in allowed_subjects()
+    )
+    return JSONResponse(
+        {"can_write": can_write, "sign_in_available": config is not None},
+        headers={"Cache-Control": "no-store"},
+    )
 
 
 async def login(request: Request) -> Response:
@@ -150,8 +175,7 @@ async def logout(request: Request) -> Response:
 
 
 def configure_auth(application: FastAPI) -> None:
-    # Invalid configuration leaves readiness and all private paths closed, even
-    # when an ASGI server or test client does not execute lifespan hooks.
+    # Authentication availability controls writes independently of public reads.
     try:
         config = AuthConfig.from_environment()
     except ValueError:
@@ -167,7 +191,7 @@ def configure_auth(application: FastAPI) -> None:
         )
         application.add_middleware(
             CSRFMiddleware, secret=config.session_secret, cookie_name=CSRF_COOKIE,
-            cookie_secure=True, exempt_urls=[re.compile(rf"^(?!{PRIVATE_PATH_PATTERN}|/auth/)")],
+            cookie_secure=True, exempt_urls=[re.compile(rf"^(?!{MATTER_PATH_PATTERN}|/auth/)")],
         )
         application.add_middleware(
             SessionMiddleware, secret_key=config.session_secret, session_cookie=SESSION_COOKIE,
@@ -176,6 +200,7 @@ def configure_auth(application: FastAPI) -> None:
         host = urlsplit(config.origin).hostname
         assert host is not None
         application.add_middleware(PractitionerTrustedHost, allowed_hosts=[host])
+    application.add_api_route("/api/access", access, methods=["GET"])
     application.add_api_route("/auth/login", login, methods=["GET"])
     application.add_api_route("/auth/callback", callback, methods=["GET"])
     application.add_api_route("/auth/logout", logout, methods=["POST"])
