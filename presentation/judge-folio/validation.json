@@ -1,0 +1,39 @@
+{
+  "pdf": "output/pdf/private-client-graph-judge-folio.pdf",
+  "pages": 20,
+  "bytes": 1648196,
+  "limit_bytes_exclusive": 20000000,
+  "sha256": "a309a95ee14c96491728d74db7d3bb07d8a4ca116743e5f2a36525d8a08f2896",
+  "page_size_points": [
+    720,
+    900
+  ],
+  "bookmarks": 20,
+  "embedded_text_fonts": [
+    "/AAAAAA+Newsreader16pt72pt-Regular",
+    "/AAAAAA+PublicSansThin-Regular",
+    "/AAAAAA+PublicSansThin-SemiBold"
+  ],
+  "unique_links": [
+    "https://github.com/alistairkung/private-client-graph",
+    "https://github.com/alistairkung/private-client-graph/blob/d5130917b32ba03e41d6345a8c3d604f4c906432/PRODUCT.md",
+    "https://github.com/alistairkung/private-client-graph/blob/d5130917b32ba03e41d6345a8c3d604f4c906432/README.md",
+    "https://github.com/alistairkung/private-client-graph/blob/d5130917b32ba03e41d6345a8c3d604f4c906432/cases/README.md",
+    "https://github.com/alistairkung/private-client-graph/blob/d5130917b32ba03e41d6345a8c3d604f4c906432/cases/case_01/ground_truth.json",
+    "https://github.com/alistairkung/private-client-graph/blob/d5130917b32ba03e41d6345a8c3d604f4c906432/cases/case_01/source.txt",
+    "https://github.com/alistairkung/private-client-graph/blob/d5130917b32ba03e41d6345a8c3d604f4c906432/cases/case_04/sources/note_02.txt",
+    "https://github.com/alistairkung/private-client-graph/blob/d5130917b32ba03e41d6345a8c3d604f4c906432/docs/adr/0005-treat-extracted-pdf-text-as-the-authoritative-source.md",
+    "https://github.com/alistairkung/private-client-graph/blob/d5130917b32ba03e41d6345a8c3d604f4c906432/docs/adr/0009-share-one-fixed-configurable-analysis-pipeline.md",
+    "https://github.com/alistairkung/private-client-graph/blob/d5130917b32ba03e41d6345a8c3d604f4c906432/docs/artifacts/ui-consolidation/README.md",
+    "https://github.com/alistairkung/private-client-graph/blob/d5130917b32ba03e41d6345a8c3d604f4c906432/presentation/product-demo/PROVENANCE.md",
+    "https://github.com/alistairkung/private-client-graph/blob/d5130917b32ba03e41d6345a8c3d604f4c906432/private_client_graph/published/research-results.v1.json",
+    "https://github.com/alistairkung/private-client-graph/pull/160",
+    "https://github.com/alistairkung/private-client-graph/tree/d5130917b32ba03e41d6345a8c3d604f4c906432/research/final-day/validation",
+    "https://github.com/alistairkung/private-client-graph/tree/main/cases/case_01",
+    "https://private-client-graph-production.up.railway.app/",
+    "https://private-client-graph-production.up.railway.app/research-results",
+    "https://private-client-graph-production.up.railway.app/research-results#comparison"
+  ],
+  "publication_sha256": "7f2c9370e0799aa639ca5cfbd08826591c81f6186da1d928d2ef190c3ff5b927",
+  "checks": "Passed integrity, size, selectable text, glyphs, fonts, bookmarks and required content. Link destinations need separate network or repository verification; layout needs visual review."
+}
