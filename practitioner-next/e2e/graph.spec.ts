@@ -19,7 +19,7 @@ test("Evergreen graph preserves family structure and every selectable relationsh
   const record = (await response.json()) as { state: CanonicalState };
   const state = record.state;
   if (info.project.name === "phone") {
-    await page.getByRole("button", { name: "Graph", exact: true }).click();
+    await page.getByRole("tab", { name: "Graph", exact: true }).click();
   }
 
   const nodes = page.locator(".react-flow__node");
@@ -28,6 +28,45 @@ test("Evergreen graph preserves family structure and every selectable relationsh
   await expect(labels).toHaveCount(state.relationships.length);
   await page.getByRole("button", { name: "Fit graph", exact: true }).click();
   const canvas = await rectangle(page.locator(".graph-container"));
+
+  const obscured = await page
+    .locator(".graph-container")
+    .evaluate((container) => {
+      const labels = Array.from(
+        container.querySelectorAll<HTMLElement>(".edge-label"),
+      );
+      const collisions: string[] = [];
+      for (const edge of container.querySelectorAll(".react-flow__edge")) {
+        const path = edge.querySelector<SVGPathElement>(
+          ".react-flow__edge-path",
+        );
+        if (!path) continue;
+        const transform = path.getScreenCTM()!;
+        const length = path.getTotalLength();
+        for (const label of labels) {
+          if (label.dataset.edgeId === edge.getAttribute("data-id")) continue;
+          const box = label.getBoundingClientRect();
+          for (let step = 0; step <= 300; step++) {
+            const p = path.getPointAtLength((length * step) / 300);
+            const x = p.x * transform.a + p.y * transform.c + transform.e;
+            const y = p.x * transform.b + p.y * transform.d + transform.f;
+            if (
+              x > box.left + 1 &&
+              x < box.right - 1 &&
+              y > box.top + 1 &&
+              y < box.bottom - 1
+            ) {
+              collisions.push(
+                `${edge.getAttribute("data-id")} under label ${label.dataset.edgeId}`,
+              );
+              break;
+            }
+          }
+        }
+      }
+      return collisions;
+    });
+  expect(obscured).toEqual([]);
 
   // Fit includes label and Trust-caption extents, rather than only React Flow nodes.
   const drawingParts = page.locator(

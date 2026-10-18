@@ -24,6 +24,8 @@ files were changed. See `verification.md` for environment and execution limits.
 | Account and public showcase | Native account control with Escape/outside/focus dismissal; CSRF signout and configurable link to the original showcase. |
 | English / Simplified Chinese | Independent translated UI and persisted locale, names/source text unchanged; switching preserves intake values. Real phone/desktop browser test. |
 | Responsive/keyboard/reduced motion | Independent phone workspace controls, source return focus, native modal focus/escape, visible focus and reduced-motion equivalents. Browser and unit checks. |
+| View and navigation continuity | Graph/List accepts drag, click and roving keyboard tabs; retains camera, query, scroll and selection. Client navigation retains ledger search and tab-memory drafts/PDFs. Desktop/phone interaction checks. |
+| Interrupted work and sign-out | Busy intake/decisions block app links and history navigation. Unknown intake outcomes retain recovery locks with the draft. Successful intake clears it; sign-out resets mounted fields/PDFs without an unload prompt. Deferred-request, remount and real session tests. |
 
 ## Reference source map
 
@@ -46,8 +48,8 @@ UI errors; they do not replace successful integration coverage. No provider
 quality, production tenancy, real-data admission, new backend workflow or
 runtime MotionScore performance certification is claimed.
 
-Validation result after graph refinement: 752 repository tests, 41 new-app unit tests, typecheck/build,
-formatting and 20 desktop/phone parity checks passed; the separate short recording
+Validation result after interaction refinement: 752 repository tests, 59 new-app unit tests, typecheck/build,
+formatting and 28 desktop/phone parity checks passed; the separate short recording
 also passed. The new CI workflow repeats the new-app gates; its remote status is
 reported at PR handoff. See verification.md for the finite graph-routing and
 runtime/model-observability limits.

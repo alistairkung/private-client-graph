@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { navigate, useNavigationLock } from "../app/navigation";
 import type { CanonicalState, ReviewRecord } from "../shared/contracts";
 import { useLocale } from "../shared/locale";
 import {
@@ -28,16 +29,17 @@ export function ProposalDecision({
 }) {
   const { t } = useLocale();
   const [busy, setBusy] = useState(false);
+  useNavigationLock(busy);
   const confirm = decision === "confirm";
   async function submit() {
     if (busy || blocked) return;
     setBusy(true);
     onError(undefined);
     try {
-      if (confirm) window.location.assign(await confirmProposal(record.id));
+      if (confirm) navigate(await confirmProposal(record.id));
       else {
         await discardProposal(record.id);
-        window.location.assign("/app");
+        navigate("/app");
       }
     } catch (failure) {
       onError(failure);

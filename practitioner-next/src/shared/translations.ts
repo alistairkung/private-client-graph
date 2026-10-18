@@ -1,5 +1,9 @@
 import { fictionalPrompt } from "../intake/prompt";
+import { applicationChinese } from "../app/translations";
+import { reviewChinese } from "../review/translations";
 export const chinese: Record<string, string> = {
+  ...applicationChinese,
+  ...reviewChinese,
   Settlor: "设立人",
   Trustee: "受托人",
   Beneficiary: "受益人",

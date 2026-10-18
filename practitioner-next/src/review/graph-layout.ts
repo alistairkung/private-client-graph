@@ -109,11 +109,8 @@ export function graphDrawing(graph: Graph, t: Translate): GraphDrawingModel {
         { x: layout.node(entity.id).x, y: layout.node(entity.id).y },
       ]),
     );
-  const routes: RelationshipRoute[] = anchored?.routes ?? [];
+  const paths: Point[][] = anchored?.routes ?? [];
   if (!anchored) {
-    const obstacles = graph.entities.map((entity) =>
-      nodeFootprint(positions.get(entity.id)!, height(entity.id), 8),
-    );
     orderedEdges.forEach(({ edge, index }) => {
       const points: Point[] = layout
         .edge({ v: edge.source, w: edge.target, name: String(index) })
@@ -128,16 +125,49 @@ export function graphDrawing(graph: Graph, t: Translate): GraphDrawingModel {
         points[points.length - 2],
         height(edge.target) === TRUST_HEIGHT,
       );
-      const route = relationshipRoute(points, edge.label, { obstacles });
-      routes[index] = route;
-      obstacles.push(route.labelBounds);
+      paths[index] = points;
     });
   }
+  // Place labels only after every claim's path exists. A later route must not disappear beneath an earlier label.
+  const obstacles = graph.entities.map((entity) =>
+    nodeFootprint(positions.get(entity.id)!, height(entity.id), 8),
+  );
+  const routes: RelationshipRoute[] = [];
+  orderedEdges.forEach(({ edge, index }) => {
+    const route = relationshipRoute(paths[index], edge.label, {
+      obstacles,
+      routes: paths,
+    });
+    routes[index] = route;
+    obstacles.push(route.labelBounds);
+  });
   return {
     bounds: completeBounds(graph, positions, routes),
     nodes: graph.entities.map((entity) => ({
       id: entity.id,
       type: "entity",
+      // Fixed diagram footprints also define XYFlow's endpoint contract. Controlled
+      // visual updates must not discard DOM-measured handle bounds between pointer events.
+      width: NODE_WIDTH,
+      height: height(entity.id),
+      handles: [
+        {
+          type: "target",
+          position: Position.Top,
+          x: NODE_WIDTH / 2,
+          y: 0,
+          width: 1,
+          height: 1,
+        },
+        {
+          type: "source",
+          position: Position.Bottom,
+          x: NODE_WIDTH / 2,
+          y: height(entity.id),
+          width: 1,
+          height: 1,
+        },
+      ],
       position: {
         x: positions.get(entity.id)!.x - NODE_WIDTH / 2,
         y: positions.get(entity.id)!.y - height(entity.id) / 2,

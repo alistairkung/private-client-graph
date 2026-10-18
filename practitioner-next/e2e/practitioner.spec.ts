@@ -79,7 +79,7 @@ test("keyboard relationship selection locates exact Evidence and restores focus"
 }, info) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto(evergreen);
-  await page.getByRole("button", { name: "List", exact: true }).click();
+  await page.getByRole("tab", { name: "List", exact: true }).click();
   const relationship = page.locator("#relationship-0");
   await relationship.focus();
   await relationship.press("Enter");
@@ -103,6 +103,14 @@ test("single-PDF proposal requires explicit confirmation and reopens as current 
 }, info) => {
   const reference = `NEXT/UI/${info.project.name}/${crypto.randomUUID()}`;
   await intake(page, reference);
+  let releaseConfirmation = () => {};
+  const confirmationGate = new Promise<void>((resolve) => {
+    releaseConfirmation = resolve;
+  });
+  await page.route("**/api/matters", async (route) => {
+    if (route.request().method() === "POST") await confirmationGate;
+    await route.continue();
+  });
   await page
     .getByRole("button", { name: "Confirm proposal", exact: true })
     .click();
@@ -111,6 +119,13 @@ test("single-PDF proposal requires explicit confirmation and reopens as current 
   await dialog
     .getByRole("button", { name: "Confirm and create Matter", exact: true })
     .click();
+  await expect(
+    dialog.getByRole("button", { name: "Confirming…", exact: true }),
+  ).toBeDisabled();
+  await page.goBack();
+  await expect(page).toHaveURL(/\/app\/matter-proposals\/[a-f0-9-]+$/);
+  await expect(dialog).toBeVisible();
+  releaseConfirmation();
   await expect(page).toHaveURL(/\/app\/matters\/[a-f0-9-]+$/);
   const url = page.url();
   await expect(
@@ -123,6 +138,21 @@ test("single-PDF proposal requires explicit confirmation and reopens as current 
   await page.getByRole("searchbox").fill(reference);
   await page.getByRole("link", { name: new RegExp(reference) }).click();
   await expect(page).toHaveURL(url);
+  await page
+    .getByRole("link", { name: /Back to Matters$|^Matters$/ })
+    .filter({ visible: true })
+    .last()
+    .click();
+  await page
+    .getByRole("link", { name: "New proposal", exact: true })
+    .filter({ visible: true })
+    .last()
+    .click();
+  await expect(page.locator('input[name="external_reference"]')).toHaveValue(
+    "",
+  );
+  await expect(page.locator('input[name="matter_title"]')).toHaveValue("");
+  await expect(page.locator(".source-uploads li")).toHaveCount(0);
 });
 
 test("multi-PDF proposal retains each Source and can be explicitly discarded", async ({
@@ -144,7 +174,7 @@ test("multi-PDF proposal retains each Source and can be explicitly discarded", a
       ),
   );
   expect(relationshipIndex).toBeGreaterThanOrEqual(0);
-  await page.getByRole("button", { name: "List", exact: true }).click();
+  await page.getByRole("tab", { name: "List", exact: true }).click();
   await page.locator(`#relationship-${relationshipIndex}`).click();
   const secondEvidence = proposal.state.relationships[
     relationshipIndex
@@ -318,6 +348,18 @@ test("fictional prompt and account controls close accessibly; sign out ends the 
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await expect(prompt).toBeFocused();
+  await page
+    .locator('input[name="external_reference"]')
+    .fill("SYNTHETIC/LOGOUT");
+  await page
+    .locator('input[name="matter_title"]')
+    .fill("Fictional draft to clear");
+  await page.locator('input[type="file"]').setInputFiles(familyPdf);
+  let unloadPrompts = 0;
+  page.on("dialog", async (dialog) => {
+    unloadPrompts++;
+    await dialog.dismiss();
+  });
   if (info.project.name === "phone")
     await page.getByRole("button", { name: "Menu", exact: true }).click();
   const account = page.getByRole("button", {
@@ -335,5 +377,7 @@ test("fictional prompt and account controls close accessibly; sign out ends the 
   await expect(
     page.getByRole("link", { name: "Sign in", exact: true }).first(),
   ).toBeVisible();
+  expect(unloadPrompts).toBe(0);
+  await expect(page.locator('input[name="matter_title"]')).toHaveCount(0);
   expect((await page.request.get("/api/matters")).status()).toBe(401);
 });

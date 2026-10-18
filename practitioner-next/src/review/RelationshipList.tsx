@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useLayoutEffect, useRef } from "react";
+import { useSessionState } from "../shared/session-state";
 import type { CanonicalState } from "../shared/contracts";
 import { useLocale } from "../shared/locale";
 import { relationshipLabels, relationshipStatement } from "./presentation";
@@ -9,15 +10,22 @@ export function RelationshipList({
   entity,
   onSelect,
   onClear,
+  memoryKey = "review:list",
 }: {
   state: CanonicalState;
   selected: number | null;
   entity: string | null;
   onSelect: (index: number) => void;
   onClear: () => void;
+  memoryKey?: string;
 }) {
   const { t } = useLocale();
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useSessionState(memoryKey + ":query", "");
+  const [scroll, setScroll] = useSessionState(memoryKey + ":list-scroll", 0);
+  const list = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    if (list.current) list.current.scrollTop = scroll;
+  }, []);
   const relationships = state.relationships
     .map((relationship, index) => ({ relationship, index }))
     .filter(
@@ -45,7 +53,11 @@ export function RelationshipList({
           {t("Show all relationships")}
         </button>
       )}
-      <div className="relationship-list-scroll">
+      <div
+        className="relationship-list-scroll"
+        ref={list}
+        onScroll={(event) => setScroll(event.currentTarget.scrollTop)}
+      >
         {relationships.map(({ relationship, index }) => (
           <button
             key={index}

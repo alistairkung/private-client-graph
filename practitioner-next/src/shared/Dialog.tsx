@@ -43,6 +43,11 @@ export function Dialog({
         className="dialog-content"
         initial={{ opacity: 0, y: reduced ? 0 : 8 }}
         animate={{ opacity: 1, y: 0 }}
+        exit={{
+          opacity: 0,
+          y: reduced ? 0 : 4,
+          transition: { duration: reduced ? 0.06 : 0.12 },
+        }}
         transition={{ duration: reduced ? 0.06 : 0.18 }}
       >
         <div className="dialog-heading">

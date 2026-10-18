@@ -7,6 +7,7 @@ export type Rectangle = {
 };
 export type RelationshipRoute = {
   points: Point[];
+  anchor: Point;
   x: number;
   y: number;
   labelOffset: Point;
@@ -17,11 +18,10 @@ export const PERSON_HEIGHT = 56;
 export const TRUST_HEIGHT = 96;
 export const TRUST_LABEL_HEIGHT = 60;
 const LABEL_HEIGHT = 32;
-const LABEL_OFFSET = 26;
 
 type RouteOptions = {
-  awayFrom?: Point;
   obstacles?: Rectangle[];
+  routes?: Point[][];
 };
 
 export function nodeBoundary(
@@ -70,18 +70,41 @@ export function nodeFootprint(
   return rectangle;
 }
 
-export function relationshipRoute(
-  points: Point[],
-  label: string,
-  options: RouteOptions = {},
-): RelationshipRoute {
+function routeAnchor(points: Point[], fraction: number) {
   const lengths = points
     .slice(1)
     .map((point, index) =>
       Math.hypot(point.x - points[index].x, point.y - points[index].y),
     );
-  const routeLength = lengths.reduce((total, length) => total + length, 0);
-  // Reserve the complete English/Chinese label footprint so language changes do not move routes.
+  const distance =
+    lengths.reduce((total, length) => total + length, 0) * fraction;
+  let travelled = 0,
+    segment = 0;
+  while (
+    segment < lengths.length - 1 &&
+    travelled + lengths[segment] < distance
+  ) {
+    travelled += lengths[segment];
+    segment++;
+  }
+  const start = points[segment],
+    end = points[segment + 1];
+  const length = lengths[segment] || 1;
+  const progress = (distance - travelled) / length;
+  return {
+    anchor: {
+      x: start.x + (end.x - start.x) * progress,
+      y: start.y + (end.y - start.y) * progress,
+    },
+    normal: { x: -(end.y - start.y) / length, y: (end.x - start.x) / length },
+  };
+}
+
+export function relationshipRoute(
+  points: Point[],
+  label: string,
+  options: RouteOptions = {},
+): RelationshipRoute {
   const width = Math.max(
     120,
     [...label].reduce(
@@ -89,58 +112,20 @@ export function relationshipRoute(
       0,
     ) + 24,
   );
-  const placements = [0.5, 0.4, 0.6, 0.3, 0.7, 0.2, 0.8].flatMap((fraction) => {
-    const targetDistance = routeLength * fraction;
-    let travelled = 0;
-    let segment = 0;
-    while (
-      segment < lengths.length - 1 &&
-      travelled + lengths[segment] < targetDistance
-    ) {
-      travelled += lengths[segment];
-      segment += 1;
-    }
-    const start = points[segment];
-    const end = points[segment + 1];
-    const length = lengths[segment] || 1;
-    const progress = (targetDistance - travelled) / length;
-    const anchor = {
-      x: start.x + (end.x - start.x) * progress,
-      y: start.y + (end.y - start.y) * progress,
-    };
-    const normal = {
-      x: -(end.y - start.y) / length,
-      y: (end.x - start.x) / length,
-    };
-    const positiveNormalOffset = {
-      x: normal.x * LABEL_OFFSET,
-      y: normal.y * LABEL_OFFSET,
-    };
-    const negativeNormalOffset = {
-      x: -positiveNormalOffset.x,
-      y: -positiveNormalOffset.y,
-    };
-    const distance = (offset: Point) =>
-      options.awayFrom
-        ? Math.hypot(
-            anchor.x + offset.x - options.awayFrom.x,
-            anchor.y + offset.y - options.awayFrom.y,
-          )
-        : 0;
-    const offsets =
-      options.awayFrom &&
-      distance(negativeNormalOffset) > distance(positiveNormalOffset)
-        ? [negativeNormalOffset, positiveNormalOffset]
-        : [positiveNormalOffset, negativeNormalOffset];
-    return [1, 1.8, 2.6, 3.4].flatMap((distance) =>
-      offsets.map((baseOffset) => {
+  const anchors = [0.5, 0.4, 0.6, 0.3, 0.7, 0.2, 0.8, 0.1, 0.9].map(
+    (fraction) => routeAnchor(points, fraction),
+  );
+  const placements = [26, 44, 62, 80, 100, 124, 156, 196].flatMap((distance) =>
+    anchors.flatMap(({ anchor, normal }) =>
+      [1, -1].map((direction) => {
         const labelOffset = {
-          x: baseOffset.x * distance,
-          y: baseOffset.y * distance,
+          x: normal.x * distance * direction,
+          y: normal.y * distance * direction,
         };
-        const x = anchor.x + labelOffset.x;
-        const y = anchor.y + labelOffset.y;
+        const x = anchor.x + labelOffset.x,
+          y = anchor.y + labelOffset.y;
         return {
+          anchor,
           x,
           y,
           labelOffset,
@@ -152,23 +137,34 @@ export function relationshipRoute(
           },
         };
       }),
-    );
-  });
+    ),
+  );
+  function collisions(candidate: (typeof placements)[number]) {
+    const box = candidate.labelBounds;
+    const nodeCollisions = (options.obstacles ?? []).filter(
+      (obstacle) =>
+        box.left < obstacle.right &&
+        box.right > obstacle.left &&
+        box.top < obstacle.bottom &&
+        box.bottom > obstacle.top,
+    ).length;
+    const lineBox = {
+      left: box.left - 4,
+      right: box.right + 4,
+      top: box.top - 4,
+      bottom: box.bottom + 4,
+    };
+    const lineCollisions = (options.routes ?? []).filter((route) =>
+      route
+        .slice(1)
+        .some((end, index) => segmentCrossesBounds(route[index], end, lineBox)),
+    ).length;
+    return nodeCollisions + lineCollisions;
+  }
   const selected =
-    placements.find(
-      (candidate) =>
-        !(options.obstacles ?? []).some(
-          (obstacle) =>
-            candidate.labelBounds.left < obstacle.right &&
-            candidate.labelBounds.right > obstacle.left &&
-            candidate.labelBounds.top < obstacle.bottom &&
-            candidate.labelBounds.bottom > obstacle.top,
-        ),
-    ) ?? placements[0];
-  return {
-    points,
-    ...selected,
-  };
+    placements.find((candidate) => collisions(candidate) === 0) ??
+    [...placements].sort((a, b) => collisions(a) - collisions(b))[0];
+  return { points, ...selected };
 }
 
 export function segmentCrossesBounds(

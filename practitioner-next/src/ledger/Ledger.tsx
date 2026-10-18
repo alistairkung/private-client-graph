@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
+import { AnimatePresence, motion } from "motion/react";
 import { getMatters, getProposals } from "../shared/api";
 import type { MatterSummary, ProposalSummary } from "../shared/contracts";
 import { ErrorNotice, Loading } from "../shared/Feedback";
 import { Icon } from "../shared/Icon";
 import { useLocale } from "../shared/locale";
+import { useSessionState } from "../shared/session-state";
 
 export function Ledger() {
   const { t } = useLocale();
@@ -13,7 +15,7 @@ export function Ledger() {
     matters?: unknown;
     proposals?: unknown;
   }>({});
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useSessionState("ledger:query", "");
   const [attempt, setAttempt] = useState(0);
   useEffect(() => {
     let active = true;
@@ -69,53 +71,51 @@ export function Ledger() {
           placeholder={t("Search by reference or title")}
         />
       </label>
-      <section className="ledger-section">
-        <div className="section-heading">
-          <h2>{t("Awaiting confirmation")}</h2>
-          {proposals && <span className="count">{pending?.length}</span>}
-        </div>
-        <p className="section-description">
+      {pending?.length === 0 && !errors.proposals ? (
+        <p className="pending-empty">
           {t(
-            "Review the complete proposal before accepting it as current Matter state.",
+            query
+              ? "No matching proposals."
+              : "No proposals awaiting confirmation.",
           )}
         </p>
-        {errors.proposals ? (
-          <ErrorNotice
-            error={errors.proposals}
-            retry={() => setAttempt(attempt + 1)}
-          />
-        ) : !pending ? (
-          <Loading />
-        ) : pending.length ? (
-          <div className="record-list">
-            {pending.map((item) => (
-              <a
-                className="record-row"
-                href={"/app/matter-proposals/" + encodeURIComponent(item.id)}
-                key={item.id}
-              >
-                <span className="record-icon">
-                  <Icon name="file" />
-                </span>
-                <span className="record-identity">
-                  <strong>{item.external_reference}</strong>
-                  <span>{item.matter_title}</span>
-                </span>
-                <span className="status">{t("Proposal")}</span>
-                <Icon name="arrow" />
-              </a>
-            ))}
+      ) : (
+        <section className="ledger-section">
+          <div className="section-heading">
+            <h2>{t("Awaiting confirmation")}</h2>
+            {proposals && <span className="count">{pending?.length}</span>}
           </div>
-        ) : (
-          <div className="empty-row">
+          <p className="section-description">
             {t(
-              query
-                ? "No matching proposals."
-                : "No proposals awaiting confirmation.",
+              "Review the complete proposal before accepting it as current Matter state.",
             )}
-          </div>
-        )}
-      </section>
+          </p>
+          {errors.proposals ? (
+            <ErrorNotice
+              error={errors.proposals}
+              retry={() => setAttempt(attempt + 1)}
+            />
+          ) : !pending ? (
+            <Loading />
+          ) : pending.length ? (
+            <RecordList
+              records={pending.map((item) => ({
+                ...item,
+                title: item.matter_title,
+              }))}
+              proposal
+            />
+          ) : (
+            <div className="empty-row">
+              {t(
+                query
+                  ? "No matching proposals."
+                  : "No proposals awaiting confirmation.",
+              )}
+            </div>
+          )}
+        </section>
+      )}
       <section className="ledger-section">
         <div className="section-heading">
           <h2>{t("Accepted Matters")}</h2>
@@ -132,25 +132,7 @@ export function Ledger() {
         ) : !current ? (
           <Loading />
         ) : current.length ? (
-          <div className="record-list">
-            {current.map((item) => (
-              <a
-                className="record-row"
-                href={"/app/matters/" + encodeURIComponent(item.id)}
-                key={item.id}
-              >
-                <span className="record-icon">
-                  <Icon name="atlas" />
-                </span>
-                <span className="record-identity">
-                  <strong>{item.external_reference}</strong>
-                  <span>{item.title}</span>
-                </span>
-                <span className="status current">{t("Current")}</span>
-                <Icon name="arrow" />
-              </a>
-            ))}
-          </div>
+          <RecordList records={current} />
         ) : (
           <div className="empty-row">
             {t(
@@ -166,6 +148,44 @@ export function Ledger() {
           "Proposals become current Matter state only after your explicit confirmation.",
         )}
       </p>
+    </div>
+  );
+}
+
+function RecordList({
+  records,
+  proposal = false,
+}: {
+  records: MatterSummary[];
+  proposal?: boolean;
+}) {
+  const { t } = useLocale();
+  return (
+    <div className="record-list">
+      <AnimatePresence initial={false}>
+        {records.map((item) => (
+          <motion.a
+            layout="position"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0, transition: { duration: 0.08 } }}
+            transition={{ duration: 0.14 }}
+            className="record-row"
+            href={`/app/${proposal ? "matter-proposals" : "matters"}/${encodeURIComponent(item.id)}`}
+            key={item.id}
+          >
+            <span className="record-icon">
+              <Icon name={proposal ? "file" : "atlas"} />
+            </span>
+            <span className="record-identity">
+              <strong>{item.external_reference}</strong>
+              <span>{item.title}</span>
+            </span>
+            {proposal && <span className="status">{t("Proposal")}</span>}
+            <Icon name="arrow" />
+          </motion.a>
+        ))}
+      </AnimatePresence>
     </div>
   );
 }

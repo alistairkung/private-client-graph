@@ -6,11 +6,8 @@ import {
   TRUST_HEIGHT,
   nodeBoundary,
   nodeFootprint,
-  relationshipRoute,
   segmentCrossesBounds,
   type Point,
-  type Rectangle,
-  type RelationshipRoute,
 } from "./node-geometry";
 
 const HORIZONTAL_GAP = 96;
@@ -142,19 +139,6 @@ function placeFamilyContext(
   }
 }
 
-function entityObstacles(
-  graph: RelationshipPresentation,
-  positions: Map<string, Point>,
-): Rectangle[] {
-  return graph.entities.map((entity) =>
-    nodeFootprint(
-      positions.get(entity.id)!,
-      entity.type === "trust" ? TRUST_HEIGHT : PERSON_HEIGHT,
-      8,
-    ),
-  );
-}
-
 type RoutingContext = {
   graph: RelationshipPresentation;
   positions: Map<string, Point>;
@@ -162,7 +146,6 @@ type RoutingContext = {
   center: Point;
   trustApproaches: Map<number, Point>;
   personGroups: Map<string, number[]>;
-  obstacles: Rectangle[];
 };
 
 function routeTrustRelationship(
@@ -234,10 +217,7 @@ function routeTrustRelationship(
     ) ?? direct;
   const points =
     edge.source === context.trustId ? personToTrust.reverse() : personToTrust;
-  return relationshipRoute(points, edge.label, {
-    awayFrom: context.center,
-    obstacles: context.obstacles,
-  });
+  return points;
 }
 
 function routePersonRelationship(
@@ -295,9 +275,7 @@ function routePersonRelationship(
           ),
         ),
     ) ?? routes[0];
-  return relationshipRoute(points, edge.label, {
-    obstacles: context.obstacles,
-  });
+  return points;
 }
 
 // Role positions are presentation preferences, not additional legal meaning.
@@ -385,8 +363,7 @@ export function centralTrustLayout(graph: RelationshipPresentation) {
     const key = personPairKey(edge);
     personGroups.set(key, [...(personGroups.get(key) ?? []), index]);
   });
-  const obstacles = entityObstacles(graph, positions);
-  const routes: RelationshipRoute[] = [];
+  const routes: Point[][] = [];
   const context: RoutingContext = {
     graph,
     positions,
@@ -394,7 +371,6 @@ export function centralTrustLayout(graph: RelationshipPresentation) {
     center,
     trustApproaches,
     personGroups,
-    obstacles,
   };
   orderedRelationships.forEach(({ edge, index }) => {
     const route =
@@ -402,7 +378,6 @@ export function centralTrustLayout(graph: RelationshipPresentation) {
         ? routeTrustRelationship(edge, index, context)
         : routePersonRelationship(edge, index, context);
     routes[index] = route;
-    obstacles.push(route.labelBounds);
   });
   return {
     positions,

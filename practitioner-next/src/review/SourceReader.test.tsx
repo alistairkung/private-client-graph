@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { SourceReader } from "./SourceReader";
@@ -13,6 +13,69 @@ const sources = [
   { id: "two", title: "Same title", text: "Second exact quote." },
 ];
 describe("exact source-aware Evidence reading", () => {
+  it("preserves source scroll on selection and moves only the source container for an explicit Evidence action", () => {
+    const item = {
+      id: "first",
+      source_id: "one",
+      document: "Same title",
+      supporting_text: "First exact quote.",
+    };
+    const props = {
+      sources,
+      sourceId: "one",
+      onSource: vi.fn(),
+      onReturn: vi.fn(),
+      memoryKey: "source-scroll-regression",
+    };
+    const { container, rerender } = render(
+      <SourceReader {...props} evidence={item} />,
+    );
+    const reader = container.querySelector<HTMLElement>(".source-scroll")!;
+    reader.scrollTop = 275;
+    fireEvent.scroll(reader);
+    rerender(<SourceReader {...props} evidence={{ ...item, id: "second" }} />);
+    expect(reader.scrollTop).toBe(275);
+    const target = container.querySelector<HTMLElement>("mark")!;
+    vi.spyOn(reader, "getBoundingClientRect").mockReturnValue(
+      new DOMRect(0, 100, 300, 300),
+    );
+    vi.spyOn(target, "getBoundingClientRect").mockReturnValue(
+      new DOMRect(0, 620, 200, 20),
+    );
+    Object.defineProperty(reader, "clientHeight", {
+      configurable: true,
+      value: 300,
+    });
+    rerender(
+      <SourceReader
+        {...props}
+        evidence={{ ...item, id: "second" }}
+        jumpRequest={1}
+      />,
+    );
+    expect(reader.scrollTop).toBe(735);
+    expect(target).toHaveFocus();
+    expect(window.scrollY).toBe(0);
+    rerender(
+      <SourceReader
+        {...props}
+        sourceId="two"
+        evidence={{ ...item, id: "second" }}
+        jumpRequest={1}
+      />,
+    );
+    expect(reader.scrollTop).toBe(0);
+    reader.scrollTop = 123;
+    fireEvent.scroll(reader);
+    rerender(
+      <SourceReader
+        {...props}
+        evidence={{ ...item, id: "second" }}
+        jumpRequest={1}
+      />,
+    );
+    expect(reader.scrollTop).toBe(735);
+  });
   it("highlights one exact occurrence in the selected source, retaining the backend Evidence ID", () => {
     const { container, rerender } = render(
       <LocaleProvider>

@@ -1,0 +1,57 @@
+.view-switch {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(64px, 1fr));
+  width: max-content;
+  padding: 4px;
+  border-radius: 9px;
+  background: #e4ebf3;
+  user-select: none;
+  touch-action: pan-y;
+}
+.view-switch-pill {
+  position: absolute;
+  z-index: -1;
+  left: 4px;
+  top: 4px;
+  bottom: 4px;
+  border-radius: 6px;
+  background: #fff;
+  box-shadow: 0 1px 3px #213c5b18;
+  pointer-events: none;
+}
+.view-switch > button {
+  min-height: 36px;
+  border: 0;
+  border-radius: 6px;
+  padding: 7px 15px;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 22px;
+  background: transparent;
+  color: #536579;
+  touch-action: pan-y;
+}
+.view-switch > button:hover:not(:disabled) {
+  background: transparent;
+  color: #2358ba;
+}
+.view-switch > button[aria-selected="true"] {
+  color: #2358ba;
+}
+.view-switch[data-dragging] {
+  cursor: grabbing;
+}
+.view-switch[data-dragging] > button {
+  cursor: grabbing;
+}
+.view-switch > button:focus-visible {
+  outline: 2px solid #2358ba;
+  outline-offset: 2px;
+}
+@media (max-width: 480px) {
+  .view-switch > button {
+    min-height: 40px;
+  }
+}

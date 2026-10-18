@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { ViewSwitch } from "../shared/ViewSwitch";
+import { useSessionState } from "../shared/session-state";
 import { getReview, RequestFailure } from "../shared/api";
 import type { ReviewRecord } from "../shared/contracts";
 import { ErrorNotice, Loading, NotFound } from "../shared/Feedback";
@@ -79,25 +81,52 @@ function Workspace({
   const { t } = useLocale();
   const reduced = useReducedMotion();
   const state = useRef(reviewState(record)).current;
-  const [selected, setSelected] = useState<number | null>(null);
-  const [entity, setEntity] = useState<string | null>(null);
-  const [evidenceId, setEvidenceId] = useState<string | null>(null);
-  const [sourceId, setSourceId] = useState<string | null>(
+  const memoryKey =
+    "review:" + (proposal ? "proposal:" : "matter:") + record.id;
+  const [narrow, setNarrow] = useState(() => window.innerWidth <= 900);
+  useEffect(() => {
+    if (!window.matchMedia) return;
+    const media = window.matchMedia("(max-width: 900px)");
+    const update = () => setNarrow(media.matches);
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
+  const [sourceJump, setSourceJump] = useState(0);
+  const [selected, setSelected] = useSessionState<number | null>(
+    memoryKey + ":selected",
+    null,
+  );
+  const [entity, setEntity] = useSessionState<string | null>(
+    memoryKey + ":entity",
+    null,
+  );
+  const [evidenceId, setEvidenceId] = useSessionState<string | null>(
+    memoryKey + ":evidence",
+    null,
+  );
+  const [sourceId, setSourceId] = useSessionState<string | null>(
+    memoryKey + ":source",
     state.sources[0]?.id ?? null,
   );
-  const [tab, setTab] = useState<"relationships" | "sources">("relationships");
-  const [view, setView] = useState<"graph" | "list">(() =>
-    window.innerWidth <= 900 ? "list" : "graph",
+  const [tab, setTab] = useSessionState<"relationships" | "sources">(
+    memoryKey + ":tab",
+    "relationships",
+  );
+  const [view, setView] = useSessionState<"graph" | "list">(
+    memoryKey + ":view",
+    () => (window.innerWidth <= 900 ? "list" : "graph"),
   );
   const [decision, setDecision] = useState<"confirm" | "discard">();
   const [decisionError, setDecisionError] = useState<unknown>();
   const decisionBlocked = decisionIsBlocked(decisionError);
-  const selectionView = useRef<"graph" | "list">("graph");
+  const [selectionView, setSelectionView] = useSessionState<"graph" | "list">(
+    memoryKey + ":selection-view",
+    view,
+  );
   const [focusRequest, setFocusRequest] = useState<{
     index: number;
     view: "graph" | "list";
   }>();
-  const inspector = useRef<HTMLHeadingElement>(null);
   const relationship =
     selected === null ? undefined : state.relationships[selected];
   const evidence = evidenceId
@@ -119,7 +148,7 @@ function Workspace({
     setEntity(null);
     setEvidenceId(item?.id ?? null);
     setSourceId(item?.source_id ?? null);
-    selectionView.current = view;
+    setSelectionView(view);
     setFocusRequest(undefined);
   }
   function selectEvidence(id: string, jump: boolean) {
@@ -130,18 +159,13 @@ function Workspace({
   }
   function openSource() {
     setTab("sources");
-    requestAnimationFrame(() => {
-      const destination =
-        document.querySelector<HTMLElement>(".source-text mark") ??
-        document.getElementById("sources-heading");
-      destination?.focus();
-    });
+    setSourceJump((previous) => previous + 1);
   }
   function returnToRelationship() {
     setTab("relationships");
     if (selected === null) return;
-    setView(selectionView.current);
-    setFocusRequest({ index: selected, view: selectionView.current });
+    setView(selectionView);
+    setFocusRequest({ index: selected, view: selectionView });
   }
   return (
     <div className="review-page">
@@ -219,7 +243,12 @@ function Workspace({
         </button>
       </div>
       <div className={"review-grid active-" + tab}>
-        <section className="relationships-panel" id="relationships-panel">
+        <section
+          className="relationships-panel"
+          id="relationships-panel"
+          aria-hidden={narrow && tab !== "relationships"}
+          inert={narrow && tab !== "relationships"}
+        >
           <header className="panel-toolbar">
             <div>
               <h2>{t("Relationships")}</h2>
@@ -230,49 +259,80 @@ function Workspace({
                 })}
               </span>
             </div>
-            <div className="view-toggle" aria-label={t("Relationship view")}>
-              <button
-                aria-pressed={view === "graph"}
-                onClick={() => setView("graph")}
-              >
-                {t("Graph")}
-              </button>
-              <button
-                aria-pressed={view === "list"}
-                onClick={() => setView("list")}
-              >
-                {t("List")}
-              </button>
-            </div>
+            <ViewSwitch
+              value={view}
+              onChange={setView}
+              id="review-view"
+              label={t("Relationship view")}
+              options={[
+                {
+                  value: "graph",
+                  label: t("Graph"),
+                  controls: "graph-view-panel",
+                },
+                {
+                  value: "list",
+                  label: t("List"),
+                  controls: "list-view-panel",
+                },
+              ]}
+            />
           </header>
-          {!state.relationships.length ? (
-            <div className="empty graph-empty">
-              <h3>{t("No relationships returned")}</h3>
-              <p>
-                {t("The returned graph contains no relationships to inspect.")}
-              </p>
-            </div>
-          ) : view === "graph" ? (
-            <GraphDrawing
-              state={state}
-              selected={selected}
-              selectedEntity={entity}
-              onSelect={selectRelationship}
-              onEntity={(id) => {
-                setEntity(id);
-                setSelected(null);
-                setEvidenceId(null);
-              }}
-            />
-          ) : (
-            <RelationshipList
-              state={state}
-              selected={selected}
-              entity={entity}
-              onSelect={selectRelationship}
-              onClear={() => setEntity(null)}
-            />
-          )}
+          <div className="review-view-stack">
+            {!state.relationships.length ? (
+              <div className="empty graph-empty">
+                <h3>{t("No relationships returned")}</h3>
+                <p>
+                  {t(
+                    "The returned graph contains no relationships to inspect.",
+                  )}
+                </p>
+              </div>
+            ) : (
+              <>
+                <div
+                  id="graph-view-panel"
+                  role="tabpanel"
+                  aria-labelledby="review-view-graph"
+                  aria-hidden={view !== "graph"}
+                  inert={view !== "graph"}
+                  className={
+                    "review-mode " + (view === "graph" ? "active" : "")
+                  }
+                >
+                  <GraphDrawing
+                    state={state}
+                    selected={selected}
+                    selectedEntity={entity}
+                    onSelect={selectRelationship}
+                    onEntity={(id) => {
+                      setEntity(id);
+                      setSelected(null);
+                      setEvidenceId(null);
+                    }}
+                    memoryKey={memoryKey}
+                  />
+                </div>
+                <div
+                  id="list-view-panel"
+                  role="tabpanel"
+                  aria-labelledby="review-view-list"
+                  aria-hidden={view !== "list"}
+                  inert={view !== "list"}
+                  className={"review-mode " + (view === "list" ? "active" : "")}
+                >
+                  <RelationshipList
+                    state={state}
+                    selected={selected}
+                    entity={entity}
+                    onSelect={selectRelationship}
+                    onClear={() => setEntity(null)}
+                    memoryKey={memoryKey}
+                  />
+                </div>
+              </>
+            )}
+          </div>
           {entity && (
             <div className="entity-inspector">
               <h3>{state.entities.find((item) => item.id === entity)?.name}</h3>
@@ -287,7 +347,7 @@ function Workspace({
             aria-labelledby="evidence-heading"
           >
             <div className="inspector-title">
-              <h2 id="evidence-heading" tabIndex={-1} ref={inspector}>
+              <h2 id="evidence-heading" tabIndex={-1}>
                 {t("Evidence")}
               </h2>
               {relationship && (
@@ -297,6 +357,7 @@ function Workspace({
               )}
             </div>
             <motion.div
+              className="inspector-body"
               key={selected ?? "empty"}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -336,27 +397,38 @@ function Workspace({
             </motion.div>
           </section>
         </section>
-        <div id="source-panel" className="source-column">
+        <div
+          id="source-panel"
+          className="source-column"
+          aria-hidden={narrow && tab !== "sources"}
+          inert={narrow && tab !== "sources"}
+        >
           <SourceReader
             sources={state.sources}
             sourceId={sourceId}
             evidence={evidence}
             onSource={setSourceId}
             onReturn={returnToRelationship}
+            jumpRequest={sourceJump}
+            statement={statement}
+            active={tab === "sources" || !narrow}
+            memoryKey={memoryKey}
           />
         </div>
       </div>
-      {decision && (
-        <ProposalDecision
-          decision={decision}
-          record={record}
-          state={state}
-          error={decisionError}
-          blocked={decisionBlocked}
-          onError={setDecisionError}
-          onClose={() => setDecision(undefined)}
-        />
-      )}
+      <AnimatePresence>
+        {decision && (
+          <ProposalDecision
+            decision={decision}
+            record={record}
+            state={state}
+            error={decisionError}
+            blocked={decisionBlocked}
+            onError={setDecisionError}
+            onClose={() => setDecision(undefined)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -382,7 +454,7 @@ function restoreRelationshipFocus(request: {
   function focus() {
     const target = panel!.querySelector<HTMLElement>(selector);
     if (!target) return;
-    target.focus();
+    target.focus({ preventScroll: true });
     observer.disconnect();
   }
   observer.observe(panel, { childList: true, subtree: true });

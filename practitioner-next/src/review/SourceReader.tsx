@@ -1,5 +1,6 @@
-import { useEffect, useId, useRef } from "react";
+import { useLayoutEffect, useId, useRef } from "react";
 import { motion, useReducedMotion } from "motion/react";
+import { useSessionState } from "../shared/session-state";
 import type { Evidence, Source } from "../shared/contracts";
 import { useLocale } from "../shared/locale";
 import { exactSpan } from "./presentation";
@@ -9,26 +10,66 @@ export function SourceReader({
   evidence,
   onSource,
   onReturn,
+  jumpRequest = 0,
+  statement,
+  active: panelActive = true,
+  memoryKey = "review:sources",
 }: {
   sources: Source[];
   sourceId: string | null;
   evidence?: Evidence;
   onSource: (id: string) => void;
   onReturn: () => void;
+  jumpRequest?: number;
+  statement?: string;
+  active?: boolean;
+  memoryKey?: string;
 }) {
   const { t } = useLocale();
   const reduced = useReducedMotion();
   const scope = useId();
   const mark = useRef<HTMLElement>(null);
+  const scroll = useRef<HTMLDivElement>(null);
+  const handledJump = useRef(0);
+  const [positions, setPositions] = useSessionState<Record<string, number>>(
+    memoryKey + ":source-scroll",
+    {},
+  );
   const source = sources.find((item) => item.id === sourceId);
   const active = evidence && evidence.source_id === source?.id;
   const span =
     active && source
       ? exactSpan(source.text, evidence.supporting_text)
       : undefined;
-  useEffect(() => {
-    mark.current?.scrollIntoView?.({ block: "center", behavior: "instant" });
-  }, [sourceId, evidence?.id]);
+  useLayoutEffect(() => {
+    if (scroll.current)
+      scroll.current.scrollTop = sourceId ? (positions[sourceId] ?? 0) : 0;
+  }, [sourceId]);
+  useLayoutEffect(() => {
+    if (!jumpRequest || handledJump.current === jumpRequest || !panelActive)
+      return;
+    handledJump.current = jumpRequest;
+    const target = mark.current;
+    const reader = scroll.current;
+    if (target && reader) {
+      reader.scrollTop = Math.max(
+        0,
+        reader.scrollTop +
+          target.getBoundingClientRect().top -
+          reader.getBoundingClientRect().top -
+          Math.min(72, reader.clientHeight * 0.2),
+      );
+      if (sourceId)
+        setPositions((previous) => ({
+          ...previous,
+          [sourceId]: reader.scrollTop,
+        }));
+      target.focus({ preventScroll: true });
+    } else
+      document
+        .getElementById("sources-heading")
+        ?.focus({ preventScroll: true });
+  }, [jumpRequest, panelActive, sourceId, evidence?.id]);
   return (
     <section className="source-panel" aria-labelledby="sources-heading">
       <header className="source-heading">
@@ -44,6 +85,12 @@ export function SourceReader({
           </button>
         )}
       </header>
+      {statement && (
+        <div className="source-relationship-context">
+          <span>{t("Selected relationship")}</span>
+          <p>{statement}</p>
+        </div>
+      )}
       <div className="source-tabs" aria-label={t("Choose source")}>
         {sources.map((item, index) => (
           <button
@@ -64,7 +111,16 @@ export function SourceReader({
           </button>
         ))}
       </div>
-      <div className="source-scroll">
+      <div
+        className="source-scroll"
+        ref={scroll}
+        onScroll={(event) => {
+          if (sourceId) {
+            const top = event.currentTarget.scrollTop;
+            setPositions((previous) => ({ ...previous, [sourceId]: top }));
+          }
+        }}
+      >
         {source ? (
           <article className="source-document">
             <div className="document-heading">
@@ -109,9 +165,9 @@ export function SourceReader({
         )}
       </div>
       <footer className="source-footer">
-        {evidence ? (
+        {active ? (
           <span>
-            {t("Active Evidence")}: {evidence.id}
+            {t("Active Evidence")}: {evidence?.id}
           </span>
         ) : (
           <span>{t("Select a relationship to locate its Evidence.")}</span>

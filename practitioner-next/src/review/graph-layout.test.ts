@@ -3,6 +3,7 @@ import { graphDrawing } from "./graph-layout";
 import type { Graph, Relationship } from "../shared/contracts";
 import {
   nodeFootprint,
+  segmentCrossesBounds,
   type Rectangle,
   type RelationshipRoute,
 } from "./node-geometry";
@@ -68,6 +69,17 @@ function assertClearLabels(drawing: Drawing) {
         "label " + index + " overlaps " + node.id,
       ).toBe(false),
     );
+    routes(drawing).forEach((other, otherIndex) => {
+      if (index === otherIndex) return;
+      other.points
+        .slice(1)
+        .forEach((end, segment) =>
+          expect(
+            segmentCrossesBounds(other.points[segment], end, label),
+            "label " + index + " obscures unrelated relationship " + otherIndex,
+          ).toBe(false),
+        );
+    });
     labels
       .slice(index + 1)
       .forEach((other) =>
@@ -137,6 +149,17 @@ function assertClearPaths(drawing: Drawing) {
   });
 }
 describe("Working Atlas relationship structure", () => {
+  it("supplies finite fixed endpoint geometry so controlled emphasis cannot invalidate mounted connectors", () => {
+    const drawing = graphDrawing(evergreen, (key) => key);
+    drawing.nodes.forEach((node) => {
+      expect(node.width).toBe(170);
+      expect(node.height).toBe(node.data.type === "trust" ? 96 : 56);
+      expect(node.handles).toEqual([
+        expect.objectContaining({ type: "target", x: 85, y: 0 }),
+        expect.objectContaining({ type: "source", x: 85, y: node.height }),
+      ]);
+    });
+  });
   it("keeps the Evergreen spouses aligned above the Trust and beneficiaries below it", () => {
     const drawing = graphDrawing(evergreen, (key) => key);
     const alice = box(drawing, "alice"),

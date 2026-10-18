@@ -1,5 +1,10 @@
 import { useEffect, useRef, useState } from "react";
-import { MotionConfig } from "motion/react";
+import {
+  AnimatePresence,
+  motion,
+  MotionConfig,
+  useReducedMotion,
+} from "motion/react";
 import { LocaleProvider, useLocale } from "../shared/locale";
 import { Icon } from "../shared/Icon";
 import { signOut } from "../shared/api";
@@ -7,6 +12,8 @@ import { ErrorNotice } from "../shared/Feedback";
 import { Ledger } from "../ledger/Ledger";
 import { Intake } from "../intake/Intake";
 import { ReviewPage } from "../review/ReviewPage";
+import { clearSessionState } from "../shared/session-state";
+import { useAppPath } from "./navigation";
 import "./app.css";
 
 export function App() {
@@ -21,7 +28,23 @@ export function App() {
 function Shell() {
   const { t, locale, setLocale } = useLocale();
   const [menu, setMenu] = useState(false);
-  const path = window.location.pathname.replace(/\/$/, "");
+  const path = useAppPath();
+  const reduced = useReducedMotion();
+  const compact = useCompactLayout();
+  const menuTrigger = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    setMenu(false);
+  }, [path]);
+  useEffect(() => {
+    if (!menu) return;
+    const close = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      setMenu(false);
+      menuTrigger.current?.focus();
+    };
+    document.addEventListener("keydown", close);
+    return () => document.removeEventListener("keydown", close);
+  }, [menu]);
   const review = path.match(/^\/app\/(matters|matter-proposals)\/([^/]+)$/);
   const isNew = path === "/app/matter-proposals/new";
   return (
@@ -29,55 +52,77 @@ function Shell() {
       <a className="skip-link" href="#main">
         {t("Skip to content")}
       </a>
-      <aside className={"rail " + (menu ? "rail-open" : "")}>
-        <a href="/app" className="brand">
-          <Icon name="atlas" />
-          <span>
-            Private Client
-            <br />
-            Graph
-          </span>
-        </a>
-        <div className="rail-label">{t("Working Atlas")}</div>
-        <nav aria-label={t("Practitioner application")}>
-          <a href="/app" aria-current={path === "/app" ? "page" : undefined}>
-            <Icon name="atlas" />
-            {t("Matters")}
-          </a>
-          <a
-            href="/app/matter-proposals/new"
-            aria-current={isNew ? "page" : undefined}
+      <AnimatePresence initial={false}>
+        {compact && menu && (
+          <motion.button
+            key="shade"
+            className="rail-shade"
+            aria-label={t("Close menu")}
+            onClick={() => setMenu(false)}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.12 }}
+          />
+        )}
+        {(!compact || menu) && (
+          <motion.aside
+            key="rail"
+            className={"rail " + (menu ? "rail-open" : "")}
+            inert={compact && !menu}
+            initial={compact ? { x: reduced ? 0 : -16, opacity: 0 } : false}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: reduced ? 0 : -16, opacity: 0 }}
+            transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
           >
-            <Icon name="plus" />
-            {t("New proposal")}
-          </a>
-        </nav>
-        <div className="rail-bottom">
-          <p className="environment">
-            <span />
-            {t("Synthetic environment")}
-          </p>
-          <p>{t("Fictional material. Real review workflow.")}</p>
-          <div className="utilities">
-            <label className="language">
-              <span className="sr-only">{t("Language")}</span>
-              <select
-                value={locale}
-                onChange={(event) =>
-                  setLocale(event.target.value as "en" | "zh-CN")
-                }
+            <a href="/app" className="brand">
+              <Icon name="atlas" />
+              <span>
+                Private Client
+                <br />
+                Graph
+              </span>
+            </a>
+            <nav aria-label={t("Practitioner application")}>
+              <a
+                href="/app"
+                aria-current={path === "/app" ? "page" : undefined}
               >
-                <option value="en">English</option>
-                <option value="zh-CN">简体中文</option>
-              </select>
-            </label>
-            <Account />
-          </div>
-        </div>
-      </aside>
+                <Icon name="atlas" />
+                {t("Matters")}
+              </a>
+              <a
+                href="/app/matter-proposals/new"
+                aria-current={isNew ? "page" : undefined}
+              >
+                <Icon name="plus" />
+                {t("New proposal")}
+              </a>
+            </nav>
+            <div className="rail-bottom">
+              <div className="utilities">
+                <label className="language">
+                  <span className="sr-only">{t("Language")}</span>
+                  <select
+                    value={locale}
+                    onChange={(event) =>
+                      setLocale(event.target.value as "en" | "zh-CN")
+                    }
+                  >
+                    <option value="en">English</option>
+                    <option value="zh-CN">简体中文</option>
+                  </select>
+                </label>
+                <Account />
+              </div>
+            </div>
+          </motion.aside>
+        )}
+      </AnimatePresence>
       <div className="app-body">
         <header className="topbar">
           <button
+            ref={menuTrigger}
             className="mobile-menu icon-button"
             aria-label={t("Menu")}
             aria-expanded={menu}
@@ -86,17 +131,7 @@ function Shell() {
             <Icon name={menu ? "close" : "menu"} />
           </button>
           <a href="/app">{t("Matters")}</a>
-          <span className="topbar-divider" />
-          <span>
-            {t(
-              isNew
-                ? "New proposal"
-                : review
-                  ? "Review workspace"
-                  : "Matter ledger",
-            )}
-          </span>
-          <span className="topbar-end">{t("Evidence-led review")}</span>
+          <span className="topbar-end">{t("Synthetic environment")}</span>
         </header>
         <div className="synthetic-banner">
           <span className="synthetic-dot" />
@@ -104,7 +139,14 @@ function Shell() {
             "Synthetic or fictional material only. Do not upload real client or personal information.",
           )}
         </div>
-        <main id="main">
+        <motion.main
+          id="main"
+          tabIndex={-1}
+          key={path}
+          initial={{ opacity: reduced ? 1 : 0.65 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: reduced ? 0 : 0.16 }}
+        >
           {isNew ? (
             <Intake />
           ) : review ? (
@@ -120,10 +162,22 @@ function Shell() {
               <a href="/app">{t("Back to Matters")}</a>
             </section>
           )}
-        </main>
+        </motion.main>
       </div>
     </div>
   );
+}
+function useCompactLayout() {
+  const [compact, setCompact] = useState(
+    () => window.matchMedia("(max-width: 900px)").matches,
+  );
+  useEffect(() => {
+    const media = window.matchMedia("(max-width: 900px)");
+    const update = () => setCompact(media.matches);
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
+  return compact;
 }
 function Account() {
   const { t } = useLocale();
@@ -134,20 +188,12 @@ function Account() {
   const trigger = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     if (!open) return;
-    const close = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && !busy) {
-        setOpen(false);
-        trigger.current?.focus();
-      }
-    };
     const outside = (event: PointerEvent) => {
       if (!busy && !region.current?.contains(event.target as Node))
         setOpen(false);
     };
-    document.addEventListener("keydown", close);
     document.addEventListener("pointerdown", outside);
     return () => {
-      document.removeEventListener("keydown", close);
       document.removeEventListener("pointerdown", outside);
     };
   }, [open, busy]);
@@ -156,6 +202,7 @@ function Account() {
     setError(undefined);
     try {
       await signOut();
+      clearSessionState();
       window.location.assign("/app");
     } catch (failure) {
       setError(failure);
@@ -166,6 +213,13 @@ function Account() {
     <div
       className="account"
       ref={region}
+      onKeyDown={(event) => {
+        if (event.key !== "Escape" || !open || busy) return;
+        event.stopPropagation();
+        event.preventDefault();
+        setOpen(false);
+        trigger.current?.focus();
+      }}
       onBlur={(event) => {
         if (!busy && !event.currentTarget.contains(event.relatedTarget))
           setOpen(false);
@@ -182,22 +236,32 @@ function Account() {
       >
         <Icon name="person" />
       </button>
-      {open && (
-        <div className="account-panel" id="account-panel">
-          <h2>{t("Account")}</h2>
-          <a
-            href={
-              import.meta.env.VITE_PCG_SHOWCASE_URL ?? "https://localhost:8443/"
-            }
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            className="account-panel"
+            id="account-panel"
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 3 }}
+            transition={{ duration: 0.14, ease: [0.16, 1, 0.3, 1] }}
           >
-            {t("Public showcase")}
-          </a>
-          <button disabled={busy} onClick={logout}>
-            {t(busy ? "Signing out…" : "Sign out")}
-          </button>
-          {error !== undefined && <ErrorNotice error={error} />}
-        </div>
-      )}
+            <h2>{t("Account")}</h2>
+            <a
+              href={
+                import.meta.env.VITE_PCG_SHOWCASE_URL ??
+                "https://localhost:8443/"
+              }
+            >
+              {t("Public showcase")}
+            </a>
+            <button disabled={busy} onClick={logout}>
+              {t(busy ? "Signing out…" : "Sign out")}
+            </button>
+            {error !== undefined && <ErrorNotice error={error} />}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

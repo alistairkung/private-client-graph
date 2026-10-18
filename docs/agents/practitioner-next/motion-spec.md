@@ -1,41 +1,52 @@
 # Practitioner motion specification
 
-Motion reinforces the document-led workspace: a selection acquires a location,
-evidence stays inspectable, and confirmation establishes a deliberate boundary.
-Use free `motion/react`; no premium runtime is required. Values below are design
-recommendations, not copied source defaults. Align colours with the UX tokens.
+The approved refinement is precise and tactile. Motion acknowledges intent,
+keeps the current relationship and Evidence together, and preserves the user's
+place across the whole journey. Implementation uses `motion/react`; premium
+research does not require a premium runtime dependency.
 
-| Trigger / task | Choreography and implementation | Timing / interruption |
+| Trigger / task | Implemented behavior | Timing / interruption |
 | --- | --- | --- |
-| Select a Matter | Move one narrow active marker between Matter rows using a scoped `layoutId`. Replace workspace content under the committed Matter title; clear previous Matter selection and evidence atomically. Keep the outer document frame stationary. | Marker spring `{ type: "spring", visualDuration: 0.22, bounce: 0 }`; new content opacity 0→1 over 120ms. Latest Matter wins; no queued page exits. |
-| Select graph node or relationship | Apply the selected outline immediately; reveal its Evidence inspector content in the existing inspector frame. Header, source label and exact quotation change together. A 120ms opacity entrance acknowledges new evidence without moving text from graph to document. | No graph relayout, zoom or animated edges on selection. Keep inspector mounted, including its empty state. Repeated selection updates immediately; never show an old quotation beneath a new title. |
-| First open Evidence on a narrow screen | Open a labelled document sheet with `y: 16→0` and opacity 0→1. Keep the selected item visually marked behind it to explain context. | Spring `visualDuration: 0.24, bounce: 0`; backdrop opacity 140ms. Closing reverses from current state. Desktop inspector remains nonmodal. |
-| Switch source / evidence occurrence | Move the source-tab underline via scoped `layoutId`; replace quotation and locator as a single keyed unit. Retain inspector position. If a deliberate locator jump is needed, scroll to it instantly, then apply a persistent highlight. | Underline spring 0.18s, bounce 0; content opacity 100ms. No smooth scroll through unrelated legal text; no character-by-character reveal. |
-| Review whole proposal | Open an explicit confirmation dialog; surface opacity 0→1, `y: 8→0`. Show the complete proposal scope before enabling confirmation under existing workflow rules. | 180ms ease-out; backdrop 120ms. Keep open during submission. Show success only after API success, using a static status label. Error keeps proposal and focus available. |
+| Graph / List | Two full clickable tabs, roving keyboard focus, Arrow/Home/End support. The pill follows a pointer drag through a MotionValue; release chooses the nearest side once. No inertia or overshoot. | Spring stiffness 700, damping 53, mass 1. A new gesture stops the current spring. Pointer cancel, lost capture, Escape or resize restores the committed side. Trailing pointer clicks are suppressed without consuming keyboard activation. |
+| View change | Both panels stay mounted in a fixed working frame. Hidden panels are inert and hidden from assistive technology. Camera, query and scroll positions survive switching and returning to the Matter. | 120ms opacity acknowledgement; no waiting for an exit before input. |
+| Graph exploration | Hover/focus/selection emphasizes a claim and its endpoints. Labels have coordinated placement and leaders; explicit fixed XYFlow endpoint dimensions preserve label DOM through hover changes. | Short color/stroke feedback. No graph relayout, animated edge flow, automatic selection pan or zoom. Pan/zoom remains user controlled. |
+| Evidence selection | Persistent compact inspector. Relationship title and all supporting Evidence change together. Source selection updates without moving the outer page. | 120ms opacity; latest selection wins immediately. |
+| Inspect in source | Explicit action scrolls only the source container and focuses the exact highlighted span. Phone Source view retains the selected statement above the document. Return resolves the current relationship control and restores focus. | Instant locator jump; no animated travel through unrelated text. Source underline uses a zero-bounce 180ms spring. |
+| App navigation / ledger | Native hrefs with client navigation, route acknowledgement, stable shell and restored per-page scroll. Compact rows acknowledge hover and settle when filtering. | Route opacity 160ms; row entry 140ms / exit 80ms; no chained entrance sequence. |
+| Intake | PDF drop target responds to drag; rows settle in/out. Draft fields, PDF objects and recovery state remain in tab memory across app links. | Row entry 180ms / exit 80ms. Submission blocks app navigation until resolved; success clears the draft. |
+| Menus and decisions | Mobile rail, account popover and native proposal/fictional-source dialogs have short entrance/exit feedback. Focus and Escape follow the nearest open surface. | Account 140ms, rail 180ms, dialog entrance 180ms / exit 120ms. Busy decisions remain open. No blur or text scaling. |
+| Controls | Subtle press compression and ledger directional feedback. | Press scale .98; brief color/transform transitions. No hover movement on graph labels. |
 
-## Accessibility and state
+## Accessibility and continuity
 
-Use `MotionConfig reducedMotion="user"` and `useReducedMotion`: remove layout,
-translation and scrolling motion; use immediate state changes or ≤80ms opacity.
-Do not delay input, announcements or data correctness for animation completion.
-Cancel stale requests or ignore stale responses using existing request identity.
+`MotionConfig reducedMotion="user"` and local `useReducedMotion` remove scale,
+translation and source underline layout movement. The draggable control still
+tracks direct input, but settles immediately. Inspector/dialog feedback reduces
+to a short opacity change. Input, focus and announcements never wait for motion.
 
-Desktop graph selection retains keyboard focus; provide an explicit “Inspect
-evidence” action that focuses the inspector heading. Modal sheets/dialogs use
-native `dialog.showModal()`, labelled headings, contained focus, Escape dismissal,
-and focus restoration to the invoking control (or its surviving context).
-Synchronize native close with React state; test repeated Escape during exit.
+Tab-memory is presentation-only: no localStorage, database mutation or persisted
+practitioner review state. Reload/close clears it. Sign-out clears mounted draft
+values and removes the unload warning before leaving. Native hrefs retain
+modifier-click/new-tab behavior; authentication stays in the existing flow.
 
-## Read sources and verification
+## Authenticated source research
 
-Authenticated premium sources inspected in full:
-[Modal: Shared layout](https://examples.motion.dev/react/modal-shared-layout)
-(`motion://examples/react/modal-shared-layout`: identity continuity, layering)
-and [Family-style dialog](https://examples.motion.dev/react/family-dialog)
-(`motion://examples/react/family-dialog`: zero-bounce spring, native dialog,
-exit lifecycle). Adapt mechanisms; omit gallery styling, blur and text scaling.
+This refinement inspected the complete premium source for
+[Smooth Tabs](https://examples.motion.dev/react/smooth-tabs) and
+[Motion UI Segmented toggle](https://motion.dev/ui/components/segmented-toggle).
+They informed shared identity, selected-state continuity and control structure.
+Neither source implements dragging: pointer capture, MotionValue tracking,
+cancellation and click suppression were implemented explicitly using Motion's
+[drag guidance](https://motion.dev/docs/react-drag) and
+[useDragControls documentation](https://motion.dev/docs/react-use-drag-controls).
 
-Verify rapid reselection, source/title/quote consistency, keyboard focus,
-reduced motion and submission failure. No runtime MotionScore audit performed.
-Research usage: one concept search, two source lookups, two premium resource
-reads; no paid application-provider calls.
+Earlier delivery also inspected
+[Modal: Shared layout](https://examples.motion.dev/react/modal-shared-layout) and
+[Family-style dialog](https://examples.motion.dev/react/family-dialog). Their
+layering, native dialog and exit-lifecycle mechanisms remain relevant; gallery
+styling, blur and text scaling were omitted.
+
+Tests cover drag/click/keyboard cancellation, rapid switching, reduced motion,
+locale changes, camera/query/scroll retention, exact source focus, connector-label
+occlusion and interrupted submission. No runtime MotionScore audit or production
+performance certification is claimed. No paid application-provider calls.

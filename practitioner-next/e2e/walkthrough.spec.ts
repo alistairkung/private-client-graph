@@ -24,11 +24,30 @@ test("record the synthetic practitioner walkthrough", async ({
   ).toBeVisible();
   await expect(page.locator(".react-flow__node")).toHaveCount(5);
   await page.waitForTimeout(1500);
+  const graph = page.getByRole("tab", { name: "Graph", exact: true });
+  const list = page.getByRole("tab", { name: "List", exact: true });
+  const from = await graph.boundingBox();
+  const to = await list.boundingBox();
+  if (!from || !to) throw new Error("View switch is not visible");
+  await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(to.x + to.width / 2, to.y + to.height / 2, {
+    steps: 16,
+  });
+  await page.mouse.up();
+  await expect(list).toHaveAttribute("aria-selected", "true");
+  await page
+    .getByRole("searchbox", { name: "Find relationship" })
+    .fill("Carol");
+  await page.waitForTimeout(1000);
+  await graph.click();
+  await page.waitForTimeout(800);
   await page.locator('button.edge-label[data-edge-id="0"]').click();
+  await page.waitForTimeout(800);
   await page.locator(".evidence-item").first().click();
   await expect(page.locator(".source-text mark")).toBeVisible();
   await page.waitForTimeout(1500);
-  await page.getByRole("button", { name: "Graph", exact: true }).click();
+  await page.getByRole("tab", { name: "Graph", exact: true }).click();
   await page.waitForTimeout(1500);
   await page.evaluate(() => window.scrollTo(0, 0));
   await page.screenshot({

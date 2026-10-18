@@ -28,16 +28,20 @@ with the work.
 
 ## Composition and interaction
 
-The desktop rail is 224px (190px at compact desktop widths); the shell heading
-is 64px. The ledger is a divided list with pending proposals first. The review
-workspace gives its width to the graph and source text. Canonical Person nodes
+The desktop rail is 176px with a single 32px synthetic-environment strip; the
+phone header is 52px. The ledger is a compact divided list with pending proposals
+first, collapsing an empty pending section to one line. The review workspace
+keeps the drawing, compact Evidence inspector and independently scrolling source
+text within a stable frame. Canonical Person nodes
 use circular notation; Trust nodes use a full-size triangle with its name below.
 One-Trust layout places settlors above, beneficiaries below, trustees beside the
 Trust and direct family context near its role holder. These are presentation
 preferences without additional domain meaning. Separate polylines preserve each
 canonical relationship; parent arrows differ from arrowless Trust roles and
 symmetric family connectors. Routes clear the Trust caption and unrelated nodes;
-label placement reserves space for earlier labels. The generic layout uses Dagre.
+label placement reserves space for earlier labels and rejects unrelated connector
+routes after all routes have been computed. Thin leaders associate offset labels
+with their own claim. The generic layout uses Dagre.
 Fit includes nodes, captions, all route points and connector labels. Selection
 and language changes preserve the camera. Page scrolling does not zoom the graph.
 
@@ -59,10 +63,26 @@ opens Sources and focuses the exact highlight (or source heading). The return
 action retains the relationship selection. Intake and whole-proposal dialogs
 stack at phone width. Account and language controls remain in the menu.
 
-Motion answers work: 120ms Evidence opacity changes, an interruption-safe 180ms
-source underline spring and a 180ms native-dialog entrance. No graph drift,
-automatic selection zoom, decorative entrance sequence or animated edge flow.
-Reduced motion removes layout/translation and keeps only brief opacity changes.
+Graph and List use a draggable segmented control with complete clickable targets
+and roving keyboard tabs. Its highlight tracks the pointer directly, then settles
+with a heavily damped spring. Both working views remain mounted: switching keeps
+the camera, query and scroll positions. Hover, keyboard focus and selection
+emphasize the claim and its endpoints without relayout or camera movement.
+
+Motion answers work across the application: 120ms Evidence opacity changes,
+an interruption-safe 180ms source underline, 160ms route acknowledgement,
+short menu/rail transitions and native dialog entrance/exit. Pressed controls
+compress subtly; ledger arrows acknowledge hover; source rows settle into place.
+No graph drift, automatic selection zoom, decorative entrance sequence or
+animated edge flow. Reduced motion removes translation/scale and snaps the view
+control immediately while keeping brief opacity feedback.
+
+Application links retain native URLs while navigating without a document reload.
+Tab-memory retains ledger search, review context and intake fields/PDFs, including
+terminal recovery messages. Reload/close clears this presentation state; sign-out
+also resets mounted values and removes the draft unload warning. In-flight
+submissions keep their current workflow open. No review state is persisted to
+the backend or browser storage.
 
 ## Workflow boundaries
 

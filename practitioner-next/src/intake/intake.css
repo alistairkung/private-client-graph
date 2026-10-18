@@ -1,71 +1,82 @@
 .intake-page {
-  max-width: 1200px;
+  max-width: 940px;
 }
 .intake-page > .back-link {
   margin: -12px 0 12px;
 }
 .intake-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 270px;
-  gap: 48px;
-  align-items: start;
+  min-width: 0;
 }
 .intake-form {
   background: white;
-  padding: 32px;
+  padding: 28px 32px;
   border: 1px solid var(--border);
 }
-fieldset {
+.intake-form fieldset {
   border: 0;
   margin: 0;
   padding: 0;
   min-width: 0;
 }
-fieldset + fieldset {
-  margin-top: 36px;
-  padding-top: 28px;
+.intake-form fieldset + fieldset {
+  margin-top: 28px;
+  padding-top: 24px;
   border-top: 1px solid var(--border);
 }
-legend {
+.intake-form legend {
   font-weight: 600;
-  font-size: 18px;
-  margin-bottom: 24px;
+  font-size: 17px;
+  margin-bottom: 18px;
   padding: 0;
 }
-fieldset > label + label {
+.intake-form fieldset > label + label {
   margin-top: 20px;
 }
 .field-help {
   font-size: 13px;
   color: var(--muted);
-  margin: 8px 0 22px;
+  margin: 8px 0 18px;
+}
+.source-help {
+  display: inline-flex;
+  margin: -6px 0 10px;
+  min-height: 36px;
 }
 .file-drop {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  column-gap: 14px;
+  row-gap: 4px;
   align-items: center;
-  gap: 10px;
   position: relative;
-  padding: 28px 20px;
+  padding: 20px;
   border: 1px dashed #9aabba;
   border-radius: 6px;
   background: #f7f9fc;
-  text-align: center;
-  margin-bottom: 16px;
+  margin-bottom: 8px;
   cursor: pointer;
+  transition:
+    border-color 140ms,
+    background-color 140ms;
 }
 .file-drop > svg {
-  width: 28px;
-  height: 32px;
+  width: 26px;
+  height: 30px;
   color: var(--cobalt);
+  grid-row: span 2;
 }
 .file-drop > strong {
   font-weight: 500;
   color: var(--cobalt);
 }
 .file-drop > span {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--muted);
+}
+.file-drop:hover,
+.file-drop.dragging {
+  background: #eaf1fc;
+  border-color: var(--cobalt);
 }
 .file-drop input {
   opacity: 0;
@@ -84,9 +95,10 @@ fieldset > label + label {
   list-style: none;
   padding: 0;
   margin: 0;
+  position: relative;
 }
 .source-uploads > li {
-  padding: 20px 0;
+  padding: 18px 0;
   border-bottom: 1px solid var(--border);
 }
 .source-uploads > li:last-child {
@@ -97,7 +109,7 @@ fieldset > label + label {
   gap: 16px;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
   font-size: 13px;
 }
 .source-upload-heading > span {
@@ -115,8 +127,7 @@ fieldset > label + label {
   display: flex;
   gap: 12px;
   align-items: flex-start;
-  margin-top: 24px;
-  padding: 20px;
+  padding: 16px;
   background: #f0f4f9;
   font-size: 13px;
   font-weight: 400;
@@ -128,81 +139,26 @@ fieldset > label + label {
   display: flex;
   gap: 24px;
   align-items: center;
-  margin-top: 32px;
+  margin-top: 24px;
 }
 .form-actions > a {
   font-size: 14px;
 }
-.intake-guide {
-  padding-top: 24px;
-}
-.intake-guide > h2 {
-  margin-bottom: 28px;
-}
-.intake-guide > div {
-  position: relative;
-  padding: 0 0 28px 24px;
-}
-.intake-guide > div:not(:last-of-type)::after {
-  content: "";
-  position: absolute;
-  left: 4px;
-  top: 18px;
-  bottom: 6px;
-  border-left: 1px solid #b5c4d2;
-}
-.guide-marker {
-  position: absolute;
-  top: 7px;
-  left: 0;
-  width: 9px;
-  height: 9px;
-  border: 1.5px solid #6f87a0;
-  border-radius: 50%;
-  background: var(--frame);
-}
-.intake-guide h3 {
-  font-size: 14px;
-  margin-bottom: 8px;
-}
-.intake-guide p {
+.draft-note {
   color: var(--muted);
-  font-size: 13px;
+  font-size: 12px;
+  margin-top: 12px;
+  max-width: 70ch;
 }
-.intake-guide > .text-button {
-  margin-left: 24px;
-}
-@media (max-width: 1200px) {
-  .intake-layout {
-    grid-template-columns: minmax(0, 1fr) 230px;
-    gap: 24px;
-  }
+@media (max-width: 600px) {
   .intake-form {
-    padding: 24px;
+    padding: 22px 16px;
   }
-}
-@media (max-width: 1000px) {
-  .intake-layout {
-    grid-template-columns: minmax(0, 1fr);
-  }
-  .intake-guide {
-    border-top: 1px solid var(--border);
-    padding-top: 28px;
-    max-width: 65ch;
-  }
-  .intake-form {
-    padding: 24px;
-  }
-  .intake-page .page-heading .button {
-    width: auto;
-  }
-}
-@media (max-width: 500px) {
-  .intake-form {
-    padding: 20px 16px;
+  .file-drop {
+    padding: 16px;
   }
   .consent {
-    padding: 16px;
+    padding: 14px;
   }
   .form-actions {
     flex-wrap: wrap;

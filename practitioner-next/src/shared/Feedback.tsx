@@ -66,7 +66,7 @@ export function ErrorNotice({
 export function Loading() {
   const { t } = useLocale();
   return (
-    <div className="loading" role="status">
+    <div className="loading" role="status" aria-live="polite">
       <p>{t("Loading workspace…")}</p>
       <span />
       <span />

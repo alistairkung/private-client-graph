@@ -162,3 +162,59 @@ recursive delegation or paid application-provider invocation occurred.
 The original frontend, backend, database, domain contracts, original tests,
 deployment and existing CI remain unchanged. Refreshed screenshots and the
 walkthrough live in `practitioner-next/artifacts/`.
+
+## Holistic interaction and motion refinement
+
+After a critical review of the complete practitioner journey, the user approved
+persistent compact Evidence inspection and precise tactile motion. The review
+identified label occlusion, fragmented graph/Evidence/source context, missing
+view continuity, redundant chrome and uneven feedback through intake/decisions.
+The two reported examples were treated as symptoms of that wider interaction gap.
+
+- Reused Sol/medium implementer and Motion contexts, with Sol/high engineering
+  review. Root owned a disjoint shell/navigation/intake integration slice. At
+  most two children active; no nested delegation or provider calls.
+- Motion research inspected actual Smooth Tabs and Motion UI Segmented toggle
+  source, plus official pointer/drag guidance. Neither premium example supplies
+  drag; explicit pointer capture, cancellation, MotionValue and trailing-click
+  handling implement it. See motion-spec.md for links and timing.
+- Graph/List remain mounted in a stable frame. Tab-memory retains camera,
+  selection, query, per-view/per-source scroll and intake entries/PDF objects.
+  This is transient presentation memory, with no persisted review mutation.
+- Coordinated label placement now sees every completed route, with geometry
+  regression checks and rendered SVG sampling against unrelated label bounds.
+  Claim hover/focus/selection emphasizes both endpoints. Live browser debugging
+  found controlled XYFlow updates discarding measured endpoint handles and
+  briefly removing every label portal before pointerup; explicit fixed endpoint
+  geometry fixes the cause and preserves the clicked DOM element.
+- Compact shell, ledger and intake free working space. Desktop Evidence remains
+  visible; phone Source view repeats the selected claim. Explicit inspection
+  scrolls/focuses only the document container; the outer workspace remains still.
+- Engineering findings fixed: retained intake failures now travel with drafts;
+  Back/Forward records departing scroll and coordinates native restoration;
+  sign-out resets mounted drafts and synchronously removes the unload warning;
+  pending proposal decisions register the same route lock as intake. Deferred
+  confirm/discard tests cover both links and history navigation.
+- Visual verification used one desktop/phone inspection batch and one fix batch,
+  followed by confirmation. Actual live Chrome confirmed dragging, direct graph
+  click and exact Evidence focus; delivered desktop/phone screenshots were
+  inspected. No additional aesthetic refinement loop was started. An intermediate
+  phone test used a deliberately hidden redundant Back link; final tests use the
+  visible phone header's Matters link. Final source remained stable for capture.
+- Required `uv run pytest`: **752 passed**, 95.15s with isolated PostgreSQL.
+  Frontend: **59 unit tests in 14 files**, typecheck, production build and
+  formatting passed. Real-backend Chromium confirmation: **28 parity/interaction
+  checks plus one refreshed recording passed** in 32.0s. Only the redundant phone
+  recording skipped. Successful paths retain the real unchanged API, graph and
+  persistence; isolated UI failure responses are explicitly identified.
+- Code Quality Review: independently inspected the complete follow-up source
+  diff, including new navigation, memory and switch modules. Removed a superseded
+  geometry option; kept routing, label placement, rendering, source navigation
+  and lifecycle responsibilities separate. Final engineering review found no
+  further material correctness/readability problems. No readability concern was
+  deliberately retained. Finite routing still has limits on dense graphs.
+- Main build bundle: **669.77 kB minified / 218.35 kB gzip**; existing nonblocking
+  size and dependency-directive warnings remain. No runtime MotionScore or live
+  production-provider claim. Shared paid application-provider usage remains
+  **0 of 5**. Original frontend/backend/domain/database/tests/deployment and
+  existing CI still have no changes from this work.
