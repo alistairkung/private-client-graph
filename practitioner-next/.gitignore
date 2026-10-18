@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.local/
+.env
+.env.*
+playwright-report/
+test-results/
+artifacts/*.webm
+!artifacts/walkthrough.webm
+artifacts/*.zip

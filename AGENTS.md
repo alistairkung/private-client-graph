@@ -137,6 +137,12 @@ does not waive any quality gate or authorize automatic merging.
 
 ## Agent skills
 
+### Independent practitioner frontend
+
+For `practitioner-next/` work or its specialist team, read
+`docs/agents/practitioner-next/workflow.md`. Existing `web/`, backend, API,
+database, domain, tests and deployment are read-only references for this work.
+
 ### Issue tracker
 
 Issues and specs are tracked in GitHub Issues using the `gh` CLI. See `docs/agents/issue-tracker.md`.

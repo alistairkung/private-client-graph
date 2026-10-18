@@ -1,0 +1,16 @@
+# Project defaults; explicit session/UI overrides can take precedence.
+model = "gpt-6.1-sol"
+model_reasoning_effort = "high"
+
+[agents]
+enabled = true
+max_concurrent_threads_per_session = 2
+max_depth = 1
+default_subagent_model = "gpt-6-luna"
+default_subagent_reasoning_effort = "low"
+
+[mcp_servers.motion]
+url = "https://mcp.motion.dev"
+
+[mcp_servers.motion-plus]
+url = "https://mcp.motion.dev/plus"
