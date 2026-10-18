@@ -10,6 +10,11 @@ analysis also requires the proposal-analysis settings in this guide. Use only
 synthetic or fictional material. Full Source text, proposals and Matters are
 publicly readable, including signed-in submissions. See ADR 0011.
 
+The landing, practitioner workspace and research publication share the production
+`web/` package. See [UI consolidation](ui-consolidation.md) for route ownership,
+preserved workflows and recording instructions. No separate `practitioner-next/`
+development server or cross-origin showcase setting is needed.
+
 Existing deployments moving from legacy canonical storage require a coordinated
 maintenance window. Follow the [cutover and recovery procedure](canonical-matter-cutover.md)
 before activating that release.

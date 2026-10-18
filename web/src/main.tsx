@@ -1,6 +1,8 @@
 import { createRoot } from "react-dom/client";
+import { MotionConfig } from "motion/react";
 import { LocaleProvider } from "./shared/locale";
 import { App } from "./app/App";
-import "./styles/global.css";
 
-createRoot(document.getElementById("root")!).render(<LocaleProvider><App /></LocaleProvider>);
+createRoot(document.getElementById("root")!).render(
+  <MotionConfig reducedMotion="user"><LocaleProvider><App /></LocaleProvider></MotionConfig>,
+);

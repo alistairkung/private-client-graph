@@ -1,0 +1,170 @@
+.intake-page {
+  max-width: 940px;
+}
+.intake-page > .back-link {
+  margin: -12px 0 12px;
+}
+.intake-layout {
+  min-width: 0;
+}
+.intake-form {
+  background: var(--surface);
+  padding: 28px 32px;
+  border: 1px solid var(--border);
+}
+.intake-form fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+.intake-form fieldset + fieldset {
+  margin-top: 28px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+}
+.intake-form legend {
+  font-weight: 600;
+  font-size: 17px;
+  margin-bottom: 18px;
+  padding: 0;
+}
+.intake-form fieldset > label + label {
+  margin-top: 20px;
+}
+.field-help {
+  font-size: 13px;
+  color: var(--muted);
+  margin: 8px 0 18px;
+}
+.source-help {
+  display: inline-flex;
+  margin: -6px 0 10px;
+  min-height: 36px;
+}
+.file-drop {
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  column-gap: 14px;
+  row-gap: 4px;
+  align-items: center;
+  position: relative;
+  padding: 20px;
+  border: 1px dashed var(--control-border);
+  border-radius: 6px;
+  background: var(--surface-subtle);
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition:
+    border-color 140ms,
+    background-color 140ms;
+}
+.file-drop > svg {
+  width: 26px;
+  height: 30px;
+  color: var(--accent);
+  grid-row: span 2;
+}
+.file-drop > strong {
+  font-weight: 500;
+  color: var(--accent);
+}
+.file-drop > span {
+  font-size: 13px;
+  color: var(--muted);
+}
+.file-drop:hover,
+.file-drop.dragging {
+  background: var(--selection);
+  border-color: var(--accent);
+}
+.file-drop input {
+  opacity: 0;
+  position: absolute;
+  inset: 0;
+  cursor: pointer;
+  margin: 0;
+  width: 100%;
+  height: 100%;
+}
+.file-drop:focus-within {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+.source-uploads {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  position: relative;
+}
+.source-uploads > li {
+  padding: 18px 0;
+  border-bottom: 1px solid var(--border);
+}
+.source-uploads > li:last-child {
+  border-bottom: 0;
+}
+.source-upload-heading {
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+.source-upload-heading > span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+.source-upload-heading > button {
+  flex: none;
+  margin-top: -12px;
+}
+.consent {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 16px;
+  background: var(--surface-muted);
+  font-size: 13px;
+  font-weight: 400;
+}
+.consent > input {
+  margin: 2px 0 0;
+}
+.form-actions {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  margin-top: 24px;
+}
+.form-actions > a {
+  font-size: 14px;
+}
+.draft-note {
+  color: var(--muted);
+  font-size: 12px;
+  margin-top: 12px;
+  max-width: 70ch;
+}
+@media (max-width: 600px) {
+  .intake-form {
+    padding: 22px 16px;
+  }
+  .file-drop {
+    padding: 16px;
+  }
+  .consent {
+    padding: 14px;
+  }
+  .form-actions {
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .form-actions > .button {
+    width: 100%;
+  }
+}

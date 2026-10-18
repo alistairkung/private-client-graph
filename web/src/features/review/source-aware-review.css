@@ -1,9 +1,0 @@
-.source-selector { margin-bottom: 20px; }
-.source-selector h3 { margin: 0 0 8px; font-size: 15px; }
-.source-selector ul { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 8px; }
-.source-selector li { max-width: 100%; }
-.source-selector button { min-height: 44px; text-align: left; white-space: normal; overflow-wrap: anywhere; }
-.source-selector button span { display: block; font-size: 12px; }
-.source-selector button[aria-pressed="true"] { background: #173e38; color: white; }
-.source-selector button:focus-visible, .showcase-case-choice:focus-visible { outline: 3px solid #773b46; outline-offset: 3px; }
-.evidence-attribution { color: #52665f; font-size: 13px; margin: 12px 0 0; overflow-wrap: anywhere; }
