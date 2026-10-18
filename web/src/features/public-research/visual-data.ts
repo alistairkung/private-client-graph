@@ -1,14 +1,16 @@
 import type { PipelineConfiguration } from "../../shared/research/AnalysisPipeline";
 import type { PerformanceRun } from "../../shared/research/RunPerformanceChart";
-import type { ResearchText } from "../../shared/research/presentation";
+import { researchText, type ResearchText } from "../../shared/research/presentation";
 import type { PublicRun } from "./types";
+import { runName } from "./RunComparison";
 
 // The v1 publication fixes A as fresh extraction and A′/B as its frozen replays.
 // This adapter copies published measurements; it never reconstructs private Run records.
-export function publishedPerformanceRuns(runs: PublicRun[]): PerformanceRun[] {
+export function publishedPerformanceRuns(runs: PublicRun[], t: ResearchText = researchText): PerformanceRun[] {
   const extractionModel = runs.find(run => run.label === "A")?.calls[0]?.model ?? null;
   return runs.map(run => ({
     id: run.run_id,
+    displayName: `${runName(run.label)} · ${t(run.label === "A" ? "Fresh baseline" : run.label === "A_prime" ? "Exact replay" : "With resolver")}`,
     lifecycle: null,
     resolver: run.label === "B",
     inputMode: run.label === "A" ? "fresh" : "saved",

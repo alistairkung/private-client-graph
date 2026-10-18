@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useLocale } from "../../shared/locale";
 import { AnalysisPipeline } from "../../shared/research/AnalysisPipeline";
 import { runName } from "./RunComparison";
+import { ResearchRunSwitch } from "./ResearchRunSwitch";
 import type { PublicRun, RunLabel } from "./types";
 import { publishedPipeline } from "./visual-data";
 
@@ -13,13 +14,15 @@ export function ResearchArchitecture({ runs }: { runs: PublicRun[] }) {
   return <div className="research-figure">
     <div className="research-figure-controls">
       <strong>{t("Published configuration")}</strong>
-      <label>{t("Inspect Run")}
-        <select value={label} onChange={event => setLabel(event.target.value as RunLabel)}>
-          {runs.map(value => <option key={value.label} value={value.label}>
-            {runName(value.label)} · {t(value.label === "A" ? "Fresh baseline" : value.label === "A_prime" ? "Exact replay" : "With resolver")}
-          </option>)}
-        </select>
-      </label>
+      <ResearchRunSwitch
+        label={t("Inspect Run")}
+        value={label}
+        onChange={setLabel}
+        options={runs.map(value => ({
+          value: value.label,
+          label: `${runName(value.label)} · ${t(value.label === "A" ? "Fresh baseline" : value.label === "A_prime" ? "Exact replay" : "With resolver")}`,
+        }))}
+      />
     </div>
     <AnalysisPipeline key={label} configuration={publishedPipeline(run, runs, t)} appearance="persistent" t={t} />
     <aside className="research-figure-notes">

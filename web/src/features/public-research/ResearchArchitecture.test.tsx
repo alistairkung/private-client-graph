@@ -2,8 +2,9 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { expect, it } from "vitest";
-import { LocaleProvider, useLocale } from "../../shared/locale";
+import { LocaleProvider, translate, useLocale } from "../../shared/locale";
 import { ResearchArchitecture } from "./ResearchArchitecture";
+import { RunPerformanceChart } from "../../shared/research/RunPerformanceChart";
 import { PublishedPerformance } from "./PublishedPerformance";
 import { publishedPerformanceRuns } from "./visual-data";
 import type { PublicResearchSnapshot } from "./types";
@@ -20,7 +21,9 @@ it("inspects all three frozen configurations using the Workbench rail without mu
   expect(stage).toHaveAttribute("aria-expanded", "true");
   expect(screen.getByRole("region", { name: "Resolve aliases settings" })).toHaveTextContent("Frozen configuration · Read-only");
   for (const label of ["A", "A_prime"]) {
-    fireEvent.change(screen.getByLabelText("Inspect Run"), { target: { value: label } });
+    fireEvent.click(within(screen.getByRole("group", { name: "Inspect Run" })).getByRole("button", {
+      name: label === "A" ? "A · Fresh baseline" : "A′ · Exact replay",
+    }));
     expect(screen.queryByRole("button", { name: /Resolve aliases/ })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /Extract relationships/ }));
     expect(screen.getByRole("region", { name: "Extract relationships settings" })).toHaveTextContent(
@@ -32,6 +35,9 @@ it("inspects all three frozen configurations using the Workbench rail without mu
 
 it("copies published scores and nullable costs without recalculating metrics or inventing private scope", () => {
   const runs = publishedPerformanceRuns(snapshot.runs);
+  expect(runs.map(run => run.displayName)).toEqual(["A · Fresh baseline", "A′ · Exact replay", "B · With resolver"]);
+  expect(publishedPerformanceRuns(snapshot.runs, (key, values) => translate("zh-CN", key, values)).map(run => run.displayName))
+    .toEqual(["A · 新提取基线", "A′ · 精确回放", "B · 使用解析器"]);
   expect(runs.map(run => run.f1)).toEqual(snapshot.runs.map(run => run.metrics.micro_f1));
   expect(runs.map(run => run.cost.total)).toEqual([null, 0, null]);
   expect(runs.map(run => run.eligibility.f1_vs_cost)).toEqual([false, true, false]);
@@ -50,22 +56,35 @@ it("keeps chart selection and filters while translating shared inspection and Un
   const { container } = render(<LocaleProvider><LanguageSwitch /><PublishedPerformance runs={snapshot.runs} /><ResearchArchitecture runs={snapshot.runs} /></LocaleProvider>);
   fireEvent.click(screen.getByText("Test English"));
   expect(container.querySelectorAll(".chart-point")).toHaveLength(3);
-  const point = screen.getByRole("button", { name: "Run 3, F1 1.000, complete, 10/10 scored" });
+  const point = screen.getByRole("button", { name: "B · With resolver, F1 1.000, complete, 10/10 scored" });
   fireEvent.click(point);
   expect(point).toHaveAttribute("aria-pressed", "true");
+  expect(container.querySelector(".chart-inspection")).toHaveTextContent("B · With resolver");
   expect(container.querySelector(".chart-inspection")).toHaveTextContent(snapshot.runs[2].run_id);
   fireEvent.change(screen.getByLabelText("Input mode"), { target: { value: "fresh" } });
   expect(container.querySelectorAll(".chart-point")).toHaveLength(1);
   fireEvent.change(screen.getByLabelText("Input mode"), { target: { value: "all" } });
   fireEvent.click(screen.getByRole("tab", { name: "F1 vs Cost" }));
   expect(container.querySelectorAll(".chart-point")).toHaveLength(1);
-  expect(container.querySelector(".chart-point")).toHaveAttribute("aria-label", "Run 2, F1 0.949, complete, 10/10 scored");
+  expect(container.querySelector(".chart-point")).toHaveAttribute("aria-label", "A′ · Exact replay, F1 0.949, complete, 10/10 scored");
   expect(screen.getAllByText("Unpriced provider attempts; excluded from cost chart.")).toHaveLength(2);
   fireEvent.click(screen.getByText("Test Chinese"));
   expect(screen.getByRole("tab", { name: "F1 与成本" })).toHaveAttribute("aria-selected", "true");
   expect(screen.getAllByText("提供商调用尝试未定价；不纳入成本图表。")).toHaveLength(2);
   expect(container.querySelector(".chart-inspection")).toHaveTextContent(snapshot.runs[2].run_id);
-  expect(screen.getByRole("button", { name: /运行 3 · 生成式解析器/ })).toHaveAttribute("aria-pressed", "true");
+  expect(within(screen.getByRole("region", { name: "运行历史与性能" })).getByRole("button", { name: /B · 使用解析器/ })).toHaveAttribute("aria-pressed", "true");
   fireEvent.click(screen.getByRole("button", { name: /解析别名/ }));
   expect(within(screen.getByRole("region", { name: "解析别名设置" })).getByText(/冻结配置 · 只读/)).toBeVisible();
+});
+
+it("preserves numeric Workbench names when Runs have no publication display name", () => {
+  const runs = publishedPerformanceRuns(snapshot.runs).map(({ displayName: _displayName, ...run }) => run);
+  const selected = runs[2].id;
+  const { container } = render(<RunPerformanceChart
+    experiment={{ name: "Workbench experiment", runIds: runs.map(run => run.id) }}
+    runs={runs} selected={selected} select={() => {}}
+  />);
+  expect(screen.getByRole("button", { name: "Run 3, F1 1.000, complete, 10/10 scored" })).toHaveAttribute("aria-pressed", "true");
+  expect(screen.getByRole("button", { name: /Run 3 · Generative resolver/ })).toHaveAttribute("aria-pressed", "true");
+  expect(container.querySelector(".chart-inspection strong")).toHaveTextContent("Workbench experiment · Run 3");
 });

@@ -1,9 +1,11 @@
 import { useId, useState } from "react";
+import { LayoutGroup, motion, useReducedMotion } from "motion/react";
 import { researchText, type ResearchText } from "./presentation";
 import "./run-performance-chart.css";
 
 export type PerformanceRun = {
   id: string;
+  displayName?: string;
   lifecycle: string | null;
   resolver: boolean;
   inputMode: string | null;
@@ -29,17 +31,20 @@ export function RunPerformanceChart({
   runs,
   selected,
   select,
+  tactile = false,
   t = researchText,
 }: {
   experiment: PerformanceExperiment;
   runs: PerformanceRun[];
   selected: string | null;
   select: (id: string) => void;
+  tactile?: boolean;
   t?: ResearchText;
 }) {
   const [tab, setTab] = useState<"run" | "cost">("run");
   const [inspected, setInspected] = useState<string | null>(null);
   const chartId = useId();
+  const reducedMotion = useReducedMotion();
   const [inputMode, setInputMode] = useState("all");
   const runNumber = (id: string) => experiment.runIds.indexOf(id) + 1;
   const visible = runs.filter(
@@ -57,7 +62,7 @@ export function RunPerformanceChart({
   );
   const tooltip = runs.find((run) => run.id === (inspected ?? selected));
   return (
-    <section className="research-visual run-chart" aria-label={t("Run history and performance")}>
+    <LayoutGroup id={chartId}><section className="research-visual run-chart" data-tactile={tactile || undefined} aria-label={t("Run history and performance")}>
       <div className="section-heading">
         <h2>{t("Run history & performance")}</h2>
         <span>
@@ -93,7 +98,13 @@ export function RunPerformanceChart({
             }}
             onClick={() => setTab(value)}
           >
-            {t(value === "run" ? "F1 by Run" : "F1 vs Cost")}
+            {tactile && tab === value && <motion.i
+              className="chart-tab-surface" aria-hidden="true"
+              layoutId={reducedMotion ? undefined : "chart-tab"}
+              initial={false}
+              transition={{ type: "spring", stiffness: 1218, damping: 70 }}
+            />}
+            <span className="chart-tab-label">{t(value === "run" ? "F1 by Run" : "F1 vs Cost")}</span>
           </button>
         ))}
       </div>
@@ -147,7 +158,9 @@ export function RunPerformanceChart({
                       left: `${x * 100}%`,
                       top: `${(1 - (run.f1 ?? 0)) * 100}%`,
                     }}
-                    aria-label={t("Run {run}, F1 {f1}, {state}, {scored}/{planned} scored", { run: index + 1, f1: metric(run.f1), state: t(run.scoreState), scored: run.coverage.scored, planned: run.coverage.planned })}
+                    aria-label={run.displayName
+                      ? t("{name}, F1 {f1}, {state}, {scored}/{planned} scored", { name: run.displayName, f1: metric(run.f1), state: t(run.scoreState), scored: run.coverage.scored, planned: run.coverage.planned })
+                      : t("Run {run}, F1 {f1}, {state}, {scored}/{planned} scored", { run: index + 1, f1: metric(run.f1), state: t(run.scoreState), scored: run.coverage.scored, planned: run.coverage.planned })}
                     aria-pressed={selected === run.id}
                     aria-describedby={`${chartId}-tooltip`}
                     onFocus={() => setInspected(run.id)}
@@ -156,6 +169,12 @@ export function RunPerformanceChart({
                     onBlur={() => setInspected(null)}
                     onClick={() => select(run.id)}
                   >
+                    {tactile && selected === run.id && <motion.i
+                      className="chart-selection-ring" aria-hidden="true"
+                      initial={reducedMotion ? false : { opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ duration: reducedMotion ? 0 : 0.08 }}
+                    />}
                     <span />
                   </button>
                 );
@@ -196,7 +215,7 @@ export function RunPerformanceChart({
           {tooltip ? (
             <>
               <strong>
-                {experiment.name} · {t("Run {run}", { run: runNumber(tooltip.id) })}
+                {experiment.name} · {tooltip.displayName ?? t("Run {run}", { run: runNumber(tooltip.id) })}
               </strong>
               <span>
                 {t("F1 {f1} · {state} · {scored}/{planned} scored", { f1: t(metric(tooltip.f1)), state: t(tooltip.scoreState), scored: tooltip.coverage.scored, planned: tooltip.coverage.planned })}
@@ -222,10 +241,8 @@ export function RunPerformanceChart({
                   aria-pressed={selected === run.id}
                   onClick={() => select(run.id)}
                 >
-                  {t("Run {run}", { run: runNumber(run.id) })} ·{" "}
-                  {!run.resolver
-                    ? t("No resolver")
-                    : t("Generative resolver")}
+                  {run.displayName ?? <>{t("Run {run}", { run: runNumber(run.id) })} ·{" "}
+                    {!run.resolver ? t("No resolver") : t("Generative resolver")}</>}
                   <small>
                     {run.lifecycle && <>{t(run.lifecycle)} · </>}F1 {metric(run.f1)} ·{" "}
                     {t(run.scoreState)}
@@ -246,6 +263,6 @@ export function RunPerformanceChart({
           </div>
         )}
       </div>
-    </section>
+    </section></LayoutGroup>
   );
 }
