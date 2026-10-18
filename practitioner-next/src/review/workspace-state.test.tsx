@@ -102,6 +102,89 @@ describe("continuous review workspace", () => {
       "true",
     );
   });
+  it("automatically reveals the first canonical Evidence, preserves desktop focus, and navigates supporting sources by ID", async () => {
+    const multi = structuredClone(state);
+    multi.sources.push(
+      {
+        id: "second",
+        title: "Fictional note",
+        text: "Second supporting quote.",
+      },
+      {
+        id: "unrelated",
+        title: "Unrelated",
+        text: "No supporting claim here.",
+      },
+    );
+    multi.evidence.push(
+      {
+        id: "second-evidence",
+        document: "Fictional note",
+        source_id: "second",
+        supporting_text: "Second supporting quote.",
+      },
+      {
+        id: "later-evidence",
+        document: "Fictional note",
+        source_id: "second",
+        supporting_text: "quote.",
+      },
+    );
+    multi.relationships[0].evidence_ids = [
+      "second-evidence",
+      "first",
+      "later-evidence",
+    ];
+    vi.mocked(getReview).mockResolvedValue({
+      id: "multi",
+      external_reference: "SYN-MULTI",
+      title: "Multiple sources",
+      authoritative_source: null,
+      state: multi,
+    });
+    const { container } = render(<ReviewPage kind="matters" id="multi" />);
+    await screen.findByRole("heading", { name: "Multiple sources" });
+    await userEvent.click(screen.getByRole("tab", { name: "List" }));
+    const origin =
+      container.querySelector<HTMLButtonElement>("#relationship-0")!;
+    await userEvent.click(origin);
+    expect(origin).toHaveFocus();
+    expect(container.querySelector("mark")).toHaveAttribute(
+      "data-evidence-id",
+      "second-evidence",
+    );
+    expect(container.querySelector(".source-text")).toHaveTextContent(
+      "Second supporting quote.",
+    );
+    const tabs = container.querySelectorAll<HTMLButtonElement>(
+      ".source-tabs button",
+    );
+    expect(tabs[1]).toHaveAttribute("aria-pressed", "true");
+    expect(tabs[0]).toHaveTextContent("Supporting Evidence");
+    expect(tabs[1]).toHaveTextContent("Supporting Evidence");
+    expect(tabs[2]).not.toHaveTextContent("Supporting Evidence");
+    await userEvent.click(tabs[0]);
+    expect(container.querySelector("mark")).toHaveAttribute(
+      "data-evidence-id",
+      "first",
+    );
+    const reader = container.querySelector<HTMLElement>(".source-scroll")!;
+    await userEvent.click(tabs[2]);
+    expect(container.querySelector("mark")).toBeNull();
+    reader.scrollTop = 135;
+    fireEvent.scroll(reader);
+    await userEvent.click(tabs[1]);
+    expect(container.querySelector("mark")).toHaveAttribute(
+      "data-evidence-id",
+      "second-evidence",
+    );
+    await userEvent.click(tabs[2]);
+    expect(reader.scrollTop).toBe(135);
+    await userEvent.click(
+      screen.getByRole("button", { name: "Back to relationship" }),
+    );
+    await vi.waitFor(() => expect(origin).toHaveFocus());
+  });
   it("retains the selected canonical relationship beside Sources and returns focus without discarding list context", async () => {
     const original = window.innerWidth;
     Object.defineProperty(window, "innerWidth", {
@@ -115,8 +198,7 @@ describe("continuous review workspace", () => {
     await userEvent.click(
       container.querySelector<HTMLButtonElement>("#relationship-0")!,
     );
-    const quote = container.querySelector<HTMLButtonElement>(".evidence-item")!;
-    await userEvent.click(quote);
+
     expect(
       container.querySelector(".source-relationship-context"),
     ).toHaveTextContent("Alice Chen — settlor of — Evergreen Trust");

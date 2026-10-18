@@ -218,3 +218,57 @@ The two reported examples were treated as symptoms of that wider interaction gap
   production-provider claim. Shared paid application-provider usage remains
   **0 of 5**. Original frontend/backend/domain/database/tests/deployment and
   existing CI still have no changes from this work.
+
+## Automatic source reveal and multiple-source continuity
+
+The user requested source reveal directly from relationship selection, smooth
+motion, and a coherent multiple-document experience. This continuation stays on
+PR #157 and its existing branch; no original frontend or backend changes.
+
+- Relationship selection atomically picks the first canonical Evidence/Source
+  and reveals the exact span over **280ms**, ease `[0.22, 1, 0.36, 1]`, inside the
+  source container. Desktop preserves graph/list focus and camera; phone opens
+  Sources with the selected statement and exact mark focused. Explicit Inspect
+  and Evidence controls continue to focus the passage.
+- Imperative numeric Motion updates avoid React state updates per frame. Reader
+  wheel/touch/pointer/scroll keys, newer requests, hidden panels/documents and
+  unmount cancel the old motion. Reduced motion jumps directly; switching that
+  preference during movement settles the target unless the reader already took
+  control. Reading positions remain transient tab memory.
+- Numbered tabs identify supporting sources by canonical ID. Supporting tabs
+  choose their first matching Evidence in canonical order; unrelated documents
+  remain browsable with their remembered positions. Long/duplicate titles use
+  two-line previews, full accessible/title text and a stable reserved support cue.
+  Active tabs reveal in the horizontal strip without moving the page.
+- The multi-source visual review found active Evidence could remain below the
+  compact inspector after a source change. The inspector now moves only enough
+  to show the active card, aligning a tall quote at its heading. Focus, canonical
+  ordering and outer-page position remain unchanged.
+- Reused Sol/medium implementer and Sol/high engineering contexts; at most two
+  active children, no recursive delegation. Three attempted Motion Codex queries
+  yielded no relevant source-navigation example; the official animate reference
+  was read for numeric animation/cancellation. No decorative parallax pattern or
+  additional premium runtime dependency. Paid application-provider usage **0/5**.
+- Browser testing used actual PDFs, unchanged API/auth/CSRF, canonical graph
+  construction and persistence with the existing deterministic model boundary.
+  Five-source checks cover Evidence pooled across four sources, a different claim
+  in source five, duplicate long titles, offscreen active tabs and repeated source
+  changes. Frame sampling verifies intermediate scroll positions rather than just
+  an eventual highlight. Source-tab and inspector visibility are asserted.
+- Bounded visual work: initial desktop/phone inspection, tab readability fix,
+  confirmation, then the material inspector-continuity correction and third/final
+  confirmation. Stopped after that functional correction; no further polish loop.
+  A test-collection attempt initially placed video configuration inside a describe
+  group; moved it to file scope before browser inspection. All three executed
+  suites passed. Live Chrome also confirmed single-click source reveal and
+  retained graph focus; refreshed captures and walkthrough are in artifacts/.
+- Final validation: **752 Python tests** in 100.24s with isolated PostgreSQL;
+  **72 frontend unit tests in 16 files**, typecheck/build/format passed. Final
+  Chromium: **32 desktop/phone parity/interaction checks + one refreshed recording
+  passed** in 38.6s; only the redundant phone recording skipped.
+- Code Quality Review: independently reviewed the complete diff and all new files.
+  Kept source scroll mechanics in a focused helper, selection/source identity in
+  the workspace, and active-card visibility in EvidenceList. Final review found
+  no material correctness/accessibility/readability issues. No material readability
+  concern deliberately retained. Main bundle **672.08 kB / 219.09 kB gzip**, with
+  the existing nonblocking size/directive warnings. No runtime MotionScore claim.

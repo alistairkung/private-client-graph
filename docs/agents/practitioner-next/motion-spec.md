@@ -10,8 +10,8 @@ research does not require a premium runtime dependency.
 | Graph / List | Two full clickable tabs, roving keyboard focus, Arrow/Home/End support. The pill follows a pointer drag through a MotionValue; release chooses the nearest side once. No inertia or overshoot. | Spring stiffness 700, damping 53, mass 1. A new gesture stops the current spring. Pointer cancel, lost capture, Escape or resize restores the committed side. Trailing pointer clicks are suppressed without consuming keyboard activation. |
 | View change | Both panels stay mounted in a fixed working frame. Hidden panels are inert and hidden from assistive technology. Camera, query and scroll positions survive switching and returning to the Matter. | 120ms opacity acknowledgement; no waiting for an exit before input. |
 | Graph exploration | Hover/focus/selection emphasizes a claim and its endpoints. Labels have coordinated placement and leaders; explicit fixed XYFlow endpoint dimensions preserve label DOM through hover changes. | Short color/stroke feedback. No graph relayout, animated edge flow, automatic selection pan or zoom. Pan/zoom remains user controlled. |
-| Evidence selection | Persistent compact inspector. Relationship title and all supporting Evidence change together. Source selection updates without moving the outer page. | 120ms opacity; latest selection wins immediately. |
-| Inspect in source | Explicit action scrolls only the source container and focuses the exact highlighted span. Phone Source view retains the selected statement above the document. Return resolves the current relationship control and restores focus. | Instant locator jump; no animated travel through unrelated text. Source underline uses a zero-bounce 180ms spring. |
+| Relationship / Evidence selection | Persistent compact inspector. Relationship title and all supporting Evidence change together. Selecting a relationship automatically reveals its first exact passage; desktop retains origin focus, phone opens Sources and focuses the mark. Explicit Inspect/Evidence also focuses the mark. | Source container scroll uses 280ms ease-out `[0.22, 1, 0.36, 1]`; a newer selection replaces the current motion. Reader wheel/touch/pointer/scroll keys, hidden panel/document and unmount cancel it. Outer page and graph camera stay fixed. |
+| Multiple sources | Numbered source tabs mark documents supporting the selected relationship. Supporting tabs select their first canonical matching Evidence; unrelated documents restore their reading positions. Active tabs reveal horizontally, and only the new document body fades in. | Body opacity .55→1 over 180ms; source underline uses a zero-bounce 180ms spring. No stale quotation under a new document title. Long or duplicate titles retain distinct source identity. |
 | App navigation / ledger | Native hrefs with client navigation, route acknowledgement, stable shell and restored per-page scroll. Compact rows acknowledge hover and settle when filtering. | Route opacity 160ms; row entry 140ms / exit 80ms; no chained entrance sequence. |
 | Intake | PDF drop target responds to drag; rows settle in/out. Draft fields, PDF objects and recovery state remain in tab memory across app links. | Row entry 180ms / exit 80ms. Submission blocks app navigation until resolved; success clears the draft. |
 | Menus and decisions | Mobile rail, account popover and native proposal/fictional-source dialogs have short entrance/exit feedback. Focus and Escape follow the nearest open surface. | Account 140ms, rail 180ms, dialog entrance 180ms / exit 120ms. Busy decisions remain open. No blur or text scaling. |
@@ -20,7 +20,8 @@ research does not require a premium runtime dependency.
 ## Accessibility and continuity
 
 `MotionConfig reducedMotion="user"` and local `useReducedMotion` remove scale,
-translation and source underline layout movement. The draggable control still
+translation and source underline layout movement. Source passage reveals become
+instant. The draggable control still
 tracks direct input, but settles immediately. Inspector/dialog feedback reduces
 to a short opacity change. Input, focus and announcements never wait for motion.
 
@@ -39,6 +40,11 @@ Neither source implements dragging: pointer capture, MotionValue tracking,
 cancellation and click suppression were implemented explicitly using Motion's
 [drag guidance](https://motion.dev/docs/react-drag) and
 [useDragControls documentation](https://motion.dev/docs/react-use-drag-controls).
+
+The source reveal uses numeric animation and cancellation from the official
+[animate documentation](https://motion.dev/docs/animate). Motion Codex scroll
+searches returned scroll-linked/parallax patterns rather than source navigation;
+those decorative patterns were not applied to document review.
 
 Earlier delivery also inspected
 [Modal: Shared layout](https://examples.motion.dev/react/modal-shared-layout) and

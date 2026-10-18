@@ -154,7 +154,8 @@ test("Evergreen graph preserves family structure and every selectable relationsh
       .first()
       .selectOption("en");
   }
-  await page.locator(".evidence-item").first().click();
+  if (info.project.name === "desktop")
+    await page.locator(".evidence-item").first().click();
   await expect(page.locator(".source-text mark")).toHaveText(
     evidence.supporting_text,
   );

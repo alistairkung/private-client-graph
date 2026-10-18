@@ -113,8 +113,8 @@ create individual-edge acceptance, or expose benchmark evaluation. Motion uses
 free `motion/react`, informed by authenticated premium Motion+ source research.
 No private registry token or premium runtime dependency is needed.
 
-Verified locally: 752 repository Python tests, 59 new-app unit tests, typecheck,
-production build, formatting and 28 real-backend desktop/phone parity tests.
+Verified locally: 752 repository Python tests, 72 new-app unit tests, typecheck,
+production build, formatting and 32 real-backend desktop/phone parity tests.
 A separate refreshed walkthrough also passed. Graph coverage includes Evergreen
 family placement, complete bounds, connector spacing, exact Evidence selection,
 return focus, stable camera and language switching. Geometry regressions cover
@@ -131,8 +131,11 @@ previews prevent text from spilling into adjacent drawing space. Compare the
 
 The tactile Graph/List control accepts clicks, dragging and keyboard navigation.
 Both views retain their camera/search/scroll state. Evidence stays in a compact
-inspector; explicit source inspection moves only the document reader and retains
-the selected statement on phone. Coordinated labels avoid unrelated connectors
+inspector; selecting a relationship smoothly reveals its first exact passage
+inside the document reader, retaining the selected statement on phone. Desktop
+focus stays on the relationship; phone opens Sources directly. Direct reader
+input cancels movement, and reduced-motion mode reveals the passage instantly.
+Coordinated labels avoid unrelated connectors
 in the regression fixtures, with focused hover and endpoint feedback.
 
 Navigation now keeps the shell and document alive. Ledger search, Matter review
@@ -144,8 +147,16 @@ See the [motion specification](../docs/agents/practitioner-next/motion-spec.md)
 and actual [desktop](artifacts/desktop-interaction.png) /
 [phone](artifacts/phone-interaction.png) Evidence captures.
 
+With multiple documents, numbered tabs identify which Sources contain supporting
+Evidence. Selecting a supporting tab reveals its matching passage; other Sources
+retain their reading positions. The active tab and Evidence card stay in view.
+Two-line tab titles and reserved Evidence cues keep the reader frame stable.
+Five-PDF integration checks cover duplicate long titles, exact attribution and
+repeated changes. See the [desktop](artifacts/desktop-multiple-sources.png) and
+[phone](artifacts/phone-multiple-sources.png) captures.
+
 Known limits: finite graph routing can still overlap connectors in larger/dense
 states; use pan/zoom and the complete searchable relationship list. The production
-build reports a nonblocking main-bundle size warning (about 218 kB gzip). No
+build reports a nonblocking main-bundle size warning (about 219 kB gzip). No
 runtime MotionScore or production Google-provider check was performed. Local
 OIDC and extraction use existing deterministic synthetic substitutes.

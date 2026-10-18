@@ -85,7 +85,7 @@ test("keyboard relationship selection locates exact Evidence and restores focus"
   await relationship.press("Enter");
   const evidence = page.locator(".evidence-item").first();
   const quote = await evidence.locator("q").textContent();
-  await evidence.click();
+  if (info.project.name === "desktop") await evidence.click();
   await expect(page.locator(".source-text mark")).toBeVisible();
   expect(await page.locator(".source-text mark").textContent()).toBe(quote);
   await page.screenshot({
@@ -187,10 +187,12 @@ test("multi-PDF proposal retains each Source and can be explicitly discarded", a
   const quote = proposal.state.evidence.find(
     (item: { id: string }) => item.id === secondEvidence,
   ).supporting_text;
-  await page
-    .locator(".evidence-item")
-    .filter({ hasText: secondEvidence })
-    .click();
+  if (info.project.name === "desktop")
+    await page
+      .locator(".evidence-item")
+      .filter({ hasText: secondEvidence })
+      .click();
+  else await page.locator(".source-tabs > button").nth(1).click();
   await expect(page.locator(".source-text mark")).toBeVisible();
   expect(await page.locator(".source-text mark").textContent()).toBe(quote);
   await page.screenshot({

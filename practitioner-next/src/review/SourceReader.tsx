@@ -3,6 +3,7 @@ import { motion, useReducedMotion } from "motion/react";
 import { useSessionState } from "../shared/session-state";
 import type { Evidence, Source } from "../shared/contracts";
 import { useLocale } from "../shared/locale";
+import { revealSource } from "./source-reveal";
 import { exactSpan } from "./presentation";
 export function SourceReader({
   sources,
@@ -11,6 +12,8 @@ export function SourceReader({
   onSource,
   onReturn,
   jumpRequest = 0,
+  focusOnReveal = true,
+  supportingEvidence = [],
   statement,
   active: panelActive = true,
   memoryKey = "review:sources",
@@ -21,6 +24,8 @@ export function SourceReader({
   onSource: (id: string) => void;
   onReturn: () => void;
   jumpRequest?: number;
+  focusOnReveal?: boolean;
+  supportingEvidence?: Evidence[];
   statement?: string;
   active?: boolean;
   memoryKey?: string;
@@ -31,7 +36,11 @@ export function SourceReader({
   const mark = useRef<HTMLElement>(null);
   const scroll = useRef<HTMLDivElement>(null);
   const handledJump = useRef(0);
-  const [positions, setPositions] = useSessionState<Record<string, number>>(
+  const previousReduced = useRef(Boolean(reduced));
+  const interruptedJump = useRef<number | undefined>(undefined);
+  const tabs = useRef<HTMLDivElement>(null);
+  // This mutable reading-position cache is tab memory, not rendered state.
+  const [positions] = useSessionState<Record<string, number>>(
     memoryKey + ":source-scroll",
     {},
   );
@@ -42,34 +51,69 @@ export function SourceReader({
       ? exactSpan(source.text, evidence.supporting_text)
       : undefined;
   useLayoutEffect(() => {
-    if (scroll.current)
-      scroll.current.scrollTop = sourceId ? (positions[sourceId] ?? 0) : 0;
+    const reader = scroll.current;
+    if (!reader) return;
+    reader.scrollTop = sourceId ? (positions[sourceId] ?? 0) : 0;
   }, [sourceId]);
   useLayoutEffect(() => {
-    if (!jumpRequest || handledJump.current === jumpRequest || !panelActive)
+    const finishForReducedMotion =
+      Boolean(reduced) &&
+      !previousReduced.current &&
+      interruptedJump.current !== jumpRequest;
+    previousReduced.current = Boolean(reduced);
+    if (
+      !jumpRequest ||
+      !panelActive ||
+      (handledJump.current === jumpRequest && !finishForReducedMotion)
+    )
       return;
     handledJump.current = jumpRequest;
     const target = mark.current;
     const reader = scroll.current;
-    if (target && reader) {
-      reader.scrollTop = Math.max(
-        0,
-        reader.scrollTop +
-          target.getBoundingClientRect().top -
-          reader.getBoundingClientRect().top -
-          Math.min(72, reader.clientHeight * 0.2),
+    if (target && reader)
+      return revealSource(
+        reader,
+        target,
+        Boolean(reduced),
+        focusOnReveal,
+        (position) => {
+          if (sourceId) positions[sourceId] = position;
+        },
+        () => {
+          interruptedJump.current = jumpRequest;
+        },
       );
-      if (sourceId)
-        setPositions((previous) => ({
-          ...previous,
-          [sourceId]: reader.scrollTop,
-        }));
-      target.focus({ preventScroll: true });
-    } else
+    if (focusOnReveal)
       document
         .getElementById("sources-heading")
         ?.focus({ preventScroll: true });
-  }, [jumpRequest, panelActive, sourceId, evidence?.id]);
+  }, [
+    jumpRequest,
+    panelActive,
+    sourceId,
+    evidence?.id,
+    reduced,
+    focusOnReveal,
+  ]);
+  useLayoutEffect(() => {
+    const strip = tabs.current;
+    const selected = strip?.querySelector<HTMLElement>("button.active");
+    if (!strip || !selected) return;
+    const revealTab = () => {
+      const left = selected.offsetLeft;
+      const right = left + selected.offsetWidth;
+      if (left < strip.scrollLeft) strip.scrollLeft = left;
+      else if (right > strip.scrollLeft + strip.clientWidth)
+        strip.scrollLeft = right - strip.clientWidth;
+    };
+    revealTab();
+    const observer =
+      typeof ResizeObserver === "undefined"
+        ? undefined
+        : new ResizeObserver(revealTab);
+    observer?.observe(strip);
+    return () => observer?.disconnect();
+  }, [sourceId, t]);
   return (
     <section className="source-panel" aria-labelledby="sources-heading">
       <header className="source-heading">
@@ -79,7 +123,7 @@ export function SourceReader({
           </h2>
           <span>{t("Exact source text")}</span>
         </div>
-        {evidence && (
+        {(statement || evidence) && (
           <button className="text-button return-action" onClick={onReturn}>
             {t("Back to relationship")}
           </button>
@@ -91,7 +135,7 @@ export function SourceReader({
           <p>{statement}</p>
         </div>
       )}
-      <div className="source-tabs" aria-label={t("Choose source")}>
+      <div className="source-tabs" ref={tabs} aria-label={t("Choose source")}>
         {sources.map((item, index) => (
           <button
             key={item.id}
@@ -100,7 +144,14 @@ export function SourceReader({
             onClick={() => onSource(item.id)}
           >
             <span className="source-number">{index + 1}</span>
-            <span>{item.title}</span>
+            <span className="source-tab-title" title={item.title}>
+              {item.title}
+            </span>
+            <span className="source-support">
+              {supportingEvidence.some((entry) => entry.source_id === item.id)
+                ? t("Supporting Evidence")
+                : null}
+            </span>
             {sourceId === item.id && (
               <motion.span
                 className="source-underline"
@@ -117,12 +168,18 @@ export function SourceReader({
         onScroll={(event) => {
           if (sourceId) {
             const top = event.currentTarget.scrollTop;
-            setPositions((previous) => ({ ...previous, [sourceId]: top }));
+            positions[sourceId] = top;
           }
         }}
       >
         {source ? (
-          <article className="source-document">
+          <motion.article
+            key={source?.id}
+            className="source-document"
+            initial={{ opacity: reduced ? 1 : 0.55 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: reduced ? 0 : 0.18 }}
+          >
             <div className="document-heading">
               <h3>{source.title}</h3>
               <span>
@@ -153,7 +210,7 @@ export function SourceReader({
                 source.text
               )}
             </div>
-          </article>
+          </motion.article>
         ) : (
           <div className="empty">
             {t(

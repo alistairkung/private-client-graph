@@ -50,7 +50,9 @@ as its accessible name. Diagram entity names use bounded two-line previews;
 the full canonical name remains in the title, accessible name, entity inspector
 and List view. Every connector also has a textual equivalent in List view.
 Selecting a relationship atomically selects its first Evidence ID and its Source
-ID. Evidence entries preserve backend order, text, titles and identifiers.
+ID and smoothly reveals that exact passage inside the source reader. Desktop
+selection keeps focus on the graph/list; phone selection opens Sources and moves
+focus to the quote. Evidence entries preserve backend order, text, titles and identifiers.
 Identically titled sources remain distinct by ID. The source reader highlights
 the first exact occurrence only; an unlocatable quote produces an explicit
 location error rather than an approximate match. Returning to the relationship
@@ -59,7 +61,8 @@ including when the diagram renderer has recreated its label portal.
 
 Below 900px, Relationships and Sources become separate views. The readable
 relationship list opens by default; the complete pannable graph remains available. Evidence activation
-opens Sources and focuses the exact highlight (or source heading). The return
+opens Sources and focuses the exact highlight (or source heading). Relationship
+selection provides the same direct source access. The return
 action retains the relationship selection. Intake and whole-proposal dialogs
 stack at phone width. Account and language controls remain in the menu.
 
@@ -69,13 +72,24 @@ with a heavily damped spring. Both working views remain mounted: switching keeps
 the camera, query and scroll positions. Hover, keyboard focus and selection
 emphasize the claim and its endpoints without relayout or camera movement.
 
+Sources keep stable numbered tabs, including distinct documents with identical
+titles. Tabs identify supporting Evidence for the selected relationship. Choosing
+a supporting source reveals its first matching passage in canonical order;
+unrelated sources remain available with their remembered reading position. The
+active tab is brought into the horizontal strip without moving the outer page.
+Only the document body receives a brief handoff fade; titles and exact quotations
+always update together. Long tab titles are bounded, with full text available in
+the document heading and native title.
+
 Motion answers work across the application: 120ms Evidence opacity changes,
 an interruption-safe 180ms source underline, 160ms route acknowledgement,
-short menu/rail transitions and native dialog entrance/exit. Pressed controls
+280ms decelerating source reveal, short menu/rail transitions and native dialog entrance/exit. Pressed controls
 compress subtly; ledger arrows acknowledge hover; source rows settle into place.
 No graph drift, automatic selection zoom, decorative entrance sequence or
 animated edge flow. Reduced motion removes translation/scale and snaps the view
-control immediately while keeping brief opacity feedback.
+control immediately and reveals source passages instantly while keeping brief
+opacity feedback. Direct reader input cancels scrolling; a new selection
+retargets from the current position.
 
 Application links retain native URLs while navigating without a document reload.
 Tab-memory retains ledger search, review context and intake fields/PDFs, including

@@ -11,8 +11,8 @@ files were changed. See `verification.md` for environment and execution limits.
 | Matter and saved proposal direct entry | `/app/matters/:id`, `/app/matter-proposals/:id`; loading, missing and failed states. Browser refresh and not-found tests. |
 | Full canonical relationship drawing | All returned entities/relationships; full-size Trust triangles, role-aware placement and family context; distinct canonical connectors, parent arrows and arrowless Trust roles. Geometry tests cover Evergreen, reciprocal claims, multiple roles and fallback layouts. |
 | Graph exploration | Pan/pinch and zoom controls, complete-drawing fit, keyboard-selectable connector labels, stable selection/locale camera, entity selection and connected relationship list. Real-backend desktop/phone graph tests verify family structure, fit, label spacing, exact Evidence and return focus. |
-| Exact Evidence inspection | All Evidence IDs/quotes and source titles; selected relationship, source highlight, explicit return-to-relationship focus. Keyboard/reduced-motion browser test. |
-| Multiple Sources | Distinct source IDs/titles/text and Evidence attribution; source switching and exact highlight. Real multi-PDF browser/API tests. |
+| Exact Evidence inspection | Relationship selection automatically smoothly reveals first canonical Evidence. Desktop retains origin focus; phone opens Sources. Input cancellation, reduced-motion instant reveal and explicit return focus. Real browser frame sampling and unit tests. |
+| Multiple Sources | Distinct source IDs/titles/text, numbered supporting-source tabs, matching passage reveal, remembered unrelated-document positions and visible active Evidence card. Five-PDF browser checks include duplicate long titles and repeated source changes; unchanged-backend integration. |
 | Single PDF intake | External reference, Matter title, Source title, synthetic consent, existing multipart contract. Real UI proposal/confirmation test. |
 | Multiple PDF intake | One to five titled PDF Sources, stable distinct IDs, add/remove, 10 MiB combined; backend retains page/text/acquisition limits. Unit admission tests and multi-PDF UI/API tests. |
 | Fictional source assistance | Copyable source-only fictional prompt with manual-copy fallback; no model invocation or fabricated source. |
@@ -48,8 +48,8 @@ UI errors; they do not replace successful integration coverage. No provider
 quality, production tenancy, real-data admission, new backend workflow or
 runtime MotionScore performance certification is claimed.
 
-Validation result after interaction refinement: 752 repository tests, 59 new-app unit tests, typecheck/build,
-formatting and 28 desktop/phone parity checks passed; the separate short recording
+Validation result after source-navigation refinement: 752 repository tests, 72 new-app unit tests, typecheck/build,
+formatting and 32 desktop/phone parity checks passed; the separate short recording
 also passed. The new CI workflow repeats the new-app gates; its remote status is
 reported at PR handoff. See verification.md for the finite graph-routing and
 runtime/model-observability limits.

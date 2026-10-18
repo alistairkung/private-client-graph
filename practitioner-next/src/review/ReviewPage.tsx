@@ -92,6 +92,7 @@ function Workspace({
     return () => media.removeEventListener("change", update);
   }, []);
   const [sourceJump, setSourceJump] = useState(0);
+  const [focusSource, setFocusSource] = useState(false);
   const [selected, setSelected] = useSessionState<number | null>(
     memoryKey + ":selected",
     null,
@@ -150,6 +151,9 @@ function Workspace({
     setSourceId(item?.source_id ?? null);
     setSelectionView(view);
     setFocusRequest(undefined);
+    if (narrow) setTab("sources");
+    setFocusSource(narrow);
+    setSourceJump((previous) => previous + 1);
   }
   function selectEvidence(id: string, jump: boolean) {
     const item = state.evidence.find((item) => item.id === id);
@@ -157,7 +161,19 @@ function Workspace({
     setSourceId(item?.source_id ?? null);
     if (jump) openSource();
   }
+  function selectSource(id: string) {
+    setSourceId(id);
+    const supporting = relationship?.evidence_ids
+      .map((id) => state.evidence.find((item) => item.id === id))
+      .find((item) => item?.source_id === id);
+    setEvidenceId(supporting?.id ?? null);
+    if (supporting) {
+      setFocusSource(false);
+      setSourceJump((previous) => previous + 1);
+    }
+  }
   function openSource() {
+    setFocusSource(true);
     setTab("sources");
     setSourceJump((previous) => previous + 1);
   }
@@ -407,9 +423,14 @@ function Workspace({
             sources={state.sources}
             sourceId={sourceId}
             evidence={evidence}
-            onSource={setSourceId}
+            onSource={selectSource}
             onReturn={returnToRelationship}
             jumpRequest={sourceJump}
+            focusOnReveal={focusSource}
+            supportingEvidence={relationship?.evidence_ids.flatMap((id) => {
+              const item = state.evidence.find((entry) => entry.id === id);
+              return item ? [item] : [];
+            })}
             statement={statement}
             active={tab === "sources" || !narrow}
             memoryKey={memoryKey}

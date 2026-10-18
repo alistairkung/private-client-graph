@@ -46,6 +46,10 @@ test("click, drag and keyboard view changes retain the review context", async ({
     "Alice Chen",
   );
   expect(await page.evaluate(() => window.scrollY)).toBe(outerScroll);
+  if (info.project.name === "phone")
+    await page
+      .getByRole("button", { name: "Back to relationship", exact: true })
+      .click();
   await graph.press("End");
   await expect(list).toHaveAttribute("aria-selected", "true");
   await expect(
@@ -60,9 +64,10 @@ test("click, drag and keyboard view changes retain the review context", async ({
   await graph.press("End");
   await query.fill("");
   await page.locator("#relationship-0").click();
-  await page
-    .getByRole("button", { name: "Inspect in source", exact: true })
-    .click();
+  if (info.project.name === "desktop")
+    await page
+      .getByRole("button", { name: "Inspect in source", exact: true })
+      .click();
   await expect(page.locator(".source-text mark")).toBeFocused();
   await expect(page.locator(".source-relationship-context")).toContainText(
     "Alice Chen",

@@ -44,7 +44,6 @@ test("record the synthetic practitioner walkthrough", async ({
   await page.waitForTimeout(800);
   await page.locator('button.edge-label[data-edge-id="0"]').click();
   await page.waitForTimeout(800);
-  await page.locator(".evidence-item").first().click();
   await expect(page.locator(".source-text mark")).toBeVisible();
   await page.waitForTimeout(1500);
   await page.getByRole("tab", { name: "Graph", exact: true }).click();

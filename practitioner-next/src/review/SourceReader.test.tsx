@@ -1,6 +1,31 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+const motionState = vi.hoisted(() => ({
+  reduced: false,
+  deferred: false,
+  update: (_value: number) => {},
+}));
+vi.mock("motion/react", async (original) => ({
+  ...(await original<typeof import("motion/react")>()),
+  useReducedMotion: () => motionState.reduced,
+}));
+vi.mock("motion", () => ({
+  animate: (
+    _from: number,
+    to: number,
+    options: { onUpdate: (value: number) => void },
+  ) => {
+    motionState.update = options.onUpdate;
+    if (!motionState.deferred) options.onUpdate(to);
+    return { stop: vi.fn() };
+  },
+}));
+beforeEach(() => {
+  motionState.reduced = false;
+  motionState.deferred = false;
+});
+
 import { SourceReader } from "./SourceReader";
 import { LocaleProvider } from "../shared/locale";
 
@@ -42,6 +67,10 @@ describe("exact source-aware Evidence reading", () => {
     vi.spyOn(target, "getBoundingClientRect").mockReturnValue(
       new DOMRect(0, 620, 200, 20),
     );
+    Object.defineProperty(reader, "scrollHeight", {
+      configurable: true,
+      value: 2000,
+    });
     Object.defineProperty(reader, "clientHeight", {
       configurable: true,
       value: 300,
@@ -76,6 +105,44 @@ describe("exact source-aware Evidence reading", () => {
     );
     expect(reader.scrollTop).toBe(735);
   });
+  it.each([false, true])(
+    "settles an ongoing reveal when reduced motion changes, unless the reader has taken control (%s)",
+    (interrupted) => {
+      motionState.deferred = true;
+      const props = {
+        sources,
+        sourceId: "one",
+        evidence: {
+          id: "e",
+          document: "",
+          source_id: "one",
+          supporting_text: "First exact quote.",
+        },
+        onSource: vi.fn(),
+        onReturn: vi.fn(),
+        focusOnReveal: false,
+        memoryKey: "reduce-transition-" + interrupted,
+      };
+      const { container, rerender } = render(<SourceReader {...props} />);
+      const reader = container.querySelector<HTMLElement>(".source-scroll")!;
+      const mark = container.querySelector<HTMLElement>("mark")!;
+      Object.defineProperties(reader, {
+        clientHeight: { value: 300 },
+        scrollHeight: { value: 2000 },
+      });
+      reader.getBoundingClientRect = () => new DOMRect(0, 100, 300, 300);
+      mark.getBoundingClientRect = () =>
+        new DOMRect(0, 900 - reader.scrollTop, 200, 20);
+      rerender(<SourceReader {...props} jumpRequest={1} />);
+      motionState.update(200);
+      if (interrupted) fireEvent.wheel(reader);
+      motionState.reduced = true;
+      rerender(<SourceReader {...props} jumpRequest={1} />);
+      expect(reader.scrollTop).toBe(interrupted ? 200 : 740);
+      motionState.update(300);
+      expect(reader.scrollTop).toBe(interrupted ? 200 : 740);
+    },
+  );
   it("highlights one exact occurrence in the selected source, retaining the backend Evidence ID", () => {
     const { container, rerender } = render(
       <LocaleProvider>
@@ -163,7 +230,7 @@ describe("exact source-aware Evidence reading", () => {
     );
     expect(container.querySelector("mark")).toBeNull();
   });
-  it("chooses sources by ID even when titles match and provides return action", async () => {
+  it("marks supporting sources by canonical ID even when titles match and provides return action", async () => {
     const onSource = vi.fn(),
       onReturn = vi.fn();
     render(
@@ -177,6 +244,14 @@ describe("exact source-aware Evidence reading", () => {
           supporting_text: "First exact quote.",
         }}
         onSource={onSource}
+        supportingEvidence={[
+          {
+            id: "e",
+            document: "",
+            source_id: "two",
+            supporting_text: "Second exact quote.",
+          },
+        ]}
         onReturn={onReturn}
       />,
     );
@@ -184,6 +259,16 @@ describe("exact source-aware Evidence reading", () => {
       screen.getAllByRole("button", { name: /Same title/ })[1],
     );
     expect(onSource).toHaveBeenCalledWith("two");
+    const supportSlots = document.querySelectorAll(".source-support");
+    expect(supportSlots).toHaveLength(sources.length);
+    expect(supportSlots[0]).toBeEmptyDOMElement();
+    expect(supportSlots[1]).toHaveTextContent("Supporting Evidence");
+    expect(
+      screen.getAllByRole("button", { name: /Same title/ })[1],
+    ).toHaveTextContent("Supporting Evidence");
+    expect(
+      screen.getAllByRole("button", { name: /Same title/ })[0],
+    ).not.toHaveTextContent("Supporting Evidence");
     await userEvent.click(
       screen.getByRole("button", { name: "Back to relationship" }),
     );
