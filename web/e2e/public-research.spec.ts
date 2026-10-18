@@ -146,7 +146,7 @@ for (const locale of ["en", "zh-CN"] as const) {
       await index.evaluate(element => { element.scrollTop = 0; });
     }
     const architecture = page.locator("#architecture");
-    await architecture.getByRole("combobox", { name: locale === "en" ? "Inspect Run" : "查看运行", exact: true }).selectOption("B");
+    await architecture.getByRole("group", { name: locale === "en" ? "Inspect Run" : "查看运行", exact: true }).getByRole("button", { name: /B/ }).click();
     const resolver = architecture.getByRole("button", { name: locale === "en" ? /Resolve aliases/ : /解析别名/ });
     await resolver.click();
     await expect(resolver).toHaveAttribute("aria-expanded", "true");
@@ -192,10 +192,10 @@ for (const locale of ["en", "zh-CN"] as const) {
       expect(await page.locator(".research-disclosure").evaluate(element => element.getBoundingClientRect().width)).toBeLessThanOrEqual(900);
     }
     const architecture = page.locator("#architecture");
-    const configuration = architecture.getByRole("combobox", { name: locale === "en" ? "Inspect Run" : "查看运行", exact: true });
-    await configuration.selectOption("A_prime");
+    const configuration = architecture.getByRole("group", { name: locale === "en" ? "Inspect Run" : "查看运行", exact: true });
+    await configuration.getByRole("button", { name: /A′/ }).click();
     await expect(architecture.getByRole("button", { name: /Resolve aliases|解析别名/ })).toHaveCount(0);
-    await configuration.selectOption("B");
+    await configuration.getByRole("button", { name: /B/ }).click();
     const stage = architecture.getByRole("button", { name: /Resolve aliases|解析别名/ });
     await stage.click();
     await expect(stage).toHaveAttribute("aria-expanded", "true");
@@ -213,7 +213,7 @@ for (const locale of ["en", "zh-CN"] as const) {
     const chart = page.locator("#comparison .run-chart");
     await expect(chart.locator(".chart-point")).toHaveCount(3);
     await chart.screenshot({ path: testInfo.outputPath(`shared-chart-component-public-${locale}.png`) });
-    const treatment = chart.getByRole("button", { name: locale === "en" ? "Run 3, F1 1.000, complete, 10/10 scored" : "运行 3，F1 1.000，完整，已评分 10/10", exact: true });
+    const treatment = chart.getByRole("button", { name: locale === "en" ? "B · With resolver, F1 1.000, complete, 10/10 scored" : "B · 使用解析器，F1 1.000，完整，已评分 10/10", exact: true });
     await treatment.click();
     await expect(treatment).toHaveAttribute("aria-pressed", "true");
     await expect(chart.locator(".chart-inspection")).toContainText("841389cef51957ce8523ea41c03d2baa");
@@ -223,10 +223,10 @@ for (const locale of ["en", "zh-CN"] as const) {
     await inputs.selectOption("all");
     await chart.getByRole("tab", { name: locale === "en" ? "F1 vs Cost" : "F1 与成本", exact: true }).click();
     await expect(chart.locator(".chart-point")).toHaveCount(1);
-    await expect(chart.locator(".chart-point")).toHaveAttribute("aria-label", locale === "en" ? "Run 2, F1 0.949, complete, 10/10 scored" : "运行 2，F1 0.949，完整，已评分 10/10");
+    await expect(chart.locator(".chart-point")).toHaveAttribute("aria-label", locale === "en" ? "A′ · Exact replay, F1 0.949, complete, 10/10 scored" : "A′ · 精确回放，F1 0.949，完整，已评分 10/10");
     await expect(chart.getByText(locale === "en" ? "Unpriced provider attempts; excluded from cost chart." : "提供商调用尝试未定价；不纳入成本图表。", { exact: true })).toHaveCount(2);
     await chart.getByRole("tab", { name: locale === "en" ? "F1 by Run" : "各次运行的 F1", exact: true }).click();
-    await expect(chart.getByRole("tab", { name: locale === "en" ? "F1 by Run" : "各次运行的 F1", exact: true })).toHaveCSS("color", "rgb(23, 62, 56)");
+    await expect(chart.getByRole("tab", { name: locale === "en" ? "F1 by Run" : "各次运行的 F1", exact: true })).toHaveCSS("color", "rgb(255, 255, 255)");
     await expect(treatment).toHaveAttribute("aria-pressed", "true");
     await page.mouse.move(0, 0);
     await page.locator("#comparison").screenshot({ path: testInfo.outputPath(`shared-chart-public-${locale}.png`) });

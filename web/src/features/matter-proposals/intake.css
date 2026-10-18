@@ -7,6 +7,39 @@
 .intake-layout {
   min-width: 0;
 }
+.intake-access {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  padding: 16px 0;
+  font-size: 14px;
+}
+.intake-access > a {
+  font-weight: 600;
+}
+.intake-form fieldset:disabled input {
+  background: var(--surface-subtle);
+  color: var(--muted);
+  cursor: not-allowed;
+}
+.intake-form fieldset:disabled .file-drop {
+  cursor: not-allowed;
+}
+.intake-form fieldset:disabled .file-drop:hover {
+  background: var(--surface-subtle);
+  border-color: var(--control-border);
+}
+.intake-form button:disabled {
+  cursor: not-allowed;
+}
+.intake-form .primary:disabled {
+  color: var(--muted);
+  background: var(--surface-muted);
+  border-color: var(--border);
+  opacity: 1;
+}
 .intake-form {
   background: var(--surface);
   padding: 28px 32px;

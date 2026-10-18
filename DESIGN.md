@@ -31,8 +31,12 @@ Evidence remain backend authoritative. Animation acknowledges work and preserves
 context. Reduced-motion preferences expose the complete story without scroll
 choreography and make Source reveals immediate.
 
-Public research retains its existing editorial typography, recorded comparison
-renderers and original artifact download. Its required older renderers live
+Public research uses Public Sans and the same Forest & Chalk palette, with a
+reading-led overview, restrained spring selection controls and stable recorded
+values. The [research interaction brief](docs/design/research-results-interaction-refresh.md)
+records its Motion+-informed decisions, research caveats and verification.
+It retains the recorded comparison renderers and original artifact download.
+Its required older renderers live
 under `web/src/features/public-research/recorded-review/`; they are not a second
 practitioner application. The earlier [public landing direction](docs/design/public-landing-visual-direction.md)
 remains a historical record of the replaced landing.

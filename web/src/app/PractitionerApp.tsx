@@ -152,7 +152,7 @@ function Shell() {
         >
           <AccessNotice />
           {isNew ? (
-            <WriteGate><Intake /></WriteGate>
+            <Intake />
           ) : exampleId ? (
             <CuratedExamples id={exampleId} />
           ) : review ? (

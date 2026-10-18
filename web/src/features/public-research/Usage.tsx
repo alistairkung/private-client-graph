@@ -15,10 +15,12 @@ export function Usage({ runs }: { runs: PublicRun[] }) {
           "Cached tokens are included within input tokens, not additional tokens. Provider duration is summed provider time, not end-to-end wall time. Attempt counts include failures. Missing prices are explicitly Unpriced.",
         )}
       </p>
+      <p id="research-usage-scroll-hint" className="research-table-hint">{t("Scroll horizontally to inspect all recorded columns.")}</p>
       <div
         className="research-table-scroll"
         role="region"
         aria-label={t("Run usage totals")}
+        aria-describedby="research-usage-scroll-hint"
         tabIndex={0}
       >
         <table>
