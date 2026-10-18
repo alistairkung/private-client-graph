@@ -836,8 +836,6 @@ main,
 }
 .public-source-notice { margin: 0; padding: 8px 24px; color: var(--muted); background: var(--surface-subtle); font-size: 12px; }
 .access-notice { margin: 12px 24px; }
-.curated-selector { padding-bottom: 0; }
-.curated-selector select { margin-top: 6px; max-width: 100%; }
 
 /* Review consumes the space left by the visible notices, including wrapped text. */
 @media (min-width: 901px) {

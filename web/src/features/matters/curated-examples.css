@@ -1,0 +1,76 @@
+.curated-selector {
+  flex: none;
+  padding: 16px 24px 12px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+.curated-toolbar {
+  display: grid;
+  grid-template-columns: minmax(200px, 1fr) minmax(280px, 480px);
+  align-items: center;
+  gap: 12px 32px;
+}
+.curated-intro p {
+  margin-top: 4px;
+  max-width: 58ch;
+  color: var(--muted);
+  font-size: 13px;
+}
+.curated-picker {
+  min-width: 0;
+}
+.curated-picker > label {
+  margin-bottom: 6px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.curated-controls,
+.curated-steps {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.curated-controls {
+  gap: 10px;
+}
+.curated-controls select {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  transition: border-color 140ms, background-color 140ms;
+}
+.curated-controls select:hover:not(:disabled) {
+  border-color: var(--accent);
+  background: var(--surface-subtle);
+}
+.curated-steps {
+  flex: none;
+}
+.curated-steps button:disabled {
+  cursor: not-allowed;
+}
+.curated-previous svg {
+  rotate: 180deg;
+}
+.curated-notice {
+  margin-top: 10px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.curated-selector > .notice,
+.curated-selector > [role="status"] {
+  margin-top: 10px;
+}
+@media (max-width: 1100px) {
+  .curated-toolbar {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
+@media (max-width: 600px) {
+  .curated-selector {
+    padding: 16px;
+  }
+}

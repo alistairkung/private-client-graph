@@ -320,9 +320,12 @@ test("missing Matter has recovery and expired sessions keep reading with sign-in
   ).toBeVisible();
   await context.clearCookies();
   await page.goto("/app");
+  await expect(page.getByRole("link", { name: /PC\/2026\/0142/ })).toBeVisible();
+  await page.locator('.page-heading a[href="/app/matter-proposals/new"]').click();
   await expect(
     page.getByRole("link", { name: "Sign in to make changes", exact: true }).first(),
-  ).toHaveAttribute("href", /\/auth\/login\?next=/);
+  ).toHaveAttribute("href", "/auth/login?next=%2Fapp%2Fmatter-proposals%2Fnew");
+  await expect(page.getByRole("button", { name: "Upload and analyse", exact: true })).toBeDisabled();
 });
 
 test("fictional prompt and account controls close accessibly; sign out ends the session", async ({
@@ -375,6 +378,11 @@ test("fictional prompt and account controls close accessibly; sign out ends the 
     page.getByRole("link", { name: "Sign in to make changes", exact: true }).first(),
   ).toBeVisible();
   expect(unloadPrompts).toBe(0);
-  await expect(page.locator('input[name="matter_title"]')).toHaveCount(0);
+  await expect(page.locator('input[name="matter_title"]')).toHaveValue("");
+  await expect(page.locator('input[name="matter_title"]')).toBeDisabled();
+  await expect(page.locator('input[name="external_reference"]')).toHaveValue("");
+  await expect(page.locator('input[type="file"]')).toBeDisabled();
+  await expect(page.locator('.source-uploads > li')).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Upload and analyse", exact: true })).toBeDisabled();
   expect((await page.request.get("/api/matters")).status()).toBe(200);
 });

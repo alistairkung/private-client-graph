@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, expect, it, vi } from "vitest";
 import { createProposal, RequestFailure } from "../../shared/api";
 import { clearSessionState } from "../../shared/session-state";
+import { AccessProvider } from "../../shared/access";
 import { Intake } from "./Intake";
 
 vi.mock("../../shared/api", async (importOriginal) => ({
@@ -12,7 +13,13 @@ vi.mock("../../shared/api", async (importOriginal) => ({
 beforeEach(() => {
   vi.clearAllMocks();
   clearSessionState();
+  vi.spyOn(globalThis, "fetch").mockImplementation(async () => new Response(JSON.stringify({ can_write: true, sign_in_available: true })));
 });
+async function renderIntake() {
+  const view = render(<AccessProvider><Intake /></AccessProvider>);
+  await waitFor(() => expect(screen.getByLabelText("External Matter reference")).toBeEnabled());
+  return view;
+}
 async function enterDraft() {
   await userEvent.type(
     screen.getByLabelText("External Matter reference"),
@@ -40,14 +47,14 @@ it("retains a non-retryable analysis failure with its draft after leaving and re
       outcome_unknown: true,
     }),
   );
-  const view = render(<Intake />);
+  const view = await renderIntake();
   await enterDraft();
   await userEvent.click(
     screen.getByRole("button", { name: "Upload and analyse" }),
   );
   await screen.findByRole("alert");
   view.unmount();
-  render(<Intake />);
+  await renderIntake();
   expect(screen.getByLabelText("External Matter reference")).toHaveValue(
     "FICTIONAL/DRAFT",
   );
@@ -59,7 +66,7 @@ it("retains a non-retryable analysis failure with its draft after leaving and re
 });
 
 it("clears mounted draft fields and removes the unload warning when the session ends", async () => {
-  render(<Intake />);
+  await renderIntake();
   await enterDraft();
   expect(
     window.dispatchEvent(new Event("beforeunload", { cancelable: true })),
