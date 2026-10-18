@@ -2,30 +2,29 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { expect, it, vi } from "vitest";
-import type { CanonicalGraph } from "../../shared/canonical-graph";
-import { RecordedGraph, recordedGraph } from "./RecordedGraph";
+import type { CanonicalState } from "../../shared/contracts";
+import { GraphDrawing } from "../review/GraphDrawing";
+import { RecordedGraph } from "./RecordedGraph";
 import type { PublicResearchSnapshot } from "./types";
 
-vi.mock("./recorded-review/GraphView", () => ({
-  GraphView: ({ graph, selected, onSelect }: { graph: CanonicalGraph; selected: number | null; onSelect: (index: number) => void }) =>
-    <>{graph.relationships.map((edge, index) => (
+vi.mock("../review/GraphDrawing", () => ({
+  GraphDrawing: vi.fn(({ state: graph, selected, onSelect, onEntity }: { state: CanonicalState; selected: number | null; onSelect: (index: number) => void; onEntity: (id: string) => void }) =>
+    <>{graph.entities.map(entity => <button key={entity.id} onClick={() => onEntity(entity.id)}>Select entity {entity.name}</button>)}
+    {graph.relationships.map((edge, index) => (
       <button key={index} aria-pressed={selected === index} onClick={() => onSelect(index)}>
         {graph.entities.find(entity => entity.id === edge.source)?.name}
         {index > 0 ? ` · ${edge.type}` : ""}
       </button>
-    ))}</>,
+    ))}</>),
 }));
 const snapshot: PublicResearchSnapshot = JSON.parse(readFileSync(resolve(
   import.meta.dirname, "../../../../private_client_graph/published/research-results.v1.json",
 ), "utf8"));
 const sample = snapshot.cases.find(item => item.case_id === "heldout_03")!;
 
-it("adapts saved state without changing graph identities, relationship ordering or Evidence", () => {
-  const observation = sample.observations[0];
-  const graph = recordedGraph(observation);
-  expect(graph.entities).toEqual(observation.state.entities);
-  expect(graph.relationships).toEqual(observation.state.relationships);
-  expect(graph.evidence).toBe(observation.state.evidence);
+it("passes the complete retained canonical state directly to the actual Matter graph renderer", () => {
+  render(<RecordedGraph sample={sample} />);
+  expect(vi.mocked(GraphDrawing).mock.calls.at(-1)?.[0].state).toBe(sample.observations[0].state);
 });
 it("joins a selected graph edge to its recorded outcome and unchanged quote across conditions", () => {
   render(<RecordedGraph sample={sample} />);
@@ -65,4 +64,24 @@ it("preserves inspected Source evidence when the selected condition is clicked a
   fireEvent.click(screen.getByRole("button", { name: "Original extraction · A" }));
   expect(screen.getByRole("article", { name: "Frozen Source" }).querySelector("mark"))
     .toHaveTextContent("Bea is the parent of Isaac Ng.");
+});
+
+it("shows incident relationships for an entity and clears stale Evidence until an edge is selected", () => {
+  render(<RecordedGraph sample={sample} />);
+  fireEvent.click(screen.getByRole("button", { name: "Bea" }));
+  fireEvent.click(screen.getByRole("button", { name: "View predicted in Source" }));
+  fireEvent.click(screen.getByRole("button", { name: "Select entity Bea" }));
+  expect(screen.queryByRole("article")).not.toBeInTheDocument();
+  expect(screen.getByRole("complementary", { name: "Entity relationships" })).toHaveTextContent("Bea");
+  fireEvent.click(screen.getByRole("button", { name: /Bea · parent_of · Isaac Ng/ }));
+  expect(screen.queryByRole("complementary", { name: "Entity relationships" })).not.toBeInTheDocument();
+  expect(screen.getByText("Bea · parent_of · Isaac Ng")).toBeInTheDocument();
+});
+
+it("resets selection and the research camera identity when the case changes", () => {
+  const { rerender } = render(<RecordedGraph sample={sample} />);
+  fireEvent.click(screen.getByRole("button", { name: "Bea" }));
+  rerender(<RecordedGraph sample={snapshot.cases[0]} />);
+  expect(screen.getByText("Select a relationship in this result.")).toBeInTheDocument();
+  expect(vi.mocked(GraphDrawing).mock.calls.at(-1)?.[0].memoryKey).toBe(`research:recorded:${snapshot.cases[0].case_id}`);
 });

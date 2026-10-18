@@ -6,6 +6,7 @@ import { PUBLIC_RESEARCH_DOWNLOAD, usePublicResearchSnapshot } from "./api";
 import { ResearchStory } from "./ResearchStory";
 import { ResearchOverview } from "./ResearchOverview";
 import "../../styles/global.css";
+import "../../shared/public/showcase-foundations.css";
 import "./public-research.css";
 export function ResearchResultsApp() {
   const { t } = useLocale();
@@ -20,7 +21,7 @@ export function ResearchResultsApp() {
       <a className="showcase-skip" href="#research-main">
         {t("Skip to research results")}
       </a>
-      <PublicHeader />
+      <PublicHeader currentPage="research" />
       <main id="research-main" className="research-main">
         <header className="research-opening">
           <h1>{t("Research results")}</h1>
@@ -53,6 +54,7 @@ export function ResearchResultsApp() {
               <a href="#cases">{t("Cases and Evidence")}</a>
               <a href="#limitations">{t("Limitations and trade-offs")}</a>
               <a href="#usage">{t("Usage")}</a>
+              <a href="#roadmap">{t("Research roadmap")}</a>
               <a href="#reproducibility">{t("Reproducibility")}</a>
             </nav>
             <ResearchStory snapshot={snapshot} />

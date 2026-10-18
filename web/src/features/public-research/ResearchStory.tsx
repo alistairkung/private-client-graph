@@ -6,6 +6,7 @@ import { RecordedGraph } from "./RecordedGraph";
 import { ResearchArchitecture } from "./ResearchArchitecture";
 import { Provenance, RunComparison } from "./RunComparison";
 import { Usage } from "./Usage";
+import { ResearchRoadmap } from "./ResearchRoadmap";
 import type { PublicResearchSnapshot } from "./types";
 
 function Chapter({ id, title, children, band = false }: { id: string; title: string; children: ReactNode; band?: boolean }) {
@@ -51,6 +52,7 @@ export function ResearchStory({ snapshot }: { snapshot: PublicResearchSnapshot }
       <Provenance runs={snapshot.runs} />
       <Usage runs={snapshot.runs} />
     </Chapter>
+    <ResearchRoadmap />
     <Chapter id="reproducibility" title="Inspect the published record.">
       <p>{t("Micro F1 pools true positives, false positives and false negatives across cases; macro F1 averages case-level F1. Neither defines true negatives. Approved-quote provenance checks exact approved text on matched relationships; Source-pair attribution additionally checks the recorded Source identity.")}</p>
       <p>{t("Original case names, Sources, entity names and Evidence remain in their original language. Interface translation does not alter the published artifacts.")}</p>

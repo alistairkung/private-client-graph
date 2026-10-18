@@ -661,7 +661,7 @@ test("the invitation keeps clear, fixed targets in both languages and reduced mo
   for (const width of widths) {
     await page.setViewportSize({ width, height: info.project.name === "phone" ? 844 : 982 });
     for (const locale of ["en", "zh-CN"]) {
-      await page.locator(".landing-masthead select").selectOption(locale);
+      await page.locator(".public-header select").selectOption(locale);
       const invited = page.locator(".landing-story-edge-label[data-inviting]");
       await expect(invited).toHaveAttribute("data-relationship-index", targetIndex!);
       await expect(invited).toHaveAttribute("aria-pressed", "false");
@@ -694,7 +694,7 @@ test("the invitation keeps clear, fixed targets in both languages and reduced mo
     }
   }
   expect(await page.locator(".landing-story-source-text").textContent()).toBe(source);
-  await page.locator(".landing-masthead select").selectOption("en");
+  await page.locator(".public-header select").selectOption("en");
   if (info.project.name === "phone") await target.tap();
   else {
     await target.focus();
@@ -711,7 +711,7 @@ test("the invitation keeps clear, fixed targets in both languages and reduced mo
     const evidence = state.evidence.find(item => item.id === id)!;
     await expect(page.locator(`mark[data-evidence-ids~="${id}"]`)).toHaveText(evidence.supporting_text);
   }
-  await page.locator(".landing-masthead select").selectOption("zh-CN");
+  await page.locator(".public-header select").selectOption("zh-CN");
   await expect(page.locator(".landing-story-edge-label[data-inviting]")).toHaveCount(0);
   expect(errors).toEqual([]);
 });
@@ -779,7 +779,7 @@ test("the chalk invitation plays once, keeps its hit target fixed, and does not 
   await trackProgress(page, 0.83);
   expect(await invited.getAttribute("data-invitation-state")).toBe("settled");
   await expect(page.locator(".landing-story-invitation-trace")).toHaveCount(0);
-  await page.locator(".landing-masthead select").selectOption("zh-CN");
+  await page.locator(".public-header select").selectOption("zh-CN");
   expect(await invited.getAttribute("data-invitation-state")).toBe("settled");
 });
 

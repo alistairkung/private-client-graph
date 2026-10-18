@@ -1,0 +1,7 @@
+.research-original-source { min-width: 0; background: white; }
+.research-original-source .panel-heading { margin-bottom: 16px; }
+.research-original-source .panel-heading h2 { font: 600 20px/1.4 "Public Sans", sans-serif; overflow-wrap: anywhere; }
+.research-original-source .source-text { white-space: pre-wrap; overflow-wrap: anywhere; font: 400 15px/1.8 "Public Sans", sans-serif; }
+.research-original-source .document-scroll { max-height: 34rem; overflow: auto; overscroll-behavior: contain; padding: 4px; }
+.research-original-source .source-return { margin-top: 16px; padding: 10px; }
+.research-original-source mark { background: #fff0a6; color: #173f31; }

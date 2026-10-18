@@ -1,5 +1,6 @@
 import { OutcomeMatrix } from "../../shared/research/OutcomeMatrix";
 import { useLocale } from "../../shared/locale";
+import { ResearchAccordion } from "./ResearchAccordion";
 import { PublishedPerformance } from "./PublishedPerformance";
 import type { PublicRun, RunLabel } from "./types";
 export const runName = (label: RunLabel) =>
@@ -21,8 +22,7 @@ export function RunComparison({ runs }: { runs: PublicRun[] }) {
         <p>{t("Baseline relationship micro-F1 was {baseline}*. With generative resolution it was {resolver}*. Select a retained Run to inspect its recorded score and coverage.", { baseline: percent(baseline.metrics.micro_f1), resolver: percent(resolver.metrics.micro_f1) })}</p>
         <PublishedPerformance runs={runs} />
         <p className="research-caveat">{t("* Small internal development benchmark. The resolver comparison was post-hoc and exploratory; two name corrections in one case accounted for the entire improvement.")}</p>
-        <details className="research-recorded-metrics">
-          <summary>{t("Recorded metric table")}</summary>
+        <ResearchAccordion className="research-recorded-metrics" items={[{ id: "metrics", title: t("Recorded metric table"), content: <>
           <p className="research-table-hint">{t("Scroll horizontally to inspect all recorded columns.")}</p>
           <div
             className="research-table-scroll"
@@ -50,17 +50,13 @@ export function RunComparison({ runs }: { runs: PublicRun[] }) {
               }))}
             />
           </div>
-        </details>
+        </> }]} />
         <p>
           {t(
             "Coverage is complete only when every planned Observation is scored. Pending, failed, uncertain and unavailable counts remain explicit below.",
           )}
         </p>
-        {runs.map((run) => (
-          <details key={run.label}>
-            <summary>
-              {t("Run {run} identity and coverage", { run: runName(run.label) })}
-            </summary>
+        <ResearchAccordion items={runs.map(run => ({ id: run.label, title: t("Run {run} identity and coverage", { run: runName(run.label) }), content: <>
             <dl className="research-metadata">
               <dt>{t("Run ID")}</dt>
               <dd>{run.run_id}</dd>
@@ -77,8 +73,7 @@ export function RunComparison({ runs }: { runs: PublicRun[] }) {
                 run.coverage,
               )}
             </p>
-          </details>
-        ))}
+          </> }))} />
       </div>
     </section>
   );
