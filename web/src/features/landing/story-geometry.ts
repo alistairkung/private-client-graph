@@ -70,8 +70,9 @@ export function relationshipLabelPoint(
   labelWidth: number,
 ): LandingPoint {
   const diagonal = Math.abs(from[0] - to[0]) > Math.abs(from[1] - to[1]) * 0.25;
+  // Leave horizontal room for both parents' labels at narrow phone widths.
   const fraction =
-    type === "parent_of" ? (mobile && diagonal ? 0.52 : 0.33) : 0.5;
+    type === "parent_of" ? (mobile && diagonal ? 0.4 : 0.33) : 0.5;
   const point: LandingPoint = [
     from[0] + (to[0] - from[0]) * fraction,
     from[1] + (to[1] - from[1]) * fraction,

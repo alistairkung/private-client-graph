@@ -153,22 +153,32 @@ behavior. No backend, domain, schema, fixture or migration changes are included.
 
 ## PR 160 browser CI follow-up
 
-The first CI run passed Python and Docker checks but failed the narrow-phone
-landing geometry check (81 application browser tests passed). The check compared
-transformed DOMRect dimensions with an exact 44px boundary. A focused browser
-probe reproduced a CSS 44px target being reported as `43.9999847px` after a
-fractional translation; target clipping and caption/label collisions stayed absent.
+The first two CI runs passed Python and Docker checks but failed the narrow-phone
+landing geometry check (81 other application browser tests passed). The first
+fix reproduced a separate DOMRect rounding effect, but did not address the CI
+cause. Expanded diagnostics exposed the actual failure: Linux renders the two
+parent labels 54px wide, producing a 2.39px horizontal and 6px vertical overlap
+at 320px. A fresh page with settled fonts reproduced it, ruling out font-load
+and resize races.
 
-The narrow-width journey now checks both ordinary and fractional positioning at
-320px, 390px and 700px. This regression failed before the fix. Minimum-size
-comparison allows 0.001px of numerical error, below one Chromium layout unit,
-while viewport containment and collision checks retain their existing bounds.
-Failures report the offending dimensions and condition rather than just `false`.
-Ten consecutive focused regressions passed after the fix. Production application,
-Source data, authentication and motion code are unchanged by this follow-up.
+The official Linux Playwright 1.63.0 runtime reproduced the identical failure
+before the production fix. The mobile diagonal parent label now sits earlier
+along the same connector, leaving room beside the other parent label. Graph
+semantics, connector paths, Source text and Evidence selection are unchanged.
+Desktop, vertical parent, settlor and beneficiary placement retain their rules.
 
-Follow-up validation passed: all **82** application browser tests against a fresh
-migrated/seeded disposable database, all **739** Python tests, and the production
-build/TypeScript check. Final two-file diff review found no material readability
-or scope issue; no paid provider calls were used. CI results for the new commit
-are reported separately at handoff.
+Two new deterministic tests cover 54px and 60px label widths. The real browser
+journey checks ordinary and wider font metrics at 320px, 390px and 700px, plus
+fractional positioning. Minimum touch targets, viewport containment and collision
+limits remain intact. The separate 0.001px numerical allowance remains below one
+Chromium layout unit. No retries or skipped checks were added.
+
+[Linux before/after screenshots](../artifacts/ui-consolidation/README.md#linux-phone-label-regression)
+are retained. Follow-up local validation passed: **165** production frontend unit
+tests, all **82** application browser tests, all **739** Python tests, and the
+production build/TypeScript check. Zero paid provider calls were used.
+
+The full Linux desktop/phone landing suite also passed: **20 passed**, with six
+existing viewport-specific skips. Its source was mounted read-only; captures
+were written separately. Final diff review found no material readability or
+scope concern, and temporary reproduction configuration was removed.

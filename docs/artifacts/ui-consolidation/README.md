@@ -22,3 +22,13 @@ then changes to a substantive light research section. Phone wrapping, exact
 highlights and the distinct retained research presentation were also inspected.
 
 See the [parity and launch guide](../../workflows/ui-consolidation.md).
+
+## Linux phone-label regression
+
+[Before](landing-labels-linux-before.png) · [After](landing-labels-linux-after.png)
+
+The official Linux Playwright runtime reproduced two parent labels overlapping
+at 320px: 2.39px horizontally and 6px vertically. The diagonal label now sits
+higher on its existing connector. Both captures use the actual Linux font
+metrics; the regression additionally reserves 60px-wide labels and tests
+fractional positioning. Source selection and all collision limits remain intact.

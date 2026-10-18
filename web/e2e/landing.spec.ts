@@ -421,6 +421,12 @@ test("phone graph captions and all six relationship targets remain separate at n
     await page.setViewportSize({ width, height: 844 });
     await openReview(page);
     await clearPhoneLabels(page);
+    // Linux CI renders these parent labels 54px wide; reserve 60px as a font-metric regression.
+    const widerLabels = await page.addStyleTag({ content: `
+      .landing-story [data-relationship-index="0"],
+      .landing-story [data-relationship-index="5"] { min-width: 60px; }
+    ` });
+    await clearPhoneLabels(page);
     // A real CSS translation exposes DOMRect precision differences between runners.
     await page.locator(".landing-story-drawing").evaluate(element => {
       (element as HTMLElement).style.transform = "translateY(0.3px)";
@@ -429,6 +435,9 @@ test("phone graph captions and all six relationship targets remain separate at n
     await page.locator(".landing-story-drawing").evaluate(element => {
       (element as HTMLElement).style.removeProperty("transform");
     });
+    await widerLabels.evaluate(element => element.parentNode?.removeChild(element));
+    await clearPhoneLabels(page);
+    await page.screenshot({ path: info.outputPath(`landing-labels-${width}.png`) });
   }
 });
 

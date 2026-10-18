@@ -74,7 +74,7 @@ describe("phone relationship captions", () => {
         110,
         60,
       ),
-    ).toEqual([258.2, 209.84]);
+    ).toEqual([284, 174.8]);
     expect(
       relationshipLabelPoint(
         "parent_of",
@@ -98,6 +98,33 @@ describe("phone relationship captions", () => {
       ),
     ).toEqual([299.05, 154.36]);
   });
+  it.each([54, 60])(
+    "separates both parent labels at 320px with %ipx font metrics",
+    (labelWidth) => {
+      const drawing = { width: 284, height: 290 };
+      const diagonal = relationshipLabelPoint(
+        "parent_of",
+        [370, 58],
+        [155, 350],
+        drawing,
+        true,
+        110,
+        labelWidth,
+      );
+      const vertical = relationshipLabelPoint(
+        "parent_of",
+        [130, 58],
+        [155, 350],
+        drawing,
+        true,
+        110,
+        labelWidth,
+      );
+      const horizontalGap =
+        ((diagonal[0] - vertical[0]) * drawing.width) / 660 - labelWidth;
+      expect(horizontalGap).toBeGreaterThan(2);
+    },
+  );
   it("places beneficiary pills eight pixels outside the actual Trust caption on either side", () => {
     const drawing = { width: 284, height: 290 };
     const left = relationshipLabelPoint(
