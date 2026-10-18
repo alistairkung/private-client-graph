@@ -17,6 +17,7 @@ workflow; it is not a separate team or a fixed intelligence tier.
 | Code Standards & Agent Governance | [code-standards](teams/code-standards.md) | `standards_architect` |
 | Frontend Engineering | [frontend](teams/frontend.md) | `frontend_architect` |
 | Backend Engineering | [backend](teams/backend.md) | `backend_architect` |
+| QA Engineering | [qa-engineering](teams/qa-engineering.md) | `qa_architect` |
 
 Read the matching contract, then its linked role definitions. If no team fits,
 work directly or propose a narrowly scoped team; do not create one per task.
