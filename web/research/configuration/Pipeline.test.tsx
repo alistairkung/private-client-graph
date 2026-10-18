@@ -1,7 +1,7 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
-import { expect, it } from "vitest";
+import { expect, it, vi } from "vitest";
 import type { Capabilities, Proposal } from "../shared/contracts";
 import { Pipeline } from "./Pipeline";
 const capabilities: Capabilities = {
@@ -110,8 +110,19 @@ it("returns focus to insertion when the resolver field bypasses its stage", asyn
   render(<Draft />);
   await user.click(screen.getByRole("button", { name: "Add alias resolution" }));
   await user.click(screen.getByRole("button", { name: "Add generative resolver" }));
-  await user.selectOptions(screen.getByRole("combobox", { name: "Resolver" }), "none");
-  const insertion = await screen.findByRole("button", { name: "Add alias resolution" });
-  expect(insertion).toHaveFocus();
-  expect(screen.queryByRole("region", { name: "Resolve aliases settings" })).not.toBeInTheDocument();
+  // The button can render before the animation frame restores its focus.
+  vi.spyOn(window, "requestAnimationFrame").mockImplementation((callback) =>
+    window.setTimeout(() => callback(performance.now()), 100),
+  );
+  await user.selectOptions(
+    screen.getByRole("combobox", { name: "Resolver" }),
+    "none",
+  );
+  const insertion = await screen.findByRole("button", {
+    name: "Add alias resolution",
+  });
+  await waitFor(() => expect(insertion).toHaveFocus());
+  expect(
+    screen.queryByRole("region", { name: "Resolve aliases settings" }),
+  ).not.toBeInTheDocument();
 });

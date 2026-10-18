@@ -78,6 +78,24 @@ retained in the changed code. Paid application-provider usage remains **0/5**.
 The backend draft PR and CI snapshot are reported at handoff; pending checks do
 not make the change merge-ready. The UI drafts remain separate and unmerged.
 
+### PR 159 CI follow-up
+
+The first browser job stopped in the Research Workbench unit tests before
+Playwright started. The resolver-bypass test waited for the insertion button to
+render, then asserted focus before its scheduled animation frame necessarily
+ran. Thirty ordinary local repetitions passed; delaying that frame reproduced
+the assertion failure. The test now waits for the focus condition and retains
+the delayed frame as a regression case, alongside the existing hidden-settings
+assertion. Application behavior and CI assertions are preserved. The original
+Python and Docker CI jobs passed; the aggregate failure followed the browser job.
+
+Follow-up validation passed: all 739 Python tests; 121 production and 26 research
+unit tests; both frontend builds/typechecks; and all four CI browser suites
+(68 application, 16 research history, 27 offline execution, 6 substituted-provider
+execution). Two existing viewport-specific history skips remain unchanged.
+Final follow-up diff review found no material readability or scope issues.
+No paid provider calls were made.
+
 ## Prepared UI consolidation handoff
 
 Use `web/` as the single production build root: Docker already builds that
