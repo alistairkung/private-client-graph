@@ -1,114 +1,129 @@
 # Landing delivery and verification
 
-Branch `codex/landing-evidence-motion`, draft PR #158, is stacked on PR #157's
-Forest & Chalk commit `97e1d99015164af2cfbee85cb9b946035b235468` as requested.
-The independent public page lives at https://127.0.0.1:5443/; `/app` retains the
-practitioner application. Existing `web/`, practitioner components, backend,
-APIs, domain, database, original tests and deployment are unchanged.
+Draft PR #158 on `codex/landing-evidence-motion` continues the user's requested
+stack on #157. The independent public page lives at https://127.0.0.1:5443/;
+`/app` keeps its existing practitioner workflows. Original `web/`, backend, APIs,
+domain, database, original tests and deployment are unchanged.
 
-## Two-capability story
+## Accepted experience
 
-The user's Lissom org-chart reference led to a tabbed feature showcase:
-**Build the trust structure**, then **Trace the Evidence**. The first now
-reveals actual returned entities and all six canonical relationships from source
-excerpts. The second inspects the same graph and the selected exact passage.
-The previous finished-graph intro and repetitive scroll walkthrough were removed.
-Forest & Chalk remains the selected visual identity.
+The user approved the isolated document-to-graph prototype for integration.
+The landing now introduces “It begins with your documents”: attendance notes,
+emails, time sheets and legal documents flick as the visitor scrolls, gather,
+and release actual canonical names into the family and Trust drawing. SVG masks
+draw the relationships, then that same graph shares a split view with the full
+source and exact supporting Evidence. Phone layouts stack graph and source.
 
-Source excerpts are deduplicated canonical supporting text, ordered by their
-actual occurrence in the corresponding Source. They are never rewritten or
-inferred in the frontend. The demonstration persistently identifies itself as an
-illustrative synthetic sequence, not live analysis. Visiting or replaying the
-page makes no model call or mutation. Professional acceptance remains a separate
-explicit decision.
+The added formats are explicitly illustrative product vision. The working graph
+and supporting quotes still come only from the existing public Case 01 GET.
+There are no fabricated Source/Evidence identifiers, uploads, model calls,
+mutations or automatic professional acceptance.
 
-## Function and interaction checklist
+The approved throwaway reference is preserved on branch
+`codex/landing-documents-prototype`, commit
+`15288805f7dea7c723d2b73f7a4772db2a307dde`. Production imports none of its files.
 
-- [x] Existing public GET loads without sign-in; no automatic analysis or upload.
-- [x] Default Builder reveals entities and all six actual connections progressively.
-- [x] Replay resets presentation only; Pause/Resume preserves playback position.
-- [x] Construction waits for at least 20% of the drawing to enter the viewport.
-- [x] Offscreen/hidden playback pauses; deliberate user pause persists on return.
-- [x] Initial and live reduced-motion preferences show the complete graph immediately.
-- [x] Evidence selection cancels construction; returning to Builder retains completion.
-- [x] Pointer and roving keyboard tabs work with arrows, Home and End.
-- [x] Completion retains owned playback focus on Replay without stealing other focus.
-- [x] Every canonical claim reveals its exact Evidence, source identity and identifier.
-- [x] Source/graph geometry and chosen relationship persist across capability changes.
-- [x] Evidence selection resets only internal source scrolling and retains control focus.
-- [x] Source excerpt paragraphs end naturally; both modes retain the same paper height.
-- [x] Connectors reach actual endpoint glyphs and retain family dashes/parent arrows.
-- [x] English/Chinese switching preserves exact words and selected Evidence.
-- [x] Retry uses the real backend without fabricated fallback; public/app routes work.
-- [x] Desktop/phone controls fit and keyboard focus remains visible.
-- [x] Existing practitioner journeys pass the unchanged-backend regression suite.
+## Functionality and interaction checklist
 
-## Review and corrections
+- [x] Public GET loads without sign-in, analysis, upload or mutation.
+- [x] Four distinct formats share a scroll-controlled document deck.
+- [x] Exact names move from measured source spans into the returned graph.
+- [x] Partial SVG masks draw connections while preserving dash/direction roles.
+- [x] The same graph moves into full-source review.
+- [x] Every canonical claim selects its exact Evidence and Source identifiers.
+- [x] Full source text and whitespace remain intact; repeated/overlapping support
+      retains all associated Evidence IDs without duplicating source text.
+- [x] Source movement is internal, cancellable by reader input and newer selection.
+- [x] Keyboard skip/focus, reverse-scroll selection and locale continuity work.
+- [x] Initial/live reduced motion and short-height fallback remove the long track.
+- [x] Compact phones use a readable in-flow alternative instead of compressed
+      relationship targets; taller phones retain the scroll sequence.
+- [x] Measured origins update after resize/locale/font changes and clean up safely.
+- [x] Failed reads retry the real backend; public and practitioner links remain.
+- [x] Story and decision backgrounds meet directly, with zero gap and equal colour.
+- [x] Research is the first subsequent light section, with substantive content.
+- [x] Existing practitioner journeys pass the unchanged-backend browser suite.
 
-One batched desktop/phone inspection, one correction batch and confirmation.
-Independent source review found two P2 issues: Motion's installed reduced-motion
-hook snapshots the initial preference, and removing Pause/Resume on completion
-lost keyboard focus. An explicit reactive media-query subscription now settles
-playback within 500ms of a preference change; a callback ref transfers focus to
-Replay only when the removed playback control owned focus. Both findings were
-independently confirmed **resolved**, with no remaining material readability or
-boundary concerns.
+## Inspection, review and corrections
 
-The visual reviewer found a cropped source line and an offscreen skip-link
-capture overlapping the phone disclosure. Complete canonical excerpts now size
-the source paper naturally, and the skip link uses clipped hiding until focus.
-The same reviewer scored both corrections **resolved**, disposition **ship**.
-Its verdict covers those scored fixes. A QUALITY BAR reference card was not
-available, so no comparison against that card is claimed. Generic agents used
-the bundled Impeccable reviewer/documenter instructions; dedicated role types
-were unavailable. Review captures are actual browser output, not generated comps.
+Actual Chrome confirmed the former empty strip: exterior margins of 70px on
+desktop and 45px on phones exposed the white page between two forest sections.
+Those margins are removed; spacing stays inside the continuous green field.
 
-Root completed the mandatory full changed-diff self-review, including both new
-modules, revised tests, deleted walkthrough/styles, documentation and artifacts.
-Playback, canonical presentation, source identity and selection remain separate
-responsibilities. Consolidated obsolete/overridden CSS and preserved canonical
-stroke patterns. No material readability issue was deliberately retained.
+The initial desktop/phone inspection and independent source review found hidden
+arrowheads and overflowing time-sheet content. Directed endpoints now intersect
+the measured circle/triangle boundary plus a small external gap, accounting for
+the drawing's actual aspect ratio. Unit and rendered-geometry tests protect
+visible arrow exposure. The time sheet fits its paper without clipping text.
+The source reviewer confirmed its P2 resolved with no new material findings.
+
+Playwright's disabled-animation screenshot option reset native scroll-timeline
+styles during capture, producing a misleading image of bare lines over the note.
+Captures now preserve running scroll styles. Their phone confirmation exposed
+label overlap around the Trust and Alice captions. Labels now use measured
+caption widths, short association leaders and separate diagonal/near-vertical
+parent placement. Browser assertions confirm all six targets clear captions and
+each other at 320, 390 and 700px while retaining 44px targets. Source reflow also
+keeps the selected quote visible until manual reader input cancels following.
+Compact phones at most 800px tall use the in-flow alternative so that their
+shorter viewport cannot compress the captions into relationship targets.
+
+Root reviewed complete source, tests, styles, documentation and artifact scope.
+The page composes a document montage, graph and source reader; finite geometry,
+source highlighting and lifecycle measurement remain focused. Obsolete tabs,
+playback clock and their CSS were removed. No material readability concern is
+being deliberately retained.
 
 ## Local validation
 
-- Required `uv run pytest`: **752 passed**, 106.40s, disposable PostgreSQL.
-- Final frontend units: **89 passed in 19 files**, including 17 landing tests.
-- Typecheck, production build, source/E2E/entry formatting and whitespace: passed.
-- Full real-backend browser suite: **52 functional checks + landing recording
-  passed** (53 total), three opt-in/redundant recordings skipped.
-- After correction, all **16 affected desktop/phone functional checks and the
-  refreshed recording passed**. Two keyboard cases were rerun after adding a
-  page-ready wait before the first Tab; both passed in 2.0s. Live reduced-motion
-  settling is asserted within 500ms, rather than accepting natural completion.
-- Successful journeys retain the real API, canonical construction and persistence;
-  only existing synthetic Google/model boundaries are substituted. The isolated
-  503 route tests retry without replacing successful data with a UI fixture.
-- Separate lazy landing/practitioner entries remain intact. Landing JS is
-  22.45 kB / 8.57 kB gzip plus shared runtime; dependency directive warnings are
-  nonblocking. No runtime MotionScore or production-provider check is claimed.
+- Required repository `uv run pytest`: **752 passed**, 106.31s, disposable PG.
+- Full independent frontend units: **101 passed in 22 files**.
+- Typecheck, production build and source formatting passed.
+- Full unchanged-backend browser run: **50 functional checks + one landing
+  recording passed** (51 total); three opt-in/redundant recordings skipped.
+- First correction confirmation: **14 affected desktop/phone checks + recording
+  passed** (15 total), one redundant phone recording skipped, 35.2s.
+- Final affected desktop/phone confirmation: **20 functional checks + recording
+  passed** (21 total), seven redundant/project-specific cases skipped, 46.6s.
+  Includes 320/390px compact phones at 667/760px height, the 800px fallback
+  boundary and the animated 844px phone sequence.
+- Landing JS: 39.17kB / 14.54kB gzip, separate from the
+  practitioner entry. Dependency-directive warnings remain nonblocking.
+
+## CI investigation and handoff
+
+The previous PR head had a failing original research focus assertion in
+`web/research/configuration/Pipeline.test.tsx` during `browser-e2e`, making the
+aggregate `tests` check fail. Neither that source nor its test differs from the
+stack base. The isolated three Pipeline tests and the complete 26-test original
+research suite both pass locally. No original code or test was changed to mask
+the failure. New-head CI will be reported at handoff; pending checks are not
+merge-ready and this task does not merge or deploy.
 
 ## Usage and evidence
 
-This continuation reused the Motion handoff without new lookups or source reads.
-Earlier authenticated landing research used two concept queries, one source
-lookup, one premium and one free source read; Smooth Tabs/Path Drawing mechanisms
-were reused from already inspected sources. No premium runtime dependency or key
-was added. Shared paid application-provider usage remains **0/5**, including all
-attempts and continuations.
+One Sol/medium implementation context was reused, with one Sol/high independent
+source reviewer and a confirmation. Root owns browser verification, visual
+inspection, docs and delivery; the implementer also ran focused phone regressions.
+The default inspection/correction cycle was extended only for
+the material phone-label issue exposed by corrected captures, within the
+workflow's three-cycle ceiling. At most two children, one runtime writer, no
+nested delegation or paid application-provider invocation: shared usage **0/5**.
+No new Motion query, premium source read, runtime dependency or account write was
+needed; existing official docs and the approved study informed the sequence.
+No runtime MotionScore or production-provider certification is claimed.
 
-Economical delegation: one Motion handoff, three implementation turns, two
-engineering review turns, two visual review turns and one design-documentation
-turn. At most two active children; one runtime writer. Motion/implementation used
-Sol/medium, final source review Sol/high, visual/documentation Luna/low. Root
-owned browser tests, integration and delivery. No nested delegation/processes.
+Current artifacts in `practitioner-next/artifacts/`:
 
-Artifacts in `practitioner-next/artifacts/`:
+- `landing-before-empty-strip.jpg`: actual Chrome before reference.
+- `landing-documents-{desktop,phone}.png`: document-deck viewports.
+- `landing-review-{desktop,phone}.png`: full-source review viewports.
+- `landing-boundary-{desktop,phone}.png`: continuous green decision section and
+  subsequent substantive research surface.
+- `landing-chrome.jpg`: live integrated Chrome review.
+- `landing-walkthrough.webm`: short document-to-graph-to-Evidence recording.
+- `landing-provenance.json`: capture methods, viewport sizes and file/source hashes.
 
-- `landing-builder-{desktop,phone}.png`: actual full-page Builder captures.
-- `landing-{desktop,phone}.png`: actual full-page Evidence captures.
-- `landing-chrome.jpg`: live Chrome capability stage.
-- `landing-walkthrough.webm`: construction → Evidence → claim inspection recording.
-
-Raster captures carry origin metadata. Launch/recording instructions are in
-`practitioner-next/README.md`; the built surface has its own DESIGN.md and sidecar.
-No merge, deployment or replacement of the original site.
+See README.md for launch/recording instructions and landing-motion.md for exact
+phase ranges and source references. The landing's DESIGN.md/sidecar and surface
+brief describe the accepted built world; the practitioner design remains separate.

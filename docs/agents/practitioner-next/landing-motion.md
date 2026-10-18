@@ -1,72 +1,77 @@
-# Landing motion: build the structure, trace the Evidence
+# Landing motion: documents become a structure, with Evidence intact
 
-The finished-graph opening underplayed construction. The replacement reveals
-the actual returned entities and six canonical connections, then yields to
-selectable exact Evidence. It remains an illustrative synthetic sequence; no
-model runs when it plays.
+The user approved the isolated scroll prototype and asked to put it into the
+independent landing page. Production implements that direction in separate
+components; it imports no throwaway code or stylesheet. The approved reference
+is preserved on `codex/landing-documents-prototype` at
+`15288805f7dea7c723d2b73f7a4772db2a307dde`.
 
-## One frame, two capabilities
+## One scroll-controlled sequence
 
-Tabs are **Build the trust structure** and **Trace the Evidence**. A scoped
-shared indicator uses spring stiffness 700, damping 53 and mass 1. Tabs support
-pointer, Enter/Space, arrows and Home/End with roving focus. Source identity,
-graph geometry and selected relationship persist across switches. The caption
-uses a 160ms opacity transition; source content changes directly within the
-same paper so reading does not wait for an exit animation.
+A 360svh track pins one viewport. Scroll progress, rather than a timer, drives
+MotionValues. There is no autoplay, replay clock or capability-tab stage.
 
-Canonical excerpt paragraphs remain fully readable, with pale-green verbatim
-entity-name emphasis. Evidence mode keeps that natural paper height and shows
-an independently scrollable exact passage and locator. The internal reader
-resets on selection, without moving focus or scrolling the outer page.
+| Progress     | Visible result                                                                                                                 |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------ |
+| 0–30%        | Attendance notes, emails, time sheets and legal documents flick to the front of the fanned deck.                               |
+| 30–36%       | Papers gather at the actual attendance excerpt.                                                                                |
+| 39–69%       | Exact entity names move from their measured source positions into person and Trust symbols.                                    |
+| 65–86%       | Solid white SVG masks progressively expose the canonical relationship paths.                                                   |
+| 86–97%       | The same graph settles left; the full source enters on the right. Phones stack graph and source.                               |
+| Final review | Relationship buttons select exact canonical Evidence and smoothly reveal the first matching occurrence inside the source pane. |
 
-## Construction clock
+The masks animate pathLength rather than changing the canonical paths' dash
+patterns. Symmetric relationships have no direction marker; directed parents and
+Trust roles have visible arrows at the target glyph boundary. Scoped IDs avoid
+marker or mask collisions. Actual node centers, canonical identifiers, types,
+ordering and directions remain unchanged.
 
-One retained Motion `animate` control drives a four-second MotionValue clock.
-Derived values update the diagram without per-frame React rendering.
+Phone relationship labels clear measured entity captions, with short leaders
+associating displaced Trust-role labels to their connections. Near-vertical and
+diagonal parent labels have separate positions; every target remains at least
+44px. The source follows its selected passage through text reflow until manual
+reader input cancels following.
 
-| Clock | Visible result |
-| --- | --- |
-| 0–0.6s | Readable Source excerpts; graph geometry reserved and empty. Caption: Synthetic source. |
-| 0.6–1.5s | Person circles and Trust triangle reveal opacity 0→1 and y 8→0, 260ms each with 90ms stagger. Names remain attached. |
-| 1.5–3.3s | Six connections and corresponding claim controls reveal in backend order, 300ms each starting 300ms apart. |
-| 3.3–4s | Complete diagram holds; at four seconds the caption becomes Six proposed relationships. Ready to inspect. |
+## Continuity, control and lifecycle
 
-Canonical paths animate opacity only. Their geometry, family dash patterns and
-parent arrows remain unchanged; no pathLength normalization or duplicate overlay
-can overwrite those roles. Each diagram scopes its marker IDs independently.
-Invisible claim controls stay disabled until their reveal begins.
+Names start with dark ink on a pale-green chip over the paper, then switch to
+chalk on forest near their final position. They stay above the fading sheet.
+Origins are measured outside animation frames, observing the actual paper,
+deck, introduction and graph dimensions. Resize, font readiness and locale
+changes refresh them; observer/listener/pending-font cleanup guards unmount.
 
-## Lifecycle and accessibility
+The skip link reaches the finished review and focuses its container. Invisible
+relationship controls remain inert and absent from accessibility until review.
+Explicit selection is independent of scroll, preserving it through reversal,
+resizing and locale changes. Interface translations never rewrite source words.
 
-Playback starts when at least 20% of the drawing is visible, including on phones.
-Offscreen/document-hidden playback pauses. Return resumes eligible playback;
-a deliberate user pause persists. Pause and Resume operate the same clock.
-Replay resets presentation only. Evidence/tab/claim input settles construction
-immediately, and return to Builder retains completion until explicit Replay.
+The source contains the complete API text and highlights every exact selected
+Evidence occurrence, including repeated or overlapping support. Only its pane
+scrolls; page position and relationship focus remain stable. Reader wheel,
+touch, pointer and scrolling keys cancel automatic movement; newer selection,
+hiding the review and unmount also cancel it. Reduced motion reveals instantly.
 
-An explicit reactive media-query subscription handles initial and live reduced
-motion: the complete graph appears immediately, and Replay remains static.
-The browser regression asserts settling within 500ms. When completion removes a
-focused Pause/Resume button, focus moves to Replay; unrelated focus stays put.
-Generations guard stale completion callbacks; observers, listeners and controls
-clean up on unmount and React StrictMode remount.
+Reduced-motion preferences are reactive. Reduced motion, any viewport at most
+580px tall, or phones at most 700px wide and 800px tall use a static in-flow
+collection, finished graph and full reader without a long track. Compact phones
+need that space for readable captions and 44px targets. Taller phone layouts
+retain scroll animation, with the same source and selection.
 
-## Actual inspected sources
+## Backgrounds and product truth
 
-- [Smooth Tabs](https://examples.motion.dev/react/smooth-tabs): scoped shared
-  indicator and continuous panels; reused already inspected source.
-- [Path Drawing](https://examples.motion.dev/react/path-drawing): actual source
-  previously read. Final construction uses per-edge opacity to preserve canonical
-  dash/arrow roles rather than its pathLength technique.
-- Premium [Scroll Spotlight](https://motion.dev/ui/components/scroll-spotlight):
-  full component/theme source was read during initial landing research. Its
-  viewport eligibility and stable stage informed this design; the former long
-  scroll walkthrough has been removed.
-- Official [SVG animation docs](https://motion.dev/docs/react-svg-animation) and
-  [useScroll docs](https://motion.dev/docs/react-use-scroll) were inspected earlier.
-  Installed free `motion/react` is 14.3.0. No upgrade or premium runtime is needed.
+The story and following proposal-review chapter share forest #173F31. Former
+70px desktop / 45px phone exterior margins exposed an empty white strip; spacing
+now stays inside the forest field. Light returns at the substantive research
+chapter. The four formats represent the labelled product vision, while the
+working example remains the existing curated synthetic Case 01. No fabricated
+Source/Evidence IDs, ingestion, automatic analysis or provider calls are added.
 
-This continuation made no new Motion query or source read. Initial landing
-research used two concept queries, one source lookup, one premium and one free
-source read. Paid application-provider calls remain **0/5** across continuations.
-No account writes, private registry token, live model or MotionScore audit.
+## Inspected references and budget
+
+The implementation reuses already read Motion useScroll/useTransform and SVG
+path-drawing documentation, the actual Path Drawing example, and the approved
+scroll study inspired by Kevin Gutowski's CodePen. Earlier authenticated Motion+
+research remains recorded in the landing direction. No new lookup, premium
+runtime dependency, registry key or account write was needed for this integration.
+No runtime MotionScore claim is made. Shared paid application-provider usage
+remains **0/5**, including all prior attempts and continuations.

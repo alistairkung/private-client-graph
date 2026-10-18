@@ -1,53 +1,48 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-18T09:44:01.208314+00:00",
+  "generatedAt": "2026-10-18T10:44:21.406384+00:00",
   "title": "Design System: Private Client Graph Public Landing",
   "extensions": {
     "shadows": [
       {
-        "name": "source-paper",
-        "value": "0 12px 32px #06261730",
-        "purpose": "Lift the white source sheet from the forest demonstration stage."
+        "name": "document-sheet",
+        "value": "0 13px 36px #0b27194d",
+        "purpose": "Separate the document sheets within the forest field."
       }
     ],
     "motion": [
       {
-        "name": "construction-clock",
-        "value": "4s linear; source 0–0.6s, entities 0.6–1.5s, relationships 1.5–4s",
-        "purpose": "Reveal the actual returned graph in three phases; playback can pause or replay."
+        "name": "document-story",
+        "value": "360svh scroll-linked track",
+        "purpose": "Documents gather into a connected structure and full-source review."
       },
       {
-        "name": "capability-indicator",
-        "value": "spring stiffness 700, damping 53, mass 1",
-        "purpose": "Move the pale-green indicator between the two capability tabs."
+        "name": "connection-drawing",
+        "value": "SVG mask pathLength 0 to 1",
+        "purpose": "Draw canonical connections without changing their dashes or arrows."
       },
       {
-        "name": "phase-caption",
-        "value": "0.16s opacity transition",
-        "purpose": "Briefly transition the live construction phase caption."
-      },
-      {
-        "name": "evidence-highlight",
-        "value": "background-color 0.12s",
-        "purpose": "Acknowledge the selected exact-Evidence passage."
+        "name": "source-reveal",
+        "value": "Native smooth internal scrolling; instant with reduced motion",
+        "purpose": "Bring exact supporting words into view while retaining page position and focus."
       }
     ],
     "breakpoints": [
       {
-        "name": "wide",
-        "value": "1700px"
-      },
-      {
-        "name": "capability-layout",
-        "value": "1100px"
-      },
-      {
-        "name": "compact",
-        "value": "1000px"
-      },
-      {
         "name": "phone",
         "value": "700px"
+      },
+      {
+        "name": "compact-height",
+        "value": "760px"
+      },
+      {
+        "name": "static-short-viewport",
+        "value": "580px"
+      },
+      {
+        "name": "static-compact-phone",
+        "value": "width <= 700px and height <= 800px"
       }
     ]
   },
@@ -55,40 +50,37 @@
     {
       "name": "Primary Action",
       "kind": "button",
-      "refersTo": "action",
       "description": "Green action that leads into the synthetic example or practitioner prototype.",
       "html": "<a class=\"ds-action\" href=\"#\">Explore the example <svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M5 12h14m-6-6 6 6-6 6\"/></svg></a>",
       "css": ".ds-action { display: inline-flex; align-items: center; gap: 28px; min-height: 48px; padding: 12px 18px; border: 1px solid transparent; border-radius: 4px; background: #1E6249; color: #FFFFFF; font: 400 14px/1.5 'Landing Public Sans', 'Segoe UI', sans-serif; text-decoration: none; transition: background-color 0.14s; } .ds-action svg { width: 24px; height: 24px; flex: none; } .ds-action:hover { background: #173F31; } .ds-action:focus-visible { outline: 2px solid #1E6249; outline-offset: 5px; }"
     },
     {
-      "name": "Source Paper",
+      "name": "Document Sheet",
       "kind": "card",
-      "refersTo": "source-paper",
-      "description": "Stable-height white source sheet with natural excerpt content and an independently scrollable exact-Evidence overlay.",
-      "html": "<article class=\"ds-paper\" data-capability=\"evidence\"><div class=\"ds-paper-heading\"><span>Source</span><span>Source 1 · source_001</span></div><h2>Attendance Note – Meeting with Alice Chen</h2><div class=\"ds-reading\"><div class=\"ds-excerpts\" aria-hidden=\"true\"><p>Alice Chen was asked first to confirm her own connection with the Evergreen Family Trust. She confirmed that she is the settlor of the Evergreen Family Trust.</p></div><div class=\"ds-fragment\"><span>Alice Chen was asked first to confirm her own connection with the Evergreen Family Trust. </span><mark>She confirmed that she is the settlor of the Evergreen Family Trust.</mark></div></div><footer><span>Evidence identifier</span><strong>evidence_005</strong></footer></article>",
-      "css": ".ds-paper { position: relative; display: flex; flex-direction: column; min-width: 0; min-height: 320px; padding: 20px; border-radius: 3px; background: #FFFFFF; color: #20372B; box-shadow: 0 12px 32px #06261730; font-family: 'Landing Public Sans', 'Segoe UI', sans-serif; } .ds-paper-heading { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 13px; padding-bottom: 10px; border-bottom: 1px solid #C7D3C8; color: #566B5D; font-size: 10px; } .ds-paper h2 { margin: 0 0 13px; font-size: 14px; font-weight: 600; line-height: 1.45; } .ds-reading { position: relative; flex: 1 1 auto; font-size: 16px; line-height: 1.55; overflow-wrap: anywhere; } .ds-reading p { margin: 0; } .ds-excerpts, .ds-fragment { padding-right: 5px; } .ds-fragment { position: absolute; inset: 0; overflow-y: auto; } .ds-paper[data-capability='builder'] .ds-fragment, .ds-paper[data-capability='evidence'] .ds-excerpts { visibility: hidden; pointer-events: none; } .ds-paper mark { padding: 2px 0; background: #FFF0A6; color: #20372B; box-decoration-break: clone; } .ds-paper footer { display: flex; justify-content: space-between; gap: 16px; margin-top: 18px; padding-top: 11px; border-top: 1px solid #C7D3C8; color: #566B5D; font-size: 10px; } .ds-paper footer strong { color: #20372B; font-weight: 400; }"
-    },
-    {
-      "name": "Capability Tab",
-      "kind": "custom",
-      "refersTo": "capability-tab-selected",
-      "description": "One of the two linked explanations, with a moving pale-green selected indicator.",
-      "html": "<button class=\"ds-tab\" role=\"tab\" aria-selected=\"true\"><span class=\"ds-tab-indicator\"></span><strong>Build the trust structure</strong><span>LLM-driven structure building turns source material into proposed people, trust roles and connections.</span></button>",
-      "css": ".ds-tab { position: relative; isolation: isolate; display: block; min-height: 150px; padding: 21px 19px; border: 0; border-radius: 10px; background: transparent; color: #C0D4C6; text-align: left; font-family: 'Landing Public Sans', 'Segoe UI', sans-serif; cursor: pointer; } .ds-tab-indicator { position: absolute; z-index: -1; inset: 0; border-radius: inherit; background: #E9F0EA; } .ds-tab[aria-selected='true'] { color: #173F31; } .ds-tab strong { display: block; max-width: 14ch; font-size: 22px; line-height: 1.2; letter-spacing: -0.025em; } .ds-tab > span:last-child { display: block; max-width: 29ch; margin-top: 12px; font-size: 12px; line-height: 1.6; } .ds-tab:focus-visible { outline: 2px solid #E5EFE7; outline-offset: 3px; }"
+      "description": "A distinct attendance, email, time-sheet or legal document within the scroll-controlled fan.",
+      "html": "<article class=\"ds-sheet\"><h3>Attendance note</h3><p class=\"ds-meta\">Case 01 · Actual synthetic source excerpts</p><p><span>Alice Chen</span> confirmed that she and David Chen are spouses.</p></article>",
+      "css": ".ds-sheet { max-width: 450px; padding: 26px 32px; border-radius: 4px; background: #F3F5EF; color: #203D30; box-shadow: 0 13px 36px #0B27194D; font: 400 14px/1.55 'Landing Public Sans', sans-serif; } .ds-sheet h3 { margin: 0 0 7px; font-size: 20px; } .ds-sheet .ds-meta { margin: 0 0 20px; color: #506858; font-size: 11px; } .ds-sheet span { background: #DCE8CA; }"
     },
     {
       "name": "Relationship Choice",
       "kind": "button",
-      "description": "Names both endpoints and the canonical relationship; selection switches to Evidence.",
-      "html": "<button class=\"ds-claim\" aria-pressed=\"true\"><span>Alice Chen</span><strong>spouse of</strong><span>David Chen</span></button>",
-      "css": ".ds-claim { display: flex; flex-direction: column; gap: 2px; min-width: 0; min-height: 72px; padding: 11px 12px; border: 0; border-right: 1px solid #688675; background: transparent; color: #E5EFE7; text-align: left; font: 400 12px/1.4 'Landing Public Sans', 'Segoe UI', sans-serif; cursor: pointer; transition: background-color 0.14s, color 0.14s; } .ds-claim strong { font-size: 12px; font-weight: 600; } .ds-claim[aria-pressed='true'] { background: #E5EFE7; color: #173F31; } .ds-claim:hover { background: #2C5945; } .ds-claim[aria-pressed='true']:hover { background: #FFFFFF; } .ds-claim:focus-visible { outline: 2px solid #E5EFE7; outline-offset: 3px; }"
+      "description": "Canonical relationship label with complete accessible statement, pressed state and visible focus.",
+      "html": "<button class=\"ds-relationship\" aria-label=\"Alice Chen — parent of — Bob Chen\" aria-pressed=\"true\">parent of</button>",
+      "css": ".ds-relationship { min-height: 44px; padding: 8px 12px; border: 1px solid #729582; border-radius: 22px; background: #173F31; color: #E3EDE1; font: 400 12px/1.5 'Landing Public Sans', sans-serif; cursor: pointer; } .ds-relationship:hover, .ds-relationship[aria-pressed='true'] { background: #E3F1B4; color: #173F31; border-color: #E3F1B4; } .ds-relationship:focus-visible { outline: 3px solid #C8E8A6; outline-offset: 4px; }"
     },
     {
-      "name": "Playback Controls",
+      "name": "Full Source Review",
       "kind": "custom",
-      "description": "Pause or resume the construction clock and replay the synthetic sequence.",
-      "html": "<div class=\"ds-playback\"><button>Pause construction</button><button>Replay construction</button></div>",
-      "css": ".ds-playback { display: flex; align-items: center; gap: 8px; background: #173F31; color: #E5EFE7; } .ds-playback button { min-height: 44px; padding: 8px 4px; border: 0; background: transparent; color: inherit; font: 400 11px/1.5 'Landing Public Sans', 'Segoe UI', sans-serif; text-decoration: underline; text-underline-offset: 4px; cursor: pointer; } .ds-playback button:hover { color: #FFFFFF; } .ds-playback button:focus-visible { outline: 2px solid #E5EFE7; outline-offset: 3px; }"
+      "description": "Complete API source text with exact Evidence highlights and independently scrollable reading pane.",
+      "html": "<aside class=\"ds-source\"><header><h3>Attendance note</h3><p>Source: source_001 · Evidence: evidence_005</p></header><div class=\"ds-reader\" tabindex=\"0\"><p>Alice Chen was asked first to confirm her own connection with the Evergreen Family Trust. <mark>She confirmed that she is the settlor of the Evergreen Family Trust.</mark></p></div></aside>",
+      "css": ".ds-source { max-width: 480px; background: #F3F5EF; color: #203D30; border-radius: 4px; overflow: hidden; font: 400 14px/1.75 'Landing Public Sans', sans-serif; } .ds-source header { padding: 22px 25px 17px; border-bottom: 1px solid #CAD8C8; } .ds-source h3 { margin: 0 0 10px; font-size: 18px; line-height: 1.4; } .ds-source header p { margin: 0; color: #4B6354; font-size: 10px; } .ds-reader { max-height: 220px; padding: 25px; overflow: auto; overscroll-behavior: contain; scrollbar-color: #76927D #F3F5EF; } .ds-reader p { margin: 0; white-space: pre-wrap; } .ds-reader mark { background: #D4E6A5; color: #173F31; padding: 2px 0; border-radius: 2px; box-decoration-break: clone; } .ds-reader:focus-visible { outline: 3px solid #1E6249; outline-offset: -4px; }"
+    },
+    {
+      "name": "Skip to Review",
+      "kind": "nav",
+      "description": "Skips the scroll sequence and focuses the finished relationship review.",
+      "html": "<a class=\"ds-skip-review\" href=\"#\">Skip to relationship review</a>",
+      "css": ".ds-skip-review { display: inline-block; padding: 8px 0; color: #173F31; font: 400 12px/1.5 'Landing Public Sans', sans-serif; text-underline-offset: 5px; } .ds-skip-review:hover { color: #1E6249; } .ds-skip-review:focus-visible { outline: 3px solid #1E6249; outline-offset: 4px; }"
     },
     {
       "name": "Masthead Navigation",
@@ -100,42 +92,39 @@
   ],
   "narrative": {
     "northStar": "Build the structure. Keep the Evidence.",
-    "overview": "The landing page introduces two connected capabilities: a language-model-assisted trust structure builder, followed by exact Evidence review. A short capability rail leads into one shared source-and-graph stage, where the same returned synthetic material supports both explanations.\n\nForest & Chalk carries across this public surface, with self-hosted Public Sans giving the headline and source a distinct voice from the practitioner app's system-font typography. A white source paper sits within a forest demonstration field. The builder reveals entities and relationships around the source; the Evidence view replaces the excerpt display with the selected claim's exact passage while retaining the paper, graph, and selected relationship.",
+    "overview": "The approved document montage gathers attendance notes, emails, time sheets and legal documents into a proposed relationship structure, then reveals the full source beside the same graph.",
     "keyCharacteristics": [
-      "Builder-first headline and action lead into an immediately explorable synthetic example.",
-      "Two capability tabs switch the explanation while preserving the same source, structure, and selection.",
-      "A four-second illustrative construction sequence reveals the returned graph, with replay and pause controls.",
-      "Exact source words remain inspectable; professional acceptance remains a separate explicit decision."
+      "Scroll-controlled document-to-graph continuity.",
+      "A continuous forest field through proposal review, with light only returning at research content.",
+      "Exact full-source Evidence and canonical graph semantics.",
+      "Keyboard skip, static reduced-motion alternative and English/Chinese continuity."
     ],
     "rules": [
       {
-        "name": "The Evidence Color Rule",
-        "body": "Use warm yellow for the exact supporting words; use pale green and a brighter connector for selected controls and relationships.",
+        "name": "Colour Continuity",
+        "body": "Keep story and proposal review in one forest field, with spacing inside sections.",
         "section": "colors"
       },
       {
-        "name": "The Source Reading Rule",
-        "body": "Keep the quoted passage more prominent than its metadata, and give the exact supporting words their own highlight.",
-        "section": "typography"
+        "name": "Exact Source",
+        "body": "Preserve every source character and attribute highlights only to canonical Evidence.",
+        "section": "layout"
       },
       {
-        "name": "The Shared Stage Rule",
-        "body": "Keep source, graph geometry, active relationship, and capability-specific explanation within one stage so switching capabilities preserves context.",
+        "name": "Product Vision",
+        "body": "Label illustrative formats; the working synthetic example supplies the actual graph and Evidence.",
         "section": "layout"
       }
     ],
     "dos": [
-      "Do keep the two capability tabs attached to one source and graph stage.",
-      "Do describe construction as an illustrative synthetic sequence, not live analysis.",
-      "Do keep exact Evidence visually distinct from selected relationships.",
-      "Do keep source and locator stable while the Evidence passage scrolls within its reading area.",
-      "Do honor keyboard operation and reduced-motion preferences."
+      "Respect reduced motion and manual source scrolling.",
+      "Preserve relationship selection through reverse scrolling.",
+      "Retain canonical names, IDs, direction, dashes and exact quotes."
     ],
     "donts": [
-      "Don't imply that the synthetic example is measured customer output or a professional judgment.",
-      "Don't use Evidence yellow as a general accent or selection color.",
-      "Don't add upload, live-analysis, or automatic-acceptance affordances to this public demonstration.",
-      "Don't carry the landing page's headline and capability-rail composition into the separate Working Atlas practitioner surface."
+      "Do not add an empty light separator between green sections.",
+      "Do not invent multi-source Evidence from the illustrative formats.",
+      "Do not import the throwaway prototype into the production landing."
     ]
   }
 }

@@ -5,11 +5,14 @@ puts the relationship drawing and exact source Evidence alongside each other.
 The original `web/` app and production deployment remain unchanged.
 
 The independent public landing page at `/` introduces the same Evidence-led
-workflow through two connected demonstrations: **Build the trust structure**
-and **Trace the Evidence**. The first reveals the actual example entities and
-proposed relationships; the second opens exact supporting words. Replay and
-Pause/Resume let visitors control the sequence; reduced motion shows the complete
-structure immediately.
+workflow through a continuous document → structure → Evidence story. Attendance
+notes, emails, time sheets and legal documents illustrate the broader product
+vision. Scrolling gathers those papers, lifts actual example names into a graph,
+draws the relationships, then opens the full source beside that same graph.
+Selecting a relationship smoothly reveals its exact supporting words. A skip
+control reaches review directly; reduced motion displays a static, readable
+sequence. The current working example remains the backend's synthetic Case 01,
+with no fabricated multi-document Evidence or new ingestion capability.
 It reads the existing public curated-example API; visiting the page never runs
 analysis. The original full public demo and research pages remain linked on the
 existing site. The practitioner application continues at `/app`.
@@ -115,8 +118,8 @@ Regenerate it against the disposable backend with
 `PCG_RECORD_DEMO=1 npm --prefix practitioner-next run test:e2e -- walkthrough --project=desktop`
 from the repository root.
 
-The new [landing recording](artifacts/landing-walkthrough.webm) shows construction,
-the capability switch and claim-to-Evidence interaction. Regenerate it with
+The [landing recording](artifacts/landing-walkthrough.webm) shows the document
+montage, graph construction and claim-to-Evidence interaction. Regenerate it with
 `PCG_RECORD_LANDING=1 npm --prefix practitioner-next run test:e2e -- landing-walkthrough --project=desktop`.
 See the [landing direction](../docs/agents/practitioner-next/landing-direction.md),
 [Motion research](../docs/agents/practitioner-next/landing-motion.md), and
@@ -140,10 +143,12 @@ create individual-edge acceptance, or expose benchmark evaluation. Motion uses
 free `motion/react`, informed by authenticated premium Motion+ source research.
 No private registry token or premium runtime dependency is needed.
 
-Verified locally: 752 repository Python tests, 89 new-app unit tests, typecheck,
-production build, formatting and 52 real-backend desktop/phone checks.
-The landing recording and 16 affected browser checks passed after the final
-capability, focus and reduced-motion corrections. Graph coverage includes
+Verified locally: 752 repository Python tests, 101 new-app unit tests, typecheck,
+production build and formatting. The full unchanged-backend desktop/phone run
+passed 50 functional checks and the landing recording. All 20 final affected
+landing checks and the refreshed recording pass, covering scroll drawing, source
+visibility, phone labels, compact-phone fallbacks and continuous section backgrounds.
+Graph coverage includes
 Evergreen family placement, complete bounds, connector spacing, exact Evidence selection,
 return focus, stable camera and language switching. Geometry regressions cover
 reciprocal claims, multiple roles and graphs with no Trust or multiple Trusts.

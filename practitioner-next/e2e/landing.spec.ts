@@ -1,197 +1,471 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import type { CanonicalState } from "../src/shared/contracts";
 import { relationshipStatement } from "../src/review/presentation";
-
 const publicCase = "/api/showcase/cases/case-01";
+async function storyProgress(page: Page, progress: number) {
+  await page.locator(".landing-story-track").evaluate((track, fraction) => {
+    window.scrollTo({
+      top:
+        track.getBoundingClientRect().top +
+        window.scrollY +
+        (track.clientHeight - window.innerHeight) * fraction,
+      behavior: "instant",
+    });
+  }, progress);
+  await page.evaluate(
+    () =>
+      new Promise<void>((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+      ),
+  );
+}
+async function selectedQuoteVisible(page: Page) {
+  await expect
+    .poll(() =>
+      page.locator(".landing-story-source-scroll").evaluate((pane) => {
+        const quote = pane.querySelector("mark");
+        if (!quote) return false;
+        const bounds = pane.getBoundingClientRect();
+        const mark = quote.getBoundingClientRect();
+        return mark.top >= bounds.top - 1 && mark.bottom <= bounds.bottom + 1;
+      }),
+    )
+    .toBe(true);
+}
+async function clearPhoneLabels(page: Page) {
+  await expect
+    .poll(() =>
+      page.locator(".landing-story-drawing").evaluate((drawing) => {
+        const captions = [
+          ...drawing.querySelectorAll("[data-entity-id] span"),
+        ].map((item) => item.getBoundingClientRect());
+        const labels = [
+          ...drawing.querySelectorAll("[data-relationship-index]"),
+        ].map((item) => item.getBoundingClientRect());
+        const overlaps = (a: DOMRect, b: DOMRect) =>
+          Math.min(a.right, b.right) - Math.max(a.left, b.left) > 0.5 &&
+          Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > 0.5;
+        return labels.every(
+          (label, index) =>
+            label.height >= 44 &&
+            label.width >= 44 &&
+            label.left >= 0 &&
+            label.right <= window.innerWidth &&
+            captions.every((caption) => !overlaps(label, caption)) &&
+            labels.slice(index + 1).every((other) => !overlaps(label, other)),
+        );
+      }),
+    )
+    .toBe(true);
+}
+async function openReview(page: Page) {
+  await page
+    .getByRole("link", { name: "Skip to relationship review", exact: true })
+    .click();
+  await expect(page.locator("#landing-story-review")).not.toHaveAttribute(
+    "inert",
+  );
+  await expect
+    .poll(() =>
+      page
+        .locator(".landing-story-source-holder")
+        .evaluate((element) => Number(getComputedStyle(element).opacity)),
+    )
+    .toBe(1);
+  await selectedQuoteVisible(page);
+}
 
-test("public example traces every canonical claim to exact Evidence without analysis or sign-in", async ({
+test("documents become one real graph, every relationship highlights its exact full-source Evidence", async ({
   page,
 }, info) => {
   const requests: string[] = [];
   page.on("request", (request) => {
-    if (new URL(request.url()).pathname.startsWith("/api/"))
-      requests.push(request.method() + " " + new URL(request.url()).pathname);
+    const path = new URL(request.url()).pathname;
+    if (path.startsWith("/api/")) requests.push(request.method() + " " + path);
   });
   await page.goto("/");
   await expect(page.locator("h1")).toContainText("Build the structure.");
+  await expect(
+    page.getByRole("heading", { name: "It begins with your documents" }),
+  ).toBeVisible();
   const response = await page.request.get(publicCase);
   expect(response.ok()).toBe(true);
   const { state } = (await response.json()) as { state: CanonicalState };
+  await storyProgress(page, 0);
+  await expect(page.locator("[data-document-kind]")).toHaveCount(4);
+  for (const format of await page
+    .locator(".landing-story-format-list > span")
+    .all()) {
+    const box = await format.boundingBox();
+    expect(box).not.toBeNull();
+    expect(box!.x).toBeGreaterThanOrEqual(0);
+    expect(box!.x + box!.width).toBeLessThanOrEqual(page.viewportSize()!.width);
+  }
+  await page.screenshot({
+    path: `artifacts/landing-documents-${info.project.name}.png`,
+    animations: "allow",
+  });
+  await openReview(page);
   const demo = page.getByRole("region", {
     name: "Explore the synthetic example",
   });
-  await page
-    .getByRole("tab", { name: "Trace the Evidence", exact: true })
-    .click();
-  await expect(demo).toBeVisible();
-  await expect(demo.locator(".landing-connectors > path")).toHaveCount(
+  await expect(demo.locator(".landing-story-edge-layer > path")).toHaveCount(
     state.relationships.length,
   );
-  await expect(async () => {
-    const broken = await demo.evaluate((region) => {
-      const failures: string[] = [];
-      for (const path of region.querySelectorAll<SVGPathElement>(
-        ".landing-connectors > path",
-      )) {
-        const length = path.getTotalLength();
-        if (length < 10) failures.push("collapsed connector");
-        const matrix = path.getScreenCTM()!;
-        for (const [id, distance] of [
-          [path.dataset.source, 0],
-          [path.dataset.target, length],
-        ] as const) {
-          const glyph = region.querySelector(`[data-entity-id="${id}"] svg`);
-          if (!glyph) {
-            failures.push("missing endpoint " + id);
-            continue;
-          }
-          const point = path.getPointAtLength(distance);
-          const x = point.x * matrix.a + point.y * matrix.c + matrix.e;
-          const y = point.x * matrix.b + point.y * matrix.d + matrix.f;
-          const box = glyph.getBoundingClientRect();
-          if (
-            x < box.left - 3 ||
-            x > box.right + 3 ||
-            y < box.top - 3 ||
-            y > box.bottom + 3
-          )
-            failures.push("detached endpoint " + id);
+  await expect(demo.locator(".landing-story-source-text")).toHaveText(
+    state.sources[0].text,
+    { useInnerText: false },
+  );
+  expect(await demo.locator(".landing-story-source-text").textContent()).toBe(
+    state.sources[0].text,
+  );
+  const geometry = await demo.evaluate((region) => {
+    const failures: string[] = [];
+    for (const path of region.querySelectorAll<SVGPathElement>(
+      ".landing-story-edge-layer > path",
+    )) {
+      const length = path.getTotalLength();
+      const matrix = path.getScreenCTM()!;
+      if (length < 10) failures.push("collapsed connector");
+      for (const [id, distance] of [
+        [path.dataset.source, 0],
+        [path.dataset.target, length],
+      ] as const) {
+        const glyph = region.querySelector<SVGSVGElement>(
+          `[data-entity-id="${id}"] svg`,
+        );
+        if (!glyph) {
+          failures.push("missing " + id);
+          continue;
         }
+        const point = path.getPointAtLength(distance);
+        const x = point.x * matrix.a + point.y * matrix.c + matrix.e;
+        const y = point.x * matrix.b + point.y * matrix.d + matrix.f;
+        const box = glyph.getBoundingClientRect();
+        const directedTarget =
+          distance === length && path.hasAttribute("marker-end");
+        if (directedTarget) {
+          const shape =
+            glyph.querySelector<SVGGeometryElement>("circle, path")!;
+          const local = new DOMPoint(x, y).matrixTransform(
+            shape.getScreenCTM()!.inverse(),
+          );
+          if (shape.isPointInFill(local) || shape.isPointInStroke(local))
+            failures.push("covered arrow " + id);
+          // The tip must remain close to the shape, rather than floating away.
+          const center = new DOMPoint(24, 24).matrixTransform(
+            glyph.getScreenCTM()!,
+          );
+          const vx = x - center.x;
+          const vy = y - center.y;
+          const radius = Math.hypot(vx, vy);
+          const inward = new DOMPoint(
+            x - (vx / radius) * 6,
+            y - (vy / radius) * 6,
+          ).matrixTransform(shape.getScreenCTM()!.inverse());
+          if (!shape.isPointInFill(inward))
+            failures.push("detached arrow " + id);
+        } else if (
+          x < box.left - 3 ||
+          x > box.right + 3 ||
+          y < box.top - 3 ||
+          y > box.bottom + 3
+        )
+          failures.push("detached " + id);
       }
-      return failures;
-    });
-    expect(broken).toEqual([]);
-  }).toPass();
+    }
+    return failures;
+  });
+  expect(geometry).toEqual([]);
   for (const relationship of state.relationships) {
-    const button = demo.getByRole("button", {
+    const claim = demo.getByRole("button", {
       name: relationshipStatement(state, relationship, (key) => key),
       exact: true,
     });
-    await button.click();
-    await expect(button).toHaveAttribute("aria-pressed", "true");
-    const evidence = state.evidence.find(
-      (item) => item.id === relationship.evidence_ids[0],
-    )!;
-    const quote = demo.locator(`mark[data-evidence-id="${evidence.id}"]`);
-    await expect(quote).toHaveText(evidence.supporting_text);
-    await expect(quote).toBeVisible();
-    expect(
-      state.sources.find((source) => source.id === evidence.source_id)?.text,
-    ).toContain(await quote.innerText());
+    const outer = await page.evaluate(() => window.scrollY);
+    await claim.click();
+    await expect(claim).toHaveAttribute("aria-pressed", "true");
+    await expect(claim).toBeFocused();
+    expect(await page.evaluate(() => window.scrollY)).toBe(outer);
+    for (const id of relationship.evidence_ids) {
+      const evidence = state.evidence.find((item) => item.id === id)!;
+      const marks = demo.locator(`mark[data-evidence-ids~="${id}"]`);
+      expect(await marks.count()).toBeGreaterThan(0);
+      for (const mark of await marks.all())
+        await expect(mark).toHaveText(evidence.supporting_text);
+      await expect(demo.locator(".landing-story-source-meta")).toContainText(
+        evidence.source_id!,
+      );
+    }
+    await selectedQuoteVisible(page);
   }
-  const strokes = await demo
-    .locator(".landing-connectors > path")
-    .evaluateAll((paths) =>
-      paths.map((element) => {
-        const path = element as SVGPathElement;
-        const style = getComputedStyle(path);
-        const length = path.getTotalLength();
-        const normalized = Number(path.getAttribute("pathLength")) || length;
-        return {
-          dash: (style.strokeDasharray.match(/[\d.]+/g) ?? []).map(
-            (value) => (Number(value) * length) / normalized,
-          ),
-          opacity: Number(style.strokeOpacity) * Number(style.opacity),
-          stroke: style.stroke,
-        };
-      }),
-    );
-  state.relationships.forEach((relationship, index) => {
-    const stroke = strokes[index];
-    expect(stroke.stroke).not.toBe("none");
-    expect(stroke.opacity).toBeGreaterThanOrEqual(0.8);
-    const family = ["parent_of", "spouse_of", "sibling_of"].includes(
-      relationship.type,
-    );
-    if (family) {
-      expect(stroke.dash.length).toBeGreaterThanOrEqual(2);
-      for (const segment of stroke.dash) {
-        expect(segment).toBeGreaterThan(1);
-        expect(segment).toBeLessThan(20);
-      }
-    } else expect(stroke.dash).toEqual([]);
+  if (page.viewportSize()!.width <= 700) await clearPhoneLabels(page);
+  const paths = demo.locator(".landing-story-edge-layer > path");
+  for (let index = 0; index < state.relationships.length; index++) {
+    const type = state.relationships[index].type;
+    const path = paths.nth(index);
+    if (["parent_of", "spouse_of", "sibling_of"].includes(type))
+      await expect(path).toHaveAttribute("stroke-dasharray", "5 5");
+    else await expect(path).not.toHaveAttribute("stroke-dasharray");
+    if (["spouse_of", "sibling_of"].includes(type))
+      await expect(path).not.toHaveAttribute("marker-end");
+    else await expect(path).toHaveAttribute("marker-end", /url\(#/);
+  }
+  await page.screenshot({
+    path: `artifacts/landing-review-${info.project.name}.png`,
+    animations: "allow",
   });
   expect(requests.length).toBeGreaterThan(0);
   expect(requests.every((request) => request === "GET " + publicCase)).toBe(
     true,
   );
-  await expect(page.locator(".atlas")).toHaveCount(0);
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= window.innerWidth,
     ),
   ).toBe(true);
-  for (const control of await page
-    .locator(
-      ".landing-masthead a, .landing-masthead select, .landing-claims button",
-    )
-    .filter({ visible: true })
-    .all()) {
-    const box = await control.boundingBox();
-    expect(box).not.toBeNull();
-    expect(box!.x).toBeGreaterThanOrEqual(0);
-    expect(box!.x + box!.width).toBeLessThanOrEqual(
-      page.viewportSize()!.width + 1,
-    );
-  }
-  await page.evaluate(() => window.scrollTo(0, 0));
-  await page.screenshot({
-    path: `artifacts/landing-${info.project.name}.png`,
-    fullPage: true,
-    animations: "disabled",
-  });
 });
 
-test("keyboard claim selection survives narrative scrolling and reduced motion", async ({
+test("scroll scrubs document fronts, measured name movement and masked drawing; reverse keeps selection", async ({
   page,
 }) => {
-  await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/");
-  const demo = page.getByRole("region", {
-    name: "Explore the synthetic example",
+  await expect(page.locator(".landing-story")).toHaveAttribute(
+    "data-story-mode",
+    "scroll",
+  );
+  for (const [progress, kind] of [
+    [0, "attendance"],
+    [0.12, "email"],
+    [0.19, "timesheet"],
+    [0.27, "legal"],
+  ] as const) {
+    await storyProgress(page, progress);
+    await expect
+      .poll(() =>
+        page
+          .locator(`[data-document-kind="${kind}"]`)
+          .evaluate((element) => getComputedStyle(element).zIndex),
+      )
+      .toBe("5");
+    const contentsFit = await page
+      .locator(`[data-document-kind="${kind}"]`)
+      .evaluate((element) => element.scrollHeight <= element.clientHeight);
+    expect(contentsFit, `${kind} content stays inside its paper`).toBe(true);
+  }
+  await storyProgress(page, 0.44);
+  const travelling = await page
+    .locator(".landing-story-entity-content")
+    .evaluateAll((nodes) =>
+      nodes.some((node) => {
+        const matrix = new DOMMatrix(getComputedStyle(node).transform);
+        return Math.abs(matrix.m41) + Math.abs(matrix.m42) > 5;
+      }),
+    );
+  expect(travelling).toBe(true);
+  await storyProgress(page, 0.69);
+  const partial = await page
+    .locator(".landing-story-edge-layer mask path")
+    .evaluateAll((nodes) =>
+      nodes.some((node) => {
+        const dash = parseFloat(getComputedStyle(node).strokeDasharray);
+        return dash > 0 && dash < 1;
+      }),
+    );
+  expect(partial).toBe(true);
+  await openReview(page);
+  const claim = page.getByRole("button", {
+    name: "Carol Wong — beneficiary of — Evergreen Family Trust",
+    exact: true,
   });
-  await page
-    .getByRole("tab", { name: "Trace the Evidence", exact: true })
-    .click();
-  const claim = demo.getByRole("button", {
+  await claim.click();
+  const evidence = await page
+    .locator(".landing-story-source-meta")
+    .textContent();
+  await storyProgress(page, 0.1);
+  await storyProgress(page, 1);
+  await expect(claim).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator(".landing-story-source-meta")).toHaveText(
+    evidence!,
+  );
+});
+
+test("keyboard skip and live reduced motion expose an in-flow review while preserving selection", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const skip = page.getByRole("link", { name: "Skip to relationship review" });
+  await skip.focus();
+  await skip.press("Enter");
+  await expect(page.locator("#landing-story-review")).toBeFocused();
+  const claim = page.getByRole("button", {
     name: "Carol Wong — beneficiary of — Evergreen Family Trust",
     exact: true,
   });
   await claim.focus();
   await claim.press("Enter");
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await expect(page.locator(".landing-story")).toHaveAttribute(
+    "data-story-mode",
+    "static",
+  );
+  await expect(page.locator(".landing-story-stage")).toHaveCSS(
+    "position",
+    "relative",
+  );
   await expect(claim).toHaveAttribute("aria-pressed", "true");
-  const quote = demo.locator("mark[data-evidence-id]");
-  const original = await quote.innerText();
-  await page.getByRole("contentinfo").scrollIntoViewIfNeeded();
-  await expect(claim).toHaveAttribute("aria-pressed", "true");
-  await expect(quote).toHaveText(original);
-  await claim.scrollIntoViewIfNeeded();
+  await expect(page.locator("[data-document-kind]")).toHaveCount(4);
+  for (const doc of await page.locator("[data-document-kind]").all()) {
+    await expect(doc).toHaveCSS("position", "relative");
+    expect(
+      await doc.evaluate(
+        (element) => element.scrollHeight <= element.clientHeight,
+      ),
+    ).toBe(true);
+  }
   await claim.focus();
   await expect(claim).toBeFocused();
-  const focus = await claim.evaluate((element) => ({
-    style: getComputedStyle(element).outlineStyle,
-    width: parseFloat(getComputedStyle(element).outlineWidth),
-  }));
-  expect(focus.style).not.toBe("none");
-  expect(focus.width).toBeGreaterThanOrEqual(2);
+  expect(
+    await claim.evaluate((element) =>
+      parseFloat(getComputedStyle(element).outlineWidth),
+    ),
+  ).toBeGreaterThanOrEqual(2);
 });
 
-test("public example failure can retry the unchanged backend without a fabricated fallback", async ({
+test("initial reduced motion shows all documents and keeps graph/source readable after resize", async ({
   page,
 }) => {
-  // Isolated UI failure; retry resumes the real existing showcase API.
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/");
+  await expect(page.locator(".landing-story")).toHaveAttribute(
+    "data-story-mode",
+    "static",
+  );
+  const source = page.locator(".landing-story-source-text");
+  const text = await source.textContent();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(page.locator(".landing-story-source-holder")).toHaveCSS(
+    "position",
+    "relative",
+  );
+  expect(await source.textContent()).toBe(text);
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth,
+    ),
+  ).toBe(true);
+});
+
+test("the forest story flows directly into the decision section; light returns with research content", async ({
+  page,
+}, info) => {
+  await page.goto("/");
+  await expect(page.locator(".landing-story")).toBeVisible();
+  const boundary = await page.evaluate(() => {
+    const story = document.querySelector(".landing-example-shell")!;
+    const decision = document.querySelector(".landing-acceptance")!;
+    const research = document.querySelector(".landing-research")!;
+    return {
+      gap:
+        decision.getBoundingClientRect().top -
+        story.getBoundingClientRect().bottom,
+      story: getComputedStyle(story).backgroundColor,
+      decision: getComputedStyle(decision).backgroundColor,
+      research: getComputedStyle(research).backgroundColor,
+      next: story.nextElementSibling === decision,
+      researchContent: research.textContent!.trim().length,
+    };
+  });
+  expect(boundary.gap).toBe(0);
+  expect(boundary.next).toBe(true);
+  expect(boundary.story).toBe(boundary.decision);
+  expect(boundary.research).not.toBe(boundary.decision);
+  expect(boundary.researchContent).toBeGreaterThan(100);
+  await page.locator(".landing-acceptance").evaluate((element) =>
+    window.scrollTo({
+      top: element.getBoundingClientRect().top + window.scrollY - 150,
+      behavior: "instant",
+    }),
+  );
+  await page.screenshot({
+    path: `artifacts/landing-boundary-${info.project.name}.png`,
+    animations: "allow",
+  });
+});
+
+test("phone graph captions and all six relationship targets remain separate at narrow widths", async ({
+  page,
+}, info) => {
+  test.skip(
+    info.project.name !== "phone",
+    "Phone layout checks run in the phone project.",
+  );
+  await page.goto("/");
+  for (const width of [320, 390, 700]) {
+    await page.setViewportSize({ width, height: 844 });
+    await openReview(page);
+    await clearPhoneLabels(page);
+  }
+});
+
+for (const height of [667, 760]) {
+  for (const width of [390, 320]) {
+    test(`compact phone ${width}x${height} uses the readable static review without label collisions`, async ({
+      page,
+    }, info) => {
+      test.skip(info.project.name !== "phone", "Compact phone regression.");
+      await page.setViewportSize({ width, height });
+      await page.goto("/");
+      await expect(page.locator(".landing-story")).toHaveAttribute(
+        "data-story-mode",
+        "static",
+      );
+      await expect(page.locator(".landing-story-stage")).toHaveCSS(
+        "position",
+        "relative",
+      );
+      await openReview(page);
+      await clearPhoneLabels(page);
+    });
+  }
+}
+test("phone fallback includes 800px and preserves the animated 844px story", async ({
+  page,
+}, info) => {
+  test.skip(
+    info.project.name !== "phone",
+    "Phone fallback boundary regression.",
+  );
+  await page.setViewportSize({ width: 390, height: 800 });
+  await page.goto("/");
+  await expect(page.locator(".landing-story")).toHaveAttribute(
+    "data-story-mode",
+    "static",
+  );
+  await openReview(page);
+  await clearPhoneLabels(page);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(page.locator(".landing-story")).toHaveAttribute(
+    "data-story-mode",
+    "scroll",
+  );
+  await openReview(page);
+  await clearPhoneLabels(page);
+});
+
+test("public read failure retries the real backend without a fabricated fallback", async ({
+  page,
+}) => {
   await page.route("**" + publicCase, (route) =>
     route.fulfill({ status: 503, json: { error: "unavailable" } }),
   );
   await page.goto("/");
   const retry = page.getByRole("button", { name: "Try again", exact: true });
   await expect(retry).toBeVisible();
-  await expect(page.locator("mark[data-evidence-id]")).toHaveCount(0);
+  await expect(page.locator(".landing-story")).toHaveCount(0);
   await page.unroute("**" + publicCase);
   await retry.click();
-  await page
-    .getByRole("tab", { name: "Trace the Evidence", exact: true })
-    .click();
+  await openReview(page);
   await expect(
     page.getByRole("button", {
       name: "Alice Chen — parent of — Bob Chen",
@@ -200,10 +474,28 @@ test("public example failure can retry the unchanged backend without a fabricate
   ).toBeVisible();
 });
 
-test("landing routes reach the existing public destinations and practitioner sign-in", async ({
+test("language changes keep exact source and canonical selection; public and practitioner routes remain", async ({
   page,
 }) => {
   await page.goto("/");
+  await openReview(page);
+  await page
+    .getByRole("button", {
+      name: "Carol Wong — beneficiary of — Evergreen Family Trust",
+      exact: true,
+    })
+    .click();
+  const source = await page.locator(".landing-story-source-text").textContent();
+  await page
+    .getByRole("combobox", { name: "Language", exact: true })
+    .selectOption("zh-CN");
+  await expect(page.locator("html")).toHaveAttribute("lang", "zh-CN");
+  expect(await page.locator(".landing-story-source-text").textContent()).toBe(
+    source,
+  );
+  await expect(
+    page.locator('.landing-story-edge-label[aria-pressed="true"]'),
+  ).toContainText("受益人");
   await expect(page.locator('a[href$="/demo"]').first()).toHaveAttribute(
     "href",
     "https://localhost:8443/demo",
@@ -213,207 +505,5 @@ test("landing routes reach the existing public destinations and practitioner sig
   ).toHaveAttribute("href", "https://localhost:8443/research-results");
   await page.locator('a[href="/app"]').first().click();
   await expect(page).toHaveURL(/\/app$/);
-  await expect(
-    page.getByRole("link", { name: "Sign in", exact: true }).first(),
-  ).toBeVisible();
   await expect(page.locator(".atlas")).toBeVisible();
-});
-
-test("language changes preserve the selected canonical relationship and source words", async ({
-  page,
-}) => {
-  await page.goto("/");
-  await page
-    .getByRole("tab", { name: "Trace the Evidence", exact: true })
-    .click();
-  const claim = page.getByRole("button", {
-    name: "Carol Wong — beneficiary of — Evergreen Family Trust",
-    exact: true,
-  });
-  await claim.click();
-  const quote = page.locator("mark[data-evidence-id]");
-  const exact = await quote.innerText();
-  const evidenceId = await quote.getAttribute("data-evidence-id");
-  await page
-    .getByRole("combobox", { name: "Language", exact: true })
-    .selectOption("zh-CN");
-  await expect(page.locator("html")).toHaveAttribute("lang", "zh-CN");
-  await expect(quote).toHaveText(exact);
-  await expect(quote).toHaveAttribute("data-evidence-id", evidenceId!);
-  await expect(
-    page.locator('.landing-claims button[aria-pressed="true"]'),
-  ).toContainText("Carol Wong");
-  await page.reload();
-  await expect(page.locator("html")).toHaveAttribute("lang", "zh-CN");
-});
-
-async function visibleConnections(page: import("@playwright/test").Page) {
-  return page
-    .locator(".landing-connectors > path")
-    .evaluateAll(
-      (paths) =>
-        paths.filter((path) => Number(getComputedStyle(path).opacity) >= 0.8)
-          .length,
-    );
-}
-
-test("construction reveals the actual graph and can pause, resume, replay and yield to Evidence", async ({
-  page,
-}, info) => {
-  await page.goto("/");
-  const demo = page.getByRole("region", {
-    name: "Explore the synthetic example",
-  });
-  await demo.locator(".landing-drawing").scrollIntoViewIfNeeded();
-  const replay = page.getByRole("button", {
-    name: "Replay construction",
-    exact: true,
-  });
-  await expect(demo).toHaveAttribute("data-capability", "builder");
-  const response = await page.request.get(publicCase);
-  const { state } = (await response.json()) as { state: CanonicalState };
-  const sourceId = await demo
-    .locator(".landing-paper")
-    .getAttribute("data-source-id");
-  const excerpts = await demo
-    .locator(".landing-source-excerpt")
-    .allTextContents();
-  const source = state.sources.find((source) => source.id === sourceId)!;
-  expect(excerpts.length).toBeGreaterThan(0);
-  expect(new Set(excerpts)).toEqual(
-    new Set(
-      state.evidence
-        .filter((item) => item.source_id === sourceId)
-        .map((item) => item.supporting_text),
-    ),
-  );
-  excerpts.forEach((excerpt) => expect(source.text).toContain(excerpt));
-  await replay.click();
-  await expect(demo).toHaveAttribute("data-playback", "playing");
-  await expect.poll(() => visibleConnections(page)).toBe(0);
-  await expect
-    .poll(() => visibleConnections(page), { intervals: [100] })
-    .toBeGreaterThan(0);
-  await page
-    .getByRole("button", { name: "Pause construction", exact: true })
-    .click();
-  await expect(demo).toHaveAttribute("data-playback", "paused");
-  const paused = await visibleConnections(page);
-  expect(paused).toBeLessThan(6);
-  // Actual elapsed time is necessary to show the user pause freezes playback.
-  await page.waitForTimeout(500);
-  expect(await visibleConnections(page)).toBe(paused);
-  await page
-    .getByRole("button", { name: "Resume construction", exact: true })
-    .click();
-  await expect(demo).toHaveAttribute("data-playback", "complete");
-  await expect(replay).toBeFocused();
-  expect(await visibleConnections(page)).toBe(6);
-  await page.screenshot({
-    path: `artifacts/landing-builder-${info.project.name}.png`,
-    fullPage: true,
-    animations: "disabled",
-  });
-  await replay.click();
-  await page
-    .getByRole("tab", { name: "Trace the Evidence", exact: true })
-    .click();
-  await expect(demo).toHaveAttribute("data-playback", "complete");
-  expect(await visibleConnections(page)).toBe(6);
-  const claim = demo.getByRole("button", {
-    name: "Carol Wong — beneficiary of — Evergreen Family Trust",
-    exact: true,
-  });
-  await claim.click();
-  const quote = await demo.locator("mark[data-evidence-id]").innerText();
-  await page
-    .getByRole("tab", { name: "Build the trust structure", exact: true })
-    .click();
-  await expect(demo).toHaveAttribute("data-playback", "complete");
-  await page
-    .getByRole("tab", { name: "Trace the Evidence", exact: true })
-    .click();
-  await expect(claim).toHaveAttribute("aria-pressed", "true");
-  await expect(demo.locator("mark[data-evidence-id]")).toHaveText(quote);
-  await expect(page.getByText(/Illustrative synthetic sequence/)).toBeVisible();
-});
-
-test("capability tabs support keyboard selection and reduced motion settles construction", async ({
-  page,
-}) => {
-  await page.goto("/");
-  const skip = page.getByRole("link", { name: "Skip to content", exact: true });
-  await expect(page.locator("h1")).toBeVisible();
-  await page.keyboard.press("Tab");
-  await expect(skip).toBeFocused();
-  expect(
-    await skip.evaluate((element) => getComputedStyle(element).clipPath),
-  ).toBe("none");
-  await page.keyboard.press("Tab");
-  await expect(skip).not.toBeFocused();
-  expect(
-    await skip.evaluate((element) => getComputedStyle(element).clipPath),
-  ).not.toBe("none");
-  const demo = page.getByRole("region", {
-    name: "Explore the synthetic example",
-  });
-  await demo.locator(".landing-drawing").scrollIntoViewIfNeeded();
-  const builder = page.getByRole("tab", {
-    name: "Build the trust structure",
-    exact: true,
-  });
-  const evidence = page.getByRole("tab", {
-    name: "Trace the Evidence",
-    exact: true,
-  });
-  await builder.focus();
-  await builder.press("End");
-  await expect(evidence).toBeFocused();
-  await expect(evidence).toHaveAttribute("aria-selected", "true");
-  await evidence.press("Home");
-  await expect(builder).toBeFocused();
-  await expect(builder).toHaveAttribute("aria-selected", "true");
-  await page
-    .getByRole("button", { name: "Replay construction", exact: true })
-    .click();
-  await page.emulateMedia({ reducedMotion: "reduce" });
-  await expect(demo).toHaveAttribute("data-playback", "complete", {
-    timeout: 500,
-  });
-  expect(await visibleConnections(page)).toBe(6);
-  await page
-    .getByRole("button", { name: "Replay construction", exact: true })
-    .click();
-  await expect(demo).toHaveAttribute("data-playback", "complete", {
-    timeout: 500,
-  });
-  expect(await visibleConnections(page)).toBe(6);
-});
-
-test("offscreen construction pauses and a deliberate pause stays paused on return", async ({
-  page,
-}) => {
-  await page.goto("/");
-  const demo = page.getByRole("region", {
-    name: "Explore the synthetic example",
-  });
-  await demo.locator(".landing-drawing").scrollIntoViewIfNeeded();
-  const replay = page.getByRole("button", {
-    name: "Replay construction",
-    exact: true,
-  });
-  await replay.click();
-  await page.getByRole("contentinfo").scrollIntoViewIfNeeded();
-  await expect(demo).toHaveAttribute("data-playback", "paused");
-  await demo.locator(".landing-drawing").scrollIntoViewIfNeeded();
-  await expect(demo).toHaveAttribute("data-playback", "playing");
-  await page
-    .getByRole("button", { name: "Pause construction", exact: true })
-    .click();
-  await page.getByRole("contentinfo").scrollIntoViewIfNeeded();
-  await demo.locator(".landing-drawing").scrollIntoViewIfNeeded();
-  await expect(demo).toHaveAttribute("data-playback", "paused");
-  await expect(
-    page.getByRole("button", { name: "Resume construction", exact: true }),
-  ).toBeVisible();
 });

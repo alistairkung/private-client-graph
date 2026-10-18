@@ -2,89 +2,70 @@
 version: 1
 slug: "practitioner-next-src-landing-landingpage-tsx"
 primary_target: "practitioner-next/src/landing/LandingPage.tsx"
-related_targets: ["practitioner-next/src/landing/landing.css","practitioner-next/src/landing/EvidenceDemo.tsx"]
+related_targets:
+  [
+    "practitioner-next/src/landing/landing.css",
+    "practitioner-next/src/landing/DocumentStory.tsx",
+    "practitioner-next/src/landing/document-story.css",
+    "practitioner-next/src/landing/StoryGraph.tsx",
+    "practitioner-next/src/landing/SourceReview.tsx",
+  ]
 ---
 
-# Landing direction: build the structure, keep the Evidence
+# Landing direction: documents become relationships, with Evidence intact
 
-Scope: independent public `/` in practitioner-next, stacked on PR #157 at
-97e1d990. Existing web, practitioner components, backend, APIs, domain, database,
-original tests and deployment stay intact. Visitor mode: **Persuade**. Audience:
-private-client practitioners discovering PCG. Job: understand the two core
-capabilities, explore a synthetic example, then choose the existing product or
-public research flow.
+Scope: independent public `/`, continuing draft PR #158 stacked on #157.
+Existing original frontend, practitioner components, backend, APIs, domain,
+database, original tests and deployment remain read-only. Visitor mode: **Persuade**.
+Private-client practitioners should understand the proposed structure, inspect its
+Evidence, and reach the existing public research or practitioner prototype.
 
-## Reference and user steering
+## User-approved direction
 
-Inspected https://lissom.ai/ in Chrome and read its page on 2026-10-18. Its
-outcome-first language, animated product mechanisms, deliberate scale and color
-fields, and clear professional responsibility transfer well. Customer logos,
-banking metrics and compliance claims do not belong to PCG.
+The Lissom org-chart reference led to the initial two-capability demonstration.
+The user subsequently approved a separate scroll prototype, explicitly replacing
+the small tabbed frame with a continuous story. “It begins with your documents”
+introduces attendance notes, emails, time sheets and legal documents. Papers flick
+as the visitor scrolls, gather, release names into a graph, and draw connections.
+At the bottom, the same graph shares a split view with the complete source and
+selectable exact Evidence. That approved composition is the authority; there is
+no new visual-world tournament.
 
-The user subsequently supplied Lissom's org-chart feature showcase and named
-PCG's two core capabilities: LLM-driven trust structure building, then returning
-to Evidence. This overrides the earlier finished-graph opening and repetitive
-three-step walkthrough. The transferable pattern is a **tabbed feature
-showcase**: a short feature rail and a generous working demonstration.
+The prototype is preserved at `codex/landing-documents-prototype`, commit
+`15288805f7dea7c723d2b73f7a4772db2a307dde`. Production code is written separately.
 
-## Direction contract
+## Visual contract
 
-THESIS: Build a proposed family and trust structure from source material, then
-inspect the words behind every relationship.
+Preserve Forest & Chalk and Public Sans. A white opening leads into one forest
+field covering the document story and proposal-review explanation. The former
+70px desktop / 45px phone margin between green sections exposed an empty white
+strip; remove that margin and keep spacing inside the sections. Return to a light
+surface only at the research section, with its actual content.
 
-OWN-WORLD: Preserve the user's selected Forest & Chalk: forest #173F31,
-ink #20372B, white #FFFFFF, frame #E9F0EA and action #1E6249. Amber #FFF0A6
-means exact Evidence. Self-hosted Public Sans supplies a clear, professional
-voice. Geometry and readable source text carry the product story.
-
-STORY: Two tabs, **Build the trust structure** and **Trace the Evidence**. The
-first animates source → entities → six proposed relationships. The second
-exposes an actual selectable claim and its exact canonical source passage. Both
-share the same source, graph geometry and selection. Professional acceptance
-remains an explicit decision in a separate chapter.
-
-FIRST VIEWPORT: Compact masthead, a large two-line builder-first offer and a
-clear exploration action. The green demonstration begins within the opening
-screen. Desktop places the two-item capability rail left of a stable source and
-graph stage. Phone puts the tabs above the stacked stage. No simulated browser
-chrome, fake cursor or upload control.
-
-FORM: Continuous source-to-structure-to-Evidence story. The original grounded
-concept roll used seed a5859a78 (seven options; selected continuous Evidence
-thread). The user's later two-capability reference is the explicit composition
-update; no new identity or concept tournament is needed. This is a code-led
-geometry/text build, not a raster comp reproduction.
-
-FINISH: unreviewed and undocumented is unfinished; end with a finish review,
-verdict, local DESIGN.md and provenance on shipping raster captures.
+Documents use distinct internal structures and one SVG icon language. Reserve the
+fan's full extents so format names and the scroll hint remain clear. Names travel
+above the fading paper. Masked line drawing preserves canonical dashes and arrows.
+The final reader keeps the full source, stable identifiers and precise highlights.
+Phones stack graph and source; reduced motion and short viewports use normal flow.
 
 ## Motion and truth
 
-A ~four-second, once-per-arrival illustration reveals the actual returned graph.
-Replay and Pause/Resume are real controls. Switching to Evidence or choosing a
-claim settles construction immediately. Offscreen/document-hidden playback
-pauses; a deliberate user pause persists. Reduced motion shows the complete
-structure immediately, including if the preference changes during playback.
-Keyboard tabs use arrow keys and Home/End. Keep stable layout and focus.
+Scroll is the only story clock. Keyboard users can skip directly to relationship
+review. Relationship selection survives reversing, resizes and locale changes;
+only the source pane scrolls, and manual reader input cancels its movement.
 
-GET `/api/showcase/cases/case-01` supplies backend-owned curated ideal state.
-Persistently label the sequence synthetic and illustrative, not live analysis.
-No upload, model call, analysis POST, invented entity or automatic acceptance.
-Canonical IDs, types, directions and exact Evidence remain unchanged. The
-original public demo, research and practitioner routes remain linked. Errors
-provide real retry without fabricated fallback data. See landing-motion.md for
-actual inspected Motion+ references and choreography.
+The montage labels the additional document formats as product vision. The public
+GET `/api/showcase/cases/case-01` supplies the actual curated synthetic graph and
+Evidence. Do not invent documents, identifiers or support for its relationships.
+No upload, model call, analysis POST, mutation or automatic professional acceptance.
+Public demo, research, practitioner entry, language and real retry remain available.
 
-## Verification and budget
+## Verification and scope
 
-One batched desktop/phone inspection, one correction batch and confirmation.
-Verify progressive construction, pause/resume/replay, interruption, keyboard and
-reduced motion, all six claims and exact Evidence, canonical connector geometry
-and dash/arrow roles, language continuity, retry and destinations. Run new-app
-units/build/format/browser gates and mandatory `uv run pytest`, then independent
-complete-diff review and draft PR handoff. No merge/deploy.
-
-At most two active children, one runtime writer; root owns browser tests, docs
-and integration. No nested delegation. Shared paid application-provider usage
-remains **0/5**, including this continuation; no live call is needed. The new
-motion specification reuses already inspected sources without further lookups.
+Use one batched desktop/phone inspection and one correction/confirmation batch.
+Verify partial drawing, name origins, full-source exact highlights, default reveal,
+selection retention, keyboard skip/focus, live reduced motion, language, retry,
+destinations and continuous section backgrounds. Run focused tests, full new-app
+units/build/browser coverage and required `uv run pytest`, then independent source
+review and draft-PR handoff. Do not merge or deploy. At most two active children,
+one runtime writer, no nested delegation, paid application-provider calls 0/5.

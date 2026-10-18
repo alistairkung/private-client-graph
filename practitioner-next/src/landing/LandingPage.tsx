@@ -8,7 +8,7 @@ import {
   publicDestination,
   type PublicExample,
 } from "./landing-api";
-import { EvidenceDemo } from "./EvidenceDemo";
+import { DocumentStory } from "./DocumentStory";
 import "./landing.css";
 export default function LandingPage() {
   return (
@@ -96,7 +96,7 @@ function LandingContent() {
           aria-label={copy.curated}
         >
           {example ? (
-            <EvidenceDemo state={example.state} />
+            <DocumentStory state={example.state} />
           ) : failed ? (
             <div className="landing-load-error" role="alert">
               <h2>{copy.error}</h2>

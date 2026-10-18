@@ -1,0 +1,126 @@
+{
+  "schemaVersion": 1,
+  "page": "https://127.0.0.1:5443/",
+  "date": "2026-10-18",
+  "sourceBaselineCommit": "a9b77274a888d8eed753c59996407755ffc0b6d0",
+  "captureCheckout": "codex/landing-evidence-motion working tree with the document-story integration",
+  "data": "Existing public synthetic Case 01 GET; no live model call",
+  "screenshots": "Viewport captures; scroll-linked styles preserved during capture",
+  "sourceSha256": {
+    "practitioner-next/src/landing/DocumentMontage.tsx": "d1977e56f521334c357284751cf1aab3dbe1c077287276d0745344419a8b7069",
+    "practitioner-next/src/landing/DocumentStory.tsx": "e19beb24076fdf4d3b38835244ffd0904ed7d17ab65d9b05f44ac89d615ceaf7",
+    "practitioner-next/src/landing/LandingPage.tsx": "7d18a4082f92fb284fa4bea4fe57c88f5b3542b83a5198b6adf7876826dd84e4",
+    "practitioner-next/src/landing/SourceReview.tsx": "0e08e07386e93eb573a691cb7cd1e2eccf9f857859008c21120e9cc29b6b8185",
+    "practitioner-next/src/landing/StoryGraph.tsx": "e651985e26ad6cbf4a0e880a4fe1e5f92a3394762f545a2e386bf1463d89105c",
+    "practitioner-next/src/landing/copy.ts": "117cd00050b9c6c21152e9b77091bfdeee96d5d2d29e96055f3d3adc802d26d4",
+    "practitioner-next/src/landing/document-story.css": "8eb259f7dfd53ce1588d7d6ef4655152f2e9a9842fc95181d5e8b5d899c4b05e",
+    "practitioner-next/src/landing/landing-api.ts": "2af90ca3f8907c3f8ed3f288158b72891a0423a17dcd3d7d157b49023eb43b8d",
+    "practitioner-next/src/landing/landing-layout.ts": "f9acdb167ae0716ab4ae0a38fa954c0278c230378d2198a4c6050dd655afff37",
+    "practitioner-next/src/landing/landing.css": "a08f1937c6bee7c17e64650e807e0fdf700a600fad600bd31655c4b62b9dc850",
+    "practitioner-next/src/landing/source-highlights.ts": "361fe6ee32bed755795a09c44c248e01524914d71ed12688f70ca62cd9d5972f",
+    "practitioner-next/src/landing/story-copy.ts": "bc359c84213e58b3f1d764181f8124360eeca90488a92f32b311bd67d332610e",
+    "practitioner-next/src/landing/story-geometry.ts": "cb6b5096f43e54d3c80664216143a1aab14b681bfc7a422aabefe2b0117a3055",
+    "practitioner-next/src/landing/useDocumentStory.ts": "a1367a45bc85c041b915f4cec14ff5cf0cdee5ed395dc3a51ee5d9623bb62a34"
+  },
+  "artifacts": [
+    {
+      "file": "landing-before-empty-strip.jpg",
+      "capturedAt": "2026-10-18T10:39:43.198050+00:00",
+      "method": "Actual Chrome via Codex browser controls",
+      "viewportCssPixels": {
+        "width": 1512,
+        "height": 862
+      },
+      "sha256": "4258a45288831b57ad38adf6b64a11a884e57619966e3906c54c16b2be57124b",
+      "state": "Before integration: former empty section margin"
+    },
+    {
+      "file": "landing-documents-desktop.png",
+      "capturedAt": "2026-10-18T11:13:46.469967+00:00",
+      "method": "Chromium via repository Playwright checks",
+      "viewportCssPixels": {
+        "width": 1512,
+        "height": 982
+      },
+      "sha256": "6dace99436f5dc375387ae2c7627bd0d1323c02857f45187b895a287e2807896",
+      "state": "Integrated document story"
+    },
+    {
+      "file": "landing-documents-phone.png",
+      "capturedAt": "2026-10-18T11:13:57.087980+00:00",
+      "method": "Chromium via repository Playwright checks",
+      "viewportCssPixels": {
+        "width": 390,
+        "height": 844
+      },
+      "sha256": "2165faae4e33fe381ebed82125676054af0a602c8c6627cdbb0096f1d5cfb934",
+      "state": "Integrated document story"
+    },
+    {
+      "file": "landing-review-desktop.png",
+      "capturedAt": "2026-10-18T11:13:47.185331+00:00",
+      "method": "Chromium via repository Playwright checks",
+      "viewportCssPixels": {
+        "width": 1512,
+        "height": 982
+      },
+      "sha256": "50b1c1392fb0b7edc54eaa00797608647b7cd50f35166b920d1e4ca7ec634256",
+      "state": "Integrated document story"
+    },
+    {
+      "file": "landing-review-phone.png",
+      "capturedAt": "2026-10-18T11:13:59.035989+00:00",
+      "method": "Chromium via repository Playwright checks",
+      "viewportCssPixels": {
+        "width": 390,
+        "height": 844
+      },
+      "sha256": "df308cbcb78226abf76d0f1967b185b56c1ec9cd7b149a238407694d55ca82e4",
+      "state": "Integrated document story"
+    },
+    {
+      "file": "landing-boundary-desktop.png",
+      "capturedAt": "2026-10-18T11:13:52.160910+00:00",
+      "method": "Chromium via repository Playwright checks",
+      "viewportCssPixels": {
+        "width": 1512,
+        "height": 982
+      },
+      "sha256": "40ac2e749a2c613323b2c4eab7794ce46514194b75da3fa0542d9392d07def5f",
+      "state": "Integrated document story"
+    },
+    {
+      "file": "landing-boundary-phone.png",
+      "capturedAt": "2026-10-18T11:14:03.997940+00:00",
+      "method": "Chromium via repository Playwright checks",
+      "viewportCssPixels": {
+        "width": 390,
+        "height": 844
+      },
+      "sha256": "6214fdd0d78326d66674fc9897cdd7dfb18e3879afaee495ab4d9ee07fbbc138",
+      "state": "Integrated document story"
+    },
+    {
+      "file": "landing-chrome.jpg",
+      "capturedAt": "2026-10-18T11:13:56.345284+00:00",
+      "method": "Actual Chrome via Codex browser controls",
+      "viewportCssPixels": {
+        "width": 1512,
+        "height": 806
+      },
+      "sha256": "0c58b239480b4facbd93d51e36b57da61feae7913bcced21b54ecc67231cbe78",
+      "state": "Integrated document story"
+    },
+    {
+      "file": "landing-walkthrough.webm",
+      "capturedAt": "2026-10-18T11:13:45.562384+00:00",
+      "method": "Chromium via repository Playwright checks",
+      "viewportCssPixels": {
+        "width": 1512,
+        "height": 982
+      },
+      "sha256": "e99be4b654583199feb4a3ccf14a453f1912e0066bc90265749e8550f6eef6a1",
+      "state": "Integrated document story"
+    }
+  ]
+}
