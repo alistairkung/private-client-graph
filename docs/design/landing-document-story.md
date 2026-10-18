@@ -92,11 +92,17 @@ statements and visible selection/focus. The full source preserves all text and
 whitespace; exact supporting occurrences have their canonical Evidence identifiers.
 Only the document pane moves when selecting a relationship. Reader input cancels
 that movement, and selection survives reverse scrolling and language changes.
-When review becomes interactive, a short pointer cue invites the visitor to try a
-relationship, and one alternative relationship receives a single outline reveal.
-The cue and outline disappear after the first pointer or keyboard selection and
-stay dismissed while scrolling back or changing language. Static/reduced-motion
-review shows the same invitation and outline without animation.
+When review becomes interactive, a small contextual “Try this relationship” hint
+points to one unselected relationship button. It sits beside that button on desktop
+and above it on phones, clear of captions, labels and Evidence controls at 320px.
+A 220ms fade and 4px arrival then rest directs attention once; reduced motion uses
+opacity only. The first pointer, touch or keyboard relationship selection dismisses
+it for the mounted page, including reverse scrolling and language changes. The
+hint never changes the initial selection or captures scrolling or focus.
+
+Motion's authenticated Base UI Tooltip example informed the anchored pointer and
+opacity/translation composition. The proactive hint uses the existing `motion/react`
+package; it needs no tooltip dependency, hover trigger, spring overshoot or portal.
 Phone labels clear measured captions and retain 44px targets, with short leaders
 associating displaced labels to their connections. Text reflow keeps the selected
 passage visible until the reader takes control.

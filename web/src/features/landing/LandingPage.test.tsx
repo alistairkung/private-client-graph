@@ -175,18 +175,23 @@ describe("document-to-review landing", () => {
   it("opens review only at the end, then preserves an explicit relationship when scrolling backwards", async () => {
     const { container } = render(<DocumentStory state={example.state} />);
     setProgress(0.7);
-    expect(screen.queryByText("Try a relationship to reveal its Evidence.")).not.toBeInTheDocument();
+    expect(screen.queryByText("Try this relationship")).not.toBeInTheDocument();
     expect(container.querySelector("#landing-story-review")).toHaveAttribute(
       "inert",
     );
     setProgress(0.99);
-    await waitFor(() => expect(screen.getByText("Try a relationship to reveal its Evidence.")).toBeVisible());
+    await waitFor(() => expect(screen.getByText("Try this relationship")).toBeVisible());
     const claim = screen.getByRole("button", {
       name: "Bob — beneficiary of — Trust",
     });
     expect(claim).toHaveAttribute("data-inviting", "true");
+    expect(claim).toHaveAccessibleDescription("Try this relationship");
+    expect(claim).toHaveAttribute("aria-pressed", "false");
+    expect(screen.getByRole("button", { name: "Alice — parent of — Bob" }))
+      .toHaveAttribute("aria-pressed", "true");
+    expect(container.querySelector("mark")).toHaveTextContent("Alice is Bob’s parent.");
     await userEvent.click(claim);
-    expect(screen.queryByText("Try a relationship to reveal its Evidence.")).not.toBeInTheDocument();
+    expect(screen.queryByText("Try this relationship")).not.toBeInTheDocument();
     expect(claim).not.toHaveAttribute("data-inviting");
     expect(claim).toHaveAttribute("aria-pressed", "true");
     expect(container.querySelector("mark")).toHaveAttribute(
@@ -199,7 +204,7 @@ describe("document-to-review landing", () => {
     );
     setProgress(0.1);
     setProgress(0.99);
-    expect(screen.queryByText("Try a relationship to reveal its Evidence.")).not.toBeInTheDocument();
+    expect(screen.queryByText("Try this relationship")).not.toBeInTheDocument();
     expect(claim).toHaveAttribute("aria-pressed", "true");
     expect(container.querySelector("mark")).toHaveTextContent(
       "Bob is a beneficiary of Trust.",
@@ -211,7 +216,7 @@ describe("document-to-review landing", () => {
       <DocumentStory state={example.state} />,
     );
     reduced(true);
-    await waitFor(() => expect(screen.getByText("Try a relationship to reveal its Evidence.")).toBeVisible());
+    await waitFor(() => expect(screen.getByText("Try this relationship")).toBeVisible());
     expect(container.querySelector(".landing-story")).toHaveAttribute(
       "data-story-mode",
       "static",
@@ -246,6 +251,18 @@ describe("document-to-review landing", () => {
     expect(scrollTo).toHaveBeenCalledWith(
       expect.objectContaining({ behavior: "instant" }),
     );
+  });
+  it.each(["{Enter}", " "])("dismisses the hint when keyboard selection %s reaffirms the initial relationship", async (key) => {
+    render(<DocumentStory state={example.state} />);
+    setProgress(0.99);
+    const initial = screen.getByRole("button", { name: "Alice — parent of — Bob" });
+    initial.focus();
+    await userEvent.keyboard(key);
+    expect(screen.queryByText("Try this relationship")).not.toBeInTheDocument();
+    expect(initial).toHaveAttribute("aria-pressed", "true");
+    setProgress(0.1);
+    setProgress(0.99);
+    expect(screen.queryByText("Try this relationship")).not.toBeInTheDocument();
   });
   it("cleans up StrictMode measurement observers and does not call a provider", async () => {
     const { unmount } = render(
@@ -306,11 +323,22 @@ describe("document-to-review landing", () => {
     const claim = await screen.findByRole("button", {
       name: "Bob — beneficiary of — Trust",
     });
-    await userEvent.click(claim);
+    await waitFor(() => expect(screen.getByText("Try this relationship")).toBeVisible());
     await userEvent.selectOptions(
       screen.getByRole("combobox", { name: "Language" }),
       "zh-CN",
     );
+    expect(screen.getByText("试着选择这项关系")).toBeVisible();
+    await userEvent.click(claim);
+    await userEvent.selectOptions(
+      screen.getByRole("combobox", { name: "语言" }),
+      "en",
+    );
+    await userEvent.selectOptions(
+      screen.getByRole("combobox", { name: "Language" }),
+      "zh-CN",
+    );
+    expect(screen.queryByText("试着选择这项关系")).not.toBeInTheDocument();
     expect(
       screen.getByRole("heading", { name: "从您的文件开始" }),
     ).toBeVisible();

@@ -1,5 +1,6 @@
 import { useLocale } from "../../shared/locale";
 import { relationshipWords, useLandingCopy } from "./copy";
+import { useStoryCopy } from "./story-copy";
 import { useId, useLayoutEffect, useState, type RefObject } from "react";
 import {
   directionalTarget,
@@ -111,6 +112,8 @@ function GraphEdge({
   scope: string;
 }) {
   const { locale } = useLocale();
+  const copy = useStoryCopy();
+  const hintId = `${scope}-relationship-hint`;
   const start = 0.65 + index * 0.025;
   const draw = useTransform(progress, [start, start + 0.08], [0, 1]);
   const maskOpacity = useTransform(draw, [0, 0.015], [0, 1]);
@@ -195,22 +198,44 @@ function GraphEdge({
             />
           )}
       </svg>
-      <motion.button
-        className="landing-story-edge-label"
-        data-relationship-index={index}
-        aria-label={label}
-        aria-pressed={selected}
-        aria-describedby={inviting ? "landing-story-interaction-hint" : undefined}
-        data-inviting={inviting || undefined}
-        onClick={onSelect}
+      <div
+        className="landing-story-edge-anchor"
         style={{
           left: `${(labelAt[0] / 660) * 100}%`,
           top: `${(labelAt[1] / 420) * 100}%`,
-          opacity: reduced ? 1 : labelOpacity,
         }}
       >
-        {relationshipWords[locale][edge.type]}
-      </motion.button>
+        <motion.button
+          className="landing-story-edge-label"
+          data-relationship-index={index}
+          aria-label={label}
+          aria-pressed={selected}
+          aria-describedby={inviting ? hintId : undefined}
+          data-inviting={inviting || undefined}
+          onClick={onSelect}
+          style={{
+            opacity: reduced ? 1 : labelOpacity,
+          }}
+        >
+          {relationshipWords[locale][edge.type]}
+        </motion.button>
+        {inviting && (
+          <span className="landing-story-hint-anchor">
+            <motion.span
+              id={hintId}
+              className="landing-story-relationship-hint"
+              initial={{ opacity: 0, y: reduced ? 0 : 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+            >
+              {copy.tryRelationship}
+              <svg viewBox="0 0 8 8" aria-hidden="true">
+                <path d="m7 1-6 3 6 3" />
+              </svg>
+            </motion.span>
+          </span>
+        )}
+      </div>
     </>
   );
 }
@@ -299,7 +324,9 @@ export function StoryGraph({
   }, [drawingRef, state, reduced]);
   const name = (id: string) =>
     state.entities.find((item) => item.id === id)?.name ?? id;
-  const invitationIndex = state.relationships.length > 1 ? 1 : 0;
+  const invitationIndex = state.relationships.findIndex(
+    (_, index) => index !== selected,
+  );
   return (
     <div
       ref={drawingRef}

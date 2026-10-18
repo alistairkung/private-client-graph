@@ -74,6 +74,28 @@ async function clearPhoneLabels(page: Page) {
     )
     .toEqual([]);
 }
+async function clearRelationshipHint(page: Page) {
+  await expect
+    .poll(() => page.locator(".landing-story-relationship-hint").evaluate(element => {
+      const box = element.getBoundingClientRect();
+      const obstacles = document.querySelectorAll(
+        ".landing-story-edge-label, .landing-story-entity span, .landing-story-entity svg, .landing-story-source-holder, .landing-story-graph-heading",
+      );
+      const overlaps = [...obstacles].filter(other => {
+        const bounds = other.getBoundingClientRect();
+        return (
+          Math.min(box.right, bounds.right) - Math.max(box.left, bounds.left) > 0.5 &&
+          Math.min(box.bottom, bounds.bottom) - Math.max(box.top, bounds.top) > 0.5
+        );
+      });
+      return {
+        overlaps: overlaps.map(other => other.getAttribute("class")),
+        clipped: box.left < 0 || box.right > window.innerWidth,
+        capturesInput: getComputedStyle(element).pointerEvents !== "none",
+      };
+    }))
+    .toEqual({ overlaps: [], clipped: false, capturesInput: false });
+}
 async function openReview(page: Page) {
   await page
     .getByRole("link", { name: "Skip to relationship review", exact: true })
@@ -289,9 +311,9 @@ test("scroll scrubs document fronts, measured name movement and masked drawing; 
       }),
     );
   expect(partial).toBe(true);
-  await expect(page.getByText("Try a relationship to reveal its Evidence.", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("Try this relationship", { exact: true })).toHaveCount(0);
   await storyProgress(page, 1);
-  await expect(page.getByText("Try a relationship to reveal its Evidence.", { exact: true })).toBeVisible();
+  await expect(page.getByText("Try this relationship", { exact: true })).toBeVisible();
   await openReview(page);
   const claim = page.getByRole("button", {
     name: "Carol Wong — beneficiary of — Evergreen Family Trust",
@@ -304,7 +326,7 @@ test("scroll scrubs document fronts, measured name movement and masked drawing; 
     .textContent();
   await storyProgress(page, 0.1);
   await storyProgress(page, 1);
-  await expect(page.getByText("Try a relationship to reveal its Evidence.", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("Try this relationship", { exact: true })).toHaveCount(0);
   await expect(claim).toHaveAttribute("aria-pressed", "true");
   await expect(page.locator(".landing-story-source-meta")).toHaveText(
     evidence!,
@@ -357,11 +379,10 @@ test("keyboard skip and live reduced motion expose an in-flow review while prese
   await skip.focus();
   await skip.press("Enter");
   await expect(page.locator("#landing-story-review")).toBeFocused();
-  await expect(page.getByText("Try a relationship to reveal its Evidence.", { exact: true })).toBeVisible();
+  await expect(page.getByText("Try this relationship", { exact: true })).toBeVisible();
   await expect(page.locator(".landing-story-edge-label[data-inviting]")).toHaveCount(1);
-  const hint = await page.locator(".landing-story-interaction-hint").boundingBox();
-  const heading = await page.locator(".landing-story-graph-heading").boundingBox();
-  expect(hint!.y + hint!.height).toBeLessThanOrEqual(heading!.y + heading!.height + 1);
+  await expect(page.locator(".landing-story-edge-label[data-inviting]"))
+    .toHaveAccessibleDescription("Try this relationship");
   const claim = page.getByRole("button", {
     name: "Carol Wong — beneficiary of — Evergreen Family Trust",
     exact: true,
@@ -369,7 +390,7 @@ test("keyboard skip and live reduced motion expose an in-flow review while prese
   await claim.focus();
   await claim.press("Enter");
   await expect(page.locator(".landing-story-edge-label[data-inviting]")).toHaveCount(0);
-  await expect(page.getByText("Try a relationship to reveal its Evidence.", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("Try this relationship", { exact: true })).toHaveCount(0);
   await page.emulateMedia({ reducedMotion: "reduce" });
   await expect(page.locator(".landing-story")).toHaveAttribute(
     "data-story-mode",
@@ -408,8 +429,9 @@ test("initial reduced motion shows all documents and keeps graph/source readable
     "data-story-mode",
     "static",
   );
-  await expect(page.getByText("Try a relationship to reveal its Evidence.", { exact: true })).toBeVisible();
-  expect(await page.locator(".landing-story-edge-label[data-inviting]").evaluate(element => getComputedStyle(element, "::after").animationName)).toBe("none");
+  await expect(page.getByText("Try this relationship", { exact: true })).toBeVisible();
+  await expect(page.locator(".landing-story-relationship-hint")).toHaveCSS("transform", "none");
+  await expect(page.locator(".landing-story-graph-heading")).toHaveCSS("opacity", "1");
   const source = page.locator(".landing-story-source-text");
   const text = await source.textContent();
   await page.setViewportSize({ width: 390, height: 844 });
@@ -592,4 +614,48 @@ test("language changes keep exact source and canonical selection; public and pra
   await page.locator('a[href="/app"]').first().click();
   await expect(page).toHaveURL(/\/app$/);
   await expect(page.locator(".atlas")).toBeVisible();
+});
+
+test("contextual hint clears graph labels, captions and Evidence in both languages and dismisses on selection", async ({ page }, info) => {
+  const errors: string[] = [];
+  page.on("pageerror", error => errors.push(error.message));
+  await page.goto("/");
+  await openReview(page);
+  const selection = page.locator('.landing-story-edge-label[aria-pressed="true"]');
+  const initial = await selection.getAttribute("data-relationship-index");
+  const source = await page.locator(".landing-story-source-text").textContent();
+  const widths = info.project.name === "phone" ? [320, 390, 700] : [701, 900, 1512];
+  for (const reducedMotion of ["no-preference", "reduce"] as const) {
+    await page.locator(".landing-masthead select").selectOption("en");
+    await page.emulateMedia({ reducedMotion });
+    await page.goto("/");
+    await openReview(page);
+    for (const width of widths) {
+      await page.setViewportSize({ width, height: info.project.name === "phone" ? 844 : 982 });
+      for (const locale of ["en", "zh-CN"]) {
+        await page.locator(".landing-masthead select").selectOption(locale);
+        if (reducedMotion === "no-preference") await storyProgress(page, 1);
+        const hint = page.locator(".landing-story-relationship-hint");
+        await expect(hint).toHaveCSS("opacity", "1");
+        await expect(hint).toHaveText(locale === "en" ? "Try this relationship" : "试着选择这项关系");
+        await expect(selection).toHaveAttribute("data-relationship-index", initial!);
+        await expect(page.locator(".landing-story-edge-label[data-inviting]")).toHaveAttribute("aria-pressed", "false");
+        await clearRelationshipHint(page);
+        if (width <= 700) await clearPhoneLabels(page);
+        if (reducedMotion === "reduce") await expect(hint).toHaveCSS("transform", "none");
+        await page.locator(".landing-story-graph-holder").screenshot({ path: info.outputPath(`hint-${width}-${locale}-${reducedMotion}.png`) });
+      }
+    }
+  }
+  expect(await page.locator(".landing-story-source-text").textContent()).toBe(source);
+  const target = page.locator(".landing-story-edge-label[data-inviting]");
+  if (info.project.name === "phone") await target.tap();
+  else {
+    await target.focus();
+    await target.press("Space");
+  }
+  await expect(page.locator(".landing-story-relationship-hint")).toHaveCount(0);
+  await page.locator(".landing-masthead select").selectOption("en");
+  await expect(page.locator(".landing-story-relationship-hint")).toHaveCount(0);
+  expect(errors).toEqual([]);
 });

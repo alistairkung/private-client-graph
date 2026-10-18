@@ -126,15 +126,7 @@ export function DocumentStory({ state }: { state: CanonicalState }) {
                 style={{ opacity: reduced ? 1 : headingOpacity }}
               >
                 <h2>{copy.graphTitle}</h2>
-                <p
-                  id="landing-story-interaction-hint"
-                  className={inviting ? "landing-story-interaction-hint" : undefined}
-                >
-                  {inviting && <svg viewBox="0 0 20 20" aria-hidden="true">
-                    <path d="m4 2 12 8-6 1-2 6-4-15Z" />
-                  </svg>}
-                  {inviting ? copy.tryRelationship : copy.working}
-                </p>
+                <p>{copy.working}</p>
               </motion.div>
               <StoryGraph
                 state={state}
