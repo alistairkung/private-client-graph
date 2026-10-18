@@ -35,8 +35,9 @@ Public research uses Public Sans and the same Forest & Chalk palette, with a
 reading-led overview, restrained spring selection controls and stable recorded
 values. The [research interaction brief](docs/design/research-results-interaction-refresh.md)
 records its Motion+-informed decisions, research caveats and verification.
-It retains the recorded comparison renderers and original artifact download.
-Its required older renderers live
-under `web/src/features/public-research/recorded-review/`; they are not a second
-practitioner application. The earlier [public landing direction](docs/design/public-landing-visual-direction.md)
+The [consistency follow-up](docs/design/research-ui-consistency.md) shares the
+landing masthead and Matter graph renderer, introduces Motion/Base UI disclosures,
+and gives case Evidence a two-pane reader. The original artifact download and
+recorded research semantics remain unchanged. The research Source reader lives
+under `web/src/features/public-research/recorded-review/`. The earlier [public landing direction](docs/design/public-landing-visual-direction.md)
 remains a historical record of the replaced landing.

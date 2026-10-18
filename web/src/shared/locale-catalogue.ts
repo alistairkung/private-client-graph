@@ -1,3 +1,4 @@
+import { researchRoadmapCatalogue } from "../features/public-research/roadmap-catalogue";
 import { chinese } from "./translations";
 import { researchVisualCatalogue } from "./research/visual-catalogue";
 import { researchEditorialCatalogue } from "../features/public-research/editorial-catalogue";
@@ -7,9 +8,13 @@ import { showcaseZhCN } from "./public/catalogue";
 
 export const catalogue: Record<string,string> = {
   ...researchEditorialCatalogue,
+  ...researchRoadmapCatalogue,
   ...researchVisualCatalogue,
   "The Evidence Source could not be found. Reload the case.": "找不到证据来源。请重新加载案例。",
   "Language": "语言",
+  "Main navigation": "主导航",
+  "Research": "研究",
+  "Open practitioner prototype": "打开实务原型",
   "Supporting evidence": "支持证据",
   "Evidence": "证据",
   "Evidence {number}": "证据 {number}",

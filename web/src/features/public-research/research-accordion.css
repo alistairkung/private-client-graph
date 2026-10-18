@@ -1,0 +1,10 @@
+.research-accordion { min-width: 0; }
+.research-accordion > [data-index] { border-bottom: 1px solid var(--research-line, #c7d3c8); }
+.research-shell .research-accordion-heading { margin: 0; font-size: 14px; letter-spacing: 0; }
+.research-shell .research-accordion-trigger { width: 100%; min-height: 56px; padding: 14px 8px; display: flex; align-items: center; justify-content: space-between; gap: 16px; border: 0; border-radius: 8px; background: transparent; text-align: left; font: 600 14px/1.5 "Public Sans", sans-serif; overflow-wrap: anywhere; }
+.research-shell .research-accordion-trigger:hover { background: var(--folio-paper, #f2f5ef); }
+.research-accordion-trigger svg { flex: none; fill: none; stroke: currentColor; stroke-width: 1.5; }
+.research-accordion-panel, .research-accordion-panel > div { overflow: hidden; }
+.research-accordion-panel[hidden] { display: block; }
+.research-accordion-content { padding: 8px 8px 24px; }
+.research-accordion-content > :last-child { margin-bottom: 0; }
