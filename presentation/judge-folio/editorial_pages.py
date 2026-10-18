@@ -124,25 +124,28 @@ def closing_references(canvas, number, evidence):
     page = Page(canvas, number, "Explore the evidence")
     page.heading("Make every relationship<br/>reviewable", y=83, size=43)
     page.paragraph(
-        "Private Client Graph combines a tangible practitioner workflow, explicit "
-        "professional acceptance and a research record that can be inspected "
-        "down to the original words. That is the foundation worth developing: "
-        "AI-assisted structure whose claims remain open to challenge. The baseline "
-        "and resolver are the first tested slice of a twenty-scenario research roadmap.",
+        "For Private Wealth advice, begin with a family-and-trust map whose "
+        "connections can be checked against the documents. This university "
+        "prototype connects synthetic PDF intake, graph review and explicit "
+        "acceptance, backed by an inspectable baseline-plus-resolver comparison.",
         48, 197, 624, 16, 23)
 
-    page.text("Open the prototype", 48, 340, 18, FOREST, "SansBold")
+    page.text("Try the public review workflow", 48, 326, 18, FOREST, "SansBold")
     page.link("private-client-graph-production.up.railway.app", PRODUCTION + "/",
-              48, 371, 13, FOREST)
-    page.text("Inspect the retained research", 48, 399, 18, FOREST, "SansBold")
+              48, 357, 13, FOREST)
+    page.paragraph(
+        "Open a synthetic Matter, select a relationship, inspect its Evidence, "
+        "then view the passage in its Source. Creating and confirming synthetic "
+        "intake requires an allowlisted account.", 48, 383, 624, 13, 18)
+    page.text("Inspect the retained research", 48, 443, 18, FOREST, "SansBold")
     page.link("Research results and downloadable original publication",
-              PRODUCTION + "/research-results", 48, 430, 13, FOREST)
-    page.text("Read the implementation", 48, 472, 18, FOREST, "SansBold")
+              PRODUCTION + "/research-results", 48, 474, 13, FOREST)
+    page.text("Read the implementation", 48, 516, 18, FOREST, "SansBold")
     page.link("github.com/alistairkung/private-client-graph", GITHUB,
-              48, 503, 13, FOREST)
+              48, 547, 13, FOREST)
 
-    page.line(48, 546, 672, 546)
-    page.text("Sources and visual provenance", 48, 566, 19, FOREST, "SansBold")
+    page.line(48, 582, 672, 582)
+    page.text("Sources and visual provenance", 48, 600, 19, FOREST, "SansBold")
     references = [
         ("Product and architecture", "README, glossary and ADRs 0001, 0005, 0006, 0009-0011.",
          PIN + "README.md"),
@@ -154,7 +157,7 @@ def closing_references(canvas, number, evidence):
          PRODUCTION + "/research-results#comparison"),
     ]
     for index, (label, description, url) in enumerate(references):
-        top = 603 + index*47
+        top = 636 + index*40
         page.link(label, url, 48, top, 11.5, FOREST)
         page.paragraph(description, 48, top+18, 624, 10.5, 14, MUTED)
     page.text("Synthetic-data prototype. Not validated for real client use.", 48, 814,
