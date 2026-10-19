@@ -1,4 +1,5 @@
 import { useLocale } from "../../../shared/locale";
+import "./source-panel.css";
 import { useEffect, useRef } from "react";
 
 export function SourcePanel({
@@ -6,9 +7,8 @@ export function SourcePanel({
   practitioner = false,
   title = "Attendance note",
   span,
-  activation,
   highlightId,
-  focusRequest = 0,
+  revealRequest = 0,
   onReturn,
 }: {
   source: string;
@@ -17,21 +17,18 @@ export function SourcePanel({
   activation?: number;
   span?: { start: number; end: number };
   highlightId?: string;
-  focusRequest?: number;
+  revealRequest?: number;
   onReturn?: () => void;
 }) {
   const { t } = useLocale();
   const highlight = useRef<HTMLElement>(null);
+
   useEffect(() => {
+    if (!revealRequest) return;
     highlight.current?.scrollIntoView({ behavior: "instant", block: "center" });
-  }, [span?.start, span?.end, activation]);
-  useEffect(() => {
-    if (!focusRequest) return;
-    highlight.current?.focus();
-    highlight.current?.scrollIntoView({ behavior: "instant", block: "center" });
-  }, [focusRequest]);
+  }, [revealRequest]);
   return (
-    <section className="source-panel panel">
+    <section className="research-original-source">
       <div className="panel-heading">
         <div>
           <h2>{practitioner ? t("Authoritative Source") : title}</h2>

@@ -15,6 +15,10 @@ import { SourceReview } from "./SourceReview";
 import { useDocumentOrigins, useStoryReducedMotion } from "./useDocumentStory";
 import "./document-story.css";
 
+const storyCompletion = 0.78;
+const invitationStart = 0.82;
+const reviewEntry = 0.83;
+
 export function DocumentStory({ state }: { state: CanonicalState }) {
   const copy = useStoryCopy();
   const landingCopy = useLandingCopy();
@@ -29,18 +33,26 @@ export function DocumentStory({ state }: { state: CanonicalState }) {
     target: track,
     offset: ["start start", "end end"],
   });
+  const storyProgress = useTransform(scrollYProgress, [0, storyCompletion], [0, 1]);
   const [exploring, setExploring] = useState(false);
+  const [invitationReady, setInvitationReady] = useState(false);
   const [selected, setSelected] = useState(0);
-  const [hasChosenRelationship, setHasChosenRelationship] = useState(false);
-  useMotionValueEvent(scrollYProgress, "change", (value) =>
-    setExploring(value >= 0.96),
-  );
+  const [hasInteracted, setHasInteracted] = useState(false);
+  const [selectionVersion, setSelectionVersion] = useState(0);
+  useMotionValueEvent(scrollYProgress, "change", (value) => {
+    setExploring(value >= storyCompletion * 0.96);
+    setInvitationReady(value >= invitationStart);
+  });
   const active = reduced || exploring;
-  const inviting = active && !hasChosenRelationship && state.relationships.length > 0;
-  const headingOpacity = useTransform(scrollYProgress, [0.62, 0.69], [0, 1]);
-  const graphX = useTransform(scrollYProgress, [0.86, 0.96], ["46%", "0%"]);
-  const sourceOpacity = useTransform(scrollYProgress, [0.87, 0.97], [0, 1]);
-  const sourceX = useTransform(scrollYProgress, [0.87, 0.97], [35, 0]);
+  const inviting =
+    active &&
+    (reduced || invitationReady) &&
+    !hasInteracted &&
+    state.relationships.length > 0;
+  const headingOpacity = useTransform(storyProgress, [0.62, 0.69], [0, 1]);
+  const graphX = useTransform(storyProgress, [0.86, 0.96], ["46%", "0%"]);
+  const sourceOpacity = useTransform(storyProgress, [0.87, 0.97], [0, 1]);
+  const sourceX = useTransform(storyProgress, [0.87, 0.97], [35, 0]);
   const origins = useDocumentOrigins(
     state,
     reduced,
@@ -75,11 +87,11 @@ export function DocumentStory({ state }: { state: CanonicalState }) {
         top:
           track.current.getBoundingClientRect().top +
           window.scrollY +
-          track.current.offsetHeight -
-          window.innerHeight,
+          (track.current.offsetHeight - window.innerHeight) * reviewEntry,
         behavior: "instant",
       });
     setExploring(true);
+    setInvitationReady(true);
     requestAnimationFrame(() => review.current?.focus({ preventScroll: true }));
   }
   return (
@@ -103,7 +115,7 @@ export function DocumentStory({ state }: { state: CanonicalState }) {
           </a>
           <DocumentMontage
             state={state}
-            progress={scrollYProgress}
+            progress={storyProgress}
             reduced={reduced}
             noteRef={note}
             hidden={!reduced && exploring}
@@ -130,14 +142,16 @@ export function DocumentStory({ state }: { state: CanonicalState }) {
               </motion.div>
               <StoryGraph
                 state={state}
-                progress={scrollYProgress}
+                progress={storyProgress}
                 reduced={reduced}
                 selected={selected}
                 inviting={inviting}
                 onSelect={index => {
                   setSelected(index);
-                  setHasChosenRelationship(true);
+                  setHasInteracted(true);
+                  setSelectionVersion(version => version + 1);
                 }}
+                onInteract={() => setHasInteracted(true)}
                 origins={origins}
                 drawingRef={drawing}
               />
@@ -155,6 +169,7 @@ export function DocumentStory({ state }: { state: CanonicalState }) {
                   relationship={statement}
                   reduced={reduced}
                   active={active}
+                  selectionVersion={selectionVersion}
                 />
               ) : (
                 <p>{copy.unavailable}</p>

@@ -26,7 +26,7 @@ for (const locale of ["en", "zh-CN"] as const) {
     await expect(page.locator("main")).toContainText("100.00%");
     await expect(page.locator("main")).toContainText(snapshot.snapshot_id);
     await expect(page.locator("main")).toContainText(snapshot.integrity.digest);
-    await page.locator(".research-recorded-metrics > summary").click();
+    await page.locator(".research-recorded-metrics .research-accordion-trigger").click();
     for (const section of ["comparison", "usage"]) {
       const scroller = page.locator(`#${section} .research-table-scroll`);
       if (page.viewportSize()!.width < 600) {
@@ -63,7 +63,7 @@ test("paired corrections preserve the exact selected Source and Evidence across 
   await page.goto("/research-results");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Research results");
   await expect(page.getByRole("article", { name: "Source document" })).toHaveCount(0);
-  await expect(page.getByRole("navigation", { name: "Benchmark cases" }).getByRole("button")).toHaveCount(10);
+  await expect(page.getByRole("combobox", { name: "Benchmark case", exact: true }).locator("option")).toHaveCount(11);
   await page.getByRole("button", { name: "Inspect the two corrections", exact: true }).click();
   const selectedHeading = page.locator(".research-case-detail h3");
   await expect(selectedHeading).toBeFocused();
@@ -72,27 +72,29 @@ test("paired corrections preserve the exact selected Source and Evidence across 
   await expect(corrections).toHaveCount(2);
   for (let index = 0; index < 2; index++) {
     await corrections.nth(index).click();
-    await expect(page.locator(".source-panel mark")).toBeVisible();
+    await page.getByRole("button", { name: "View in original Source", exact: true }).click();
+    await expect(page.locator(".research-original-source mark")).toBeVisible();
     await expect(page.locator(".research-source-inspection")).toContainText("Selected relationship · B");
-    const quote = await page.locator(".source-panel mark").innerText();
-    const source = await page.getByLabel("Original Source", { exact: true }).inputValue();
+    const quote = await page.locator(".research-original-source mark").innerText();
+    const source = await page.getByRole("combobox", { name: "Original Source", exact: true }).inputValue();
     await selectPublicLanguage(page, "zh-CN");
     await expect(page.locator("html")).toHaveAttribute("lang", "zh-CN");
-    await expect(page.locator(".source-panel mark")).toHaveText(quote);
+    await expect(page.locator(".research-original-source mark")).toHaveText(quote);
     expect(await page.locator(".research-source-inspection select").first().inputValue()).toBe(source);
-    await expect(page.locator(".research-case-index button[aria-pressed=true]")).toContainText("heldout_03");
-    await expect(page.locator(".research-pair button[aria-pressed=true]")).toHaveCount(1);
+    await expect(page.locator(".research-case-picker select")).toHaveValue("heldout_03");
+    await expect(page.locator(".research-relationship-list section button[aria-pressed=true]")).toHaveCount(1);
     await expect(page.locator(".research-source-inspection")).not.toContainText("Selected relationship");
     if (index === 0) await page.screenshot({ path: testInfo.outputPath("research-correction-zh-CN.png"), fullPage: true });
     await selectPublicLanguage(page, "en");
-    await expect(page.locator(".source-panel mark")).toHaveText(quote);
+    await expect(page.locator(".research-original-source mark")).toHaveText(quote);
   }
   await page.getByLabel("Recorded outcome filter").selectOption("errors");
   await expect(page.getByRole("region", { name: "Run B relationships" })).toContainText("No recorded relationship errors.");
+  await page.getByRole("group", { name: "Relationship Run", exact: true }).getByRole("button", { name: "Run A′", exact: true }).click();
   await expect(page.getByRole("region", { name: "Run A′ relationships" }).getByRole("button")).toHaveCount(4);
   await page.getByLabel("Baseline Run").selectOption("A");
   await expect(page.getByRole("region", { name: "Run A relationships" }).getByRole("button")).toHaveCount(4);
-  await page.getByRole("navigation", { name: "Benchmark cases" }).getByRole("button").first().click();
+  await page.getByRole("combobox", { name: "Benchmark case", exact: true }).selectOption("heldout_01");
   await expect(page.locator(".research-case-detail")).toContainText("Unchanged relationship results across A, A′ and B.");
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 });
@@ -106,11 +108,11 @@ test("provider inspection shows replay zero calls and retained metadata only", a
   await usage.getByText("Run A′: 0 provider calls", { exact: true }).click();
   await expect(usage).toContainText("Zero provider calls. This control used deterministic replay.");
   await usage.getByText(`Run B: ${resolver.usage.attempts} provider calls`, { exact: true }).click();
-  const treatment = usage.locator(":scope > details").filter({
+  const treatment = usage.locator(".research-accordion-panel").filter({
     has: page.getByText(resolver.run_id, { exact: true }),
-  });
-  const call = treatment.locator(".research-call-list details").first();
-  await call.locator("summary").click();
+  }).first();
+  const call = treatment.locator(".research-call-list > .research-accordion").first();
+  await call.getByRole("button").click();
   await expect(call).toContainText(resolver.calls[0].attempt_id);
   await expect(call).toContainText("Input tokens");
   await expect(call).toContainText("Output tokens");
@@ -120,7 +122,7 @@ test("provider inspection shows replay zero calls and retained metadata only", a
   await expect(call).not.toContainText("system_prompt");
   await page.screenshot({ path: testInfo.outputPath("research-calls-en.png"), fullPage: true });
   await selectPublicLanguage(page, "zh-CN");
-  await expect(call).toHaveAttribute("open", "");
+  await expect(call.getByRole("button")).toHaveAttribute("aria-expanded", "true");
   await expect(call).toContainText(resolver.calls[0].attempt_id);
   await expect(call).toContainText("未定价");
   await page.screenshot({ path: testInfo.outputPath("research-calls-zh-CN.png"), fullPage: true });
@@ -133,18 +135,13 @@ for (const locale of ["en", "zh-CN"] as const) {
     const requests: string[] = [];
     page.on("request", request => { if (request.url().includes("/api/")) requests.push(`${request.method()} ${new URL(request.url()).pathname}`); });
     await page.goto("/research-results");
-    await expect(page.locator("main > .research-section")).toHaveCount(8);
-    const sectionIds = ["question", "architecture", "methodology", "comparison", "failure-analysis", "findings", "limitations", "reproducibility"];
+    await expect(page.locator("main > .research-section")).toHaveCount(9);
+    const sectionIds = ["question", "architecture", "methodology", "comparison", "failure-analysis", "findings", "limitations", "roadmap", "reproducibility"];
     expect(await page.locator("main > .research-section").evaluateAll(elements => elements.map(element => element.id))).toEqual(sectionIds);
-    if (page.viewportSize()!.width >= 701) {
-      const index = page.getByRole("navigation", { name: locale === "en" ? "Benchmark cases" : "基准案例" });
-      expect(await index.evaluate(element => element.clientHeight)).toBeLessThanOrEqual(512);
-      expect(await index.evaluate(element => element.scrollHeight > element.clientHeight)).toBe(true);
-      expect(await index.getByRole("button").evaluateAll(buttons => buttons.every(button => button.scrollHeight <= button.clientHeight + 1))).toBe(true);
-      await index.getByRole("button").last().scrollIntoViewIfNeeded();
-      await expect(index.getByRole("button").last()).toBeVisible();
-      await index.evaluate(element => { element.scrollTop = 0; });
-    }
+    const picker = page.locator(".research-case-picker select");
+    await expect(picker.locator("option")).toHaveCount(11);
+    expect(await picker.evaluate(element => element.getBoundingClientRect().height)).toBeLessThanOrEqual(60);
+    await expect(page.locator("#roadmap")).toContainText(locale === "en" ? "not delivery commitments" : "并非交付承诺");
     const architecture = page.locator("#architecture");
     await architecture.getByRole("group", { name: locale === "en" ? "Inspect Run" : "查看运行", exact: true }).getByRole("button", { name: /B/ }).click();
     const resolver = architecture.getByRole("button", { name: locale === "en" ? /Resolve aliases/ : /解析别名/ });
@@ -152,8 +149,13 @@ for (const locale of ["en", "zh-CN"] as const) {
     await expect(resolver).toHaveAttribute("aria-expanded", "true");
     await expect(architecture.getByRole("region", { name: locale === "en" ? "Resolve aliases settings" : "解析别名设置" })).toContainText(locale === "en" ? "Frozen configuration · Read-only" : "冻结配置 · 只读");
     const study = page.locator(".research-graph-study");
+    await expect(study.locator(".graph-tools button")).toHaveCount(3);
+    expect(await study.locator(".graph-tools button").evaluateAll(buttons => buttons.every(button => {
+      const { width, height } = button.getBoundingClientRect();
+      return width >= 44 && height >= 44;
+    }))).toBe(true);
     await study.getByLabel(locale === "en" ? "Find a relationship" : "查找关系").selectOption("0");
-    const canvasContainsNodes = () => study.locator(".graph-canvas").evaluate(canvas => {
+    const canvasContainsNodes = () => study.locator(".graph-container").evaluate(canvas => {
       const frame = canvas.getBoundingClientRect();
       return Array.from(canvas.querySelectorAll(".react-flow__node")).every(node => {
         const box = node.getBoundingClientRect();

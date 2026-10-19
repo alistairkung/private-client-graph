@@ -3,7 +3,6 @@ const en = {
   research: "Research",
   enter: "Open practitioner prototype",
   explore: "Explore the example",
-  language: "Language",
   headline: "Build the structure.\nKeep the Evidence.",
   intro:
     "AI-assisted trust structure building, with the words behind every proposed relationship.",
@@ -57,7 +56,6 @@ const zh: Copy = {
   research: "研究",
   enter: "打开实务原型",
   explore: "探索示例",
-  language: "语言",
   headline: "构建关系结构。\n保留支持证据。",
   intro: "由 AI 辅助构建信托关系结构，保留每项提议关系的原文依据。",
   description:

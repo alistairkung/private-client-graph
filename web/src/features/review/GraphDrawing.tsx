@@ -21,6 +21,7 @@ import { useSessionState } from "../../shared/session-state";
 import type { CanonicalState } from "../../shared/contracts";
 import { useLocale } from "../../shared/locale";
 import "@xyflow/react/dist/style.css";
+import "./graph-drawing.css";
 
 const nodeTypes = { entity: EntityNode };
 const edgeTypes = { relationship: RelationshipEdge };

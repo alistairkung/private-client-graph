@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { expect, it } from "vitest";
 import { Usage } from "./Usage";
 import type { PublicResearchSnapshot } from "./types";
@@ -13,14 +13,10 @@ const snapshot: PublicResearchSnapshot = JSON.parse(
     "utf8",
   ),
 );
-it("distinguishes the zero-call control from unpriced recorded provider calls without exposing communications", () => {
+it("distinguishes the zero-call control from unpriced recorded provider calls without exposing communications", async () => {
   render(<Usage runs={snapshot.runs} />);
   fireEvent.click(screen.getByText("Run A′: 0 provider calls"));
-  expect(
-    screen.getByText(
-      "Zero provider calls. This control used deterministic replay.",
-    ),
-  ).toBeVisible();
+  await waitFor(() => expect(screen.getByText("Zero provider calls. This control used deterministic replay.")).toBeVisible());
   fireEvent.click(screen.getByText("Run B: 10 provider calls"));
   fireEvent.click(screen.getAllByText(/heldout_03 · Resolution/)[0]);
   expect(screen.getAllByText("Unpriced").length).toBeGreaterThan(0);

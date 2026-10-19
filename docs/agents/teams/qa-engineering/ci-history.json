@@ -1,0 +1,859 @@
+{
+  "schema_version": 1,
+  "revision": "39fe75b6ad9791725c601a48edd6ad40aa6970ff",
+  "collected_at": "2026-10-19",
+  "environment": {
+    "repository": "private-client-graph",
+    "branch": "codex/qa-engineering-department",
+    "host": "macOS local workspace",
+    "ci_provider": "GitHub Actions",
+    "gh_cli": "Available; initial restricted API request failed, then approved read-only network access collected the documented sample."
+  },
+  "requested_scope": {
+    "workflow": "Tests",
+    "completed_runs_limit": 20,
+    "latest_complete_successful_main_run": true,
+    "result": "collected",
+    "source_workflow_file": ".github/workflows/tests.yml"
+  },
+  "workflow_run_sample": {
+    "runs_returned": 20,
+    "denominator": "20/20 most recent completed runs returned",
+    "runs": [
+      {
+        "workflowName": "Tests",
+        "databaseId": 39149927229,
+        "headBranch": "codex/tactile-relationship-invitation",
+        "headSha": "ad8f1afa98209f063aaa7f076c5d8da0d598e138",
+        "event": "pull_request",
+        "conclusion": "failure",
+        "createdAt": "2026-10-18T17:30:49Z",
+        "updatedAt": "2026-10-18T17:35:19Z",
+        "url": "https://github.com/alistairkung/private-client-graph/actions/runs/39149927229",
+        "attempt": 1,
+        "status": "completed",
+        "displayTitle": "Invite graph interaction with a glowing relationship and held scroll frame"
+      },
+      {
+        "workflowName": "Tests",
+        "databaseId": 39149906958,
+        "headBranch": "main",
+        "headSha": "39fe75b6ad9791725c601a48edd6ad40aa6970ff",
+        "event": "push",
+        "conclusion": "success",
+        "createdAt": "2026-10-18T17:30:34Z",
+        "updatedAt": "2026-10-18T17:39:58Z",
+        "url": "https://github.com/alistairkung/private-client-graph/actions/runs/39149906958",
+        "attempt": 1,
+        "status": "completed",
+        "displayTitle": "Merge pull request #168 from alistairkung/codex/agent-team-governance"
+      },
+      {
+        "workflowName": "Tests",
+        "databaseId": 39149538104,
+        "headBranch": "codex/tactile-relationship-invitation",
+        "headSha": "741323d3ba417d4d3600294234479dc1896b070c",
+        "event": "pull_request",
+        "conclusion": "success",
+        "createdAt": "2026-10-18T17:25:45Z",
+        "updatedAt": "2026-10-18T17:34:50Z",
+        "url": "https://github.com/alistairkung/private-client-graph/actions/runs/39149538104",
+        "attempt": 1,
+        "status": "completed",
+        "displayTitle": "Invite graph interaction with a glowing relationship and held scroll frame"
+      },
+      {
+        "workflowName": "Tests",
+        "databaseId": 39149308128,
+        "headBranch": "codex/agent-team-governance",
+        "headSha": "d3938e128b2c2ebcff9393665f9584b9325e0b83",
+        "event": "pull_request",
+        "conclusion": "success",
+        "createdAt": "2026-10-18T17:22:48Z",
+        "updatedAt": "2026-10-18T17:30:24Z",
+        "url": "https://github.com/alistairkung/private-client-graph/actions/runs/39149308128",
+        "attempt": 1,
+        "status": "completed",
+        "displayTitle": "Establish cost-aware agent team governance"
+      },
+      {
+        "workflowName": "Tests",
+        "databaseId": 39149166356,
+        "headBranch": "main",
+        "headSha": "9c320e55eb0debcbd5ffbc169fd10b0397707ac8",
+        "event": "push",
+        "conclusion": "success",
+        "createdAt": "2026-10-18T17:20:58Z",
+        "updatedAt": "2026-10-18T17:29:56Z",
+        "url": "https://github.com/alistairkung/private-client-graph/actions/runs/39149166356",
+        "attempt": 1,
+        "status": "completed",
+        "displayTitle": "Merge pull request #166 from alistairkung/codex/research-ui-consistency"
+      },
+      {
+        "workflowName": "Tests",
+        "databaseId": 39149017080,
+        "headBranch": "codex/agent-team-governance",
+        "headSha": "4663d23466fd1a183b647ac0cd02543f50b023c2",
+        "event": "pull_request",
+        "conclusion": "success",
+        "createdAt": "2026-10-18T17:19:06Z",
+        "updatedAt": "2026-10-18T17:26:54Z",
+        "url": "https://github.com/alistairkung/private-client-graph/actions/runs/39149017080",
+        "attempt": 1,
+        "status": "completed",
+        "displayTitle": "Establish cost-aware agent team governance"
+      },
+      {
+        "workflowName": "Tests",
+        "databaseId": 39148958870,
+        "headBranch": "codex/tactile-relationship-invitation",
+        "headSha": "71a5f05e14a0355f52481e789af7f1b90b2a3d2e",
+        "event": "pull_request",
+        "conclusion": "success",
+        "createdAt": "2026-10-18T17:18:20Z",
+        "updatedAt": "2026-10-18T17:25:49Z",
+        "url": "https://github.com/alistairkung/private-client-graph/actions/runs/39148958870",
+        "attempt": 1,
+        "status": "completed",
+        "displayTitle": "Invite graph interaction with a glowing relationship and held scroll frame"
+      },
+      {
+        "workflowName": "Tests",
+        "databaseId": 39147279104,
+        "headBranch": "codex/research-ui-consistency",
+        "headSha": "f2f25eda1adb1536ebc5ebc193b80e8901864b13",
+        "event": "pull_request",
+        "conclusion": "success",
+        "createdAt": "2026-10-18T16:56:22Z",
+        "updatedAt": "2026-10-18T17:03:44Z",
+        "url": "https://github.com/alistairkung/private-client-graph/actions/runs/39147279104",
+        "attempt": 1,
+        "status": "completed",
+        "displayTitle": "Unify research navigation, graph and evidence review"
+      },
+      {
+        "workflowName": "Tests",
+        "databaseId": 39145227008,
+        "headBranch": "codex/judge-folio-bilingual",
+        "headSha": "3f96d13fd4f3831484d8d134aa80493ea1b60ef7",
+        "event": "pull_request",
+        "conclusion": "success",
+        "createdAt": "2026-10-18T16:29:26Z",
+        "updatedAt": "2026-10-18T16:38:15Z",
+        "url": "https://github.com/alistairkung/private-client-graph/actions/runs/39145227008",
+        "attempt": 1,
+        "status": "completed",
+        "displayTitle": "Refine Private Wealth judge folio and add Simplified Chinese edition"
+      },
+      {
+        "workflowName": "Tests",
+        "databaseId": 39145207569,
+        "headBranch": "main",
+        "headSha": "8616156184c9d90c9c251495bb7a170a4e609ca6",
+        "event": "push",
+        "conclusion": "success",
+        "createdAt": "2026-10-18T16:29:10Z",
+        "updatedAt": "2026-10-18T16:36:26Z",
+        "url": "https://github.com/alistairkung/private-client-graph/actions/runs/39145207569",
+        "attempt": 1,
+        "status": "completed",
+        "displayTitle": "Merge pull request #163 from alistairkung/codex/curated-intake-ui"
+      },
+      {
+        "workflowName": "Tests",
+        "databaseId": 39143678206,
+        "headBranch": "codex/curated-intake-ui",
+        "headSha": "3d5d208ccb2453313c08012cc35bd552ed264e55",
+        "event": "pull_request",
+        "conclusion": "success",
+        "createdAt": "2026-10-18T16:08:51Z",
+        "updatedAt": "2026-10-18T16:17:44Z",
+        "url": "https://github.com/alistairkung/private-client-graph/actions/runs/39143678206",
+        "attempt": 1,
+        "status": "completed",
+        "displayTitle": "Improve public demo discovery and intake preview"
+      },
+      {
+        "workflowName": "Tests",
+        "databaseId": 39143663150,
+        "headBranch": "main",
+        "headSha": "3d248c9eb1a8bb30b62cba802cedf0c6e5304b8d",
+        "event": "push",
+        "conclusion": "success",
+        "createdAt": "2026-10-18T16:08:38Z",
+        "updatedAt": "2026-10-18T16:15:19Z",
+        "url": "https://github.com/alistairkung/private-client-graph/actions/runs/39143663150",
+        "attempt": 1,
+        "status": "completed",
+        "displayTitle": "Merge pull request #165 from alistairkung/codex/refresh-research-results"
+      },
+      {
+        "workflowName": "Tests",
+        "databaseId": 39143468041,
+        "headBranch": "codex/curated-intake-ui",
+        "headSha": "948aec7c06367ac3e52b239dde69aa0b164cc0f9",
+        "event": "pull_request",
+        "conclusion": "success",
+        "createdAt": "2026-10-18T16:06:05Z",
+        "updatedAt": "2026-10-18T16:13:32Z",
+        "url": "https://github.com/alistairkung/private-client-graph/actions/runs/39143468041",
+        "attempt": 1,
+        "status": "completed",
+        "displayTitle": "Improve public demo discovery and intake preview"
+      },
+      {
+        "workflowName": "Tests",
+        "databaseId": 39142896226,
+        "headBranch": "codex/refresh-research-results",
+        "headSha": "56cc32419e1a4d54de1d00de3b922b932388be7c",
+        "event": "pull_request",
+        "conclusion": "success",
+        "createdAt": "2026-10-18T15:58:43Z",
+        "updatedAt": "2026-10-18T16:07:28Z",
+        "url": "https://github.com/alistairkung/private-client-graph/actions/runs/39142896226",
+        "attempt": 1,
+        "status": "completed",
+        "displayTitle": "Refresh research results with Forest & Chalk and precise Run comparisons"
+      },
+      {
+        "workflowName": "Tests",
+        "databaseId": 39140285830,
+        "headBranch": "codex/curated-intake-ui",
+        "headSha": "8de67b18a145ba6df963516e68c68344dceb6587",
+        "event": "pull_request",
+        "conclusion": "success",
+        "createdAt": "2026-10-18T15:23:46Z",
+        "updatedAt": "2026-10-18T15:32:22Z",
+        "url": "https://github.com/alistairkung/private-client-graph/actions/runs/39140285830",
+        "attempt": 1,
+        "status": "completed",
+        "displayTitle": "Improve public demo discovery and intake preview"
+      },
+      {
+        "workflowName": "Tests",
+        "databaseId": 39138861539,
+        "headBranch": "codex/judge-folio-bilingual",
+        "headSha": "fde7da6ccf19fc4aeed05dce3f9a22dbde7b3aa0",
+        "event": "pull_request",
+        "conclusion": "success",
+        "createdAt": "2026-10-18T15:04:57Z",
+        "updatedAt": "2026-10-18T15:13:36Z",
+        "url": "https://github.com/alistairkung/private-client-graph/actions/runs/39138861539",
+        "attempt": 1,
+        "status": "completed",
+        "displayTitle": "Refine Private Wealth judge folio and add Simplified Chinese edition"
+      },
+      {
+        "workflowName": "Tests",
+        "databaseId": 39138247716,
+        "headBranch": "codex/curated-intake-ui",
+        "headSha": "8ad6bb215fb53720a7b4521a0a3262dcab0a9f49",
+        "event": "pull_request",
+        "conclusion": "success",
+        "createdAt": "2026-10-18T14:56:47Z",
+        "updatedAt": "2026-10-18T15:05:14Z",
+        "url": "https://github.com/alistairkung/private-client-graph/actions/runs/39138247716",
+        "attempt": 1,
+        "status": "completed",
+        "displayTitle": "Improve public demo discovery and intake preview"
+      },
+      {
+        "workflowName": "Tests",
+        "databaseId": 39138229907,
+        "headBranch": "main",
+        "headSha": "01acde3edf5b9a559f055cc4765376b043800e69",
+        "event": "push",
+        "conclusion": "success",
+        "createdAt": "2026-10-18T14:56:30Z",
+        "updatedAt": "2026-10-18T15:04:49Z",
+        "url": "https://github.com/alistairkung/private-client-graph/actions/runs/39138229907",
+        "attempt": 1,
+        "status": "completed",
+        "displayTitle": "Merge pull request #161 from alistairkung/codex/refine-document-flick"
+      },
+      {
+        "workflowName": "Tests",
+        "databaseId": 39137686836,
+        "headBranch": "codex/curated-intake-ui",
+        "headSha": "7c10381360269d71180bc945cbfa9c941b807a6d",
+        "event": "pull_request",
+        "conclusion": "success",
+        "createdAt": "2026-10-18T14:49:04Z",
+        "updatedAt": "2026-10-18T14:57:20Z",
+        "url": "https://github.com/alistairkung/private-client-graph/actions/runs/39137686836",
+        "attempt": 1,
+        "status": "completed",
+        "displayTitle": "Improve public demo discovery and intake preview"
+      },
+      {
+        "workflowName": "Tests",
+        "databaseId": 39137614301,
+        "headBranch": "codex/refine-document-flick",
+        "headSha": "05d6ad3861cf1b65ddff294b5c6632e93693d433",
+        "event": "pull_request",
+        "conclusion": "success",
+        "createdAt": "2026-10-18T14:48:06Z",
+        "updatedAt": "2026-10-18T14:56:18Z",
+        "url": "https://github.com/alistairkung/private-client-graph/actions/runs/39137614301",
+        "attempt": 1,
+        "status": "completed",
+        "displayTitle": "Give the document montage a softer paper flick"
+      }
+    ],
+    "sample_conclusions": {
+      "success": 19,
+      "failure": 1,
+      "other": 0
+    },
+    "attempts": {
+      "attempt_1": 20,
+      "other_attempts": 0
+    },
+    "same_sha_comparisons": {
+      "duplicate_sha_groups": 0,
+      "denominator": "20 runs; each sampled run has a distinct headSha",
+      "interpretation": "No same-commit comparison can be made within the bounded sample."
+    },
+    "failed_job_logs_inspected": 1,
+    "failed_job_log_run_id": 39149927229,
+    "failure_category": "functional browser accessibility contrast assertion; see ci-observations.md",
+    "failed_run_artifacts": "Not downloaded. Failed logs contained the concrete failure; unrelated artifacts were not fetched."
+  },
+  "workflow_definition": {
+    "file": ".github/workflows/tests.yml",
+    "jobs": {
+      "python": [
+        "uv sync --locked",
+        "uv run pytest --durations=25",
+        "uv run mypy private_client_graph/application private_client_graph/api private_client_graph/persistence private_client_graph/research private_client_graph/pipeline private_client_graph/extraction private_client_graph/resolution.py private_client_graph/extract.py private_client_graph/workbench --follow-imports=silent"
+      ],
+      "browser_e2e": [
+        "uv sync --locked",
+        "npm ci --prefix web",
+        "npm test and npm run build",
+        "npm run test:research and npm run build:research",
+        "npx playwright install --with-deps chromium",
+        "alembic upgrade head and evergreen seed",
+        "npx playwright test",
+        "npx playwright test --config playwright.research.config.ts",
+        "npx playwright test --config playwright.execution.config.ts",
+        "npx playwright test --config playwright.live.config.ts"
+      ],
+      "docker_smoke": [
+        "research Compose restart/index rebuild smoke",
+        "docker image build and deployment smoke"
+      ]
+    },
+    "research_browser_fanout": {
+      "research-history": "3 viewport projects per logical test, except narrow-only focus test which intentionally skips desktop and compact",
+      "research-execution": "3 viewport projects per logical test",
+      "research-live": "3 viewport projects per logical test"
+    },
+    "setup_cost_observations": [
+      "The browser job installs Python dependencies, Node dependencies and Chromium once before four Playwright commands; the three research configs each start a separate webServer process on port 4175 and each initializes a temporary retained-history artifact tree/index.",
+      "Each research config uses a separate Playwright invocation; execution/live inherit desktop, compact and narrow projects and create 3 project executions per test definition.",
+      "Per-step and whole-job wall times cannot be inferred from workflow YAML. Browser installation, database migrations/seeding, build/test commands and server startup are distinct setup/runtime components; no measured setup or job cost is available."
+    ]
+  },
+  "local_collection": {
+    "revision": "39fe75b6ad9791725c601a48edd6ad40aa6970ff",
+    "environment": "macOS; Node v26.10.0; Playwright 1.63.0; repository node_modules; DATABASE_URL=postgresql://pcg_tactile@127.0.0.1:55489/pcg_tactile_e2e (collection guard only)",
+    "execution": false,
+    "commands": [
+      "DATABASE_URL=postgresql://pcg_tactile@127.0.0.1:55489/pcg_tactile_e2e npx playwright test --config playwright.research.config.ts --list --reporter=json",
+      "DATABASE_URL=postgresql://pcg_tactile@127.0.0.1:55489/pcg_tactile_e2e npx playwright test --config playwright.execution.config.ts --list --reporter=json",
+      "DATABASE_URL=postgresql://pcg_tactile@127.0.0.1:55489/pcg_tactile_e2e npx playwright test --config playwright.live.config.ts --list --reporter=json"
+    ],
+    "per_config_collection": [
+      {
+        "suite": "research-history",
+        "unique_definitions": 6,
+        "configured_cases": 18,
+        "list_reporter_skipped": 18,
+        "denominator": "18 configured project cases",
+        "reported_collection_duration_ms": 12.723,
+        "interpretation": "discovery-only; every listed case has skipped status because --list does not execute tests"
+      },
+      {
+        "suite": "research-execution",
+        "unique_definitions": 9,
+        "configured_cases": 27,
+        "list_reporter_skipped": 27,
+        "denominator": "27 configured project cases",
+        "reported_collection_duration_ms": 16.678,
+        "interpretation": "discovery-only; every listed case has skipped status because --list does not execute tests"
+      },
+      {
+        "suite": "research-live",
+        "unique_definitions": 2,
+        "configured_cases": 6,
+        "list_reporter_skipped": 6,
+        "denominator": "6 configured project cases",
+        "reported_collection_duration_ms": 11.294,
+        "interpretation": "discovery-only; every listed case has skipped status because --list does not execute tests"
+      }
+    ],
+    "total": {
+      "unique_definitions": 17,
+      "configured_cases": 51,
+      "list_reporter_skipped": 51,
+      "denominator": "51 project cases across 17 unique test definitions",
+      "summed_collection_duration_ms": 40.696,
+      "interpretation": "collection reporter duration sum only; not suite wall time, test duration, CI duration, setup cost or a performance baseline"
+    },
+    "suite_wall_time": "Not measured as execution; command elapsed wall times are not available in retained structured output.",
+    "summed_test_duration": "Not applicable; no tests executed.",
+    "intentional_runtime_skip": "history.spec.ts:133 test.skip applies to desktop and compact only; the configured narrow case runs if execution is requested. Collection status alone does not evaluate the test body skip condition.",
+    "provider_safety": "No application server was started and no provider/model dispatch occurred. tests/research_browser_server.py confirms PCG_BROWSER_LIVE replaces supervisor Popen's worker with tests/research_live_worker.py when live-suite mode is used; it initializes deterministic substituted-provider task accounting."
+  },
+  "provider_calls": {
+    "attempted": 0,
+    "allowance": 5,
+    "note": "No real API/model dispatch or provider-backed experiment was run."
+  },
+  "latest_complete_successful_main_run": {
+    "databaseId": 39149906958,
+    "workflowName": "Tests",
+    "headBranch": "main",
+    "headSha": "39fe75b6ad9791725c601a48edd6ad40aa6970ff",
+    "event": "push",
+    "status": "completed",
+    "conclusion": "success",
+    "createdAt": "2026-10-18T17:30:34Z",
+    "updatedAt": "2026-10-18T17:39:58Z",
+    "attempt": 1,
+    "url": "https://github.com/alistairkung/private-client-graph/actions/runs/39149906958",
+    "jobs": [
+      {
+        "job_id": 117741226316,
+        "name": "browser-e2e",
+        "started_at": "2026-10-18T17:30:37Z",
+        "completed_at": "2026-10-18T17:39:51Z",
+        "duration_seconds": 554,
+        "conclusion": "success",
+        "url": "https://github.com/alistairkung/private-client-graph/actions/runs/39149906958/job/117741226316",
+        "steps": [
+          {
+            "number": 1,
+            "name": "Set up job",
+            "started_at": "2026-10-18T17:30:38Z",
+            "completed_at": "2026-10-18T17:30:39Z",
+            "duration_seconds": 1,
+            "conclusion": "success"
+          },
+          {
+            "number": 2,
+            "name": "Initialize containers",
+            "started_at": "2026-10-18T17:30:39Z",
+            "completed_at": "2026-10-18T17:30:53Z",
+            "duration_seconds": 14,
+            "conclusion": "success"
+          },
+          {
+            "number": 3,
+            "name": "Run actions/checkout@v4",
+            "started_at": "2026-10-18T17:30:53Z",
+            "completed_at": "2026-10-18T17:30:56Z",
+            "duration_seconds": 3,
+            "conclusion": "success"
+          },
+          {
+            "number": 4,
+            "name": "Install uv",
+            "started_at": "2026-10-18T17:30:56Z",
+            "completed_at": "2026-10-18T17:30:59Z",
+            "duration_seconds": 3,
+            "conclusion": "success"
+          },
+          {
+            "number": 5,
+            "name": "Set up Python",
+            "started_at": "2026-10-18T17:30:59Z",
+            "completed_at": "2026-10-18T17:31:00Z",
+            "duration_seconds": 1,
+            "conclusion": "success"
+          },
+          {
+            "number": 6,
+            "name": "Install locked environment",
+            "started_at": "2026-10-18T17:31:00Z",
+            "completed_at": "2026-10-18T17:31:00Z",
+            "duration_seconds": 0,
+            "conclusion": "success"
+          },
+          {
+            "number": 7,
+            "name": "Run actions/setup-node@v4",
+            "started_at": "2026-10-18T17:31:00Z",
+            "completed_at": "2026-10-18T17:31:05Z",
+            "duration_seconds": 5,
+            "conclusion": "success"
+          },
+          {
+            "number": 8,
+            "name": "Install web dependencies",
+            "started_at": "2026-10-18T17:31:05Z",
+            "completed_at": "2026-10-18T17:31:10Z",
+            "duration_seconds": 5,
+            "conclusion": "success"
+          },
+          {
+            "number": 9,
+            "name": "Test and build web application",
+            "started_at": "2026-10-18T17:31:10Z",
+            "completed_at": "2026-10-18T17:32:00Z",
+            "duration_seconds": 50,
+            "conclusion": "success"
+          },
+          {
+            "number": 10,
+            "name": "Install browser",
+            "started_at": "2026-10-18T17:32:00Z",
+            "completed_at": "2026-10-18T17:32:28Z",
+            "duration_seconds": 28,
+            "conclusion": "success"
+          },
+          {
+            "number": 11,
+            "name": "Initialize browser-test PostgreSQL database",
+            "started_at": "2026-10-18T17:32:28Z",
+            "completed_at": "2026-10-18T17:32:30Z",
+            "duration_seconds": 2,
+            "conclusion": "success"
+          },
+          {
+            "number": 12,
+            "name": "Test professional-review journey",
+            "started_at": "2026-10-18T17:32:30Z",
+            "completed_at": "2026-10-18T17:34:27Z",
+            "duration_seconds": 117,
+            "conclusion": "success"
+          },
+          {
+            "number": 13,
+            "name": "Test research history and Evidence journey",
+            "started_at": "2026-10-18T17:34:27Z",
+            "completed_at": "2026-10-18T17:34:50Z",
+            "duration_seconds": 23,
+            "conclusion": "success"
+          },
+          {
+            "number": 14,
+            "name": "Test offline research execution journey",
+            "started_at": "2026-10-18T17:34:50Z",
+            "completed_at": "2026-10-18T17:38:27Z",
+            "duration_seconds": 217,
+            "conclusion": "success"
+          },
+          {
+            "number": 15,
+            "name": "Test explicitly authorized research execution with substituted providers",
+            "started_at": "2026-10-18T17:38:27Z",
+            "completed_at": "2026-10-18T17:39:48Z",
+            "duration_seconds": 81,
+            "conclusion": "success"
+          },
+          {
+            "number": 16,
+            "name": "Run actions/upload-artifact@v4",
+            "started_at": "2026-10-18T17:39:48Z",
+            "completed_at": "2026-10-18T17:39:48Z",
+            "duration_seconds": 0,
+            "conclusion": "skipped"
+          },
+          {
+            "number": 29,
+            "name": "Post Run actions/setup-node@v4",
+            "started_at": "2026-10-18T17:39:48Z",
+            "completed_at": "2026-10-18T17:39:49Z",
+            "duration_seconds": 1,
+            "conclusion": "success"
+          },
+          {
+            "number": 30,
+            "name": "Post Install uv",
+            "started_at": "2026-10-18T17:39:49Z",
+            "completed_at": "2026-10-18T17:39:49Z",
+            "duration_seconds": 0,
+            "conclusion": "success"
+          },
+          {
+            "number": 31,
+            "name": "Post Run actions/checkout@v4",
+            "started_at": "2026-10-18T17:39:49Z",
+            "completed_at": "2026-10-18T17:39:49Z",
+            "duration_seconds": 0,
+            "conclusion": "success"
+          },
+          {
+            "number": 32,
+            "name": "Stop containers",
+            "started_at": "2026-10-18T17:39:49Z",
+            "completed_at": "2026-10-18T17:39:49Z",
+            "duration_seconds": 0,
+            "conclusion": "success"
+          },
+          {
+            "number": 33,
+            "name": "Complete job",
+            "started_at": "2026-10-18T17:39:49Z",
+            "completed_at": "2026-10-18T17:39:49Z",
+            "duration_seconds": 0,
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "job_id": 117741226372,
+        "name": "python",
+        "started_at": "2026-10-18T17:30:37Z",
+        "completed_at": "2026-10-18T17:34:41Z",
+        "duration_seconds": 244,
+        "conclusion": "success",
+        "url": "https://github.com/alistairkung/private-client-graph/actions/runs/39149906958/job/117741226372",
+        "steps": [
+          {
+            "number": 1,
+            "name": "Set up job",
+            "started_at": "2026-10-18T17:30:37Z",
+            "completed_at": "2026-10-18T17:30:38Z",
+            "duration_seconds": 1,
+            "conclusion": "success"
+          },
+          {
+            "number": 2,
+            "name": "Initialize containers",
+            "started_at": "2026-10-18T17:30:38Z",
+            "completed_at": "2026-10-18T17:30:51Z",
+            "duration_seconds": 13,
+            "conclusion": "success"
+          },
+          {
+            "number": 3,
+            "name": "Run actions/checkout@v4",
+            "started_at": "2026-10-18T17:30:51Z",
+            "completed_at": "2026-10-18T17:30:53Z",
+            "duration_seconds": 2,
+            "conclusion": "success"
+          },
+          {
+            "number": 4,
+            "name": "Install uv",
+            "started_at": "2026-10-18T17:30:53Z",
+            "completed_at": "2026-10-18T17:30:56Z",
+            "duration_seconds": 3,
+            "conclusion": "success"
+          },
+          {
+            "number": 5,
+            "name": "Set up Python",
+            "started_at": "2026-10-18T17:30:56Z",
+            "completed_at": "2026-10-18T17:30:57Z",
+            "duration_seconds": 1,
+            "conclusion": "success"
+          },
+          {
+            "number": 6,
+            "name": "Install locked environment",
+            "started_at": "2026-10-18T17:30:57Z",
+            "completed_at": "2026-10-18T17:30:58Z",
+            "duration_seconds": 1,
+            "conclusion": "success"
+          },
+          {
+            "number": 7,
+            "name": "Install PostgreSQL 16 recovery tools",
+            "started_at": "2026-10-18T17:30:58Z",
+            "completed_at": "2026-10-18T17:31:03Z",
+            "duration_seconds": 5,
+            "conclusion": "success"
+          },
+          {
+            "number": 8,
+            "name": "Run tests",
+            "started_at": "2026-10-18T17:31:03Z",
+            "completed_at": "2026-10-18T17:34:20Z",
+            "duration_seconds": 197,
+            "conclusion": "success"
+          },
+          {
+            "number": 9,
+            "name": "Check application types",
+            "started_at": "2026-10-18T17:34:20Z",
+            "completed_at": "2026-10-18T17:34:38Z",
+            "duration_seconds": 18,
+            "conclusion": "success"
+          },
+          {
+            "number": 16,
+            "name": "Post Install uv",
+            "started_at": "2026-10-18T17:34:38Z",
+            "completed_at": "2026-10-18T17:34:39Z",
+            "duration_seconds": 1,
+            "conclusion": "success"
+          },
+          {
+            "number": 17,
+            "name": "Post Run actions/checkout@v4",
+            "started_at": "2026-10-18T17:34:39Z",
+            "completed_at": "2026-10-18T17:34:39Z",
+            "duration_seconds": 0,
+            "conclusion": "success"
+          },
+          {
+            "number": 18,
+            "name": "Stop containers",
+            "started_at": "2026-10-18T17:34:39Z",
+            "completed_at": "2026-10-18T17:34:39Z",
+            "duration_seconds": 0,
+            "conclusion": "success"
+          },
+          {
+            "number": 19,
+            "name": "Complete job",
+            "started_at": "2026-10-18T17:34:39Z",
+            "completed_at": "2026-10-18T17:34:39Z",
+            "duration_seconds": 0,
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "job_id": 117741226376,
+        "name": "docker-smoke",
+        "started_at": "2026-10-18T17:30:36Z",
+        "completed_at": "2026-10-18T17:32:10Z",
+        "duration_seconds": 94,
+        "conclusion": "success",
+        "url": "https://github.com/alistairkung/private-client-graph/actions/runs/39149906958/job/117741226376",
+        "steps": [
+          {
+            "number": 1,
+            "name": "Set up job",
+            "started_at": "2026-10-18T17:30:37Z",
+            "completed_at": "2026-10-18T17:30:38Z",
+            "duration_seconds": 1,
+            "conclusion": "success"
+          },
+          {
+            "number": 2,
+            "name": "Initialize containers",
+            "started_at": "2026-10-18T17:30:38Z",
+            "completed_at": "2026-10-18T17:30:58Z",
+            "duration_seconds": 20,
+            "conclusion": "success"
+          },
+          {
+            "number": 3,
+            "name": "Run actions/checkout@v4",
+            "started_at": "2026-10-18T17:30:58Z",
+            "completed_at": "2026-10-18T17:31:00Z",
+            "duration_seconds": 2,
+            "conclusion": "success"
+          },
+          {
+            "number": 4,
+            "name": "Verify research Compose restart and index rebuild",
+            "started_at": "2026-10-18T17:31:00Z",
+            "completed_at": "2026-10-18T17:31:52Z",
+            "duration_seconds": 52,
+            "conclusion": "success"
+          },
+          {
+            "number": 5,
+            "name": "Build and smoke-test deployment image",
+            "started_at": "2026-10-18T17:31:52Z",
+            "completed_at": "2026-10-18T17:32:08Z",
+            "duration_seconds": 16,
+            "conclusion": "success"
+          },
+          {
+            "number": 9,
+            "name": "Post Run actions/checkout@v4",
+            "started_at": "2026-10-18T17:32:08Z",
+            "completed_at": "2026-10-18T17:32:08Z",
+            "duration_seconds": 0,
+            "conclusion": "success"
+          },
+          {
+            "number": 10,
+            "name": "Stop containers",
+            "started_at": "2026-10-18T17:32:08Z",
+            "completed_at": "2026-10-18T17:32:08Z",
+            "duration_seconds": 0,
+            "conclusion": "success"
+          },
+          {
+            "number": 11,
+            "name": "Complete job",
+            "started_at": "2026-10-18T17:32:08Z",
+            "completed_at": "2026-10-18T17:32:08Z",
+            "duration_seconds": 0,
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "job_id": 117743343143,
+        "name": "tests",
+        "started_at": "2026-10-18T17:39:54Z",
+        "completed_at": "2026-10-18T17:39:58Z",
+        "duration_seconds": 4,
+        "conclusion": "success",
+        "url": "https://github.com/alistairkung/private-client-graph/actions/runs/39149906958/job/117743343143",
+        "steps": [
+          {
+            "number": 1,
+            "name": "Set up job",
+            "started_at": "2026-10-18T17:39:55Z",
+            "completed_at": "2026-10-18T17:39:55Z",
+            "duration_seconds": 0,
+            "conclusion": "success"
+          },
+          {
+            "number": 2,
+            "name": "Verify all required test jobs passed",
+            "started_at": "2026-10-18T17:39:55Z",
+            "completed_at": "2026-10-18T17:39:55Z",
+            "duration_seconds": 0,
+            "conclusion": "success"
+          },
+          {
+            "number": 3,
+            "name": "Complete job",
+            "started_at": "2026-10-18T17:39:55Z",
+            "completed_at": "2026-10-18T17:39:55Z",
+            "duration_seconds": 0,
+            "conclusion": "success"
+          }
+        ]
+      }
+    ],
+    "metrics": {
+      "workflow_elapsed_seconds": 564,
+      "parallel_job_span_seconds": 554,
+      "sum_of_job_durations_seconds": 896,
+      "note": "Workflow elapsed is wall interval; job durations overlap in parallel and must not be summed as critical-path wall time. Per-step durations are Actions timestamps rounded to whole seconds."
+    }
+  },
+  "failed_run_case_study": {
+    "databaseId": 39149927229,
+    "headBranch": "codex/tactile-relationship-invitation",
+    "headSha": "ad8f1afa98209f063aaa7f076c5d8da0d598e138",
+    "attempt": 1,
+    "conclusion": "failure",
+    "createdAt": "2026-10-18T17:30:49Z",
+    "updatedAt": "2026-10-18T17:35:19Z",
+    "url": "https://github.com/alistairkung/private-client-graph/actions/runs/39149927229",
+    "failure_job": "browser-e2e",
+    "failure_step": "Test professional-review journey",
+    "failure_job_id": 117741285488,
+    "failure": "[phone] e2e/theme.spec.ts:86:1 failed checkContrast at theme.spec.ts:148; submit action foreground rgb(105,124,111) ratio 3.43336132935938 below expected minimum 4.5. 108 passed, 11 skipped, 1 failed in that Playwright command. Python and docker-smoke jobs succeeded. Three research Playwright commands skipped because the earlier browser step failed and workflow steps use fail-fast default.",
+    "attempt_context": "Sampled as attempt 1; prior run on same branch is success at different SHA 741323d3ba417d4d3600294234479dc1896b070c (run 39149538104). This is a changed-commit outcome, not same-revision retry evidence and not labeled flaky."
+  },
+  "job_step_timings": "Available for latest complete successful main run 39149906958; see latest_complete_successful_main_run.jobs.",
+  "failed_job_logs_inspected": 1,
+  "retries_or_flakes": "No duplicate SHA in the 20 sampled runs; all attempts are 1. One concrete failed run is a changed-revision browser accessibility assertion. No flakiness claim.",
+  "run_sample_caveat": "Small temporal sample: 20 completed workflow runs within about 2h43m on 2026-10-18; mostly PR/main activity from the same repository. Not a representative long-term failure rate."
+}
