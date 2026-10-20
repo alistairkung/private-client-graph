@@ -9,12 +9,12 @@ PUBLICATION = GITHUB + "/blob/d5130917b32ba03e41d6345a8c3d604f4c906432/private_c
 
 
 def cover(canvas, number, evidence):
-    page = Page(canvas, number, "FTEC5660", dark=True)
+    page = Page(canvas, number, "FTEC5660 / Private Wealth", dark=True)
     page.heading("From documents to<br/>reviewable relationships", y=111,
                  size=54, color=WHITE)
     page.paragraph(
-        "An AI-assisted tool for private-client solicitors and advisers: "
-        "reconstruct family and trust relationships, inspect their exact "
+        "A Private Wealth tool for solicitors and advisers preparing an estate-planning "
+        "or trust review: reconstruct family and trust relationships, inspect the "
         "documentary Evidence, and decide what to accept.",
         48, 256, 580, 17, 25, WHITE)
 
@@ -35,8 +35,8 @@ def cover(canvas, number, evidence):
     page.paragraph(
         "A relationship is useful when the reader can inspect the words behind it.",
         48, 694, 585, 24, 29, WHITE, "Serif")
-    page.text("Product and research case study", 48, 789, 13, WHITE)
-    page.text("Synthetic prototype. No real client data.", 48, 814, 12, WHITE)
+    page.text("University hackathon case study / English pages 1-20", 48, 789, 13, WHITE)
+    page.text("Synthetic prototype. Simplified Chinese follows on page 21.", 48, 814, 12, WHITE)
     page.footer("Case 01: exact source-backed relationship; editorial diagram.",
                 GITHUB + "/tree/main/cases/case_01")
 
@@ -45,9 +45,9 @@ def product_inspection(canvas, number, evidence):
     page = Page(canvas, number, "The reviewable Matter")
     page.heading("A graph you can question", y=83, size=43)
     page.paragraph(
-        "A summary can describe a family without making each claim easy to check. "
-        "PCG lets the practitioner select a relationship, read its Evidence, "
-        "and locate the exact passage in its Source.",
+        "An incoming adviser asks: what supports Bob Chen's connection to this family? "
+        "Select Alice Chen's parent relationship, inspect the quoted words, then "
+        "open the Source in context. Bob's beneficiary role needs separate Evidence.",
         48, 153, 624, 16, 23)
 
     capture = ROOT / "docs/artifacts/ui-consolidation/practitioner-evidence-desktop.png"
@@ -58,7 +58,7 @@ def product_inspection(canvas, number, evidence):
         "roles remain distinct claims.",
         507, 308, 165, 14, 20)
     page.paragraph(
-        "The selected connector leads to the quotation below.",
+        "The selected connector leads to the quotation below. Compare Bob's separate Trust role on page 3.",
         507, 431, 165, 14, 20, MUTED)
     page.text("Actual practitioner workspace: selected relationship detail", 48, 588, 11.5, MUTED)
 
@@ -77,9 +77,9 @@ def paired_experiment(canvas, number, evidence):
     page = Page(canvas, number, "Research methodology")
     page.heading("Change one stage.<br/>Keep the extraction fixed.", y=83, size=43)
     page.paragraph(
-        "A fresh extraction could change for reasons unrelated to resolution. "
-        "The comparison therefore reuses the same saved model outputs and "
-        "adds a zero-call replay control.",
+        "Can a name-only correction recover missed relationships without rewriting "
+        "the claims? The comparison reuses saved extraction outputs and adds a "
+        "zero-call replay control, isolating resolution from fresh extraction variability.",
         48, 196, 624, 16, 23)
 
     page.rect(48, 295, 624, 103, CHALK)
@@ -152,8 +152,8 @@ def measured_results(canvas, number, evidence):
     page.paragraph(
         f'<b>Evidence checks remained imperfect:</b> B passed {resolved["quote_passed"]}/{resolved["quote_assessed"]} approved-quote '
         f'checks and {resolved["source_pair_passed"]}/{resolved["source_pair_assessed"]} Source/quote-pair checks, using separate denominators. '
-        "This small, post-hoc result does not establish general identity resolution "
-        "or production accuracy.",
+        "The resolver is implemented in the research pipeline; application intake "
+        "currently uses baseline extraction. Small, synthetic, post-hoc comparison.",
         62, 753, 595, 13, 18)
     page.footer("Retained results and deployed chart, inspected 18 October 2026.",
                 PRODUCTION + "/research-results#comparison")

@@ -1,18 +1,35 @@
 {
   "pdf": "output/pdf/private-client-graph-judge-folio.pdf",
-  "pages": 20,
-  "bytes": 1648196,
+  "pages": 40,
+  "bytes": 1931700,
   "limit_bytes_exclusive": 20000000,
-  "sha256": "a309a95ee14c96491728d74db7d3bb07d8a4ca116743e5f2a36525d8a08f2896",
+  "sha256": "72fbdc8ce86fb83e24a93de16745a9502d25959e5c0a0cdb45f04dc3839883f6",
   "page_size_points": [
     720,
     900
   ],
-  "bookmarks": 20,
+  "bookmarks": 42,
+  "editions": {
+    "English": [
+      1,
+      20
+    ],
+    "Simplified Chinese": [
+      21,
+      40
+    ]
+  },
   "embedded_text_fonts": [
     "/AAAAAA+Newsreader16pt72pt-Regular",
+    "/AAAAAA+NotoSansSCThin-Regular",
+    "/AAAAAA+NotoSansSCThin-SemiBold",
+    "/AAAAAA+NotoSerifSCExtraLight-Regular",
     "/AAAAAA+PublicSansThin-Regular",
-    "/AAAAAA+PublicSansThin-SemiBold"
+    "/AAAAAA+PublicSansThin-SemiBold",
+    "/AAAAAB+NotoSansSCThin-Regular",
+    "/AAAAAB+NotoSansSCThin-SemiBold",
+    "/AAAAAB+NotoSerifSCExtraLight-Regular",
+    "/AAAAAC+NotoSansSCThin-Regular"
   ],
   "unique_links": [
     "https://github.com/alistairkung/private-client-graph",

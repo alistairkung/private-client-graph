@@ -1,8 +1,9 @@
 # Private Client Graph judge folio
 
 Status: full production completed after the user approved the representative
-rendered sample. The user's subsequent roadmap and methodology clarification is
-incorporated on pages 9-11 and in the conclusion. No new experiments were run.
+rendered sample. The author's roadmap and methodology clarification, Private Wealth
+category, simulated university-level judging feedback and requested Simplified
+Chinese edition are incorporated. No new experiments were run.
 
 ## Format decision
 
@@ -18,8 +19,9 @@ The brief is one self-contained PDF below 20,000,000 bytes, not a slide deck.
 Preferred format: **portrait editorial hybrid**, 720 x 900 PDF points (4:5).
 This slightly wide portrait format supports readable prose and annotated product
 details on a laptop. It is not a conventional slide canvas. Approximately 16-18
-pages was the initial content budget. The finished 20 pages include two additional
-substantive pages for the user's five-step methodology and twenty-scenario roadmap.
+pages was the initial content budget. The finished English edition has 20 pages,
+including the user's five-step methodology and twenty-scenario roadmap. The full
+Simplified Chinese edition follows, giving one 40-page submission.
 
 ## Two concepts
 
@@ -48,7 +50,9 @@ the principal graphic, rather than a generic network or AI illustration.
 
 - White and cool chalk reading surfaces; forest green for major visual passages.
 - Public Sans for explanatory prose and data; Newsreader Display for titles and
-  quoted documentary language. These are existing self-hosted project fonts.
+  quoted documentary language. The Chinese edition uses Noto Sans SC and Noto
+  Serif SC. These are existing self-hosted project fonts. Original English
+  documentary excerpts retain their English typography and exact wording.
 - Body 16/23 pt; captions 11.5/16 pt; principal headings 36-54 pt.
 - A 48 pt outer margin, 24 pt gutters, left-aligned prose, measured line lengths.
 - Gold identifies documentary Evidence; burgundy identifies the recorded baseline.
@@ -76,18 +80,23 @@ unchanged because this is a separate publication, not an application redesign.
 8. The semantic/deterministic boundary and why it matters.
 9. Case hypothesis, development samples/truth, held-out set, Workbench measurement,
    then surrounding application support: the author's development method.
-10. Twenty planned scenarios, five authored development cases, and the limited
-    baseline-plus-resolver slice established within the hackathon.
-11. Separate held-out construction and ground-truth checks.
-12. Relationship-level metrics and separate provenance diagnostics.
-13. Frozen extraction and the A / A-prime / B experiment.
+10. Separate held-out construction and ground-truth checks.
+11. Relationship-level metrics and separate provenance diagnostics.
+12. Frozen extraction and the A / A-prime / B experiment.
+13. The two endpoint corrections and the resolver's enforced constraints.
 14. Recorded aggregate results and actual Workbench chart.
-15. The two endpoint corrections, examined in detail.
-16. Every held-out case's relationship F1.
-17. Remaining evidence failures and additional provider usage.
-18. What was demonstrated, what remains uncertain and reproducibility.
-19. Governed future work and practitioner validation.
+15. Every held-out case's relationship F1.
+16. Remaining evidence failures and additional provider usage.
+17. What was demonstrated, what remains uncertain and reproducibility.
+18. Governed future work and practitioner validation.
+19. Twenty planned scenarios, five authored development cases, and the limited
+    baseline-plus-resolver slice established within the hackathon.
 20. Closing proposition, product/research/repository links and source index.
+
+The same sequence repeats in Simplified Chinese on pages 21-40. Each cover gives
+the language ranges, and PDF bookmarks provide two language roots. The judging
+round moved the complete roadmap after the completed findings and strengthened
+the early practitioner task, built-system summary and closing demo route.
 
 The sample demonstrates cover, authentic product inspection, controlled
 methodology and measured results. Its four pages are representative excerpts,
