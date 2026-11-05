@@ -65,8 +65,18 @@ Each case declares its own document count in the ground-truth metadata, so we ca
 ## Methodology: How We Build and Verify a Case
 Each benchmark case is built in the same sequence. The process is manual at the start (so we understand the case) and automated at the end (so the case is trustworthy).
 
+
 ### Step 1: Write the synthetic documents
 For each case, we author one or more `source_NN.txt` files. The text is written to trigger exactly one axis and nothing else. If a source document accidentally contains a second difficulty, the case is rejected and rewritten.
+
+### Synthetic Document Genres
+To ensure the benchmark tests real-world complexity, we propose using a mix of legal document genres, not just meeting notes. This matches the `cases/README.md` guideline that "document genre shift" is a valid complexity axis.
+
+1. **Formal Deeds / Trust Instruments:** Dense clauses where relationships are legally defined (e.g., "WHEREAS the Settlor...").
+2. **Letters / Confirmation Notes:** Structured but narrative, like a client confirmation letter.
+3. **Wills and Codicils:** First-person documents establishing historical relationships.
+4. **Resolutions / Minutes:** Short, punchy documents recording appointments and removals (temporal changes).
+5. **Meeting Notes / File Notes:** Narrative summaries of discussions.
 
 ### Step 2: Write the ground truth
 We manually list every entity and relationship that *should* be extracted from the sources. The content and scenarios are entirely new and generic, moving away from the old `cases/` examples.
@@ -104,12 +114,27 @@ The following were considered and deliberately excluded:
 - **Real legal documents:** The project only accepts synthetic material.
 
 ## Why JSON for the Benchmark Files?
-We are **not** reusing the old `cases/` folder content. However, we *must* use the existing JSON data format (the Pydantic schema). 
-- **The pipeline requires it:** `evaluate.py` and `graph.py` use Pydantic's `model_validate_json()`. Using YAML or another format would require rewriting the loading logic.
-- **Standard practice:** JSON is the standard format for machine-parsed evaluation datasets.
-- **Structure:** JSON handles the nested entities, relationships, and evidence IDs cleanly.
-*(The synthetic documents themselves remain plain text, because that is what the LLM reads).*
+We are **explicitly discarding the old `cases/` scenarios** to build a new, generic benchmark (`benchmark_v1/`). However, we *must* use the existing JSON data format (the Pydantic schema). 
 
+- **The pipeline requires it:** The Python code (`evaluate.py`, `graph.py`) uses Pydantic's `model_validate_json()`. Using YAML or another format would require rewriting the loading logic.
+- **No content is reused:** The schemas are just empty containers. The entities, documents, and relationships are 100% new and generic.
+- **Multi-document support:** Because a case can contain multiple documents, `ground_truth.json` includes a `document_id` so the evaluator knows which source proves each relationship.
+
+```json
+{
+  "entities": [
+    {"id": "person_001", "type": "person", "name": "Nadia Lau"}
+  ],
+  "relationships": [
+    {
+      "source": "person_001", 
+      "type": "settlor_of", 
+      "target": "trust_001",
+      "document_id": "source_01.txt"
+    }
+  ]
+}
+'''
 ## Future Work: Composite Cases
 After the baseline is established, we propose building composite cases that combine multiple axes (e.g., Temporal + Authority + Aliases in one file) to test whether isolated improvements transfer to realistic scenarios.
 
