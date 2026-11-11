@@ -1,0 +1,4 @@
+{
+  "name": "Incremental Hallucination (Development)",
+  "description": "Tests whether the pipeline distinguishes current facts from proposals and intentions within a single draft note."
+}

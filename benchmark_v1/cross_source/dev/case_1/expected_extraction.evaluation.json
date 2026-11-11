@@ -1,0 +1,58 @@
+{
+  "tp": 4,
+  "fp": 0,
+  "fn": 0,
+  "precision": 1.0,
+  "recall": 1.0,
+  "f1": 1.0,
+  "true_positive_edges": [
+    [
+      "Alice Chen",
+      "settlor_of",
+      "Oakwood Trust"
+    ],
+    [
+      "Alice Chen",
+      "spouse_of",
+      "David Chen"
+    ],
+    [
+      "Bob Chen",
+      "beneficiary_of",
+      "Oakwood Trust"
+    ],
+    [
+      "David Chen",
+      "settlor_of",
+      "Oakwood Trust"
+    ]
+  ],
+  "false_positive_edges": [],
+  "false_negative_edges": [],
+  "provenance_passed": 4,
+  "provenance_failed": 0,
+  "provenance_accuracy": 1.0,
+  "provenance_passes": [
+    [
+      "Alice Chen",
+      "settlor_of",
+      "Oakwood Trust"
+    ],
+    [
+      "Alice Chen",
+      "spouse_of",
+      "David Chen"
+    ],
+    [
+      "Bob Chen",
+      "beneficiary_of",
+      "Oakwood Trust"
+    ],
+    [
+      "David Chen",
+      "settlor_of",
+      "Oakwood Trust"
+    ]
+  ],
+  "provenance_failures": []
+}

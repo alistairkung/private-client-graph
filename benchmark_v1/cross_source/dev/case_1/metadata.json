@@ -1,0 +1,4 @@
+{
+  "name": "Cross-Source Reconciliation (Development)",
+  "description": "Tests whether the pipeline combines facts from two separate emails into a single accurate graph."
+}

@@ -1,151 +1,108 @@
-# Benchmark Plan: Complexity Axes
+# Benchmark Plan: Complexity Axes & RAG Experiment
 
 ## Objective
-Evaluate the baseline performance of the current pipeline (Extractor + Resolver) on synthetic documents that isolate distinct dimensions of legal complexity. We are measuring where the current architecture fails, not fixing it yet. We are moving away from the existing `cases/` scenarios to build a new, generic benchmark set.
+Complement the existing `cases/` regression fixtures with a new diagnostic benchmark suite (`benchmark_v1/`). The existing cases have already informed development and remain as regression tests; they cannot serve as independent final evaluation.
 
-## Optimization Goal
-Trust and Exactness. We prioritize **Precision** (zero hallucinations) and **Provenance Accuracy** (exact quotes) over Recall. In a legal context, missing a relationship is annoying, but hallucinating one is dangerous.
+The new suite evaluates the pipeline's baseline capabilities, defines capability gaps for future work, and tests whether Retrieval-Augmented Generation (RAG) improves graph reconstruction as document volume and complexity increase.
 
-## Metrics
-We propose tracking four metrics:
-1. **F1 Score:** The overall balance of Precision and Recall.
-2. **False Positive Rate:** The count of hallucinated relationships (claims not in the ground truth).
-3. **Provenance Accuracy:** The percentage of correct relationships backed by the exact, approved quote.
-4. **Failure Rate by Axis:** A diagnostic breakdown showing which specific complexity axes the baseline fails.
+## 1. Benchmark Structure: 6 Axes, Dev and Held-Out
 
-## The 7 Complexity Axes
-We propose creating 3 test cases per axis (amendable), spanning a variable document count (see Document Count Policy). Each isolated case tests **only one** difficulty so failures are attributable.
+We propose 6 complexity axes. Following the collaborator's suggestion, we hold out a variety of axes by creating **6 held-out samples** (one per axis).
 
-### 1. Temporal Precedence
-- **Scenario:** A relationship changes over time (e.g., a trustee is replaced).
-- **Challenge:** The AI must output only the *current* state, discarding the historical state.
+For each axis, we author two cases:
+- **1 Development Case:** Visible, inspected, and used to tune the pipeline.
+- **1 Held-Out Case:** Frozen before any development tuning begins. Scored at final evaluation.
 
-### 2. Document Authority
-- **Scenario:** An informal intention conflicts with a formal deed.
-- **Challenge:** The AI must prioritize the formal deed and discard the informal note.
+### The 6 Axes
+1. **Temporal Precedence:** A relationship changes over time (e.g., trustee replaced).
+2. **Document Authority:** Informal intention vs. formal deed.
+3. **Aliases:** Same person, different names.
+4. **Distractors:** Irrelevant named people.
+5. **Cross-Source Reconciliation:** Facts split across multiple documents.
+6. **Incremental Hallucination:** Drafts mixing true facts with proposals.
 
-### 3. Aliases
-- **Scenario:** The same person is referred to by multiple names.
-- **Challenge:** The AI must resolve these as one entity, not three.
+### Capability Fixtures vs. Baseline Diagnostics
+The graph currently represents relationships, not effective dates, authority rankings, or source-aware scoring. We distinguish measurable extraction failures from capabilities the system doesn't yet support.
 
-### 4. Distractors
-- **Scenario:** A document mentions irrelevant people who have no role in the trust.
-- **Challenge:** The AI must only extract the relevant family/trust relationships.
+- **Baseline Diagnostics:** Aliases, Distractors, Incremental Hallucination. The pipeline can attempt these today. Scored in both development and held-out.
+- **Capability Fixtures:** Temporal Precedence, Document Authority, Cross-Source Reconciliation. These require capabilities the pipeline doesn't have yet. Their development cases are authored but not scored. Their held-out cases **are scored at final evaluation** — if the capability was built, the score reflects it; if not, the score reports "not attempted" as an honest finding.
 
-### 5. Cross-Source Reconciliation
-- **Scenario:** A relationship is only visible when multiple documents are read together.
-- **Challenge:** The AI must combine facts across documents into a single graph.
+## 2. RAG Experiment (Separate from Axes)
+We test the hypothesis: *"As volume, complexity, and distribution of documents increase, RAG improves the ability to reconstruct an accurate graph."*
 
-### 6. Incremental Hallucination (Draft vs. Fact)
-- **Scenario:** A document mixes true facts with proposals or intentions.
-- **Challenge:** The AI must distinguish between historical facts and proposals, extracting only the facts.
+### The 3-Step Experiment
+1. **Baseline:** Run the current pipeline (full context) on a small case. Record F1.
+2. **RAG Added:** Run the same case with retrieval. Record F1. If identical, RAG is a no-op on small cases.
+3. **Sweep:** Run both baseline and RAG across Small / Medium / Large versions of the same case.
 
-### 7. Prompt Injection (Weird Document Text)
-- **Scenario:** A document contains text that looks like an instruction to the AI.
-- **Challenge:** The AI must treat the document as data, not as instructions, and must not be hijacked.
+### RAG Sweep Thresholds (Reasoning)
+The interesting comparison is at the **context-window edge**: where the baseline can still process the file but starts losing accuracy. Below it, RAG is a no-op. Above it, baseline cannot run and the comparison becomes trivial.
 
-## Document Count Policy (amendable)
-We propose each axis gets 3 cases spanning a variable document count:
-- **Case A:** Minimum documents needed to test the axis.
-- **Case B:** Mid-range (axis + 1–2 surrounding documents).
-- **Case C:** Maximum realistic file size (up to 7 documents).
+| Tier | Approx. docs | What it tests | Trade-off |
+|---|---|---|---|
+| **Small** | ~5 | Control condition. Everything fits; RAG should be a no-op. | Cheap, low information, establishes the null. |
+| **Medium** | ~15 | A realistic Matter file. Model still fits everything but starts losing accuracy. | Likely sweet spot. Moderate cost. |
+| **Large** | ~30–50 (or context-window limit) | At the edge of context. Baseline drops; RAG recovers. | The meaningful finding. Capped at whichever is smaller: ~50 docs or the model's context-window limit. |
 
-| Axis | Min–Max docs (amendable) |
-|---|---|
-| Temporal Precedence | 2–5 |
-| Document Authority | 2–5 |
-| Aliases | 1–4 |
-| Distractors | 1–5 |
-| Cross-Source Reconciliation | 2–7 |
-| Incremental Hallucination | 1–4 |
-| Prompt Injection | 1–3 |
+**Cap:** Above the context-window edge, baseline cannot run and the comparison is trivial. The finding is whether RAG's advantage appears at the edge, not past it.
 
-Each case declares its own document count in the ground-truth metadata, so we can report failure rate *per document count*, not just per axis.
+### Design Constraints
+- **Realistic, Not Noise:** The larger cases must look like real Matter files (deeds, letters, resolutions), not artificial stress tests.
+- **Output is a Curve:** We plot F1 vs. document count. The gap between the baseline and RAG curves is RAG's value.
+- **Conclusion:** If RAG never diverges from baseline, we report that RAG was not a good use case for this domain, showing the numbers.
 
-## Methodology: How We Build and Verify a Case
-Each benchmark case is built in the same sequence. The process is manual at the start (so we understand the case) and automated at the end (so the case is trustworthy).
+## 3. Metrics (Aligned to Evaluator)
+1. **TP / FP / FN:** Raw counts.
+2. **Precision, Recall, F1:** Standard metrics.
+3. **FP Count & 1 − Precision:** Because true negatives are not enumerated, we report raw FP count and false discovery proportion (1 − Precision).
+4. **Relationship Provenance Accuracy:** TP edges where at least one predicted span matches an approved span.
+5. **Source Attribution Accuracy:** Multi-source cases only. TP edges where the predicted `source_id` matches the approved `source_id`. Supported by the existing evaluator for `CanonicalState`.
+6. **Retrieval Recall:** RAG runs only. Fraction of approved evidence present in retrieved chunks.
+7. **Axis Failure:** Defined specifically. Only the intended variable counts.
 
+## 4. Methodology (Per `synthetic-case-authoring.md`)
+We strictly follow the canonical order: **Answer Key → Source → Audit → Evidence → Extraction.**
 
-### Step 1: Write the synthetic documents
-For each case, we author one or more `source_NN.txt` files. The text is written to trigger exactly one axis and nothing else. If a source document accidentally contains a second difficulty, the case is rejected and rewritten.
+1. **Declare Case Purpose:** Record ID, purpose, intended variable, supported types.
+2. **Define Answer Key:** Complete graph in JSON first. Challenge every edge.
+3. **Draft Source:** Write realistic document from the answer key. No accidental edges.
+4. **Bidirectional Audit:** GT → Source (is every edge supported?) and Source → GT (are there unintended edges?).
+5. **Annotate Evidence:** Exact verbatim spans for every edge.
+6. **Freeze Answer Key:** Re-verify after any source edit.
+7. **Derive Expected Extraction:** Only after source is stable.
+8. **Deterministic Checks:** Run schema, reference, and verbatim validations.
+9. **Persist Run & Evaluate:** Run pipeline, save artifact, score.
+10. **Record Failure:** Categorize (extraction, graph, annotation, etc.).
 
-### Synthetic Document Genres
-To ensure the benchmark tests real-world complexity, we propose using a mix of legal document genres, not just meeting notes. This matches the `cases/README.md` guideline that "document genre shift" is a valid complexity axis.
+## 5. Multi-Document Schema (Existing Contracts)
+Use existing files, no new schema:
+- `sources.json`: Ordered source list.
+- `ground_truth.json`: Entities/relationships with plain-string `approved_evidence`.
+- `source_evidence.json`: Separate mapping of `source_id` to quotes.
+- `expected_extraction.json`: Raw candidates.
+- `expected_source_extraction.json`: Source-attributed ideal extraction.
 
-1. **Formal Deeds / Trust Instruments:** Dense clauses where relationships are legally defined (e.g., "WHEREAS the Settlor...").
-2. **Letters / Confirmation Notes:** Structured but narrative, like a client confirmation letter.
-3. **Wills and Codicils:** First-person documents establishing historical relationships.
-4. **Resolutions / Minutes:** Short, punchy documents recording appointments and removals (temporal changes).
-5. **Meeting Notes / File Notes:** Narrative summaries of discussions.
+*No `document_id` field in `ground_truth.json`.*
 
-### Step 2: Write the ground truth
-We manually list every entity and relationship that *should* be extracted from the sources. The content and scenarios are entirely new and generic, moving away from the old `cases/` examples.
+## 6. Document Count Policy
+Initial non-RAG cases use the *minimum* documents needed for the axis. Document-count variation is reserved exclusively for the RAG experiment.
+- **Aliases / Distractors / Hallucination:** 1 document.
+- **Temporal / Authority / Cross-Source:** 1 combined `source.txt` containing two documents. The full multi-document structure (separate files per source) is deferred until the pipeline gains sequential processing.
 
-### Step 3: Write the approved evidence
-For every relationship in the ground truth, we manually copy the exact quote from the source document that proves it, and save it to `source_evidence.json`. 
+## 7. Ownership and Approval
+- **Stage 1 (This PR):** Agree on approach.
+- **Stage 2 (Self-Review):** Author verifies ground truth completeness, evidence support, and automated checks. Includes summary and flagged uncertainties.
+- **Stage 3 (Review):** Joint review only where needed. Author makes and defends routine decisions.
 
-### Step 4: Manual verification
-A human reads the source documents, the ground truth, and the approved evidence side-by-side. They must confirm:
-1. Every relationship in the ground truth is genuinely supported by the source text.
-2. Every quote in the approved evidence is an exact, verbatim substring of the source.
-3. The source text contains no accidental difficulty from another axis.
-If any check fails, we go back to Step 1.
+## 8. Out of Scope
+Fraud detection, RCE, Agentic tool misuse, Real legal documents, artificial noise stress tests.
 
-### Step 5: Automated verification
-A script (which we will write) checks the same files programmatically: all JSON parses, all entity IDs resolve, all quotes exist verbatim, and the document count matches.
-If the script fails, we go back to Step 1.
+## 9. Reporting
+Markdown summaries for metrics. Individual errors and Evidence inspectable via the existing Workbench.
 
-### Step 6: Run the baseline
-Once a case passes both verification steps, we run the current `extract` + `resolve` pipeline on it and record F1, False Positives, Provenance, and whether it failed the axis.
-
-## Baseline Recording
-- **Baseline definition:** The current `extract` + `resolve` configuration, unchanged.
-- **Storage:** Results recorded in `benchmark_v1/results/baseline.md`.
-- **Comparison:** Every future pipeline change is compared against this baseline. Baseline is frozen once approved.
-
-## Approval Gate
-Before running the baseline, the benchmark cases must be reviewed and approved by Alistair. This mirrors the existing rule for held-out cases: the benchmark is frozen and approved before results are produced.
-
-## Out of Scope
-The following were considered and deliberately excluded:
-- **Fraud detection:** The app is a lawyer's assistant, not a fraud detector. Synthetic cases assume good-faith documents.
-- **Server-level attacks (RCE, buffer overflow):** Out of scope; illegal; the project does not have pen-testing authorization.
-- **Agentic tool misuse (DeepSeek Harness):** Not applicable until the pipeline exposes dynamic tool selection.
-- **Real legal documents:** The project only accepts synthetic material.
-
-## Why JSON for the Benchmark Files?
-We are **explicitly discarding the old `cases/` scenarios** to build a new, generic benchmark (`benchmark_v1/`). However, we *must* use the existing JSON data format (the Pydantic schema). 
-
-- **The pipeline requires it:** The Python code (`evaluate.py`, `graph.py`) uses Pydantic's `model_validate_json()`. Using YAML or another format would require rewriting the loading logic.
-- **No content is reused:** The schemas are just empty containers. The entities, documents, and relationships are 100% new and generic.
-- **Multi-document support:** Because a case can contain multiple documents, `ground_truth.json` includes a `document_id` so the evaluator knows which source proves each relationship.
-
-```json
-{
-  "entities": [
-    {"id": "person_001", "type": "person", "name": "Nadia Lau"}
-  ],
-  "relationships": [
-    {
-      "source": "person_001", 
-      "type": "settlor_of", 
-      "target": "trust_001",
-      "document_id": "source_01.txt"
-    }
-  ]
-}
-'''
-## Future Work: Composite Cases
-After the baseline is established, we propose building composite cases that combine multiple axes (e.g., Temporal + Authority + Aliases in one file) to test whether isolated improvements transfer to realistic scenarios.
-
-## Reporting
-Baseline results will be recorded in `benchmark_v1/results/baseline.md`:
-
-| Axis | Case | Docs | F1 | FP Rate | Provenance | Notes |
-|---|---|---|---|---|---|---|
-
-## Open Questions for Review
-1. Is the proposed **3 cases per axis** structure the right granularity for a baseline?
-2. Are the **document count ranges** per axis realistic for a typical private-client Matter file?
-3. Is the **approval gate** correctly placed before baseline execution, or should it occur earlier?
-4. Should the **composite cases** be built earlier, or deferred until the baseline is fully understood?
+## 10. Current Status
+- **12 cases authored and contract-verified** (6 dev + 6 held-out, one per axis per phase).
+- All 12 pass `evaluate_case.py` with F1=1.0 and provenance=1.0 on hand-crafted ideal extractions.
+- **Held-out set is frozen** (not inspected during development).
+- **RAG sweep is next.**
+- Full details in each case's README under `benchmark_v1/<axis>/<dev|held_out>/case_1/`.

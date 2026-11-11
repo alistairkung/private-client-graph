@@ -1,0 +1,16 @@
+{
+  "entities": [
+    { "id": "person_001", "type": "person", "name": "Carol Wong" },
+    { "id": "trust_001", "type": "trust", "name": "Evergreen Family Trust" }
+  ],
+  "relationships": [
+    {
+      "source": "person_001",
+      "type": "beneficiary_of",
+      "target": "trust_001",
+      "approved_evidence": [
+        "The sole beneficiary of the Evergreen Family Trust is hereby changed to Carol Wong."
+      ]
+    }
+  ]
+}

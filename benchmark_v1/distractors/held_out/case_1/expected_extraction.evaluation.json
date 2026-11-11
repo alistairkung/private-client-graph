@@ -1,0 +1,68 @@
+{
+  "tp": 5,
+  "fp": 0,
+  "fn": 0,
+  "precision": 1.0,
+  "recall": 1.0,
+  "f1": 1.0,
+  "true_positive_edges": [
+    [
+      "Laura Reid",
+      "parent_of",
+      "Oliver Reid"
+    ],
+    [
+      "Laura Reid",
+      "spouse_of",
+      "Thomas Reid"
+    ],
+    [
+      "Oliver Reid",
+      "beneficiary_of",
+      "Stirling Family Trust"
+    ],
+    [
+      "Thomas Reid",
+      "parent_of",
+      "Oliver Reid"
+    ],
+    [
+      "Thomas Reid",
+      "settlor_of",
+      "Stirling Family Trust"
+    ]
+  ],
+  "false_positive_edges": [],
+  "false_negative_edges": [],
+  "provenance_passed": 5,
+  "provenance_failed": 0,
+  "provenance_accuracy": 1.0,
+  "provenance_passes": [
+    [
+      "Laura Reid",
+      "parent_of",
+      "Oliver Reid"
+    ],
+    [
+      "Laura Reid",
+      "spouse_of",
+      "Thomas Reid"
+    ],
+    [
+      "Oliver Reid",
+      "beneficiary_of",
+      "Stirling Family Trust"
+    ],
+    [
+      "Thomas Reid",
+      "parent_of",
+      "Oliver Reid"
+    ],
+    [
+      "Thomas Reid",
+      "settlor_of",
+      "Stirling Family Trust"
+    ]
+  ],
+  "provenance_failures": []
+}

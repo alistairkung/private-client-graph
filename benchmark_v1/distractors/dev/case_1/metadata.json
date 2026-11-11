@@ -1,0 +1,4 @@
+{
+  "name": "Distractors (Development)",
+  "description": "Tests whether the pipeline ignores irrelevant named people (solicitor, PA, cousin) with no trust or family role."
+}

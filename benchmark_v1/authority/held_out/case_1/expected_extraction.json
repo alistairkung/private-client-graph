@@ -1,0 +1,10 @@
+{
+  "relationships": [
+    {
+      "source_name": "Daniel Foster",
+      "relationship_type": "beneficiary_of",
+      "target_name": "Ashworth Family Trust",
+      "supporting_text": "The sole beneficiary of the Ashworth Family Trust is hereby changed to Daniel Foster."
+    }
+  ]
+}

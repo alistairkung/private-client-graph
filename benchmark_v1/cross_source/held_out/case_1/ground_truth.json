@@ -1,0 +1,42 @@
+{
+  "entities": [
+    { "id": "person_001", "type": "person", "name": "Susan Leung" },
+    { "id": "person_002", "type": "person", "name": "Michelle Yeung" },
+    { "id": "person_003", "type": "person", "name": "Amy Yeung" },
+    { "id": "trust_001", "type": "trust", "name": "Ravenswood Trust" }
+  ],
+  "relationships": [
+    {
+      "source": "person_001",
+      "type": "settlor_of",
+      "target": "trust_001",
+      "approved_evidence": [
+        "Just confirming that my wife, Michelle Yeung, and I established the Ravenswood Trust in 2021. We are both the settlors."
+      ]
+    },
+    {
+      "source": "person_002",
+      "type": "settlor_of",
+      "target": "trust_001",
+      "approved_evidence": [
+        "Just confirming that my wife, Michelle Yeung, and I established the Ravenswood Trust in 2021. We are both the settlors."
+      ]
+    },
+    {
+      "source": "person_001",
+      "type": "spouse_of",
+      "target": "person_002",
+      "approved_evidence": [
+        "Just confirming that my wife, Michelle Yeung, and I established the Ravenswood Trust in 2021."
+      ]
+    },
+    {
+      "source": "person_003",
+      "type": "beneficiary_of",
+      "target": "trust_001",
+      "approved_evidence": [
+        "As noted in the deed, your daughter, Amy Yeung, is the sole beneficiary of the Ravenswood Trust."
+      ]
+    }
+  ]
+}

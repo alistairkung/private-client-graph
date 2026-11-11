@@ -1,0 +1,28 @@
+{
+  "tp": 1,
+  "fp": 0,
+  "fn": 0,
+  "precision": 1.0,
+  "recall": 1.0,
+  "f1": 1.0,
+  "true_positive_edges": [
+    [
+      "Carol Wong",
+      "beneficiary_of",
+      "Evergreen Family Trust"
+    ]
+  ],
+  "false_positive_edges": [],
+  "false_negative_edges": [],
+  "provenance_passed": 1,
+  "provenance_failed": 0,
+  "provenance_accuracy": 1.0,
+  "provenance_passes": [
+    [
+      "Carol Wong",
+      "beneficiary_of",
+      "Evergreen Family Trust"
+    ]
+  ],
+  "provenance_failures": []
+}

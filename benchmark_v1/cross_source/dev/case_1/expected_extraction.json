@@ -1,0 +1,28 @@
+{
+  "relationships": [
+    {
+      "source_name": "Alice Chen",
+      "relationship_type": "settlor_of",
+      "target_name": "Oakwood Trust",
+      "supporting_text": "Just confirming that my husband, David Chen, and I established the Oakwood Trust in 2020. We are both the settlors."
+    },
+    {
+      "source_name": "David Chen",
+      "relationship_type": "settlor_of",
+      "target_name": "Oakwood Trust",
+      "supporting_text": "Just confirming that my husband, David Chen, and I established the Oakwood Trust in 2020. We are both the settlors."
+    },
+    {
+      "source_name": "Alice Chen",
+      "relationship_type": "spouse_of",
+      "target_name": "David Chen",
+      "supporting_text": "Just confirming that my husband, David Chen, and I established the Oakwood Trust in 2020."
+    },
+    {
+      "source_name": "Bob Chen",
+      "relationship_type": "beneficiary_of",
+      "target_name": "Oakwood Trust",
+      "supporting_text": "As noted in the deed, your son, Bob Chen, is the sole beneficiary of the Oakwood Trust."
+    }
+  ]
+}

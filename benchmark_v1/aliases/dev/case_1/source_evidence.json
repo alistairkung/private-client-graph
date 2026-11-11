@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "relationships": [
+    {
+      "source": "person_001",
+      "type": "settlor_of",
+      "target": "trust_001",
+      "approved_evidence": [
+        {
+          "source_id": "note_01",
+          "supporting_text": "Margaret confirmed that she established the trust in 2018 and is its settlor."
+        }
+      ]
+    },
+    {
+      "source": "person_001",
+      "type": "spouse_of",
+      "target": "person_002",
+      "approved_evidence": [
+        {
+          "source_id": "note_01",
+          "supporting_text": "Margaret also confirmed that she and her husband, Thomas Wu, are spouses."
+        }
+      ]
+    },
+    {
+      "source": "person_001",
+      "type": "parent_of",
+      "target": "person_003",
+      "approved_evidence": [
+        {
+          "source_id": "note_01",
+          "supporting_text": "They have one child, Daniel."
+        }
+      ]
+    },
+    {
+      "source": "person_002",
+      "type": "parent_of",
+      "target": "person_003",
+      "approved_evidence": [
+        {
+          "source_id": "note_01",
+          "supporting_text": "They have one child, Daniel."
+        }
+      ]
+    },
+    {
+      "source": "person_003",
+      "type": "beneficiary_of",
+      "target": "trust_001",
+      "approved_evidence": [
+        {
+          "source_id": "note_01",
+          "supporting_text": "Mrs. Wu explained that \"Danny\" — as the family calls him — is the sole beneficiary of the Ashford Family Trust."
+        }
+      ]
+    }
+  ]
+}

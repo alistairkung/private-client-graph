@@ -1,0 +1,68 @@
+{
+  "tp": 5,
+  "fp": 0,
+  "fn": 0,
+  "precision": 1.0,
+  "recall": 1.0,
+  "f1": 1.0,
+  "true_positive_edges": [
+    [
+      "Emily Beaumont",
+      "beneficiary_of",
+      "Beaumont Family Trust"
+    ],
+    [
+      "Katherine Beaumont",
+      "parent_of",
+      "Emily Beaumont"
+    ],
+    [
+      "Katherine Beaumont",
+      "settlor_of",
+      "Beaumont Family Trust"
+    ],
+    [
+      "Katherine Beaumont",
+      "spouse_of",
+      "Richard Beaumont"
+    ],
+    [
+      "Richard Beaumont",
+      "parent_of",
+      "Emily Beaumont"
+    ]
+  ],
+  "false_positive_edges": [],
+  "false_negative_edges": [],
+  "provenance_passed": 5,
+  "provenance_failed": 0,
+  "provenance_accuracy": 1.0,
+  "provenance_passes": [
+    [
+      "Emily Beaumont",
+      "beneficiary_of",
+      "Beaumont Family Trust"
+    ],
+    [
+      "Katherine Beaumont",
+      "parent_of",
+      "Emily Beaumont"
+    ],
+    [
+      "Katherine Beaumont",
+      "settlor_of",
+      "Beaumont Family Trust"
+    ],
+    [
+      "Katherine Beaumont",
+      "spouse_of",
+      "Richard Beaumont"
+    ],
+    [
+      "Richard Beaumont",
+      "parent_of",
+      "Emily Beaumont"
+    ]
+  ],
+  "provenance_failures": []
+}

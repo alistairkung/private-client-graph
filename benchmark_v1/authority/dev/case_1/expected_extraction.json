@@ -1,0 +1,10 @@
+{
+  "relationships": [
+    {
+      "source_name": "Carol Wong",
+      "relationship_type": "beneficiary_of",
+      "target_name": "Evergreen Family Trust",
+      "supporting_text": "The sole beneficiary of the Evergreen Family Trust is hereby changed to Carol Wong."
+    }
+  ]
+}

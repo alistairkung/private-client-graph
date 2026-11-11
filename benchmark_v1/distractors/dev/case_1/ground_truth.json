@@ -1,0 +1,50 @@
+{
+  "entities": [
+    { "id": "person_001", "type": "person", "name": "Helen Park" },
+    { "id": "person_002", "type": "person", "name": "Simon Park" },
+    { "id": "person_003", "type": "person", "name": "Chloe Park" },
+    { "id": "trust_001", "type": "trust", "name": "Juniper Family Trust" }
+  ],
+  "relationships": [
+    {
+      "source": "person_001",
+      "type": "settlor_of",
+      "target": "trust_001",
+      "approved_evidence": [
+        "Helen confirmed that she is the settlor of the Juniper Family Trust."
+      ]
+    },
+    {
+      "source": "person_001",
+      "type": "spouse_of",
+      "target": "person_002",
+      "approved_evidence": [
+        "She also confirmed that she and her husband, Simon Park, are spouses."
+      ]
+    },
+    {
+      "source": "person_001",
+      "type": "parent_of",
+      "target": "person_003",
+      "approved_evidence": [
+        "They have one child together, Chloe Park."
+      ]
+    },
+    {
+      "source": "person_002",
+      "type": "parent_of",
+      "target": "person_003",
+      "approved_evidence": [
+        "They have one child together, Chloe Park."
+      ]
+    },
+    {
+      "source": "person_003",
+      "type": "beneficiary_of",
+      "target": "trust_001",
+      "approved_evidence": [
+        "Helen confirmed that Chloe Park is the sole current beneficiary of the Juniper Family Trust."
+      ]
+    }
+  ]
+}
