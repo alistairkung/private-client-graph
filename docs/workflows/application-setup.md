@@ -463,4 +463,14 @@ Set the following variables with the `PCG_WORKSPACE_` prefix:
 
 PCG sign-in authorizes the practitioner. The separate online grant authorizes the synthetic mailbox and Drive account. A one-use OAuth transaction binds PKCE, nonce and state to the current signed login. Access ends at the earlier of token expiry and session expiry. Disconnect, logout and a rejected grant retire the private journey. An item-level denial leaves the connection available to revise the collection.
 
+When the practitioner approves publication, PCG consumes the preview token,
+reacquires the Sources and compares them with the exact approved collection.
+PCG rechecks practitioner eligibility, then authorizes import by verifying the
+active grant and search handle under the same lock used by disconnect.
+Disconnection or expiry before that point rejects the import before analysis.
+Afterward, analysis can finish using the finalized Sources even if Workspace
+disconnects. The database commit makes the proposal public. Reference checks,
+provider authorization and accounting, and recovery by reference after an
+unknown outcome follow the same rules as PDF intake.
+
 Configure the private reverse proxy and any external monitoring to omit discovery bodies, OAuth callback query strings and authorization headers from logs and traces. The app uses server memory for active tokens. The private operator must restrict ingress and disable external HTTP/body tracing. Real account provisioning, seeding and live API verification belong to the subsequent pilot.

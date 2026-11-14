@@ -1,7 +1,10 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { expect, it, vi } from "vitest";
 import { candidates, type View } from "./api";
+import { AccessProvider } from "../../../shared/access";
+import { Intake } from "../Intake";
+import { WorkspaceConnection } from "./WorkspaceConnection";
 import { WorkspaceDiscovery } from "./WorkspaceDiscovery";
 
 const view: View = {
@@ -91,7 +94,6 @@ it("reordering invalidates approval and a failed import requires another exact p
 });
 
 it("retiring a Workspace grant removes private results and offers a fresh connection", async () => {
-  const { WorkspaceConnection } = await import("./WorkspaceConnection");
   const user = userEvent.setup();
   const respond = (body: unknown, status = 200) =>
     new Response(JSON.stringify(body), { status });
@@ -168,4 +170,131 @@ it("keeps the selection editable when a single Source becomes unavailable", asyn
   expect(screen.getByLabelText("Deed · PDF")).not.toBeChecked();
   expect(screen.getByText("Preview exact Sources")).toBeEnabled();
   expect(grantLost).not.toHaveBeenCalled();
+});
+
+it("clears a private preview and offers sign-in after the server forgets the login", async () => {
+  const user = userEvent.setup();
+  const respond = (body: unknown, status = 200) =>
+    new Response(JSON.stringify(body), { status });
+  const fetch = vi.spyOn(globalThis, "fetch");
+  fetch.mockResolvedValueOnce(
+    respond({
+      can_write: true,
+      sign_in_available: true,
+      workspace_discovery: true,
+      workspace_connection: true,
+    }),
+  );
+  render(
+    <AccessProvider>
+      <Intake />
+    </AccessProvider>,
+  );
+  fetch.mockResolvedValueOnce(
+    respond({
+      connected: true,
+      generation: "first",
+      account: "pilot@example.test",
+      folder: "folder",
+      label: "label",
+      folder_name: "Alder",
+      label_name: "Letters",
+    }),
+  );
+  await user.click(
+    await screen.findByRole("button", { name: "Discover Workspace Sources" }),
+  );
+  fetch.mockResolvedValueOnce(
+    respond({
+      session: "old",
+      view: {
+        ...view,
+        suggestions: [
+          {
+            query: "Mara Voss",
+            passage: "Mara will circulate the appointment.",
+            origin: "same",
+            rationale: "An appointment is outstanding.",
+          },
+        ],
+      },
+    }),
+  );
+  await user.click(
+    await screen.findByRole("button", { name: "Start private discovery" }),
+  );
+  await user.click(screen.getByLabelText("Deed · PDF"));
+  fetch.mockResolvedValueOnce(
+    respond({
+      token: "old-preview",
+      sources: [
+        {
+          id: "source_001",
+          title: "Appointment",
+          text: "Reviewed private text",
+        },
+      ],
+    }),
+  );
+  await user.click(
+    screen.getByRole("button", { name: "Preview exact Sources" }),
+  );
+  await user.click(screen.getByLabelText(/I approve publishing/));
+  expect(screen.getByText("Reviewed private text")).toBeVisible();
+  fetch
+    .mockResolvedValueOnce(
+      respond(
+        {
+          error: {
+            code: "sign_in_required",
+            message: "Sign in again.",
+            retryable: false,
+          },
+        },
+        401,
+      ),
+    )
+    .mockResolvedValueOnce(
+      respond({ can_write: false, sign_in_available: true }),
+    );
+  fireEvent.focus(window);
+  expect(
+    await screen.findByRole("link", { name: "Sign in again" }),
+  ).toHaveAttribute(
+    "href",
+    "/auth/login?next=%2Fapp%2Fmatter-proposals%2Fnew%3Fworkspace%3Dconnect",
+  );
+  expect(screen.getByText("Your session has expired")).toBeVisible();
+  expect(screen.queryByText("Reviewed private text")).toBeNull();
+  expect(
+    screen.queryByRole("button", { name: "Search for Mara Voss" }),
+  ).toBeNull();
+  expect(screen.queryByLabelText("Deed · PDF")).toBeNull();
+  expect(screen.queryByLabelText(/I approve publishing/)).toBeNull();
+  expect(screen.queryByRole("button", { name: /try again|retry/i })).toBeNull();
+});
+
+it("retries a failed connection status read without repeating a discovery action", async () => {
+  const fetch = vi
+    .spyOn(globalThis, "fetch")
+    .mockRejectedValueOnce(new TypeError("Network unavailable"));
+  render(<WorkspaceConnection onBusy={vi.fn()} />);
+  const retry = await screen.findByRole("button", { name: "Try again" });
+  fetch.mockResolvedValueOnce(
+    new Response(
+      JSON.stringify({
+        connected: false,
+        account: "pilot@example.test",
+        folder_name: "Alder",
+        label_name: "Letters",
+      }),
+    ),
+  );
+  await userEvent.click(retry);
+  expect(
+    await screen.findByRole("button", { name: "Connect Google Workspace" }),
+  ).toBeEnabled();
+  expect(fetch.mock.calls.map(([url]) => url)).toEqual(
+    Array(2).fill("/api/matter-proposals/discovery/connection"),
+  );
 });

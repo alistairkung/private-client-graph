@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import { useLocale } from "../../../shared/locale";
+import { RequestFailure } from "../../../shared/api";
 import { ErrorNotice } from "../../../shared/Feedback";
 import { action } from "./api";
 import { WorkspaceDiscovery } from "./WorkspaceDiscovery";
@@ -86,7 +87,16 @@ export function WorkspaceConnection({
       } catch (failure) {
         if (active && ticket === revision.current) {
           setStatus(undefined);
-          setError(failure);
+          // Status uses POST for privacy, but checking it has no mutation to replay.
+          setError(
+            failure instanceof RequestFailure && failure.status === 0
+              ? new RequestFailure(0, {
+                  code: "connection",
+                  message: "",
+                  retryable: true,
+                })
+              : failure,
+          );
         }
       }
     }

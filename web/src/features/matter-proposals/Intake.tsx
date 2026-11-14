@@ -20,7 +20,7 @@ import "./intake.css";
 
 export function Intake() {
   const { t } = useLocale();
-  const { access } = useAccess();
+  const { access, sessionEnded } = useAccess();
   const canWrite = access?.can_write === true;
   const [reference, setReference] = useSessionState("intake:reference", "");
   const [title, setTitle] = useSessionState("intake:title", "");
@@ -116,8 +116,19 @@ export function Intake() {
       </div>
       <p className="public-source-notice">{t("Saving a proposal publishes every Source title and its entire extracted text, proposed relationships and Matter reference to anyone, before confirmation. Discard cannot retract copies already read or downloaded.")}</p>
       {!canWrite && <div className="intake-access" id="intake-access">
-        <p>{t("Sign in to upload sources and create a proposal.")}</p>
-        <WriteGate />
+        {discover && sessionEnded ? (
+          <div className="notice error" role="alert">
+            <h2>{t("Your session has expired")}</h2>
+            <a href={"/auth/login?next=" + encodeURIComponent("/app/matter-proposals/new?workspace=connect")}>
+              {t("Sign in again")}
+            </a>
+          </div>
+        ) : (
+          <>
+            <p>{t("Sign in to upload sources and create a proposal.")}</p>
+            <WriteGate />
+          </>
+        )}
       </div>}
       {canWrite && access?.workspace_discovery && (
         <button className="button" disabled={busy || discoveryBusy} onClick={() => setDiscover(!discover)}>

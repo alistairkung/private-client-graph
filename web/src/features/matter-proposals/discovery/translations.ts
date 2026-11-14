@@ -5,6 +5,7 @@ export const discoveryCatalogue: Record<string, string> = {
   "The connection could not be verified. Connect again.": "无法验证连接。请重新连接。",
   "Workspace access ended. Reconnect and review your Sources again.": "Workspace 访问已结束。请重新连接并再次审阅来源。",
   "Workspace connected": "已连接 Workspace",
+  "Sign in again": "重新登录",
   "Connect again": "重新连接",
   "Choose the pilot account": "选择试点帐号",
   "Review permissions": "检查权限",

@@ -22,13 +22,15 @@ type AccessState =
 const Context = createContext<{
   state: AccessState;
   access?: Access;
+  sessionEnded: boolean;
   refresh: () => void;
-}>({ state: { status: "loading" }, refresh: () => {} });
+}>({ state: { status: "loading" }, sessionEnded: false, refresh: () => {} });
 export const accessDeniedEvent = "pcg:access-denied";
 
 export function AccessProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AccessState>({ status: "loading" });
   const [attempt, setAttempt] = useState(0);
+  const [sessionEnded, setSessionEnded] = useState(false);
   const wasWriter = useRef(false);
   function refresh() {
     setState({ status: "loading" });
@@ -41,6 +43,7 @@ export function AccessProvider({ children }: { children: ReactNode }) {
       .then((access: Access) => {
         if (!active) return;
         if (wasWriter.current && !access.can_write) clearSessionState();
+        if (access.can_write) setSessionEnded(false);
         wasWriter.current = access.can_write;
         setState({ status: "ready", access });
       })
@@ -50,7 +53,8 @@ export function AccessProvider({ children }: { children: ReactNode }) {
     return () => { active = false; };
   }, [attempt]);
   useEffect(() => {
-    const denied = () => {
+    const denied = (event: Event) => {
+      if (event instanceof CustomEvent && event.detail === 401) setSessionEnded(true);
       clearSessionState();
       wasWriter.current = false;
       refresh();
@@ -61,6 +65,7 @@ export function AccessProvider({ children }: { children: ReactNode }) {
   return (
     <Context.Provider value={{
       state,
+      sessionEnded,
       access: state.status === "ready" ? state.access : undefined,
       refresh,
     }}>

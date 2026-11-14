@@ -18,6 +18,7 @@ from private_client_graph.application.matter_proposals import analyse_finalized_
 from private_client_graph.application.proposal_contracts import MatterIntakeMetadata, MatterProposalDetail
 from private_client_graph.application.proposal_errors import ProposalFailure
 from private_client_graph.application.proposal_sources import MAX_PROPOSAL_SOURCES
+from .auth import allowed_subjects, available_auth_config
 from .workspace_pilot import Pilot, reconnect
 
 
@@ -85,10 +86,12 @@ def discovery_router(http: Client | None = None, *, pilot: Pilot | None = None) 
 
     def review(request: Request, body: SessionAction) -> CollectionReview:
         if pilot:
-            journey = pilot.connected(request).journey
-            if not journey or journey[0] != body.session:
-                raise ProposalFailure("unknown_discovery", "Start private discovery again.", status_code=409)
-            return journey[1]
+            # Disconnect, expiry and journey replacement use the same lock.
+            with pilot.lock:
+                journey = pilot.connected(request).journey
+                if not journey or journey[0] != body.session:
+                    raise ProposalFailure("unknown_discovery", "Start private discovery again.", status_code=409)
+                return journey[1]
         return sessions.get(request, body)
 
     @contextmanager
@@ -159,6 +162,13 @@ def discovery_router(http: Client | None = None, *, pilot: Pilot | None = None) 
     def publish(request: Request, body: Import, response: Response) -> MatterProposalDetail:
         with active_review(request, body) as collection:
             sources = collection.approve(body.preview)
+            if pilot:
+                if available_auth_config(request) is None:
+                    raise ProposalFailure("authentication_unavailable", "Authentication is unavailable.", status_code=503)
+                if request.session["sub"] not in allowed_subjects():
+                    raise ProposalFailure("access_denied", "Access is not allowed.", status_code=403)
+        # The final active_review check authorizes handoff. Subsequent disconnects
+        # cannot revoke the finalized Sources or undo a provider reservation.
         proposal = analyse_finalized_sources(body.metadata, sources, request.app.state.proposal_analysis)
         response.headers["Location"] = f"/api/matter-proposals/{proposal.id}"
         return proposal
