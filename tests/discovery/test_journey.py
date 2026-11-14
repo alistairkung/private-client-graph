@@ -216,3 +216,16 @@ def test_streamed_oversize_response_stops_before_pulling_another_chunk():
                                    Limits(action_bytes=8))
         view = session.start("Alder Trust")
     assert view.bytes == 8 and view.stop_reason == "Action byte limit"
+
+
+def test_unframed_response_stops_before_a_block_would_cross_the_limit():
+    class Chunks(SyncByteStream):
+        def __iter__(self):
+            yield b"x" * 8192
+            pytest.fail("read another HTTP block with only 1808 bytes remaining")
+
+    with Client(transport=MockTransport(lambda _: Response(200, stream=Chunks()))) as http:
+        session = DiscoverySession(http, WorkspaceScope("synthetic@example.test", "alder-label", "folder-1"),
+                                   Limits(action_bytes=10_000))
+        view = session.start("Alder Trust")
+    assert view.bytes == 8192 and view.stop_reason == "Action byte limit"

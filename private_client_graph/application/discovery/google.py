@@ -114,11 +114,15 @@ class WorkspaceReader:
                     action.require_bytes(expected)
                 data = bytearray()
                 # Cap each application read, including chunked responses without Content-Length.
-                for chunk in response.iter_bytes(min(8192, action.remaining_bytes)):
+                block_size = min(8192, action.remaining_bytes)
+                for chunk in response.iter_bytes(block_size):
                     action.consume(len(chunk))
                     data.extend(chunk)
-                    if action.remaining_bytes == 0 and len(data) != expected:
-                        action.require_bytes(1)
+                    if expected is None:
+                        # Unframed responses may require another full block. Stop before pulling it.
+                        action.require_bytes(block_size)
+                    elif len(data) == expected:
+                        break
                 if expected is not None and expected != len(data):
                     raise ReadFailure("Incomplete Workspace response")
                 return bytes(data)
