@@ -1,0 +1,1078 @@
+{
+  "description": "Recorded development-only Workbench baseline. Candidates are provider payloads. Evaluation and attribution are the original observation results.",
+  "experiment_name": "benchmark-v1-six-axis-baseline",
+  "experiment_id": "c7eae3fb42735f97a80851d282109956",
+  "run_id": "724873665d0f5e7f839e1507fa3badfd",
+  "plan_digest": "9df8e798f18c833bb1cc980739707c199b2867bee14b7a45561a2b1598e34b16",
+  "artifact_digest": "40470f27ef74899d09ad4af20bd4a7e352b809ebd2cde47df1c2ddde667feb3c",
+  "source_commit": "3b579c96b8daa06285933a1efca17f2e41c23407",
+  "dependencies": {
+    "pydantic": "2.13.5",
+    "pydantic-core": "2.46.5",
+    "langchain-core": "1.6.6",
+    "langchain-deepseek": "1.1.1",
+    "langchain-openai": "1.6.7",
+    "openai": "3.23.0",
+    "langsmith": "0.14.3",
+    "httpx": "0.28.1",
+    "httpcore": "1.0.9"
+  },
+  "settings": {
+    "model": "deepseek-flash",
+    "timeout_seconds": 90.0,
+    "temperature": null,
+    "max_retries": 0,
+    "thinking": "disabled"
+  },
+  "settings_sha256": "a388906e2964889173a636ec633f7106f91926ab8cedf1b237b31caa7c010edd",
+  "sourced_system_prompt_sha256": "d67afaeb19c26448a6779d9576800cc50ca399c634ad81a1a02b847be0a9dfae",
+  "run_configuration": {
+    "input_ids": [
+      "benchmark_v1_aliases_dev_1_fixture",
+      "benchmark_v1_authority_dev_1_fixture",
+      "benchmark_v1_cross_source_dev_1_fixture",
+      "benchmark_v1_distractors_dev_1_fixture",
+      "benchmark_v1_hallucination_dev_1_fixture",
+      "benchmark_v1_temporal_dev_1_fixture"
+    ],
+    "retained_experiment_id": null,
+    "retained_run_id": null,
+    "input_mode": "fresh",
+    "execution_mode": "live",
+    "resolver": "none",
+    "extraction_samples": 1,
+    "resolver_repetitions": 1,
+    "invocation_cap": 6,
+    "temperature": null,
+    "timeout_seconds": 90.0,
+    "task_call_cap": 6,
+    "model": "deepseek-flash"
+  },
+  "evaluator": "semantic_edges_v1",
+  "aggregate_version": "observation_micro_f1_v1",
+  "coverage": {
+    "planned": 6,
+    "scored": 6,
+    "pending": 0,
+    "failed": 0,
+    "uncertain": 0,
+    "unavailable": 0
+  },
+  "graph_and_quote_counts": {
+    "tp": 30,
+    "fp": 1,
+    "fn": 1,
+    "provenance_passed": 28,
+    "provenance_failed": 2
+  },
+  "source_attribution": {
+    "version": "source_attribution_v1",
+    "passed": 28,
+    "assessed": 30,
+    "failed": 2,
+    "accuracy": 0.9333333333333333
+  },
+  "micro_f1": 0.967741935483871,
+  "lifecycle_times_utc": {
+    "complete": "2026-11-14T06:27:36.613311+00:00",
+    "running": "2026-11-14T06:27:25.748205+00:00"
+  },
+  "elapsed_run_seconds": 10.865106,
+  "summed_provider_seconds": 10.455677501042373,
+  "usage": {
+    "input_tokens": 6354,
+    "output_tokens": 2022,
+    "cached_tokens": 3200
+  },
+  "workbench_cost": {
+    "total": null,
+    "known_subtotal": 0.0,
+    "currency": "USD",
+    "attempts": 6,
+    "unpriced_attempts": 6,
+    "reasons": [
+      "benchmark_v1_aliases_dev_1_fixture_fresh_01-extraction: Retained usage or pricing unavailable.",
+      "benchmark_v1_authority_dev_1_fixture_fresh_01-extraction: Retained usage or pricing unavailable.",
+      "benchmark_v1_cross_source_dev_1_fixture_fresh_01-extraction: Retained usage or pricing unavailable.",
+      "benchmark_v1_distractors_dev_1_fixture_fresh_01-extraction: Retained usage or pricing unavailable.",
+      "benchmark_v1_hallucination_dev_1_fixture_fresh_01-extraction: Retained usage or pricing unavailable.",
+      "benchmark_v1_temporal_dev_1_fixture_fresh_01-extraction: Retained usage or pricing unavailable."
+    ]
+  },
+  "post_hoc_tariff_estimate": {
+    "currency": "USD",
+    "estimated_cost": "0.0016959",
+    "usd_per_million_uncached_input": "0.15",
+    "usd_per_million_cached_input": "0.003",
+    "usd_per_million_output": "0.60",
+    "retrieved": "2026-11-14",
+    "source": "https://api-docs.deepseek.com/quick_start/pricing/",
+    "schedule": "Weekend off-peak"
+  },
+  "observations": [
+    {
+      "case_id": "benchmark_v1_aliases_dev_1",
+      "axis": "aliases",
+      "family": "benchmark_v1_aliases_1",
+      "fixture_id": "benchmark_v1_aliases_dev_1_fixture",
+      "sample_id": "benchmark_v1_aliases_dev_1_fixture_fresh_01",
+      "observation_id": "benchmark_v1_aliases_dev_1_fixture_fresh_01-noop",
+      "attempt_id": "benchmark_v1_aliases_dev_1_fixture_fresh_01-extraction",
+      "source_ids": [
+        "note_01"
+      ],
+      "source_digest": "bd8b93edce12f43aeb4a11de6c5d689a8f8b71489b1ca2a99fb3c6484cbb9e87",
+      "truth_digest": "82338cc4c62223b3bfcb388939a407d024f3240f7af487d042519c13e5755d13",
+      "file_sha256": {
+        "source.txt": "8e03fde3d195a033473f89717d7145ee69bc082273fef4605f248392747191cb",
+        "ground_truth.json": "c5259f60dc8e42535736c262014800ef80fcb24905f895fe889c9113a6e0d0fb",
+        "extraction.json": "26d624c24c4d61e23a8bbea23cb57a114097f770473e38cec4a725a7f24d716b",
+        "sources.json": "bc4c79c7d6390930c6716cf6314e3cfd9d1d2fb3fd4374667025caa4827786ba",
+        "expected_source_extraction.json": "129e23a0824a368636a8dec93b8a378bbc9bdc2fc7e4abd270366749c667e076",
+        "source_evidence.json": "acdfd4a7bfa8c306e4e871e72f8cbd0b730f35c011ab1400802de1c653242fd9"
+      },
+      "message_pair_sha256": "b9dd94dd8af23f15f3c2d284c8a45da5de1c60c9b953804b1faa135116218e6d",
+      "started_at": "2026-11-14T06:27:26.095786+00:00",
+      "finished_at": "2026-11-14T06:27:27.996499+00:00",
+      "provider_seconds": 1.8985859589884058,
+      "returned_model": "deepseek-flash",
+      "system_fingerprint": "bc19ba97cbe016479903222bb1578db6",
+      "token_usage": {
+        "input_tokens": 997,
+        "output_tokens": 328,
+        "cached_tokens": 0
+      },
+      "outcome": "completed",
+      "candidates": {
+        "relationships": [
+          {
+            "source_name": "Margaret Wu",
+            "relationship_type": "settlor_of",
+            "target_name": "Ashford Family Trust",
+            "supporting_text": "Margaret confirmed that she established the trust in 2018 and is its settlor.",
+            "source_id": "note_01"
+          },
+          {
+            "source_name": "Margaret Wu",
+            "relationship_type": "spouse_of",
+            "target_name": "Thomas Wu",
+            "supporting_text": "Margaret also confirmed that she and her husband, Thomas Wu, are spouses.",
+            "source_id": "note_01"
+          },
+          {
+            "source_name": "Margaret Wu",
+            "relationship_type": "parent_of",
+            "target_name": "Daniel Wu",
+            "supporting_text": "They have one child, Daniel Wu, known to the family as Daniel.",
+            "source_id": "note_01"
+          },
+          {
+            "source_name": "Thomas Wu",
+            "relationship_type": "parent_of",
+            "target_name": "Daniel Wu",
+            "supporting_text": "They have one child, Daniel Wu, known to the family as Daniel.",
+            "source_id": "note_01"
+          },
+          {
+            "source_name": "Daniel Wu",
+            "relationship_type": "beneficiary_of",
+            "target_name": "Ashford Family Trust",
+            "supporting_text": "Mrs. Wu explained that \"Danny\" — as the family calls him — is the sole beneficiary of the Ashford Family Trust.",
+            "source_id": "note_01"
+          }
+        ]
+      },
+      "evaluation": {
+        "tp": 5,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "true_positive_edges": [
+          [
+            "Daniel Wu",
+            "beneficiary_of",
+            "Ashford Family Trust"
+          ],
+          [
+            "Margaret Wu",
+            "parent_of",
+            "Daniel Wu"
+          ],
+          [
+            "Margaret Wu",
+            "settlor_of",
+            "Ashford Family Trust"
+          ],
+          [
+            "Margaret Wu",
+            "spouse_of",
+            "Thomas Wu"
+          ],
+          [
+            "Thomas Wu",
+            "parent_of",
+            "Daniel Wu"
+          ]
+        ],
+        "false_positive_edges": [],
+        "false_negative_edges": [],
+        "provenance_passed": 5,
+        "provenance_failed": 0,
+        "provenance_accuracy": 1.0,
+        "provenance_passes": [
+          [
+            "Daniel Wu",
+            "beneficiary_of",
+            "Ashford Family Trust"
+          ],
+          [
+            "Margaret Wu",
+            "parent_of",
+            "Daniel Wu"
+          ],
+          [
+            "Margaret Wu",
+            "settlor_of",
+            "Ashford Family Trust"
+          ],
+          [
+            "Margaret Wu",
+            "spouse_of",
+            "Thomas Wu"
+          ],
+          [
+            "Thomas Wu",
+            "parent_of",
+            "Daniel Wu"
+          ]
+        ],
+        "provenance_failures": []
+      },
+      "source_attribution": {
+        "version": "source_attribution_v1",
+        "assessed": 5,
+        "passed": 5,
+        "failed": 0,
+        "accuracy": 1.0,
+        "failures": []
+      },
+      "canonical_state_sha256": "80d551e3132752e93c155f2a11eb1d230e2da4fcda18bf0cc116aef5d3a39640",
+      "canonical_graph_sha256": "41af6760373cf9a3a279859c9abb9458ae917926aebc472a0211b14fa6f13c12",
+      "attempt_finished_file_sha256": "2bc0a720b1c0864e67e98e136f6c6d0608356ac989f962ce9a18afc19229e255"
+    },
+    {
+      "case_id": "benchmark_v1_authority_dev_1",
+      "axis": "authority",
+      "family": "benchmark_v1_authority_1",
+      "fixture_id": "benchmark_v1_authority_dev_1_fixture",
+      "sample_id": "benchmark_v1_authority_dev_1_fixture_fresh_01",
+      "observation_id": "benchmark_v1_authority_dev_1_fixture_fresh_01-noop",
+      "attempt_id": "benchmark_v1_authority_dev_1_fixture_fresh_01-extraction",
+      "source_ids": [
+        "note_01",
+        "note_02"
+      ],
+      "source_digest": "150acc5ae8d8088f3060978649db6ae6bf900a8fcd65045c737bac888bf8ae66",
+      "truth_digest": "d2f452d9998c18d7fd9e795c81cf889126294e02fd0be9b80df50885ed4bf46e",
+      "file_sha256": {
+        "source.txt": "06acebe8bbd35d9d67364f463771ee2e201cff0173a0fc590ff5e42298548e71",
+        "ground_truth.json": "5e08da1f31d5c85d89a1ec4dc499790c038f6ff6daf7dce1fde24eba28c64770",
+        "extraction.json": "cf4a7e155ac2104b7aa7bae67ad8efd07431809b32e20acab4d89dcab1037384",
+        "sources/note_01.txt": "58ca25ad8ceeb77d24320b88988a547efcc32548510a363ecc2fa8b1c472f761",
+        "sources/note_02.txt": "0207c6812d69b6ef17d9c822a3f82956849227316a47b6353110d2b773c5982b",
+        "sources.json": "51fedcadbc8132ca1a8f829d00f51c112c53740a0369355cb62b0ab3465597c7",
+        "expected_source_extraction.json": "c4dcbe4498fdbcc96447d79fc335cbfe5e3d5c52882485a537e0a27fa58bf33c",
+        "source_evidence.json": "5f49e30bdba7d85bdc7a3f25fba752b2d2a6ddd4e62920210349e477f4321275"
+      },
+      "message_pair_sha256": "fab16ba9bd9c46ee1bd990999065574f841817b9e2635be83802da367d2040dd",
+      "started_at": "2026-11-14T06:27:28.002530+00:00",
+      "finished_at": "2026-11-14T06:27:29.043599+00:00",
+      "provider_seconds": 1.035690207965672,
+      "returned_model": "deepseek-flash",
+      "system_fingerprint": "bc19ba97cbe016479903222bb1578db6",
+      "token_usage": {
+        "input_tokens": 1044,
+        "output_tokens": 149,
+        "cached_tokens": 640
+      },
+      "outcome": "completed",
+      "candidates": {
+        "relationships": [
+          {
+            "source_name": "Alice Chen",
+            "relationship_type": "parent_of",
+            "target_name": "Bob Chen",
+            "supporting_text": "Alice mentioned that she intends to leave everything to her son, Bob Chen",
+            "source_id": "note_01"
+          },
+          {
+            "source_name": "Carol Wong",
+            "relationship_type": "beneficiary_of",
+            "target_name": "Evergreen Family Trust",
+            "supporting_text": "The sole beneficiary of the Evergreen Family Trust is hereby changed to Carol Wong.",
+            "source_id": "note_02"
+          }
+        ]
+      },
+      "evaluation": {
+        "tp": 2,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "true_positive_edges": [
+          [
+            "Alice Chen",
+            "parent_of",
+            "Bob Chen"
+          ],
+          [
+            "Carol Wong",
+            "beneficiary_of",
+            "Evergreen Family Trust"
+          ]
+        ],
+        "false_positive_edges": [],
+        "false_negative_edges": [],
+        "provenance_passed": 1,
+        "provenance_failed": 1,
+        "provenance_accuracy": 0.5,
+        "provenance_passes": [
+          [
+            "Carol Wong",
+            "beneficiary_of",
+            "Evergreen Family Trust"
+          ]
+        ],
+        "provenance_failures": [
+          [
+            "Alice Chen",
+            "parent_of",
+            "Bob Chen"
+          ]
+        ]
+      },
+      "source_attribution": {
+        "version": "source_attribution_v1",
+        "assessed": 2,
+        "passed": 1,
+        "failed": 1,
+        "accuracy": 0.5,
+        "failures": [
+          {
+            "edge": [
+              "Alice Chen",
+              "parent_of",
+              "Bob Chen"
+            ],
+            "evidence_id": "evidence_001",
+            "source_id": "note_01",
+            "supporting_text": "Alice mentioned that she intends to leave everything to her son, Bob Chen"
+          }
+        ]
+      },
+      "canonical_state_sha256": "77f7606078c73fa5cd6d4534fbe519c93740cd8d67eefa0a1a2ecb1d6a228016",
+      "canonical_graph_sha256": "006ccff664678ade6d12c6bac0e7dae825f7472ca5feabeb6b30966cfcbf1f1f",
+      "attempt_finished_file_sha256": "f378516af65044fb7273d2c5e3394b45d81200080874bfbc937f8a7a9ba1cc46"
+    },
+    {
+      "case_id": "benchmark_v1_cross_source_dev_1",
+      "axis": "cross_source",
+      "family": "benchmark_v1_cross_source_1",
+      "fixture_id": "benchmark_v1_cross_source_dev_1_fixture",
+      "sample_id": "benchmark_v1_cross_source_dev_1_fixture_fresh_01",
+      "observation_id": "benchmark_v1_cross_source_dev_1_fixture_fresh_01-noop",
+      "attempt_id": "benchmark_v1_cross_source_dev_1_fixture_fresh_01-extraction",
+      "source_ids": [
+        "note_01",
+        "note_02"
+      ],
+      "source_digest": "0bfb5b25a7683e347adb2be1072d185580417db02fc09033bbd5bcce1d8f1a9d",
+      "truth_digest": "00c22ca1ef7e634219551bc9a0e57762385bd97d0b6143d387e5d41486acc2c0",
+      "file_sha256": {
+        "source.txt": "830d9e49f7ba2568acd8a4f444f4527e4e6525ae3ea66923bdd9c69881f772f2",
+        "ground_truth.json": "ca2514eaccc1a677409056836cd1568fc99852116527e94f44f9e743884ab00d",
+        "extraction.json": "37d4a786a35f9a06877d94ce2fa0103ba731207e9d290b2bf287dd5805f14a5c",
+        "sources/note_01.txt": "8b9981fb0ed2a1f0dba5d60edeba0d0d34abe00328bb97c8b58fea26cd474787",
+        "sources/note_02.txt": "2757e1d0a321a011f26b4e77a73eecc7ecfbc829d00f6a3bf88a949c2d69d17d",
+        "sources.json": "51fedcadbc8132ca1a8f829d00f51c112c53740a0369355cb62b0ab3465597c7",
+        "expected_source_extraction.json": "72203d9bd136c85497d6da0a425ac4d052bc52421cbb1862f44c5b051e0e1315",
+        "source_evidence.json": "5ac9530d4819d5fbda7d29dd64b5a9c94581a0a60e212c033281fe2da6c69f92"
+      },
+      "message_pair_sha256": "95b076db0866e457636a9325df1d193ac065fe204107d8970ebb347ec55b211e",
+      "started_at": "2026-11-14T06:27:29.048316+00:00",
+      "finished_at": "2026-11-14T06:27:30.702303+00:00",
+      "provider_seconds": 1.649066042038612,
+      "returned_model": "deepseek-flash",
+      "system_fingerprint": "bc19ba97cbe016479903222bb1578db6",
+      "token_usage": {
+        "input_tokens": 1030,
+        "output_tokens": 362,
+        "cached_tokens": 640
+      },
+      "outcome": "completed",
+      "candidates": {
+        "relationships": [
+          {
+            "source_name": "Alice Chen",
+            "relationship_type": "spouse_of",
+            "target_name": "David Chen",
+            "supporting_text": "Just confirming that my husband, David Chen, and I established the Oakwood Trust in 2020.",
+            "source_id": "note_01"
+          },
+          {
+            "source_name": "Alice Chen",
+            "relationship_type": "settlor_of",
+            "target_name": "Oakwood Trust",
+            "supporting_text": "Just confirming that my husband, David Chen, and I established the Oakwood Trust in 2020. We are both the settlors.",
+            "source_id": "note_01"
+          },
+          {
+            "source_name": "David Chen",
+            "relationship_type": "settlor_of",
+            "target_name": "Oakwood Trust",
+            "supporting_text": "Just confirming that my husband, David Chen, and I established the Oakwood Trust in 2020. We are both the settlors.",
+            "source_id": "note_01"
+          },
+          {
+            "source_name": "Alice Chen",
+            "relationship_type": "parent_of",
+            "target_name": "Bob Chen",
+            "supporting_text": "As noted in the deed, your son, Bob Chen, is the sole beneficiary of the Oakwood Trust.",
+            "source_id": "note_02"
+          },
+          {
+            "source_name": "Bob Chen",
+            "relationship_type": "beneficiary_of",
+            "target_name": "Oakwood Trust",
+            "supporting_text": "As noted in the deed, your son, Bob Chen, is the sole beneficiary of the Oakwood Trust.",
+            "source_id": "note_02"
+          }
+        ]
+      },
+      "evaluation": {
+        "tp": 5,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "true_positive_edges": [
+          [
+            "Alice Chen",
+            "parent_of",
+            "Bob Chen"
+          ],
+          [
+            "Alice Chen",
+            "settlor_of",
+            "Oakwood Trust"
+          ],
+          [
+            "Alice Chen",
+            "spouse_of",
+            "David Chen"
+          ],
+          [
+            "Bob Chen",
+            "beneficiary_of",
+            "Oakwood Trust"
+          ],
+          [
+            "David Chen",
+            "settlor_of",
+            "Oakwood Trust"
+          ]
+        ],
+        "false_positive_edges": [],
+        "false_negative_edges": [],
+        "provenance_passed": 5,
+        "provenance_failed": 0,
+        "provenance_accuracy": 1.0,
+        "provenance_passes": [
+          [
+            "Alice Chen",
+            "parent_of",
+            "Bob Chen"
+          ],
+          [
+            "Alice Chen",
+            "settlor_of",
+            "Oakwood Trust"
+          ],
+          [
+            "Alice Chen",
+            "spouse_of",
+            "David Chen"
+          ],
+          [
+            "Bob Chen",
+            "beneficiary_of",
+            "Oakwood Trust"
+          ],
+          [
+            "David Chen",
+            "settlor_of",
+            "Oakwood Trust"
+          ]
+        ],
+        "provenance_failures": []
+      },
+      "source_attribution": {
+        "version": "source_attribution_v1",
+        "assessed": 5,
+        "passed": 5,
+        "failed": 0,
+        "accuracy": 1.0,
+        "failures": []
+      },
+      "canonical_state_sha256": "624f788f5ac9a765569bf074835b0af6824caa812cd851aed3dec0153db38fd3",
+      "canonical_graph_sha256": "bd92ed2ed50582848061962d648ff88cab468887d8c6837db241b42032d84ad2",
+      "attempt_finished_file_sha256": "b0890ccc0fe475e4e25a3a57ecbfe3d7bbee71c9eda3d95d5a6040ba287dfaa4"
+    },
+    {
+      "case_id": "benchmark_v1_distractors_dev_1",
+      "axis": "distractors",
+      "family": "benchmark_v1_distractors_1",
+      "fixture_id": "benchmark_v1_distractors_dev_1_fixture",
+      "sample_id": "benchmark_v1_distractors_dev_1_fixture_fresh_01",
+      "observation_id": "benchmark_v1_distractors_dev_1_fixture_fresh_01-noop",
+      "attempt_id": "benchmark_v1_distractors_dev_1_fixture_fresh_01-extraction",
+      "source_ids": [
+        "note_01"
+      ],
+      "source_digest": "a0e687053af4ce241cfcae729cc753e918aeca4f4a693002a549aed06a20d60b",
+      "truth_digest": "759bebb6758c7d18dde646cabdce2207218246ceaa5fc2d833050b98b9ea5c33",
+      "file_sha256": {
+        "source.txt": "8d5a9c311de028ecfdc27ea516e52cf3ee2b20c04749ef29669f6633eb5cd49b",
+        "ground_truth.json": "d6817298334f0b59aa3fb83e42eeaab26d3adcbce1d82ef3c97628b114069c72",
+        "extraction.json": "9a14bbd8cc001878841c9bffb853b75518c29b2729fe1d3c32a0c5cc94631cc9",
+        "sources.json": "bc4c79c7d6390930c6716cf6314e3cfd9d1d2fb3fd4374667025caa4827786ba",
+        "expected_source_extraction.json": "a7a9a3687613e51772cba3549f0ac9ee941748457adf42414fc8bf75825cc9c1",
+        "source_evidence.json": "191334a7da357715161f3ec92dd86afd2108fb9b24eddd4d4ab647e74cdb28d4"
+      },
+      "message_pair_sha256": "2427632cfd5bf03974a922027fc017832427f0e70347e78050d59459e87617e9",
+      "started_at": "2026-11-14T06:27:30.708027+00:00",
+      "finished_at": "2026-11-14T06:27:32.595493+00:00",
+      "provider_seconds": 1.880995124927722,
+      "returned_model": "deepseek-flash",
+      "system_fingerprint": "bc19ba97cbe016479903222bb1578db6",
+      "token_usage": {
+        "input_tokens": 1055,
+        "output_tokens": 309,
+        "cached_tokens": 640
+      },
+      "outcome": "completed",
+      "candidates": {
+        "relationships": [
+          {
+            "source_name": "Helen Park",
+            "relationship_type": "settlor_of",
+            "target_name": "Juniper Family Trust",
+            "supporting_text": "Helen confirmed that she is the settlor of the Juniper Family Trust.",
+            "source_id": "note_01"
+          },
+          {
+            "source_name": "Helen Park",
+            "relationship_type": "spouse_of",
+            "target_name": "Simon Park",
+            "supporting_text": "She also confirmed that she and her husband, Simon Park, are spouses.",
+            "source_id": "note_01"
+          },
+          {
+            "source_name": "Helen Park",
+            "relationship_type": "parent_of",
+            "target_name": "Chloe Park",
+            "supporting_text": "They have one child together, Chloe Park.",
+            "source_id": "note_01"
+          },
+          {
+            "source_name": "Simon Park",
+            "relationship_type": "parent_of",
+            "target_name": "Chloe Park",
+            "supporting_text": "They have one child together, Chloe Park.",
+            "source_id": "note_01"
+          },
+          {
+            "source_name": "Chloe Park",
+            "relationship_type": "beneficiary_of",
+            "target_name": "Juniper Family Trust",
+            "supporting_text": "Helen confirmed that Chloe Park is the sole current beneficiary of the Juniper Family Trust.",
+            "source_id": "note_01"
+          }
+        ]
+      },
+      "evaluation": {
+        "tp": 5,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "true_positive_edges": [
+          [
+            "Chloe Park",
+            "beneficiary_of",
+            "Juniper Family Trust"
+          ],
+          [
+            "Helen Park",
+            "parent_of",
+            "Chloe Park"
+          ],
+          [
+            "Helen Park",
+            "settlor_of",
+            "Juniper Family Trust"
+          ],
+          [
+            "Helen Park",
+            "spouse_of",
+            "Simon Park"
+          ],
+          [
+            "Simon Park",
+            "parent_of",
+            "Chloe Park"
+          ]
+        ],
+        "false_positive_edges": [],
+        "false_negative_edges": [],
+        "provenance_passed": 5,
+        "provenance_failed": 0,
+        "provenance_accuracy": 1.0,
+        "provenance_passes": [
+          [
+            "Chloe Park",
+            "beneficiary_of",
+            "Juniper Family Trust"
+          ],
+          [
+            "Helen Park",
+            "parent_of",
+            "Chloe Park"
+          ],
+          [
+            "Helen Park",
+            "settlor_of",
+            "Juniper Family Trust"
+          ],
+          [
+            "Helen Park",
+            "spouse_of",
+            "Simon Park"
+          ],
+          [
+            "Simon Park",
+            "parent_of",
+            "Chloe Park"
+          ]
+        ],
+        "provenance_failures": []
+      },
+      "source_attribution": {
+        "version": "source_attribution_v1",
+        "assessed": 5,
+        "passed": 5,
+        "failed": 0,
+        "accuracy": 1.0,
+        "failures": []
+      },
+      "canonical_state_sha256": "690c2fbdb2216c34093bd1b8b84c5aec98763546eb500745ea48a756f4aeae1f",
+      "canonical_graph_sha256": "482b4c2dc936e5965001b31772a59680997b88031c6c561ba4eb2bea6cd939b7",
+      "attempt_finished_file_sha256": "df040107eb7a00bbfd98b2ab651d7565bf876d45b47db9099203e17fc2fa3721"
+    },
+    {
+      "case_id": "benchmark_v1_hallucination_dev_1",
+      "axis": "hallucination",
+      "family": "benchmark_v1_hallucination_1",
+      "fixture_id": "benchmark_v1_hallucination_dev_1_fixture",
+      "sample_id": "benchmark_v1_hallucination_dev_1_fixture_fresh_01",
+      "observation_id": "benchmark_v1_hallucination_dev_1_fixture_fresh_01-noop",
+      "attempt_id": "benchmark_v1_hallucination_dev_1_fixture_fresh_01-extraction",
+      "source_ids": [
+        "note_01"
+      ],
+      "source_digest": "ba7bdf096ee10743d63c00c1325a14bacf3f37503635630c289072b07db61788",
+      "truth_digest": "2e85f58deebd420dae4435fc349051d2515f2531886daf5bd40ab50e9aa5fe85",
+      "file_sha256": {
+        "source.txt": "b0cdc456803be7602c12bed8158fed5a9bc65d1743a7bdd86241745ca15855ac",
+        "ground_truth.json": "e1463fcd358516c94eea25cc3fefb305f736998a3beaf4adff9365f83118c7f7",
+        "extraction.json": "d3f7074d24478566f1eb6c41db326ba9036502d77ca09fd81339ed63b900931f",
+        "sources.json": "bc4c79c7d6390930c6716cf6314e3cfd9d1d2fb3fd4374667025caa4827786ba",
+        "expected_source_extraction.json": "1559d42759a97effe2497ed01ccb2e972e9f6c914b4a7fc15a59578989e23ad5",
+        "source_evidence.json": "f360ac6fe12cff7205e3224083657013ff9274597315260f6dd7df0ad7a07609"
+      },
+      "message_pair_sha256": "f0f57f8d3492c4c67ebf780ee03a4f5723c6b61006960c3dee108232792a0174",
+      "started_at": "2026-11-14T06:27:32.599674+00:00",
+      "finished_at": "2026-11-14T06:27:34.837116+00:00",
+      "provider_seconds": 2.232470417045988,
+      "returned_model": "deepseek-flash",
+      "system_fingerprint": "bc19ba97cbe016479903222bb1578db6",
+      "token_usage": {
+        "input_tokens": 1146,
+        "output_tokens": 485,
+        "cached_tokens": 640
+      },
+      "outcome": "completed",
+      "candidates": {
+        "relationships": [
+          {
+            "source_name": "Gregory Ashby",
+            "relationship_type": "settlor_of",
+            "target_name": "Ashby Family Trust",
+            "supporting_text": "Gregory Ashby is the settlor of the Ashby Family Trust.",
+            "source_id": "note_01"
+          },
+          {
+            "source_name": "Gregory Ashby",
+            "relationship_type": "spouse_of",
+            "target_name": "Patricia Ashby",
+            "supporting_text": "He and his wife, Patricia Ashby, are spouses.",
+            "source_id": "note_01"
+          },
+          {
+            "source_name": "Gregory Ashby",
+            "relationship_type": "parent_of",
+            "target_name": "Emma Ashby",
+            "supporting_text": "They have two children, Emma Ashby and James Ashby.",
+            "source_id": "note_01"
+          },
+          {
+            "source_name": "Gregory Ashby",
+            "relationship_type": "parent_of",
+            "target_name": "James Ashby",
+            "supporting_text": "They have two children, Emma Ashby and James Ashby.",
+            "source_id": "note_01"
+          },
+          {
+            "source_name": "Patricia Ashby",
+            "relationship_type": "parent_of",
+            "target_name": "Emma Ashby",
+            "supporting_text": "They have two children, Emma Ashby and James Ashby.",
+            "source_id": "note_01"
+          },
+          {
+            "source_name": "Patricia Ashby",
+            "relationship_type": "parent_of",
+            "target_name": "James Ashby",
+            "supporting_text": "They have two children, Emma Ashby and James Ashby.",
+            "source_id": "note_01"
+          },
+          {
+            "source_name": "Emma Ashby",
+            "relationship_type": "sibling_of",
+            "target_name": "James Ashby",
+            "supporting_text": "They have two children, Emma Ashby and James Ashby.",
+            "source_id": "note_01"
+          },
+          {
+            "source_name": "Emma Ashby",
+            "relationship_type": "beneficiary_of",
+            "target_name": "Ashby Family Trust",
+            "supporting_text": "Emma Ashby is the current sole beneficiary of the Ashby Family Trust.",
+            "source_id": "note_01"
+          }
+        ]
+      },
+      "evaluation": {
+        "tp": 7,
+        "fp": 1,
+        "fn": 1,
+        "precision": 0.875,
+        "recall": 0.875,
+        "f1": 0.875,
+        "true_positive_edges": [
+          [
+            "Emma Ashby",
+            "beneficiary_of",
+            "Ashby Family Trust"
+          ],
+          [
+            "Gregory Ashby",
+            "parent_of",
+            "Emma Ashby"
+          ],
+          [
+            "Gregory Ashby",
+            "parent_of",
+            "James Ashby"
+          ],
+          [
+            "Gregory Ashby",
+            "settlor_of",
+            "Ashby Family Trust"
+          ],
+          [
+            "Gregory Ashby",
+            "spouse_of",
+            "Patricia Ashby"
+          ],
+          [
+            "Patricia Ashby",
+            "parent_of",
+            "Emma Ashby"
+          ],
+          [
+            "Patricia Ashby",
+            "parent_of",
+            "James Ashby"
+          ]
+        ],
+        "false_positive_edges": [
+          [
+            "Emma Ashby",
+            "sibling_of",
+            "James Ashby"
+          ]
+        ],
+        "false_negative_edges": [
+          [
+            "Gregory Ashby",
+            "sibling_of",
+            "Margaret Ashby"
+          ]
+        ],
+        "provenance_passed": 7,
+        "provenance_failed": 0,
+        "provenance_accuracy": 1.0,
+        "provenance_passes": [
+          [
+            "Emma Ashby",
+            "beneficiary_of",
+            "Ashby Family Trust"
+          ],
+          [
+            "Gregory Ashby",
+            "parent_of",
+            "Emma Ashby"
+          ],
+          [
+            "Gregory Ashby",
+            "parent_of",
+            "James Ashby"
+          ],
+          [
+            "Gregory Ashby",
+            "settlor_of",
+            "Ashby Family Trust"
+          ],
+          [
+            "Gregory Ashby",
+            "spouse_of",
+            "Patricia Ashby"
+          ],
+          [
+            "Patricia Ashby",
+            "parent_of",
+            "Emma Ashby"
+          ],
+          [
+            "Patricia Ashby",
+            "parent_of",
+            "James Ashby"
+          ]
+        ],
+        "provenance_failures": []
+      },
+      "source_attribution": {
+        "version": "source_attribution_v1",
+        "assessed": 7,
+        "passed": 7,
+        "failed": 0,
+        "accuracy": 1.0,
+        "failures": []
+      },
+      "canonical_state_sha256": "535db08453561c4534894403b2aeffe204f76d4828a9e56a0ddc1969c5912572",
+      "canonical_graph_sha256": "a1060613ca080de9b61ad4ecf07ac48ca404b28f72fa9614594330a81b54bcd7",
+      "attempt_finished_file_sha256": "ce14717c518b878fbf3c57e07f3e256e688f17417bf61e52f928b141db7246ea"
+    },
+    {
+      "case_id": "benchmark_v1_temporal_dev_1",
+      "axis": "temporal",
+      "family": "benchmark_v1_temporal_1",
+      "fixture_id": "benchmark_v1_temporal_dev_1_fixture",
+      "sample_id": "benchmark_v1_temporal_dev_1_fixture_fresh_01",
+      "observation_id": "benchmark_v1_temporal_dev_1_fixture_fresh_01-noop",
+      "attempt_id": "benchmark_v1_temporal_dev_1_fixture_fresh_01-extraction",
+      "source_ids": [
+        "note_01",
+        "note_02"
+      ],
+      "source_digest": "c056f436468b9e3e64f7ad1c72dcfdaca07ba9697388b63d735d5a170735d620",
+      "truth_digest": "28bdb67fe53e84265cf6a04d9b508c44d33a63ca90579d2c3a81268d8e6ce4e4",
+      "file_sha256": {
+        "source.txt": "64d01bdd6f437b1d6f4d1481dc241b136f0304ee95e7acf583c5222df2037396",
+        "ground_truth.json": "bbf8a60b5d8b466cb8bb03d995260b655a6c91cfffc18ff495c776d91aa17e7f",
+        "extraction.json": "aaf6eb9a3e8fed7e43b7b068c32a55b24ceb5baedccf58a4a570aeeb01b5d62e",
+        "sources/note_01.txt": "8d7bc9976580b6acdb5b376a1d2a91d766fd9ba7d24a47745b15935ef2b610ca",
+        "sources/note_02.txt": "379215a1cb3e146593740989d85cc17a5f62265142cec7f3c0017d72a81875b4",
+        "sources.json": "51fedcadbc8132ca1a8f829d00f51c112c53740a0369355cb62b0ab3465597c7",
+        "expected_source_extraction.json": "ac06e922e3092a609f85974cf38701a0ab5e0d35110f9050f5c369c6465c4bf4",
+        "source_evidence.json": "f702ce0f8eeadde4a8e58d27e5ac22b48c63a95b727a470bf0f264864e1fb0bc"
+      },
+      "message_pair_sha256": "93291183ff3c060df058f4480cfddabf02388055d3c7ee72a845f6be1cf32b54",
+      "started_at": "2026-11-14T06:27:34.842073+00:00",
+      "finished_at": "2026-11-14T06:27:36.605655+00:00",
+      "provider_seconds": 1.7588697500759736,
+      "returned_model": "deepseek-flash",
+      "system_fingerprint": "bc19ba97cbe016479903222bb1578db6",
+      "token_usage": {
+        "input_tokens": 1082,
+        "output_tokens": 389,
+        "cached_tokens": 640
+      },
+      "outcome": "completed",
+      "candidates": {
+        "relationships": [
+          {
+            "source_name": "Elaine Ho",
+            "relationship_type": "settlor_of",
+            "target_name": "Willow Family Trust",
+            "supporting_text": "Elaine Ho is the settlor of the Willow Family Trust.",
+            "source_id": "note_01"
+          },
+          {
+            "source_name": "Elaine Ho",
+            "relationship_type": "spouse_of",
+            "target_name": "Martin Ho",
+            "supporting_text": "Elaine Ho and Martin Ho are spouses.",
+            "source_id": "note_01"
+          },
+          {
+            "source_name": "Elaine Ho",
+            "relationship_type": "parent_of",
+            "target_name": "Sophie Ho",
+            "supporting_text": "Elaine Ho and Martin Ho are the parents of Sophie Ho.",
+            "source_id": "note_01"
+          },
+          {
+            "source_name": "Martin Ho",
+            "relationship_type": "parent_of",
+            "target_name": "Sophie Ho",
+            "supporting_text": "Elaine Ho and Martin Ho are the parents of Sophie Ho.",
+            "source_id": "note_01"
+          },
+          {
+            "source_name": "Sophie Ho",
+            "relationship_type": "beneficiary_of",
+            "target_name": "Willow Family Trust",
+            "supporting_text": "Sophie Ho is a beneficiary of the Willow Family Trust.",
+            "source_id": "note_01"
+          },
+          {
+            "source_name": "Rachel Lim",
+            "relationship_type": "trustee_of",
+            "target_name": "Willow Family Trust",
+            "supporting_text": "Rachel Lim was appointed as replacement trustee with effect from 10 September 2026. The current position as at 15 September 2026 is that Rachel Lim is the sole trustee of the Willow Family Trust.",
+            "source_id": "note_02"
+          }
+        ]
+      },
+      "evaluation": {
+        "tp": 6,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "true_positive_edges": [
+          [
+            "Elaine Ho",
+            "parent_of",
+            "Sophie Ho"
+          ],
+          [
+            "Elaine Ho",
+            "settlor_of",
+            "Willow Family Trust"
+          ],
+          [
+            "Elaine Ho",
+            "spouse_of",
+            "Martin Ho"
+          ],
+          [
+            "Martin Ho",
+            "parent_of",
+            "Sophie Ho"
+          ],
+          [
+            "Rachel Lim",
+            "trustee_of",
+            "Willow Family Trust"
+          ],
+          [
+            "Sophie Ho",
+            "beneficiary_of",
+            "Willow Family Trust"
+          ]
+        ],
+        "false_positive_edges": [],
+        "false_negative_edges": [],
+        "provenance_passed": 5,
+        "provenance_failed": 1,
+        "provenance_accuracy": 0.8333333333333334,
+        "provenance_passes": [
+          [
+            "Elaine Ho",
+            "parent_of",
+            "Sophie Ho"
+          ],
+          [
+            "Elaine Ho",
+            "settlor_of",
+            "Willow Family Trust"
+          ],
+          [
+            "Elaine Ho",
+            "spouse_of",
+            "Martin Ho"
+          ],
+          [
+            "Martin Ho",
+            "parent_of",
+            "Sophie Ho"
+          ],
+          [
+            "Sophie Ho",
+            "beneficiary_of",
+            "Willow Family Trust"
+          ]
+        ],
+        "provenance_failures": [
+          [
+            "Rachel Lim",
+            "trustee_of",
+            "Willow Family Trust"
+          ]
+        ]
+      },
+      "source_attribution": {
+        "version": "source_attribution_v1",
+        "assessed": 6,
+        "passed": 5,
+        "failed": 1,
+        "accuracy": 0.8333333333333334,
+        "failures": [
+          {
+            "edge": [
+              "Rachel Lim",
+              "trustee_of",
+              "Willow Family Trust"
+            ],
+            "evidence_id": "evidence_005",
+            "source_id": "note_02",
+            "supporting_text": "Rachel Lim was appointed as replacement trustee with effect from 10 September 2026. The current position as at 15 September 2026 is that Rachel Lim is the sole trustee of the Willow Family Trust."
+          }
+        ]
+      },
+      "canonical_state_sha256": "622e0f9ca2b738a33f042acc82ddf777bdfbfca8b5be6b9b990248becd0f6743",
+      "canonical_graph_sha256": "88090fb6d614180de631f47208725530a3e04bb67c4a29f802210d7cc48ca1c4",
+      "attempt_finished_file_sha256": "eeb1dd720b9c53fa190d1db3f3d7fc337d9737d427a95341a16c5ceb9e272bf2"
+    }
+  ]
+}
