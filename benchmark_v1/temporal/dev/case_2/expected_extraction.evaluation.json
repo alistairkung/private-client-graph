@@ -1,0 +1,58 @@
+{
+  "tp": 4,
+  "fp": 0,
+  "fn": 0,
+  "precision": 1.0,
+  "recall": 1.0,
+  "f1": 1.0,
+  "true_positive_edges": [
+    [
+      "Alice Tan",
+      "parent_of",
+      "Chloe Tan"
+    ],
+    [
+      "Alice Tan",
+      "settlor_of",
+      "Pemberton Family Trust"
+    ],
+    [
+      "Benedict Tan",
+      "parent_of",
+      "Chloe Tan"
+    ],
+    [
+      "Chloe Tan",
+      "beneficiary_of",
+      "Pemberton Family Trust"
+    ]
+  ],
+  "false_positive_edges": [],
+  "false_negative_edges": [],
+  "provenance_passed": 4,
+  "provenance_failed": 0,
+  "provenance_accuracy": 1.0,
+  "provenance_passes": [
+    [
+      "Alice Tan",
+      "parent_of",
+      "Chloe Tan"
+    ],
+    [
+      "Alice Tan",
+      "settlor_of",
+      "Pemberton Family Trust"
+    ],
+    [
+      "Benedict Tan",
+      "parent_of",
+      "Chloe Tan"
+    ],
+    [
+      "Chloe Tan",
+      "beneficiary_of",
+      "Pemberton Family Trust"
+    ]
+  ],
+  "provenance_failures": []
+}

@@ -1,0 +1,8 @@
+{
+  "name": "Temporal Precedence: Proposal (Held-Out)",
+  "description": "Held-out counterpart to the proposal dev case. Proposal states only 'would like to'; model must infer that no change has been made.",
+  "id": "benchmark_v1_temporal_held_out_5",
+  "axis": "temporal",
+  "split": "held_out",
+  "matter_family": "benchmark_v1_temporal_5"
+}

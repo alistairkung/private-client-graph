@@ -1,0 +1,78 @@
+{
+  "tp": 6,
+  "fp": 0,
+  "fn": 0,
+  "precision": 1.0,
+  "recall": 1.0,
+  "f1": 1.0,
+  "true_positive_edges": [
+    [
+      "Jasmine Moy",
+      "beneficiary_of",
+      "Larkfield Family Trust"
+    ],
+    [
+      "Rachel Moy",
+      "parent_of",
+      "Jasmine Moy"
+    ],
+    [
+      "Rachel Moy",
+      "settlor_of",
+      "Larkfield Family Trust"
+    ],
+    [
+      "Rachel Moy",
+      "spouse_of",
+      "Simon Moy"
+    ],
+    [
+      "Simon Moy",
+      "parent_of",
+      "Jasmine Moy"
+    ],
+    [
+      "Simon Moy",
+      "trustee_of",
+      "Larkfield Family Trust"
+    ]
+  ],
+  "false_positive_edges": [],
+  "false_negative_edges": [],
+  "provenance_passed": 6,
+  "provenance_failed": 0,
+  "provenance_accuracy": 1.0,
+  "provenance_passes": [
+    [
+      "Jasmine Moy",
+      "beneficiary_of",
+      "Larkfield Family Trust"
+    ],
+    [
+      "Rachel Moy",
+      "parent_of",
+      "Jasmine Moy"
+    ],
+    [
+      "Rachel Moy",
+      "settlor_of",
+      "Larkfield Family Trust"
+    ],
+    [
+      "Rachel Moy",
+      "spouse_of",
+      "Simon Moy"
+    ],
+    [
+      "Simon Moy",
+      "parent_of",
+      "Jasmine Moy"
+    ],
+    [
+      "Simon Moy",
+      "trustee_of",
+      "Larkfield Family Trust"
+    ]
+  ],
+  "provenance_failures": []
+}

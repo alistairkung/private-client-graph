@@ -1,0 +1,40 @@
+{
+  "relationships": [
+    {
+      "source_name": "Eleanor Hartley",
+      "relationship_type": "settlor_of",
+      "target_name": "Hartley Family Trust",
+      "supporting_text": "Eleanor Hartley is the settlor of the Hartley Family Trust."
+    },
+    {
+      "source_name": "Eleanor Hartley",
+      "relationship_type": "spouse_of",
+      "target_name": "James Hartley",
+      "supporting_text": "Eleanor Hartley and James Hartley are spouses."
+    },
+    {
+      "source_name": "Eleanor Hartley",
+      "relationship_type": "parent_of",
+      "target_name": "Oliver Hartley",
+      "supporting_text": "Eleanor Hartley and James Hartley are the parents of Oliver Hartley."
+    },
+    {
+      "source_name": "James Hartley",
+      "relationship_type": "parent_of",
+      "target_name": "Oliver Hartley",
+      "supporting_text": "Eleanor Hartley and James Hartley are the parents of Oliver Hartley."
+    },
+    {
+      "source_name": "Oliver Hartley",
+      "relationship_type": "beneficiary_of",
+      "target_name": "Hartley Family Trust",
+      "supporting_text": "Oliver Hartley is a beneficiary of the Hartley Family Trust."
+    },
+    {
+      "source_name": "Margaret Hartley",
+      "relationship_type": "trustee_of",
+      "target_name": "Hartley Family Trust",
+      "supporting_text": "Margaret Hartley has been appointed as the sole trustee of the Hartley Family Trust with effect from 11 September 2026, in place of James Hartley."
+    }
+  ]
+}

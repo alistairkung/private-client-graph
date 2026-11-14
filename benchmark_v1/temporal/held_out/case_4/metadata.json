@@ -1,0 +1,8 @@
+{
+  "name": "Temporal Precedence: Material Correction (Held-Out)",
+  "description": "Held-out counterpart to the material correction dev case. Correction does not state 'no siblings recorded'; model must infer that the retraction applies.",
+  "id": "benchmark_v1_temporal_held_out_4",
+  "axis": "temporal",
+  "split": "held_out",
+  "matter_family": "benchmark_v1_temporal_4"
+}
