@@ -61,6 +61,7 @@ export interface ExistingResource {
   location: string;
 }
 export interface ServiceError {
+  source_number?: number;
   code: string;
   message: string;
   retryable: boolean;

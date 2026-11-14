@@ -6,6 +6,7 @@ import re
 from dataclasses import dataclass
 from datetime import date, datetime, time, timezone
 from email.message import Message
+from email.utils import parsedate_to_datetime
 from hashlib import sha256
 from urllib.parse import quote
 
@@ -89,6 +90,12 @@ class PdfPreview:
 class MailPreview:
     title: str
     text: str
+    sender: str
+    to: str
+    cc: str
+    bcc: str
+    sent_at: datetime | None
+    gmail_timestamp_ms: int
 
 
 FILE_FIELDS = "id,name,mimeType,parents,trashed,version"
@@ -148,9 +155,10 @@ class WorkspaceReader:
             raise ReadFailure("Invalid Workspace response")
         return value
 
-    def mail_page(self, terms: str, token: str, action: Action) -> dict:
+    def mail_page(self, terms: str, token: str, action: Action, page_size: int) -> dict:
+        # With only IDs and a cursor, Google can return HTTP 204 for an empty terminal page.
         params = {"q": self.scope.gmail_query(f'"{literal(terms)}"'), "labelIds": self.scope.label,
-                  "fields": "nextPageToken,messages(id)", "maxResults": "100"}
+                  "fields": "nextPageToken,messages(id),resultSizeEstimate", "maxResults": str(page_size)}
         if token:
             params["pageToken"] = token
         page = self._json(self.messages, params, action)
@@ -158,11 +166,11 @@ class WorkspaceReader:
             page["messages"] = [m for m in page.get("messages", []) if m["id"] in self.message_ids]
         return page
 
-    def drive_page(self, terms: str, token: str, action: Action) -> dict:
+    def drive_page(self, terms: str, token: str, action: Action, page_size: int) -> dict:
         phrase = literal(terms).replace("'", "\\'")
         query = (f"'{self.scope.folder}' in parents and trashed = false and mimeType = 'application/pdf' "
                  f"and fullText contains '\"{phrase}\"'")
-        params = {"q": query, "fields": f"nextPageToken,files({FILE_FIELDS})", "pageSize": "100"}
+        params = {"q": query, "fields": f"nextPageToken,files({FILE_FIELDS})", "pageSize": str(page_size)}
         if token:
             params["pageToken"] = token
         return self._json(self.files, params, action)
@@ -203,10 +211,33 @@ class WorkspaceReader:
         full = self._json(url, {"format": "full", "fields": fields + ",payload"}, action)
         if not self.scope.admits_message(full, key):
             raise OutsideScope()
-        payload = full["payload"]
-        subject = next((header["value"] for header in payload.get("headers", [])
-                        if header["name"].lower() == "subject"), "")
-        return MailPreview(subject or "Untitled email", _plain_body(payload))
+        return _mail_preview(full["payload"], int(full["internalDate"]))
+
+
+def _mail_preview(payload: dict, gmail_timestamp_ms: int) -> MailPreview:
+    headers = Message()
+    for header in payload.get("headers", []):
+        if header["name"].lower() in {"subject", "from", "to", "cc", "bcc", "date"}:
+            headers[header["name"]] = header["value"]
+    return MailPreview(
+        title=headers.get("Subject") or "Untitled email",
+        text=_plain_body(payload),
+        sender=", ".join(headers.get_all("From", [])),
+        to=", ".join(headers.get_all("To", [])),
+        cc=", ".join(headers.get_all("Cc", [])),
+        bcc=", ".join(headers.get_all("Bcc", [])),
+        sent_at=_sent_at(headers.get("Date", "")),
+        gmail_timestamp_ms=gmail_timestamp_ms,
+    )
+
+
+def _sent_at(header: str) -> datetime | None:
+    try:
+        sent = parsedate_to_datetime(header)
+    except (ValueError, OverflowError):
+        return None
+    # A missing timezone cannot be interpreted as the practitioner's local time.
+    return sent if sent.tzinfo is not None else None
 
 
 def _plain_body(part: dict) -> str:

@@ -1,5 +1,5 @@
 """Private in-process discovery session. A trusted caller supplies its authorized scope and HTTP client."""
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from hashlib import sha256
 from threading import RLock
 
@@ -10,10 +10,13 @@ from .leads import Suggestion, ranked_suggestions
 from .limits import Action, LimitReached, Limits, SessionLimitReached, Usage
 
 
+ORIGINAL_BATCH_SIZE = 5
+
+
 @dataclass
 class _Search:
     query: str
-    message_ids: set[str] = field(default_factory=set)
+    message_ids: dict[str, None] = field(default_factory=dict)
     files: dict[str, DriveFile] = field(default_factory=dict)
     mail_page: str | None = ""
     drive_page: str | None = ""
@@ -22,35 +25,47 @@ class _Search:
     def more_pages(self) -> bool:
         return self.mail_page is not None or self.drive_page is not None
 
+    @property
+    def item_count(self) -> int:
+        return len(self.message_ids) + len(self.files)
+
     def enumerate(self, reader: WorkspaceReader, action: Action) -> None:
         while self.mail_page is not None:
             self.read_mail_page(reader, action)
         while self.drive_page is not None:
             self.read_drive_page(reader, action)
 
-    def read_mail_page(self, reader: WorkspaceReader, action: Action) -> None:
+    def read_mail_page(self, reader: WorkspaceReader, action: Action, size: int = 100) -> None:
         if self.mail_page is None:
             return
-        page = reader.mail_page(self.query, self.mail_page, action)
-        self.message_ids.update(item_id(row["id"]) for row in page.get("messages", []))
-        self.mail_page = _next_page(page)
+        page = reader.mail_page(self.query, self.mail_page, action, size)
+        cursor = _next_page(page, self.mail_page)
+        rows = page.get("messages", [])
+        if len(rows) > size:
+            raise ReadFailure("Unexpected Gmail page size")
+        self.message_ids.update(dict.fromkeys(sorted(item_id(row["id"]) for row in rows)))
+        self.mail_page = cursor
 
-    def read_drive_page(self, reader: WorkspaceReader, action: Action) -> None:
+    def read_drive_page(self, reader: WorkspaceReader, action: Action, size: int = 100) -> None:
         if self.drive_page is None:
             return
-        page = reader.drive_page(self.query, self.drive_page, action)
-        for row in page.get("files", []):
+        page = reader.drive_page(self.query, self.drive_page, action, size)
+        cursor = _next_page(page, self.drive_page)
+        rows = page.get("files", [])
+        if len(rows) > size:
+            raise ReadFailure("Unexpected Drive page size")
+        for row in rows:
             try:
                 item = reader.admitted_file(row)
             except OutsideScope:
                 continue
             self.files[item.id] = item
-        self.drive_page = _next_page(page)
+        self.drive_page = cursor
 
 
-def _next_page(page: dict) -> str | None:
+def _next_page(page: dict, previous: str) -> str | None:
     token = page.get("nextPageToken")
-    if token is not None and not isinstance(token, str):
+    if token is not None and (not isinstance(token, str) or token == previous):
         raise ReadFailure("Invalid page token")
     return token or None
 
@@ -59,6 +74,7 @@ def _next_page(page: dict) -> str | None:
 class DiscoveryView:
     scope: WorkspaceScope
     original_query: str
+    original_item_limit: int
     revision: int
     can_inspect_more: bool
     returned_messages: tuple[str, ...]
@@ -98,7 +114,9 @@ class DiscoverySession:
         self._reader = WorkspaceReader(http, scope, message_ids=message_ids, file_ids=file_ids)
         self._limits = limits
         self._usage = Usage()
+        self._review_usage = Usage()
         self._original: _Search | None = None
+        self._drive_first = False
         self._texts: dict[str, str] = {}
         self._titles: dict[str, str] = {}
         self._digests: dict[str, str] = {}
@@ -125,37 +143,39 @@ class DiscoverySession:
             self._original = _Search(literal(terms))
             return self.inspect_more()
 
-    def inspect_more(self) -> DiscoveryView:
-        """Inspect known Gmail hits first, advancing each original cursor at most once per action."""
+    def inspect_more(self, revision: int | None = None) -> DiscoveryView:
+        """Advance the displayed original search by one batch. Replays return the latest view."""
         with self._lock:
             original = self._original
             if original is None:
                 raise ValueError("Start discovery first")
+            if self._views:
+                latest = self._views[-1]
+                if not latest.can_inspect_more or (revision is not None and revision != latest.revision):
+                    return latest
             action = Action(self._limits, self._usage)
             reason = None
             session_blocked = False
             try:
-                pending = self._pending(original)
-                if not pending:
-                    original.read_mail_page(self._reader, action)
-                    pending = self._pending(original)
-                for key in pending[:5]:
-                    self._inspect_message(key, action)
-                original.read_drive_page(self._reader, action)
+                self._original_batch(original, action)
             except LimitReached as exc:
                 reason = str(exc)
                 session_blocked = isinstance(exc, SessionLimitReached)
             except (KeyError, TypeError, ValueError):
                 reason = "Original search incomplete"
             pending = self._pending(original)
+            at_cap = original.item_count >= self._limits.original_items
+            if at_cap and original.more_pages and not pending and not reason:
+                reason = "Original item limit"
             view = DiscoveryView(
                 scope=self._reader.scope,
                 original_query=original.query,
+                original_item_limit=self._limits.original_items,
                 revision=len(self._views),
-                can_inspect_more=(bool(pending or original.more_pages) and not session_blocked
+                can_inspect_more=(bool(pending or (original.more_pages and not at_cap)) and not session_blocked
                                   and self._usage.requests < self._limits.session_requests
                                   and self._usage.bytes < self._limits.session_bytes),
-                returned_messages=tuple(sorted(original.message_ids)),
+                returned_messages=tuple(original.message_ids),
                 pending=pending,
                 inspected=tuple(self._texts),
                 inspected_titles=dict(self._titles),
@@ -171,8 +191,30 @@ class DiscoverySession:
             self._views.append(view)
             return view
 
+    def _original_batch(self, original: _Search, action: Action) -> None:
+        pending = self._pending(original)[:ORIGINAL_BATCH_SIZE]
+        for key in pending:
+            self._inspect_message(key, action)
+        room = min(ORIGINAL_BATCH_SIZE - len(pending), self._limits.original_items - original.item_count)
+
+        # A full Gmail page must not consume every batch before Drive gets a turn.
+        providers = ("drive", "mail") if self._drive_first else ("mail", "drive")
+        for provider in providers:
+            if not room:
+                break
+            before = original.item_count
+            if provider == "mail" and not pending and original.mail_page is not None:
+                original.read_mail_page(self._reader, action, room)
+                self._drive_first = True
+                for key in self._pending(original):
+                    self._inspect_message(key, action)
+            elif provider == "drive" and original.drive_page is not None:
+                original.read_drive_page(self._reader, action, room)
+                self._drive_first = False
+            room -= original.item_count - before
+
     def _pending(self, original: _Search) -> tuple[str, ...]:
-        return tuple(sorted(original.message_ids - self._texts.keys() - self._skipped - self._failed))
+        return tuple(sorted(original.message_ids.keys() - self._texts.keys() - self._skipped - self._failed))
 
     def _inspect_message(self, key: str, action: Action) -> None:
         try:
@@ -193,6 +235,27 @@ class DiscoverySession:
 
     def new_action(self) -> Action:
         return Action(self._limits, self._usage)
+
+    def collection_candidates(self) -> set[tuple[str, str]]:
+        with self._lock:
+            original = self._original
+            if original is None:
+                return set()
+            mail = set(original.message_ids)
+            files = set(original.files)
+            for approval in self._approvals.values():
+                mail.update(approval.messages)
+                files.update(item.id for item in approval.files)
+            return ({("email", key) for key in mail - self._skipped - self._failed}
+                    | {("pdf", key) for key in files})
+
+    def review_action(self) -> Action:
+        # Budget one preview and revalidation, plus a second pair for a revised
+        # selection. Retries share the same ledger. Search has its own limits.
+        candidates = self.collection_candidates()
+        requests_per_pass = sum(2 if kind == "email" else 3 for kind, _ in candidates)
+        limits = replace(self._limits, session_requests=self._limits.action_requests + 4 * requests_per_pass)
+        return Action(limits, self._review_usage)
 
     def read_message(self, message_id: str, action: Action) -> MailPreview:
         with self._lock:

@@ -6,21 +6,32 @@ import { useLocale } from "../../../shared/locale";
 import {
   action,
   candidates,
+  mergeHits,
+  type DiscoveredItem,
+  candidateKey,
+  type PreviewProgress,
   type View,
+  type EmailMessage,
   type Hits,
   type FollowUp,
   type Preview,
   type Candidate,
 } from "./api";
-import { DiscoveryResults } from "./DiscoveryResults";
+import { SearchSetup } from "./SearchSetup";
+import { PublicationReview } from "./PublicationReview";
+import { DiscoveryResults, SearchSummary } from "./DiscoveryResults";
+import { EmailReader, type EmailReading } from "./EmailReader";
+import { useOriginalSearch } from "./useOriginalSearch";
 import { SourceSelection } from "./SourceSelection";
 
 export function WorkspaceDiscovery({
   onBusy,
+  active = true,
   scope,
   onGrantLoss,
   onStaleSearch,
 }: {
+  active?: boolean;
   scope?: {
     label: string;
     folder: string;
@@ -32,18 +43,33 @@ export function WorkspaceDiscovery({
   onBusy: (busy: boolean) => void;
 }) {
   const { t } = useLocale();
-  const [terms, setTerms] = useState("Alder Trust");
-  const [first, setFirst] = useState("");
-  const [last, setLast] = useState("");
   const [session, setSession] = useState("");
   const [view, setView] = useState<View>();
   const [followups, setFollowups] = useState<FollowUp[]>([]);
+  const [discovered, setDiscovered] = useState<DiscoveredItem[]>([]);
   const [selected, setSelected] = useState<Candidate[]>([]);
+  const [bulkSeen, setBulkSeen] = useState<Set<string>>();
+  const [progress, setProgress] = useState<PreviewProgress>();
   const [preview, setPreview] = useState<Preview>();
-  const [busy, setBusy] = useState(false);
+  const [reading, setReading] = useState<EmailReading>();
+  const [operationLabel, setOperationLabel] = useState("");
+  const busy = Boolean(operationLabel);
+  const [reference, setReference] = useState("");
+  const [title, setTitle] = useState("");
+  const resultsHeading = useRef<HTMLHeadingElement>(null);
+  useEffect(() => {
+    if (session) resultsHeading.current?.focus();
+  }, [session]);
+  const selectionHeading = useRef<HTMLHeadingElement>(null);
+  const restoreSelectionFocus = useRef(false);
+  useEffect(() => {
+    if (!preview && !busy && restoreSelectionFocus.current) {
+      selectionHeading.current?.focus();
+      restoreSelectionFocus.current = false;
+    }
+  }, [preview, busy]);
   const [error, setError] = useState<unknown>();
   useNavigationLock(busy);
-  const selectionHeading = useRef<HTMLHeadingElement>(null);
   const mounted = useRef(true);
   useEffect(() => {
     mounted.current = true;
@@ -53,36 +79,47 @@ export function WorkspaceDiscovery({
     };
   }, [onBusy]);
 
-  async function run(operation: () => Promise<void>) {
+  function recoverSession(failure: unknown): boolean {
+    if (!(failure instanceof RequestFailure)) return false;
+    if (onGrantLoss && failure.detail?.code === "workspace_reconnect") {
+      onGrantLoss();
+      return true;
+    }
+    if (onStaleSearch && failure.detail?.code === "unknown_discovery") {
+      onStaleSearch();
+      return true;
+    }
+    return false;
+  }
+
+  function receiveOriginal(next: View) {
+    setDiscovered(items => mergeHits(items, { messages: next.returned_messages, files: next.files }));
+    setView(next);
+  }
+  const original = useOriginalSearch(session, active ? view : undefined, receiveOriginal, recoverSession);
+
+  async function run(label: string, operation: () => Promise<void>) {
     if (busy) return;
-    setBusy(true);
+    setOperationLabel(label);
     onBusy(true);
     setError(undefined);
     try {
       await operation();
     } catch (failure) {
       if (!mounted.current) return;
-      if (
-        onGrantLoss &&
-        failure instanceof RequestFailure &&
-        failure.detail?.code === "workspace_reconnect"
-      )
-        onGrantLoss();
-      else if (
-        onStaleSearch &&
-        failure instanceof RequestFailure &&
-        failure.detail?.code === "unknown_discovery"
-      )
-        onStaleSearch();
-      else setError(failure);
+      if (!recoverSession(failure)) {
+        if (preview) setPreview(undefined);
+        setError(failure);
+      }
     } finally {
       if (mounted.current) {
-        setBusy(false);
+        setProgress(undefined);
+        setOperationLabel("");
         onBusy(false);
       }
     }
   }
-  async function start() {
+  async function start(terms: string, first: string, last: string) {
     const result = await action<{ session: string; view: View }>("start", {
       terms,
       label: scope?.label ?? "alder-label",
@@ -91,7 +128,7 @@ export function WorkspaceDiscovery({
       last_day: last || null,
     });
     setSession(result.session);
-    setView(result.view);
+    receiveOriginal(result.view);
   }
   async function follow(revision: number, query: string) {
     const result = await action<Hits>("follow-up", {
@@ -99,20 +136,43 @@ export function WorkspaceDiscovery({
       revision,
       query,
     });
+    setDiscovered(items => mergeHits(items, result, query));
     setFollowups((previous) => [...previous, { ...result, revision, query }]);
   }
-  async function read() {
-    setPreview(undefined);
-    setPreview(
-      await action<Preview>("preview", {
+  async function openEmail(candidate: Candidate) {
+    const opening: EmailReading = { title: candidate.title, state: "loading" };
+    setReading(opening);
+    try {
+      const email = await action<EmailMessage>("email", {
         session,
-        candidates: selected.map(({ kind, id }) => ({ kind, id })),
-      }),
-    );
+        message_id: candidate.id,
+      });
+      setReading((current) =>
+        current === opening ? { ...email, state: "ready" } : current,
+      );
+    } catch (failure) {
+      if (!mounted.current || recoverSession(failure)) return;
+      const limited = failure instanceof RequestFailure && failure.detail?.code === "discovery_limit";
+      setReading((current) =>
+        current === opening ? { title: candidate.title, state: "error", limited } : current,
+      );
+    }
+  }
+  async function read() {
+    let result = await action<Preview | PreviewProgress>("preview", {
+      session,
+      candidates: selected.map(({ kind, id }) => ({ kind, id })),
+    });
+    while (mounted.current && "continuation" in result) {
+      setProgress(result);
+      result = await action<Preview | PreviewProgress>("preview-next", {
+        session, continuation: result.continuation,
+      });
+    }
+    if (mounted.current && "token" in result) setPreview(result);
   }
   async function publish(external_reference: string, matter_title: string) {
     if (!preview) return;
-    setPreview(undefined);
     const proposal = await action<{ id: string }>("import", {
       session,
       preview: preview.token,
@@ -122,93 +182,59 @@ export function WorkspaceDiscovery({
     if (mounted.current)
       navigate("/app/matter-proposals/" + encodeURIComponent(proposal.id));
   }
+  const folder = scope?.folder_name ?? "folder-1";
+  const label = scope?.label_name ?? "alder-label";
+  const options = view
+    ? candidates(discovered, view, (number) =>
+        t("Uninspected email {number}", { number }),
+      )
+    : [];
+  const failedNumber = error instanceof RequestFailure ? error.detail?.source_number : undefined;
+  const affected = failedNumber && selected[failedNumber - 1];
+  const operationStatus = progress
+    ? t("Prepared {completed} of {total} Sources…", { completed: progress.completed, total: progress.total })
+    : t(operationLabel);
+  function changeSelection(items: Candidate[]) {
+    // Manually excluded arrivals stay excluded when the next group is added.
+    if (bulkSeen && items.length < selected.length) {
+      setBulkSeen(new Set([...bulkSeen, ...selected.map(candidateKey)]));
+    }
+    setSelected(items);
+    setError(undefined);
+  }
+  const latestFollowUp = followups.at(-1);
+  const searchStatus = latestFollowUp
+    ? t("{query} returned {mail} email hits and {pdf} PDF hits.", {
+        query: latestFollowUp.query,
+        mail: latestFollowUp.messages.length,
+        pdf: latestFollowUp.files.length,
+      })
+    : "";
+  const stage = preview ? 2 : view ? 1 : 0;
   return (
-    <div className="intake-form discovery" aria-busy={busy}>
-      <fieldset disabled={busy}>
-        <legend>{t("Private Workspace discovery")}</legend>
-        {!view ? (
-          <>
-            <p>
-              {t(
-                "Starting discovery authorizes private inspection of matching synthetic content in the selected scope. Review and publication require separate approval.",
-              )}
-            </p>
-            <label>
-              {t("Drive folder")}
-              <select>
-                <option>{scope?.folder_name ?? "folder-1"}</option>
-              </select>
-            </label>
-            <label>
-              {t("Gmail label")}
-              <select>
-                <option>{scope?.label_name ?? "alder-label"}</option>
-              </select>
-            </label>
-            <label>
-              {t("Initial search terms")}
-              <input
-                value={terms}
-                maxLength={160}
-                onChange={(e) => setTerms(e.target.value)}
-              />
-            </label>
-            <label>
-              {t("Gmail from (UTC)")}
-              <input
-                type="date"
-                value={first}
-                max={last || undefined}
-                onChange={(e) => setFirst(e.target.value)}
-              />
-            </label>
-            <label>
-              {t("Gmail through (UTC)")}
-              <input
-                type="date"
-                value={last}
-                min={first || undefined}
-                onChange={(e) => setLast(e.target.value)}
-              />
-            </label>
-            <button
-              className="button"
-              disabled={!terms.trim() || Boolean(first && last && first > last)}
-              onClick={() => run(start)}
-            >
-              {t("Start private discovery")}
-            </button>
-          </>
-        ) : (
-          <>
-            <DiscoveryResults
-              view={view}
-              followups={followups}
-              inspect={() =>
-                run(async () =>
-                  setView(await action<View>("inspect", { session })),
-                )
-              }
-              approve={(revision, query) => run(() => follow(revision, query))}
-            />
-            <SourceSelection
-              headingRef={selectionHeading}
-              options={candidates(view, followups, (id) =>
-                t("Email hit {id}", { id }),
-              )}
-              selected={selected}
-              change={(items) => {
-                setSelected(items);
-                setPreview(undefined);
-              }}
-              preview={preview}
-              read={() => run(read)}
-              publish={(ref, title) => run(() => publish(ref, title))}
-            />
-          </>
+    <div className="discovery">
+      <ol className="discovery-stages" aria-label={t("Discovery progress")}>
+        {["Search scope", "Find Sources", "Review and publish"].map(
+          (step, i) => (
+            <li key={step} aria-current={stage === i ? "step" : undefined}>
+              <span aria-hidden="true">{i + 1}</span>
+              {t(step)}
+            </li>
+          ),
         )}
-      </fieldset>
+      </ol>
+      <p
+        className={busy ? "discovery-working" : "discovery-sr"}
+        role="status"
+        aria-atomic="true"
+      >
+        {busy && <span className="discovery-spinner" aria-hidden="true" />}
+        {busy ? operationStatus : !preview && searchStatus}
+      </p>
       {error != null && <ErrorNotice error={error} />}
+      {affected && failedNumber && (
+        <p>{t("Check Source {number} · {title}", { number: failedNumber, title: affected.title })}</p>
+      )}
       {scope &&
         error instanceof RequestFailure &&
         error.detail?.code === "source_unavailable" && (
@@ -216,6 +242,72 @@ export function WorkspaceDiscovery({
             {t("Review selection")}
           </button>
         )}
+      <fieldset
+        className="discovery-controls"
+        disabled={busy}
+        aria-label={t("Private Workspace discovery")}
+      >
+        {!view ? (
+          <SearchSetup
+            folder={folder}
+            label={label}
+            start={(terms, first, last) =>
+              run("Searching emails and PDFs…", () => start(terms, first, last))
+            }
+          />
+        ) : preview ? (
+          <PublicationReview
+            key={preview.token}
+            preview={preview}
+            reference={reference}
+            title={title}
+            setReference={setReference}
+            setTitle={setTitle}
+            edit={() => {
+              restoreSelectionFocus.current = true;
+              setPreview(undefined);
+            }}
+            publish={() =>
+              run("Creating proposal…", () => publish(reference, title))
+            }
+          />
+        ) : (
+          <>
+            <SearchSummary view={view} folder={folder} label={label} headingRef={resultsHeading} {...original} />
+            <button
+              className="discovery-jump"
+              onClick={() => selectionHeading.current?.focus()}
+            >
+              {t("Jump to Source selection")}
+            </button>
+            <div className="discovery-columns">
+              <DiscoveryResults
+                view={view}
+                followups={followups}
+                approve={(revision, query) =>
+                  run("Searching Workspace…", () => follow(revision, query))
+                }
+              />
+              <SourceSelection
+                headingRef={selectionHeading}
+                options={options}
+                selected={selected}
+                change={changeSelection}
+                bulkSeen={bulkSeen}
+                onBulk={(items) => {
+                  setBulkSeen(new Set(options.map(candidateKey)));
+                  changeSelection([...selected, ...items]);
+                }}
+                openEmail={openEmail}
+                read={() => run("Preparing exact preview…", read)}
+              />
+            </div>
+          </>
+        )}
+      </fieldset>
+      {reading && (
+        <EmailReader reading={reading} close={() => setReading(undefined)} />
+      )}
     </div>
   );
 }

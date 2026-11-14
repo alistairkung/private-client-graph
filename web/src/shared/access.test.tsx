@@ -39,6 +39,15 @@ it.each([true, false])("offers local sign-in only when the server confirms avail
   expect(screen.getByText("Public Matter remains readable")).toBeVisible();
 });
 
+it("returns a signed-out practitioner to Workspace discovery after sign-in", async () => {
+  window.history.replaceState(null, "", "/app/matter-proposals/new?workspace=connect");
+  vi.stubGlobal("fetch", vi.fn().mockResolvedValueOnce(response(false)));
+  render(<AccessProvider><WriteGate /></AccessProvider>);
+  expect(await screen.findByRole("link", { name: "Sign in to make changes" })).toHaveAttribute(
+    "href", "/auth/login?next=%2Fapp%2Fmatter-proposals%2Fnew%3Fworkspace%3Dconnect",
+  );
+});
+
 it("clears session-owned drafts after confirmed demotion while preserving public content", async () => {
   vi.stubGlobal("fetch", vi.fn().mockResolvedValueOnce(response(true)).mockResolvedValue(response(false)));
   render(<AccessProvider><Probe /></AccessProvider>);

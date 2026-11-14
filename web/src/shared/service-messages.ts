@@ -4,7 +4,10 @@ export const serviceMessages: Record<string, string> = {
   unknown_discovery: "Start private discovery again.",
   source_unavailable: "Check the selection and preview again.",
   discovery_limit: "Discovery budget exhausted.",
-  collection_too_large: "Select fewer or shorter Sources.",
+  review_limit: "The private review reached its reading budget. Start a fresh search.",
+  invalid_selection: "Select distinct Workspace results.",
+  source_changed: "A Source changed after preview. Review your selection again.",
+  collection_text_limit: "Select Sources with at most 100,000 characters combined.",
   preview_required: "Preview the selected Sources again.",
   invalid_followup: "Choose an available suggested search.",
   confirmation_outcome_unknown:

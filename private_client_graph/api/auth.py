@@ -154,9 +154,14 @@ async def login(request: Request) -> Response:
     request.session.clear()
     request.session["next"] = target
     config = request.app.state.auth_config
-    return await request.app.state.google.authorize_redirect(
+    response = await request.app.state.google.authorize_redirect(
         request, config.origin + "/auth/callback", prompt="select_account"
     )
+    # The pilot rotates its signing key on restart. Let the callback GET issue
+    # a current CSRF cookie even when the browser still holds the previous one.
+    if CSRF_COOKIE in request.cookies:
+        response.delete_cookie(CSRF_COOKIE, secure=True)
+    return response
 
 
 async def callback(request: Request) -> Response:

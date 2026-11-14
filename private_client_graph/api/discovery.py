@@ -12,12 +12,12 @@ from httpx2 import Client
 from pydantic import BaseModel, ConfigDict, Field
 
 from private_client_graph.application.discovery import DiscoverySession, WorkspaceScope
-from private_client_graph.application.discovery.collection import Candidate, CollectionReview, ReviewPreview
+from private_client_graph.application.discovery.collection import Candidate, CollectionReview, PreviewProgress, ReviewPreview
+from private_client_graph.application.discovery.google import MailPreview
 from private_client_graph.application.discovery.session import DiscoveryView
 from private_client_graph.application.matter_proposals import analyse_finalized_sources
 from private_client_graph.application.proposal_contracts import MatterIntakeMetadata, MatterProposalDetail
 from private_client_graph.application.proposal_errors import ProposalFailure
-from private_client_graph.application.proposal_sources import MAX_PROPOSAL_SOURCES
 from .auth import allowed_subjects, available_auth_config
 from .workspace_pilot import Pilot, reconnect
 
@@ -36,13 +36,25 @@ class SessionAction(BaseModel):
     session: str
 
 
+class Inspection(SessionAction):
+    revision: int | None = Field(default=None, ge=0)
+
+
 class FollowUp(SessionAction):
     revision: int
     query: str
 
 
+class EmailRead(SessionAction):
+    message_id: str
+
+
 class Selection(SessionAction):
-    candidates: list[Candidate] = Field(min_length=1, max_length=MAX_PROPOSAL_SOURCES)
+    candidates: list[Candidate] = Field(min_length=1)
+
+
+class ContinuePreview(SessionAction):
+    continuation: str
 
 
 class Import(SessionAction):
@@ -139,9 +151,9 @@ def discovery_router(http: Client | None = None, *, pilot: Pilot | None = None) 
         return {"session": handle, "view": view}
 
     @router.post("/inspect")
-    def inspect(request: Request, body: SessionAction) -> DiscoveryView:
+    def inspect(request: Request, body: Inspection) -> DiscoveryView:
         with active_review(request, body) as collection:
-            return collection.discovery.inspect_more()
+            return collection.discovery.inspect_more(body.revision)
 
     @router.post("/follow-up")
     def follow_up(request: Request, body: FollowUp) -> dict:
@@ -153,10 +165,20 @@ def discovery_router(http: Client | None = None, *, pilot: Pilot | None = None) 
         return {"messages": approval.messages, "files": approval.files, "stop_reason": approval.stop_reason,
                 "more_pages": approval.more_pages}
 
+    @router.post("/email")
+    def read_email(request: Request, body: EmailRead) -> MailPreview:
+        with active_review(request, body) as collection:
+            return collection.read_email(body.message_id)
+
     @router.post("/preview")
-    def preview(request: Request, body: Selection) -> ReviewPreview:
+    def preview(request: Request, body: Selection) -> ReviewPreview | PreviewProgress:
         with active_review(request, body) as collection:
             return collection.preview(body.candidates)
+
+    @router.post("/preview-next")
+    def continue_preview(request: Request, body: ContinuePreview) -> ReviewPreview | PreviewProgress:
+        with active_review(request, body) as collection:
+            return collection.continue_preview(body.continuation)
 
     @router.post("/import", status_code=201)
     def publish(request: Request, body: Import, response: Response) -> MatterProposalDetail:
