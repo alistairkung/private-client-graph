@@ -89,3 +89,43 @@ it("reordering invalidates approval and a failed import requires another exact p
   expect(screen.getByText("Create public proposal")).toBeDisabled();
   expect(screen.getByLabelText("Matter title")).toHaveValue("Example");
 });
+
+it("retiring a Workspace grant removes private results and offers a fresh connection", async () => {
+  const { WorkspaceConnection } = await import("./WorkspaceConnection");
+  const user = userEvent.setup();
+  const respond = (body: unknown, status = 200) =>
+    new Response(JSON.stringify(body), { status });
+  const post = vi.spyOn(globalThis, "fetch");
+  post.mockResolvedValueOnce(
+    respond({
+      connected: true,
+      generation: "one",
+      expires: Date.now() / 1000 + 300,
+      account: "pilot@example.test",
+      folder: "folder",
+      label: "label",
+      folder_name: "Alder",
+      label_name: "Letters",
+    }),
+  );
+  render(<WorkspaceConnection onBusy={vi.fn()} />);
+  const start = await screen.findByText("Start private discovery");
+  expect(post).toHaveBeenCalledTimes(1);
+  post.mockResolvedValueOnce(
+    respond({ session: "first", view: { ...view, can_inspect_more: true } }),
+  );
+  await user.click(start);
+  expect(await screen.findByLabelText("Letter · Email")).toBeVisible();
+  post.mockResolvedValueOnce(
+    respond(
+      { error: { code: "workspace_reconnect", message: "", retryable: false } },
+      409,
+    ),
+  );
+  await user.click(screen.getByText("Inspect more original results"));
+  expect(
+    await screen.findByRole("button", { name: "Reconnect" }),
+  ).toBeEnabled();
+  expect(screen.queryByLabelText("Letter · Email")).toBeNull();
+  expect(screen.queryByText("Start private discovery")).toBeNull();
+});

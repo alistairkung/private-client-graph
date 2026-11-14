@@ -93,8 +93,9 @@ class Approval:
 
 
 class DiscoverySession:
-    def __init__(self, http: Client, scope: WorkspaceScope, limits: Limits = Limits()):
-        self._reader = WorkspaceReader(http, scope)
+    def __init__(self, http: Client, scope: WorkspaceScope, limits: Limits = Limits(), *,
+                 message_ids: frozenset[str] | None = None, file_ids: frozenset[str] | None = None):
+        self._reader = WorkspaceReader(http, scope, message_ids=message_ids, file_ids=file_ids)
         self._limits = limits
         self._usage = Usage()
         self._original: _Search | None = None

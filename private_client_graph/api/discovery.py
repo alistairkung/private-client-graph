@@ -1,10 +1,12 @@
-"""Private, same-session actions mounted only by the offline practitioner app."""
-from dataclasses import dataclass
+"""Private discovery actions for offline fixtures or the opt-in synthetic pilot."""
+from dataclasses import dataclass, replace
 from datetime import date
 from secrets import token_urlsafe
 from threading import Lock
 from time import time
 from typing import Literal
+
+from .workspace_pilot import Pilot, reconnect
 
 from fastapi import APIRouter, Request, Response
 from httpx2 import Client
@@ -22,8 +24,8 @@ from private_client_graph.application.proposal_sources import MAX_PROPOSAL_SOURC
 class Start(BaseModel):
     model_config = ConfigDict(extra="forbid")
     terms: str = Field(max_length=160)
-    folder: Literal["folder-1"]
-    label: Literal["alder-label"]
+    folder: str
+    label: str
     first_day: date | None = None
     last_day: date | None = None
 
@@ -76,27 +78,52 @@ class _Sessions:
             return flow.review
 
 
-def discovery_router(http: Client) -> APIRouter:
+def discovery_router(http: Client | None = None, *, pilot: Pilot | None = None) -> APIRouter:
     router = APIRouter(prefix="/api/matter-proposals/discovery", include_in_schema=False)
     sessions = _Sessions()
 
+    def review(request: Request, body: SessionAction) -> CollectionReview:
+        if pilot:
+            journey = pilot.connected(request).journey
+            if not journey or journey[0] != body.session:
+                raise ProposalFailure("unknown_discovery", "Start private discovery again.", status_code=409)
+            return journey[1]
+        return sessions.get(request, body)
+
     @router.post("/start")
     def start(request: Request, body: Start) -> dict:
+        connection = pilot.connected(request) if pilot else None
+        client = connection.http if connection else http
+        if client is None:
+            raise reconnect()
         try:
-            scope = WorkspaceScope("synthetic@example.test", body.label, body.folder, body.first_day, body.last_day)
-            discovery = DiscoverySession(http, scope)
+            base = pilot.config.scope if pilot else WorkspaceScope("synthetic@example.test", "alder-label", "folder-1")
+            if (body.label, body.folder) != (base.label, base.folder):
+                raise ValueError("Invalid scope")
+            scope = replace(base, first_day=body.first_day, last_day=body.last_day)
+            discovery = DiscoverySession(client, scope, message_ids=pilot.config.message_ids if pilot else None,
+                                         file_ids=pilot.config.file_ids if pilot else None)
             view = discovery.start(body.terms)
         except ValueError:
             raise ProposalFailure("invalid_discovery", "Check your discovery inputs.") from None
-        return {"session": sessions.start(request, CollectionReview(discovery)), "view": view}
+        collection = CollectionReview(discovery)
+        if connection and pilot:
+            with pilot.lock:
+                if pilot.connected(request) is not connection:
+                    raise reconnect()
+                handle = token_urlsafe()
+                connection.journey = handle, collection
+        else:
+            handle = sessions.start(request, collection)
+        return {"session": handle, "view": view}
 
     @router.post("/inspect")
     def inspect(request: Request, body: SessionAction) -> DiscoveryView:
-        return sessions.get(request, body).discovery.inspect_more()
+        return review(request, body).discovery.inspect_more()
 
     @router.post("/follow-up")
     def follow_up(request: Request, body: FollowUp) -> dict:
-        discovery = sessions.get(request, body).discovery
+        discovery = review(request, body).discovery
         try:
             approval = discovery.approve(body.revision, body.query)
         except ValueError:
@@ -106,11 +133,13 @@ def discovery_router(http: Client) -> APIRouter:
 
     @router.post("/preview")
     def preview(request: Request, body: Selection) -> ReviewPreview:
-        return sessions.get(request, body).preview(body.candidates)
+        return review(request, body).preview(body.candidates)
 
     @router.post("/import", status_code=201)
     def publish(request: Request, body: Import, response: Response) -> MatterProposalDetail:
-        sources = sessions.get(request, body).approve(body.preview)
+        sources = review(request, body).approve(body.preview)
+        if pilot:
+            review(request, body)  # Recheck the grant after acquisition.
         proposal = analyse_finalized_sources(body.metadata, sources, request.app.state.proposal_analysis)
         response.headers["Location"] = f"/api/matter-proposals/{proposal.id}"
         return proposal

@@ -101,7 +101,10 @@ def item_id(value: object) -> str:
 
 
 class WorkspaceReader:
-    def __init__(self, http: Client, scope: WorkspaceScope):
+    def __init__(self, http: Client, scope: WorkspaceScope, *, message_ids: frozenset[str] | None = None,
+                 file_ids: frozenset[str] | None = None):
+        self.message_ids = message_ids
+        self.file_ids = file_ids
         self.http = http
         self.scope = scope
         self.messages = f"https://gmail.googleapis.com/gmail/v1/users/{quote(scope.mailbox, safe='@')}/messages"
@@ -150,7 +153,10 @@ class WorkspaceReader:
                   "fields": "nextPageToken,messages(id)", "maxResults": "100"}
         if token:
             params["pageToken"] = token
-        return self._json(self.messages, params, action)
+        page = self._json(self.messages, params, action)
+        if self.message_ids is not None:
+            page["messages"] = [m for m in page.get("messages", []) if m["id"] in self.message_ids]
+        return page
 
     def drive_page(self, terms: str, token: str, action: Action) -> dict:
         phrase = literal(terms).replace("'", "\\'")
@@ -162,6 +168,8 @@ class WorkspaceReader:
         return self._json(self.files, params, action)
 
     def admitted_file(self, row: dict) -> DriveFile:
+        if self.file_ids is not None and row.get("id") not in self.file_ids:
+            raise OutsideScope()
         if (row.get("parents") != [self.scope.folder] or row.get("trashed") is not False
                 or row.get("mimeType") != "application/pdf"):
             raise OutsideScope()
@@ -185,6 +193,8 @@ class WorkspaceReader:
         return self.message(key, action).text
 
     def message(self, key: str, action: Action) -> MailPreview:
+        if self.message_ids is not None and key not in self.message_ids:
+            raise OutsideScope()
         url = f"{self.messages}/{item_id(key)}"
         fields = "id,labelIds,internalDate"
         metadata = self._json(url, {"format": "metadata", "fields": fields}, action)
