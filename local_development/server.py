@@ -6,6 +6,8 @@ from fastapi import FastAPI, Request
 from starlette.responses import RedirectResponse
 
 from local_development.google import GoogleBoundary
+from local_development.workspace import fixture_client
+from private_client_graph.api.discovery import discovery_router
 from local_development.https import serve_https
 from local_development.model import extract_fixture, extract_source_fixtures
 from private_client_graph.api.app import create_app
@@ -21,7 +23,7 @@ def create_local_app(origin: str = DEFAULT_ORIGIN) -> FastAPI:
     # Substitute the complete external-dispatch boundary, never grant live authority.
     matter_proposals._extract_proposal = _local_extraction
     matter_proposals._extract_proposal_sources = _local_source_extraction
-    application = create_app()
+    application = create_app(discovery_router=discovery_router(fixture_client()))
     if application.state.auth_config is None:
         raise RuntimeError("Local authentication configuration is missing or invalid")
     if application.state.auth_config.origin != origin:

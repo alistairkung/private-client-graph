@@ -1,14 +1,10 @@
 """Literal Google HTTP exchanges. No query evaluation, access policy or ranking."""
-import base64
 import json
-from pathlib import Path
+from local_development.workspace import FILES, MAIL, ROOT, message_response
 
 from httpx2 import Client, MockTransport, Response
 
-ROOT = Path(__file__).parents[1] / "fixtures" / "alder-trust-v1"
 CORPUS = json.loads((ROOT / "corpus.json").read_text())
-MAIL = "/gmail/v1/users/synthetic@example.test/messages"
-FILES = "/drive/v3/files"
 
 
 class Exchanges:
@@ -41,14 +37,9 @@ class Exchanges:
 
     def message(self, id, fmt, *, body=None, labels=None):
         record = next(m for m in CORPUS["messages"] if m["id"] == id)
-        payload = {"mimeType": "text/plain", "headers": [{"name": "Subject", "value": record["subject"]}]}
-        if fmt == "full":
-            data = (body if body is not None else record["body"]).encode()
-            payload["body"] = {"data": base64.urlsafe_b64encode(data).decode(), "size": len(data)}
-        response = {k: record[k] for k in ("id", "threadId", "internalDate", "labelIds")}
-        if labels is not None:
-            response["labelIds"] = labels
-        self.expect(f"{MAIL}/{id}", {"format": fmt}, {**response, "payload": payload})
+        row = {**record, "body": record["body"] if body is None else body,
+               "labelIds": record["labelIds"] if labels is None else labels}
+        self.expect(f"{MAIL}/{id}", {"format": fmt}, message_response(row, fmt))
 
 
 def file(id):

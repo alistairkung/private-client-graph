@@ -132,8 +132,11 @@ def access(request: Request) -> JSONResponse:
         and time.time() < expires
         and session.get("sub") in allowed_subjects()
     )
+    capabilities = {"can_write": can_write, "sign_in_available": config is not None}
+    if can_write and request.app.state.workspace_discovery:
+        capabilities["workspace_discovery"] = True
     return JSONResponse(
-        {"can_write": can_write, "sign_in_available": config is not None},
+        capabilities,
         headers={"Cache-Control": "no-store"},
     )
 

@@ -5,9 +5,9 @@ from threading import RLock
 
 from httpx2 import Client
 
-from .google import DriveFile, OutsideScope, PdfPreview, ReadFailure, WorkspaceReader, WorkspaceScope, item_id, literal
+from .google import DriveFile, MailPreview, OutsideScope, PdfPreview, ReadFailure, WorkspaceReader, WorkspaceScope, item_id, literal
 from .leads import Suggestion, ranked_suggestions
-from .limits import Action, LimitReached, Limits, Usage
+from .limits import Action, LimitReached, Limits, SessionLimitReached, Usage
 
 
 @dataclass
@@ -60,9 +60,11 @@ class DiscoveryView:
     scope: WorkspaceScope
     original_query: str
     revision: int
+    can_inspect_more: bool
     returned_messages: tuple[str, ...]
     pending: tuple[str, ...]
     inspected: tuple[str, ...]
+    inspected_titles: dict[str, str]
     skipped: tuple[str, ...]
     failed: tuple[str, ...]
     files: tuple[DriveFile, ...]
@@ -97,6 +99,7 @@ class DiscoverySession:
         self._usage = Usage()
         self._original: _Search | None = None
         self._texts: dict[str, str] = {}
+        self._titles: dict[str, str] = {}
         self._digests: dict[str, str] = {}
         self._skipped: set[str] = set()
         self._failed: set[str] = set()
@@ -129,6 +132,7 @@ class DiscoverySession:
                 raise ValueError("Start discovery first")
             action = Action(self._limits, self._usage)
             reason = None
+            session_blocked = False
             try:
                 pending = self._pending(original)
                 if not pending:
@@ -139,6 +143,7 @@ class DiscoverySession:
                 original.read_drive_page(self._reader, action)
             except LimitReached as exc:
                 reason = str(exc)
+                session_blocked = isinstance(exc, SessionLimitReached)
             except (KeyError, TypeError, ValueError):
                 reason = "Original search incomplete"
             pending = self._pending(original)
@@ -146,9 +151,13 @@ class DiscoverySession:
                 scope=self._reader.scope,
                 original_query=original.query,
                 revision=len(self._views),
+                can_inspect_more=(bool(pending or original.more_pages) and not session_blocked
+                                  and self._usage.requests < self._limits.session_requests
+                                  and self._usage.bytes < self._limits.session_bytes),
                 returned_messages=tuple(sorted(original.message_ids)),
                 pending=pending,
                 inspected=tuple(self._texts),
+                inspected_titles=dict(self._titles),
                 skipped=tuple(sorted(self._skipped)),
                 failed=tuple(sorted(self._failed)),
                 files=tuple(original.files.values()),
@@ -166,33 +175,44 @@ class DiscoverySession:
 
     def _inspect_message(self, key: str, action: Action) -> None:
         try:
-            text = self._reader.message_text(key, action)
+            email = self._reader.message(key, action)
         except OutsideScope:
             self._skipped.add(key)
         except (KeyError, TypeError, ValueError):
             self._failed.add(key)
         else:
-            self._texts[key] = text
-            self._digests[key] = sha256(text.encode()).hexdigest()
+            self._texts[key] = email.text
+            self._titles[key] = email.title
+            self._digests[key] = sha256(email.text.encode()).hexdigest()
 
     def preview_message(self, message_id: str) -> str:
         """An explicit preview never contributes text to automatic query expansion."""
+        with self._lock:
+            return self.read_message(message_id, self.new_action()).text
+
+    def new_action(self) -> Action:
+        return Action(self._limits, self._usage)
+
+    def read_message(self, message_id: str, action: Action) -> MailPreview:
         with self._lock:
             original_hit = self._original and message_id in self._original.message_ids
             followup_hit = any(message_id in approval.messages for approval in self._approvals.values())
             if not original_hit and not followup_hit:
                 raise ValueError("Unknown message candidate")
-            return self._reader.message_text(message_id, Action(self._limits, self._usage))
+            return self._reader.message(message_id, action)
 
     def preview_pdf(self, file_id: str) -> PdfPreview:
         """Only an admitted candidate can enter the existing PDF acquisition boundary."""
+        return self.read_pdf(file_id, self.new_action())
+
+    def read_pdf(self, file_id: str, action: Action, *, refresh: bool = False) -> PdfPreview:
         with self._lock:
             candidates = dict(self._original.files) if self._original else {}
             for approval in self._approvals.values():
                 candidates.update((item.id, item) for item in approval.files)
             if file_id not in candidates:
                 raise ValueError("Unknown PDF candidate")
-            return self._reader.preview_pdf(candidates[file_id], Action(self._limits, self._usage))
+            return self._reader.preview_pdf(candidates[file_id], action, refresh=refresh)
 
     def approve(self, revision: int, query: str) -> Approval:
         """Execute exactly the displayed lead; retain a partial/failed search as a charged approval."""

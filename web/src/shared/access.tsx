@@ -12,6 +12,7 @@ import { useLocale } from "./locale";
 
 export interface Access {
   can_write: boolean;
+  workspace_discovery?: boolean;
   sign_in_available: boolean;
 }
 type AccessState =

@@ -4,7 +4,7 @@ from pathlib import Path
 from uuid import UUID
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, Request, Response
+from fastapi import APIRouter, FastAPI, Request, Response
 from pydantic import BaseModel, ConfigDict
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
@@ -84,6 +84,10 @@ async def invalid_request(
     request: Request, exc: Exception
 ) -> JSONResponse:
     assert isinstance(exc, RequestValidationError)
+    if request.app.state.workspace_discovery and request.url.path.startswith("/api/matter-proposals/discovery/"):
+        return JSONResponse(status_code=422, content={"error": {
+            "code": "invalid_discovery", "message": "Check your discovery inputs.", "retryable": True,
+        }})
     if request.url.path.startswith("/api/matter-proposals/"):
         return JSONResponse(
             status_code=422,
@@ -102,7 +106,7 @@ async def invalid_request(
     return JSONResponse(status_code=422, content={"error": {"message": "Invalid request."}})
 
 
-def create_app(web_dist: Path = WEB_DIST) -> FastAPI:
+def create_app(web_dist: Path = WEB_DIST, *, discovery_router: APIRouter | None = None) -> FastAPI:
     load_dotenv(ROOT / ".env")
     application = FastAPI(title="Private Client Graph")
     configure_auth(application)
@@ -112,6 +116,9 @@ def create_app(web_dist: Path = WEB_DIST) -> FastAPI:
         application.state.proposal_analysis = proposal_config
     except ValueError:
         application.state.proposal_analysis = None
+    application.state.workspace_discovery = discovery_router is not None
+    if discovery_router is not None:
+        application.include_router(discovery_router)
     application.include_router(proposal_router)
     application.include_router(public_research_router)
     application.add_exception_handler(ProposalFailure, proposal_failure)

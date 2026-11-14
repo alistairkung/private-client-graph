@@ -63,6 +63,14 @@ For a deterministic walkthrough, use `tests/fixtures/synthetic-proposal.pdf` and
 `tests/fixtures/multiple-role-proposal.pdf`. These demonstrate the review workflow;
 the local model substitute does not measure extraction quality on arbitrary PDFs.
 
+For offline Workspace discovery, sign in locally, open **New proposal** and choose
+**Discover Workspace Sources**. Start with “Alder Trust”, search for Alice Reed,
+then inspect the next original batch. The sixth email supports a search for Mara
+Voss. Select that email and the appointment PDF, order and preview the Sources,
+then approve publication to save a pending proposal. The PDF contains the
+existing synthetic Alice/Ben relationship fixture. Discovery uses one in-memory
+journey per login and the versioned Alder Trust HTTP fixtures.
+
 Stop with `docker compose --profile practitioner down`. Database state survives
 ordinary restarts; adding `-v` deletes Compose database volumes. See the
 [application setup and deployment guide](docs/workflows/application-setup.md)

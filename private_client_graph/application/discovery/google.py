@@ -82,6 +82,13 @@ class PdfPreview:
     file: DriveFile
     sha256: str
     text: str
+    size: int
+
+
+@dataclass(frozen=True)
+class MailPreview:
+    title: str
+    text: str
 
 
 FILE_FIELDS = "id,name,mimeType,parents,trashed,version"
@@ -160,20 +167,24 @@ class WorkspaceReader:
             raise OutsideScope()
         return DriveFile(item_id(row["id"]), row["name"], row["version"])
 
-    def preview_pdf(self, candidate: DriveFile, action: Action) -> PdfPreview:
+    def preview_pdf(self, candidate: DriveFile, action: Action, *, refresh: bool = False) -> PdfPreview:
         url = f"{self.files}/{item_id(candidate.id)}"
 
         def current() -> DriveFile:
             return self.admitted_file(self._json(url, {"fields": FILE_FIELDS}, action))
 
-        if current() != candidate:
+        before = current()
+        if before.id != candidate.id or (not refresh and before != candidate):
             raise OutsideScope("File changed since discovery")
         media = self.read(url, {"alt": "media"}, action)
-        if current() != candidate:
+        if current() != before:
             raise OutsideScope("File changed during download")
-        return PdfPreview(candidate, sha256(media).hexdigest(), extract_pdf_source(media))
+        return PdfPreview(before, sha256(media).hexdigest(), extract_pdf_source(media), len(media))
 
     def message_text(self, key: str, action: Action) -> str:
+        return self.message(key, action).text
+
+    def message(self, key: str, action: Action) -> MailPreview:
         url = f"{self.messages}/{item_id(key)}"
         fields = "id,labelIds,internalDate"
         metadata = self._json(url, {"format": "metadata", "fields": fields}, action)
@@ -182,7 +193,10 @@ class WorkspaceReader:
         full = self._json(url, {"format": "full", "fields": fields + ",payload"}, action)
         if not self.scope.admits_message(full, key):
             raise OutsideScope()
-        return _plain_body(full["payload"])
+        payload = full["payload"]
+        subject = next((header["value"] for header in payload.get("headers", [])
+                        if header["name"].lower() == "subject"), "")
+        return MailPreview(subject or "Untitled email", _plain_body(payload))
 
 
 def _plain_body(part: dict) -> str:

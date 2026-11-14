@@ -138,9 +138,10 @@ def test_request_and_byte_exhaustion_report_incomplete_results():
     session = DiscoverySession(google.http, WorkspaceScope("synthetic@example.test", "alder-label", "folder-1"),
                                Limits(action_requests=1, session_requests=2))
     view = session.start("Alder Trust")
-    assert view.more_pages and view.stop_reason == "Action request limit"
+    assert view.can_inspect_more and view.more_pages and view.stop_reason == "Action request limit"
     google.message("01", "metadata")
     view = session.inspect_more()
+    assert not view.can_inspect_more
     assert view.more_pages and view.stop_reason == "Session request limit" and view.pending == ("01",)
 
     google = Exchanges()
@@ -148,6 +149,7 @@ def test_request_and_byte_exhaustion_report_incomplete_results():
     session = DiscoverySession(google.http, WorkspaceScope("synthetic@example.test", "alder-label", "folder-1"),
                                Limits(action_bytes=8, session_bytes=8))
     view = session.start("Alder Trust")
+    assert not view.can_inspect_more
     assert view.bytes == 0 and view.stop_reason == "Session byte limit" and view.inspected == ()
     assert not google.steps
 

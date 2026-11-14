@@ -1,4 +1,11 @@
 export const serviceMessages: Record<string, string> = {
+  invalid_discovery: "Check your discovery inputs.",
+  unknown_discovery: "Start private discovery again.",
+  source_unavailable: "Check the selection and preview again.",
+  discovery_limit: "Discovery budget exhausted.",
+  collection_too_large: "Select fewer or shorter Sources.",
+  preview_required: "Preview the selected Sources again.",
+  invalid_followup: "Choose an available suggested search.",
   confirmation_outcome_unknown:
     "The confirmation outcome is unknown. Check Matters to see whether the Matter was created.",
   confirmation_failed:
