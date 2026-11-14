@@ -18,6 +18,8 @@ ENV PATH="/app/.venv/bin:$PATH" \
 COPY pyproject.toml uv.lock README.md ./
 COPY private_client_graph/ ./private_client_graph/
 COPY local_development/ ./local_development/
+COPY tests/fixtures/alder-trust-v1/ ./tests/fixtures/alder-trust-v1/
+COPY tests/fixtures/synthetic-proposal.pdf ./tests/fixtures/
 COPY cases/ ./cases/
 COPY alembic.ini ./
 COPY migrations/ ./migrations/
