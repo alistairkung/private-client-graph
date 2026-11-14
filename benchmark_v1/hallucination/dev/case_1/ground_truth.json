@@ -1,10 +1,35 @@
 {
   "entities": [
-    { "id": "person_001", "type": "person", "name": "Gregory Ashby" },
-    { "id": "person_002", "type": "person", "name": "Patricia Ashby" },
-    { "id": "person_003", "type": "person", "name": "Emma Ashby" },
-    { "id": "person_004", "type": "person", "name": "James Ashby" },
-    { "id": "trust_001", "type": "trust", "name": "Ashby Family Trust" }
+    {
+      "id": "person_001",
+      "type": "person",
+      "name": "Gregory Ashby"
+    },
+    {
+      "id": "person_002",
+      "type": "person",
+      "name": "Patricia Ashby"
+    },
+    {
+      "id": "person_003",
+      "type": "person",
+      "name": "Emma Ashby"
+    },
+    {
+      "id": "person_004",
+      "type": "person",
+      "name": "James Ashby"
+    },
+    {
+      "id": "person_005",
+      "type": "person",
+      "name": "Margaret Ashby"
+    },
+    {
+      "id": "trust_001",
+      "type": "trust",
+      "name": "Ashby Family Trust"
+    }
   ],
   "relationships": [
     {
@@ -61,6 +86,14 @@
       "target": "trust_001",
       "approved_evidence": [
         "Emma Ashby is the current sole beneficiary of the Ashby Family Trust."
+      ]
+    },
+    {
+      "source": "person_001",
+      "type": "sibling_of",
+      "target": "person_005",
+      "approved_evidence": [
+        "Mr. Ashby has also suggested that his sister, Margaret Ashby, should be appointed as a trustee in place of the current trustee."
       ]
     }
   ]

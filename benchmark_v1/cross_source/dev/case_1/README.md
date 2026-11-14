@@ -1,66 +1,25 @@
-# Case: Cross-Source Reconciliation (Development)
+# Cross-Source Reconciliation (Development)
 
-## Purpose
-Test whether the pipeline combines facts from two separate documents into
-a single accurate graph without duplicating, omitting, or misattributing
-any relationship.
+`benchmark_v1_cross_source_dev_1` belongs to development family
+`benchmark_v1_cross_source_1`. Combine complementary facts from two emails and preserve the Source identity for each selected quote.
 
-## Intended Variable
-Cross-source reconciliation. The combined source contains two emails:
-- Email 1 (12 April 2026): Alice Chen confirms that she and David Chen
-  are spouses and both are settlors of the Oakwood Trust.
-- Email 2 (14 April 2026): The solicitor confirms that Bob Chen is the
-  sole beneficiary of the Oakwood Trust.
+## Complete current answer key
 
-The answer key requires combining facts from both emails. Neither email
-alone is sufficient.
+- Alice Chen → settlor_of → Oakwood Trust
+- David Chen → settlor_of → Oakwood Trust
+- Alice Chen → spouse_of → David Chen
+- Bob Chen → beneficiary_of → Oakwood Trust
+- Alice Chen → parent_of → Bob Chen
 
-## Supported Relationship Types
-`settlor_of`, `spouse_of`, `beneficiary_of`.
+## Bidirectional audit
 
-## Answer Key
+Email 1 explicitly supports the two settlor edges and spouse edge; its From header identifies Alice as the speaker. Email 2 is addressed to Alice and calls Bob “your son”, supporting Alice→Bob parent_of and Bob’s beneficiary edge. Registration is not a supported graph primitive. No David→Bob parent edge is inferred.
 
-### Entities
-- Alice Chen (person, settlor, spouse)
-- David Chen (person, settlor, spouse)
-- Bob Chen (person, beneficiary)
-- Oakwood Trust (trust)
+Two complementary emails, dated 12 and 14 April 2026 (note_01, note_02). The complete graph needs both documents. No update or historical-state operation is required.
 
-### Relationships (4 edges)
-1. Alice Chen → settlor_of → Oakwood Trust
-2. David Chen → settlor_of → Oakwood Trust
-3. Alice Chen → spouse_of → David Chen
-4. Bob Chen → beneficiary_of → Oakwood Trust
+## Offline reproduction
 
-## Source Audit (Bidirectional)
-
-**Answer key → source:** Email 1 supports edges 1–3. Email 2 supports
-edge 4. Every edge has explicit support.
-
-**Source → answer key:** Email 1 also says "my husband, David Chen" — this
-supports the spouse edge, which is already in the answer key. No additional
-supported relationships are asserted.
-
-## How to Test This Case
-
-```bash
-uv run python benchmark_v1/evaluate_case.py \
-    benchmark_v1/cross_source/dev/case_1 \
-    benchmark_v1/cross_source/dev/case_1/expected_extraction.json
-
-    ## Contract Check Result (Ideal Extraction)
-
-**Run:** 2026-11-11
-**Input:** `expected_extraction.json` (hand-crafted ideal extraction)
-**Evaluator:** `benchmark_v1/evaluate_case.py`
-
-**Result:**
-- TP: 4, FP: 0, FN: 0
-- Precision: 1.0, Recall: 1.0, F1: 1.0
-- Provenance accuracy: 1.0 (4/4 passed)
-
-**Interpretation:** The case's contracts are compatible with the existing
-evaluator. All 4 ground-truth edges are supported by exact source quotes
-from both emails. The case requires combining facts from both sources.
-
-**Paid provider calls:** 0
+Select this case in the Workbench and follow the saved replay instructions.
+The authored ideal yields 5 TP, zero FP/FN, 5/5 approved-quote passes
+and 5/5 approved Source/quote associations. This checks the fixture and
+deterministic pipeline. [Benchmark plan](../../../../docs/workflows/benchmark-plan.md)

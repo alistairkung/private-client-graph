@@ -1,4 +1,8 @@
 {
   "name": "Document Authority (Development)",
-  "description": "Tests whether the pipeline prioritises a formal signed deed over an earlier informal meeting note when the two conflict."
+  "description": "Tests whether the pipeline prioritises a formal signed deed over an earlier informal meeting note when the two conflict.",
+  "id": "benchmark_v1_authority_dev_1",
+  "axis": "authority",
+  "split": "dev",
+  "matter_family": "benchmark_v1_authority_1"
 }

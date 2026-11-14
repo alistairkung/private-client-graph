@@ -2,7 +2,7 @@
   "entities": [
     { "id": "person_001", "type": "person", "name": "Katherine Beaumont" },
     { "id": "person_002", "type": "person", "name": "Richard Beaumont" },
-    { "id": "person_003", "type": "person", "name": "Emily Beaumont" },
+    { "id": "person_003", "type": "person", "name": "Emily" },
     { "id": "trust_001", "type": "trust", "name": "Beaumont Family Trust" }
   ],
   "relationships": [

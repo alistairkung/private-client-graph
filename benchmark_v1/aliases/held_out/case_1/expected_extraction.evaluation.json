@@ -7,14 +7,14 @@
   "f1": 1.0,
   "true_positive_edges": [
     [
-      "Emily Beaumont",
+      "Emily",
       "beneficiary_of",
       "Beaumont Family Trust"
     ],
     [
       "Katherine Beaumont",
       "parent_of",
-      "Emily Beaumont"
+      "Emily"
     ],
     [
       "Katherine Beaumont",
@@ -29,7 +29,7 @@
     [
       "Richard Beaumont",
       "parent_of",
-      "Emily Beaumont"
+      "Emily"
     ]
   ],
   "false_positive_edges": [],
@@ -39,14 +39,14 @@
   "provenance_accuracy": 1.0,
   "provenance_passes": [
     [
-      "Emily Beaumont",
+      "Emily",
       "beneficiary_of",
       "Beaumont Family Trust"
     ],
     [
       "Katherine Beaumont",
       "parent_of",
-      "Emily Beaumont"
+      "Emily"
     ],
     [
       "Katherine Beaumont",
@@ -61,7 +61,7 @@
     [
       "Richard Beaumont",
       "parent_of",
-      "Emily Beaumont"
+      "Emily"
     ]
   ],
   "provenance_failures": []

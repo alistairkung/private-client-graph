@@ -1,4 +1,8 @@
 {
   "name": "Temporal Precedence (Development)",
-  "description": "Tests whether the pipeline resolves a trustee replacement within a combined text, outputting only the current trustee and excluding the historical trustee."
+  "description": "Tests whether the pipeline resolves a trustee replacement within a combined text, outputting only the current trustee and excluding the historical trustee.",
+  "id": "benchmark_v1_temporal_dev_1",
+  "axis": "temporal",
+  "split": "dev",
+  "matter_family": "benchmark_v1_temporal_1"
 }

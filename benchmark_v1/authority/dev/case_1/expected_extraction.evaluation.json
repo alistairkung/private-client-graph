@@ -1,11 +1,16 @@
 {
-  "tp": 1,
+  "tp": 2,
   "fp": 0,
   "fn": 0,
   "precision": 1.0,
   "recall": 1.0,
   "f1": 1.0,
   "true_positive_edges": [
+    [
+      "Alice Chen",
+      "parent_of",
+      "Bob Chen"
+    ],
     [
       "Carol Wong",
       "beneficiary_of",
@@ -14,10 +19,15 @@
   ],
   "false_positive_edges": [],
   "false_negative_edges": [],
-  "provenance_passed": 1,
+  "provenance_passed": 2,
   "provenance_failed": 0,
   "provenance_accuracy": 1.0,
   "provenance_passes": [
+    [
+      "Alice Chen",
+      "parent_of",
+      "Bob Chen"
+    ],
     [
       "Carol Wong",
       "beneficiary_of",

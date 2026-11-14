@@ -15,17 +15,17 @@
     {
       "source_name": "Katherine Beaumont",
       "relationship_type": "parent_of",
-      "target_name": "Emily Beaumont",
+      "target_name": "Emily",
       "supporting_text": "They have one child, Emily."
     },
     {
       "source_name": "Richard Beaumont",
       "relationship_type": "parent_of",
-      "target_name": "Emily Beaumont",
+      "target_name": "Emily",
       "supporting_text": "They have one child, Emily."
     },
     {
-      "source_name": "Emily Beaumont",
+      "source_name": "Emily",
       "relationship_type": "beneficiary_of",
       "target_name": "Beaumont Family Trust",
       "supporting_text": "Mrs. Beaumont explained that \"Em\" — as the family calls her — is the sole beneficiary of the Beaumont Family Trust."

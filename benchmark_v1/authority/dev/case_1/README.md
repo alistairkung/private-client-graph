@@ -1,66 +1,22 @@
-# Case: Document Authority (Development)
+# Document Authority (Development)
 
-## Purpose
-Test whether the pipeline prioritises a formal signed deed over an earlier
-informal meeting note when the two conflict.
+`benchmark_v1_authority_dev_1` belongs to development family
+`benchmark_v1_authority_1`. Distinguish informal future intention from an executed deed while retaining unchanged family facts.
 
-## Intended Variable
-Document authority. The combined source contains two documents:
-- Note 1 (15 March 2023): Alice Chen *intends* Bob Chen to be the primary
-  beneficiary of the Evergreen Family Trust. No formal changes made.
-- Note 2 (10 January 2024): A signed deed of variation changes the sole
-  beneficiary to Carol Wong and removes Bob Chen.
+## Complete current answer key
 
-The answer key reflects the formal deed: Carol Wong is the sole beneficiary.
-Bob Chen is excluded because the intention was never formalised, and the
-deed explicitly removes him.
+- Carol Wong → beneficiary_of → Evergreen Family Trust
+- Alice Chen → parent_of → Bob Chen
 
-## Supported Relationship Types
-`beneficiary_of`.
+## Bidirectional audit
 
-## Answer Key
+The note supports Alice→Bob parent_of, not a current Bob beneficiary edge. The deed supports Carol’s current beneficiary edge and explicitly removes Bob. No settlor, spouse or additional family relationship is asserted. Bob remains an entity because of his supported parent edge.
 
-### Entities
-- Carol Wong (person, beneficiary)
-- Evergreen Family Trust (trust)
+Two documents: the 15 March 2023 file note (note_01), then the 10 January 2024 executed deed (note_02). The documents also differ in date and effective status, so this is not an isolated causal test of document authority.
 
-### Relationships (1 edge)
-1. Carol Wong → beneficiary_of → Evergreen Family Trust
+## Offline reproduction
 
-**Deliberately excluded:** Bob Chen → beneficiary_of → Evergreen Family
-Trust. The 2023 note is an intention, not a current fact. The 2024 deed
-supersedes it.
-
-## Source Audit (Bidirectional)
-
-**Answer key → source:** The deed explicitly states Carol Wong is the sole
-beneficiary. Evidence span recorded in `ground_truth.json`.
-
-**Source → answer key:** The 2023 note mentions Bob as intended
-beneficiary. This is a proposal, not a current fact. The 2024 deed
-explicitly removes him. No other supported relationships are asserted.
-
-## How to Test This Case
-
-```bash
-uv run python benchmark_v1/evaluate_case.py \
-    benchmark_v1/authority/dev/case_1 \
-    benchmark_v1/authority/dev/case_1/expected_extraction.json
-
-    ## Contract Check Result (Ideal Extraction)
-
-**Run:** 2026-11-11
-**Input:** `expected_extraction.json` (hand-crafted ideal extraction)
-**Evaluator:** `benchmark_v1/evaluate_case.py`
-
-**Result:**
-- TP: 1, FP: 0, FN: 0
-- Precision: 1.0, Recall: 1.0, F1: 1.0
-- Provenance accuracy: 1.0 (1/1 passed)
-
-**Interpretation:** The case's contracts are compatible with the existing
-evaluator. The single ground-truth edge (Carol as beneficiary) is supported
-by the exact deed quote. Bob Chen is correctly excluded — the informal note
-is not a current fact.
-
-**Paid provider calls:** 0
+Select this case in the Workbench and follow the saved replay instructions.
+The authored ideal yields 2 TP, zero FP/FN, 2/2 approved-quote passes
+and 2/2 approved Source/quote associations. This checks the fixture and
+deterministic pipeline. [Benchmark plan](../../../../docs/workflows/benchmark-plan.md)

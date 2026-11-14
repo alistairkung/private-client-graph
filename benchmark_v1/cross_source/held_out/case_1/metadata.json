@@ -1,4 +1,8 @@
 {
   "name": "Cross-Source Reconciliation (Held-Out)",
-  "description": "Held-out counterpart to the Cross-Source development case. Different family, trust, and documents; same split-facts-across-emails pattern."
+  "description": "Held-out counterpart to the Cross-Source development case. Different family, trust, and documents; same split-facts-across-emails pattern.",
+  "id": "benchmark_v1_cross_source_held_out_1",
+  "axis": "cross_source",
+  "split": "held_out",
+  "matter_family": "benchmark_v1_cross_source_1"
 }

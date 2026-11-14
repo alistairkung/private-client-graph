@@ -60,6 +60,9 @@ export type CaseMetadata = {
   fixture_description: string | null;
   kind: "benchmark" | "diagnostic" | "historical" | "heldout";
   metadata_available: boolean;
+  axis: string | null;
+  split: "dev" | "held_out" | null;
+  matter_family: string | null;
 };
 
 export type ChartEligibility = {

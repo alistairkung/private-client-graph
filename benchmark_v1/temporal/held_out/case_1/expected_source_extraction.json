@@ -1,0 +1,46 @@
+{
+  "relationships": [
+    {
+      "source_name": "Julia Marlow",
+      "relationship_type": "settlor_of",
+      "target_name": "Marlow Family Trust",
+      "supporting_text": "Julia Marlow is the settlor of the Marlow Family Trust.",
+      "source_id": "note_01"
+    },
+    {
+      "source_name": "Julia Marlow",
+      "relationship_type": "spouse_of",
+      "target_name": "Peter Marlow",
+      "supporting_text": "Julia Marlow and Peter Marlow are spouses.",
+      "source_id": "note_01"
+    },
+    {
+      "source_name": "Julia Marlow",
+      "relationship_type": "parent_of",
+      "target_name": "Anna Marlow",
+      "supporting_text": "Julia Marlow and Peter Marlow are the parents of Anna Marlow.",
+      "source_id": "note_01"
+    },
+    {
+      "source_name": "Peter Marlow",
+      "relationship_type": "parent_of",
+      "target_name": "Anna Marlow",
+      "supporting_text": "Julia Marlow and Peter Marlow are the parents of Anna Marlow.",
+      "source_id": "note_01"
+    },
+    {
+      "source_name": "Anna Marlow",
+      "relationship_type": "beneficiary_of",
+      "target_name": "Marlow Family Trust",
+      "supporting_text": "Anna Marlow is a beneficiary of the Marlow Family Trust.",
+      "source_id": "note_01"
+    },
+    {
+      "source_name": "Fiona Grant",
+      "relationship_type": "trustee_of",
+      "target_name": "Marlow Family Trust",
+      "supporting_text": "The current position as at 20 March 2026 is that Fiona Grant is the sole trustee of the Marlow Family Trust.",
+      "source_id": "note_02"
+    }
+  ]
+}

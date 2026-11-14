@@ -1,4 +1,8 @@
 {
   "name": "Cross-Source Reconciliation (Development)",
-  "description": "Tests whether the pipeline combines facts from two separate emails into a single accurate graph."
+  "description": "Tests whether the pipeline combines facts from two separate emails into a single accurate graph.",
+  "id": "benchmark_v1_cross_source_dev_1",
+  "axis": "cross_source",
+  "split": "dev",
+  "matter_family": "benchmark_v1_cross_source_1"
 }

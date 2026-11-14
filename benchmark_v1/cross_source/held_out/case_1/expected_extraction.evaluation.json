@@ -1,5 +1,5 @@
 {
-  "tp": 4,
+  "tp": 5,
   "fp": 0,
   "fn": 0,
   "precision": 1.0,
@@ -23,13 +23,18 @@
     ],
     [
       "Susan Leung",
+      "parent_of",
+      "Amy Yeung"
+    ],
+    [
+      "Susan Leung",
       "settlor_of",
       "Ravenswood Trust"
     ]
   ],
   "false_positive_edges": [],
   "false_negative_edges": [],
-  "provenance_passed": 4,
+  "provenance_passed": 5,
   "provenance_failed": 0,
   "provenance_accuracy": 1.0,
   "provenance_passes": [
@@ -47,6 +52,11 @@
       "Michelle Yeung",
       "spouse_of",
       "Susan Leung"
+    ],
+    [
+      "Susan Leung",
+      "parent_of",
+      "Amy Yeung"
     ],
     [
       "Susan Leung",

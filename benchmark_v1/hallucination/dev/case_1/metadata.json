@@ -1,4 +1,8 @@
 {
   "name": "Incremental Hallucination (Development)",
-  "description": "Tests whether the pipeline distinguishes current facts from proposals and intentions within a single draft note."
+  "description": "Tests whether the pipeline distinguishes current facts from proposals and intentions within a single draft note.",
+  "id": "benchmark_v1_hallucination_dev_1",
+  "axis": "hallucination",
+  "split": "dev",
+  "matter_family": "benchmark_v1_hallucination_1"
 }

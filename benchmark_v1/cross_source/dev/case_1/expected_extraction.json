@@ -23,6 +23,12 @@
       "relationship_type": "beneficiary_of",
       "target_name": "Oakwood Trust",
       "supporting_text": "As noted in the deed, your son, Bob Chen, is the sole beneficiary of the Oakwood Trust."
+    },
+    {
+      "source_name": "Alice Chen",
+      "relationship_type": "parent_of",
+      "target_name": "Bob Chen",
+      "supporting_text": "As noted in the deed, your son, Bob Chen, is the sole beneficiary of the Oakwood Trust."
     }
   ]
 }

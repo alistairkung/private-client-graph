@@ -11,6 +11,17 @@
           "supporting_text": "The sole beneficiary of the Evergreen Family Trust is hereby changed to Carol Wong."
         }
       ]
+    },
+    {
+      "source": "person_002",
+      "type": "parent_of",
+      "target": "person_003",
+      "approved_evidence": [
+        {
+          "source_id": "note_01",
+          "supporting_text": "Alice mentioned that she intends to leave everything to her son, Bob Chen, and that Bob will be the primary beneficiary of the Evergreen Family Trust."
+        }
+      ]
     }
   ]
 }

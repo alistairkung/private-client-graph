@@ -23,6 +23,12 @@
       "relationship_type": "beneficiary_of",
       "target_name": "Ravenswood Trust",
       "supporting_text": "As noted in the deed, your daughter, Amy Yeung, is the sole beneficiary of the Ravenswood Trust."
+    },
+    {
+      "source_name": "Susan Leung",
+      "relationship_type": "parent_of",
+      "target_name": "Amy Yeung",
+      "supporting_text": "As noted in the deed, your daughter, Amy Yeung, is the sole beneficiary of the Ravenswood Trust."
     }
   ]
 }

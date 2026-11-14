@@ -1,5 +1,5 @@
 {
-  "tp": 7,
+  "tp": 8,
   "fp": 0,
   "fn": 0,
   "precision": 1.0,
@@ -10,6 +10,11 @@
       "Anna Marlow",
       "beneficiary_of",
       "Marlow Family Trust"
+    ],
+    [
+      "Elizabeth Marlow",
+      "sibling_of",
+      "Julia Marlow"
     ],
     [
       "Julia Marlow",
@@ -44,7 +49,7 @@
   ],
   "false_positive_edges": [],
   "false_negative_edges": [],
-  "provenance_passed": 7,
+  "provenance_passed": 8,
   "provenance_failed": 0,
   "provenance_accuracy": 1.0,
   "provenance_passes": [
@@ -52,6 +57,11 @@
       "Anna Marlow",
       "beneficiary_of",
       "Marlow Family Trust"
+    ],
+    [
+      "Elizabeth Marlow",
+      "sibling_of",
+      "Julia Marlow"
     ],
     [
       "Julia Marlow",

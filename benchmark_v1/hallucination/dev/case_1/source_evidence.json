@@ -6,7 +6,10 @@
       "type": "settlor_of",
       "target": "trust_001",
       "approved_evidence": [
-        { "source_id": "note_01", "supporting_text": "Gregory Ashby is the settlor of the Ashby Family Trust." }
+        {
+          "source_id": "note_01",
+          "supporting_text": "Gregory Ashby is the settlor of the Ashby Family Trust."
+        }
       ]
     },
     {
@@ -14,7 +17,10 @@
       "type": "spouse_of",
       "target": "person_002",
       "approved_evidence": [
-        { "source_id": "note_01", "supporting_text": "He and his wife, Patricia Ashby, are spouses." }
+        {
+          "source_id": "note_01",
+          "supporting_text": "He and his wife, Patricia Ashby, are spouses."
+        }
       ]
     },
     {
@@ -22,7 +28,10 @@
       "type": "parent_of",
       "target": "person_003",
       "approved_evidence": [
-        { "source_id": "note_01", "supporting_text": "They have two children, Emma Ashby and James Ashby." }
+        {
+          "source_id": "note_01",
+          "supporting_text": "They have two children, Emma Ashby and James Ashby."
+        }
       ]
     },
     {
@@ -30,7 +39,10 @@
       "type": "parent_of",
       "target": "person_003",
       "approved_evidence": [
-        { "source_id": "note_01", "supporting_text": "They have two children, Emma Ashby and James Ashby." }
+        {
+          "source_id": "note_01",
+          "supporting_text": "They have two children, Emma Ashby and James Ashby."
+        }
       ]
     },
     {
@@ -38,7 +50,10 @@
       "type": "parent_of",
       "target": "person_004",
       "approved_evidence": [
-        { "source_id": "note_01", "supporting_text": "They have two children, Emma Ashby and James Ashby." }
+        {
+          "source_id": "note_01",
+          "supporting_text": "They have two children, Emma Ashby and James Ashby."
+        }
       ]
     },
     {
@@ -46,7 +61,10 @@
       "type": "parent_of",
       "target": "person_004",
       "approved_evidence": [
-        { "source_id": "note_01", "supporting_text": "They have two children, Emma Ashby and James Ashby." }
+        {
+          "source_id": "note_01",
+          "supporting_text": "They have two children, Emma Ashby and James Ashby."
+        }
       ]
     },
     {
@@ -54,7 +72,21 @@
       "type": "beneficiary_of",
       "target": "trust_001",
       "approved_evidence": [
-        { "source_id": "note_01", "supporting_text": "Emma Ashby is the current sole beneficiary of the Ashby Family Trust." }
+        {
+          "source_id": "note_01",
+          "supporting_text": "Emma Ashby is the current sole beneficiary of the Ashby Family Trust."
+        }
+      ]
+    },
+    {
+      "source": "person_001",
+      "type": "sibling_of",
+      "target": "person_005",
+      "approved_evidence": [
+        {
+          "source_id": "note_01",
+          "supporting_text": "Mr. Ashby has also suggested that his sister, Margaret Ashby, should be appointed as a trustee in place of the current trustee."
+        }
       ]
     }
   ]

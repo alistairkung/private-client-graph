@@ -1,4 +1,8 @@
 {
   "name": "Aliases (Development)",
-  "description": "Tests whether the pipeline resolves different surface forms (Margaret Wu, Margaret, Mrs. Wu; Daniel, Danny) into single entities."
+  "description": "Tests whether the pipeline resolves different surface forms (Margaret Wu, Margaret, Mrs. Wu; Daniel, Danny) into single entities.",
+  "id": "benchmark_v1_aliases_dev_1",
+  "axis": "aliases",
+  "split": "dev",
+  "matter_family": "benchmark_v1_aliases_1"
 }

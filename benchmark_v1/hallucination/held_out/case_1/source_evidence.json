@@ -56,6 +56,14 @@
       "approved_evidence": [
         { "source_id": "note_01", "supporting_text": "Anna Marlow is the current sole beneficiary of the Marlow Family Trust." }
       ]
+    },
+    {
+      "source": "person_001",
+      "type": "sibling_of",
+      "target": "person_005",
+      "approved_evidence": [
+        { "source_id": "note_01", "supporting_text": "Mrs. Marlow has also suggested that her sister, Elizabeth Marlow, should be appointed as a trustee in place of the current trustee." }
+      ]
     }
   ]
 }

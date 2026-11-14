@@ -80,6 +80,25 @@ export function ObservationInspection({ run }: { run: RunDetail }) {
               {metric(observation.result.evaluation.provenance_accuracy)}
             </p>
           )}
+          {observation.result?.source_attribution && (
+            <div>
+              <p>
+                Approved Source/quote associations on matched relationships:{" "}
+                {observation.result.source_attribution.passed} /{" "}
+                {observation.result.source_attribution.assessed}
+              </p>
+              {observation.result.source_attribution.failures.length > 0 && (
+                <ul aria-label="Unapproved Source/quote associations">
+                  {observation.result.source_attribution.failures.map((failure) => (
+                    <li key={JSON.stringify([failure.edge, failure.evidence_id])}>
+                      {failure.edge.join(" · ")} — {failure.source_id}:{" "}
+                      <q>{failure.supporting_text}</q>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
           <div className="observation-bench">
             <section id="relationships" tabIndex={-1}>
               <label>

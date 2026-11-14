@@ -1,0 +1,39 @@
+{
+  "relationships": [
+    {
+      "source_name": "Katherine Beaumont",
+      "relationship_type": "settlor_of",
+      "target_name": "Beaumont Family Trust",
+      "supporting_text": "Katherine confirmed that she established the trust in 2019 and is its settlor.",
+      "source_id": "note_01"
+    },
+    {
+      "source_name": "Katherine Beaumont",
+      "relationship_type": "spouse_of",
+      "target_name": "Richard Beaumont",
+      "supporting_text": "Katherine also confirmed that she and her husband, Richard Beaumont, are spouses.",
+      "source_id": "note_01"
+    },
+    {
+      "source_name": "Katherine Beaumont",
+      "relationship_type": "parent_of",
+      "target_name": "Emily",
+      "supporting_text": "They have one child, Emily.",
+      "source_id": "note_01"
+    },
+    {
+      "source_name": "Richard Beaumont",
+      "relationship_type": "parent_of",
+      "target_name": "Emily",
+      "supporting_text": "They have one child, Emily.",
+      "source_id": "note_01"
+    },
+    {
+      "source_name": "Emily",
+      "relationship_type": "beneficiary_of",
+      "target_name": "Beaumont Family Trust",
+      "supporting_text": "Mrs. Beaumont explained that \"Em\" — as the family calls her — is the sole beneficiary of the Beaumont Family Trust.",
+      "source_id": "note_01"
+    }
+  ]
+}

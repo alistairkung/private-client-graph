@@ -4,6 +4,7 @@
     { "id": "person_002", "type": "person", "name": "Peter Marlow" },
     { "id": "person_003", "type": "person", "name": "Anna Marlow" },
     { "id": "person_004", "type": "person", "name": "William Marlow" },
+    { "id": "person_005", "type": "person", "name": "Elizabeth Marlow" },
     { "id": "trust_001", "type": "trust", "name": "Marlow Family Trust" }
   ],
   "relationships": [
@@ -61,6 +62,14 @@
       "target": "trust_001",
       "approved_evidence": [
         "Anna Marlow is the current sole beneficiary of the Marlow Family Trust."
+      ]
+    },
+    {
+      "source": "person_001",
+      "type": "sibling_of",
+      "target": "person_005",
+      "approved_evidence": [
+        "Mrs. Marlow has also suggested that her sister, Elizabeth Marlow, should be appointed as a trustee in place of the current trustee."
       ]
     }
   ]

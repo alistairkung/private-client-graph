@@ -1,7 +1,25 @@
 {
   "entities": [
-    { "id": "person_001", "type": "person", "name": "Carol Wong" },
-    { "id": "trust_001", "type": "trust", "name": "Evergreen Family Trust" }
+    {
+      "id": "person_002",
+      "type": "person",
+      "name": "Alice Chen"
+    },
+    {
+      "id": "person_003",
+      "type": "person",
+      "name": "Bob Chen"
+    },
+    {
+      "id": "person_001",
+      "type": "person",
+      "name": "Carol Wong"
+    },
+    {
+      "id": "trust_001",
+      "type": "trust",
+      "name": "Evergreen Family Trust"
+    }
   ],
   "relationships": [
     {
@@ -10,6 +28,14 @@
       "target": "trust_001",
       "approved_evidence": [
         "The sole beneficiary of the Evergreen Family Trust is hereby changed to Carol Wong."
+      ]
+    },
+    {
+      "source": "person_002",
+      "type": "parent_of",
+      "target": "person_003",
+      "approved_evidence": [
+        "Alice mentioned that she intends to leave everything to her son, Bob Chen, and that Bob will be the primary beneficiary of the Evergreen Family Trust."
       ]
     }
   ]

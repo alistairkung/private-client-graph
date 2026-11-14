@@ -1,108 +1,101 @@
-# Benchmark Plan: Complexity Axes & RAG Experiment
+# Six-axis diagnostic benchmark
 
-## Objective
-Complement the existing `cases/` regression fixtures with a new diagnostic benchmark suite (`benchmark_v1/`). The existing cases have already informed development and remain as regression tests; they cannot serve as independent final evaluation.
+The twelve synthetic fixtures under `benchmark_v1/` complement Cases 01–05 and
+the ten published evaluation cases. Each axis has one development fixture and one
+designated held-out fixture. They exercise exhaustive reconstruction of the current
+Person/Trust graph from ordered Sources.
 
-The new suite evaluates the pipeline's baseline capabilities, defines capability gaps for future work, and tests whether Retrieval-Augmented Generation (RAG) improves graph reconstruction as document volume and complexity increase.
+| Axis | What to inspect in the complete graph |
+| --- | --- |
+| Aliases | Explicitly linked surface names resolve to the source-supported participant. |
+| Authority | Current roles follow the particular instruments and intentions described in the fictional matter. |
+| Cross-source | Facts across both Sources survive with the correct supporting Source. |
+| Distractors | Additional names and unsupported roles introduce no current relationship. |
+| Drafts and proposals | Asserted family facts survive, including those embedded in proposed appointments. |
+| Temporal | An effective replacement removes the former trustee and preserves unchanged earlier facts. |
 
-## 1. Benchmark Structure: 6 Axes, Dev and Held-Out
+## Execution and selection
 
-We propose 6 complexity axes. Following the collaborator's suggestion, we hold out a variety of axes by creating **6 held-out samples** (one per axis).
+The current pipeline can attempt all six tasks. It supplies the entire ordered
+Source bundle to one extraction call, optionally resolves endpoint names, then
+constructs a validated current graph. The fixtures ask for a final snapshot.
+Representing unresolved conflicts or a history of states would require a separate
+contract decision. Ground truth, ideal extractions and approvals belong to
+evaluation and are excluded from operational model input.
 
-For each axis, we author two cases:
-- **1 Development Case:** Visible, inspected, and used to tune the pipeline.
-- **1 Held-Out Case:** Frozen before any development tuning begins. Scored at final evaluation.
+In the Research Workbench, create an Experiment, open **Choose cases**, clear the
+selection and select the six **Development** entries. Choose **Saved replay · No
+provider calls**, **Saved extraction snapshots** and **No resolution**. Freeze
+the Run, review the planned six observations, then start it. Open **Observations
+& Evidence** to inspect results and follow predicted and expected quotations to
+their original Sources. The Run retains inputs, metadata, hashes, results and
+coverage. The five historical default inputs keep their previous selection.
+Both the development diagnostics and designated held-out fixtures require an
+explicit selection. Reserve the latter for isolated annotation QA or a separately
+approved evaluation on a frozen pipeline.
 
-### The 6 Axes
-1. **Temporal Precedence:** A relationship changes over time (e.g., trustee replaced).
-2. **Document Authority:** Informal intention vs. formal deed.
-3. **Aliases:** Same person, different names.
-4. **Distractors:** Irrelevant named people.
-5. **Cross-Source Reconciliation:** Facts split across multiple documents.
-6. **Incremental Hallucination:** Drafts mixing true facts with proposals.
+Each case's metadata records its stable ID, axis, split and matter family. The
+Workbench fixture ID appends `_fixture`. A package contains the complete
+`ground_truth.json`, ordered `sources.json`, Source/quote approvals in
+`source_evidence.json`, and an attributed ideal in
+`expected_source_extraction.json`. The combined `source.txt` and corresponding
+`expected_extraction.json` retain the legacy representation. A one-Source
+manifest may reference `source.txt` directly. Follow the existing Case 04/05
+conventions and the two-direction authoring audit before deriving either ideal.
+[Authoring workflow](synthetic-case-authoring.md)
 
-### Capability Fixtures vs. Baseline Diagnostics
-The graph currently represents relationships, not effective dates, authority rankings, or source-aware scoring. We distinguish measurable extraction failures from capabilities the system doesn't yet support.
+## Reproducing the checks
 
-- **Baseline Diagnostics:** Aliases, Distractors, Incremental Hallucination. The pipeline can attempt these today. Scored in both development and held-out.
-- **Capability Fixtures:** Temporal Precedence, Document Authority, Cross-Source Reconciliation. These require capabilities the pipeline doesn't have yet. Their development cases are authored but not scored. Their held-out cases **are scored at final evaluation** — if the capability was built, the score reflects it; if not, the score reports "not attempted" as an honest finding.
+From the repository root, exercise the catalogue, deterministic pipeline,
+persisted Run, aggregate and Evidence inspection with:
 
-## 2. RAG Experiment (Separate from Axes)
-We test the hypothesis: *"As volume, complexity, and distribution of documents increase, RAG improves the ability to reconstruct an accurate graph."*
+```sh
+uv run --locked pytest tests/workbench/test_benchmark_v1.py tests/research/test_source_attribution.py
+```
 
-### The 3-Step Experiment
-1. **Baseline:** Run the current pipeline (full context) on a small case. Record F1.
-2. **RAG Added:** Run the same case with retrieval. Record F1. If identical, RAG is a no-op on small cases.
-3. **Sweep:** Run both baseline and RAG across Small / Medium / Large versions of the same case.
+To reproduce a committed legacy graph/quotation score independently, use a new
+destination. The helper refuses an existing output and accepts legacy candidates.
+The Workbench replay above exercises Source attribution.
 
-### RAG Sweep Thresholds (Reasoning)
-The interesting comparison is at the **context-window edge**: where the baseline can still process the file but starts losing accuracy. Below it, RAG is a no-op. Above it, baseline cannot run and the comparison becomes trivial.
+```sh
+case_dir=benchmark_v1/authority/dev/case_1
+result_dir=$(mktemp -d)
+uv run --locked python benchmark_v1/evaluate_case.py "$case_dir" \
+  "$case_dir/expected_extraction.json" --output "$result_dir/score.json"
+```
 
-| Tier | Approx. docs | What it tests | Trade-off |
-|---|---|---|---|
-| **Small** | ~5 | Control condition. Everything fits; RAG should be a no-op. | Cheap, low information, establishes the null. |
-| **Medium** | ~15 | A realistic Matter file. Model still fits everything but starts losing accuracy. | Likely sweet spot. Moderate cost. |
-| **Large** | ~30–50 (or context-window limit) | At the edge of context. Baseline drops; RAG recovers. | The meaningful finding. Capped at whichever is smaller: ~50 docs or the model's context-window limit. |
+## What the Run measures
 
-**Cap:** Above the context-window edge, baseline cannot run and the comparison is trivial. The finding is whether RAG's advantage appears at the edge, not past it.
+| Measure | Contract |
+| --- | --- |
+| Graph counts | TP, FP and FN count distinct exact-name, typed edges. Direction matters for parent and trust roles. Spouse and sibling are symmetric. |
+| Precision, recall, F1 | TP/(TP+FP), TP/(TP+FN), and 2TP/(2TP+FP+FN). A scored zero denominator yields 0.0. Run micro F1 pools edge counts over scored observations. True negatives are unspecified, so report the FP count. |
+| Approved-quotation accuracy | TP edges with at least one attached exact approved quote divided by all TP edges. With zero TPs the scorer returns 0.0. Alternative quotes may each suffice. Semantic support requires annotation review. |
+| Source attribution | Approved attached (Source ID, exact quotation) associations on TP edges divided by all assessed associations on TP edges. One edge can contribute several associations. Zero assessed yields an unavailable ratio. A quote occurring in two Sources can pass the quotation check and fail the Source check. |
+| Coverage | Report scored/planned observations and counts of failed, uncertain, pending and unavailable slots. Only scored observations contribute edges. No scored observations means unavailable Run F1. Partial coverage yields provisional quality. |
 
-### Design Constraints
-- **Realistic, Not Noise:** The larger cases must look like real Matter files (deeds, letters, resolutions), not artificial stress tests.
-- **Output is a Curve:** We plot F1 vs. document count. The gap between the baseline and RAG curves is RAG's value.
-- **Conclusion:** If RAG never diverges from baseline, we report that RAG was not a good use case for this domain, showing the numbers.
+Authored ideal replay establishes internal agreement and exercises mechanical
+validation. Live model quality, variability and resource costs require separately
+authorised experiments. The existing published A/A′/B study has its own frozen
+input scope, scores and replay provenance. [Publication workflow](public-research-publication.md)
 
-## 3. Metrics (Aligned to Evaluator)
-1. **TP / FP / FN:** Raw counts.
-2. **Precision, Recall, F1:** Standard metrics.
-3. **FP Count & 1 − Precision:** Because true negatives are not enumerated, we report raw FP count and false discovery proportion (1 − Precision).
-4. **Relationship Provenance Accuracy:** TP edges where at least one predicted span matches an approved span.
-5. **Source Attribution Accuracy:** Multi-source cases only. TP edges where the predicted `source_id` matches the approved `source_id`. Supported by the existing evaluator for `CanonicalState`.
-6. **Retrieval Recall:** RAG runs only. Fraction of approved evidence present in retrieved chunks.
-7. **Axis Failure:** Defined specifically. Only the intended variable counts.
+## Split limitations and next decisions
 
-## 4. Methodology (Per `synthetic-case-authoring.md`)
-We strictly follow the canonical order: **Answer Key → Source → Audit → Evidence → Extraction.**
+At initial review all six dev/held-out pairs shared their directed typed graph
+structure under entity ordering. The temporal dev case also shares its named
+answer graph with Case 05. Several axes mix difficulties, particularly authority
+with recency and explicit effectiveness. The two splits are useful for controlled
+inspection. Independent generalisation would require separately authored matter
+families kept wholly within split, including composites and positive/negative
+controls. Record lineage and revisions before any independent final freeze.
 
-1. **Declare Case Purpose:** Record ID, purpose, intended variable, supported types.
-2. **Define Answer Key:** Complete graph in JSON first. Challenge every edge.
-3. **Draft Source:** Write realistic document from the answer key. No accidental edges.
-4. **Bidirectional Audit:** GT → Source (is every edge supported?) and Source → GT (are there unintended edges?).
-5. **Annotate Evidence:** Exact verbatim spans for every edge.
-6. **Freeze Answer Key:** Re-verify after any source edit.
-7. **Derive Expected Extraction:** Only after source is stable.
-8. **Deterministic Checks:** Run schema, reference, and verbatim validations.
-9. **Persist Run & Evaluate:** Run pipeline, save artifact, score.
-10. **Record Failure:** Categorize (extraction, graph, annotation, etc.).
+All six designated held-out fixtures received isolated semantic annotation QA.
+The prior reviewer reported aggregate defects, followed by the correction pass
+documented below. No held-out model results guided changes. [Held-out audit and revision digests](../../benchmark_v1/held-out-audit.md)
 
-## 5. Multi-Document Schema (Existing Contracts)
-Use existing files, no new schema:
-- `sources.json`: Ordered source list.
-- `ground_truth.json`: Entities/relationships with plain-string `approved_evidence`.
-- `source_evidence.json`: Separate mapping of `source_id` to quotes.
-- `expected_extraction.json`: Raw candidates.
-- `expected_source_extraction.json`: Source-attributed ideal extraction.
-
-*No `document_id` field in `ground_truth.json`.*
-
-## 6. Document Count Policy
-Initial non-RAG cases use the *minimum* documents needed for the axis. Document-count variation is reserved exclusively for the RAG experiment.
-- **Aliases / Distractors / Hallucination:** 1 document.
-- **Temporal / Authority / Cross-Source:** 1 combined `source.txt` containing two documents. The full multi-document structure (separate files per source) is deferred until the pipeline gains sequential processing.
-
-## 7. Ownership and Approval
-- **Stage 1 (This PR):** Agree on approach.
-- **Stage 2 (Self-Review):** Author verifies ground truth completeness, evidence support, and automated checks. Includes summary and flagged uncertainties.
-- **Stage 3 (Review):** Joint review only where needed. Author makes and defends routine decisions.
-
-## 8. Out of Scope
-Fraud detection, RCE, Agentic tool misuse, Real legal documents, artificial noise stress tests.
-
-## 9. Reporting
-Markdown summaries for metrics. Individual errors and Evidence inspectable via the existing Workbench.
-
-## 10. Current Status
-- **12 cases authored and contract-verified** (6 dev + 6 held-out, one per axis per phase).
-- All 12 pass `evaluate_case.py` with F1=1.0 and provenance=1.0 on hand-crafted ideal extractions.
-- **Held-out set is frozen** (not inspected during development).
-- **RAG sweep is next.**
-- Full details in each case's README under `benchmark_v1/<axis>/<dev|held_out>/case_1/`.
+Future work starts with observed development errors. A retrieval comparison would
+use the same original matters, full context versus selected context, matched
+downstream processing and separate evidence-sufficiency diagnostics. Its
+specification, budget and execution require separate decisions. Document count
+alone does not establish context pressure. Question answering would introduce a
+different product task and its own evaluation.

@@ -1,0 +1,60 @@
+{
+  "relationships": [
+    {
+      "source_name": "Julia Marlow",
+      "relationship_type": "settlor_of",
+      "target_name": "Marlow Family Trust",
+      "supporting_text": "Julia Marlow is the settlor of the Marlow Family Trust.",
+      "source_id": "note_01"
+    },
+    {
+      "source_name": "Julia Marlow",
+      "relationship_type": "spouse_of",
+      "target_name": "Peter Marlow",
+      "supporting_text": "She and her husband, Peter Marlow, are spouses.",
+      "source_id": "note_01"
+    },
+    {
+      "source_name": "Julia Marlow",
+      "relationship_type": "parent_of",
+      "target_name": "Anna Marlow",
+      "supporting_text": "They have two children, Anna Marlow and William Marlow.",
+      "source_id": "note_01"
+    },
+    {
+      "source_name": "Julia Marlow",
+      "relationship_type": "parent_of",
+      "target_name": "William Marlow",
+      "supporting_text": "They have two children, Anna Marlow and William Marlow.",
+      "source_id": "note_01"
+    },
+    {
+      "source_name": "Peter Marlow",
+      "relationship_type": "parent_of",
+      "target_name": "Anna Marlow",
+      "supporting_text": "They have two children, Anna Marlow and William Marlow.",
+      "source_id": "note_01"
+    },
+    {
+      "source_name": "Peter Marlow",
+      "relationship_type": "parent_of",
+      "target_name": "William Marlow",
+      "supporting_text": "They have two children, Anna Marlow and William Marlow.",
+      "source_id": "note_01"
+    },
+    {
+      "source_name": "Anna Marlow",
+      "relationship_type": "beneficiary_of",
+      "target_name": "Marlow Family Trust",
+      "supporting_text": "Anna Marlow is the current sole beneficiary of the Marlow Family Trust.",
+      "source_id": "note_01"
+    },
+    {
+      "source_name": "Julia Marlow",
+      "relationship_type": "sibling_of",
+      "target_name": "Elizabeth Marlow",
+      "supporting_text": "Mrs. Marlow has also suggested that her sister, Elizabeth Marlow, should be appointed as a trustee in place of the current trustee.",
+      "source_id": "note_01"
+    }
+  ]
+}
