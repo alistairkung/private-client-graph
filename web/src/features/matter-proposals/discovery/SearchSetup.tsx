@@ -23,59 +23,64 @@ export function SearchSetup({
       }}
     >
       <h2 className="discovery-title">{t("Search Workspace")}</h2>
-      <dl className="discovery-scope">
-        <div>
-          <dt>{t("Drive folder")}</dt>
-          <dd>{folder}</dd>
-        </div>
-        <div>
-          <dt>{t("Gmail label")}</dt>
-          <dd>{label}</dd>
-        </div>
-      </dl>
-      <label>
-        {t("Initial search terms")}
-        <input
-          required
-          value={terms}
-          maxLength={160}
-          onChange={(e) => setTerms(e.target.value)}
-        />
-      </label>
-      <details>
-        <summary>{t("Gmail date range (optional)")}</summary>
-        <div className="discovery-dates">
-          <label>
-            {t("Gmail from (UTC)")}
-            <input
-              type="date"
-              value={first}
-              max={last || undefined}
-              onChange={(e) => setFirst(e.target.value)}
-            />
-          </label>
-          <label>
-            {t("Gmail through (UTC)")}
-            <input
-              type="date"
-              value={last}
-              min={first || undefined}
-              onChange={(e) => setLast(e.target.value)}
-            />
-          </label>
-        </div>
-      </details>
-      <p>
-        {t(
-          "Search up to 50 matching emails and PDFs in these locations. Emails are checked for leads as results arrive. Nothing is published until you approve.",
-        )}
-      </p>
-      <button
-        className="button primary"
-        disabled={!terms.trim() || Boolean(first && last && first > last)}
-      >
-        {t("Start private discovery")}
-      </button>
+      <section className="discovery-locations">
+        <h3>{t("Where you’re searching")}</h3>
+        <dl className="discovery-scope">
+          <div>
+            <dt>{t("Drive folder")}</dt>
+            <dd>{folder}</dd>
+          </div>
+          <div>
+            <dt>{t("Gmail label")}</dt>
+            <dd>{label}</dd>
+          </div>
+        </dl>
+      </section>
+      <div className="discovery-search-fields">
+        <label>
+          {t("Initial search terms")}
+          <input
+            required
+            value={terms}
+            maxLength={160}
+            onChange={(e) => setTerms(e.target.value)}
+          />
+        </label>
+        <details>
+          <summary>{t("Gmail date range (optional)")}</summary>
+          <div className="discovery-dates">
+            <label>
+              {t("Gmail from (UTC)")}
+              <input
+                type="date"
+                value={first}
+                max={last || undefined}
+                onChange={(e) => setFirst(e.target.value)}
+              />
+            </label>
+            <label>
+              {t("Gmail through (UTC)")}
+              <input
+                type="date"
+                value={last}
+                min={first || undefined}
+                onChange={(e) => setLast(e.target.value)}
+              />
+            </label>
+          </div>
+        </details>
+        <p>
+          {t(
+            "Search up to 50 matching emails and PDFs in these locations. Emails are checked for leads as results arrive. Nothing is published until you approve.",
+          )}
+        </p>
+        <button
+          className="button primary"
+          disabled={!terms.trim() || Boolean(first && last && first > last)}
+        >
+          {t("Start private discovery")}
+        </button>
+      </div>
     </form>
   );
 }

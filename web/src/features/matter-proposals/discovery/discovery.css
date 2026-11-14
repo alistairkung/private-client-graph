@@ -137,8 +137,7 @@
   color: var(--rail-muted);
   margin-bottom: 5px;
 }
-.discovery-counts,
-.discovery-scope {
+.discovery-counts {
   display: flex;
   gap: 20px;
   flex-wrap: wrap;
@@ -188,17 +187,6 @@
   min-width: 0;
 }
 .discovery-inspection:has(> div:empty):not(:has(button)) { display: none; }
-.discovery-scope {
-  padding: 12px 0;
-}
-.discovery-scope dt {
-  font-size: 13px;
-  color: var(--muted);
-}
-.discovery-scope dd {
-  margin: 2px 0 0;
-  font-weight: 600;
-}
 .discovery-columns {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -319,13 +307,34 @@
   display: none;
 }
 .discovery-setup {
-  max-width: 760px;
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  grid-template-areas: "title locations" "fields locations";
+  align-items: start;
+  gap: 20px clamp(24px, 4vw, 64px);
+}
+.discovery-setup > h2 { grid-area: title; }
+.discovery-search-fields {
+  grid-area: fields;
   display: grid;
   gap: 16px;
+  min-width: 0;
 }
-.discovery-setup .discovery-scope {
-  border-block: 1px solid var(--border);
+.discovery-locations {
+  grid-area: locations;
+  padding: 16px 20px;
+  background: var(--surface-subtle);
+  border-radius: 8px;
 }
+.discovery-locations h3 { margin: 0 0 12px; }
+.discovery-scope {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+  margin: 0;
+}
+.discovery-scope dt { font-size: 13px; color: var(--muted); }
+.discovery-scope dd { margin: 2px 0 0; font-weight: 600; }
 .discovery-setup button {
   justify-self: start;
 }
@@ -380,6 +389,10 @@
   margin-bottom: 12px;
 }
 @media (max-width: 800px) {
+  .discovery-setup {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "title" "locations" "fields";
+  }
   .discovery-jump {
     display: inline-block;
     margin-top: 12px;

@@ -83,6 +83,7 @@ export const discoveryCatalogue: Record<string, string> = {
   "Private Workspace discovery": "私密 Workspace 检索",
   "Search up to 50 matching emails and PDFs in these locations. Emails are checked for leads as results arrive. Nothing is published until you approve.":
     "在这些位置中最多搜索 50 封邮件和 PDF 文件。系统会逐批查看邮件以寻找线索。只有在您批准后才会发布。",
+  "Where you’re searching": "搜索位置",
   "Drive folder": "云端硬盘文件夹",
   "Gmail label": "Gmail 标签",
   "Initial search terms": "初始搜索词",
