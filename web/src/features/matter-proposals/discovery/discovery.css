@@ -1,0 +1,428 @@
+.discovery-page {
+  max-width: 1220px;
+}
+.discovery-page .page-heading {
+  margin-bottom: 4px;
+}
+.discovery-return {
+  margin-bottom: 12px;
+}
+.workspace-connection,
+.discovery {
+  font-family: "Public Sans", system-ui, sans-serif;
+  overflow-wrap: anywhere;
+}
+.workspace-connection,
+.discovery-panel,
+.discovery-summary,
+.discovery-papers article {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  min-width: 0;
+}
+.workspace-connection {
+  display: grid;
+  justify-items: start;
+  gap: 12px;
+  padding: 20px 24px;
+}
+.workspace-connection p,
+.discovery-setup p {
+  max-width: 70ch;
+}
+.workspace-connection.is-connected {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  padding: 8px 18px;
+  background: var(--surface-subtle);
+}
+.workspace-connection.is-connected h2 {
+  font:
+    600 14px/1.5 "Public Sans",
+    sans-serif;
+}
+.workspace-connection.is-connected h2::before {
+  content: "";
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+.connection-account,
+.discovery-caption,
+.discovery figcaption {
+  font-size: 13px;
+  color: var(--muted);
+}
+.workspace-connection.is-connected > div {
+  margin-left: auto;
+}
+.workspace-connection.is-connected button {
+  background: transparent;
+  border-color: transparent;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.discovery-stages {
+  list-style: none;
+  display: flex;
+  gap: clamp(12px, 4vw, 48px);
+  margin: 16px 0;
+  padding: 0;
+}
+.discovery-stages li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--muted);
+}
+.discovery-stages span {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1px solid var(--control-border);
+  flex: none;
+}
+.discovery-stages [aria-current] {
+  color: var(--ink);
+  font-weight: 600;
+}
+.discovery-stages [aria-current] span {
+  background: var(--rail);
+  color: white;
+  border-color: var(--rail);
+}
+.discovery-controls,
+.discovery-group {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+.discovery-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+.discovery-working {
+  padding: 8px 0;
+  color: var(--accent);
+}
+.discovery-summary {
+  overflow: hidden;
+}
+.discovery-summary-top {
+  background: var(--rail);
+  color: var(--rail-text);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: clamp(18px, 3vw, 32px);
+}
+.discovery .discovery-title,
+.discovery-papers h3 {
+  font:
+    500 clamp(26px, 3vw, 40px)/1.1 "Newsreader",
+    Georgia,
+    serif;
+  letter-spacing: -0.025em;
+}
+.discovery-summary .discovery-caption {
+  color: var(--rail-muted);
+  margin-bottom: 5px;
+}
+.discovery-counts,
+.discovery-scope {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin: 0;
+}
+.discovery-counts > div {
+  display: flex;
+  flex-direction: column-reverse;
+  border-left: 1px solid var(--rail-border);
+  padding-left: 16px;
+}
+.discovery-counts dt {
+  color: var(--rail-muted);
+  font-size: 13px;
+}
+.discovery-counts dd {
+  margin: 0;
+  font:
+    500 28px/1.1 "Newsreader",
+    Georgia,
+    serif;
+}
+.discovery-inspection {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  padding: 10px 20px;
+}
+.discovery-inspection > div {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.discovery details summary {
+  cursor: pointer;
+  color: var(--accent);
+  padding: 10px 0;
+  min-height: 44px;
+  font-weight: 600;
+}
+.discovery details[open] {
+  min-width: 0;
+}
+.discovery-inspection details[open] {
+  width: 100%;
+}
+.discovery-scope {
+  padding: 12px 0;
+}
+.discovery-scope dt {
+  font-size: 13px;
+  color: var(--muted);
+}
+.discovery-scope dd {
+  margin: 2px 0 0;
+  font-weight: 600;
+}
+.discovery-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+  margin-top: 16px;
+}
+.discovery-panel,
+.discovery-papers article {
+  padding: clamp(16px, 2vw, 26px);
+}
+.discovery-panel > h2 {
+  font-size: 21px;
+}
+.discovery-leads {
+  padding: 0;
+  margin: 18px 0 0;
+  list-style-position: inside;
+}
+.discovery-leads li {
+  padding: 20px 0 0;
+  border-top: 1px solid var(--border);
+}
+.discovery-leads li + li {
+  margin-top: 18px;
+}
+.discovery-leads li::marker {
+  font-weight: 600;
+  color: var(--muted);
+}
+.discovery-leads h3 {
+  display: inline;
+  font:
+    500 25px/1.2 "Newsreader",
+    Georgia,
+    serif;
+}
+.discovery-leads figure {
+  margin: 12px 0;
+  padding: 12px 16px;
+  border-left: 3px solid var(--selection-border);
+  background: var(--surface-subtle);
+}
+.discovery-leads blockquote {
+  margin: 0 0 6px;
+  line-height: 1.55;
+}
+.discovery-leads button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  color: var(--accent);
+}
+.discovery-outcome {
+  margin-top: 10px;
+  color: var(--accent);
+  font-weight: 600;
+}
+.discovery-group {
+  margin-top: 18px;
+}
+.discovery-group legend,
+.discovery-order h3 {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  padding: 0 0 6px;
+}
+.discovery-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  padding: 8px;
+  min-height: 44px;
+  border-top: 1px solid var(--border);
+}
+.discovery-row:hover {
+  background: var(--surface-subtle);
+}
+.discovery-row:has(:checked) {
+  background: var(--selection);
+}
+.discovery-row input,
+.discovery-consent input {
+  margin: 0;
+}
+.discovery-row small {
+  font-size: 12px;
+  color: var(--muted);
+}
+.discovery-order {
+  padding: 12px;
+  margin-top: 12px;
+  background: var(--surface-subtle);
+  border-radius: 6px;
+}
+.discovery-order ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.discovery-order li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 32px;
+}
+.discovery-order button {
+  flex: none;
+}
+.discovery-next {
+  margin-top: 16px;
+}
+.discovery-jump {
+  display: none;
+}
+.discovery-setup {
+  max-width: 760px;
+  display: grid;
+  gap: 16px;
+}
+.discovery-setup .discovery-scope {
+  border-block: 1px solid var(--border);
+}
+.discovery-setup button {
+  justify-self: start;
+}
+.discovery-dates {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.discovery-review-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 24px 0 0;
+}
+.discovery-papers {
+  display: grid;
+  gap: 12px;
+}
+.discovery-papers article {
+  border-top: 3px solid var(--selection-border);
+}
+.discovery-papers h3 {
+  margin-top: 8px;
+  font-size: 26px;
+}
+.discovery-papers pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font: inherit;
+  line-height: 1.65;
+  max-width: 70ch;
+  margin-bottom: 0;
+}
+.discovery-publication {
+  display: grid;
+  gap: 16px;
+}
+.discovery-consent {
+  display: flex;
+  align-items: start;
+  gap: 12px;
+  padding: 16px;
+  background: var(--surface-muted);
+  border-left: 3px solid var(--accent);
+}
+.discovery-consent input {
+  margin-top: 2px;
+}
+.discovery .notice {
+  margin-bottom: 12px;
+}
+@media (max-width: 800px) {
+  .discovery-jump {
+    display: inline-block;
+    margin-top: 12px;
+  }
+  .discovery-columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .discovery-stages {
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .discovery-stages li {
+    align-items: start;
+    font-size: 13px;
+    gap: 5px;
+  }
+  .discovery-summary-top {
+    align-items: start;
+  }
+  .discovery-counts {
+    gap: 10px;
+  }
+  .discovery-counts > div {
+    padding-left: 8px;
+  }
+  .discovery input:not([type="checkbox"]) {
+    font-size: 16px;
+  }
+  .discovery-dates {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .discovery *,
+  .workspace-connection * {
+    transition: none;
+  }
+}

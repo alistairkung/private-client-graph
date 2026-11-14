@@ -201,16 +201,3 @@
     width: 100%;
   }
 }
-
-.discovery { margin-top: 12px; }
-.discovery section + section { border-top: 1px solid var(--border); margin-top: 24px; }
-.discovery button { margin: 6px 0; }
-.discovery blockquote { border-left: 2px solid var(--control-border); padding-left: 12px; margin: 8px 0; }
-.discovery pre { white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; }
-.discovery .discovery-choice { display: flex; align-items: baseline; gap: 8px; margin: 8px 0; }
-.discovery-choice input { flex: 0 0 auto; width: auto; }
-
-.workspace-connection { margin-top: 12px; overflow-wrap: anywhere; }
-.workspace-connection h2 { margin-top: 0; }
-.workspace-connection p { max-width: 65ch; }
-.workspace-connection button { min-height: 44px; }

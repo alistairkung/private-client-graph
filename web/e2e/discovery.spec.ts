@@ -29,7 +29,7 @@ test("sixth original email leads to an approved PDF and publicly reopened Eviden
     await page.getByRole("button", { name: "Search for Mara Voss" }).click();
     await page.getByLabel("Mara Voss appointment · PDF").check();
     await page.getByLabel("Alder Trust correspondence 06 · Email").check();
-    await page.getByRole("button", { name: "Move up" }).last().click();
+    await page.getByRole("button", { name: "Move Alder Trust correspondence 06 up" }).last().click();
     await page.getByRole("button", { name: "Preview exact Sources" }).click();
     await expect(page.locator(".discovery article pre").nth(1)).toHaveText(
       "Alice Example is the parent of Ben Example.",

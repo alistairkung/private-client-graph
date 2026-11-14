@@ -1,6 +1,7 @@
 import { csrfHeaders, request } from "../../../shared/api";
 
 export interface Candidate {
+  followUp?: string;
   kind: "email" | "pdf";
   id: string;
   title: string;
@@ -58,26 +59,33 @@ export async function action<T>(name: string, body: object): Promise<T> {
 export function candidates(
   view: View,
   followups: FollowUp[],
-  messageTitle: (id: string) => string,
+  messageTitle: (id: string, position: number) => string,
 ) {
   const items = new Map<string, Candidate>();
   const excluded = new Set([...view.skipped, ...view.failed]);
   const original = { messages: view.returned_messages, files: view.files };
-  for (const hits of [original, ...followups]) {
+  let mailPosition = 0;
+  for (const hits of [{ ...original, query: "" }, ...followups]) {
+    const origin = hits.query ? { followUp: hits.query } : {};
     for (const id of hits.messages) {
-      if (!excluded.has(id))
-        items.set("mail:" + id, {
-          kind: "email",
-          id,
-          title: view.inspected_titles[id] || messageTitle(id),
-        });
+      if (excluded.has(id) || items.has("mail:" + id)) continue;
+      mailPosition++;
+      items.set("mail:" + id, {
+        ...origin,
+        kind: "email",
+        id,
+        title: view.inspected_titles[id] || messageTitle(id, mailPosition),
+      });
     }
-    for (const file of hits.files)
+    for (const file of hits.files) {
+      if (items.has("pdf:" + file.id)) continue;
       items.set("pdf:" + file.id, {
+        ...origin,
         kind: "pdf",
         id: file.id,
         title: file.title,
       });
+    }
   }
   return [...items.values()];
 }

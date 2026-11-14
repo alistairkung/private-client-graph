@@ -17,6 +17,7 @@ import {
 } from "../../shared/session-state";
 import { navigate, useNavigationLock } from "../../app/navigation";
 import "./intake.css";
+import "./discovery/discovery.css";
 
 export function Intake() {
   const { t } = useLocale();
@@ -100,21 +101,21 @@ export function Intake() {
     }
   }
   return (
-    <div className="page intake-page">
+    <div className={"page intake-page" + (discover ? " discovery-page" : "")}>
       <a className="back-link" href="/app">
         {t("Back to Matters")}
       </a>
       <div className="page-heading">
         <div>
-          <h1>{t("New proposal")}</h1>
+          <h1>{t(discover ? "Private Workspace discovery" : "New proposal")}</h1>
           <p>
             {t(
-              "Bring synthetic sources together. Review the relationships before accepting a Matter.",
+              discover ? "Find and review Sources for a new Matter Proposal." : "Bring synthetic sources together. Review the relationships before accepting a Matter.",
             )}
           </p>
         </div>
       </div>
-      <p className="public-source-notice">{t("Saving a proposal publishes every Source title and its entire extracted text, proposed relationships and Matter reference to anyone, before confirmation. Discard cannot retract copies already read or downloaded.")}</p>
+      {!discover && <p className="public-source-notice">{t("Saving a proposal publishes every Source title and its entire extracted text, proposed relationships and Matter reference to anyone, before confirmation. Discard cannot retract copies already read or downloaded.")}</p>}
       {!canWrite && <div className="intake-access" id="intake-access">
         {discover && sessionEnded ? (
           <div className="notice error" role="alert">
@@ -131,7 +132,7 @@ export function Intake() {
         )}
       </div>}
       {canWrite && access?.workspace_discovery && (
-        <button className="button" disabled={busy || discoveryBusy} onClick={() => setDiscover(!discover)}>
+        <button className={discover ? "text-button discovery-return" : "button"} disabled={busy || discoveryBusy} onClick={() => setDiscover(!discover)}>
           {t(discover ? "Return to PDF upload" : "Discover Workspace Sources")}
         </button>
       )}

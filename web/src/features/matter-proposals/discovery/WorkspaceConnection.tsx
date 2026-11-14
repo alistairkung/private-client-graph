@@ -148,7 +148,7 @@ export function WorkspaceConnection({
   }
   return (
     <>
-      <section className="intake-form workspace-connection" aria-busy={busy}>
+      <section className={"workspace-connection" + (status?.connected ? " is-connected" : "")} aria-busy={busy}>
         <h2 ref={heading} tabIndex={-1}>
           {t(
             status?.connected
@@ -158,7 +158,7 @@ export function WorkspaceConnection({
         </h2>
         {status && (
           <>
-            <p>
+            <p className="connection-account">
               {status.account} · {t("Read-only access for this session")}
             </p>
             {status.connected ? (

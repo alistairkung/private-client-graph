@@ -12,7 +12,9 @@ import {
   type Preview,
   type Candidate,
 } from "./api";
-import { DiscoveryResults } from "./DiscoveryResults";
+import { SearchSetup } from "./SearchSetup";
+import { PublicationReview } from "./PublicationReview";
+import { DiscoveryResults, SearchSummary } from "./DiscoveryResults";
 import { SourceSelection } from "./SourceSelection";
 
 export function WorkspaceDiscovery({
@@ -32,18 +34,25 @@ export function WorkspaceDiscovery({
   onBusy: (busy: boolean) => void;
 }) {
   const { t } = useLocale();
-  const [terms, setTerms] = useState("Alder Trust");
-  const [first, setFirst] = useState("");
-  const [last, setLast] = useState("");
   const [session, setSession] = useState("");
   const [view, setView] = useState<View>();
   const [followups, setFollowups] = useState<FollowUp[]>([]);
   const [selected, setSelected] = useState<Candidate[]>([]);
   const [preview, setPreview] = useState<Preview>();
-  const [busy, setBusy] = useState(false);
+  const [operationLabel, setOperationLabel] = useState("");
+  const busy = Boolean(operationLabel);
+  const [reference, setReference] = useState("");
+  const [title, setTitle] = useState("");
+  const selectionHeading = useRef<HTMLHeadingElement>(null);
+  const restoreSelectionFocus = useRef(false);
+  useEffect(() => {
+    if (!preview && !busy && restoreSelectionFocus.current) {
+      selectionHeading.current?.focus();
+      restoreSelectionFocus.current = false;
+    }
+  }, [preview, busy]);
   const [error, setError] = useState<unknown>();
   useNavigationLock(busy);
-  const selectionHeading = useRef<HTMLHeadingElement>(null);
   const mounted = useRef(true);
   useEffect(() => {
     mounted.current = true;
@@ -53,9 +62,9 @@ export function WorkspaceDiscovery({
     };
   }, [onBusy]);
 
-  async function run(operation: () => Promise<void>) {
+  async function run(label: string, operation: () => Promise<void>) {
     if (busy) return;
-    setBusy(true);
+    setOperationLabel(label);
     onBusy(true);
     setError(undefined);
     try {
@@ -74,15 +83,18 @@ export function WorkspaceDiscovery({
         failure.detail?.code === "unknown_discovery"
       )
         onStaleSearch();
-      else setError(failure);
+      else {
+        if (preview) setPreview(undefined);
+        setError(failure);
+      }
     } finally {
       if (mounted.current) {
-        setBusy(false);
+        setOperationLabel("");
         onBusy(false);
       }
     }
   }
-  async function start() {
+  async function start(terms: string, first: string, last: string) {
     const result = await action<{ session: string; view: View }>("start", {
       terms,
       label: scope?.label ?? "alder-label",
@@ -112,7 +124,6 @@ export function WorkspaceDiscovery({
   }
   async function publish(external_reference: string, matter_title: string) {
     if (!preview) return;
-    setPreview(undefined);
     const proposal = await action<{ id: string }>("import", {
       session,
       preview: preview.token,
@@ -122,92 +133,52 @@ export function WorkspaceDiscovery({
     if (mounted.current)
       navigate("/app/matter-proposals/" + encodeURIComponent(proposal.id));
   }
+  const folder = scope?.folder_name ?? "folder-1";
+  const label = scope?.label_name ?? "alder-label";
+  const options = view
+    ? candidates(view, followups, (_id, number) =>
+        t("Uninspected email {number}", { number }),
+      )
+    : [];
+  const latestFollowUp = followups.at(-1);
+  const searchStatus = latestFollowUp
+    ? t("{query} returned {mail} email hits and {pdf} PDF hits.", {
+        query: latestFollowUp.query,
+        mail: latestFollowUp.messages.length,
+        pdf: latestFollowUp.files.length,
+      })
+    : "";
+  const stage = preview ? 2 : view ? 1 : 0;
   return (
-    <div className="intake-form discovery" aria-busy={busy}>
-      <fieldset disabled={busy}>
-        <legend>{t("Private Workspace discovery")}</legend>
-        {!view ? (
-          <>
-            <p>
-              {t(
-                "Starting discovery authorizes private inspection of matching synthetic content in the selected scope. Review and publication require separate approval.",
-              )}
-            </p>
-            <label>
-              {t("Drive folder")}
-              <select>
-                <option>{scope?.folder_name ?? "folder-1"}</option>
-              </select>
-            </label>
-            <label>
-              {t("Gmail label")}
-              <select>
-                <option>{scope?.label_name ?? "alder-label"}</option>
-              </select>
-            </label>
-            <label>
-              {t("Initial search terms")}
-              <input
-                value={terms}
-                maxLength={160}
-                onChange={(e) => setTerms(e.target.value)}
-              />
-            </label>
-            <label>
-              {t("Gmail from (UTC)")}
-              <input
-                type="date"
-                value={first}
-                max={last || undefined}
-                onChange={(e) => setFirst(e.target.value)}
-              />
-            </label>
-            <label>
-              {t("Gmail through (UTC)")}
-              <input
-                type="date"
-                value={last}
-                min={first || undefined}
-                onChange={(e) => setLast(e.target.value)}
-              />
-            </label>
-            <button
-              className="button"
-              disabled={!terms.trim() || Boolean(first && last && first > last)}
-              onClick={() => run(start)}
-            >
-              {t("Start private discovery")}
-            </button>
-          </>
-        ) : (
-          <>
-            <DiscoveryResults
-              view={view}
-              followups={followups}
-              inspect={() =>
-                run(async () =>
-                  setView(await action<View>("inspect", { session })),
-                )
-              }
-              approve={(revision, query) => run(() => follow(revision, query))}
-            />
-            <SourceSelection
-              headingRef={selectionHeading}
-              options={candidates(view, followups, (id) =>
-                t("Email hit {id}", { id }),
-              )}
-              selected={selected}
-              change={(items) => {
-                setSelected(items);
-                setPreview(undefined);
-              }}
-              preview={preview}
-              read={() => run(read)}
-              publish={(ref, title) => run(() => publish(ref, title))}
-            />
-          </>
+    <div className="discovery">
+      <ol className="discovery-stages" aria-label={t("Discovery progress")}>
+        {["Search scope", "Find Sources", "Review and publish"].map(
+          (step, i) => (
+            <li key={step} aria-current={stage === i ? "step" : undefined}>
+              <span aria-hidden="true">{i + 1}</span>
+              {t(step)}
+            </li>
+          ),
         )}
-      </fieldset>
+      </ol>
+      <p
+        className={busy ? "discovery-working" : "discovery-sr"}
+        role="status"
+        aria-atomic="true"
+      >
+        {busy
+          ? t(operationLabel)
+          : view &&
+            t(
+              "Original search: {mail} emails returned, {read} inspected, {pdf} PDFs listed.",
+              {
+                mail: view.returned_messages.length,
+                read: view.inspected.length,
+                pdf: view.files.length,
+              },
+            )}
+        {!busy && view && !preview && " " + searchStatus}
+      </p>
       {error != null && <ErrorNotice error={error} />}
       {scope &&
         error instanceof RequestFailure &&
@@ -216,6 +187,72 @@ export function WorkspaceDiscovery({
             {t("Review selection")}
           </button>
         )}
+      <fieldset
+        className="discovery-controls"
+        disabled={busy}
+        aria-label={t("Private Workspace discovery")}
+      >
+        {!view ? (
+          <SearchSetup
+            folder={folder}
+            label={label}
+            start={(terms, first, last) =>
+              run("Searching Workspace…", () => start(terms, first, last))
+            }
+          />
+        ) : preview ? (
+          <PublicationReview
+            key={preview.token}
+            preview={preview}
+            reference={reference}
+            title={title}
+            setReference={setReference}
+            setTitle={setTitle}
+            edit={() => {
+              restoreSelectionFocus.current = true;
+              setPreview(undefined);
+            }}
+            publish={() =>
+              run("Creating proposal…", () => publish(reference, title))
+            }
+          />
+        ) : (
+          <>
+            <SearchSummary
+              view={view}
+              folder={folder}
+              label={label}
+              inspect={() =>
+                run("Inspecting original emails…", async () =>
+                  setView(await action<View>("inspect", { session })),
+                )
+              }
+            />
+            <button
+              className="discovery-jump"
+              onClick={() => selectionHeading.current?.focus()}
+            >
+              {t("Jump to Source selection")}
+            </button>
+            <div className="discovery-columns">
+              <DiscoveryResults
+                view={view}
+                followups={followups}
+                approve={(revision, query) =>
+                  run("Searching Workspace…", () => follow(revision, query))
+                }
+              />
+              <SourceSelection
+                headingRef={selectionHeading}
+                options={options}
+                selected={selected}
+                change={setSelected}
+                read={() => run("Preparing exact preview…", read)}
+              />
+            </div>
+          </>
+        )}
+      </fieldset>
     </div>
   );
 }

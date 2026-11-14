@@ -44,7 +44,7 @@ it("merges hits by provider and ID and keeps rejected mail out of every result s
   expect(candidates(view, [hits, hits], (id) => "Hit " + id)).toEqual([
     { kind: "email", id: "same", title: "Letter" },
     { kind: "pdf", id: "same", title: "Deed" },
-    { kind: "email", id: "new", title: "Hit new" },
+    { kind: "email", id: "new", title: "Hit new", followUp: "Name" },
   ]);
 });
 
@@ -72,7 +72,10 @@ it("reordering invalidates approval and a failed import requires another exact p
   await user.type(screen.getByLabelText("Matter title"), "Example");
   await user.type(screen.getByLabelText("External Matter reference"), "REF");
   await user.click(screen.getByLabelText(/I approve publishing/));
-  await user.click(screen.getAllByText("Move up")[1]);
+  expect(screen.queryByRole("heading", { name: "Select Sources" })).toBeNull();
+  await user.click(screen.getByRole("button", { name: "Edit selection" }));
+  expect(screen.getByRole("heading", { name: "Select Sources" })).toHaveFocus();
+  await user.click(screen.getByRole("button", { name: "Move Deed up" }));
   expect(screen.queryByText("Create public proposal")).toBeNull();
   await preview("two");
   expect(screen.getByText("Create public proposal")).toBeDisabled();
