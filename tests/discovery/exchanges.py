@@ -33,11 +33,11 @@ class Exchanges:
         self.expect(MAIL, {"labelIds": "alder-label", "q": f'"{terms}"{dates}', "pageToken": token},
                     {"messages": [{"id": i} for i in ids], "nextPageToken": next_token})
 
-    def list_files(self, terms, ids, *, token=None, next_token=None):
+    def list_files(self, terms, ids, *, token=None, next_token=None, records=None):
         query = ("'folder-1' in parents and trashed = false and mimeType = 'application/pdf' "
                  f"and fullText contains '\"{terms}\"'")
         self.expect(FILES, {"q": query, "pageToken": token},
-                    {"files": [file(i) for i in ids], "nextPageToken": next_token})
+                    {"files": [file(i) for i in ids] if records is None else records, "nextPageToken": next_token})
 
     def message(self, id, fmt, *, body=None, labels=None):
         record = next(m for m in CORPUS["messages"] if m["id"] == id)

@@ -5,7 +5,7 @@ from threading import RLock
 
 from httpx2 import Client
 
-from .google import DriveFile, OutsideScope, PdfPreview, ReadFailure, WorkspaceReader, WorkspaceScope, _key, literal
+from .google import DriveFile, OutsideScope, PdfPreview, ReadFailure, WorkspaceReader, WorkspaceScope, item_id, literal
 from .leads import Suggestion, ranked_suggestions
 from .limits import Action, LimitReached, Limits, Usage
 
@@ -25,7 +25,7 @@ class _Search:
     def enumerate(self, reader: WorkspaceReader, action: Action) -> None:
         while self.mail_page is not None:
             page = reader.mail_page(self.query, self.mail_page, action)
-            self.message_ids.update(_key(row["id"]) for row in page.get("messages", []))
+            self.message_ids.update(item_id(row["id"]) for row in page.get("messages", []))
             self.mail_page = _next_page(page)
         while self.drive_page is not None:
             page = reader.drive_page(self.query, self.drive_page, action)
@@ -47,6 +47,8 @@ def _next_page(page: dict) -> str | None:
 
 @dataclass(frozen=True)
 class DiscoveryView:
+    scope: WorkspaceScope
+    original_query: str
     revision: int
     returned_messages: tuple[str, ...]
     pending: tuple[str, ...]
@@ -123,14 +125,25 @@ class DiscoverySession:
                     self._inspect_message(key, action)
             except LimitReached as exc:
                 reason = str(exc)
-            except (ReadFailure, KeyError, TypeError, ValueError):
+            except (KeyError, TypeError, ValueError):
                 reason = "Original search incomplete"
             pending = self._pending(original)
-            view = DiscoveryView(len(self._views), tuple(sorted(original.message_ids)), pending,
-                                 tuple(self._texts), tuple(sorted(self._skipped)), tuple(sorted(self._failed)),
-                                 tuple(original.files.values()), ranked_suggestions(self._texts),
-                                 original.more_pages, reason or ("Batch complete" if pending else None),
-                                 self._usage.requests, self._usage.bytes)
+            view = DiscoveryView(
+                scope=self._reader.scope,
+                original_query=original.query,
+                revision=len(self._views),
+                returned_messages=tuple(sorted(original.message_ids)),
+                pending=pending,
+                inspected=tuple(self._texts),
+                skipped=tuple(sorted(self._skipped)),
+                failed=tuple(sorted(self._failed)),
+                files=tuple(original.files.values()),
+                suggestions=ranked_suggestions(self._texts),
+                more_pages=original.more_pages,
+                stop_reason=reason or ("Batch complete" if pending else None),
+                requests=self._usage.requests,
+                bytes=self._usage.bytes,
+            )
             self._views.append(view)
             return view
 
@@ -142,11 +155,20 @@ class DiscoverySession:
             text = self._reader.message_text(key, action)
         except OutsideScope:
             self._skipped.add(key)
-        except (ReadFailure, KeyError, TypeError, ValueError):
+        except (KeyError, TypeError, ValueError):
             self._failed.add(key)
         else:
             self._texts[key] = text
             self._digests[key] = sha256(text.encode()).hexdigest()
+
+    def preview_message(self, message_id: str) -> str:
+        """An explicit preview never contributes text to automatic query expansion."""
+        with self._lock:
+            original_hit = self._original and message_id in self._original.message_ids
+            followup_hit = any(message_id in approval.messages for approval in self._approvals.values())
+            if not original_hit and not followup_hit:
+                raise ValueError("Unknown message candidate")
+            return self._reader.message_text(message_id, Action(self._limits, self._usage))
 
     def preview_pdf(self, file_id: str) -> PdfPreview:
         """Only an admitted candidate can enter the existing PDF acquisition boundary."""
@@ -171,17 +193,26 @@ class DiscoverySession:
                 raise ValueError("Query was not suggested in this revision")
             if len(self._approvals) >= 3:
                 raise ValueError("Follow-up limit reached")
-            before = self._usage.requests, self._usage.bytes
+            requests_before = self._usage.requests
+            bytes_before = self._usage.bytes
             search = _Search(query)
             reason = None
             try:
                 search.enumerate(self._reader, Action(self._limits, self._usage))
             except LimitReached as exc:
                 reason = str(exc)
-            except (ReadFailure, KeyError, TypeError, ValueError):
+            except (KeyError, TypeError, ValueError):
                 reason = "Follow-up search incomplete"
-            approved = Approval(display, query, tuple((i, self._digests[i]) for i in display.inspected),
-                                *before, tuple(sorted(search.message_ids)), tuple(search.files.values()),
-                                search.more_pages, reason)
+            approved = Approval(
+                display=display,
+                query=query,
+                inspected=tuple((i, self._digests[i]) for i in display.inspected),
+                requests_before=requests_before,
+                bytes_before=bytes_before,
+                messages=tuple(sorted(search.message_ids)),
+                files=tuple(search.files.values()),
+                more_pages=search.more_pages,
+                stop_reason=reason,
+            )
             self._approvals[key] = approved
             return approved

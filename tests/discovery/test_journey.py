@@ -1,6 +1,12 @@
-from httpx2 import Client, MockTransport, Response
+from concurrent.futures import ThreadPoolExecutor
+from datetime import date
 
-from private_client_graph.application.discovery import DiscoverySession, WorkspaceScope
+import pytest
+from httpx2 import Client, MockTransport, Response, SyncByteStream
+
+from private_client_graph.application.discovery import DiscoverySession, Limits, WorkspaceScope
+
+from .exchanges import CORPUS, FILES, ROOT, Exchanges, file
 
 
 def test_empty_search_queries_the_scoped_collections_once():
@@ -23,10 +29,6 @@ def test_empty_search_queries_the_scoped_collections_once():
         "and fullText contains '\"Alder Trust\"'"
     )
     assert session.suggestions == ()
-
-
-from .exchanges import CORPUS, FILES, ROOT, Exchanges, file
-import pytest
 
 
 @pytest.mark.parametrize("lead", ["Mara Voss", "Ben Wong"])
@@ -58,9 +60,19 @@ def test_followup_then_sixth_original_message_revises_the_shortlist(lead):
     assert best.rationale and second.skipped == ("07",)
     assert "08" not in second.inspected and second.pending == ()
     google.list_mail(lead, [])
-    google.list_files(lead, ["appointment", "other"])
+    appointment = file("appointment")
+    if lead == "Ben Wong":
+        appointment = {**appointment, "name": CORPUS["alternate_appointment_title"]}
+    google.list_files(lead, [], records=[appointment, file("other")])
     result = session.approve(second.revision, lead)
     assert [f.id for f in result.files] == ["appointment"]
+    if lead == "Mara Voss":
+        path = FILES + "/appointment"
+        media = CORPUS["appointment_media"]
+        google.expect(path, {}, file("appointment"))
+        google.expect(path, {"alt": "media"}, (ROOT / media["path"]).read_bytes())
+        google.expect(path, {}, file("appointment"))
+        assert session.preview_pdf("appointment").sha256 == media["sha256"]
     assert result.shortlist == second.suggestions
     assert dict(result.inspected)["06"]
     assert session.approve(first.revision, "Alice Reed").shortlist == first.suggestions
@@ -98,8 +110,6 @@ def test_pdf_preview_uses_original_bytes_only_while_file_stays_in_scope():
 
 
 def test_scope_and_date_are_rechecked_before_consuming_content():
-    from datetime import date
-
     google = Exchanges()
     google.list_mail("Alder Trust", ["06", "07", "08", "09"],
                      dates=" after:1767571199 before:1767657600")
@@ -119,8 +129,6 @@ def test_scope_and_date_are_rechecked_before_consuming_content():
 
 
 def test_request_and_byte_exhaustion_report_incomplete_results():
-    from private_client_graph.application.discovery import Limits
-
     google = Exchanges()
     google.list_mail("Alder Trust", ["01"], next_token="next")
     session = DiscoverySession(google.http, WorkspaceScope("synthetic@example.test", "alder-label", "folder-1"),
@@ -136,13 +144,11 @@ def test_request_and_byte_exhaustion_report_incomplete_results():
     session = DiscoverySession(google.http, WorkspaceScope("synthetic@example.test", "alder-label", "folder-1"),
                                Limits(action_bytes=8, session_bytes=8))
     view = session.start("Alder Trust")
-    assert view.bytes == 8 and view.stop_reason == "Session byte limit" and view.inspected == ()
+    assert view.bytes == 0 and view.stop_reason == "Session byte limit" and view.inspected == ()
     assert not google.steps
 
 
 def test_concurrent_approval_and_three_execution_limit():
-    from concurrent.futures import ThreadPoolExecutor
-
     google = Exchanges()
     google.list_mail("Alder Trust", ["01", "06", "08", "09"])
     google.list_files("Alder Trust", [])
@@ -162,3 +168,51 @@ def test_concurrent_approval_and_three_execution_limit():
     with pytest.raises(ValueError, match="limit"):
         session.approve(later.revision, later.suggestions[0].query)
     assert not google.steps
+
+
+def test_malformed_membership_cannot_authorize_a_body_read():
+    google = Exchanges()
+    google.list_mail("Alder Trust", ["01"])
+    google.list_files("Alder Trust", [])
+    google.expect("/gmail/v1/users/synthetic@example.test/messages/01", {"format": "metadata"},
+                  {"id": "01", "labelIds": "alder-label-unrelated", "internalDate": "1"})
+    session = DiscoverySession(google.http, WorkspaceScope("synthetic@example.test", "alder-label", "folder-1"))
+    view = session.start("Alder Trust")
+    assert view.inspected == () and view.failed == ("01",)
+    assert not google.steps
+
+
+def test_followup_message_preview_cannot_supply_a_recursive_lead():
+    google = Exchanges()
+    google.list_mail("Alder Trust", ["01"])
+    google.list_files("Alder Trust", [])
+    google.message("01", "metadata")
+    google.message("01", "full")
+    session = DiscoverySession(google.http, WorkspaceScope("synthetic@example.test", "alder-label", "folder-1"))
+    first = session.start("Alder Trust")
+    google.list_mail("Alice Reed", ["08"])
+    google.list_files("Alice Reed", [])
+    session.approve(first.revision, "Alice Reed")
+    google.message("08", "metadata")
+    google.message("08", "full")
+    assert session.preview_message("08") == "Cora Patel will circulate the signed deed."
+    assert session.inspect_more().suggestions == first.suggestions
+    with pytest.raises(ValueError):
+        session.preview_message("unknown")
+    assert not google.steps
+
+
+def test_streamed_oversize_response_stops_before_pulling_another_chunk():
+    class Chunks(SyncByteStream):
+        def __iter__(self):
+            yield b"12345678"
+            pytest.fail("pulled another chunk after exhausting the byte budget")
+
+    def respond(request):
+        return Response(200, stream=Chunks())
+
+    with Client(transport=MockTransport(respond)) as http:
+        session = DiscoverySession(http, WorkspaceScope("synthetic@example.test", "alder-label", "folder-1"),
+                                   Limits(action_bytes=8))
+        view = session.start("Alder Trust")
+    assert view.bytes == 8 and view.stop_reason == "Action byte limit"

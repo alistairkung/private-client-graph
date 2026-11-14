@@ -61,8 +61,11 @@ class WorkspaceScope:
         return phrase
 
     def admits_message(self, item: dict, key: str) -> bool:
+        labels = item.get("labelIds")
+        if not isinstance(labels, list) or not all(isinstance(label, str) for label in labels):
+            raise ReadFailure("Invalid message labels")
         stamp = int(item["internalDate"])
-        return (item.get("id") == key and self.label in item["labelIds"]
+        return (item.get("id") == key and self.label in labels
                 and (not self.first_day or stamp >= _day_start(self.first_day) * 1000)
                 and (not self.last_day or stamp < (_day_start(self.last_day) + 86400) * 1000))
 
@@ -84,7 +87,7 @@ class PdfPreview:
 FILE_FIELDS = "id,name,mimeType,parents,trashed,version"
 
 
-def _key(value: object) -> str:
+def item_id(value: object) -> str:
     if not isinstance(value, str) or not re.fullmatch(r"[a-zA-Z0-9_-]+", value):
         raise ReadFailure("Invalid item identity")
     return value
@@ -103,10 +106,21 @@ class WorkspaceReader:
             with self.http.stream("GET", url, params=params, headers={"Accept-Encoding": "identity"},
                                   follow_redirects=False) as response:
                 response.raise_for_status()
+                if response.headers.get("content-encoding", "identity") != "identity":
+                    raise ReadFailure("Unexpected Workspace content encoding")
+                length = response.headers.get("content-length")
+                expected = int(length) if length is not None else None
+                if expected is not None:
+                    action.require_bytes(expected)
                 data = bytearray()
-                for chunk in response.iter_bytes(8192):
+                # Cap each application read, including chunked responses without Content-Length.
+                for chunk in response.iter_bytes(min(8192, action.remaining_bytes)):
                     action.consume(len(chunk))
                     data.extend(chunk)
+                    if action.remaining_bytes == 0 and len(data) != expected:
+                        action.require_bytes(1)
+                if expected is not None and expected != len(data):
+                    raise ReadFailure("Incomplete Workspace response")
                 return bytes(data)
         except HTTPError:
             raise ReadFailure("Workspace read failed") from None
@@ -141,10 +155,11 @@ class WorkspaceReader:
         if (row.get("parents") != [self.scope.folder] or row.get("trashed") is not False
                 or row.get("mimeType") != "application/pdf"):
             raise OutsideScope()
-        return DriveFile(_key(row["id"]), row["name"], row["version"])
+        return DriveFile(item_id(row["id"]), row["name"], row["version"])
 
     def preview_pdf(self, candidate: DriveFile, action: Action) -> PdfPreview:
-        url = f"{self.files}/{_key(candidate.id)}"
+        url = f"{self.files}/{item_id(candidate.id)}"
+
         def current() -> DriveFile:
             return self.admitted_file(self._json(url, {"fields": FILE_FIELDS}, action))
 
@@ -156,7 +171,7 @@ class WorkspaceReader:
         return PdfPreview(candidate, sha256(media).hexdigest(), extract_pdf_source(media))
 
     def message_text(self, key: str, action: Action) -> str:
-        url = f"{self.messages}/{_key(key)}"
+        url = f"{self.messages}/{item_id(key)}"
         fields = "id,labelIds,internalDate"
         metadata = self._json(url, {"format": "metadata", "fields": fields}, action)
         if not self.scope.admits_message(metadata, key):

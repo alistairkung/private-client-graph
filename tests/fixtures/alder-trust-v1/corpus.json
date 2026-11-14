@@ -58,7 +58,7 @@
       ],
       "internalDate": "1767600000000",
       "subject": "Alder Trust correspondence 06",
-      "body": "Alice Reed, Ben Wong, Cora Patel, Leo Dunn and Mara Voss attended. Mara Voss will circulate the executed appointment separately."
+      "body": "Please accept my resignation as trustee of Alder Trust. Alice Reed, Ben Wong, Cora Patel, Leo Dunn and Mara Voss attended. Mara Voss will circulate the executed appointment separately."
     },
     {
       "id": "07",
@@ -91,7 +91,7 @@
       "body": "Ben Wong will send the signed deed."
     }
   ],
-  "alternate_resignation": "Alice Reed, Ben Wong, Cora Patel, Leo Dunn and Mara Voss attended. Ben Wong will circulate the executed appointment separately.",
+  "alternate_resignation": "Please accept my resignation as trustee of Alder Trust. Alice Reed, Ben Wong, Cora Patel, Leo Dunn and Mara Voss attended. Ben Wong will circulate the executed appointment separately.",
   "files": [
     {
       "id": "deed",
@@ -150,5 +150,6 @@
   "appointment_media": {
     "path": "../synthetic-proposal.pdf",
     "sha256": "08402d562dd08c8b409ecc8d4e5107288d2a5f9a9b91e8f2573a5ba9226e24ff"
-  }
+  },
+  "alternate_appointment_title": "Ben Wong appointment"
 }

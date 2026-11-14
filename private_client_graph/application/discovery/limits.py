@@ -35,17 +35,24 @@ class Action:
             raise LimitReached("Session request limit")
         if self.used.requests >= self.limits.action_requests:
             raise LimitReached("Action request limit")
-        self.consume(0)
+        self.require_bytes(1)
         self.session.requests += 1
         self.used.requests += 1
 
-    def consume(self, size: int) -> None:
-        session_left = self.limits.session_bytes - self.session.bytes
-        action_left = self.limits.action_bytes - self.used.bytes
-        admitted = min(size, session_left, action_left)
-        self.session.bytes += admitted
-        self.used.bytes += admitted
-        if not session_left or size > session_left:
+    @property
+    def remaining_bytes(self) -> int:
+        return min(self.limits.session_bytes - self.session.bytes,
+                   self.limits.action_bytes - self.used.bytes)
+
+    def require_bytes(self, size: int) -> None:
+        if size > self.limits.session_bytes - self.session.bytes:
             raise LimitReached("Session byte limit")
-        if not action_left or size > action_left:
+        if size > self.limits.action_bytes - self.used.bytes:
             raise LimitReached("Action byte limit")
+
+    def consume(self, size: int) -> None:
+        # A transport block can straddle the ceiling. Charge all bytes consumed
+        # from HTTP and reject the block before any of its content is processed.
+        self.session.bytes += size
+        self.used.bytes += size
+        self.require_bytes(0)
