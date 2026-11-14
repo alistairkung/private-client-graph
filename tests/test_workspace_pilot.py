@@ -159,6 +159,20 @@ def test_explicit_grant_level_403_retires_connection(pilot, envelope):
     assert not post(client, "connection").json()["connected"]
 
 
+def test_sign_in_after_restart_with_rotated_secret_restores_workspace_access(pilot, monkeypatch):
+    original, _ = pilot
+    monkeypatch.setenv("PCG_SESSION_SECRET", "fresh-pilot-signing-key-after-restart")
+    restarted = create_app()
+    make_google_boundary().install(restarted)
+    client = TestClient(restarted, base_url="https://testserver", cookies=original.cookies)
+    assert sign_in(client).status_code == 303
+    assert client.get("/api/access").json()["can_write"]
+    assert client.cookies[CSRF_COOKIE] != original.cookies[CSRF_COOKIE]
+    status = post(client, "connection")
+    assert status.status_code == 200
+    assert status.json()["connected"] is False
+
+
 def test_restart_requires_new_login_and_grant_and_rejects_previous_preview(pilot):
     original, _ = pilot
     _, old_import = ready_publication(pilot)

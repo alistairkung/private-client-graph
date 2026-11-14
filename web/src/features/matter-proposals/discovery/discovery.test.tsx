@@ -217,6 +217,28 @@ it("keeps the selection editable when a single Source becomes unavailable", asyn
   expect(grantLost).not.toHaveBeenCalled();
 });
 
+it("stops checking Workspace after a forbidden request even when the login still has write access", async () => {
+  const capabilities = { can_write: true, sign_in_available: true, workspace_discovery: true, workspace_connection: true };
+  let checks = 0;
+  const fetch = vi.spyOn(globalThis, "fetch").mockImplementation(async (url) => {
+    if (url === "/api/access") return Response.json(capabilities);
+    if (url === "/api/matter-proposals/discovery/connection") {
+      checks++;
+      // End a regression loop deterministically.
+      if (checks > 1) throw new Error("Repeated connection check");
+      return new Response("CSRF token verification failed", { status: 403 });
+    }
+    throw new Error("Unexpected request");
+  });
+  window.history.replaceState(null, "", "/app/matter-proposals/new?workspace=connect");
+  render(<AccessProvider><Intake /></AccessProvider>);
+  const recovery = await screen.findByRole("link", { name: "Sign in again" });
+  expect(recovery).toHaveAttribute("href", "/auth/login?next=%2Fapp%2Fmatter-proposals%2Fnew%3Fworkspace%3Dconnect");
+  expect(checks).toBe(1);
+  expect(fetch.mock.calls.filter(([url]) => url === "/api/access")).toHaveLength(2);
+  expect(screen.queryByText("Checking Workspace access…")).toBeNull();
+});
+
 it("clears a private preview and offers sign-in after the server forgets the login", async () => {
   const user = userEvent.setup();
   const respond = (body: unknown, status = 200) =>

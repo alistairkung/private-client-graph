@@ -22,7 +22,7 @@ import "./discovery/discovery.css";
 
 export function Intake() {
   const { t } = useLocale();
-  const { access, sessionEnded } = useAccess();
+  const { access, denial } = useAccess();
   const canWrite = access?.can_write === true;
   const canChooseMethod = canWrite && access?.workspace_discovery === true;
   const [reference, setReference] = useSessionState("intake:reference", "");
@@ -36,7 +36,7 @@ export function Intake() {
   useNavigationLock(busy);
   const [error, setError] = useSessionState<unknown>("intake:error", undefined);
   const [discover, setDiscover] = useState(() => new URLSearchParams(location.search).has("workspace"));
-  const expiredDiscovery = !canWrite && discover && sessionEnded;
+  const recoverDiscovery = discover && Boolean(denial);
   const [discoveryBusy, setDiscoveryBusy] = useState(false);
   const [prompt, setPrompt] = useState(false);
   const [dragging, setDragging] = useState(false);
@@ -118,12 +118,12 @@ export function Intake() {
           </p>
         </div>
       </div>
-      {!canWrite && <div className="intake-access" id="intake-access">
-        {expiredDiscovery ? (
+      {(!canWrite || recoverDiscovery) && <div className="intake-access" id="intake-access">
+        {recoverDiscovery ? (
           <div className="intake-session-ended" role="alert">
             <span className="session-lock"><Icon name="lock" /></span>
             <div>
-              <h2>{t("Your session has expired")}</h2>
+              <h2>{t(denial === "expired" ? "Your session has expired" : "Workspace access needs a fresh sign-in")}</h2>
               <p>{t("Sign in and reconnect Workspace to start a fresh search.")}</p>
             </div>
             <a className="button" href={"/auth/login?next=" + encodeURIComponent("/app/matter-proposals/new?workspace=connect")}>
@@ -140,12 +140,12 @@ export function Intake() {
       {canChooseMethod && (
         <SourceMethod discover={discover} disabled={busy || discoveryBusy} change={setDiscover} />
       )}
-      {canChooseMethod && discover && (
+      {canChooseMethod && discover && !recoverDiscovery && (
         access.workspace_connection
           ? <WorkspaceConnection onBusy={setDiscoveryBusy} />
           : <WorkspaceDiscovery onBusy={setDiscoveryBusy} />
       )}
-      {!expiredDiscovery && !(canChooseMethod && discover) && <div className="intake-layout">
+      {!recoverDiscovery && !(canChooseMethod && discover) && <div className="intake-layout">
         <form onSubmit={submit} className="intake-form" aria-describedby={!canWrite ? "intake-access" : undefined}>
           <fieldset disabled={busy || !canWrite}>
             <legend>{t("Matter identity")}</legend>
