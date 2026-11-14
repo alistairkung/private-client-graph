@@ -12,7 +12,9 @@ from private_client_graph.api.auth import CSRF_COOKIE
 
 ROOT = "/api/matter-proposals/discovery/"
 CALLBACK = "/auth/workspace/callback"
-SCOPES = "openid https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/drive.readonly"
+SCOPES = (
+    "openid https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/drive.readonly"
+)
 
 
 @pytest.fixture
@@ -59,7 +61,7 @@ def test_private_connection_is_separate_from_sign_in(pilot):
     )
 
 
-def install_google(app, *, subject="synthetic-sub", scopes=SCOPES):
+def install_google(app, *, subject="synthetic-sub", scopes=SCOPES, fail_exchange=False):
     from local_development.google import GoogleBoundary
 
     google = GoogleBoundary(subject=subject, client_id="pilot.apps.googleusercontent.com")
@@ -67,6 +69,8 @@ def install_google(app, *, subject="synthetic-sub", scopes=SCOPES):
     def respond(request):
         response = google.respond(request)
         if request.url.path == "/token":
+            if fail_exchange:
+                return Response(400, json={"error": "invalid_grant"})
             assert b"code_verifier=" in request.content
             return Response(200, json={**response.json(), "expires_in": 300, "scope": scopes})
         return response
@@ -185,3 +189,125 @@ def test_workspace_actions_require_origin_csrf_and_current_allowlist(pilot, monk
     )
     monkeypatch.setenv("PCG_GOOGLE_SUB_ALLOWLIST", "other-sub")
     assert post(client, "connection").status_code == 403
+
+
+@pytest.mark.parametrize(
+    "case,outcome", [("cancel", "cancelled"), ("exchange", "invalid"), ("nonce", "invalid")]
+)
+def test_failed_consent_does_not_establish_a_grant(pilot, case, outcome):
+    client, app = pilot
+    install_google(app, fail_exchange=case == "exchange")
+    params = begin(client)
+    if case == "cancel":
+        params = {"state": params["state"], "error": "access_denied"}
+    elif case == "nonce":
+        params["code"] = "different-nonce"
+    assert client.get(CALLBACK, params=params).headers["location"].endswith("=" + outcome)
+    assert not post(client, "connection").json()["connected"]
+
+
+@pytest.mark.parametrize(
+    "envelope",
+    [
+        {"errors": [{"reason": "insufficientPermissions"}]},
+        {"details": [{"reason": "ACCESS_TOKEN_SCOPE_INSUFFICIENT"}]},
+    ],
+)
+def test_explicit_grant_level_403_retires_connection(pilot, envelope):
+    client, app = pilot
+    install_google(app)
+    app.state.workspace_pilot.transport = MockTransport(lambda _: Response(403, json={"error": envelope}))
+    client.get(CALLBACK, params=begin(client))
+    body = {"terms": "Alder Trust", "label": "pilot-label", "folder": "pilot-folder"}
+    assert post(client, "start", body).json()["error"]["code"] == "workspace_reconnect"
+    assert not post(client, "connection").json()["connected"]
+
+
+def test_lost_server_login_allows_fresh_sign_in(pilot):
+    client, app = pilot
+    app.state.workspace_pilot.logins.clear()
+    assert post(client, "connection").status_code == 401
+    assert not client.get("/api/access").json()["can_write"]
+
+
+def test_private_http_diagnostics_are_redacted_and_ordinary_logs_resume(pilot, caplog):
+    import logging
+    from private_client_graph.api.workspace_logging import private_request
+
+    client, app = pilot
+    transport = logging.getLogger("httpx2")
+    auth = logging.getLogger("authlib.oauth2.client")
+    access = logging.getLogger("uvicorn.access")
+
+    def respond(request):
+        assert private_request.get()
+        transport.warning("private transport diagnostic")
+        auth.warning("private authorization diagnostic")
+        access.warning("%s %s %s", "client", "GET", CALLBACK + "?code=private")
+        return Response(503)
+
+    app.state.workspace_pilot.oauth.client_kwargs["transport"] = MockTransport(respond)
+    assert post(client, "connect").status_code == 503
+    auth.warning("ordinary auth diagnostic")
+    access.warning("%s %s %s", "client", "GET", "/health")
+    assert "ordinary auth diagnostic" in caplog.text and "/health" in caplog.text
+    assert "private transport" not in caplog.text and "private authorization" not in caplog.text
+    assert "?code=private" not in caplog.text
+
+
+def test_disconnect_retires_ready_preview_and_reconnect_requires_another_search(pilot):
+    from pathlib import Path
+
+    client, app = pilot
+    install_google(app)
+    row = {
+        "id": "appointment",
+        "parents": ["pilot-folder"],
+        "mimeType": "application/pdf",
+        "trashed": False,
+        "version": "1",
+        "name": "Appointment",
+    }
+    media = (Path(__file__).parent / "fixtures/synthetic-proposal.pdf").read_bytes()
+
+    def respond(request):
+        if request.url.path.endswith("/messages"):
+            return Response(200, json={"messages": []})
+        if request.url.path.endswith("/files"):
+            return Response(200, json={"files": [row]})
+        assert request.url.path.endswith("/files/appointment")
+        if request.url.params.get("alt") == "media":
+            return Response(200, content=media)
+        return Response(200, json=row)
+
+    app.state.workspace_pilot.transport = MockTransport(respond)
+    client.get(CALLBACK, params=begin(client))
+    old_generation = post(client, "connection").json()["generation"]
+    session = post(
+        client, "start", {"terms": "Alder Trust", "label": "pilot-label", "folder": "pilot-folder"}
+    ).json()["session"]
+    preview = post(
+        client, "preview", {"session": session, "candidates": [{"kind": "pdf", "id": "appointment"}]}
+    ).json()
+    assert preview["sources"] == [
+        {"id": "source_001", "title": "Appointment", "text": "Alice Example is the parent of Ben Example."}
+    ]
+    assert not post(client, "disconnect").json()["connected"]
+    assert client.get("/api/access").json()["can_write"]
+    client.get(CALLBACK, params=begin(client))
+    assert post(client, "connection").json()["generation"] != old_generation
+    publish = {
+        "session": session,
+        "preview": preview["token"],
+        "publish_synthetic": True,
+        "metadata": {"external_reference": "SYN-180", "matter_title": "Alder"},
+    }
+    assert post(client, "import", publish).json()["error"]["code"] == "unknown_discovery"
+
+
+def test_anonymous_pilot_has_no_discovery_capability_or_private_reads(pilot):
+    _, app = pilot
+    anonymous = TestClient(app, base_url="https://testserver")
+    assert "workspace_discovery" not in anonymous.get("/api/access").json()
+    for path in ("connection", "connect", "preview", "import"):
+        assert post(anonymous, path).status_code == 401

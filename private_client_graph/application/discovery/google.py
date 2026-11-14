@@ -114,7 +114,7 @@ class WorkspaceReader:
         action.request()
         try:
             with self.http.stream("GET", url, params=params, headers={"Accept-Encoding": "identity"},
-                                  follow_redirects=False) as response:
+                                  follow_redirects=False, extensions={"discovery_action": action}) as response:
                 response.raise_for_status()
                 if response.headers.get("content-encoding", "identity") != "identity":
                     raise ReadFailure("Unexpected Workspace content encoding")

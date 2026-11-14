@@ -15,12 +15,24 @@ interface Status {
   label_name: string;
   folder_name: string;
 }
-const messages: Record<string, string> = {
-  cancelled: "Google access was cancelled.",
-  account: "Choose the designated synthetic account.",
-  permissions: "Grant read-only access to both Gmail and Drive.",
-  invalid: "The connection could not be verified. Connect again.",
-  ended: "Workspace access ended. Reconnect and review your Sources again.",
+const recovery: Record<string, [string, string]> = {
+  cancelled: ["Google access was cancelled.", "Connect again"],
+  account: [
+    "Choose the designated synthetic account.",
+    "Choose the pilot account",
+  ],
+  permissions: [
+    "Grant read-only access to both Gmail and Drive.",
+    "Review permissions",
+  ],
+  invalid: [
+    "The connection could not be verified. Connect again.",
+    "Connect again",
+  ],
+  ended: [
+    "Workspace access ended. Reconnect and review your Sources again.",
+    "Reconnect",
+  ],
 };
 
 export function WorkspaceConnection({
@@ -34,11 +46,21 @@ export function WorkspaceConnection({
   const [notice, setNotice] = useState(
     () => new URLSearchParams(location.search).get("workspace") || "",
   );
+  const prompt = Object.hasOwn(recovery, notice) ? recovery[notice] : undefined;
   const [error, setError] = useState<unknown>();
   const [busy, setBusy] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const heading = useRef<HTMLHeadingElement>(null);
   const revision = useRef(0);
+  const [search, setSearch] = useState(0);
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+      onBusy(false);
+    };
+  }, [onBusy]);
   function ended() {
     revision.current++;
     setStatus(
@@ -88,17 +110,20 @@ export function WorkspaceConnection({
   }, [status?.connected]);
   async function connect() {
     setBusy(true);
+    onBusy(true);
     setError(undefined);
     try {
       const { url } = await action<{ url: string }>("connect", {});
-      window.location.assign(url);
+      if (mounted.current) window.location.assign(url);
     } catch (failure) {
       setError(failure);
       setBusy(false);
+      if (mounted.current) onBusy(false);
     }
   }
   async function disconnect() {
     setBusy(true);
+    onBusy(true);
     setError(undefined);
     try {
       await action("disconnect", {});
@@ -108,6 +133,7 @@ export function WorkspaceConnection({
       setError(failure);
     } finally {
       setBusy(false);
+      if (mounted.current) onBusy(false);
     }
   }
   return (
@@ -148,17 +174,13 @@ export function WorkspaceConnection({
                   <br />
                   {t("Gmail label")} · {status.label_name}
                 </p>
-                <p role="status">{Object.hasOwn(messages, notice) && t(messages[notice])}</p>
+                {prompt && <p role="status">{t(prompt[0])}</p>}
                 <button
                   className="button primary"
                   disabled={busy}
                   onClick={connect}
                 >
-                  {t(
-                    notice === "ended"
-                      ? "Reconnect"
-                      : "Connect Google Workspace",
-                  )}
+                  {t(prompt?.[1] ?? "Connect Google Workspace")}
                 </button>
               </>
             )}
@@ -173,10 +195,14 @@ export function WorkspaceConnection({
       </section>
       {status?.connected && (
         <WorkspaceDiscovery
-          key={status.generation}
+          key={status.generation + "/" + search}
           onBusy={onBusy}
           scope={status}
           onGrantLoss={ended}
+          onStaleSearch={() => {
+            setSearch((value) => value + 1);
+            setAttempt((value) => value + 1);
+          }}
         />
       )}
     </>

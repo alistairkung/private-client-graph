@@ -1,12 +1,11 @@
 """Private discovery actions for offline fixtures or the opt-in synthetic pilot."""
+from contextlib import contextmanager
 from dataclasses import dataclass, replace
 from datetime import date
 from secrets import token_urlsafe
 from threading import Lock
 from time import time
-from typing import Literal
-
-from .workspace_pilot import Pilot, reconnect
+from typing import Iterator, Literal
 
 from fastapi import APIRouter, Request, Response
 from httpx2 import Client
@@ -19,6 +18,7 @@ from private_client_graph.application.matter_proposals import analyse_finalized_
 from private_client_graph.application.proposal_contracts import MatterIntakeMetadata, MatterProposalDetail
 from private_client_graph.application.proposal_errors import ProposalFailure
 from private_client_graph.application.proposal_sources import MAX_PROPOSAL_SOURCES
+from .workspace_pilot import Pilot, reconnect
 
 
 class Start(BaseModel):
@@ -81,6 +81,7 @@ class _Sessions:
 def discovery_router(http: Client | None = None, *, pilot: Pilot | None = None) -> APIRouter:
     router = APIRouter(prefix="/api/matter-proposals/discovery", include_in_schema=False)
     sessions = _Sessions()
+    base_scope = pilot.config.scope if pilot else WorkspaceScope("synthetic@example.test", "alder-label", "folder-1")
 
     def review(request: Request, body: SessionAction) -> CollectionReview:
         if pilot:
@@ -90,6 +91,16 @@ def discovery_router(http: Client | None = None, *, pilot: Pilot | None = None) 
             return journey[1]
         return sessions.get(request, body)
 
+    @contextmanager
+    def active_review(request: Request, body: SessionAction) -> Iterator[CollectionReview]:
+        collection = review(request, body)
+        try:
+            yield collection
+        finally:
+            # A concurrent disconnect or replacement invalidates in-flight results too.
+            if pilot:
+                review(request, body)
+
     @router.post("/start")
     def start(request: Request, body: Start) -> dict:
         connection = pilot.connected(request) if pilot else None
@@ -97,15 +108,22 @@ def discovery_router(http: Client | None = None, *, pilot: Pilot | None = None) 
         if client is None:
             raise reconnect()
         try:
-            base = pilot.config.scope if pilot else WorkspaceScope("synthetic@example.test", "alder-label", "folder-1")
-            if (body.label, body.folder) != (base.label, base.folder):
+            if (body.label, body.folder) != (base_scope.label, base_scope.folder):
                 raise ValueError("Invalid scope")
-            scope = replace(base, first_day=body.first_day, last_day=body.last_day)
-            discovery = DiscoverySession(client, scope, message_ids=pilot.config.message_ids if pilot else None,
-                                         file_ids=pilot.config.file_ids if pilot else None)
+            scope = replace(base_scope, first_day=body.first_day, last_day=body.last_day)
+            discovery = DiscoverySession(
+                client, scope,
+                message_ids=pilot.config.message_ids if pilot else None,
+                file_ids=pilot.config.file_ids if pilot else None,
+            )
             view = discovery.start(body.terms)
         except ValueError:
             raise ProposalFailure("invalid_discovery", "Check your discovery inputs.") from None
+        except RuntimeError:
+            # A client closed by a simultaneous disconnect cannot issue another read.
+            if pilot and pilot.connected(request) is not connection:
+                raise reconnect() from None
+            raise
         collection = CollectionReview(discovery)
         if connection and pilot:
             with pilot.lock:
@@ -119,13 +137,14 @@ def discovery_router(http: Client | None = None, *, pilot: Pilot | None = None) 
 
     @router.post("/inspect")
     def inspect(request: Request, body: SessionAction) -> DiscoveryView:
-        return review(request, body).discovery.inspect_more()
+        with active_review(request, body) as collection:
+            return collection.discovery.inspect_more()
 
     @router.post("/follow-up")
     def follow_up(request: Request, body: FollowUp) -> dict:
-        discovery = review(request, body).discovery
         try:
-            approval = discovery.approve(body.revision, body.query)
+            with active_review(request, body) as collection:
+                approval = collection.discovery.approve(body.revision, body.query)
         except ValueError:
             raise ProposalFailure("invalid_followup", "Choose an available suggested search.") from None
         return {"messages": approval.messages, "files": approval.files, "stop_reason": approval.stop_reason,
@@ -133,13 +152,13 @@ def discovery_router(http: Client | None = None, *, pilot: Pilot | None = None) 
 
     @router.post("/preview")
     def preview(request: Request, body: Selection) -> ReviewPreview:
-        return review(request, body).preview(body.candidates)
+        with active_review(request, body) as collection:
+            return collection.preview(body.candidates)
 
     @router.post("/import", status_code=201)
     def publish(request: Request, body: Import, response: Response) -> MatterProposalDetail:
-        sources = review(request, body).approve(body.preview)
-        if pilot:
-            review(request, body)  # Recheck the grant after acquisition.
+        with active_review(request, body) as collection:
+            sources = collection.approve(body.preview)
         proposal = analyse_finalized_sources(body.metadata, sources, request.app.state.proposal_analysis)
         response.headers["Location"] = f"/api/matter-proposals/{proposal.id}"
         return proposal

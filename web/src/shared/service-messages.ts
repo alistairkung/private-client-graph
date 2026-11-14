@@ -1,5 +1,6 @@
 export const serviceMessages: Record<string, string> = {
   invalid_discovery: "Check your discovery inputs.",
+  workspace_unavailable: "Workspace connection unavailable.",
   unknown_discovery: "Start private discovery again.",
   source_unavailable: "Check the selection and preview again.",
   discovery_limit: "Discovery budget exhausted.",

@@ -129,3 +129,43 @@ it("retiring a Workspace grant removes private results and offers a fresh connec
   expect(screen.queryByLabelText("Letter · Email")).toBeNull();
   expect(screen.queryByText("Start private discovery")).toBeNull();
 });
+
+it("keeps the selection editable when a single Source becomes unavailable", async () => {
+  const user = userEvent.setup();
+  const post = vi.spyOn(globalThis, "fetch");
+  const response = (body: unknown, status = 200) =>
+    new Response(JSON.stringify(body), { status });
+  const grantLost = vi.fn();
+  render(
+    <WorkspaceDiscovery
+      onBusy={() => {}}
+      onGrantLoss={grantLost}
+      scope={{
+        folder: "folder",
+        label: "label",
+        label_name: "Letters",
+        folder_name: "Deeds",
+      }}
+    />,
+  );
+  post.mockResolvedValueOnce(response({ session: "first", view }));
+  await user.click(screen.getByText("Start private discovery"));
+  await user.click(screen.getByLabelText("Letter · Email"));
+  await user.click(screen.getByLabelText("Deed · PDF"));
+  post.mockResolvedValueOnce(
+    response(
+      { error: { code: "source_unavailable", message: "", retryable: false } },
+      409,
+    ),
+  );
+  await user.click(screen.getByText("Preview exact Sources"));
+  await user.click(
+    await screen.findByRole("button", { name: "Review selection" }),
+  );
+  expect(screen.getByRole("heading", { name: "Select Sources" })).toHaveFocus();
+  await user.click(screen.getByLabelText("Deed · PDF"));
+  expect(screen.getByLabelText("Letter · Email")).toBeChecked();
+  expect(screen.getByLabelText("Deed · PDF")).not.toBeChecked();
+  expect(screen.getByText("Preview exact Sources")).toBeEnabled();
+  expect(grantLost).not.toHaveBeenCalled();
+});

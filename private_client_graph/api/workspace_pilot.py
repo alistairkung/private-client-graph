@@ -1,6 +1,7 @@
 """Session-bound online access for one explicitly configured synthetic Google corpus."""
 
 from dataclasses import dataclass, field
+import json
 import os
 from secrets import compare_digest, token_urlsafe
 from threading import RLock, Timer
@@ -13,6 +14,7 @@ from starlette.responses import RedirectResponse
 
 from private_client_graph.application.discovery.collection import CollectionReview
 from private_client_graph.application.discovery.google import WorkspaceScope, item_id
+from private_client_graph.application.discovery.limits import Action
 from private_client_graph.application.proposal_errors import ProposalFailure
 from .auth import AuthConfig, allowed_subjects
 
@@ -69,6 +71,43 @@ def reconnect() -> ProposalFailure:
     )
 
 
+def _grant_denied(response: GoogleResponse) -> bool:
+    if response.status_code == 401:
+        return True
+    if response.status_code != 403:
+        return False
+    if "insufficient_scope" in response.headers.get("www-authenticate", ""):
+        return True
+    # Only Google's explicit OAuth reasons invalidate the entire grant. Charge
+    # error envelopes to the same limits as content and bound diagnostic parsing.
+    action: Action = response.request.extensions["discovery_action"]
+    if response.headers.get("content-encoding", "identity") != "identity":
+        return False
+    body = bytearray()
+    for chunk in response.iter_bytes():
+        action.consume(len(chunk))
+        if len(body) + len(chunk) > 16_384:
+            return False
+        body.extend(chunk)
+    try:
+        payload = json.loads(body)
+    except (ValueError, UnicodeError):
+        return False
+    error = payload.get("error") if isinstance(payload, dict) else None
+    if not isinstance(error, dict):
+        return False
+    for field, reason in (
+        ("errors", "insufficientPermissions"),
+        ("details", "ACCESS_TOKEN_SCOPE_INSUFFICIENT"),
+    ):
+        rows = error.get(field)
+        if isinstance(rows, list) and any(
+            isinstance(row, dict) and row.get("reason") == reason for row in rows
+        ):
+            return True
+    return False
+
+
 @dataclass(eq=False, repr=False)
 class Connection:
     deadline: float
@@ -91,7 +130,11 @@ class Pilot:
             client_id=config.client_id,
             client_secret=config.secret,
             server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
-            client_kwargs={"scope": " ".join(sorted(SCOPES)), "code_challenge_method": "S256"},
+            client_kwargs={
+                "scope": " ".join(sorted(SCOPES)),
+                "code_challenge_method": "S256",
+                "trust_env": False,
+            },
         )
         self.entries: dict[str, Connection] = {}
         self.logins: dict[str, float] = {}
@@ -114,6 +157,7 @@ class Pilot:
         key = request.session.get("workspace_login", "")
         with self.lock:
             if self.logins.get(key, 0) <= time():
+                request.session.clear()
                 raise ProposalFailure("sign_in_required", "Sign in again.", status_code=401)
         return key
 
@@ -185,6 +229,7 @@ class Pilot:
             entry = self.entries.get(key)
             if (
                 not entry
+                or entry.deadline <= time()
                 or not entry.pending
                 or not compare_digest(entry.pending["state"].encode(), params.get("state", "").encode())
             ):
@@ -201,7 +246,7 @@ class Pilot:
                 )
                 claims = await self.oauth.parse_id_token(token, nonce=transaction["nonce"], leeway=0)
                 if claims.get("aud") != self.config.client_id or claims.get("nonce") != transaction["nonce"]:
-                    raise ValueError("Invalid nonce")
+                    raise ValueError("Invalid identity binding")
                 if claims["sub"] != self.config.subject:
                     reason = "account"
                 elif set(token.get("scope", "").split()) != SCOPES:
@@ -222,7 +267,8 @@ class Pilot:
             if (
                 deadline <= time()
                 or token.get("token_type", "").lower() != "bearer"
-                or not token.get("access_token")
+                or not isinstance(token.get("access_token"), str)
+                or not token["access_token"]
             ):
                 raise ValueError("Invalid grant")
 
@@ -233,10 +279,7 @@ class Pilot:
                     request.headers["Authorization"] = "Bearer " + entry.token
 
             def check(response: GoogleResponse) -> None:
-                if response.status_code == 401 or (
-                    response.status_code == 403
-                    and "insufficient_scope" in response.headers.get("www-authenticate", "")
-                ):
+                if _grant_denied(response):
                     self.retire(key, entry)
                     raise reconnect()
 

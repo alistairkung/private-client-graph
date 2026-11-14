@@ -19,6 +19,7 @@ export function WorkspaceDiscovery({
   onBusy,
   scope,
   onGrantLoss,
+  onStaleSearch,
 }: {
   scope?: {
     label: string;
@@ -26,6 +27,7 @@ export function WorkspaceDiscovery({
     label_name: string;
     folder_name: string;
   };
+  onStaleSearch?: () => void;
   onGrantLoss?: () => void;
   onBusy: (busy: boolean) => void;
 }) {
@@ -41,6 +43,7 @@ export function WorkspaceDiscovery({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<unknown>();
   useNavigationLock(busy);
+  const selectionHeading = useRef<HTMLHeadingElement>(null);
   const mounted = useRef(true);
   useEffect(() => {
     mounted.current = true;
@@ -65,10 +68,18 @@ export function WorkspaceDiscovery({
         failure.detail?.code === "workspace_reconnect"
       )
         onGrantLoss();
+      else if (
+        onStaleSearch &&
+        failure instanceof RequestFailure &&
+        failure.detail?.code === "unknown_discovery"
+      )
+        onStaleSearch();
       else setError(failure);
     } finally {
-      setBusy(false);
-      onBusy(false);
+      if (mounted.current) {
+        setBusy(false);
+        onBusy(false);
+      }
     }
   }
   async function start() {
@@ -181,6 +192,7 @@ export function WorkspaceDiscovery({
               approve={(revision, query) => run(() => follow(revision, query))}
             />
             <SourceSelection
+              headingRef={selectionHeading}
               options={candidates(view, followups, (id) =>
                 t("Email hit {id}", { id }),
               )}
@@ -197,6 +209,13 @@ export function WorkspaceDiscovery({
         )}
       </fieldset>
       {error != null && <ErrorNotice error={error} />}
+      {scope &&
+        error instanceof RequestFailure &&
+        error.detail?.code === "source_unavailable" && (
+          <button onClick={() => selectionHeading.current?.focus()}>
+            {t("Review selection")}
+          </button>
+        )}
     </div>
   );
 }
