@@ -1,6 +1,6 @@
 """Re-read an explicitly ordered collection before releasing finalized Sources for analysis."""
 from contextlib import contextmanager
-from dataclasses import dataclass, field, replace
+from dataclasses import dataclass, field
 from hashlib import sha256
 from secrets import token_urlsafe
 from threading import Lock
@@ -68,10 +68,7 @@ class CollectionReview:
     def read_email(self, message_id: str) -> MailPreview:
         """Address headers belong to the private reader, outside the publication snapshot."""
         with _acquisition_errors():
-            email = self.discovery.read_message(message_id, self.discovery.new_action())
-            source = _source(1, email.title, email.text)
-            _check_size(len(source.text), 0)
-            return replace(email, title=source.title)
+            return self.discovery.read_message(message_id, self.discovery.new_action())
 
     def preview(self, candidates: list[Candidate]) -> ReviewPreview | PreviewProgress:
         with self._lock:

@@ -1,7 +1,7 @@
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { expect, it, vi } from "vitest";
-import { candidates, type View } from "./api";
+import { candidates, mergeHits, type View } from "./api";
 import { AccessProvider } from "../../../shared/access";
 import { Intake } from "../Intake";
 import { SearchSummary } from "./DiscoveryResults";
@@ -43,10 +43,12 @@ it("merges hits by provider and ID and keeps rejected mail out of every result s
     files: view.files,
     messages: ["same", "new", "denied", "failed"],
   };
-  expect(candidates(view, [hits, hits], (id) => "Hit " + id)).toEqual([
+  const original = mergeHits([], { messages: view.returned_messages, files: view.files });
+  const followUp = mergeHits(original, hits, hits.query);
+  expect(candidates(mergeHits(followUp, hits, hits.query), view, n => "Hit " + n)).toEqual([
     { kind: "email", id: "same", title: "Letter" },
     { kind: "pdf", id: "same", title: "Deed" },
-    { kind: "email", id: "new", title: "Hit new", followUp: "Name" },
+    { kind: "email", id: "new", title: "Hit 2", followUp: "Name" },
   ]);
 });
 
@@ -66,7 +68,7 @@ it("shows the search indicator only while discovery is pending", async () => {
 });
 
 it("explains incomplete coverage without operational counters or a dead-end action", () => {
-  render(<SearchSummary view={{ ...view, more_pages: true, stop_reason: "Session byte limit" }} searching={false} interrupted={false} retry={vi.fn()} />);
+  render(<SearchSummary folder={view.scope.folder} label={view.scope.label} view={{ ...view, more_pages: true, stop_reason: "Session byte limit" }} searching={false} interrupted={false} retry={vi.fn()} />);
   expect(screen.getByText("Checked 1 of 3 emails for leads.")).toBeVisible();
   expect(screen.getByText("Unavailable emails: 2.")).toBeVisible();
   expect(screen.queryByText("Original search complete.")).toBeNull();
@@ -96,6 +98,51 @@ it("renders each original batch, preserves selection, and stops at the combined 
   expect(screen.getByText("Stopped at 50 original results. More matches may be available.")).toBeVisible();
   expect(screen.queryByText("Still searching emails and PDFs…")).toBeNull();
   expect(post).toHaveBeenCalledTimes(2);
+});
+
+it("retains a follow-up's email and PDF rows while an open email gains its inspected subject", async () => {
+  const user = userEvent.setup();
+  const lead = { query: "Mara Voss", origin: "same", passage: "Mara will send it.", rationale: "Find the deed." };
+  const first = { ...view, can_inspect_more: true, suggestions: [lead] };
+  let deliverBatch!: (response: Response) => void;
+  vi.spyOn(globalThis, "fetch")
+    .mockResolvedValueOnce(Response.json({ session: "local", view: first }))
+    .mockImplementationOnce(() => new Promise(resolve => { deliverBatch = resolve; }))
+    .mockResolvedValueOnce(Response.json({ messages: ["shared"], files: [{ id: "shared", title: "Old PDF title" }] }))
+    .mockResolvedValueOnce(Response.json({ title: "Appointment email", text: "Private message" }));
+  render(<WorkspaceDiscovery onBusy={() => {}} />);
+  await user.click(screen.getByText("Start private discovery"));
+  await user.click(screen.getByText("Search for Mara Voss"));
+  const group = within(screen.getByRole("group", { name: "Found via Mara Voss" }));
+  const trigger = group.getByRole("button", { name: "Read Uninspected email 2" });
+  await user.click(trigger);
+  await screen.findByRole("dialog", { name: "Appointment email" });
+  await act(async () => deliverBatch(Response.json({
+    ...view, revision: 1, returned_messages: [...view.returned_messages, "shared"],
+    inspected_titles: { ...view.inspected_titles, shared: "Appointment email" },
+    files: [...view.files, { id: "shared", title: "Revised PDF title" }],
+  })));
+  await user.click(screen.getByRole("button", { name: "Close dialog" }));
+  expect(trigger).toHaveFocus();
+  expect(group.getByRole("button", { name: "Read Appointment email" })).toBe(trigger);
+  expect(group.getByLabelText("Revised PDF title · PDF")).toBeVisible();
+  expect(screen.getAllByLabelText("Appointment email · Email")).toHaveLength(1);
+});
+
+it("shows the applied folder, label and inclusive Gmail dates even for an empty search", async () => {
+  const scope = { folder: "folder-1", label: "alder-label", folder_name: "Trust deeds", label_name: "Trust mail" };
+  vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(Response.json({
+    session: "local",
+    view: { ...view, scope: { ...view.scope, first_day: "2024-01-01", last_day: "2024-01-31" },
+      returned_messages: [], inspected: [], skipped: [], failed: [], files: [] },
+  }));
+  render(<WorkspaceDiscovery scope={scope} onBusy={() => {}} />);
+  await userEvent.click(screen.getByText("Start private discovery"));
+  await screen.findByText("No Sources available to select.");
+  expect(screen.getByText("Trust deeds")).toBeVisible();
+  expect(screen.getByText("Trust mail")).toBeVisible();
+  expect(screen.getByText("Gmail dates (UTC)")).toBeVisible();
+  expect(screen.getByText("2024-01-01 – 2024-01-31")).toBeVisible();
 });
 
 it("stops on network loss and resumes the same revision only on request", async () => {
@@ -385,6 +432,30 @@ it("clears a private preview and offers sign-in after the server forgets the log
   expect(screen.queryByLabelText("Deed · PDF")).toBeNull();
   expect(screen.queryByLabelText(/I approve publishing/)).toBeNull();
   expect(screen.queryByRole("button", { name: /try again|retry/i })).toBeNull();
+});
+
+it("checks the current grant before revealing a draft after a method switch", async () => {
+  const user = userEvent.setup();
+  const onBusy = vi.fn();
+  const connected = {
+    connected: true, generation: "one", account: "synthetic@example.test",
+    folder: "folder-1", label: "alder-label", folder_name: "Deeds", label_name: "Letters",
+  };
+  const post = vi.spyOn(globalThis, "fetch")
+    .mockResolvedValueOnce(Response.json(connected))
+    .mockResolvedValueOnce(Response.json({ session: "local", view }));
+  const { rerender } = render(<WorkspaceConnection active onBusy={onBusy} />);
+  await user.click(await screen.findByText("Start private discovery"));
+  await user.click(screen.getByLabelText("Letter · Email"));
+  rerender(<WorkspaceConnection active={false} onBusy={onBusy} />);
+  let finish!: (response: Response) => void;
+  post.mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
+  rerender(<WorkspaceConnection active onBusy={onBusy} />);
+  expect(screen.getByText("Checking Workspace access…")).toBeVisible();
+  expect(screen.queryByRole("checkbox", { name: "Letter · Email" })).toBeNull();
+  await act(async () => finish(Response.json({ ...connected, connected: false, generation: null })));
+  expect(screen.getByRole("button", { name: "Reconnect" })).toBeVisible();
+  expect(screen.queryByLabelText("Letter · Email")).toBeNull();
 });
 
 it("retries a failed connection status read without repeating a discovery action", async () => {

@@ -56,6 +56,25 @@ def test_reading_an_email_checks_access_and_preserves_the_reviewed_collection():
     assert not google.steps
 
 
+@pytest.mark.parametrize("oversize", ["subject", "body"])
+def test_private_read_preserves_email_that_exceeds_publication_limits(oversize):
+    google, review = prepare()
+    row = dict(CORPUS["messages"][5])
+    if oversize == "subject":
+        row["subject"] = "S" * 201
+    else:
+        row["body"] = "b" * 100_001
+    for _ in range(2):
+        google.message("06", "metadata")
+        google.expect(MAIL + "/06", {"format": "full"}, message_response(row, "full"))
+    email = review.read_email("06")
+    assert (email.title, email.text) == (row["subject"], row["body"])
+    with pytest.raises(ProposalFailure) as publication:
+        review.preview([EMAIL])
+    assert publication.value.error.code == ("source_unavailable" if oversize == "subject" else "collection_text_limit")
+    assert not google.steps
+
+
 def test_envelope_is_private_and_keeps_copied_addresses_and_distinct_dates():
     google, review = prepare()
     record = CORPUS["messages"][5]

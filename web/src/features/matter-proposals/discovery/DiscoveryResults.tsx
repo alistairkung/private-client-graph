@@ -1,19 +1,30 @@
+import type { Ref } from "react";
 import { Icon } from "../../../shared/Icon";
 import { useLocale } from "../../../shared/locale";
 import type { FollowUp, View } from "./api";
 
 export function SearchSummary({
   view,
+  folder,
+  label,
+  headingRef,
   searching,
   interrupted,
   retry,
 }: {
   view: View;
+  folder: string;
+  label: string;
+  headingRef?: Ref<HTMLHeadingElement>;
   searching: boolean;
   interrupted: boolean;
   retry: () => void;
 }) {
   const { t } = useLocale();
+  const { first_day, last_day } = view.scope;
+  const mailDates = first_day || last_day
+    ? [first_day ?? t("Any start"), last_day ?? t("Any end")].join(" – ")
+    : t("All dates");
   const unreadable = view.failed.length + view.skipped.length;
   const unfinished = view.pending.length > 0 || view.more_pages;
   let progress = t("Original search complete.");
@@ -28,7 +39,7 @@ export function SearchSummary({
       <div className="discovery-summary-top">
         <div>
           <p className="discovery-caption">{t("Original search")}</p>
-          <h2 className="discovery-title">{view.original_query}</h2>
+          <h2 className="discovery-title" ref={headingRef} tabIndex={-1}>{view.original_query}</h2>
         </div>
         <dl className="discovery-counts">
           {[
@@ -42,6 +53,11 @@ export function SearchSummary({
           ))}
         </dl>
       </div>
+      <dl className="discovery-scope discovery-applied-scope">
+        <div><dt>{t("Drive folder")}</dt><dd>{folder}</dd></div>
+        <div><dt>{t("Gmail label")}</dt><dd>{label}</dd></div>
+        <div><dt>{t("Gmail dates (UTC)")}</dt><dd>{mailDates}</dd></div>
+      </dl>
       <div className="discovery-inspection">
         <div role="status" aria-atomic="true">
           <p className="discovery-search-progress">

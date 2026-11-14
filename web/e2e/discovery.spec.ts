@@ -33,6 +33,7 @@ test("sixth original email leads to an approved PDF and publicly reopened Eviden
       await route.continue();
     });
     await page.getByRole("button", { name: "Start private discovery" }).click();
+    await expect(page.getByRole("heading", { name: "Alder Trust", exact: true })).toBeFocused();
     await expect(page.getByText("Still searching emails and PDFs…")).toBeVisible();
     await expect(page.getByText("Checked 5 of 5 emails for leads.")).toBeVisible();
     await page.getByRole("button", { name: "Search for Alice Reed" }).click();
@@ -136,6 +137,7 @@ test("inline reconnection after expiry opens a fresh search", async ({
   page,
 }) => {
   let generation = 0;
+  let expires = 0;
   let searches = 0;
   const root = "**/api/matter-proposals/discovery/";
   await page.clock.install();
@@ -148,6 +150,7 @@ test("inline reconnection after expiry opens a fresh search", async ({
   });
   await page.route(root + "connect", async (route) => {
     generation++;
+    expires = await page.evaluate(() => Date.now() / 1000 + 300);
     await route.fulfill({
       json: { url: "/app/matter-proposals/new?workspace=ready" },
     });
@@ -156,9 +159,9 @@ test("inline reconnection after expiry opens a fresh search", async ({
     const now = await page.evaluate(() => Date.now());
     await route.fulfill({
       json: {
-        connected: generation > 0,
+        connected: expires > now / 1000,
         generation: String(generation),
-        expires: generation ? now / 1000 + 300 : null,
+        expires: expires > now / 1000 ? expires : null,
         account: "synthetic@example.test",
         label: "alder-label",
         folder: "folder-1",
@@ -191,7 +194,19 @@ test("inline reconnection after expiry opens a fresh search", async ({
   await page.getByRole("button", { name: "Preview exact Sources" }).click();
   await expect(page.getByLabel(/I approve publishing/)).toBeVisible();
 
+  const workspace = page.getByRole("radio", { name: "Search Workspace" });
+  const upload = page.getByRole("radio", { name: "Upload PDFs" });
+  const reference = page.getByRole("textbox", { name: "External Matter reference" });
+  await reference.fill("PRIVATE-DRAFT");
+  await workspace.press("ArrowLeft");
+  await expect(upload).toBeChecked();
+  await expect(reference).toHaveValue("");
+  await upload.press("ArrowRight");
+  await expect(reference).toHaveValue("PRIVATE-DRAFT");
+  await expect(page.getByLabel(/I approve publishing/)).toBeVisible();
+  await workspace.press("ArrowLeft");
   await page.clock.fastForward(301_000);
+  await upload.press("ArrowRight");
   const reconnect = page.getByRole("button", {
     name: "Reconnect",
     exact: true,

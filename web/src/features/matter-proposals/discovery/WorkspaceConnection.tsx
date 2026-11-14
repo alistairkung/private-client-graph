@@ -38,13 +38,17 @@ const recovery: Record<string, [string, string]> = {
 };
 
 export function WorkspaceConnection({
+  active = true,
   onBusy,
 }: {
+  active?: boolean;
   onBusy: (value: boolean) => void;
 }) {
   const { t } = useLocale();
   const reduced = useReducedMotion();
   const [status, setStatus] = useState<Status>();
+  const [checked, setChecked] = useState(false);
+  const visible = active && checked;
   const [notice, setNotice] = useState(
     () => new URLSearchParams(location.search).get("workspace") || "",
   );
@@ -72,24 +76,33 @@ export function WorkspaceConnection({
         old && { ...old, connected: false, generation: null, expires: null },
     );
     setNotice("ended");
+    setChecked(true);
     onBusy(false);
   }
   useEffect(() => {
-    let active = true;
+    if (!active) {
+      setChecked(false);
+      return;
+    }
+    let subscribed = true;
     async function refresh() {
       const ticket = ++revision.current;
       try {
         const current = await action<Status>("connection", {});
-        if (active && ticket === revision.current) {
+        if (subscribed && ticket === revision.current) {
           setStatus((old) => {
             if (old?.connected && !current.connected) setNotice("ended");
             return current;
           });
+          setChecked(true);
           setError(undefined);
         }
       } catch (failure) {
-        if (active && ticket === revision.current) {
-          setStatus(undefined);
+        if (subscribed && ticket === revision.current) {
+          setChecked(false);
+          if (failure instanceof RequestFailure && (failure.status === 401 || failure.status === 403)) {
+            setStatus(undefined);
+          }
           // Status uses POST for privacy, but checking it has no mutation to replay.
           setError(
             failure instanceof RequestFailure && failure.status === 0
@@ -103,13 +116,14 @@ export function WorkspaceConnection({
         }
       }
     }
+    setChecked(false);
     void refresh();
     window.addEventListener("focus", refresh);
     return () => {
-      active = false;
+      subscribed = false;
       window.removeEventListener("focus", refresh);
     };
-  }, [attempt]);
+  }, [active, attempt]);
   useEffect(() => {
     if (!status?.expires) return;
     const timer = window.setTimeout(
@@ -119,12 +133,12 @@ export function WorkspaceConnection({
     return () => window.clearTimeout(timer);
   }, [status?.expires]);
   useEffect(() => {
-    if (!status) return;
+    if (!visible || !status) return;
     if (status.connected && !wasConnected.current) heading.current?.focus();
     if (!status.connected && (wasConnected.current || prompt || attempt > 0))
       connectButton.current?.focus();
     wasConnected.current = status.connected;
-  }, [status?.connected, prompt, attempt]);
+  }, [visible, status?.connected, prompt, attempt]);
   async function connect() {
     setBusy(true);
     onBusy(true);
@@ -155,7 +169,7 @@ export function WorkspaceConnection({
   }
   return (
     <>
-      <section
+      {visible && <section
         className={
           "workspace-connection" +
           (status?.connected
@@ -233,24 +247,27 @@ export function WorkspaceConnection({
             </>
           )
         )}
-        {!status && !error && (
-          <p role="status">{t("Checking Workspace access…")}</p>
-        )}
-        {!!error && (
-          <ErrorNotice error={error} retry={() => setAttempt((v) => v + 1)} />
-        )}
-      </section>
+      </section>}
       {status?.connected && (
-        <WorkspaceDiscovery
-          key={status.generation + "/" + search}
-          onBusy={onBusy}
-          scope={status}
-          onGrantLoss={ended}
-          onStaleSearch={() => {
-            setSearch((value) => value + 1);
-            setAttempt((value) => value + 1);
-          }}
-        />
+        <div hidden={!visible}>
+          <WorkspaceDiscovery
+            key={status.generation + "/" + search}
+            active={visible}
+            onBusy={onBusy}
+            scope={status}
+            onGrantLoss={ended}
+            onStaleSearch={() => {
+              setSearch((value) => value + 1);
+              setAttempt((value) => value + 1);
+            }}
+          />
+        </div>
+      )}
+      {active && !visible && !error && (
+        <p className="workspace-connection" role="status">{t("Checking Workspace access…")}</p>
+      )}
+      {active && !!error && (
+        <ErrorNotice error={error} retry={() => setAttempt((v) => v + 1)} />
       )}
     </>
   );

@@ -35,7 +35,10 @@ export function Intake() {
   const [busy, setBusy] = useState(false);
   useNavigationLock(busy);
   const [error, setError] = useSessionState<unknown>("intake:error", undefined);
-  const [discover, setDiscover] = useState(() => new URLSearchParams(location.search).has("workspace"));
+  // Undefined keeps the connection lazy until Workspace is first opened.
+  const [discover, setDiscover] = useState<boolean | undefined>(() =>
+    new URLSearchParams(location.search).has("workspace") ? true : undefined
+  );
   const recoverDiscovery = discover && Boolean(denial);
   const [discoveryBusy, setDiscoveryBusy] = useState(false);
   const [prompt, setPrompt] = useState(false);
@@ -138,12 +141,14 @@ export function Intake() {
         )}
       </div>}
       {canChooseMethod && (
-        <SourceMethod discover={discover} disabled={busy || discoveryBusy} change={setDiscover} />
+        <SourceMethod discover={discover === true} disabled={busy || discoveryBusy} change={setDiscover} />
       )}
-      {canChooseMethod && discover && !recoverDiscovery && (
-        access.workspace_connection
-          ? <WorkspaceConnection onBusy={setDiscoveryBusy} />
-          : <WorkspaceDiscovery onBusy={setDiscoveryBusy} />
+      {canChooseMethod && discover !== undefined && !denial && (
+        <div hidden={!discover}>
+          {access.workspace_connection
+            ? <WorkspaceConnection active={discover} onBusy={setDiscoveryBusy} />
+            : <WorkspaceDiscovery active={discover} onBusy={setDiscoveryBusy} />}
+        </div>
       )}
       {!recoverDiscovery && !(canChooseMethod && discover) && <div className="intake-layout">
         <form onSubmit={submit} className="intake-form" aria-describedby={!canWrite ? "intake-access" : undefined}>

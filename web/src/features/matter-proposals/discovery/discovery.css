@@ -343,6 +343,13 @@
   gap: 12px 24px;
   margin: 0;
 }
+.discovery-applied-scope {
+  padding: 10px 20px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-subtle);
+}
+.discovery-applied-scope > div { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; }
+.discovery-scope.discovery-applied-scope dd { margin: 0; font-size: 14px; }
 .discovery-scope dt { font-size: 13px; color: var(--muted); }
 .discovery-scope dd { margin: 2px 0 0; font-weight: 600; }
 .discovery-setup button {

@@ -6,6 +6,8 @@ import { useLocale } from "../../../shared/locale";
 import {
   action,
   candidates,
+  mergeHits,
+  type DiscoveredItem,
   candidateKey,
   type PreviewProgress,
   type View,
@@ -24,10 +26,12 @@ import { SourceSelection } from "./SourceSelection";
 
 export function WorkspaceDiscovery({
   onBusy,
+  active = true,
   scope,
   onGrantLoss,
   onStaleSearch,
 }: {
+  active?: boolean;
   scope?: {
     label: string;
     folder: string;
@@ -42,6 +46,7 @@ export function WorkspaceDiscovery({
   const [session, setSession] = useState("");
   const [view, setView] = useState<View>();
   const [followups, setFollowups] = useState<FollowUp[]>([]);
+  const [discovered, setDiscovered] = useState<DiscoveredItem[]>([]);
   const [selected, setSelected] = useState<Candidate[]>([]);
   const [bulkSeen, setBulkSeen] = useState<Set<string>>();
   const [progress, setProgress] = useState<PreviewProgress>();
@@ -51,6 +56,10 @@ export function WorkspaceDiscovery({
   const busy = Boolean(operationLabel);
   const [reference, setReference] = useState("");
   const [title, setTitle] = useState("");
+  const resultsHeading = useRef<HTMLHeadingElement>(null);
+  useEffect(() => {
+    if (session) resultsHeading.current?.focus();
+  }, [session]);
   const selectionHeading = useRef<HTMLHeadingElement>(null);
   const restoreSelectionFocus = useRef(false);
   useEffect(() => {
@@ -83,7 +92,11 @@ export function WorkspaceDiscovery({
     return false;
   }
 
-  const original = useOriginalSearch(session, view, setView, recoverSession);
+  function receiveOriginal(next: View) {
+    setDiscovered(items => mergeHits(items, { messages: next.returned_messages, files: next.files }));
+    setView(next);
+  }
+  const original = useOriginalSearch(session, active ? view : undefined, receiveOriginal, recoverSession);
 
   async function run(label: string, operation: () => Promise<void>) {
     if (busy) return;
@@ -115,7 +128,7 @@ export function WorkspaceDiscovery({
       last_day: last || null,
     });
     setSession(result.session);
-    setView(result.view);
+    receiveOriginal(result.view);
   }
   async function follow(revision: number, query: string) {
     const result = await action<Hits>("follow-up", {
@@ -123,6 +136,7 @@ export function WorkspaceDiscovery({
       revision,
       query,
     });
+    setDiscovered(items => mergeHits(items, result, query));
     setFollowups((previous) => [...previous, { ...result, revision, query }]);
   }
   async function openEmail(candidate: Candidate) {
@@ -171,7 +185,7 @@ export function WorkspaceDiscovery({
   const folder = scope?.folder_name ?? "folder-1";
   const label = scope?.label_name ?? "alder-label";
   const options = view
-    ? candidates(view, followups, (_id, number) =>
+    ? candidates(discovered, view, (number) =>
         t("Uninspected email {number}", { number }),
       )
     : [];
@@ -259,7 +273,7 @@ export function WorkspaceDiscovery({
           />
         ) : (
           <>
-            <SearchSummary view={view} {...original} />
+            <SearchSummary view={view} folder={folder} label={label} headingRef={resultsHeading} {...original} />
             <button
               className="discovery-jump"
               onClick={() => selectionHeading.current?.focus()}

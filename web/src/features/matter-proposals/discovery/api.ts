@@ -59,7 +59,7 @@ export interface PreviewProgress {
   total: number;
 }
 
-export function candidateKey(item: Candidate) {
+export function candidateKey(item: Pick<Candidate, "kind" | "id">) {
   return item.kind + ":" + item.id;
 }
 
@@ -78,36 +78,47 @@ export async function action<T>(name: string, body: object, signal?: AbortSignal
   return response.json();
 }
 
-export function candidates(
-  view: View,
-  followups: FollowUp[],
-  messageTitle: (id: string, position: number) => string,
-) {
-  const items = new Map<string, Candidate>();
-  const excluded = new Set([...view.skipped, ...view.failed]);
-  const original = { messages: view.returned_messages, files: view.files };
-  let mailPosition = 0;
-  for (const hits of [{ ...original, query: "" }, ...followups]) {
-    const origin = hits.query ? { followUp: hits.query } : {};
-    for (const id of hits.messages) {
-      if (excluded.has(id) || items.has("mail:" + id)) continue;
-      mailPosition++;
-      items.set("mail:" + id, {
-        ...origin,
-        kind: "email",
-        id,
-        title: view.inspected_titles[id] || messageTitle(id, mailPosition),
-      });
-    }
-    for (const file of hits.files) {
-      if (items.has("pdf:" + file.id)) continue;
-      items.set("pdf:" + file.id, {
-        ...origin,
-        kind: "pdf",
-        id: file.id,
-        title: file.title,
-      });
-    }
+export type DiscoveredItem =
+  | { kind: "email"; id: string; followUp?: string }
+  | { kind: "pdf"; id: string; followUp?: string; title: string };
+
+// Apply responses in arrival order. Updating a Map entry preserves its first position.
+export function mergeHits(
+  previous: DiscoveredItem[],
+  hits: Pick<Hits, "messages" | "files">,
+  followUp?: string,
+): DiscoveredItem[] {
+  const items = new Map(previous.map(item => [candidateKey(item), item]));
+  for (const id of hits.messages) {
+    const email = { kind: "email" as const, id, followUp };
+    const key = candidateKey(email);
+    if (!items.has(key)) items.set(key, email);
+  }
+  for (const file of hits.files) {
+    const pdf = { kind: "pdf" as const, ...file, followUp };
+    const key = candidateKey(pdf);
+    const existing = items.get(key);
+    items.set(key, existing?.kind === "pdf" ? { ...existing, title: file.title } : pdf);
   }
   return [...items.values()];
+}
+
+export function candidates(
+  discovered: DiscoveredItem[],
+  view: View,
+  messageTitle: (position: number) => string,
+): Candidate[] {
+  const items: Candidate[] = [];
+  const excluded = new Set([...view.skipped, ...view.failed]);
+  let mailPosition = 0;
+  for (const item of discovered) {
+    if (item.kind === "email") {
+      if (excluded.has(item.id)) continue;
+      mailPosition++;
+      items.push({ ...item, title: view.inspected_titles[item.id] || messageTitle(mailPosition) });
+    } else {
+      items.push(item);
+    }
+  }
+  return items;
 }

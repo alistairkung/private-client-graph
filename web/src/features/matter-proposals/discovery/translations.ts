@@ -102,6 +102,7 @@ export const discoveryCatalogue: Record<string, string> = {
   "Gmail through (UTC)": "Gmail 截止日期（UTC）",
   "Start private discovery": "开始私密检索",
   "Gmail dates (UTC)": "Gmail 日期（UTC）",
+  "All dates": "所有日期",
   "Any start": "不限起始日期",
   "Any end": "不限截止日期",
   "Original search: {mail} emails returned, {read} inspected, {pdf} PDFs listed.":
