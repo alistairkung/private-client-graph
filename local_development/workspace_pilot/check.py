@@ -41,7 +41,7 @@ def check(http, directory, account):
     ids = manifest["ids"]
     scope = WorkspaceScope(account, ids["alder-label"], ids["folder-1"])
     expected = {ids[f"{i:02d}"] for i in range(1, 7)}
-    params = dict(q='"Alder Trust"', maxResults="2", fields="messages(id),nextPageToken")
+    params = dict(q='"Alder Trust"', maxResults="2", fields="messages(id),nextPageToken,resultSizeEstimate")
     outside = page_ids(http, MAIL + "/messages", "messages", **params)
     require(ids["07"] in outside, "Unlabelled sibling positive control missing")
     inside = page_ids(http, MAIL + "/messages", "messages", labelIds=scope.label, **params)
@@ -56,7 +56,16 @@ def check(http, directory, account):
         )
     print("PASS Gmail UTC date bounds")
     query = """trashed = false and mimeType = 'application/pdf' and fullText contains '"Mara Voss"'"""
-    drive = dict(q=query, pageSize="1", fields="files(id),nextPageToken")
+    folder_query = f"'{scope.folder}' in parents and trashed = false and mimeType = 'application/pdf'"
+    folder_ids = page_ids(
+        http, DRIVE, "files", q=folder_query, orderBy="createdTime,name", pageSize="1",
+        fields="files(id),nextPageToken",
+    )
+    require(folder_ids == {ids[key] for key in ("deed", "appointment", "minutes")}, "Drive folder pages differ")
+    print("PASS Drive direct-folder pagination")
+    # Google repeated a PDF across one-item full-text pages.
+    # Use the practitioner page size for the independent search-isolation check.
+    drive = dict(q=query, pageSize="100", fields="files(id),nextPageToken")
     both = page_ids(http, DRIVE, "files", **drive)
     require({ids["other"], ids["appointment"]} <= both, "Drive positive controls missing")
     drive["q"] = f"'{scope.folder}' in parents and " + query

@@ -161,6 +161,7 @@ def test_google_check_requires_visible_controls_before_claiming_isolation(tmp_pa
             return Response(200, json={"email_verified": True, "sub": "s", "email": "pilot@gmail.com"})
         assert "labelIds" not in request.url.params
         assert request.url.params["maxResults"] == "2"
+        assert "resultSizeEstimate" in request.url.params["fields"].split(",")
         if "pageToken" not in request.url.params:
             return Response(200, json={"messages": [{"id": "1"}], "nextPageToken": "second"})
         return Response(200, json={"messages": [{"id": "2"}]})
@@ -169,4 +170,89 @@ def test_google_check_requires_visible_controls_before_claiming_isolation(tmp_pa
         Client(transport=MockTransport(respond)) as client,
         pytest.raises(ValueError, match="positive control missing"),
     ):
+        check(client, tmp_path, "pilot@gmail.com")
+
+
+def test_operator_consent_saves_only_isolated_refresh_credentials(tmp_path):
+    import json
+    from types import SimpleNamespace
+    from unittest.mock import Mock
+
+    from local_development.workspace_pilot.authorize import authorize
+
+    private = tmp_path / "gcloud"
+    private.mkdir(mode=0o700)
+    load = Mock()
+    consent = load.return_value.run_local_server
+    consent.return_value = SimpleNamespace(client_id="client", client_secret="secret", refresh_token="refresh")
+    authorize(tmp_path, "pilot@gmail.com", load)
+    _, scopes = load.call_args.args
+    assert set(scopes) == {"openid"} | {
+        "https://www.googleapis.com/auth/" + scope
+        for scope in ("userinfo.email", "gmail.readonly", "gmail.insert", "gmail.labels", "drive.file")
+    }
+    assert consent.call_args.kwargs["login_hint"] == "pilot@gmail.com"
+    assert consent.call_args.kwargs["host"] == "127.0.0.1"
+    saved = private / "application_default_credentials.json"
+    assert saved.stat().st_mode & 0o077 == 0
+    assert json.loads(saved.read_text()) == {
+        "type": "authorized_user", "client_id": "client", "client_secret": "secret", "refresh_token": "refresh"
+    }
+    with pytest.raises(SystemExit, match="already exists"):
+        authorize(tmp_path, "pilot@gmail.com", load)
+    consent.assert_called_once()
+
+
+@pytest.mark.parametrize("create_directory", [False, True])
+def test_operator_consent_requires_private_storage_before_opening_browser(tmp_path, create_directory):
+    from unittest.mock import Mock
+
+    from local_development.workspace_pilot.authorize import authorize
+
+    if create_directory:
+        (tmp_path / "gcloud").mkdir()
+        (tmp_path / "gcloud").chmod(0o755)
+    load = Mock()
+    with pytest.raises(SystemExit, match="private 0700"):
+        authorize(tmp_path, "pilot@gmail.com", load)
+    load.assert_not_called()
+
+
+def test_missing_operator_refresh_grant_leaves_no_credential_file(tmp_path):
+    from unittest.mock import Mock
+
+    from local_development.workspace_pilot.authorize import authorize
+
+    (tmp_path / "gcloud").mkdir(mode=0o700)
+    load = Mock()
+    load.return_value.run_local_server.return_value.refresh_token = None
+    with pytest.raises(SystemExit, match="refresh grant"):
+        authorize(tmp_path, "pilot@gmail.com", load)
+    assert not list((tmp_path / "gcloud").iterdir())
+
+
+def test_drive_folder_pagination_rejects_missing_seeded_pdf_before_full_text_check(tmp_path):
+    import json
+    from local_development.workspace_pilot.check import check
+
+    ids = {f"{i:02d}": str(i) for i in range(1, 8)}
+    ids.update({key: key for key in ("alder-label", "folder-1", "deed", "minutes", "appointment")})
+    (tmp_path / "manifest.json").write_text(json.dumps({"ids": ids, "sub": "s", "email": "pilot@gmail.com"}))
+
+    def respond(request):
+        params = request.url.params
+        if request.url.path.endswith("userinfo"):
+            return Response(200, json={"sub": "s", "email": "pilot@gmail.com", "email_verified": True})
+        if request.url.path.endswith("messages"):
+            count = 7 if "labelIds" not in params else 6
+            if "after:1767657599" in params["q"]:
+                count = 0
+            return Response(200, json={"messages": [{"id": str(i + 1)} for i in range(count)]})
+        assert "fullText" not in params["q"] and "'folder-1' in parents" in params["q"]
+        assert params["orderBy"] == "createdTime,name" and params["pageSize"] == "1"
+        if "pageToken" not in params:
+            return Response(200, json={"nextPageToken": "next", "files": [{"id": "deed"}]})
+        return Response(200, json={"files": [{"id": "appointment"}]})
+
+    with Client(transport=MockTransport(respond)) as client, pytest.raises(ValueError, match="folder pages"):
         check(client, tmp_path, "pilot@gmail.com")

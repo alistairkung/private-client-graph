@@ -2,12 +2,12 @@
 
 ## Owner provisioning
 
-**Live status: awaiting owner provisioning and consent.** The following console steps are based on Google's documentation. Record the outcome of the actual account run separately below. Use one dedicated consumer Gmail account for the signed-in practitioner, the corpus owner and the only OAuth test user. Keep the entire pilot on a private workstation.
+**The pilot project, dedicated test account and three OAuth clients are provisioned. Operator consent and seeding succeeded.** The following console steps are based on Google's documentation. Record the outcome of the actual account run separately below. Use one dedicated consumer Gmail account for the signed-in practitioner, the corpus owner and the only OAuth test user. Keep the entire pilot on a private workstation.
 
 1. In a fresh browser profile choose **Create account → For my personal use** and create a new Gmail mailbox. Complete Google's verification, terms and recovery prompts yourself. Use the account exclusively for the fictional corpus. [Create a Google Account](https://support.google.com/accounts/answer/27441)
 2. Signed in as that account, open Cloud Console, select the project picker, then **New project**. Create and select a separate project such as **PCG Synthetic Pilot**. In **APIs & Services → Library**, enable **Gmail API** and **Google Drive API** for that project. [Create a project](https://developers.google.com/workspace/guides/create-project) · [Enable APIs](https://developers.google.com/workspace/guides/enable-apis)
 3. In **Google Auth Platform → Branding → Get started**, enter the pilot app name, support email and developer contact. Set **Audience → External**, leave publishing status **Testing**, and add the synthetic Gmail address under **Test users**. In **Data Access** declare openid, email, gmail.readonly, drive.readonly and the operator scopes gmail.insert, gmail.labels and drive.file. The three clients request separate grants. [Configure consent](https://developers.google.com/workspace/guides/configure-oauth-consent)
-4. In **Google Auth Platform → Clients → Create client**, register the three clients below. Download each client JSON when Google offers the secret, and move the files into the private directory created below. Use the exact HTTPS redirect for each web client. The desktop client's loopback redirect is managed by the Google Cloud CLI. [Create credentials](https://developers.google.com/workspace/guides/create-credentials)
+4. In **Google Auth Platform → Clients → Create client**, register the three clients below. Download each client JSON when Google offers the secret, and move the files into the private directory created below. Use the exact HTTPS redirect for each web client. The desktop client's loopback redirect is managed by the operator consent helper. [Create credentials](https://developers.google.com/workspace/guides/create-credentials)
 
 | Client | Type | Authorized redirect | Local filename |
 | --- | --- | --- | --- |
@@ -32,12 +32,10 @@ uv sync --locked
 
 ## Operator consent and seeding
 
-Run the following in the dedicated profile and select the synthetic account on Google's consent screen. The operator grant can insert messages, manage labels and create Drive files. The operator directory holds local refresh credentials. The practitioner web clients use separate credentials and online grants. [Google CLI user credentials with custom scopes](https://docs.cloud.google.com/sdk/gcloud/reference/auth/application-default/login)
+Run the following in the dedicated profile and select the synthetic account on Google's consent screen. The operator grant can insert messages, manage labels and create Drive files. The operator directory holds local refresh credentials. The practitioner web clients use separate credentials and online grants. The operator helper uses Google's desktop loopback OAuth flow because the installed Google CLI requires an additional Cloud Platform scope for its login command. The helper requests only the identity and corpus scopes and saves the refresh grant in the isolated CLI directory. If Google shows `403 access_denied` with “developer-approved testers”, verify the pilot project's **Audience → Test users** entry and select that same dedicated account during consent. [Google desktop OAuth flow](https://google-auth-oauthlib.readthedocs.io/en/latest/reference/google_auth_oauthlib.flow.html) · [Testing audience](https://support.google.com/cloud/answer/15549945)
 
 ```sh
-gcloud auth application-default login "$PILOT_ACCOUNT" \
-  --client-id-file="$PILOT_DIR/operator.json" --disable-quota-project \
-  --scopes=openid,https://www.googleapis.com/auth/userinfo.email,https://www.googleapis.com/auth/gmail.readonly,https://www.googleapis.com/auth/gmail.insert,https://www.googleapis.com/auth/gmail.labels,https://www.googleapis.com/auth/drive.file
+uv run --script local_development/workspace_pilot/authorize.py "$PILOT_DIR" "$PILOT_ACCOUNT"
 uv run python -m local_development.workspace_pilot.seed "$PILOT_DIR" "$PILOT_ACCOUNT"
 uv run python -m local_development.workspace_pilot.seed "$PILOT_DIR" "$PILOT_ACCOUNT"
 uv run python -m local_development.workspace_pilot.check "$PILOT_DIR" "$PILOT_ACCOUNT"
@@ -72,15 +70,17 @@ Open `https://localhost:8444/app` locally. Accept the development certificate fo
 
 The local rehearsal on 2026-11-14 applied all migrations to an isolated PostgreSQL cluster, launched the built practitioner shell with fixture OAuth configuration on loopback HTTPS, and observed healthy reads with anonymous writes disabled. The credential-free seed tests exercised 17 creates, a repeat with zero writes, drift and interrupted-write recovery.
 
-**Live Google observations are pending** for all rows. An HTTP-fixture result or local launch cannot establish Google behavior. Record date, commit, pass/fail, counts, digest equality and a sanitized description of differences. Keep IDs, account details, raw URLs, Source content, browser traces and screenshots private.
+The operator completed the first two checks on 2026-11-14 against Google. The remaining rows require the practitioner’s browser session. Record date, commit, pass/fail, counts, digest equality and a sanitized description of differences. Keep IDs, account details, raw URLs, Source content, browser traces and screenshots private.
 
-| Check | Observation to make |
+| Check | Live observation or remaining action |
 | --- | --- |
-| First and repeat seed | First run creates the corpus. Repeat reports 17 verified and zero created, with the same manifest IDs. |
-| Direct Google controls | Run the check command. Its unrestricted positive controls must find the unlabelled sibling and out-of-folder appointment. Its scoped searches must exclude them. It requests two messages or one file per page to exercise cursors, checks Jan 5 inclusion and Jan 6 exclusion, and compares original bytes through PCG PDF acquisition against the tracked SHA-256. Indexing lag may delay search results. Repeat the read-only check after indexing. |
-| Sixth message | Sign in → New proposal → Discover Workspace Sources → connect the designated account → Start private discovery for Alder Trust. Record the initial inspected count, approve Alice Reed, inspect more original results and approve the lead from message 06. Real Gmail IDs determine inspection order. If Mara appears early, report the difference from the sixth-position fixture. |
+| First and repeat seed | Passed. The first seed verified 17 objects and created 17. The repeat verified the same 17 IDs and created zero. |
+| Direct Google controls | Passed. The unrestricted searches found both distractors. The label retained exactly six messages and the direct-parent full-text search retained only the appointment. Jan 5 included the six messages and Jan 6 excluded them. A sorted direct-folder listing returned all three PDFs on distinct one-item pages. The downloaded appointment matched the fixture SHA-256 through PCG acquisition. |
+| Sixth message | Sign in → New proposal → Discover Workspace Sources → connect the designated account → Start private discovery for Alder Trust. Record the initial inspected count, approve Alice Reed, inspect more original results and approve the lead from message 06. The six live IDs put the resignation first under PCG’s within-page sort. Mara can appear in the initial batch. Record the order shown in the practitioner UI. The sixth-position case remains an offline fixture. |
 | Selection and public boundary | Select the resignation and appointment, preview exact Sources, and check from a signed-out window on the same workstation that no proposal exists yet. Approve publication separately using a unique synthetic reference. Reopen the proposal locally and check the PDF's Source attribution. |
 | Access loss | With a preview open, remove this pilot's grant in the synthetic account's third-party connections and attempt another private read. Verify reconnect and fresh search; the old preview cannot publish. Revoking project access can also invalidate operator consent. Record the observed scope of revocation. |
+
+Two provider differences surfaced during the live checks. Gmail returned a cursor after its sixth result and HTTP 204 on the subsequent empty page when the field mask requested only IDs and the cursor. Including `resultSizeEstimate` yielded an empty JSON result and retained all six IDs. Drive full-text search repeated the same PDF across six successive one-item pages with distinct cursors. At the practitioner page size both controls appeared together. The runbook checks folder pagination independently from full-text isolation. Exhaustive full-text recall across pages remains unverified.
 
 After the smoke, stop the server and run `pg_ctl -D "$PILOT_DIR/postgres" -m fast -w stop`. Revoke remaining operator credentials with `gcloud auth application-default revoke` using the same isolated CLOUDSDK_CONFIG. Review the isolated proposal database, seeded corpus and private credential files with the owner for deletion when the pilot ends.
 
