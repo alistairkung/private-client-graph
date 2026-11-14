@@ -25,10 +25,16 @@ test("sixth original email leads to an approved PDF and publicly reopened Eviden
     await expect(upload).toBeChecked();
     await expect(page.getByLabel("External Matter reference", { exact: true })).toHaveValue(reference);
     await workspace.check();
+    // Hold only the second batch so we can interact with the first results deterministically.
+    let releaseBatch!: () => void;
+    const gate = new Promise<void>(resolve => { releaseBatch = resolve; });
+    await page.route("**/discovery/inspect", async route => {
+      await gate;
+      await route.continue();
+    });
     await page.getByRole("button", { name: "Start private discovery" }).click();
-    await expect(page.getByRole("status")).toContainText("5 inspected");
+    await expect(page.getByText("Still searching emails and PDFs…")).toBeVisible();
     await expect(page.getByText("Checked 5 of 5 emails for leads.")).toBeVisible();
-    await expect(page.getByText("More matches may be available.")).toBeVisible();
     await page.getByRole("button", { name: "Search for Alice Reed" }).click();
     const uninspected = page.getByRole("button", { name: "Read Uninspected email 6" });
     await uninspected.click();
@@ -45,9 +51,8 @@ test("sixth original email leads to an approved PDF and publicly reopened Eviden
     await expect(page.getByRole("button", { name: "Preview exact Sources" })).toBeDisabled();
     await expect(page.getByRole("button", { name: "Search for Mara Voss" })).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Search for Cora Patel" })).toHaveCount(0);
-    await page
-      .getByRole("button", { name: "Check more results" })
-      .click();
+    releaseBatch();
+    await expect(page.getByText("Original search complete.")).toBeVisible();
     await expect(page.getByRole("blockquote").first()).toHaveText(
       "Mara Voss will circulate the executed appointment separately.",
     );

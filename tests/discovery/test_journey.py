@@ -9,7 +9,7 @@ from private_client_graph.application.discovery import DiscoverySession, Limits,
 from private_client_graph.application.discovery.google import ReadFailure, WorkspaceReader
 from private_client_graph.application.discovery.limits import Action, LimitReached, Usage
 
-from .exchanges import CORPUS, FILES, ROOT, Exchanges, file
+from .exchanges import CORPUS, FILES, MAIL, ROOT, Exchanges, file
 
 
 def test_empty_search_queries_the_scoped_collections_once():
@@ -27,6 +27,7 @@ def test_empty_search_queries_the_scoped_collections_once():
     assert mail.url.path == "/gmail/v1/users/synthetic@example.test/messages"
     assert mail.url.params["q"] == '"Alder Trust"'
     assert mail.url.params["labelIds"] == "alder-label"
+    assert "resultSizeEstimate" in mail.url.params["fields"].split(",")
     assert drive.url.params["q"] == (
         "'folder-1' in parents and trashed = false and mimeType = 'application/pdf' "
         "and fullText contains '\"Alder Trust\"'"
@@ -41,20 +42,22 @@ def test_followup_then_sixth_original_message_revises_the_shortlist(lead):
     for i in ("01", "02", "03", "04", "05"):
         google.message(i, "metadata")
         google.message(i, "full")
-    google.list_files("Alder Trust", ["deed", "shortcut", "other"], next_token="drive-p2")
     session = DiscoverySession(google.http, WorkspaceScope("synthetic@example.test", "alder-label", "folder-1"))
     first = session.start("Alder Trust")
     assert first.pending == () and first.more_pages
     assert len(first.inspected) == 5
-    assert {f.id for f in first.files} == {"deed"}
+    assert not first.files
     assert first.suggestions[0].query == "Alice Reed"
     google.list_mail("Alice Reed", ["08"])
     google.list_files("Alice Reed", [])
     session.approve(first.revision, "Alice Reed")
+    google.list_files("Alder Trust", ["deed", "shortcut", "other"], next_token="drive-p2")
     google.list_mail("Alder Trust", ["07", "06"], token="mail-p2")
     google.message("06", "metadata")
     google.message("06", "full", body=CORPUS["alternate_resignation"] if lead == "Ben Wong" else None)
     google.message("07", "metadata")
+    revised = session.inspect_more()
+    assert revised.suggestions[0].query == lead and revised.more_pages
     google.list_files("Alder Trust", ["minutes"], token="drive-p2")
     second = session.inspect_more()
     assert {f.id for f in second.files} == {"deed", "minutes"} and not second.more_pages
@@ -160,7 +163,7 @@ def test_concurrent_approval_and_three_execution_limit():
     for i in ("01", "06", "08", "09"):
         google.message(i, "metadata")
         google.message(i, "full")
-    google.list_files("Alder Trust", [])
+    google.list_files("Alder Trust", [], next_token="last")
     session = DiscoverySession(google.http, WorkspaceScope("synthetic@example.test", "alder-label", "folder-1"))
     view = session.start("Alder Trust")
     assert len(view.suggestions) == 3
@@ -170,6 +173,7 @@ def test_concurrent_approval_and_three_execution_limit():
         with ThreadPoolExecutor(2) as pool:
             results = list(pool.map(lambda _: session.approve(view.revision, suggestion.query), range(2)))
         assert results[0] == results[1]
+    google.list_files("Alder Trust", [], token="last")
     later = session.inspect_more()
     with pytest.raises(ValueError, match="limit"):
         session.approve(later.revision, later.suggestions[0].query)
@@ -219,15 +223,16 @@ def test_first_original_page_can_be_inspected_with_more_pages_and_a_tight_budget
     assert first.inspected == ("02",) and first.more_pages
     assert first.stop_reason == "Action request limit"
 
+    google.list_files("Alder Trust", ["deed"])
     google.list_mail("Alder Trust", ["01", "02"], token="more")
     google.message("01", "metadata")
-    google.message("01", "full")
     second = session.inspect_more()
-    assert second.inspected == ("02", "01") and second.more_pages
+    assert second.inspected == ("02",) and second.pending == ("01",)
 
-    google.list_files("Alder Trust", ["deed"])
+    google.message("01", "metadata")
+    google.message("01", "full")
     final = session.inspect_more()
-    assert not final.more_pages and final.pending == ()
+    assert final.inspected == ("02", "01") and not final.more_pages and not final.pending
     assert [item.id for item in final.files] == ["deed"]
     assert not google.steps
 
@@ -290,24 +295,70 @@ def test_incomplete_or_misframed_read_charges_consumed_bytes(length, suffix, exp
 
 def test_pending_original_hits_are_inspected_before_advancing_the_mail_cursor():
     google = Exchanges()
-    google.list_mail("Alder Trust", ["06", "05", "04", "03", "02", "01"], next_token="p2")
-    for key in ("01", "02", "03", "04", "05"):
+    google.list_mail("Alder Trust", ["06", "05", "04", "03", "02"], next_token="p2")
+    for key in ("02", "03", "04", "05"):
         google.message(key, "metadata")
         google.message(key, "full")
-    google.list_files("Alder Trust", [])
-    session = DiscoverySession(google.http, WorkspaceScope("synthetic@example.test", "alder-label", "folder-1"))
+    session = DiscoverySession(google.http, WorkspaceScope("synthetic@example.test", "alder-label", "folder-1"),
+                               Limits(action_requests=9))
     first = session.start("Alder Trust")
     assert first.pending == ("06",) and first.more_pages
 
     google.message("06", "metadata")
     google.message("06", "full")
+    google.list_files("Alder Trust", [])
     second = session.inspect_more()
     assert second.pending == () and second.more_pages
-    assert second.inspected == ("01", "02", "03", "04", "05", "06")
+    assert second.inspected == ("02", "03", "04", "05", "06")
 
     google.list_mail("Alder Trust", ["06", "07"], token="p2")
     google.message("07", "metadata")
     final = session.inspect_more()
     assert final.skipped == ("07",) and not final.more_pages
     assert final.inspected == second.inspected
+    assert not google.steps
+
+
+def test_original_limit_is_shared_with_drive_and_replayed_batches_do_not_fetch():
+    google = Exchanges()
+    google.expect(MAIL, {"maxResults": "5"}, {"messages": [{"id": "06"}]})
+    google.message("06", "metadata")
+    google.message("06", "full")
+    base = file("deed")
+    for index in range(10):
+        size = 4 if index == 0 else 5
+        google.expect(FILES, {"pageSize": str(size), "pageToken": str(index) if index else None}, {
+            "files": [{**base, "id": f"f{index}-{i}"} for i in range(size)],
+            "nextPageToken": str(index + 1),
+        })
+    scope = WorkspaceScope("synthetic@example.test", "alder-label", "folder-1")
+    session = DiscoverySession(google.http, scope)
+    view = session.start("Alder Trust")
+    for count in range(5, 51, 5):
+        assert len(view.returned_messages) + len(view.files) == count
+        if count < 50:
+            assert view.can_inspect_more
+            revision = view.revision
+            view = session.inspect_more(revision)
+            assert session.inspect_more(revision) is view
+    assert view.original_item_limit == 50 and view.more_pages
+    assert not view.can_inspect_more and view.stop_reason == "Original item limit"
+    assert session.inspect_more() is view
+    # A separately approved search uses its own cursor, outside the original item cap.
+    google.list_mail("Mara Voss", [])
+    google.list_files("Mara Voss", ["appointment"])
+    assert session.approve(view.revision, "Mara Voss").files[0].id == "appointment"
+    assert not google.steps
+
+
+def test_exact_last_page_at_limit_is_complete_and_an_oversized_page_is_not_admitted():
+    scope = WorkspaceScope("synthetic@example.test", "alder-label", "folder-1")
+    google = Exchanges()
+    google.list_mail("Alder Trust", [])
+    google.expect(FILES, {"pageSize": "1"}, {"files": [file("deed")]})
+    view = DiscoverySession(google.http, scope, Limits(original_items=1)).start("Alder Trust")
+    assert not view.can_inspect_more and not view.more_pages and view.stop_reason is None
+    google.expect(MAIL, {"maxResults": "1"}, {"messages": [{"id": "01"}, {"id": "02"}]})
+    view = DiscoverySession(google.http, scope, Limits(original_items=1)).start("Alder Trust")
+    assert view.stop_reason == "Original search incomplete" and not view.returned_messages
     assert not google.steps

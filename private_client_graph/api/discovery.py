@@ -37,6 +37,10 @@ class SessionAction(BaseModel):
     session: str
 
 
+class Inspection(SessionAction):
+    revision: int | None = Field(default=None, ge=0)
+
+
 class FollowUp(SessionAction):
     revision: int
     query: str
@@ -144,9 +148,9 @@ def discovery_router(http: Client | None = None, *, pilot: Pilot | None = None) 
         return {"session": handle, "view": view}
 
     @router.post("/inspect")
-    def inspect(request: Request, body: SessionAction) -> DiscoveryView:
+    def inspect(request: Request, body: Inspection) -> DiscoveryView:
         with active_review(request, body) as collection:
-            return collection.discovery.inspect_more()
+            return collection.discovery.inspect_more(body.revision)
 
     @router.post("/follow-up")
     def follow_up(request: Request, body: FollowUp) -> dict:

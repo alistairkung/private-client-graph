@@ -18,6 +18,7 @@ const view: View = {
   },
   can_inspect_more: false,
   original_query: "Alder Trust",
+  original_item_limit: 50,
   revision: 0,
   returned_messages: ["same", "denied", "failed"],
   inspected: ["same"],
@@ -57,7 +58,7 @@ it("shows the search indicator only while discovery is pending", async () => {
   render(<WorkspaceDiscovery onBusy={() => {}} />);
   await userEvent.click(screen.getByRole("button", { name: "Start private discovery" }));
   const status = screen.getByRole("status");
-  expect(status).toHaveTextContent("Searching Workspace…");
+  expect(status).toHaveTextContent("Searching emails and PDFs…");
   expect(status.querySelector(".discovery-spinner")).toHaveAttribute("aria-hidden", "true");
   finish(new Response(JSON.stringify({ session: "local", view })));
   await screen.findByRole("heading", { name: "Select Sources" });
@@ -65,13 +66,56 @@ it("shows the search indicator only while discovery is pending", async () => {
 });
 
 it("explains incomplete coverage without operational counters or a dead-end action", () => {
-  render(<SearchSummary view={{ ...view, more_pages: true, stop_reason: "Session byte limit" }} inspect={vi.fn()} />);
+  render(<SearchSummary view={{ ...view, more_pages: true, stop_reason: "Session byte limit" }} searching={false} interrupted={false} retry={vi.fn()} />);
   expect(screen.getByText("Checked 1 of 3 emails for leads.")).toBeVisible();
   expect(screen.getByText("Unavailable emails: 2.")).toBeVisible();
-  expect(screen.getByText("More matches may be available.")).toBeVisible();
+  expect(screen.queryByText("Original search complete.")).toBeNull();
   expect(screen.getByText("This search reached its limit.")).toBeVisible();
   expect(screen.queryByText(/requests|bytes|Inspection details/i)).toBeNull();
   expect(screen.queryByRole("button")).toBeNull();
+});
+
+it("renders each original batch, preserves selection, and stops at the combined cap", async () => {
+  const user = userEvent.setup();
+  const partial = { ...view, revision: 3, can_inspect_more: true, more_pages: true };
+  const post = vi.spyOn(globalThis, "fetch")
+    .mockResolvedValueOnce(Response.json({ session: "local", view: partial }));
+  let finish!: (response: Response) => void;
+  post.mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
+  render(<WorkspaceDiscovery onBusy={() => {}} />);
+  await user.click(screen.getByText("Start private discovery"));
+  expect(await screen.findByText("Still searching emails and PDFs…")).toBeVisible();
+  await user.click(screen.getByLabelText("Letter · Email"));
+  expect(post).toHaveBeenCalledTimes(2);
+  expect(post.mock.calls[1][0]).toMatch(/discovery\/inspect$/);
+  expect(JSON.parse(String(post.mock.calls[1][1]?.body))).toEqual({ session: "local", revision: 3 });
+  finish(Response.json({ ...partial, revision: 4, can_inspect_more: false, stop_reason: "Original item limit",
+    files: [...view.files, { id: "late", title: "Appointment" }] }));
+  expect(await screen.findByLabelText("Appointment · PDF")).toBeVisible();
+  expect(screen.getByLabelText("Letter · Email")).toBeChecked();
+  expect(screen.getByText("Stopped at 50 original results. More matches may be available.")).toBeVisible();
+  expect(screen.queryByText("Still searching emails and PDFs…")).toBeNull();
+  expect(post).toHaveBeenCalledTimes(2);
+});
+
+it("stops on network loss and resumes the same revision only on request", async () => {
+  const first = { ...view, can_inspect_more: true, more_pages: true };
+  const post = vi.spyOn(globalThis, "fetch")
+    .mockResolvedValueOnce(Response.json({ session: "local", view: first }))
+    .mockRejectedValueOnce(new TypeError("offline"));
+  const { unmount } = render(<WorkspaceDiscovery onBusy={() => {}} />);
+  await userEvent.click(screen.getByText("Start private discovery"));
+  expect(await screen.findByText("Search interrupted. Results already found are available.")).toBeVisible();
+  expect(post).toHaveBeenCalledTimes(2);
+  let finish!: (response: Response) => void;
+  post.mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
+  await userEvent.click(screen.getByText("Resume original search"));
+  expect(post.mock.calls[2][1]?.body).toBe(post.mock.calls[1][1]?.body);
+  const signal = post.mock.calls[2][1]?.signal;
+  unmount();
+  expect(signal?.aborted).toBe(true);
+  await act(async () => finish(Response.json({ ...first, revision: 1 })));
+  expect(post).toHaveBeenCalledTimes(3);
 });
 
 it("closing a loading email discards its late body and leaves selection alone", async () => {
@@ -161,15 +205,13 @@ it("retiring a Workspace grant removes private results and offers a fresh connec
   post.mockResolvedValueOnce(
     respond({ session: "first", view: { ...view, can_inspect_more: true } }),
   );
+  let finish!: (response: Response) => void;
+  post.mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
   await user.click(start);
   expect(await screen.findByLabelText("Letter · Email")).toBeVisible();
-  post.mockResolvedValueOnce(
-    respond(
-      { error: { code: "workspace_reconnect", message: "", retryable: false } },
-      409,
-    ),
-  );
-  await user.click(screen.getByText("Check more results"));
+  await act(async () => finish(respond(
+    { error: { code: "workspace_reconnect", message: "", retryable: false } }, 409,
+  )));
   expect(
     await screen.findByRole("button", { name: "Reconnect" }),
   ).toBeEnabled();

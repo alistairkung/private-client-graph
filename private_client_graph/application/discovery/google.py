@@ -155,9 +155,10 @@ class WorkspaceReader:
             raise ReadFailure("Invalid Workspace response")
         return value
 
-    def mail_page(self, terms: str, token: str, action: Action) -> dict:
+    def mail_page(self, terms: str, token: str, action: Action, page_size: int) -> dict:
+        # With only IDs and a cursor, Google can return HTTP 204 for an empty terminal page.
         params = {"q": self.scope.gmail_query(f'"{literal(terms)}"'), "labelIds": self.scope.label,
-                  "fields": "nextPageToken,messages(id)", "maxResults": "100"}
+                  "fields": "nextPageToken,messages(id),resultSizeEstimate", "maxResults": str(page_size)}
         if token:
             params["pageToken"] = token
         page = self._json(self.messages, params, action)
@@ -165,11 +166,11 @@ class WorkspaceReader:
             page["messages"] = [m for m in page.get("messages", []) if m["id"] in self.message_ids]
         return page
 
-    def drive_page(self, terms: str, token: str, action: Action) -> dict:
+    def drive_page(self, terms: str, token: str, action: Action, page_size: int) -> dict:
         phrase = literal(terms).replace("'", "\\'")
         query = (f"'{self.scope.folder}' in parents and trashed = false and mimeType = 'application/pdf' "
                  f"and fullText contains '\"{phrase}\"'")
-        params = {"q": query, "fields": f"nextPageToken,files({FILE_FIELDS})", "pageSize": "100"}
+        params = {"q": query, "fields": f"nextPageToken,files({FILE_FIELDS})", "pageSize": str(page_size)}
         if token:
             params["pageToken"] = token
         return self._json(self.files, params, action)

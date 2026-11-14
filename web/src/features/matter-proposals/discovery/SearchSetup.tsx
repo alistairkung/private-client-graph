@@ -67,7 +67,7 @@ export function SearchSetup({
       </details>
       <p>
         {t(
-          "Starting discovery authorizes private inspection of matching synthetic content in the selected scope. Review and publication require separate approval.",
+          "Search up to 50 matching emails and PDFs in these locations. Emails are checked for leads as results arrive. Nothing is published until you approve.",
         )}
       </p>
       <button

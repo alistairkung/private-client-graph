@@ -22,6 +22,7 @@ export interface View extends Omit<Hits, "messages"> {
   };
   can_inspect_more: boolean;
   original_query: string;
+  original_item_limit: number;
   revision: number;
   returned_messages: string[];
   pending: string[];
@@ -57,9 +58,10 @@ export interface FollowUp extends Hits {
   query: string;
 }
 
-export async function action<T>(name: string, body: object): Promise<T> {
+export async function action<T>(name: string, body: object, signal?: AbortSignal): Promise<T> {
   const response = await request("/api/matter-proposals/discovery/" + name, {
     method: "POST",
+    signal,
     headers: { "content-type": "application/json", ...csrfHeaders() },
     body: JSON.stringify(body),
   });

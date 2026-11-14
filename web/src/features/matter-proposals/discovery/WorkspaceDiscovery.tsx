@@ -17,6 +17,7 @@ import { SearchSetup } from "./SearchSetup";
 import { PublicationReview } from "./PublicationReview";
 import { DiscoveryResults, SearchSummary } from "./DiscoveryResults";
 import { EmailReader, type EmailReading } from "./EmailReader";
+import { useOriginalSearch } from "./useOriginalSearch";
 import { SourceSelection } from "./SourceSelection";
 
 export function WorkspaceDiscovery({
@@ -77,6 +78,8 @@ export function WorkspaceDiscovery({
     }
     return false;
   }
+
+  const original = useOriginalSearch(session, view, setView, recoverSession);
 
   async function run(label: string, operation: () => Promise<void>) {
     if (busy) return;
@@ -192,16 +195,7 @@ export function WorkspaceDiscovery({
         {busy && <span className="discovery-spinner" aria-hidden="true" />}
         {busy
           ? t(operationLabel)
-          : view &&
-            t(
-              "Original search: {mail} emails returned, {read} inspected, {pdf} PDFs listed.",
-              {
-                mail: view.returned_messages.length,
-                read: view.inspected.length,
-                pdf: view.files.length,
-              },
-            )}
-        {!busy && view && !preview && " " + searchStatus}
+          : !preview && searchStatus}
       </p>
       {error != null && <ErrorNotice error={error} />}
       {scope &&
@@ -221,7 +215,7 @@ export function WorkspaceDiscovery({
             folder={folder}
             label={label}
             start={(terms, first, last) =>
-              run("Searching Workspace…", () => start(terms, first, last))
+              run("Searching emails and PDFs…", () => start(terms, first, last))
             }
           />
         ) : preview ? (
@@ -242,14 +236,7 @@ export function WorkspaceDiscovery({
           />
         ) : (
           <>
-            <SearchSummary
-              view={view}
-              inspect={() =>
-                run("Inspecting original emails…", async () =>
-                  setView(await action<View>("inspect", { session })),
-                )
-              }
-            />
+            <SearchSummary view={view} {...original} />
             <button
               className="discovery-jump"
               onClick={() => selectionHeading.current?.focus()}

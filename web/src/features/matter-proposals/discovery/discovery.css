@@ -461,6 +461,13 @@
 @media (max-width: 740px) {
   .connection-setup { grid-template-columns: minmax(0, 1fr); grid-template-areas: "intro" "scope" "action"; }
 }
+.discovery-search-progress {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--ink);
+  font-weight: 600;
+}
 .discovery-working { display: flex; align-items: center; gap: 9px; }
 .discovery-spinner {
   width: 1.1em;
@@ -471,6 +478,8 @@
   border-radius: 50%;
 }
 @media (prefers-reduced-motion: no-preference) {
+  .discovery-row { animation: workspace-result-in 160ms ease-out; }
+  @keyframes workspace-result-in { from { opacity: .55; } to { opacity: 1; } }
   .discovery-spinner { animation: workspace-spin 1.2s linear infinite; }
 }
 @keyframes workspace-spin { to { transform: rotate(1turn); } }

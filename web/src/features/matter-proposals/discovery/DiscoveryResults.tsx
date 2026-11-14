@@ -4,14 +4,25 @@ import type { FollowUp, View } from "./api";
 
 export function SearchSummary({
   view,
-  inspect,
+  searching,
+  interrupted,
+  retry,
 }: {
   view: View;
-  inspect: () => void;
+  searching: boolean;
+  interrupted: boolean;
+  retry: () => void;
 }) {
   const { t } = useLocale();
   const unreadable = view.failed.length + view.skipped.length;
   const unfinished = view.pending.length > 0 || view.more_pages;
+  let progress = t("Original search complete.");
+  if (searching) progress = t("Still searching emails and PDFs…");
+  else if (view.stop_reason === "Original item limit") {
+    progress = t("Stopped at {limit} original results. More matches may be available.", { limit: view.original_item_limit });
+  } else if (interrupted || view.stop_reason === "Original search incomplete") {
+    progress = t("Search interrupted. Results already found are available.");
+  } else if (unfinished) progress = t("This search reached its limit.");
   return (
     <header className="discovery-summary">
       <div className="discovery-summary-top">
@@ -32,7 +43,11 @@ export function SearchSummary({
         </dl>
       </div>
       <div className="discovery-inspection">
-        <div>
+        <div role="status" aria-atomic="true">
+          <p className="discovery-search-progress">
+            {searching && <span className="discovery-spinner" aria-hidden="true" />}
+            {progress}
+          </p>
           {view.returned_messages.length > 0 && (
             <p>{t("Checked {read} of {total} emails for leads.", {
               read: view.inspected.length, total: view.returned_messages.length,
@@ -41,16 +56,9 @@ export function SearchSummary({
           {unreadable > 0 && (
             <p>{t("Unavailable emails: {count}.", { count: unreadable })}</p>
           )}
-          {view.more_pages && <p>{t("More matches may be available.")}</p>}
-          {unfinished && !view.can_inspect_more && (
-            <p>{t("This search reached its limit.")}</p>
-          )}
-          {view.stop_reason === "Original search incomplete" && (
-            <p>{t("Part of the search could not be completed.")}</p>
-          )}
         </div>
-        {view.can_inspect_more && (
-          <button onClick={inspect}>{t("Check more results")}</button>
+        {view.can_inspect_more && !searching && (
+          <button onClick={retry}>{t("Resume original search")}</button>
         )}
       </div>
     </header>
