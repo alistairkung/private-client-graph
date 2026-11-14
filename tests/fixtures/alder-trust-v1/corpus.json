@@ -1,0 +1,154 @@
+{
+  "messages": [
+    {
+      "id": "01",
+      "threadId": "01",
+      "labelIds": [
+        "alder-label"
+      ],
+      "internalDate": "1767600000000",
+      "subject": "Alder Trust correspondence 01",
+      "body": "Alice Reed will forward the signed notice."
+    },
+    {
+      "id": "02",
+      "threadId": "02",
+      "labelIds": [
+        "alder-label"
+      ],
+      "internalDate": "1767600000000",
+      "subject": "Alder Trust correspondence 02",
+      "body": "Routine acknowledgement."
+    },
+    {
+      "id": "03",
+      "threadId": "03",
+      "labelIds": [
+        "alder-label"
+      ],
+      "internalDate": "1767600000000",
+      "subject": "Alder Trust correspondence 03",
+      "body": "Routine acknowledgement."
+    },
+    {
+      "id": "04",
+      "threadId": "04",
+      "labelIds": [
+        "alder-label"
+      ],
+      "internalDate": "1767600000000",
+      "subject": "Alder Trust correspondence 04",
+      "body": "Routine acknowledgement."
+    },
+    {
+      "id": "05",
+      "threadId": "05",
+      "labelIds": [
+        "alder-label"
+      ],
+      "internalDate": "1767600000000",
+      "subject": "Alder Trust correspondence 05",
+      "body": "Routine acknowledgement."
+    },
+    {
+      "id": "06",
+      "threadId": "06",
+      "labelIds": [
+        "alder-label"
+      ],
+      "internalDate": "1767600000000",
+      "subject": "Alder Trust correspondence 06",
+      "body": "Alice Reed, Ben Wong, Cora Patel, Leo Dunn and Mara Voss attended. Mara Voss will circulate the executed appointment separately."
+    },
+    {
+      "id": "07",
+      "threadId": "06",
+      "labelIds": [
+        "INBOX"
+      ],
+      "internalDate": "1767600000000",
+      "subject": "Private sibling",
+      "body": "Unlabelled sibling secret."
+    },
+    {
+      "id": "08",
+      "threadId": "08",
+      "labelIds": [
+        "alder-label"
+      ],
+      "internalDate": "1767600000000",
+      "subject": "Alice Reed dispatch",
+      "body": "Cora Patel will circulate the signed deed."
+    },
+    {
+      "id": "09",
+      "threadId": "09",
+      "labelIds": [
+        "alder-label"
+      ],
+      "internalDate": "1767600000000",
+      "subject": "Ben Wong dispatch",
+      "body": "Ben Wong will send the signed deed."
+    }
+  ],
+  "alternate_resignation": "Alice Reed, Ben Wong, Cora Patel, Leo Dunn and Mara Voss attended. Ben Wong will circulate the executed appointment separately.",
+  "files": [
+    {
+      "id": "deed",
+      "name": "Alder Trust deed",
+      "parents": [
+        "folder-1"
+      ],
+      "trashed": false,
+      "mimeType": "application/pdf",
+      "version": "1"
+    },
+    {
+      "id": "minutes",
+      "name": "Alder Trust parking minutes",
+      "parents": [
+        "folder-1"
+      ],
+      "trashed": false,
+      "mimeType": "application/pdf",
+      "version": "1"
+    },
+    {
+      "id": "appointment",
+      "name": "Mara Voss appointment",
+      "parents": [
+        "folder-1"
+      ],
+      "trashed": false,
+      "mimeType": "application/pdf",
+      "version": "1"
+    },
+    {
+      "id": "other",
+      "name": "Mara Voss appointment",
+      "parents": [
+        "folder-2"
+      ],
+      "trashed": false,
+      "mimeType": "application/pdf",
+      "version": "1"
+    },
+    {
+      "id": "shortcut",
+      "name": "Alder Trust link",
+      "parents": [
+        "folder-1"
+      ],
+      "trashed": false,
+      "mimeType": "application/vnd.google-apps.shortcut",
+      "version": "1",
+      "shortcutDetails": {
+        "targetId": "other"
+      }
+    }
+  ],
+  "appointment_media": {
+    "path": "../synthetic-proposal.pdf",
+    "sha256": "08402d562dd08c8b409ecc8d4e5107288d2a5f9a9b91e8f2573a5ba9226e24ff"
+  }
+}

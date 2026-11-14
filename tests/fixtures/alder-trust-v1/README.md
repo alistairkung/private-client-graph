@@ -1,0 +1,7 @@
+# Alder Trust discovery corpus v1
+
+The original phrase is “Alder Trust”. The sixth labelled message contains the outstanding appointment lead. The seventh message shares its thread and has only the Inbox label. The appointment PDF is filed under the responsible person's name. Its acquisition payload is PCG's existing fictional binary PDF, identified by relative path and SHA-256 in the manifest. Its example family relationship exercises acquisition and does not purport to evaluate the legal contents of an appointment. The paired resignation passage moves responsibility to another of the same five people. Test assertions supply expected outcomes separately from the application inputs.
+
+The HTTP exchange scripts supply individual Gmail list, metadata and MIME responses and Drive list, metadata and media responses. Some responses deliberately include items outside the requested scope. They do not implement a substitute search engine. Run the journey with `uv run pytest tests/discovery`.
+
+The offline application session enumerates original pages under explicit ceilings, deduplicates by provider ID, then considers five outstanding original message IDs per inspection action in ascending lexical order. This reproducible baseline avoids dependence on provider response order. Drive listings supply candidates for explicit preview. Follow-up message IDs are uninspected hits. A view records remaining IDs separately from unenumerated pages. A session keeps private approval snapshots in process. It has no public route, credentials, model dispatch or durable state.
