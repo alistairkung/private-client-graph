@@ -146,3 +146,27 @@ def test_private_launcher_excludes_seed_controls_and_operator_credentials(tmp_pa
     }
     assert set(settings["PCG_WORKSPACE_FILE_IDS"].split(",")) == {"appointment", "deed", "minutes"}
     assert settings["PCG_GOOGLE_CLIENT_ID"] == "signin" and settings["PCG_WORKSPACE_CLIENT_ID"] == "discovery"
+
+
+def test_google_check_requires_visible_controls_before_claiming_isolation(tmp_path):
+    import json
+    from local_development.workspace_pilot.check import check
+
+    ids = {f"{i:02d}": str(i) for i in range(1, 8)}
+    ids.update({"alder-label": "label", "folder-1": "folder"})
+    (tmp_path / "manifest.json").write_text(json.dumps({"ids": ids, "sub": "s", "email": "pilot@gmail.com"}))
+
+    def respond(request):
+        if request.url.path.endswith("userinfo"):
+            return Response(200, json={"email_verified": True, "sub": "s", "email": "pilot@gmail.com"})
+        assert "labelIds" not in request.url.params
+        assert request.url.params["maxResults"] == "2"
+        if "pageToken" not in request.url.params:
+            return Response(200, json={"messages": [{"id": "1"}], "nextPageToken": "second"})
+        return Response(200, json={"messages": [{"id": "2"}]})
+
+    with (
+        Client(transport=MockTransport(respond)) as client,
+        pytest.raises(ValueError, match="positive control missing"),
+    ):
+        check(client, tmp_path, "pilot@gmail.com")

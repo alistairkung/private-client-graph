@@ -15,7 +15,7 @@
 | PCG pilot discovery | Web application | `https://localhost:8444/auth/workspace/callback` | `discovery.json` |
 | Alder v1 seed operator | Desktop app | Desktop loopback | `operator.json` |
 
-Use a terminal in the clean pilot checkout. The host commands below use a POSIX shell, Google Cloud CLI, PostgreSQL client/server tools, Node/npm and uv. On macOS use a short private directory path so the Unix socket fits its path-length limit.
+Use a terminal in the clean pilot checkout. The host commands below use a POSIX shell, [Google Cloud CLI](https://cloud.google.com/sdk/docs/install), PostgreSQL client/server tools, Node/npm and uv. On macOS use a short private directory path so the Unix socket fits its path-length limit.
 
 ```sh
 umask 077
@@ -70,11 +70,13 @@ Open `https://localhost:8444/app` locally. Accept the development certificate fo
 
 ## Live acceptance record
 
-**Pending** for all rows. An HTTP-fixture result or local launch cannot establish Google behavior. Record date, commit, pass/fail, counts, digest equality and a sanitized description of differences. Keep IDs, account details, raw URLs, Source content, browser traces and screenshots private.
+The local rehearsal on 2026-11-14 applied all migrations to an isolated PostgreSQL cluster, launched the built practitioner shell with fixture OAuth configuration on loopback HTTPS, and observed healthy reads with anonymous writes disabled. The credential-free seed tests exercised 17 creates, a repeat with zero writes, drift and interrupted-write recovery.
+
+**Live Google observations are pending** for all rows. An HTTP-fixture result or local launch cannot establish Google behavior. Record date, commit, pass/fail, counts, digest equality and a sanitized description of differences. Keep IDs, account details, raw URLs, Source content, browser traces and screenshots private.
 
 | Check | Observation to make |
 | --- | --- |
-| First and repeat seed | First run creates the corpus. Repeat reports verified, with the same manifest IDs and no duplicate markers. |
+| First and repeat seed | First run creates the corpus. Repeat reports 17 verified and zero created, with the same manifest IDs. |
 | Direct Google controls | Run the check command. Its unrestricted positive controls must find the unlabelled sibling and out-of-folder appointment. Its scoped searches must exclude them. It requests two messages or one file per page to exercise cursors, checks Jan 5 inclusion and Jan 6 exclusion, and compares original bytes through PCG PDF acquisition against the tracked SHA-256. Indexing lag may delay search results. Repeat the read-only check after indexing. |
 | Sixth message | Sign in → New proposal → Discover Workspace Sources → connect the designated account → Start private discovery for Alder Trust. Record the initial inspected count, approve Alice Reed, inspect more original results and approve the lead from message 06. Real Gmail IDs determine inspection order. If Mara appears early, report the difference from the sixth-position fixture. |
 | Selection and public boundary | Select the resignation and appointment, preview exact Sources, and check from a signed-out window on the same workstation that no proposal exists yet. Approve publication separately using a unique synthetic reference. Reopen the proposal locally and check the PDF's Source attribution. |
@@ -86,4 +88,4 @@ After the smoke, stop the server and run `pg_ctl -D "$PILOT_DIR/postgres" -m fas
 
 Google's Limited Use rules cover restricted Gmail and Drive data and derivatives. They constrain retention, human access and transfer and prohibit general model training. This pilot uses a dedicated fictional corpus, local extraction, local database and owner-visible review. A publicly readable route still exposes full Sources to everyone who can reach the service. Before any wider deployment, assess the proposed retention period, deletion mechanism, disclosures, recipients, user consent, and verification/security requirements against the actual use. Synthetic data and OAuth Testing status alone do not establish approval for broader distribution. [Google API Services User Data Policy](https://developers.google.com/terms/api-services-user-data-policy) · [Workspace developer policy](https://developers.google.com/workspace/workspace-api-user-data-developer-policy)
 
-Official Google remote MCP is a separate evaluation under #182. Check Developer Preview enrollment for the actual account/project and product-specific access before attempting that evaluation. Direct API access does not establish MCP eligibility. [Google remote MCP prerequisites](https://developers.google.com/workspace/guides/configure-mcp-servers)
+Official Google remote MCP is a separate future evaluation milestone. Check Developer Preview enrollment for the actual account/project and product-specific access before attempting that evaluation. Direct API access does not establish MCP eligibility. [Google remote MCP prerequisites](https://developers.google.com/workspace/guides/configure-mcp-servers)

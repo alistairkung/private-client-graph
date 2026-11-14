@@ -24,19 +24,18 @@ MAIL = "https://gmail.googleapis.com/gmail/v1/users/me"
 DRIVE = "https://www.googleapis.com/drive/v3/files"
 LABEL = "PCG Alder Trust v1"
 FOLDER = "application/vnd.google-apps.folder"
-SHORTCUT = "application/vnd.google-apps.shortcut"
 
 
 class PilotError(ValueError):
     """Safe, operator-facing diagnostic."""
 
 
-def require(condition, message):
+def require(condition, message: str) -> None:
     if not condition:
         raise PilotError(message)
 
 
-def save(path, data):
+def save(path: Path, data: dict) -> None:
     with NamedTemporaryFile(dir=path.parent, mode="w", delete=False) as out:
         json.dump(data, out)
         out.flush()
@@ -48,7 +47,7 @@ def get(http, url, **params):
     return http.get(url, params=params).raise_for_status().json()
 
 
-def marker(key):
+def marker(key: str) -> str:
     return f"<pcg-alder-v1-{key}@example.invalid>"
 
 
@@ -87,6 +86,7 @@ class Installation:
             "Manifest account or corpus mismatch",
         )
         self.ids = self.state["ids"]
+        self.created = 0
 
     def ensure(self, key, create, verify):
         if key not in self.ids:
@@ -96,6 +96,7 @@ class Installation:
             self.state["pending"] = key
             save(self.path, self.state)
             self.ids[key] = item_id(create())
+            self.created += 1
             del self.state["pending"]
             save(self.path, self.state)
         verify(item_id(self.ids[key]))
@@ -250,6 +251,7 @@ def seed(http, directory, account):
                 pdf=pdf if row["mimeType"] == "application/pdf" else None,
                 target=install.ids[target] if target else None,
             )
+        print(f"Alder Trust v1 verified: {len(install.ids)} objects, {install.created} created this run.")
         return install.state
 
 
@@ -281,7 +283,6 @@ def main():
     token = operator_token(directory)
     with Client(headers={"Authorization": "Bearer " + token}, trust_env=False) as http:
         seed(http, directory, args.account)
-    print("Alder Trust v1 verified. Private IDs are in manifest.json.")
 
 
 if __name__ == "__main__":

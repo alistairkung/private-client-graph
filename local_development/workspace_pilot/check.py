@@ -5,6 +5,7 @@ from datetime import date
 from hashlib import sha256
 import json
 from pathlib import Path
+from subprocess import SubprocessError
 
 from httpx2 import Client, HTTPError
 
@@ -87,7 +88,7 @@ if __name__ == "__main__":
             check(client, args.directory, args.account)
     except PilotError as exc:
         raise SystemExit(str(exc)) from None
-    except (HTTPError, OSError, ValueError, KeyError, RuntimeError):
+    except (HTTPError, OSError, ValueError, KeyError, RuntimeError, SubprocessError):
         raise SystemExit(
             "Provider checks incomplete. Verify pilot configuration, access and indexing."
         ) from None
