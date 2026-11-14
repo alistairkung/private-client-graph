@@ -19,6 +19,7 @@ export interface View extends Omit<Hits, "messages"> {
     first_day: string | null;
     last_day: string | null;
   };
+  can_inspect_more: boolean;
   original_query: string;
   revision: number;
   returned_messages: string[];

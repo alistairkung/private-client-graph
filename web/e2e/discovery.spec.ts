@@ -1,5 +1,8 @@
 import { expect, test } from "@playwright/test";
 
+// Private search responses and review tokens must stay out of recorded traces.
+test.use({ trace: "off", screenshot: "off", video: "off" });
+
 test("sixth original email leads to an approved PDF and publicly reopened Evidence", async ({
   page,
   browser,
@@ -81,6 +84,12 @@ test("sixth original email leads to an approved PDF and publicly reopened Eviden
     await expect(
       reopened.getByRole("heading", { name: "Alder Trust review" }),
     ).toBeVisible();
+    await reopened.getByRole("tab", { name: "List", exact: true }).click();
+    await reopened.locator("#relationship-0").click();
+    await expect(reopened.locator(".source-text mark")).toHaveText(preview[1]);
+    await expect(
+      reopened.locator(".source-tabs button[aria-pressed=true]"),
+    ).toContainText("Mara Voss appointment");
     const matter = await (
       await reader.request.get(page.url().replace("/app/", "/api/"))
     ).json();

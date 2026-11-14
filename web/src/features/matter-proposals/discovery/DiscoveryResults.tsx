@@ -62,10 +62,7 @@ export function DiscoveryResults({
         {view.stop_reason && t(view.stop_reason)}
       </p>
       <button
-        disabled={
-          (!view.pending.length && !view.more_pages) ||
-          view.stop_reason?.startsWith("Session ")
-        }
+        disabled={!view.can_inspect_more}
         onClick={inspect}
       >
         {t("Inspect more original results")}

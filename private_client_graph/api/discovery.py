@@ -11,11 +11,12 @@ from httpx2 import Client
 from pydantic import BaseModel, ConfigDict, Field
 
 from private_client_graph.application.discovery import DiscoverySession, WorkspaceScope
-from private_client_graph.application.discovery.collection import Candidate, CollectionReview
+from private_client_graph.application.discovery.collection import Candidate, CollectionReview, ReviewPreview
 from private_client_graph.application.discovery.session import DiscoveryView
 from private_client_graph.application.matter_proposals import analyse_finalized_sources
 from private_client_graph.application.proposal_contracts import MatterIntakeMetadata, MatterProposalDetail
 from private_client_graph.application.proposal_errors import ProposalFailure
+from private_client_graph.application.proposal_sources import MAX_PROPOSAL_SOURCES
 
 
 class Start(BaseModel):
@@ -38,7 +39,7 @@ class FollowUp(SessionAction):
 
 
 class Selection(SessionAction):
-    candidates: list[Candidate] = Field(min_length=1, max_length=5)
+    candidates: list[Candidate] = Field(min_length=1, max_length=MAX_PROPOSAL_SOURCES)
 
 
 class Import(SessionAction):
@@ -104,7 +105,7 @@ def discovery_router(http: Client) -> APIRouter:
                 "more_pages": approval.more_pages}
 
     @router.post("/preview")
-    def preview(request: Request, body: Selection):
+    def preview(request: Request, body: Selection) -> ReviewPreview:
         return sessions.get(request, body).preview(body.candidates)
 
     @router.post("/import", status_code=201)

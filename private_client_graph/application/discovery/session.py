@@ -7,7 +7,7 @@ from httpx2 import Client
 
 from .google import DriveFile, MailPreview, OutsideScope, PdfPreview, ReadFailure, WorkspaceReader, WorkspaceScope, item_id, literal
 from .leads import Suggestion, ranked_suggestions
-from .limits import Action, LimitReached, Limits, Usage
+from .limits import Action, LimitReached, Limits, SessionLimitReached, Usage
 
 
 @dataclass
@@ -60,6 +60,7 @@ class DiscoveryView:
     scope: WorkspaceScope
     original_query: str
     revision: int
+    can_inspect_more: bool
     returned_messages: tuple[str, ...]
     pending: tuple[str, ...]
     inspected: tuple[str, ...]
@@ -131,6 +132,7 @@ class DiscoverySession:
                 raise ValueError("Start discovery first")
             action = Action(self._limits, self._usage)
             reason = None
+            session_blocked = False
             try:
                 pending = self._pending(original)
                 if not pending:
@@ -141,6 +143,7 @@ class DiscoverySession:
                 original.read_drive_page(self._reader, action)
             except LimitReached as exc:
                 reason = str(exc)
+                session_blocked = isinstance(exc, SessionLimitReached)
             except (KeyError, TypeError, ValueError):
                 reason = "Original search incomplete"
             pending = self._pending(original)
@@ -148,6 +151,9 @@ class DiscoverySession:
                 scope=self._reader.scope,
                 original_query=original.query,
                 revision=len(self._views),
+                can_inspect_more=(bool(pending or original.more_pages) and not session_blocked
+                                  and self._usage.requests < self._limits.session_requests
+                                  and self._usage.bytes < self._limits.session_bytes),
                 returned_messages=tuple(sorted(original.message_ids)),
                 pending=pending,
                 inspected=tuple(self._texts),

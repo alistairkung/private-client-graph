@@ -24,6 +24,10 @@ class LimitReached(Exception):
     pass
 
 
+class SessionLimitReached(LimitReached):
+    """The requested operation cannot fit in the remaining session budget."""
+
+
 class Action:
     def __init__(self, limits: Limits, session: Usage):
         self.limits = limits
@@ -32,7 +36,7 @@ class Action:
 
     def request(self) -> None:
         if self.session.requests >= self.limits.session_requests:
-            raise LimitReached("Session request limit")
+            raise SessionLimitReached("Session request limit")
         if self.used.requests >= self.limits.action_requests:
             raise LimitReached("Action request limit")
         self.require_bytes(1)
@@ -41,7 +45,7 @@ class Action:
 
     def require_bytes(self, size: int) -> None:
         if size > self.limits.session_bytes - self.session.bytes:
-            raise LimitReached("Session byte limit")
+            raise SessionLimitReached("Session byte limit")
         if size > self.limits.action_bytes - self.used.bytes:
             raise LimitReached("Action byte limit")
 
