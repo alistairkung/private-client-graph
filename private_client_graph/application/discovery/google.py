@@ -149,8 +149,9 @@ class WorkspaceReader:
         return value
 
     def mail_page(self, terms: str, token: str, action: Action) -> dict:
+        # With only IDs and a cursor, Google can return HTTP 204 for an empty terminal page.
         params = {"q": self.scope.gmail_query(f'"{literal(terms)}"'), "labelIds": self.scope.label,
-                  "fields": "nextPageToken,messages(id)", "maxResults": "100"}
+                  "fields": "nextPageToken,messages(id),resultSizeEstimate", "maxResults": "100"}
         if token:
             params["pageToken"] = token
         page = self._json(self.messages, params, action)
