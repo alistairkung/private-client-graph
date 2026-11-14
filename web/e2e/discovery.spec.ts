@@ -14,9 +14,17 @@ test("sixth original email leads to an approved PDF and publicly reopened Eviden
   });
   try {
     await page.goto("/auth/login?next=/app/matter-proposals/new");
-    await page
-      .getByRole("button", { name: "Discover Workspace Sources" })
-      .click();
+    const upload = page.getByRole("radio", { name: "Upload PDFs" });
+    const workspace = page.getByRole("radio", { name: "Search Workspace" });
+    await expect(upload).toBeChecked();
+    await page.getByLabel("External Matter reference", { exact: true }).fill(reference);
+    await upload.focus();
+    await page.keyboard.press("ArrowRight");
+    await expect(workspace).toBeChecked();
+    await workspace.press("ArrowLeft");
+    await expect(upload).toBeChecked();
+    await expect(page.getByLabel("External Matter reference", { exact: true })).toHaveValue(reference);
+    await workspace.check();
     await page.getByRole("button", { name: "Start private discovery" }).click();
     await expect(page.getByRole("status")).toContainText("5 inspected");
     await page.getByRole("button", { name: "Search for Alice Reed" }).click();
@@ -141,7 +149,7 @@ test("inline reconnection after expiry opens a fresh search", async ({
 
   await page.goto("/auth/login?next=/app/matter-proposals/new");
   await page
-    .getByRole("button", { name: "Discover Workspace Sources" })
+    .getByRole("radio", { name: "Search Workspace" })
     .click();
   await page.getByRole("button", { name: "Connect Google Workspace" }).click();
   await expect(

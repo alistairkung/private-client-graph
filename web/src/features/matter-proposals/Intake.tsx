@@ -9,6 +9,7 @@ import { useAccess, WriteGate } from "../../shared/access";
 import { admissionError, addSources } from "./uploads";
 import { WorkspaceConnection } from "./discovery/WorkspaceConnection";
 import { WorkspaceDiscovery } from "./discovery/WorkspaceDiscovery";
+import { SourceMethod } from "./SourceMethod";
 import { FictionalPrompt } from "./FictionalPrompt";
 import {
   forgetSessionState,
@@ -23,6 +24,7 @@ export function Intake() {
   const { t } = useLocale();
   const { access, sessionEnded } = useAccess();
   const canWrite = access?.can_write === true;
+  const canChooseMethod = canWrite && access?.workspace_discovery === true;
   const [reference, setReference] = useSessionState("intake:reference", "");
   const [title, setTitle] = useSessionState("intake:title", "");
   const [sources, setSources] = useSessionState<SourceUpload[]>(
@@ -101,21 +103,20 @@ export function Intake() {
     }
   }
   return (
-    <div className={"page intake-page" + (discover ? " discovery-page" : "")}>
+    <div className={"page intake-page" + (canChooseMethod ? " discovery-page" : "")}>
       <a className="back-link" href="/app">
         {t("Back to Matters")}
       </a>
       <div className="page-heading">
         <div>
-          <h1>{t(discover ? "Private Workspace discovery" : "New proposal")}</h1>
+          <h1>{t("New proposal")}</h1>
           <p>
             {t(
-              discover ? "Find and review Sources for a new Matter Proposal." : "Bring synthetic sources together. Review the relationships before accepting a Matter.",
+              "Bring synthetic sources together. Review the relationships before accepting a Matter.",
             )}
           </p>
         </div>
       </div>
-      {!discover && <p className="public-source-notice">{t("Saving a proposal publishes every Source title and its entire extracted text, proposed relationships and Matter reference to anyone, before confirmation. Discard cannot retract copies already read or downloaded.")}</p>}
       {!canWrite && <div className="intake-access" id="intake-access">
         {discover && sessionEnded ? (
           <div className="notice error" role="alert">
@@ -131,12 +132,10 @@ export function Intake() {
           </>
         )}
       </div>}
-      {canWrite && access?.workspace_discovery && (
-        <button className={discover ? "text-button discovery-return" : "button"} disabled={busy || discoveryBusy} onClick={() => setDiscover(!discover)}>
-          {t(discover ? "Return to PDF upload" : "Discover Workspace Sources")}
-        </button>
+      {canChooseMethod && (
+        <SourceMethod discover={discover} disabled={busy || discoveryBusy} change={setDiscover} />
       )}
-      {canWrite && access?.workspace_discovery && discover ? (access.workspace_connection ? <WorkspaceConnection onBusy={setDiscoveryBusy} /> : <WorkspaceDiscovery onBusy={setDiscoveryBusy} />) : <div className="intake-layout">
+      {canChooseMethod && discover ? (access.workspace_connection ? <WorkspaceConnection onBusy={setDiscoveryBusy} /> : <WorkspaceDiscovery onBusy={setDiscoveryBusy} />) : <div className="intake-layout">
         <form onSubmit={submit} className="intake-form" aria-describedby={!canWrite ? "intake-access" : undefined}>
           <fieldset disabled={busy || !canWrite}>
             <legend>{t("Matter identity")}</legend>
@@ -277,6 +276,7 @@ export function Intake() {
           </fieldset>
           <fieldset disabled={busy || !canWrite}>
             <legend>{t("Review and submit")}</legend>
+            <p className="intake-publication-note">{t("Saving a proposal publishes every Source title and its entire extracted text, proposed relationships and Matter reference to anyone, before confirmation. Discard cannot retract copies already read or downloaded.")}</p>
             <label className="consent">
               <input
                 type="checkbox"

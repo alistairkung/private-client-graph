@@ -1,12 +1,6 @@
 .discovery-page {
   max-width: 1220px;
 }
-.discovery-page .page-heading {
-  margin-bottom: 4px;
-}
-.discovery-return {
-  margin-bottom: 12px;
-}
 .workspace-connection,
 .discovery {
   font-family: "Public Sans", system-ui, sans-serif;

@@ -49,8 +49,10 @@ export const discoveryCatalogue: Record<string, string> = {
   "Reconnect": "重新连接",
   "Google will request read-only access to Gmail and Drive. PCG searches only approved synthetic items in these locations.": "Google 将请求 Gmail 和云端硬盘的只读权限。PCG 仅在以下位置搜索已获批准的合成资料。",
   "Checking Workspace access…": "正在检查 Workspace 访问权限…",
-  "Return to PDF upload": "返回 PDF 上传",
-  "Discover Workspace Sources": "查找 Workspace 来源",
+  "How would you like to add Sources?": "您想如何添加来源？",
+  "Upload PDFs": "上传 PDF",
+  "Choose files from your device.": "从设备中选择文件。",
+  "Find Sources in Gmail and Google Drive.": "在 Gmail 和 Google 云端硬盘中查找来源。",
   "Private Workspace discovery": "私密 Workspace 检索",
   "Starting discovery authorizes private inspection of matching synthetic content in the selected scope. Review and publication require separate approval.":
     "开始检索即授权在选定范围内私密查看匹配的合成内容。审阅和发布需要另行批准。",

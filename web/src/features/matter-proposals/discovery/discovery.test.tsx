@@ -205,7 +205,7 @@ it("clears a private preview and offers sign-in after the server forgets the log
     }),
   );
   await user.click(
-    await screen.findByRole("button", { name: "Discover Workspace Sources" }),
+    await screen.findByRole("radio", { name: "Search Workspace" }),
   );
   fetch.mockResolvedValueOnce(
     respond({
