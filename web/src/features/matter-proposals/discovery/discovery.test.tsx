@@ -48,6 +48,21 @@ it("merges hits by provider and ID and keeps rejected mail out of every result s
   ]);
 });
 
+it("shows the search indicator only while discovery is pending", async () => {
+  let finish!: (response: Response) => void;
+  vi.spyOn(globalThis, "fetch").mockImplementationOnce(
+    () => new Promise<Response>((resolve) => { finish = resolve; }),
+  );
+  render(<WorkspaceDiscovery onBusy={() => {}} />);
+  await userEvent.click(screen.getByRole("button", { name: "Start private discovery" }));
+  const status = screen.getByRole("status");
+  expect(status).toHaveTextContent("Searching Workspace…");
+  expect(status.querySelector(".discovery-spinner")).toHaveAttribute("aria-hidden", "true");
+  finish(new Response(JSON.stringify({ session: "local", view })));
+  await screen.findByRole("heading", { name: "Select Sources" });
+  expect(status.querySelector(".discovery-spinner")).toBeNull();
+});
+
 it("reordering invalidates approval and a failed import requires another exact preview", async () => {
   const user = userEvent.setup();
   const post = vi.spyOn(globalThis, "fetch");
@@ -295,7 +310,7 @@ it("retries a failed connection status read without repeating a discovery action
   );
   await userEvent.click(retry);
   expect(
-    await screen.findByRole("button", { name: "Connect Google Workspace" }),
+    await screen.findByRole("button", { name: "Continue to Google" }),
   ).toBeEnabled();
   expect(fetch.mock.calls.map(([url]) => url)).toEqual(
     Array(2).fill("/api/matter-proposals/discovery/connection"),

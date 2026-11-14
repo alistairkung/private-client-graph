@@ -151,7 +151,12 @@ test("inline reconnection after expiry opens a fresh search", async ({
   await page
     .getByRole("radio", { name: "Search Workspace" })
     .click();
-  await page.getByRole("button", { name: "Connect Google Workspace" }).click();
+  const connect = page.getByRole("button", { name: "Continue to Google" });
+  await expect(connect).toBeVisible();
+  await expect(page.getByRole("radio", { name: "Search Workspace" })).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(connect).toBeFocused();
+  await connect.press("Enter");
   await expect(
     page.getByRole("heading", { name: "Workspace connected" }),
   ).toBeFocused();

@@ -166,6 +166,7 @@ export function WorkspaceDiscovery({
         role="status"
         aria-atomic="true"
       >
+        {busy && <span className="discovery-spinner" aria-hidden="true" />}
         {busy
           ? t(operationLabel)
           : view &&

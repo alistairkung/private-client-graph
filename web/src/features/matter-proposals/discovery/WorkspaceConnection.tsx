@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import { useLocale } from "../../../shared/locale";
 import { RequestFailure } from "../../../shared/api";
+import { Icon } from "../../../shared/Icon";
 import { ErrorNotice } from "../../../shared/Feedback";
 import { action } from "./api";
 import { WorkspaceDiscovery } from "./WorkspaceDiscovery";
@@ -52,6 +53,8 @@ export function WorkspaceConnection({
   const [busy, setBusy] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const heading = useRef<HTMLHeadingElement>(null);
+  const connectButton = useRef<HTMLButtonElement>(null);
+  const wasConnected = useRef(false);
   const revision = useRef(0);
   const [search, setSearch] = useState(0);
   const mounted = useRef(true);
@@ -116,8 +119,12 @@ export function WorkspaceConnection({
     return () => window.clearTimeout(timer);
   }, [status?.expires]);
   useEffect(() => {
-    if (status) heading.current?.focus();
-  }, [status?.connected]);
+    if (!status) return;
+    if (status.connected && !wasConnected.current) heading.current?.focus();
+    if (!status.connected && (wasConnected.current || prompt || attempt > 0))
+      connectButton.current?.focus();
+    wasConnected.current = status.connected;
+  }, [status?.connected, prompt, attempt]);
   async function connect() {
     setBusy(true);
     onBusy(true);
@@ -148,53 +155,83 @@ export function WorkspaceConnection({
   }
   return (
     <>
-      <section className={"workspace-connection" + (status?.connected ? " is-connected" : "")} aria-busy={busy}>
-        <h2 ref={heading} tabIndex={-1}>
-          {t(
-            status?.connected
-              ? "Workspace connected"
-              : "Connect Google Workspace",
-          )}
-        </h2>
-        {status && (
+      <section
+        className={
+          "workspace-connection" +
+          (status?.connected
+            ? " is-connected"
+            : status
+              ? " connection-setup"
+              : "")
+        }
+        aria-busy={busy}
+      >
+        {status?.connected ? (
           <>
+            <h2 ref={heading} tabIndex={-1}>
+              {t("Workspace connected")}
+            </h2>
             <p className="connection-account">
               {status.account} · {t("Read-only access for this session")}
             </p>
-            {status.connected ? (
-              <motion.div
-                key="connected"
-                initial={{ opacity: reduced ? 1 : 0.4 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: reduced ? 0 : 0.16 }}
-              >
-                <button disabled={busy} onClick={disconnect}>
-                  {t("Disconnect")}
-                </button>
-              </motion.div>
-            ) : (
-              <>
+            <motion.div
+              key="connected"
+              initial={{ opacity: reduced ? 1 : 0.4 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: reduced ? 0 : 0.16 }}
+            >
+              <button disabled={busy} onClick={disconnect}>
+                {t("Disconnect")}
+              </button>
+            </motion.div>
+          </>
+        ) : (
+          status && (
+            <>
+              <div className="connection-intro">
+                <h2>{t("Connect your Workspace")}</h2>
                 <p>
                   {t(
-                    "Google will request read-only access to Gmail and Drive. PCG searches only approved synthetic items in these locations.",
+                    "Use the synthetic account shown here to grant read-only access to Gmail and Drive for this session.",
                   )}
                 </p>
+              </div>
+              <dl className="connection-scope">
+                <div>
+                  <dt>{t("Google account")}</dt>
+                  <dd>{status.account}</dd>
+                </div>
+                <div>
+                  <dt>{t("Drive folder")}</dt>
+                  <dd>{status.folder_name}</dd>
+                </div>
+                <div>
+                  <dt>{t("Gmail label")}</dt>
+                  <dd>{status.label_name}</dd>
+                </div>
+              </dl>
+              <div className="connection-action">
                 <p>
-                  {t("Drive folder")} · {status.folder_name}
-                  <br />
-                  {t("Gmail label")} · {status.label_name}
+                  {t(
+                    "Only approved synthetic items in these locations can be searched.",
+                  )}
                 </p>
-                {prompt && <p role="status">{t(prompt[0])}</p>}
+                {prompt && (
+                  <p className="connection-recovery" role="status">
+                    {t(prompt[0])}
+                  </p>
+                )}
                 <button
                   className="button primary"
+                  ref={connectButton}
                   disabled={busy}
                   onClick={connect}
                 >
-                  {t(prompt?.[1] ?? "Connect Google Workspace")}
+                  {t(prompt?.[1] ?? "Continue to Google")} <Icon name="arrow" />
                 </button>
-              </>
-            )}
-          </>
+              </div>
+            </>
+          )
         )}
         {!status && !error && (
           <p role="status">{t("Checking Workspace access…")}</p>
