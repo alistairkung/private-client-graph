@@ -53,6 +53,16 @@ export interface Preview {
   token: string;
   sources: { id: string; title: string; text: string }[];
 }
+export interface PreviewProgress {
+  continuation: string;
+  completed: number;
+  total: number;
+}
+
+export function candidateKey(item: Candidate) {
+  return item.kind + ":" + item.id;
+}
+
 export interface FollowUp extends Hits {
   revision: number;
   query: string;

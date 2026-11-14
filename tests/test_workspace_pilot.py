@@ -230,5 +230,5 @@ def test_anonymous_pilot_has_no_discovery_capability_or_private_reads(pilot):
     _, app = pilot
     anonymous = TestClient(app, base_url="https://testserver")
     assert "workspace_discovery" not in anonymous.get("/api/access").json()
-    for path in ("connection", "connect", "email", "preview", "import"):
+    for path in ("connection", "connect", "email", "preview", "preview-next", "import"):
         assert post(anonymous, path).status_code == 401

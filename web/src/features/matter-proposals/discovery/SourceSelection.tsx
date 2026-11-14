@@ -1,13 +1,15 @@
 import type { Ref } from "react";
 import { Icon } from "../../../shared/Icon";
 import { useLocale } from "../../../shared/locale";
-import type { Candidate } from "./api";
+import { candidateKey, type Candidate } from "./api";
 
 export function SourceSelection({
   headingRef,
   options,
   selected,
   change,
+  bulkSeen,
+  onBulk,
   openEmail,
   read,
 }: {
@@ -15,11 +17,17 @@ export function SourceSelection({
   options: Candidate[];
   selected: Candidate[];
   change: (items: Candidate[]) => void;
+  bulkSeen?: Set<string>;
+  onBulk: (items: Candidate[]) => void;
   openEmail: (candidate: Candidate) => void;
   read: () => void;
 }) {
   const { t } = useLocale();
   const groups = [...new Set(options.map((item) => item.followUp))].reverse();
+  const selectedKeys = new Set(selected.map(candidateKey));
+  const available = new Map(options.map(item => [candidateKey(item), item]));
+  const additions = options.filter(item => !selectedKeys.has(candidateKey(item)) && !bulkSeen?.has(candidateKey(item)));
+  const removed = selected.filter(item => !available.has(candidateKey(item)));
   function move(index: number) {
     const next = selected.slice();
     [next[index - 1], next[index]] = [next[index], next[index - 1]];
@@ -30,9 +38,21 @@ export function SourceSelection({
       <h2 ref={headingRef} tabIndex={-1}>
         {t("Select Sources")}
       </h2>
-      <p className="discovery-caption">
-        {t("{count} of 5 selected", { count: selected.length })}
-      </p>
+      <div className="discovery-selection-tools">
+        <span className="discovery-caption">{t("{count} selected", { count: selected.length })}</span>
+        {additions.length > 0 && (
+          <button onClick={() => onBulk(additions)}>
+            {bulkSeen
+              ? t(additions.length === 1 ? "Add 1 new result" : "Add {count} new results", { count: additions.length })
+              : t(options.length === 1 ? "Select 1 result" : "Select all {count} results", { count: options.length })}
+          </button>
+        )}
+      </div>
+      {removed.map(item => (
+        <button key={candidateKey(item)} onClick={() => change(selected.filter(s => s !== item))}>
+          {t("Remove unavailable Source · {title}", { title: item.title })}
+        </button>
+      ))}
       {!options.length && <p>{t("No Sources available to select.")}</p>}
       {groups.map((group) => (
         <fieldset className="discovery-group" key={JSON.stringify([group])}>
@@ -44,9 +64,8 @@ export function SourceSelection({
           {options
             .filter((item) => item.followUp === group)
             .map((item) => {
-              const match = (s: Candidate) =>
-                s.kind === item.kind && s.id === item.id;
-              const included = selected.some(match);
+              const key = candidateKey(item);
+              const included = selectedKeys.has(key);
               const kind = t(item.kind === "pdf" ? "PDF" : "Email");
               return (
                 <div key={item.kind + item.id} className="discovery-row">
@@ -54,12 +73,11 @@ export function SourceSelection({
                     id={"source-" + item.kind + "-" + item.id}
                     type="checkbox"
                     checked={included}
-                    disabled={!included && selected.length >= 5}
                     aria-label={item.title + " · " + kind}
                     onChange={() =>
                       change(
                         included
-                          ? selected.filter((s) => !match(s))
+                          ? selected.filter((s) => candidateKey(s) !== key)
                           : [...selected, item],
                       )
                     }
@@ -84,15 +102,14 @@ export function SourceSelection({
         </fieldset>
       ))}
       {selected.length > 1 && (
-        <div className="discovery-order">
-          <h3>{t("Preview order")}</h3>
+        <details className="discovery-order">
+          <summary>{t("Preview order")}</summary>
           <ol>
             {selected.map((item, index) => (
               <li key={item.kind + item.id}>
                 <span>
                   {index + 1}.{" "}
-                  {options.find((s) => s.kind === item.kind && s.id === item.id)
-                    ?.title ?? item.title}
+                  {available.get(candidateKey(item))?.title ?? item.title}
                 </span>
                 {index > 0 && (
                   <button
@@ -105,11 +122,11 @@ export function SourceSelection({
               </li>
             ))}
           </ol>
-        </div>
+        </details>
       )}
       <button
         className="button primary discovery-next"
-        disabled={!selected.length}
+        disabled={!selected.length || removed.length > 0}
         onClick={read}
       >
         {t("Preview exact Sources")} <Icon name="arrow" />

@@ -51,22 +51,28 @@ test("sixth original email leads to an approved PDF and publicly reopened Eviden
     await expect(page.getByRole("button", { name: "Preview exact Sources" })).toBeDisabled();
     await expect(page.getByRole("button", { name: "Search for Mara Voss" })).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Search for Cora Patel" })).toHaveCount(0);
+    await page.getByRole("button", { name: "Select all 6 results" }).click();
+    const dispatch = page.getByLabel("Uninspected email 6 · Email", { exact: true });
+    await dispatch.uncheck();
     releaseBatch();
     await expect(page.getByText("Original search complete.")).toBeVisible();
     await expect(page.getByRole("blockquote").first()).toHaveText(
       "Mara Voss will circulate the executed appointment separately.",
     );
     await page.getByRole("button", { name: "Search for Mara Voss" }).click();
-    await page.getByLabel("Mara Voss appointment · PDF").check();
-    await page.getByLabel("Alder Trust correspondence 06 · Email").check();
-    await page.getByRole("button", { name: "Move Alder Trust correspondence 06 up" }).last().click();
+    await page.getByRole("button", { name: "Add 4 new results" }).click();
+    await page.getByLabel("Alder Trust parking minutes · PDF").uncheck();
+    await expect(page.getByText("8 selected", { exact: true })).toBeVisible();
+    await page.locator("summary").filter({ hasText: "Preview order" }).click();
+    await page.getByRole("button", { name: "Move Mara Voss appointment up" }).click();
     await page.getByRole("button", { name: "Preview exact Sources" }).click();
-    await expect(page.locator(".discovery article pre").nth(1)).toHaveText(
-      "Alice Example is the parent of Ben Example.",
-    );
-    const preview = await page
-      .locator(".discovery article pre")
-      .allTextContents();
+    const articles = page.locator(".discovery article");
+    await expect(articles).toHaveCount(8);
+    const titles = await articles.locator("h3").allTextContents();
+    const preview = await articles.locator("pre").allTextContents();
+    const appointment = titles.indexOf("Mara Voss appointment");
+    expect(appointment).toBeGreaterThanOrEqual(5);
+    expect(preview[appointment]).toBe("Alice Example is the parent of Ben Example.");
     await page.getByLabel("External Matter reference").fill(reference);
     await page.getByLabel("Matter title").fill("Alder Trust review");
     await expect(
@@ -87,20 +93,15 @@ test("sixth original email leads to an approved PDF and publicly reopened Eviden
     const proposal = await (
       await reader.request.get(page.url().replace("/app/", "/api/"))
     ).json();
-    expect(proposal.state.sources).toEqual([
-      {
-        id: "source_001",
-        title: "Alder Trust correspondence 06",
-        text: preview[0],
-      },
-      { id: "source_002", title: "Mara Voss appointment", text: preview[1] },
-    ]);
-    expect(proposal.state.evidence[0]).toMatchObject({
-      source_id: "source_002",
-      supporting_text: preview[1],
-    });
+    const sources = titles.map((title, index) => ({
+      id: "source_" + String(index + 1).padStart(3, "0"), title, text: preview[index],
+    }));
+    expect(proposal.state.sources).toEqual(sources);
+    expect(proposal.state.evidence).toContainEqual(expect.objectContaining({
+      source_id: sources[appointment].id, supporting_text: preview[appointment],
+    }));
     expect(JSON.stringify(proposal)).not.toMatch(
-      /folder-1|alder-label|signed notice|synthetic@example|shortlist/,
+      /folder-1|alder-label|parking minutes|Cora Patel will circulate|synthetic@example|shortlist/,
     );
     await page
       .getByRole("button", { name: "Confirm proposal", exact: true })
@@ -116,7 +117,8 @@ test("sixth original email leads to an approved PDF and publicly reopened Eviden
     ).toBeVisible();
     await reopened.getByRole("tab", { name: "List", exact: true }).click();
     await reopened.locator("#relationship-0").click();
-    await expect(reopened.locator(".source-text mark")).toHaveText(preview[1]);
+    await reopened.locator(".source-tabs button").filter({ hasText: "Mara Voss appointment" }).click();
+    await expect(reopened.locator(".source-text mark")).toHaveText(preview[appointment]);
     await expect(
       reopened.locator(".source-tabs button[aria-pressed=true]"),
     ).toContainText("Mara Voss appointment");

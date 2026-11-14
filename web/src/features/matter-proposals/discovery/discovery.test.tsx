@@ -161,6 +161,7 @@ it("reordering invalidates approval and a failed import requires another exact p
   expect(screen.queryByRole("heading", { name: "Select Sources" })).toBeNull();
   await user.click(screen.getByRole("button", { name: "Edit selection" }));
   expect(screen.getByRole("heading", { name: "Select Sources" })).toHaveFocus();
+  await user.click(screen.getByText("Preview order"));
   await user.click(screen.getByRole("button", { name: "Move Deed up" }));
   expect(screen.queryByText("Create public proposal")).toBeNull();
   await preview("two");
@@ -243,11 +244,12 @@ it("keeps the selection editable when a single Source becomes unavailable", asyn
   await user.click(screen.getByLabelText("Deed · PDF"));
   post.mockResolvedValueOnce(
     response(
-      { error: { code: "source_unavailable", message: "", retryable: false } },
+      { error: { code: "source_unavailable", message: "", retryable: false, source_number: 2 } },
       409,
     ),
   );
   await user.click(screen.getByText("Preview exact Sources"));
+  expect(await screen.findByText("Check Source 2 · Deed")).toBeVisible();
   await user.click(
     await screen.findByRole("button", { name: "Review selection" }),
   );
@@ -408,4 +410,27 @@ it("retries a failed connection status read without repeating a discovery action
   expect(fetch.mock.calls.map(([url]) => url)).toEqual(
     Array(2).fill("/api/matter-proposals/discovery/connection"),
   );
+});
+
+it("reports private batch progress and only presents the completed preview for approval", async () => {
+  const user = userEvent.setup();
+  const files = Array.from({ length: 6 }, (_, index) => ({ id: String(index), title: "File " + index }));
+  const search = { ...view, files, returned_messages: [], inspected: [], inspected_titles: {} };
+  let finish!: (response: Response) => void;
+  const post = vi.spyOn(globalThis, "fetch")
+    .mockResolvedValueOnce(Response.json({ session: "local", view: search }))
+    .mockResolvedValueOnce(Response.json({ continuation: "next", completed: 5, total: 6 }))
+    .mockImplementationOnce(() => new Promise<Response>(resolve => { finish = resolve; }));
+  render(<WorkspaceDiscovery onBusy={() => {}} />);
+  await user.click(screen.getByText("Start private discovery"));
+  await user.click(screen.getByText("Select all 6 results"));
+  await user.click(screen.getByText("Preview exact Sources"));
+  expect(screen.getByText("Prepared 5 of 6 Sources…")).toBeVisible();
+  expect(screen.queryByLabelText(/I approve publishing/)).toBeNull();
+  expect(post.mock.calls[2][1]?.body).toBe(JSON.stringify({ session: "local", continuation: "next" }));
+  await act(async () => finish(Response.json({
+    token: "reviewed", sources: files.map(file => ({ ...file, text: file.title + " text" })),
+  })));
+  expect(screen.getByText("File 5 text")).toBeVisible();
+  expect(screen.getByLabelText(/I approve publishing/)).not.toBeChecked();
 });

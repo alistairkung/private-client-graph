@@ -6,7 +6,7 @@ import pytest
 from local_development.workspace import message_response
 
 from private_client_graph.application.discovery import DiscoverySession, WorkspaceScope
-from private_client_graph.application.discovery.collection import Candidate, CollectionReview
+from private_client_graph.application.discovery.collection import Candidate, CollectionReview, PreviewProgress, ReviewPreview
 from private_client_graph.application.proposal_errors import ProposalFailure
 
 from .exchanges import CORPUS, FILES, MAIL, ROOT, Exchanges, file
@@ -162,11 +162,11 @@ def test_selection_limits_and_preview_replacement(monkeypatch):
     monkeypatch.setattr(collection, "MAX_SOURCE_CHARACTERS", len(CORPUS["messages"][5]["body"]))
     message(google)
     pdf(google)
-    with pytest.raises(ProposalFailure, match="fewer or shorter"):
+    with pytest.raises(ProposalFailure, match="100,000 characters"):
         review.preview([EMAIL, PDF])
     monkeypatch.setattr(collection, "MAX_TOTAL_PDF_BYTES", 10)
     pdf(google)
-    with pytest.raises(ProposalFailure, match="fewer or shorter"):
+    with pytest.raises(ProposalFailure, match="10 MiB"):
         review.preview([PDF])
     assert not google.steps
 
@@ -207,3 +207,155 @@ def test_binary_digest_at_pdf_parser_boundary(monkeypatch):
     pdf(google)
     review.approve(preview.token)
     assert digests == [CORPUS["appointment_media"]["sha256"]] * 2
+
+
+def test_full_original_collection_plus_followup_can_be_reviewed_and_revalidated():
+    google = Exchanges()
+    keys = [f"mail{i:02}" for i in range(50)]
+    row = CORPUS["messages"][5]
+
+    def queue_mail(key):
+        for fmt in ("metadata", "full"):
+            google.expect(MAIL + "/" + key, {"format": fmt}, message_response({**row, "id": key}, fmt))
+
+    session = DiscoverySession(google.http, WorkspaceScope("synthetic@example.test", "alder-label", "folder-1"))
+    for offset in range(0, 50, 5):
+        if offset == 5:
+            google.list_files("Alder Trust", [])
+        google.list_mail("Alder Trust", keys[offset:offset + 5],
+                         token=str(offset) if offset else None,
+                         next_token=str(offset + 5) if offset < 45 else None)
+        for key in keys[offset:offset + 5]:
+            queue_mail(key)
+        view = session.inspect_more() if offset else session.start("Alder Trust")
+    google.list_mail("Mara Voss", [])
+    google.list_files("Mara Voss", ["appointment"])
+    session.approve(view.revision, "Mara Voss")
+
+    selected = [Candidate(kind="email", id=key) for key in reversed(keys)] + [PDF]
+    review = CollectionReview(session)
+    for candidate in selected[:-1]:
+        queue_mail(candidate.id)
+    pdf(google)
+    result = review.preview(selected)
+    for count in range(5, 51, 5):
+        assert isinstance(result, PreviewProgress)
+        assert (result.completed, result.total) == (count, 51)
+        with pytest.raises(ProposalFailure, match="Preview the selected Sources again"):
+            review.approve(result.continuation)
+        used = result.continuation
+        result = review.continue_preview(used)
+        with pytest.raises(ProposalFailure):
+            review.continue_preview(used)
+    assert isinstance(result, ReviewPreview)
+    for candidate in selected[:-1]:
+        queue_mail(candidate.id)
+    pdf(google)
+    sources = review.approve(result.token)
+    assert sources == result.sources
+    assert len(sources) == 51
+    assert (sources[-1].id, sources[-1].title) == ("source_051", "Mara Voss appointment")
+    assert not google.steps
+
+
+@pytest.mark.parametrize("denied", [False, True], ids=["changed", "access-lost"])
+def test_last_batch_identifies_failed_item_and_allows_a_revised_collection(denied):
+    google = Exchanges()
+    keys = ["01", "02", "03", "04", "05", "06"]
+
+    def queue_message(key, **kwargs):
+        google.message(key, "metadata")
+        google.message(key, "full", **kwargs)
+
+    google.list_mail("Alder Trust", keys[:5], next_token="page2")
+    for key in keys[:5]:
+        queue_message(key)
+    session = DiscoverySession(google.http, WorkspaceScope("synthetic@example.test", "alder-label", "folder-1"))
+    session.start("Alder Trust")
+    google.list_files("Alder Trust", [])
+    google.list_mail("Alder Trust", keys[5:], token="page2")
+    queue_message("06")
+    session.inspect_more()
+    review = CollectionReview(session)
+    selected = [Candidate(kind="email", id=key) for key in keys]
+    for _ in range(2):
+        for key in keys[:5]:
+            queue_message(key)
+    first = review.preview(selected)
+    restarted = review.preview(selected)
+    assert isinstance(first, PreviewProgress) and isinstance(restarted, PreviewProgress)
+    with pytest.raises(ProposalFailure):
+        review.continue_preview(first.continuation)
+    queue_message("06")
+    ready = review.continue_preview(restarted.continuation)
+    assert isinstance(ready, ReviewPreview)
+    for key in keys[:5]:
+        queue_message(key)
+    if denied:
+        google.message("06", "metadata", labels=["INBOX"])
+    else:
+        queue_message("06", body="Changed after review")
+    with pytest.raises(ProposalFailure) as changed:
+        review.approve(ready.token)
+    assert changed.value.error.source_number == 6
+    assert changed.value.error.code == ("source_unavailable" if denied else "source_changed")
+    with pytest.raises(ProposalFailure):
+        review.approve(ready.token)
+    for _ in range(2):
+        for key in keys[:5]:
+            queue_message(key)
+    revised = review.preview(selected[:-1])
+    assert isinstance(revised, ReviewPreview)
+    assert review.approve(revised.token) == ready.sources[:-1]
+    assert not google.steps
+
+
+@pytest.mark.parametrize("over_limit", ["pdf", "characters"])
+def test_final_batch_enforces_whole_collection_limit_without_a_publishable_prefix(monkeypatch, over_limit):
+    from private_client_graph.application.discovery import collection
+    from local_development.workspace import fixture_client
+
+    session = DiscoverySession(fixture_client(), WorkspaceScope("synthetic@example.test", "alder-label", "folder-1"))
+    view = session.start("Alder Trust")
+    while view.can_inspect_more:
+        view = session.inspect_more()
+    mail = [Candidate(kind="email", id=key) for key in view.inspected[:4]]
+    selected = [Candidate(kind="pdf", id="deed"), *mail, Candidate(kind="pdf", id="minutes")]
+    # Both synthetic listing fixtures return the original, identical PDF bytes.
+    size = len((ROOT / CORPUS["appointment_media"]["path"]).read_bytes())
+    if over_limit == "pdf":
+        monkeypatch.setattr(collection, "MAX_TOTAL_PDF_BYTES", size * 2 - 1)
+    else:
+        texts = {item["id"]: item["body"] for item in CORPUS["messages"]}
+        first_batch_chars = len("Alice Example is the parent of Ben Example.") + sum(len(texts[item.id]) for item in mail)
+        monkeypatch.setattr(collection, "MAX_SOURCE_CHARACTERS", first_batch_chars)
+    review = CollectionReview(session)
+    progress = review.preview(selected)
+    assert isinstance(progress, PreviewProgress)
+    with pytest.raises(ProposalFailure) as oversized:
+        review.continue_preview(progress.continuation)
+    assert oversized.value.error.code == ("pdf_too_large" if over_limit == "pdf" else "collection_text_limit")
+    with pytest.raises(ProposalFailure):
+        review.approve(progress.continuation)
+    with pytest.raises(ProposalFailure):
+        review.continue_preview(progress.continuation)
+
+
+def test_repeated_previews_share_a_finite_review_budget():
+    from private_client_graph.application.discovery import Limits
+
+    google = Exchanges()
+    google.list_mail("Alder Trust", ["06"])
+    message(google)
+    google.list_files("Alder Trust", [])
+    session = DiscoverySession(google.http, WorkspaceScope("synthetic@example.test", "alder-label", "folder-1"),
+                               Limits(action_requests=4))
+    session.start("Alder Trust")
+    review = CollectionReview(session)
+    for _ in range(6):
+        message(google)
+        review.preview([EMAIL])
+    with pytest.raises(ProposalFailure) as exhausted:
+        review.preview([EMAIL])
+    assert exhausted.value.error.code == "review_limit"
+    assert not google.steps

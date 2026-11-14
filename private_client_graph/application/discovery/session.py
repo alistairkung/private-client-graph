@@ -1,5 +1,5 @@
 """Private in-process discovery session. A trusted caller supplies its authorized scope and HTTP client."""
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from hashlib import sha256
 from threading import RLock
 
@@ -114,6 +114,7 @@ class DiscoverySession:
         self._reader = WorkspaceReader(http, scope, message_ids=message_ids, file_ids=file_ids)
         self._limits = limits
         self._usage = Usage()
+        self._review_usage = Usage()
         self._original: _Search | None = None
         self._drive_first = False
         self._texts: dict[str, str] = {}
@@ -234,6 +235,27 @@ class DiscoverySession:
 
     def new_action(self) -> Action:
         return Action(self._limits, self._usage)
+
+    def collection_candidates(self) -> set[tuple[str, str]]:
+        with self._lock:
+            original = self._original
+            if original is None:
+                return set()
+            mail = set(original.message_ids)
+            files = set(original.files)
+            for approval in self._approvals.values():
+                mail.update(approval.messages)
+                files.update(item.id for item in approval.files)
+            return ({("email", key) for key in mail - self._skipped - self._failed}
+                    | {("pdf", key) for key in files})
+
+    def review_action(self) -> Action:
+        # Budget one preview and revalidation, plus a second pair for a revised
+        # selection. Retries share the same ledger. Search has its own limits.
+        candidates = self.collection_candidates()
+        requests_per_pass = sum(2 if kind == "email" else 3 for kind, _ in candidates)
+        limits = replace(self._limits, session_requests=self._limits.action_requests + 4 * requests_per_pass)
+        return Action(limits, self._review_usage)
 
     def read_message(self, message_id: str, action: Action) -> MailPreview:
         with self._lock:

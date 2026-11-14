@@ -6,6 +6,8 @@ import { useLocale } from "../../../shared/locale";
 import {
   action,
   candidates,
+  candidateKey,
+  type PreviewProgress,
   type View,
   type EmailMessage,
   type Hits,
@@ -41,6 +43,8 @@ export function WorkspaceDiscovery({
   const [view, setView] = useState<View>();
   const [followups, setFollowups] = useState<FollowUp[]>([]);
   const [selected, setSelected] = useState<Candidate[]>([]);
+  const [bulkSeen, setBulkSeen] = useState<Set<string>>();
+  const [progress, setProgress] = useState<PreviewProgress>();
   const [preview, setPreview] = useState<Preview>();
   const [reading, setReading] = useState<EmailReading>();
   const [operationLabel, setOperationLabel] = useState("");
@@ -96,6 +100,7 @@ export function WorkspaceDiscovery({
       }
     } finally {
       if (mounted.current) {
+        setProgress(undefined);
         setOperationLabel("");
         onBusy(false);
       }
@@ -140,13 +145,17 @@ export function WorkspaceDiscovery({
     }
   }
   async function read() {
-    setPreview(undefined);
-    setPreview(
-      await action<Preview>("preview", {
-        session,
-        candidates: selected.map(({ kind, id }) => ({ kind, id })),
-      }),
-    );
+    let result = await action<Preview | PreviewProgress>("preview", {
+      session,
+      candidates: selected.map(({ kind, id }) => ({ kind, id })),
+    });
+    while (mounted.current && "continuation" in result) {
+      setProgress(result);
+      result = await action<Preview | PreviewProgress>("preview-next", {
+        session, continuation: result.continuation,
+      });
+    }
+    if (mounted.current && "token" in result) setPreview(result);
   }
   async function publish(external_reference: string, matter_title: string) {
     if (!preview) return;
@@ -166,6 +175,19 @@ export function WorkspaceDiscovery({
         t("Uninspected email {number}", { number }),
       )
     : [];
+  const failedNumber = error instanceof RequestFailure ? error.detail?.source_number : undefined;
+  const affected = failedNumber && selected[failedNumber - 1];
+  const operationStatus = progress
+    ? t("Prepared {completed} of {total} Sources…", { completed: progress.completed, total: progress.total })
+    : t(operationLabel);
+  function changeSelection(items: Candidate[]) {
+    // Manually excluded arrivals stay excluded when the next group is added.
+    if (bulkSeen && items.length < selected.length) {
+      setBulkSeen(new Set([...bulkSeen, ...selected.map(candidateKey)]));
+    }
+    setSelected(items);
+    setError(undefined);
+  }
   const latestFollowUp = followups.at(-1);
   const searchStatus = latestFollowUp
     ? t("{query} returned {mail} email hits and {pdf} PDF hits.", {
@@ -193,11 +215,12 @@ export function WorkspaceDiscovery({
         aria-atomic="true"
       >
         {busy && <span className="discovery-spinner" aria-hidden="true" />}
-        {busy
-          ? t(operationLabel)
-          : !preview && searchStatus}
+        {busy ? operationStatus : !preview && searchStatus}
       </p>
       {error != null && <ErrorNotice error={error} />}
+      {affected && failedNumber && (
+        <p>{t("Check Source {number} · {title}", { number: failedNumber, title: affected.title })}</p>
+      )}
       {scope &&
         error instanceof RequestFailure &&
         error.detail?.code === "source_unavailable" && (
@@ -255,7 +278,12 @@ export function WorkspaceDiscovery({
                 headingRef={selectionHeading}
                 options={options}
                 selected={selected}
-                change={setSelected}
+                change={changeSelection}
+                bulkSeen={bulkSeen}
+                onBulk={(items) => {
+                  setBulkSeen(new Set(options.map(candidateKey)));
+                  changeSelection([...selected, ...items]);
+                }}
                 openEmail={openEmail}
                 read={() => run("Preparing exact preview…", read)}
               />
