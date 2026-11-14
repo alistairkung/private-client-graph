@@ -4,16 +4,14 @@ import type { FollowUp, View } from "./api";
 
 export function SearchSummary({
   view,
-  folder,
-  label,
   inspect,
 }: {
   view: View;
-  folder: string;
-  label: string;
   inspect: () => void;
 }) {
   const { t } = useLocale();
+  const unreadable = view.failed.length + view.skipped.length;
+  const unfinished = view.pending.length > 0 || view.more_pages;
   return (
     <header className="discovery-summary">
       <div className="discovery-summary-top">
@@ -24,7 +22,6 @@ export function SearchSummary({
         <dl className="discovery-counts">
           {[
             [t("Emails returned"), view.returned_messages.length],
-            [t("Inspected"), view.inspected.length],
             [t("PDFs listed"), view.files.length],
           ].map(([name, count]) => (
             <div key={name}>
@@ -35,59 +32,26 @@ export function SearchSummary({
         </dl>
       </div>
       <div className="discovery-inspection">
-        <details>
-          <summary>{t("Inspection details")}</summary>
-          <dl className="discovery-scope">
-            <div>
-              <dt>{t("Drive folder")}</dt>
-              <dd>{folder}</dd>
-            </div>
-            <div>
-              <dt>{t("Gmail label")}</dt>
-              <dd>{label}</dd>
-            </div>
-            <div>
-              <dt>{t("Gmail dates (UTC)")}</dt>
-              <dd>
-                {view.scope.first_day || t("Any start")} –{" "}
-                {view.scope.last_day || t("Any end")}
-              </dd>
-            </div>
-          </dl>
-          <ul>
-            {view.inspected.map((id) => (
-              <li key={id}>{view.inspected_titles[id]}</li>
-            ))}
-          </ul>
-          <p>
-            {t("{pending} pending · {skipped} skipped · {failed} failed", {
-              pending: view.pending.length,
-              skipped: view.skipped.length,
-              failed: view.failed.length,
-            })}
-          </p>
-          <p>
-            {t("At this inspection: {requests} requests, {bytes} bytes.", {
-              requests: view.requests,
-              bytes: view.bytes,
-            })}
-          </p>
-        </details>
         <div>
-          <p>
-            {t(
-              view.more_pages
-                ? "More original result pages remain."
-                : "All original result pages returned.",
-            )}
-          </p>
-          {view.stop_reason && <p>{t(view.stop_reason)}</p>}
-          {view.can_inspect_more && (
-            <button onClick={inspect}>
-              {t("Inspect more original results")}
-            </button>
+          {view.returned_messages.length > 0 && (
+            <p>{t("Checked {read} of {total} emails for leads.", {
+              read: view.inspected.length, total: view.returned_messages.length,
+            })}</p>
+          )}
+          {unreadable > 0 && (
+            <p>{t("Unavailable emails: {count}.", { count: unreadable })}</p>
+          )}
+          {view.more_pages && <p>{t("More matches may be available.")}</p>}
+          {unfinished && !view.can_inspect_more && (
+            <p>{t("This search reached its limit.")}</p>
+          )}
+          {view.stop_reason === "Original search incomplete" && (
+            <p>{t("Part of the search could not be completed.")}</p>
           )}
         </div>
+        {view.can_inspect_more && (
+          <button onClick={inspect}>{t("Check more results")}</button>
+        )}
       </div>
     </header>
   );
@@ -102,8 +66,7 @@ function SearchOutcome({ result }: { result: FollowUp }) {
         mail: result.messages.length,
         pdf: result.files.length,
       })}
-      {result.more_pages && " · " + t("More result pages remain.")}
-      {result.stop_reason && " · " + t(result.stop_reason)}
+      {(result.more_pages || result.stop_reason) && " · " + t("Partial results")}
     </p>
   );
 }

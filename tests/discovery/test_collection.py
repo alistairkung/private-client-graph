@@ -35,6 +35,23 @@ PDF = Candidate(kind="pdf", id="appointment")
 EMAIL = Candidate(kind="email", id="06")
 
 
+def test_reading_an_email_checks_access_and_preserves_the_reviewed_collection():
+    google, review = prepare()
+    pdf(google)
+    preview = review.preview([PDF])
+    message(google)
+    email = review.read_email("06")
+    assert email.title == "Alder Trust correspondence 06"
+    assert email.text == CORPUS["messages"][5]["body"]
+    google.message("06", "metadata", labels=["INBOX"])
+    with pytest.raises(ProposalFailure) as denied:
+        review.read_email("06")
+    assert denied.value.error.code == "source_unavailable"
+    pdf(google)
+    assert review.approve(preview.token) == preview.sources
+    assert not google.steps
+
+
 def test_review_revalidates_order_and_issues_distinct_local_source_ids():
     google, review = prepare()
     pdf(google)

@@ -27,9 +27,21 @@ test("sixth original email leads to an approved PDF and publicly reopened Eviden
     await workspace.check();
     await page.getByRole("button", { name: "Start private discovery" }).click();
     await expect(page.getByRole("status")).toContainText("5 inspected");
+    await expect(page.getByText("Checked 5 of 5 emails for leads.")).toBeVisible();
+    await expect(page.getByText("More matches may be available.")).toBeVisible();
     await page.getByRole("button", { name: "Search for Alice Reed" }).click();
+    const uninspected = page.getByRole("button", { name: "Read Uninspected email 6" });
+    await uninspected.click();
+    const email = page.getByRole("dialog", { name: "Alice Reed dispatch" });
+    await expect(email).toContainText("Cora Patel will circulate the signed deed.");
+    await page.keyboard.press("Escape");
+    await expect(email).toHaveCount(0);
+    await expect(uninspected).toBeFocused();
+    await expect(page.getByRole("button", { name: "Preview exact Sources" })).toBeDisabled();
+    await expect(page.getByRole("button", { name: "Search for Mara Voss" })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Search for Cora Patel" })).toHaveCount(0);
     await page
-      .getByRole("button", { name: "Inspect more original results" })
+      .getByRole("button", { name: "Check more results" })
       .click();
     await expect(page.getByRole("blockquote").first()).toHaveText(
       "Mara Voss will circulate the executed appointment separately.",

@@ -163,6 +163,7 @@
 }
 .discovery-inspection {
   display: flex;
+  align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 6px 18px;
@@ -186,9 +187,7 @@
 .discovery details[open] {
   min-width: 0;
 }
-.discovery-inspection details[open] {
-  width: 100%;
-}
+.discovery-inspection:has(> div:empty):not(:has(button)) { display: none; }
 .discovery-scope {
   padding: 12px 0;
 }
@@ -274,8 +273,7 @@
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 10px;
-  cursor: pointer;
-  padding: 8px;
+  padding: 0 8px;
   min-height: 44px;
   border-top: 1px solid var(--border);
 }
@@ -476,3 +474,28 @@
   .discovery-spinner { animation: workspace-spin 1.2s linear infinite; }
 }
 @keyframes workspace-spin { to { transform: rotate(1turn); } }
+
+.discovery-email-link {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  justify-self: start;
+  min-height: 44px;
+  background: transparent;
+  border: 0;
+  padding: 5px 0;
+  text-align: start;
+  color: var(--accent);
+  overflow-wrap: anywhere;
+}
+.discovery-email-link:hover { text-decoration: underline; text-underline-offset: 3px; }
+.discovery-email-link svg { width: 14px; flex: none; }
+.discovery-row label { cursor: pointer; padding-block: 10px; }
+.email-reader-body {
+  border-top: 1px solid var(--border);
+  padding-top: 18px;
+  font: 400 16px/1.7 "Public Sans", system-ui, sans-serif;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.dialog:has(.email-reader-body) .dialog-heading h2 { overflow-wrap: anywhere; }

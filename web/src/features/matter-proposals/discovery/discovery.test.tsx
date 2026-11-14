@@ -1,9 +1,10 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { expect, it, vi } from "vitest";
 import { candidates, type View } from "./api";
 import { AccessProvider } from "../../../shared/access";
 import { Intake } from "../Intake";
+import { SearchSummary } from "./DiscoveryResults";
 import { WorkspaceConnection } from "./WorkspaceConnection";
 import { WorkspaceDiscovery } from "./WorkspaceDiscovery";
 
@@ -61,6 +62,32 @@ it("shows the search indicator only while discovery is pending", async () => {
   finish(new Response(JSON.stringify({ session: "local", view })));
   await screen.findByRole("heading", { name: "Select Sources" });
   expect(status.querySelector(".discovery-spinner")).toBeNull();
+});
+
+it("explains incomplete coverage without operational counters or a dead-end action", () => {
+  render(<SearchSummary view={{ ...view, more_pages: true, stop_reason: "Session byte limit" }} inspect={vi.fn()} />);
+  expect(screen.getByText("Checked 1 of 3 emails for leads.")).toBeVisible();
+  expect(screen.getByText("Unavailable emails: 2.")).toBeVisible();
+  expect(screen.getByText("More matches may be available.")).toBeVisible();
+  expect(screen.getByText("This search reached its limit.")).toBeVisible();
+  expect(screen.queryByText(/requests|bytes|Inspection details/i)).toBeNull();
+  expect(screen.queryByRole("button")).toBeNull();
+});
+
+it("closing a loading email discards its late body and leaves selection alone", async () => {
+  const post = vi.spyOn(globalThis, "fetch");
+  post.mockResolvedValueOnce(new Response(JSON.stringify({ session: "local", view })));
+  render(<WorkspaceDiscovery onBusy={() => {}} />);
+  await userEvent.click(screen.getByText("Start private discovery"));
+  let finish!: (response: Response) => void;
+  post.mockImplementationOnce(() => new Promise<Response>(resolve => { finish = resolve; }));
+  await userEvent.click(screen.getByRole("button", { name: "Read Letter" }));
+  expect(screen.getByRole("dialog")).toHaveTextContent("Opening email…");
+  await userEvent.click(screen.getByRole("button", { name: "Close dialog" }));
+  await act(async () => finish(new Response(JSON.stringify({ title: "Letter", text: "Late private body" }))));
+  expect(screen.queryByText("Late private body")).toBeNull();
+  expect(screen.getByLabelText("Letter · Email")).not.toBeChecked();
+  expect(screen.getByText("Preview exact Sources")).toBeDisabled();
 });
 
 it("reordering invalidates approval and a failed import requires another exact preview", async () => {
@@ -142,7 +169,7 @@ it("retiring a Workspace grant removes private results and offers a fresh connec
       409,
     ),
   );
-  await user.click(screen.getByText("Inspect more original results"));
+  await user.click(screen.getByText("Check more results"));
   expect(
     await screen.findByRole("button", { name: "Reconnect" }),
   ).toBeEnabled();
@@ -282,6 +309,8 @@ it("clears a private preview and offers sign-in after the server forgets the log
     "href",
     "/auth/login?next=%2Fapp%2Fmatter-proposals%2Fnew%3Fworkspace%3Dconnect",
   );
+  expect(screen.getByRole("alert")).toHaveTextContent("Sign in and reconnect Workspace to start a fresh search.");
+  expect(screen.queryByLabelText("PDF sources")).toBeNull();
   expect(screen.getByText("Your session has expired")).toBeVisible();
   expect(screen.queryByText("Reviewed private text")).toBeNull();
   expect(

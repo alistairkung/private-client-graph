@@ -41,6 +41,10 @@ class FollowUp(SessionAction):
     query: str
 
 
+class EmailRead(SessionAction):
+    message_id: str
+
+
 class Selection(SessionAction):
     candidates: list[Candidate] = Field(min_length=1, max_length=MAX_PROPOSAL_SOURCES)
 
@@ -152,6 +156,12 @@ def discovery_router(http: Client | None = None, *, pilot: Pilot | None = None) 
             raise ProposalFailure("invalid_followup", "Choose an available suggested search.") from None
         return {"messages": approval.messages, "files": approval.files, "stop_reason": approval.stop_reason,
                 "more_pages": approval.more_pages}
+
+    @router.post("/email")
+    def read_email(request: Request, body: EmailRead) -> dict[str, str]:
+        with active_review(request, body) as collection:
+            source = collection.read_email(body.message_id)
+            return {"title": source.title, "text": source.text}
 
     @router.post("/preview")
     def preview(request: Request, body: Selection) -> ReviewPreview:

@@ -44,6 +44,10 @@ class CollectionReview:
         self._review: tuple[str, list[_Snapshot]] | None = None
         self._lock = Lock()
 
+    def read_email(self, message_id: str) -> Source:
+        """Read one candidate without replacing the practitioner's publication preview."""
+        return self._acquire([Candidate(kind="email", id=message_id)])[0].source
+
     def preview(self, candidates: list[Candidate]) -> ReviewPreview:
         with self._lock:
             self._review = None

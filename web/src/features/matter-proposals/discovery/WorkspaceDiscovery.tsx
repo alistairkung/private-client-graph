@@ -15,6 +15,7 @@ import {
 import { SearchSetup } from "./SearchSetup";
 import { PublicationReview } from "./PublicationReview";
 import { DiscoveryResults, SearchSummary } from "./DiscoveryResults";
+import { EmailReader, type EmailReading } from "./EmailReader";
 import { SourceSelection } from "./SourceSelection";
 
 export function WorkspaceDiscovery({
@@ -39,6 +40,7 @@ export function WorkspaceDiscovery({
   const [followups, setFollowups] = useState<FollowUp[]>([]);
   const [selected, setSelected] = useState<Candidate[]>([]);
   const [preview, setPreview] = useState<Preview>();
+  const [reading, setReading] = useState<EmailReading>();
   const [operationLabel, setOperationLabel] = useState("");
   const busy = Boolean(operationLabel);
   const [reference, setReference] = useState("");
@@ -62,6 +64,19 @@ export function WorkspaceDiscovery({
     };
   }, [onBusy]);
 
+  function recoverSession(failure: unknown): boolean {
+    if (!(failure instanceof RequestFailure)) return false;
+    if (onGrantLoss && failure.detail?.code === "workspace_reconnect") {
+      onGrantLoss();
+      return true;
+    }
+    if (onStaleSearch && failure.detail?.code === "unknown_discovery") {
+      onStaleSearch();
+      return true;
+    }
+    return false;
+  }
+
   async function run(label: string, operation: () => Promise<void>) {
     if (busy) return;
     setOperationLabel(label);
@@ -71,19 +86,7 @@ export function WorkspaceDiscovery({
       await operation();
     } catch (failure) {
       if (!mounted.current) return;
-      if (
-        onGrantLoss &&
-        failure instanceof RequestFailure &&
-        failure.detail?.code === "workspace_reconnect"
-      )
-        onGrantLoss();
-      else if (
-        onStaleSearch &&
-        failure instanceof RequestFailure &&
-        failure.detail?.code === "unknown_discovery"
-      )
-        onStaleSearch();
-      else {
+      if (!recoverSession(failure)) {
         if (preview) setPreview(undefined);
         setError(failure);
       }
@@ -112,6 +115,25 @@ export function WorkspaceDiscovery({
       query,
     });
     setFollowups((previous) => [...previous, { ...result, revision, query }]);
+  }
+  async function openEmail(candidate: Candidate) {
+    const opening: EmailReading = { title: candidate.title, state: "loading" };
+    setReading(opening);
+    try {
+      const email = await action<{ title: string; text: string }>("email", {
+        session,
+        message_id: candidate.id,
+      });
+      setReading((current) =>
+        current === opening ? { ...email, state: "ready" } : current,
+      );
+    } catch (failure) {
+      if (!mounted.current || recoverSession(failure)) return;
+      const limited = failure instanceof RequestFailure && failure.detail?.code === "discovery_limit";
+      setReading((current) =>
+        current === opening ? { title: candidate.title, state: "error", limited } : current,
+      );
+    }
   }
   async function read() {
     setPreview(undefined);
@@ -221,8 +243,6 @@ export function WorkspaceDiscovery({
           <>
             <SearchSummary
               view={view}
-              folder={folder}
-              label={label}
               inspect={() =>
                 run("Inspecting original emails…", async () =>
                   setView(await action<View>("inspect", { session })),
@@ -248,12 +268,16 @@ export function WorkspaceDiscovery({
                 options={options}
                 selected={selected}
                 change={setSelected}
+                openEmail={openEmail}
                 read={() => run("Preparing exact preview…", read)}
               />
             </div>
           </>
         )}
       </fieldset>
+      {reading && (
+        <EmailReader reading={reading} close={() => setReading(undefined)} />
+      )}
     </div>
   );
 }

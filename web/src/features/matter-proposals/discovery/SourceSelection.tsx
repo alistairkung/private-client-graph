@@ -8,12 +8,14 @@ export function SourceSelection({
   options,
   selected,
   change,
+  openEmail,
   read,
 }: {
   headingRef: Ref<HTMLHeadingElement>;
   options: Candidate[];
   selected: Candidate[];
   change: (items: Candidate[]) => void;
+  openEmail: (candidate: Candidate) => void;
   read: () => void;
 }) {
   const { t } = useLocale();
@@ -47,8 +49,9 @@ export function SourceSelection({
               const included = selected.some(match);
               const kind = t(item.kind === "pdf" ? "PDF" : "Email");
               return (
-                <label key={item.kind + item.id} className="discovery-row">
+                <div key={item.kind + item.id} className="discovery-row">
                   <input
+                    id={"source-" + item.kind + "-" + item.id}
                     type="checkbox"
                     checked={included}
                     disabled={!included && selected.length >= 5}
@@ -61,9 +64,21 @@ export function SourceSelection({
                       )
                     }
                   />
-                  <span>{item.title}</span>
+                  {item.kind === "email" ? (
+                    <button
+                      className="discovery-email-link"
+                      aria-haspopup="dialog"
+                      aria-label={t("Read {title}", { title: item.title })}
+                      onClick={() => openEmail(item)}
+                    >
+                      {item.title}
+                      <Icon name="chevron" />
+                    </button>
+                  ) : (
+                    <label htmlFor={"source-pdf-" + item.id}>{item.title}</label>
+                  )}
                   <small>{kind}</small>
-                </label>
+                </div>
               );
             })}
         </fieldset>

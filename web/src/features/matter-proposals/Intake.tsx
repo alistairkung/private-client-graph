@@ -36,6 +36,7 @@ export function Intake() {
   useNavigationLock(busy);
   const [error, setError] = useSessionState<unknown>("intake:error", undefined);
   const [discover, setDiscover] = useState(() => new URLSearchParams(location.search).has("workspace"));
+  const expiredDiscovery = !canWrite && discover && sessionEnded;
   const [discoveryBusy, setDiscoveryBusy] = useState(false);
   const [prompt, setPrompt] = useState(false);
   const [dragging, setDragging] = useState(false);
@@ -118,11 +119,15 @@ export function Intake() {
         </div>
       </div>
       {!canWrite && <div className="intake-access" id="intake-access">
-        {discover && sessionEnded ? (
-          <div className="notice error" role="alert">
-            <h2>{t("Your session has expired")}</h2>
-            <a href={"/auth/login?next=" + encodeURIComponent("/app/matter-proposals/new?workspace=connect")}>
-              {t("Sign in again")}
+        {expiredDiscovery ? (
+          <div className="intake-session-ended" role="alert">
+            <span className="session-lock"><Icon name="lock" /></span>
+            <div>
+              <h2>{t("Your session has expired")}</h2>
+              <p>{t("Sign in and reconnect Workspace to start a fresh search.")}</p>
+            </div>
+            <a className="button" href={"/auth/login?next=" + encodeURIComponent("/app/matter-proposals/new?workspace=connect")}>
+              {t("Sign in again")} <Icon name="arrow" />
             </a>
           </div>
         ) : (
@@ -135,7 +140,12 @@ export function Intake() {
       {canChooseMethod && (
         <SourceMethod discover={discover} disabled={busy || discoveryBusy} change={setDiscover} />
       )}
-      {canChooseMethod && discover ? (access.workspace_connection ? <WorkspaceConnection onBusy={setDiscoveryBusy} /> : <WorkspaceDiscovery onBusy={setDiscoveryBusy} />) : <div className="intake-layout">
+      {canChooseMethod && discover && (
+        access.workspace_connection
+          ? <WorkspaceConnection onBusy={setDiscoveryBusy} />
+          : <WorkspaceDiscovery onBusy={setDiscoveryBusy} />
+      )}
+      {!expiredDiscovery && !(canChooseMethod && discover) && <div className="intake-layout">
         <form onSubmit={submit} className="intake-form" aria-describedby={!canWrite ? "intake-access" : undefined}>
           <fieldset disabled={busy || !canWrite}>
             <legend>{t("Matter identity")}</legend>

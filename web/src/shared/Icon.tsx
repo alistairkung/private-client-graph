@@ -2,6 +2,8 @@ export function Icon({
   name,
 }: {
   name:
+    | "lock"
+    | "chevron"
     | "atlas"
     | "arrow"
     | "plus"
@@ -12,6 +14,8 @@ export function Icon({
     | "search";
 }) {
   const paths = {
+    lock: "M7 10V7a5 5 0 0 1 10 0v3M5 10h14v11H5zM12 14v3",
+    chevron: "m9 6 6 6-6 6",
     atlas: "M4 4h6l2 3 2-3h6v16h-6l-2-3-2 3H4V4Zm8 3v10",
     arrow: "M5 12h14m-6-6 6 6-6 6",
     plus: "M12 5v14M5 12h14",
