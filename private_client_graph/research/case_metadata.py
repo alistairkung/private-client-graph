@@ -14,6 +14,9 @@ class CaseMetadata(BaseModel):
     fixture_description: str | None
     kind: Literal['benchmark', 'diagnostic', 'historical', 'heldout']
     metadata_available: bool
+    axis: str | None = None
+    split: Literal['dev', 'held_out'] | None = None
+    matter_family: str | None = None
 
     @field_validator('name', 'fixture_name', 'description', 'fixture_description')
     @classmethod

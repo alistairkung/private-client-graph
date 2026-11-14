@@ -1,0 +1,76 @@
+{
+  "entities": [
+    { "id": "person_001", "type": "person", "name": "Julia Marlow" },
+    { "id": "person_002", "type": "person", "name": "Peter Marlow" },
+    { "id": "person_003", "type": "person", "name": "Anna Marlow" },
+    { "id": "person_004", "type": "person", "name": "William Marlow" },
+    { "id": "person_005", "type": "person", "name": "Elizabeth Marlow" },
+    { "id": "trust_001", "type": "trust", "name": "Marlow Family Trust" }
+  ],
+  "relationships": [
+    {
+      "source": "person_001",
+      "type": "settlor_of",
+      "target": "trust_001",
+      "approved_evidence": [
+        "Julia Marlow is the settlor of the Marlow Family Trust."
+      ]
+    },
+    {
+      "source": "person_001",
+      "type": "spouse_of",
+      "target": "person_002",
+      "approved_evidence": [
+        "She and her husband, Peter Marlow, are spouses."
+      ]
+    },
+    {
+      "source": "person_001",
+      "type": "parent_of",
+      "target": "person_003",
+      "approved_evidence": [
+        "They have two children, Anna Marlow and William Marlow."
+      ]
+    },
+    {
+      "source": "person_002",
+      "type": "parent_of",
+      "target": "person_003",
+      "approved_evidence": [
+        "They have two children, Anna Marlow and William Marlow."
+      ]
+    },
+    {
+      "source": "person_001",
+      "type": "parent_of",
+      "target": "person_004",
+      "approved_evidence": [
+        "They have two children, Anna Marlow and William Marlow."
+      ]
+    },
+    {
+      "source": "person_002",
+      "type": "parent_of",
+      "target": "person_004",
+      "approved_evidence": [
+        "They have two children, Anna Marlow and William Marlow."
+      ]
+    },
+    {
+      "source": "person_003",
+      "type": "beneficiary_of",
+      "target": "trust_001",
+      "approved_evidence": [
+        "Anna Marlow is the current sole beneficiary of the Marlow Family Trust."
+      ]
+    },
+    {
+      "source": "person_001",
+      "type": "sibling_of",
+      "target": "person_005",
+      "approved_evidence": [
+        "Mrs. Marlow has also suggested that her sister, Elizabeth Marlow, should be appointed as a trustee in place of the current trustee."
+      ]
+    }
+  ]
+}

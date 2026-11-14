@@ -1,0 +1,50 @@
+{
+  "entities": [
+    { "id": "person_001", "type": "person", "name": "Thomas Reid" },
+    { "id": "person_002", "type": "person", "name": "Laura Reid" },
+    { "id": "person_003", "type": "person", "name": "Oliver Reid" },
+    { "id": "trust_001", "type": "trust", "name": "Stirling Family Trust" }
+  ],
+  "relationships": [
+    {
+      "source": "person_001",
+      "type": "settlor_of",
+      "target": "trust_001",
+      "approved_evidence": [
+        "Thomas confirmed that he is the settlor of the Stirling Family Trust."
+      ]
+    },
+    {
+      "source": "person_001",
+      "type": "spouse_of",
+      "target": "person_002",
+      "approved_evidence": [
+        "He also confirmed that he and his wife, Laura Reid, are spouses."
+      ]
+    },
+    {
+      "source": "person_001",
+      "type": "parent_of",
+      "target": "person_003",
+      "approved_evidence": [
+        "They have one child together, Oliver Reid."
+      ]
+    },
+    {
+      "source": "person_002",
+      "type": "parent_of",
+      "target": "person_003",
+      "approved_evidence": [
+        "They have one child together, Oliver Reid."
+      ]
+    },
+    {
+      "source": "person_003",
+      "type": "beneficiary_of",
+      "target": "trust_001",
+      "approved_evidence": [
+        "Thomas confirmed that Oliver Reid is the sole current beneficiary of the Stirling Family Trust."
+      ]
+    }
+  ]
+}

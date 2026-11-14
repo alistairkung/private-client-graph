@@ -1,0 +1,16 @@
+{
+  "relationships": [
+    {
+      "source_name": "Daniel Foster",
+      "relationship_type": "beneficiary_of",
+      "target_name": "Ashworth Family Trust",
+      "supporting_text": "The sole beneficiary of the Ashworth Family Trust is hereby changed to Daniel Foster."
+    },
+    {
+      "source_name": "Nigel Foster",
+      "relationship_type": "parent_of",
+      "target_name": "Charlotte Foster",
+      "supporting_text": "Nigel mentioned that he intends to leave everything to his daughter, Charlotte Foster, and that Charlotte will be the primary beneficiary of the Ashworth Family Trust."
+    }
+  ]
+}

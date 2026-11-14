@@ -1,0 +1,8 @@
+{
+  "name": "Distractors (Held-Out)",
+  "description": "Held-out counterpart to the Distractors development case. Different family and trust; same distractor pattern.",
+  "id": "benchmark_v1_distractors_held_out_1",
+  "axis": "distractors",
+  "split": "held_out",
+  "matter_family": "benchmark_v1_distractors_1"
+}

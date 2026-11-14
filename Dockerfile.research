@@ -15,6 +15,8 @@ COPY migrations/ ./migrations/
 COPY research/history/ ./research/history/
 COPY research/fixtures/ ./research/fixtures/
 COPY cases/ ./cases/
+COPY evaluation_cases/ ./evaluation_cases/
+COPY benchmark_v1/ ./benchmark_v1/
 RUN uv sync --locked --no-dev
 COPY --from=frontend /build/web/research-dist/ ./web/research-dist/
 EXPOSE 8000

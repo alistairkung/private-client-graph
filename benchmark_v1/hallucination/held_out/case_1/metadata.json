@@ -1,0 +1,8 @@
+{
+  "name": "Incremental Hallucination (Held-Out)",
+  "description": "Held-out counterpart to the Incremental Hallucination development case. Different family and trust; same fact/proposal distinction.",
+  "id": "benchmark_v1_hallucination_held_out_1",
+  "axis": "hallucination",
+  "split": "held_out",
+  "matter_family": "benchmark_v1_hallucination_1"
+}

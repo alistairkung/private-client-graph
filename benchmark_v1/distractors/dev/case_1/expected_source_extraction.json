@@ -1,0 +1,39 @@
+{
+  "relationships": [
+    {
+      "source_name": "Helen Park",
+      "relationship_type": "settlor_of",
+      "target_name": "Juniper Family Trust",
+      "supporting_text": "Helen confirmed that she is the settlor of the Juniper Family Trust.",
+      "source_id": "note_01"
+    },
+    {
+      "source_name": "Helen Park",
+      "relationship_type": "spouse_of",
+      "target_name": "Simon Park",
+      "supporting_text": "She also confirmed that she and her husband, Simon Park, are spouses.",
+      "source_id": "note_01"
+    },
+    {
+      "source_name": "Helen Park",
+      "relationship_type": "parent_of",
+      "target_name": "Chloe Park",
+      "supporting_text": "They have one child together, Chloe Park.",
+      "source_id": "note_01"
+    },
+    {
+      "source_name": "Simon Park",
+      "relationship_type": "parent_of",
+      "target_name": "Chloe Park",
+      "supporting_text": "They have one child together, Chloe Park.",
+      "source_id": "note_01"
+    },
+    {
+      "source_name": "Chloe Park",
+      "relationship_type": "beneficiary_of",
+      "target_name": "Juniper Family Trust",
+      "supporting_text": "Helen confirmed that Chloe Park is the sole current beneficiary of the Juniper Family Trust.",
+      "source_id": "note_01"
+    }
+  ]
+}

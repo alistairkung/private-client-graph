@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "relationships": [
+    {
+      "source": "person_001",
+      "type": "settlor_of",
+      "target": "trust_001",
+      "approved_evidence": [
+        {
+          "source_id": "note_01",
+          "supporting_text": "Just confirming that my husband, David Chen, and I established the Oakwood Trust in 2020. We are both the settlors."
+        }
+      ]
+    },
+    {
+      "source": "person_002",
+      "type": "settlor_of",
+      "target": "trust_001",
+      "approved_evidence": [
+        {
+          "source_id": "note_01",
+          "supporting_text": "Just confirming that my husband, David Chen, and I established the Oakwood Trust in 2020. We are both the settlors."
+        }
+      ]
+    },
+    {
+      "source": "person_001",
+      "type": "spouse_of",
+      "target": "person_002",
+      "approved_evidence": [
+        {
+          "source_id": "note_01",
+          "supporting_text": "Just confirming that my husband, David Chen, and I established the Oakwood Trust in 2020."
+        }
+      ]
+    },
+    {
+      "source": "person_003",
+      "type": "beneficiary_of",
+      "target": "trust_001",
+      "approved_evidence": [
+        {
+          "source_id": "note_02",
+          "supporting_text": "As noted in the deed, your son, Bob Chen, is the sole beneficiary of the Oakwood Trust."
+        }
+      ]
+    },
+    {
+      "source": "person_001",
+      "type": "parent_of",
+      "target": "person_003",
+      "approved_evidence": [
+        {
+          "source_id": "note_02",
+          "supporting_text": "As noted in the deed, your son, Bob Chen, is the sole beneficiary of the Oakwood Trust."
+        }
+      ]
+    }
+  ]
+}

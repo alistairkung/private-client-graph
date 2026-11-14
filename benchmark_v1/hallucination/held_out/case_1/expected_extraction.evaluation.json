@@ -1,0 +1,98 @@
+{
+  "tp": 8,
+  "fp": 0,
+  "fn": 0,
+  "precision": 1.0,
+  "recall": 1.0,
+  "f1": 1.0,
+  "true_positive_edges": [
+    [
+      "Anna Marlow",
+      "beneficiary_of",
+      "Marlow Family Trust"
+    ],
+    [
+      "Elizabeth Marlow",
+      "sibling_of",
+      "Julia Marlow"
+    ],
+    [
+      "Julia Marlow",
+      "parent_of",
+      "Anna Marlow"
+    ],
+    [
+      "Julia Marlow",
+      "parent_of",
+      "William Marlow"
+    ],
+    [
+      "Julia Marlow",
+      "settlor_of",
+      "Marlow Family Trust"
+    ],
+    [
+      "Julia Marlow",
+      "spouse_of",
+      "Peter Marlow"
+    ],
+    [
+      "Peter Marlow",
+      "parent_of",
+      "Anna Marlow"
+    ],
+    [
+      "Peter Marlow",
+      "parent_of",
+      "William Marlow"
+    ]
+  ],
+  "false_positive_edges": [],
+  "false_negative_edges": [],
+  "provenance_passed": 8,
+  "provenance_failed": 0,
+  "provenance_accuracy": 1.0,
+  "provenance_passes": [
+    [
+      "Anna Marlow",
+      "beneficiary_of",
+      "Marlow Family Trust"
+    ],
+    [
+      "Elizabeth Marlow",
+      "sibling_of",
+      "Julia Marlow"
+    ],
+    [
+      "Julia Marlow",
+      "parent_of",
+      "Anna Marlow"
+    ],
+    [
+      "Julia Marlow",
+      "parent_of",
+      "William Marlow"
+    ],
+    [
+      "Julia Marlow",
+      "settlor_of",
+      "Marlow Family Trust"
+    ],
+    [
+      "Julia Marlow",
+      "spouse_of",
+      "Peter Marlow"
+    ],
+    [
+      "Peter Marlow",
+      "parent_of",
+      "Anna Marlow"
+    ],
+    [
+      "Peter Marlow",
+      "parent_of",
+      "William Marlow"
+    ]
+  ],
+  "provenance_failures": []
+}

@@ -1,0 +1,68 @@
+{
+  "tp": 5,
+  "fp": 0,
+  "fn": 0,
+  "precision": 1.0,
+  "recall": 1.0,
+  "f1": 1.0,
+  "true_positive_edges": [
+    [
+      "Daniel Wu",
+      "beneficiary_of",
+      "Ashford Family Trust"
+    ],
+    [
+      "Margaret Wu",
+      "parent_of",
+      "Daniel Wu"
+    ],
+    [
+      "Margaret Wu",
+      "settlor_of",
+      "Ashford Family Trust"
+    ],
+    [
+      "Margaret Wu",
+      "spouse_of",
+      "Thomas Wu"
+    ],
+    [
+      "Thomas Wu",
+      "parent_of",
+      "Daniel Wu"
+    ]
+  ],
+  "false_positive_edges": [],
+  "false_negative_edges": [],
+  "provenance_passed": 5,
+  "provenance_failed": 0,
+  "provenance_accuracy": 1.0,
+  "provenance_passes": [
+    [
+      "Daniel Wu",
+      "beneficiary_of",
+      "Ashford Family Trust"
+    ],
+    [
+      "Margaret Wu",
+      "parent_of",
+      "Daniel Wu"
+    ],
+    [
+      "Margaret Wu",
+      "settlor_of",
+      "Ashford Family Trust"
+    ],
+    [
+      "Margaret Wu",
+      "spouse_of",
+      "Thomas Wu"
+    ],
+    [
+      "Thomas Wu",
+      "parent_of",
+      "Daniel Wu"
+    ]
+  ],
+  "provenance_failures": []
+}

@@ -1,0 +1,68 @@
+{
+  "tp": 5,
+  "fp": 0,
+  "fn": 0,
+  "precision": 1.0,
+  "recall": 1.0,
+  "f1": 1.0,
+  "true_positive_edges": [
+    [
+      "Amy Yeung",
+      "beneficiary_of",
+      "Ravenswood Trust"
+    ],
+    [
+      "Michelle Yeung",
+      "settlor_of",
+      "Ravenswood Trust"
+    ],
+    [
+      "Michelle Yeung",
+      "spouse_of",
+      "Susan Leung"
+    ],
+    [
+      "Susan Leung",
+      "parent_of",
+      "Amy Yeung"
+    ],
+    [
+      "Susan Leung",
+      "settlor_of",
+      "Ravenswood Trust"
+    ]
+  ],
+  "false_positive_edges": [],
+  "false_negative_edges": [],
+  "provenance_passed": 5,
+  "provenance_failed": 0,
+  "provenance_accuracy": 1.0,
+  "provenance_passes": [
+    [
+      "Amy Yeung",
+      "beneficiary_of",
+      "Ravenswood Trust"
+    ],
+    [
+      "Michelle Yeung",
+      "settlor_of",
+      "Ravenswood Trust"
+    ],
+    [
+      "Michelle Yeung",
+      "spouse_of",
+      "Susan Leung"
+    ],
+    [
+      "Susan Leung",
+      "parent_of",
+      "Amy Yeung"
+    ],
+    [
+      "Susan Leung",
+      "settlor_of",
+      "Ravenswood Trust"
+    ]
+  ],
+  "provenance_failures": []
+}

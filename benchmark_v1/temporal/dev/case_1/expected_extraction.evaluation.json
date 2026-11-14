@@ -1,0 +1,78 @@
+{
+  "tp": 6,
+  "fp": 0,
+  "fn": 0,
+  "precision": 1.0,
+  "recall": 1.0,
+  "f1": 1.0,
+  "true_positive_edges": [
+    [
+      "Elaine Ho",
+      "parent_of",
+      "Sophie Ho"
+    ],
+    [
+      "Elaine Ho",
+      "settlor_of",
+      "Willow Family Trust"
+    ],
+    [
+      "Elaine Ho",
+      "spouse_of",
+      "Martin Ho"
+    ],
+    [
+      "Martin Ho",
+      "parent_of",
+      "Sophie Ho"
+    ],
+    [
+      "Rachel Lim",
+      "trustee_of",
+      "Willow Family Trust"
+    ],
+    [
+      "Sophie Ho",
+      "beneficiary_of",
+      "Willow Family Trust"
+    ]
+  ],
+  "false_positive_edges": [],
+  "false_negative_edges": [],
+  "provenance_passed": 6,
+  "provenance_failed": 0,
+  "provenance_accuracy": 1.0,
+  "provenance_passes": [
+    [
+      "Elaine Ho",
+      "parent_of",
+      "Sophie Ho"
+    ],
+    [
+      "Elaine Ho",
+      "settlor_of",
+      "Willow Family Trust"
+    ],
+    [
+      "Elaine Ho",
+      "spouse_of",
+      "Martin Ho"
+    ],
+    [
+      "Martin Ho",
+      "parent_of",
+      "Sophie Ho"
+    ],
+    [
+      "Rachel Lim",
+      "trustee_of",
+      "Willow Family Trust"
+    ],
+    [
+      "Sophie Ho",
+      "beneficiary_of",
+      "Willow Family Trust"
+    ]
+  ],
+  "provenance_failures": []
+}

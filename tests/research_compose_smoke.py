@@ -41,6 +41,22 @@ def wait_state(identity, expected):
     raise AssertionError(f'Experiment did not reach {expected}: {state}')
 
 
+def packaged_case_catalog():
+    rows = read('/api/research/v2/cases')
+    catalog = {row['id']: row for row in rows}
+    axes = ('aliases', 'authority', 'cross_source', 'distractors', 'hallucination', 'temporal')
+    assert len(catalog) == len(rows)
+    for axis in axes:
+        for split in ('dev', 'held_out'):
+            identity = f'benchmark_v1_{axis}_{split}_1'
+            row = catalog[f'{identity}_fixture']
+            assert row['case_id'] == identity
+            assert (row['axis'], row['split']) == (axis, split)
+            assert row['kind'] == ('diagnostic' if split == 'dev' else 'heldout')
+            assert row['metadata_available']
+    assert catalog['case_03_historical']['kind'] == 'historical'
+
+
 def offline_journey():
     plan = command('/plans', {'input_ids': ['case_03_fixture'], 'execution_mode': 'recorded',
         'resolver': 'generative', 'resolver_repetitions': 2, 'invocation_cap': 1})
@@ -75,6 +91,7 @@ def main() -> None:
     try:
         compose('up', '--build', '-d', 'research')
         wait_ready()
+        packaged_case_catalog()
         offline_journey()
         original = snapshot()
         assert any(item['history']['kind'] == 'task_b_pilot' for item in original)

@@ -1,0 +1,39 @@
+{
+  "relationships": [
+    {
+      "source_name": "Thomas Reid",
+      "relationship_type": "settlor_of",
+      "target_name": "Stirling Family Trust",
+      "supporting_text": "Thomas confirmed that he is the settlor of the Stirling Family Trust.",
+      "source_id": "note_01"
+    },
+    {
+      "source_name": "Thomas Reid",
+      "relationship_type": "spouse_of",
+      "target_name": "Laura Reid",
+      "supporting_text": "He also confirmed that he and his wife, Laura Reid, are spouses.",
+      "source_id": "note_01"
+    },
+    {
+      "source_name": "Thomas Reid",
+      "relationship_type": "parent_of",
+      "target_name": "Oliver Reid",
+      "supporting_text": "They have one child together, Oliver Reid.",
+      "source_id": "note_01"
+    },
+    {
+      "source_name": "Laura Reid",
+      "relationship_type": "parent_of",
+      "target_name": "Oliver Reid",
+      "supporting_text": "They have one child together, Oliver Reid.",
+      "source_id": "note_01"
+    },
+    {
+      "source_name": "Oliver Reid",
+      "relationship_type": "beneficiary_of",
+      "target_name": "Stirling Family Trust",
+      "supporting_text": "Thomas confirmed that Oliver Reid is the sole current beneficiary of the Stirling Family Trust.",
+      "source_id": "note_01"
+    }
+  ]
+}

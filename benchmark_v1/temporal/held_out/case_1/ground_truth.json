@@ -1,0 +1,60 @@
+{
+  "entities": [
+    { "id": "person_001", "type": "person", "name": "Julia Marlow" },
+    { "id": "person_002", "type": "person", "name": "Peter Marlow" },
+    { "id": "person_003", "type": "person", "name": "Anna Marlow" },
+    { "id": "person_004", "type": "person", "name": "Fiona Grant" },
+    { "id": "trust_001", "type": "trust", "name": "Marlow Family Trust" }
+  ],
+  "relationships": [
+    {
+      "source": "person_001",
+      "type": "settlor_of",
+      "target": "trust_001",
+      "approved_evidence": [
+        "Julia Marlow is the settlor of the Marlow Family Trust."
+      ]
+    },
+    {
+      "source": "person_001",
+      "type": "spouse_of",
+      "target": "person_002",
+      "approved_evidence": [
+        "Julia Marlow and Peter Marlow are spouses."
+      ]
+    },
+    {
+      "source": "person_001",
+      "type": "parent_of",
+      "target": "person_003",
+      "approved_evidence": [
+        "Julia Marlow and Peter Marlow are the parents of Anna Marlow."
+      ]
+    },
+    {
+      "source": "person_002",
+      "type": "parent_of",
+      "target": "person_003",
+      "approved_evidence": [
+        "Julia Marlow and Peter Marlow are the parents of Anna Marlow."
+      ]
+    },
+    {
+      "source": "person_003",
+      "type": "beneficiary_of",
+      "target": "trust_001",
+      "approved_evidence": [
+        "Anna Marlow is a beneficiary of the Marlow Family Trust."
+      ]
+    },
+    {
+      "source": "person_004",
+      "type": "trustee_of",
+      "target": "trust_001",
+      "approved_evidence": [
+        "Fiona Grant was appointed as replacement trustee with effect from 15 March 2026.",
+        "The current position as at 20 March 2026 is that Fiona Grant is the sole trustee of the Marlow Family Trust."
+      ]
+    }
+  ]
+}

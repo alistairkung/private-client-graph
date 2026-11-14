@@ -1,0 +1,8 @@
+{
+  "name": "Distractors (Development)",
+  "description": "Tests whether the pipeline ignores professional attendees, unsupported cousin labels and a proposed beneficiary request while retaining current family and trust facts.",
+  "id": "benchmark_v1_distractors_dev_1",
+  "axis": "distractors",
+  "split": "dev",
+  "matter_family": "benchmark_v1_distractors_1"
+}

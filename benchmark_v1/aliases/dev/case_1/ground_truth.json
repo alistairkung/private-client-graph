@@ -1,0 +1,50 @@
+{
+  "entities": [
+    { "id": "person_001", "type": "person", "name": "Margaret Wu" },
+    { "id": "person_002", "type": "person", "name": "Thomas Wu" },
+    { "id": "person_003", "type": "person", "name": "Daniel Wu" },
+    { "id": "trust_001", "type": "trust", "name": "Ashford Family Trust" }
+  ],
+  "relationships": [
+    {
+      "source": "person_001",
+      "type": "settlor_of",
+      "target": "trust_001",
+      "approved_evidence": [
+        "Margaret confirmed that she established the trust in 2018 and is its settlor."
+      ]
+    },
+    {
+      "source": "person_001",
+      "type": "spouse_of",
+      "target": "person_002",
+      "approved_evidence": [
+        "Margaret also confirmed that she and her husband, Thomas Wu, are spouses."
+      ]
+    },
+    {
+      "source": "person_001",
+      "type": "parent_of",
+      "target": "person_003",
+      "approved_evidence": [
+        "They have one child, Daniel Wu, known to the family as Daniel."
+      ]
+    },
+    {
+      "source": "person_002",
+      "type": "parent_of",
+      "target": "person_003",
+      "approved_evidence": [
+        "They have one child, Daniel Wu, known to the family as Daniel."
+      ]
+    },
+    {
+      "source": "person_003",
+      "type": "beneficiary_of",
+      "target": "trust_001",
+      "approved_evidence": [
+        "Mrs. Wu explained that \"Danny\" — as the family calls him — is the sole beneficiary of the Ashford Family Trust."
+      ]
+    }
+  ]
+}

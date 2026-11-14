@@ -1,0 +1,8 @@
+{
+  "name": "Document Authority (Held-Out)",
+  "description": "Held-out counterpart to the Document Authority development case. Different family, trust, and conflict; same formal-deed-over-informal-note pattern.",
+  "id": "benchmark_v1_authority_held_out_1",
+  "axis": "authority",
+  "split": "held_out",
+  "matter_family": "benchmark_v1_authority_1"
+}

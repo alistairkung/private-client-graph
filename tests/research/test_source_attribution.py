@@ -109,7 +109,8 @@ def test_wrong_source_with_identical_quote_fails_attribution_while_quote_metric_
     claims = SourcedExtractionResult(relationships=[dict(source_id='second', source_name='Alice',
         relationship_type='trustee_of', target_name='Harbour Trust', supporting_text=quote)])
     state = build_canonical_state(claims.relationships, sources=sources)
-    assert evaluate_graph(reconstruct_graph(state), truth).provenance_accuracy == 1
+    score = evaluate_graph(reconstruct_graph(state), truth)
+    assert (score.f1, score.provenance_accuracy) == (1, 1)
     diagnostic = diagnose_source_attribution(state, truth, approval)
     assert (diagnostic.assessed, diagnostic.passed, diagnostic.failed, diagnostic.accuracy) == (1, 0, 1, 0)
     assert diagnostic.failures[0].source_id == 'second'

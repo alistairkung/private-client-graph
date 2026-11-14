@@ -1,0 +1,16 @@
+{
+  "relationships": [
+    {
+      "source_name": "Carol Wong",
+      "relationship_type": "beneficiary_of",
+      "target_name": "Evergreen Family Trust",
+      "supporting_text": "The sole beneficiary of the Evergreen Family Trust is hereby changed to Carol Wong."
+    },
+    {
+      "source_name": "Alice Chen",
+      "relationship_type": "parent_of",
+      "target_name": "Bob Chen",
+      "supporting_text": "Alice mentioned that she intends to leave everything to her son, Bob Chen, and that Bob will be the primary beneficiary of the Evergreen Family Trust."
+    }
+  ]
+}

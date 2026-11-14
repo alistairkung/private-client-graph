@@ -1,0 +1,98 @@
+{
+  "tp": 8,
+  "fp": 0,
+  "fn": 0,
+  "precision": 1.0,
+  "recall": 1.0,
+  "f1": 1.0,
+  "true_positive_edges": [
+    [
+      "Emma Ashby",
+      "beneficiary_of",
+      "Ashby Family Trust"
+    ],
+    [
+      "Gregory Ashby",
+      "parent_of",
+      "Emma Ashby"
+    ],
+    [
+      "Gregory Ashby",
+      "parent_of",
+      "James Ashby"
+    ],
+    [
+      "Gregory Ashby",
+      "settlor_of",
+      "Ashby Family Trust"
+    ],
+    [
+      "Gregory Ashby",
+      "sibling_of",
+      "Margaret Ashby"
+    ],
+    [
+      "Gregory Ashby",
+      "spouse_of",
+      "Patricia Ashby"
+    ],
+    [
+      "Patricia Ashby",
+      "parent_of",
+      "Emma Ashby"
+    ],
+    [
+      "Patricia Ashby",
+      "parent_of",
+      "James Ashby"
+    ]
+  ],
+  "false_positive_edges": [],
+  "false_negative_edges": [],
+  "provenance_passed": 8,
+  "provenance_failed": 0,
+  "provenance_accuracy": 1.0,
+  "provenance_passes": [
+    [
+      "Emma Ashby",
+      "beneficiary_of",
+      "Ashby Family Trust"
+    ],
+    [
+      "Gregory Ashby",
+      "parent_of",
+      "Emma Ashby"
+    ],
+    [
+      "Gregory Ashby",
+      "parent_of",
+      "James Ashby"
+    ],
+    [
+      "Gregory Ashby",
+      "settlor_of",
+      "Ashby Family Trust"
+    ],
+    [
+      "Gregory Ashby",
+      "sibling_of",
+      "Margaret Ashby"
+    ],
+    [
+      "Gregory Ashby",
+      "spouse_of",
+      "Patricia Ashby"
+    ],
+    [
+      "Patricia Ashby",
+      "parent_of",
+      "Emma Ashby"
+    ],
+    [
+      "Patricia Ashby",
+      "parent_of",
+      "James Ashby"
+    ]
+  ],
+  "provenance_failures": []
+}

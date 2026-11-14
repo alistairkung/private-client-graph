@@ -1,0 +1,26 @@
+{
+  "entities": [
+    { "id": "person_001", "type": "person", "name": "Daniel Foster" },
+    { "id": "person_002", "type": "person", "name": "Nigel Foster" },
+    { "id": "person_003", "type": "person", "name": "Charlotte Foster" },
+    { "id": "trust_001", "type": "trust", "name": "Ashworth Family Trust" }
+  ],
+  "relationships": [
+    {
+      "source": "person_001",
+      "type": "beneficiary_of",
+      "target": "trust_001",
+      "approved_evidence": [
+        "The sole beneficiary of the Ashworth Family Trust is hereby changed to Daniel Foster."
+      ]
+    },
+    {
+      "source": "person_002",
+      "type": "parent_of",
+      "target": "person_003",
+      "approved_evidence": [
+        "Nigel mentioned that he intends to leave everything to his daughter, Charlotte Foster, and that Charlotte will be the primary beneficiary of the Ashworth Family Trust."
+      ]
+    }
+  ]
+}

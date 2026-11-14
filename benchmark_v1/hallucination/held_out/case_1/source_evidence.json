@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "relationships": [
+    {
+      "source": "person_001",
+      "type": "settlor_of",
+      "target": "trust_001",
+      "approved_evidence": [
+        { "source_id": "note_01", "supporting_text": "Julia Marlow is the settlor of the Marlow Family Trust." }
+      ]
+    },
+    {
+      "source": "person_001",
+      "type": "spouse_of",
+      "target": "person_002",
+      "approved_evidence": [
+        { "source_id": "note_01", "supporting_text": "She and her husband, Peter Marlow, are spouses." }
+      ]
+    },
+    {
+      "source": "person_001",
+      "type": "parent_of",
+      "target": "person_003",
+      "approved_evidence": [
+        { "source_id": "note_01", "supporting_text": "They have two children, Anna Marlow and William Marlow." }
+      ]
+    },
+    {
+      "source": "person_002",
+      "type": "parent_of",
+      "target": "person_003",
+      "approved_evidence": [
+        { "source_id": "note_01", "supporting_text": "They have two children, Anna Marlow and William Marlow." }
+      ]
+    },
+    {
+      "source": "person_001",
+      "type": "parent_of",
+      "target": "person_004",
+      "approved_evidence": [
+        { "source_id": "note_01", "supporting_text": "They have two children, Anna Marlow and William Marlow." }
+      ]
+    },
+    {
+      "source": "person_002",
+      "type": "parent_of",
+      "target": "person_004",
+      "approved_evidence": [
+        { "source_id": "note_01", "supporting_text": "They have two children, Anna Marlow and William Marlow." }
+      ]
+    },
+    {
+      "source": "person_003",
+      "type": "beneficiary_of",
+      "target": "trust_001",
+      "approved_evidence": [
+        { "source_id": "note_01", "supporting_text": "Anna Marlow is the current sole beneficiary of the Marlow Family Trust." }
+      ]
+    },
+    {
+      "source": "person_001",
+      "type": "sibling_of",
+      "target": "person_005",
+      "approved_evidence": [
+        { "source_id": "note_01", "supporting_text": "Mrs. Marlow has also suggested that her sister, Elizabeth Marlow, should be appointed as a trustee in place of the current trustee." }
+      ]
+    }
+  ]
+}

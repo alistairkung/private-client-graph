@@ -1,0 +1,34 @@
+{
+  "relationships": [
+    {
+      "source_name": "Margaret Wu",
+      "relationship_type": "settlor_of",
+      "target_name": "Ashford Family Trust",
+      "supporting_text": "Margaret confirmed that she established the trust in 2018 and is its settlor."
+    },
+    {
+      "source_name": "Margaret Wu",
+      "relationship_type": "spouse_of",
+      "target_name": "Thomas Wu",
+      "supporting_text": "Margaret also confirmed that she and her husband, Thomas Wu, are spouses."
+    },
+    {
+      "source_name": "Margaret Wu",
+      "relationship_type": "parent_of",
+      "target_name": "Daniel Wu",
+      "supporting_text": "They have one child, Daniel Wu, known to the family as Daniel."
+    },
+    {
+      "source_name": "Thomas Wu",
+      "relationship_type": "parent_of",
+      "target_name": "Daniel Wu",
+      "supporting_text": "They have one child, Daniel Wu, known to the family as Daniel."
+    },
+    {
+      "source_name": "Daniel Wu",
+      "relationship_type": "beneficiary_of",
+      "target_name": "Ashford Family Trust",
+      "supporting_text": "Mrs. Wu explained that \"Danny\" — as the family calls him — is the sole beneficiary of the Ashford Family Trust."
+    }
+  ]
+}

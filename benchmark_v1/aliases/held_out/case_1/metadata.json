@@ -1,0 +1,8 @@
+{
+  "name": "Aliases (Held-Out)",
+  "description": "Held-out counterpart to the Aliases development case. Different family and trust; same alias pattern.",
+  "id": "benchmark_v1_aliases_held_out_1",
+  "axis": "aliases",
+  "split": "held_out",
+  "matter_family": "benchmark_v1_aliases_1"
+}

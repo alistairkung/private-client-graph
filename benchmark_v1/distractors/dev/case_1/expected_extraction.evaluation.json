@@ -1,0 +1,68 @@
+{
+  "tp": 5,
+  "fp": 0,
+  "fn": 0,
+  "precision": 1.0,
+  "recall": 1.0,
+  "f1": 1.0,
+  "true_positive_edges": [
+    [
+      "Chloe Park",
+      "beneficiary_of",
+      "Juniper Family Trust"
+    ],
+    [
+      "Helen Park",
+      "parent_of",
+      "Chloe Park"
+    ],
+    [
+      "Helen Park",
+      "settlor_of",
+      "Juniper Family Trust"
+    ],
+    [
+      "Helen Park",
+      "spouse_of",
+      "Simon Park"
+    ],
+    [
+      "Simon Park",
+      "parent_of",
+      "Chloe Park"
+    ]
+  ],
+  "false_positive_edges": [],
+  "false_negative_edges": [],
+  "provenance_passed": 5,
+  "provenance_failed": 0,
+  "provenance_accuracy": 1.0,
+  "provenance_passes": [
+    [
+      "Chloe Park",
+      "beneficiary_of",
+      "Juniper Family Trust"
+    ],
+    [
+      "Helen Park",
+      "parent_of",
+      "Chloe Park"
+    ],
+    [
+      "Helen Park",
+      "settlor_of",
+      "Juniper Family Trust"
+    ],
+    [
+      "Helen Park",
+      "spouse_of",
+      "Simon Park"
+    ],
+    [
+      "Simon Park",
+      "parent_of",
+      "Chloe Park"
+    ]
+  ],
+  "provenance_failures": []
+}

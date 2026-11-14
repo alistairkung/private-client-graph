@@ -1,0 +1,52 @@
+{
+  "relationships": [
+    {
+      "source_name": "Gregory Ashby",
+      "relationship_type": "settlor_of",
+      "target_name": "Ashby Family Trust",
+      "supporting_text": "Gregory Ashby is the settlor of the Ashby Family Trust."
+    },
+    {
+      "source_name": "Gregory Ashby",
+      "relationship_type": "spouse_of",
+      "target_name": "Patricia Ashby",
+      "supporting_text": "He and his wife, Patricia Ashby, are spouses."
+    },
+    {
+      "source_name": "Gregory Ashby",
+      "relationship_type": "parent_of",
+      "target_name": "Emma Ashby",
+      "supporting_text": "They have two children, Emma Ashby and James Ashby."
+    },
+    {
+      "source_name": "Gregory Ashby",
+      "relationship_type": "parent_of",
+      "target_name": "James Ashby",
+      "supporting_text": "They have two children, Emma Ashby and James Ashby."
+    },
+    {
+      "source_name": "Patricia Ashby",
+      "relationship_type": "parent_of",
+      "target_name": "Emma Ashby",
+      "supporting_text": "They have two children, Emma Ashby and James Ashby."
+    },
+    {
+      "source_name": "Patricia Ashby",
+      "relationship_type": "parent_of",
+      "target_name": "James Ashby",
+      "supporting_text": "They have two children, Emma Ashby and James Ashby."
+    },
+    {
+      "source_name": "Emma Ashby",
+      "relationship_type": "beneficiary_of",
+      "target_name": "Ashby Family Trust",
+      "supporting_text": "Emma Ashby is the current sole beneficiary of the Ashby Family Trust."
+    },
+    {
+      "source_name": "Gregory Ashby",
+      "relationship_type": "sibling_of",
+      "target_name": "Margaret Ashby",
+      "supporting_text": "Mr. Ashby has also suggested that his sister, Margaret Ashby, should be appointed as a trustee in place of the current trustee."
+    }
+  ]
+}
