@@ -7,6 +7,7 @@ import {
   action,
   candidates,
   type View,
+  type EmailMessage,
   type Hits,
   type FollowUp,
   type Preview,
@@ -120,7 +121,7 @@ export function WorkspaceDiscovery({
     const opening: EmailReading = { title: candidate.title, state: "loading" };
     setReading(opening);
     try {
-      const email = await action<{ title: string; text: string }>("email", {
+      const email = await action<EmailMessage>("email", {
         session,
         message_id: candidate.id,
       });

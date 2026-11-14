@@ -13,6 +13,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from private_client_graph.application.discovery import DiscoverySession, WorkspaceScope
 from private_client_graph.application.discovery.collection import Candidate, CollectionReview, ReviewPreview
+from private_client_graph.application.discovery.google import MailPreview
 from private_client_graph.application.discovery.session import DiscoveryView
 from private_client_graph.application.matter_proposals import analyse_finalized_sources
 from private_client_graph.application.proposal_contracts import MatterIntakeMetadata, MatterProposalDetail
@@ -158,10 +159,9 @@ def discovery_router(http: Client | None = None, *, pilot: Pilot | None = None) 
                 "more_pages": approval.more_pages}
 
     @router.post("/email")
-    def read_email(request: Request, body: EmailRead) -> dict[str, str]:
+    def read_email(request: Request, body: EmailRead) -> MailPreview:
         with active_review(request, body) as collection:
-            source = collection.read_email(body.message_id)
-            return {"title": source.title, "text": source.text}
+            return collection.read_email(body.message_id)
 
     @router.post("/preview")
     def preview(request: Request, body: Selection) -> ReviewPreview:

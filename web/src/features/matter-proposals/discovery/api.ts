@@ -38,6 +38,16 @@ export interface View extends Omit<Hits, "messages"> {
     rationale: string;
   }[];
 }
+export interface EmailMessage {
+  title: string;
+  text: string;
+  sender: string;
+  to: string;
+  cc: string;
+  bcc: string;
+  sent_at: string | null;
+  gmail_timestamp_ms: number;
+}
 export interface Preview {
   token: string;
   sources: { id: string; title: string; text: string }[];

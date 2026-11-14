@@ -491,11 +491,58 @@
 .discovery-email-link:hover { text-decoration: underline; text-underline-offset: 3px; }
 .discovery-email-link svg { width: 14px; flex: none; }
 .discovery-row label { cursor: pointer; padding-block: 10px; }
-.email-reader-body {
-  border-top: 1px solid var(--border);
-  padding-top: 18px;
-  font: 400 16px/1.7 "Public Sans", system-ui, sans-serif;
-  white-space: pre-wrap;
+.dialog.email-reader {
+  width: min(640px, calc(100% - 24px));
+  font-family: "Public Sans", system-ui, sans-serif;
   overflow-wrap: anywhere;
 }
-.dialog:has(.email-reader-body) .dialog-heading h2 { overflow-wrap: anywhere; }
+.email-reader .dialog-content {
+  padding: clamp(18px, 4vw, 32px);
+}
+.email-reader .dialog-heading {
+  align-items: start;
+  margin-bottom: 20px;
+}
+.email-reader .dialog-heading h2 {
+  margin: 0;
+  font: 500 clamp(26px, 3.5vw, 34px)/1.15 "Newsreader", Georgia, serif;
+}
+.email-reader .dialog-heading .icon-button {
+  width: 44px;
+  height: 44px;
+  min-height: 44px;
+  margin: -8px -8px 0 0;
+}
+.email-envelope { border-block: 1px solid var(--border); padding-block: 16px; }
+.email-sender { display: flex; align-items: center; gap: 10px; }
+.email-envelope-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  color: var(--accent);
+  background: var(--selection);
+  border-radius: 50%;
+}
+.email-envelope-icon svg { width: 18px; }
+.email-envelope dl, .email-envelope dd { margin: 0; }
+.email-envelope dt, .email-dates { color: var(--muted); font-size: 13px; }
+.email-sender dd { font-size: 16px; font-weight: 600; }
+.email-envelope .email-fields { margin-top: 10px; }
+.email-fields > div {
+  display: grid;
+  grid-template-columns: minmax(3em, max-content) minmax(0, 1fr);
+  align-items: baseline;
+  gap: 10px;
+  padding-block: 2px;
+  font-size: 14px;
+}
+.email-dates summary { width: fit-content; padding: 5px 0; cursor: pointer; }
+.email-dates time { color: var(--ink); }
+.email-reader-body {
+  padding-block: 22px 4px;
+  font-size: 16px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+}

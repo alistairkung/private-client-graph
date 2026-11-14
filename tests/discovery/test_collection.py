@@ -1,5 +1,9 @@
 """A reviewed collection is a one-use, private snapshot of exact provider reads."""
+from datetime import datetime, timezone
+
 import pytest
+
+from local_development.workspace import message_response
 
 from private_client_graph.application.discovery import DiscoverySession, WorkspaceScope
 from private_client_graph.application.discovery.collection import Candidate, CollectionReview
@@ -50,6 +54,50 @@ def test_reading_an_email_checks_access_and_preserves_the_reviewed_collection():
     pdf(google)
     assert review.approve(preview.token) == preview.sources
     assert not google.steps
+
+
+def test_envelope_is_private_and_keeps_copied_addresses_and_distinct_dates():
+    google, review = prepare()
+    record = CORPUS["messages"][5]
+    full = message_response(record, "full")
+    headers = full["payload"]["headers"]
+    headers[:] = [header for header in headers if header["name"] != "Date"]
+    headers.extend([
+        {"name": "cC", "value": '"Patel, Cora" <cora@example.test>'},
+        {"name": "CC", "value": "leo@example.test"},
+        {"name": "Bcc", "value": "mara@example.test"},
+        {"name": "Date", "value": "Mon, 5 Jan 2026 09:30:00 +0800"},
+    ])
+
+    def queue_read():
+        google.message("06", "metadata")
+        google.expect(MAIL + "/06", {"format": "full"}, full)
+
+    queue_read()
+    email = review.read_email("06")
+    assert email.sender == "corpus@example.invalid" and email.to == "synthetic@example.test"
+    assert email.cc == '"Patel, Cora" <cora@example.test>, leo@example.test'
+    assert email.bcc == "mara@example.test"
+    assert email.sent_at == datetime(2026, 1, 5, 1, 30, tzinfo=timezone.utc)
+    assert email.gmail_timestamp_ms == int(record["internalDate"])
+    queue_read()
+    assert review.preview([EMAIL]).sources[0].model_dump() == {
+        "id": "source_001", "title": record["subject"], "text": record["body"],
+    }
+
+
+@pytest.mark.parametrize("date_header", ["", "unreadable", "Mon, 5 Jan 2026 09:30:00"])
+def test_reader_does_not_invent_a_sent_time_or_hidden_recipients(date_header):
+    google, review = prepare()
+    full = message_response(CORPUS["messages"][5], "full")
+    full["payload"]["headers"] = [
+        {"name": "Date", "value": date_header}
+    ] if date_header else []
+    google.message("06", "metadata")
+    google.expect(MAIL + "/06", {"format": "full"}, full)
+    email = review.read_email("06")
+    assert email.sent_at is None and email.gmail_timestamp_ms == int(full["internalDate"])
+    assert (email.sender, email.to, email.cc, email.bcc) == ("", "", "", "")
 
 
 def test_review_revalidates_order_and_issues_distinct_local_source_ids():

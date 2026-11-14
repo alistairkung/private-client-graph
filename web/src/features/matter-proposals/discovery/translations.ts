@@ -1,6 +1,13 @@
 export const discoveryCatalogue: Record<string, string> = {
   "{query} returned {mail} email hits and {pdf} PDF hits.": "「{query}」匹配了 {mail} 封邮件和 {pdf} 份 PDF。",
   "Read {title}": "阅读「{title}」",
+  From: "发件人",
+  To: "收件人",
+  Cc: "抄送",
+  Bcc: "密送",
+  Sent: "发送时间",
+  "Sender unavailable": "发件人未知",
+  "Gmail timestamp": "Gmail 记录时间",
   "Opening email…": "正在打开邮件…",
   "This email could not be opened.": "无法打开这封邮件。",
   "This search reached its limit.": "此次检索已达上限。",

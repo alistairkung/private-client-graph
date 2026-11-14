@@ -2,6 +2,7 @@
 import base64
 import json
 import logging
+from email.utils import formatdate
 from pathlib import Path
 
 from httpx2 import Client, MockTransport, Request, Response, URL
@@ -14,6 +15,11 @@ FILES = "/drive/v3/files"
 def message_response(record: dict, fmt: str) -> dict:
     payload = {"mimeType": "text/plain", "headers": [{"name": "Subject", "value": record["subject"]}]}
     if fmt == "full":
+        payload["headers"].extend([
+            {"name": "From", "value": "corpus@example.invalid"},
+            {"name": "To", "value": "synthetic@example.test"},
+            {"name": "Date", "value": formatdate(int(record["internalDate"]) / 1000, usegmt=True)},
+        ])
         data = record["body"].encode()
         payload["body"] = {"data": base64.urlsafe_b64encode(data).decode(), "size": len(data)}
     return {key: record[key] for key in ("id", "threadId", "internalDate", "labelIds")} | {"payload": payload}

@@ -34,6 +34,11 @@ test("sixth original email leads to an approved PDF and publicly reopened Eviden
     await uninspected.click();
     const email = page.getByRole("dialog", { name: "Alice Reed dispatch" });
     await expect(email).toContainText("Cora Patel will circulate the signed deed.");
+    await expect(email.getByText("corpus@example.invalid")).toBeVisible();
+    await expect(email.getByText("synthetic@example.test")).toBeVisible();
+    await expect(email.getByText("Sent", { exact: true })).toBeVisible();
+    await expect(email.locator("time")).toBeVisible();
+    await expect(email.getByText("Bcc", { exact: true })).toHaveCount(0);
     await page.keyboard.press("Escape");
     await expect(email).toHaveCount(0);
     await expect(uninspected).toBeFocused();

@@ -6,6 +6,7 @@ import re
 from dataclasses import dataclass
 from datetime import date, datetime, time, timezone
 from email.message import Message
+from email.utils import parsedate_to_datetime
 from hashlib import sha256
 from urllib.parse import quote
 
@@ -89,6 +90,12 @@ class PdfPreview:
 class MailPreview:
     title: str
     text: str
+    sender: str
+    to: str
+    cc: str
+    bcc: str
+    sent_at: datetime | None
+    gmail_timestamp_ms: int
 
 
 FILE_FIELDS = "id,name,mimeType,parents,trashed,version"
@@ -203,10 +210,33 @@ class WorkspaceReader:
         full = self._json(url, {"format": "full", "fields": fields + ",payload"}, action)
         if not self.scope.admits_message(full, key):
             raise OutsideScope()
-        payload = full["payload"]
-        subject = next((header["value"] for header in payload.get("headers", [])
-                        if header["name"].lower() == "subject"), "")
-        return MailPreview(subject or "Untitled email", _plain_body(payload))
+        return _mail_preview(full["payload"], int(full["internalDate"]))
+
+
+def _mail_preview(payload: dict, gmail_timestamp_ms: int) -> MailPreview:
+    headers = Message()
+    for header in payload.get("headers", []):
+        if header["name"].lower() in {"subject", "from", "to", "cc", "bcc", "date"}:
+            headers[header["name"]] = header["value"]
+    return MailPreview(
+        title=headers.get("Subject") or "Untitled email",
+        text=_plain_body(payload),
+        sender=", ".join(headers.get_all("From", [])),
+        to=", ".join(headers.get_all("To", [])),
+        cc=", ".join(headers.get_all("Cc", [])),
+        bcc=", ".join(headers.get_all("Bcc", [])),
+        sent_at=_sent_at(headers.get("Date", "")),
+        gmail_timestamp_ms=gmail_timestamp_ms,
+    )
+
+
+def _sent_at(header: str) -> datetime | None:
+    try:
+        sent = parsedate_to_datetime(header)
+    except (ValueError, OverflowError):
+        return None
+    # A missing timezone cannot be interpreted as the practitioner's local time.
+    return sent if sent.tzinfo is not None else None
 
 
 def _plain_body(part: dict) -> str:

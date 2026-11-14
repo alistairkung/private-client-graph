@@ -2,6 +2,7 @@ export function Icon({
   name,
 }: {
   name:
+    | "mail"
     | "lock"
     | "chevron"
     | "atlas"
@@ -14,6 +15,7 @@ export function Icon({
     | "search";
 }) {
   const paths = {
+    mail: "M3 5h18v14H3z M3 6l9 7 9-7",
     lock: "M7 10V7a5 5 0 0 1 10 0v3M5 10h14v11H5zM12 14v3",
     chevron: "m9 6 6 6-6 6",
     atlas: "M4 4h6l2 3 2-3h6v16h-6l-2-3-2 3H4V4Zm8 3v10",

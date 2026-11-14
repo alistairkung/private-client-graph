@@ -1,9 +1,10 @@
 """Re-read an explicitly ordered collection before releasing finalized Sources for analysis."""
-from dataclasses import dataclass
+from contextlib import contextmanager
+from dataclasses import dataclass, replace
 from hashlib import sha256
 from secrets import token_urlsafe
 from threading import Lock
-from typing import Literal
+from typing import Iterator, Literal
 
 from pydantic import BaseModel, ConfigDict
 
@@ -13,6 +14,7 @@ from ..pdf_acquisition import MAX_SOURCE_CHARACTERS, PdfAcquisitionError
 from ..proposal_contracts import ProposalSourceMetadata
 from ..proposal_errors import ProposalFailure
 from ..proposal_sources import MAX_PROPOSAL_SOURCES, MAX_TOTAL_PDF_BYTES
+from .google import MailPreview
 from .limits import Action, LimitReached
 from .session import DiscoverySession
 
@@ -44,9 +46,13 @@ class CollectionReview:
         self._review: tuple[str, list[_Snapshot]] | None = None
         self._lock = Lock()
 
-    def read_email(self, message_id: str) -> Source:
-        """Read one candidate without replacing the practitioner's publication preview."""
-        return self._acquire([Candidate(kind="email", id=message_id)])[0].source
+    def read_email(self, message_id: str) -> MailPreview:
+        """Address headers belong to the private reader, outside the publication snapshot."""
+        with _acquisition_errors():
+            email = self.discovery.read_message(message_id, self.discovery.new_action())
+            source = _source(1, email.title, email.text)
+            _check_size(len(source.text), 0)
+            return replace(email, title=source.title)
 
     def preview(self, candidates: list[Candidate]) -> ReviewPreview:
         with self._lock:
@@ -74,20 +80,11 @@ class CollectionReview:
         snapshots = []
         pdf_bytes = characters = 0
         for index, candidate in enumerate(candidates, 1):
-            try:
+            with _acquisition_errors():
                 snapshot = self._read(candidate, index, action)
-            except (KeyError, TypeError, ValueError):
-                raise ProposalFailure(
-                    "source_unavailable", "Check the selection and preview again.", status_code=409,
-                ) from None
-            except LimitReached:
-                raise ProposalFailure("discovery_limit", "Discovery budget exhausted.") from None
-            except PdfAcquisitionError as exc:
-                raise ProposalFailure(exc.code, exc.message) from None
             characters += len(snapshot.source.text)
             pdf_bytes += snapshot.pdf_bytes
-            if characters > MAX_SOURCE_CHARACTERS or pdf_bytes > MAX_TOTAL_PDF_BYTES:
-                raise ProposalFailure("collection_too_large", "Select fewer or shorter Sources.")
+            _check_size(characters, pdf_bytes)
             snapshots.append(snapshot)
         return snapshots
 
@@ -100,8 +97,30 @@ class CollectionReview:
             email = self.discovery.read_message(candidate.id, action)
             title, text = email.title, email.text
             digest, version, size = sha256(text.encode()).hexdigest(), None, 0
-        metadata = ProposalSourceMetadata(id=f"source_{index:03}", title=title)
-        if not text.strip():
-            raise ValueError("Empty Source")
-        source = Source(id=metadata.id, title=metadata.title, text=text)
-        return _Snapshot(candidate, source, digest, version, size)
+        return _Snapshot(candidate, _source(index, title, text), digest, version, size)
+
+
+def _source(index: int, title: str, text: str) -> Source:
+    metadata = ProposalSourceMetadata(id=f"source_{index:03}", title=title)
+    if not text.strip():
+        raise ValueError("Empty Source")
+    return Source(id=metadata.id, title=metadata.title, text=text)
+
+
+def _check_size(characters: int, pdf_bytes: int) -> None:
+    if characters > MAX_SOURCE_CHARACTERS or pdf_bytes > MAX_TOTAL_PDF_BYTES:
+        raise ProposalFailure("collection_too_large", "Select fewer or shorter Sources.")
+
+
+@contextmanager
+def _acquisition_errors() -> Iterator[None]:
+    try:
+        yield
+    except (KeyError, TypeError, ValueError):
+        raise ProposalFailure(
+            "source_unavailable", "Check the selection and preview again.", status_code=409,
+        ) from None
+    except LimitReached:
+        raise ProposalFailure("discovery_limit", "Discovery budget exhausted.") from None
+    except PdfAcquisitionError as exc:
+        raise ProposalFailure(exc.code, exc.message) from None
