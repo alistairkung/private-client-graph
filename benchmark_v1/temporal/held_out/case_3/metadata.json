@@ -1,0 +1,8 @@
+{
+  "name": "Temporal Precedence: Death and Succession (Held-Out)",
+  "description": "Held-out counterpart to the death/succession dev case. Death note does not explicitly state that family edges survive; model must infer that death does not remove parenthood.",
+  "id": "benchmark_v1_temporal_held_out_3",
+  "axis": "temporal",
+  "split": "held_out",
+  "matter_family": "benchmark_v1_temporal_3"
+}

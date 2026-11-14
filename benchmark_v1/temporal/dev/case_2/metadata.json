@@ -1,0 +1,8 @@
+{
+  "name": "Temporal Precedence: Divorce (Development)",
+  "description": "Tests whether the pipeline excludes a superseded spouse edge after a completed divorce, while preserving unaffected family and trust edges.",
+  "id": "benchmark_v1_temporal_dev_2",
+  "axis": "temporal",
+  "split": "dev",
+  "matter_family": "benchmark_v1_temporal_2"
+}

@@ -1,0 +1,58 @@
+{
+  "entities": [
+    { "id": "person_001", "type": "person", "name": "Rachel Moy" },
+    { "id": "person_002", "type": "person", "name": "Simon Moy" },
+    { "id": "person_003", "type": "person", "name": "Jasmine Moy" },
+    { "id": "trust_001", "type": "trust", "name": "Larkfield Family Trust" }
+  ],
+  "relationships": [
+    {
+      "source": "person_001",
+      "type": "settlor_of",
+      "target": "trust_001",
+      "approved_evidence": [
+        "Rachel Moy is the settlor of the Larkfield Family Trust."
+      ]
+    },
+    {
+      "source": "person_001",
+      "type": "spouse_of",
+      "target": "person_002",
+      "approved_evidence": [
+        "Rachel Moy and Simon Moy are spouses."
+      ]
+    },
+    {
+      "source": "person_001",
+      "type": "parent_of",
+      "target": "person_003",
+      "approved_evidence": [
+        "Rachel Moy and Simon Moy are the parents of Jasmine Moy."
+      ]
+    },
+    {
+      "source": "person_002",
+      "type": "parent_of",
+      "target": "person_003",
+      "approved_evidence": [
+        "Rachel Moy and Simon Moy are the parents of Jasmine Moy."
+      ]
+    },
+    {
+      "source": "person_003",
+      "type": "beneficiary_of",
+      "target": "trust_001",
+      "approved_evidence": [
+        "Jasmine Moy is a beneficiary of the Larkfield Family Trust."
+      ]
+    },
+    {
+      "source": "person_002",
+      "type": "trustee_of",
+      "target": "trust_001",
+      "approved_evidence": [
+        "The current position remains that Simon Moy is the sole trustee of the Larkfield Family Trust."
+      ]
+    }
+  ]
+}

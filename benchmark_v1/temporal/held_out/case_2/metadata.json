@@ -1,0 +1,8 @@
+{
+  "name": "Temporal Precedence: Divorce (Held-Out)",
+  "description": "Held-out counterpart to the divorce dev case. Divorce note does not explicitly state 'no longer spouses'; model must infer that divorce supersedes the marriage.",
+  "id": "benchmark_v1_temporal_held_out_2",
+  "axis": "temporal",
+  "split": "held_out",
+  "matter_family": "benchmark_v1_temporal_2"
+}

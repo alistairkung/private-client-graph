@@ -1,0 +1,78 @@
+{
+  "tp": 6,
+  "fp": 0,
+  "fn": 0,
+  "precision": 1.0,
+  "recall": 1.0,
+  "f1": 1.0,
+  "true_positive_edges": [
+    [
+      "Eleanor Hartley",
+      "parent_of",
+      "Oliver Hartley"
+    ],
+    [
+      "Eleanor Hartley",
+      "settlor_of",
+      "Hartley Family Trust"
+    ],
+    [
+      "Eleanor Hartley",
+      "spouse_of",
+      "James Hartley"
+    ],
+    [
+      "James Hartley",
+      "parent_of",
+      "Oliver Hartley"
+    ],
+    [
+      "Margaret Hartley",
+      "trustee_of",
+      "Hartley Family Trust"
+    ],
+    [
+      "Oliver Hartley",
+      "beneficiary_of",
+      "Hartley Family Trust"
+    ]
+  ],
+  "false_positive_edges": [],
+  "false_negative_edges": [],
+  "provenance_passed": 6,
+  "provenance_failed": 0,
+  "provenance_accuracy": 1.0,
+  "provenance_passes": [
+    [
+      "Eleanor Hartley",
+      "parent_of",
+      "Oliver Hartley"
+    ],
+    [
+      "Eleanor Hartley",
+      "settlor_of",
+      "Hartley Family Trust"
+    ],
+    [
+      "Eleanor Hartley",
+      "spouse_of",
+      "James Hartley"
+    ],
+    [
+      "James Hartley",
+      "parent_of",
+      "Oliver Hartley"
+    ],
+    [
+      "Margaret Hartley",
+      "trustee_of",
+      "Hartley Family Trust"
+    ],
+    [
+      "Oliver Hartley",
+      "beneficiary_of",
+      "Hartley Family Trust"
+    ]
+  ],
+  "provenance_failures": []
+}

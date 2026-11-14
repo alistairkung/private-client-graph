@@ -1,0 +1,8 @@
+{
+  "name": "Temporal Precedence: Proposal (Development)",
+  "description": "Tests whether the pipeline correctly rejects a proposed trustee replacement that has not been formally executed, retaining the existing trustee edge.",
+  "id": "benchmark_v1_temporal_dev_5",
+  "axis": "temporal",
+  "split": "dev",
+  "matter_family": "benchmark_v1_temporal_5"
+}

@@ -1,0 +1,8 @@
+{
+  "name": "Temporal Precedence: Death and Succession (Development)",
+  "description": "Tests whether the pipeline distinguishes a death notice from a separate succession document, replaces the trustee edge correctly, and preserves family edges despite the death.",
+  "id": "benchmark_v1_temporal_dev_3",
+  "axis": "temporal",
+  "split": "dev",
+  "matter_family": "benchmark_v1_temporal_3"
+}

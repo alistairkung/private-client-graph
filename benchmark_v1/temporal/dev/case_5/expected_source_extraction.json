@@ -1,0 +1,46 @@
+{
+  "relationships": [
+    {
+      "source_name": "Rachel Moy",
+      "relationship_type": "settlor_of",
+      "target_name": "Larkfield Family Trust",
+      "supporting_text": "Rachel Moy is the settlor of the Larkfield Family Trust.",
+      "source_id": "note_01"
+    },
+    {
+      "source_name": "Rachel Moy",
+      "relationship_type": "spouse_of",
+      "target_name": "Simon Moy",
+      "supporting_text": "Rachel Moy and Simon Moy are spouses.",
+      "source_id": "note_01"
+    },
+    {
+      "source_name": "Rachel Moy",
+      "relationship_type": "parent_of",
+      "target_name": "Jasmine Moy",
+      "supporting_text": "Rachel Moy and Simon Moy are the parents of Jasmine Moy.",
+      "source_id": "note_01"
+    },
+    {
+      "source_name": "Simon Moy",
+      "relationship_type": "parent_of",
+      "target_name": "Jasmine Moy",
+      "supporting_text": "Rachel Moy and Simon Moy are the parents of Jasmine Moy.",
+      "source_id": "note_01"
+    },
+    {
+      "source_name": "Jasmine Moy",
+      "relationship_type": "beneficiary_of",
+      "target_name": "Larkfield Family Trust",
+      "supporting_text": "Jasmine Moy is a beneficiary of the Larkfield Family Trust.",
+      "source_id": "note_01"
+    },
+    {
+      "source_name": "Simon Moy",
+      "relationship_type": "trustee_of",
+      "target_name": "Larkfield Family Trust",
+      "supporting_text": "The current position remains that Simon Moy is the sole trustee of the Larkfield Family Trust.",
+      "source_id": "note_02"
+    }
+  ]
+}

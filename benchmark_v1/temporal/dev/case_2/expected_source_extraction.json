@@ -1,0 +1,32 @@
+{
+  "relationships": [
+    {
+      "source_name": "Alice Tan",
+      "relationship_type": "settlor_of",
+      "target_name": "Pemberton Family Trust",
+      "supporting_text": "Alice Tan is the settlor of the Pemberton Family Trust.",
+      "source_id": "note_01"
+    },
+    {
+      "source_name": "Alice Tan",
+      "relationship_type": "parent_of",
+      "target_name": "Chloe Tan",
+      "supporting_text": "Alice Tan and Benedict Tan are the parents of Chloe Tan.",
+      "source_id": "note_01"
+    },
+    {
+      "source_name": "Benedict Tan",
+      "relationship_type": "parent_of",
+      "target_name": "Chloe Tan",
+      "supporting_text": "Alice Tan and Benedict Tan are the parents of Chloe Tan.",
+      "source_id": "note_01"
+    },
+    {
+      "source_name": "Chloe Tan",
+      "relationship_type": "beneficiary_of",
+      "target_name": "Pemberton Family Trust",
+      "supporting_text": "Chloe Tan is a beneficiary of the Pemberton Family Trust.",
+      "source_id": "note_01"
+    }
+  ]
+}

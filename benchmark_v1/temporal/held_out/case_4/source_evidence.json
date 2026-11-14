@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "relationships": [
+    {
+      "source": "person_001",
+      "type": "settlor_of",
+      "target": "trust_001",
+      "approved_evidence": [
+        { "source_id": "note_01", "supporting_text": "Margaret Nightingale is the settlor of the Nightingale Family Trust." }
+      ]
+    },
+    {
+      "source": "person_001",
+      "type": "spouse_of",
+      "target": "person_002",
+      "approved_evidence": [
+        { "source_id": "note_01", "supporting_text": "Margaret Nightingale and Thomas Nightingale are spouses." }
+      ]
+    },
+    {
+      "source": "person_003",
+      "type": "beneficiary_of",
+      "target": "trust_001",
+      "approved_evidence": [
+        { "source_id": "note_01", "supporting_text": "Caroline Nightingale is a beneficiary of the Nightingale Family Trust." }
+      ]
+    }
+  ]
+}

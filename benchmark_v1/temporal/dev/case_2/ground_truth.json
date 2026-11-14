@@ -1,0 +1,42 @@
+{
+  "entities": [
+    { "id": "person_001", "type": "person", "name": "Alice Tan" },
+    { "id": "person_002", "type": "person", "name": "Benedict Tan" },
+    { "id": "person_003", "type": "person", "name": "Chloe Tan" },
+    { "id": "trust_001", "type": "trust", "name": "Pemberton Family Trust" }
+  ],
+  "relationships": [
+    {
+      "source": "person_001",
+      "type": "settlor_of",
+      "target": "trust_001",
+      "approved_evidence": [
+        "Alice Tan is the settlor of the Pemberton Family Trust."
+      ]
+    },
+    {
+      "source": "person_001",
+      "type": "parent_of",
+      "target": "person_003",
+      "approved_evidence": [
+        "Alice Tan and Benedict Tan are the parents of Chloe Tan."
+      ]
+    },
+    {
+      "source": "person_002",
+      "type": "parent_of",
+      "target": "person_003",
+      "approved_evidence": [
+        "Alice Tan and Benedict Tan are the parents of Chloe Tan."
+      ]
+    },
+    {
+      "source": "person_003",
+      "type": "beneficiary_of",
+      "target": "trust_001",
+      "approved_evidence": [
+        "Chloe Tan is a beneficiary of the Pemberton Family Trust."
+      ]
+    }
+  ]
+}

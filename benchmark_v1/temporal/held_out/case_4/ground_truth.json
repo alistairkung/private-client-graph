@@ -1,0 +1,34 @@
+{
+  "entities": [
+    { "id": "person_001", "type": "person", "name": "Margaret Nightingale" },
+    { "id": "person_002", "type": "person", "name": "Thomas Nightingale" },
+    { "id": "person_003", "type": "person", "name": "Caroline Nightingale" },
+    { "id": "trust_001", "type": "trust", "name": "Nightingale Family Trust" }
+  ],
+  "relationships": [
+    {
+      "source": "person_001",
+      "type": "settlor_of",
+      "target": "trust_001",
+      "approved_evidence": [
+        "Margaret Nightingale is the settlor of the Nightingale Family Trust."
+      ]
+    },
+    {
+      "source": "person_001",
+      "type": "spouse_of",
+      "target": "person_002",
+      "approved_evidence": [
+        "Margaret Nightingale and Thomas Nightingale are spouses."
+      ]
+    },
+    {
+      "source": "person_003",
+      "type": "beneficiary_of",
+      "target": "trust_001",
+      "approved_evidence": [
+        "Caroline Nightingale is a beneficiary of the Nightingale Family Trust."
+      ]
+    }
+  ]
+}
