@@ -39,11 +39,6 @@ class Action:
         self.session.requests += 1
         self.used.requests += 1
 
-    @property
-    def remaining_bytes(self) -> int:
-        return min(self.limits.session_bytes - self.session.bytes,
-                   self.limits.action_bytes - self.used.bytes)
-
     def require_bytes(self, size: int) -> None:
         if size > self.limits.session_bytes - self.session.bytes:
             raise LimitReached("Session byte limit")

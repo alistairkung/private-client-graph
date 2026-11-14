@@ -109,21 +109,20 @@ class WorkspaceReader:
                 if response.headers.get("content-encoding", "identity") != "identity":
                     raise ReadFailure("Unexpected Workspace content encoding")
                 length = response.headers.get("content-length")
+                if length is not None and not re.fullmatch(r"[0-9]+", length):
+                    raise ReadFailure("Invalid Workspace content length")
                 expected = int(length) if length is not None else None
                 if expected is not None:
                     action.require_bytes(expected)
                 data = bytearray()
-                # Cap each application read, including chunked responses without Content-Length.
-                block_size = min(8192, action.remaining_bytes)
-                for chunk in response.iter_bytes(block_size):
+                # Identity encoding: each yield is one transport chunk. Charge before
+                # retaining it, including the first excess chunk needed to distinguish EOF.
+                for chunk in response.iter_bytes():
                     action.consume(len(chunk))
+                    if expected is not None and len(data) + len(chunk) > expected:
+                        raise ReadFailure("Workspace response exceeds its declared length")
                     data.extend(chunk)
-                    if expected is None:
-                        # Unframed responses may require another full block. Stop before pulling it.
-                        action.require_bytes(block_size)
-                    elif len(data) == expected:
-                        break
-                if expected is not None and expected != len(data):
+                if expected is not None and len(data) != expected:
                     raise ReadFailure("Incomplete Workspace response")
                 return bytes(data)
         except HTTPError:

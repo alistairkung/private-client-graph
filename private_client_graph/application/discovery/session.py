@@ -24,18 +24,28 @@ class _Search:
 
     def enumerate(self, reader: WorkspaceReader, action: Action) -> None:
         while self.mail_page is not None:
-            page = reader.mail_page(self.query, self.mail_page, action)
-            self.message_ids.update(item_id(row["id"]) for row in page.get("messages", []))
-            self.mail_page = _next_page(page)
+            self.read_mail_page(reader, action)
         while self.drive_page is not None:
-            page = reader.drive_page(self.query, self.drive_page, action)
-            for row in page.get("files", []):
-                try:
-                    item = reader.admitted_file(row)
-                except OutsideScope:
-                    continue
-                self.files[item.id] = item
-            self.drive_page = _next_page(page)
+            self.read_drive_page(reader, action)
+
+    def read_mail_page(self, reader: WorkspaceReader, action: Action) -> None:
+        if self.mail_page is None:
+            return
+        page = reader.mail_page(self.query, self.mail_page, action)
+        self.message_ids.update(item_id(row["id"]) for row in page.get("messages", []))
+        self.mail_page = _next_page(page)
+
+    def read_drive_page(self, reader: WorkspaceReader, action: Action) -> None:
+        if self.drive_page is None:
+            return
+        page = reader.drive_page(self.query, self.drive_page, action)
+        for row in page.get("files", []):
+            try:
+                item = reader.admitted_file(row)
+            except OutsideScope:
+                continue
+            self.files[item.id] = item
+        self.drive_page = _next_page(page)
 
 
 def _next_page(page: dict) -> str | None:
@@ -112,7 +122,7 @@ class DiscoverySession:
             return self.inspect_more()
 
     def inspect_more(self) -> DiscoveryView:
-        """Enumerate original matches, then inspect up to five outstanding Gmail IDs in lexical order."""
+        """Inspect known Gmail hits first, advancing each original cursor at most once per action."""
         with self._lock:
             original = self._original
             if original is None:
@@ -120,9 +130,13 @@ class DiscoverySession:
             action = Action(self._limits, self._usage)
             reason = None
             try:
-                original.enumerate(self._reader, action)
-                for key in self._pending(original)[:5]:
+                pending = self._pending(original)
+                if not pending:
+                    original.read_mail_page(self._reader, action)
+                    pending = self._pending(original)
+                for key in pending[:5]:
                     self._inspect_message(key, action)
+                original.read_drive_page(self._reader, action)
             except LimitReached as exc:
                 reason = str(exc)
             except (KeyError, TypeError, ValueError):
