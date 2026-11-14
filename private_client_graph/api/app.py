@@ -11,6 +11,9 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from private_client_graph.api.public_research import router as public_research_router
 from private_client_graph.api.auth import configure_auth
+from private_client_graph.api.discovery import discovery_router as make_discovery_router
+from private_client_graph.api.workspace_logging import WorkspaceLogBoundary
+from private_client_graph.api.workspace_pilot import Pilot, PilotConfig
 from private_client_graph.api.matter_proposals import router as proposal_router, proposal_failure
 from private_client_graph.application.matter_confirmation import confirm_matter
 from private_client_graph.application.proposal_errors import ProposalFailure
@@ -116,6 +119,13 @@ def create_app(web_dist: Path = WEB_DIST, *, discovery_router: APIRouter | None 
         application.state.proposal_analysis = proposal_config
     except ValueError:
         application.state.proposal_analysis = None
+    application.state.workspace_pilot = None
+    if discovery_router is None and (pilot_config := PilotConfig.load(application.state.auth_config)):
+        pilot = Pilot(pilot_config, application.state.auth_config.origin)
+        application.add_middleware(WorkspaceLogBoundary)
+        application.state.workspace_pilot = pilot
+        application.include_router(pilot.router())
+        discovery_router = make_discovery_router(pilot=pilot)
     application.state.workspace_discovery = discovery_router is not None
     if discovery_router is not None:
         application.include_router(discovery_router)

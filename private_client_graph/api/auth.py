@@ -86,6 +86,7 @@ class PractitionerBoundary(BaseHTTPMiddleware):
     async def _dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         path = request.url.path
         private = matter_path(path) and request.method not in {"GET", "HEAD", "OPTIONS"}
+        private = private or path == "/auth/workspace/callback"
         auth_route = path.startswith("/auth/")
         if not private and not auth_route:
             return await call_next(request)
@@ -103,9 +104,11 @@ class PractitionerBoundary(BaseHTTPMiddleware):
             subject = request.session.get("sub")
             expires = request.session.get("expires", 0)
             if not subject or not isinstance(expires, (float, int)) or time.time() >= expires:
+                _disconnect_workspace(request)
                 request.session.clear()
                 return JSONResponse({"error": {"message": "Sign in required."}}, status_code=401)
             if subject not in subjects:
+                _disconnect_workspace(request)
                 request.session.clear()
                 return JSONResponse({"error": {"message": "Access is not allowed."}}, status_code=403)
         return await call_next(request)
@@ -135,6 +138,8 @@ def access(request: Request) -> JSONResponse:
     capabilities = {"can_write": can_write, "sign_in_available": config is not None}
     if can_write and request.app.state.workspace_discovery:
         capabilities["workspace_discovery"] = True
+        if request.app.state.workspace_pilot:
+            capabilities["workspace_connection"] = True
     return JSONResponse(
         capabilities,
         headers={"Cache-Control": "no-store"},
@@ -145,6 +150,7 @@ async def login(request: Request) -> Response:
     target = request.query_params.get("next", "/app")
     if not (target == "/app" or target.startswith("/app/")) or "\\" in target:
         target = "/app"
+    _disconnect_workspace(request)
     request.session.clear()
     request.session["next"] = target
     config = request.app.state.auth_config
@@ -169,10 +175,18 @@ async def callback(request: Request) -> Response:
     if not authorized:
         return JSONResponse({"error": {"message": "Access is not allowed."}}, status_code=403)
     request.session.update(sub=subject, expires=time.time() + request.app.state.auth_config.session_seconds)
+    if request.app.state.workspace_pilot:
+        request.session["workspace_login"] = request.app.state.workspace_pilot.login(request.session["expires"])
     return RedirectResponse(target, status_code=303)
 
 
+def _disconnect_workspace(request: Request) -> None:
+    if pilot := request.app.state.workspace_pilot:
+        pilot.logout(request.session.get("workspace_login", ""))
+
+
 async def logout(request: Request) -> Response:
+    _disconnect_workspace(request)
     request.session.clear()
     return Response(status_code=204, headers={"Cache-Control": "no-store"})
 

@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { type Ref, useState } from "react";
 import { useLocale } from "../../../shared/locale";
 import type { Candidate, Preview } from "./api";
 
 type SelectionProps = {
+  headingRef: Ref<HTMLHeadingElement>;
   options: Candidate[];
   selected: Candidate[];
   change: (items: Candidate[]) => void;
@@ -12,6 +13,7 @@ type SelectionProps = {
 };
 
 export function SourceSelection({
+  headingRef,
   options,
   selected,
   change,
@@ -30,7 +32,9 @@ export function SourceSelection({
   }
   return (
     <section>
-      <h2>{t("Select Sources")}</h2>
+      <h2 ref={headingRef} tabIndex={-1}>
+        {t("Select Sources")}
+      </h2>
       {options.map((item) => {
         const key = item.kind + item.id;
         const included = selected.some(

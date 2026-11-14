@@ -209,3 +209,8 @@
 .discovery pre { white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; }
 .discovery .discovery-choice { display: flex; align-items: baseline; gap: 8px; margin: 8px 0; }
 .discovery-choice input { flex: 0 0 auto; width: auto; }
+
+.workspace-connection { margin-top: 12px; overflow-wrap: anywhere; }
+.workspace-connection h2 { margin-top: 0; }
+.workspace-connection p { max-width: 65ch; }
+.workspace-connection button { min-height: 44px; }

@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { navigate, useNavigationLock } from "../../../app/navigation";
+import { RequestFailure } from "../../../shared/api";
 import { ErrorNotice } from "../../../shared/Feedback";
 import { useLocale } from "../../../shared/locale";
 import {
@@ -16,7 +17,18 @@ import { SourceSelection } from "./SourceSelection";
 
 export function WorkspaceDiscovery({
   onBusy,
+  scope,
+  onGrantLoss,
+  onStaleSearch,
 }: {
+  scope?: {
+    label: string;
+    folder: string;
+    label_name: string;
+    folder_name: string;
+  };
+  onStaleSearch?: () => void;
+  onGrantLoss?: () => void;
   onBusy: (busy: boolean) => void;
 }) {
   const { t } = useLocale();
@@ -31,6 +43,15 @@ export function WorkspaceDiscovery({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<unknown>();
   useNavigationLock(busy);
+  const selectionHeading = useRef<HTMLHeadingElement>(null);
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+      onBusy(false);
+    };
+  }, [onBusy]);
 
   async function run(operation: () => Promise<void>) {
     if (busy) return;
@@ -40,17 +61,32 @@ export function WorkspaceDiscovery({
     try {
       await operation();
     } catch (failure) {
-      setError(failure);
+      if (!mounted.current) return;
+      if (
+        onGrantLoss &&
+        failure instanceof RequestFailure &&
+        failure.detail?.code === "workspace_reconnect"
+      )
+        onGrantLoss();
+      else if (
+        onStaleSearch &&
+        failure instanceof RequestFailure &&
+        failure.detail?.code === "unknown_discovery"
+      )
+        onStaleSearch();
+      else setError(failure);
     } finally {
-      setBusy(false);
-      onBusy(false);
+      if (mounted.current) {
+        setBusy(false);
+        onBusy(false);
+      }
     }
   }
   async function start() {
     const result = await action<{ session: string; view: View }>("start", {
       terms,
-      label: "alder-label",
-      folder: "folder-1",
+      label: scope?.label ?? "alder-label",
+      folder: scope?.folder ?? "folder-1",
       first_day: first || null,
       last_day: last || null,
     });
@@ -83,7 +119,8 @@ export function WorkspaceDiscovery({
       publish_synthetic: true,
       metadata: { external_reference, matter_title },
     });
-    navigate("/app/matter-proposals/" + encodeURIComponent(proposal.id));
+    if (mounted.current)
+      navigate("/app/matter-proposals/" + encodeURIComponent(proposal.id));
   }
   return (
     <div className="intake-form discovery" aria-busy={busy}>
@@ -99,13 +136,13 @@ export function WorkspaceDiscovery({
             <label>
               {t("Drive folder")}
               <select>
-                <option>folder-1</option>
+                <option>{scope?.folder_name ?? "folder-1"}</option>
               </select>
             </label>
             <label>
               {t("Gmail label")}
               <select>
-                <option>alder-label</option>
+                <option>{scope?.label_name ?? "alder-label"}</option>
               </select>
             </label>
             <label>
@@ -155,6 +192,7 @@ export function WorkspaceDiscovery({
               approve={(revision, query) => run(() => follow(revision, query))}
             />
             <SourceSelection
+              headingRef={selectionHeading}
               options={candidates(view, followups, (id) =>
                 t("Email hit {id}", { id }),
               )}
@@ -171,6 +209,13 @@ export function WorkspaceDiscovery({
         )}
       </fieldset>
       {error != null && <ErrorNotice error={error} />}
+      {scope &&
+        error instanceof RequestFailure &&
+        error.detail?.code === "source_unavailable" && (
+          <button onClick={() => selectionHeading.current?.focus()}>
+            {t("Review selection")}
+          </button>
+        )}
     </div>
   );
 }

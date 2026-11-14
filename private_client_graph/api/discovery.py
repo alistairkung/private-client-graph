@@ -1,10 +1,11 @@
-"""Private, same-session actions mounted only by the offline practitioner app."""
-from dataclasses import dataclass
+"""Private discovery actions for offline fixtures or the opt-in synthetic pilot."""
+from contextlib import contextmanager
+from dataclasses import dataclass, replace
 from datetime import date
 from secrets import token_urlsafe
 from threading import Lock
 from time import time
-from typing import Literal
+from typing import Iterator, Literal
 
 from fastapi import APIRouter, Request, Response
 from httpx2 import Client
@@ -17,13 +18,15 @@ from private_client_graph.application.matter_proposals import analyse_finalized_
 from private_client_graph.application.proposal_contracts import MatterIntakeMetadata, MatterProposalDetail
 from private_client_graph.application.proposal_errors import ProposalFailure
 from private_client_graph.application.proposal_sources import MAX_PROPOSAL_SOURCES
+from .auth import allowed_subjects, available_auth_config
+from .workspace_pilot import Pilot, reconnect
 
 
 class Start(BaseModel):
     model_config = ConfigDict(extra="forbid")
     terms: str = Field(max_length=160)
-    folder: Literal["folder-1"]
-    label: Literal["alder-label"]
+    folder: str
+    label: str
     first_day: date | None = None
     last_day: date | None = None
 
@@ -76,29 +79,75 @@ class _Sessions:
             return flow.review
 
 
-def discovery_router(http: Client) -> APIRouter:
+def discovery_router(http: Client | None = None, *, pilot: Pilot | None = None) -> APIRouter:
     router = APIRouter(prefix="/api/matter-proposals/discovery", include_in_schema=False)
     sessions = _Sessions()
+    base_scope = pilot.config.scope if pilot else WorkspaceScope("synthetic@example.test", "alder-label", "folder-1")
+
+    def review(request: Request, body: SessionAction) -> CollectionReview:
+        if pilot:
+            # Disconnect, expiry and journey replacement use the same lock.
+            with pilot.lock:
+                journey = pilot.connected(request).journey
+                if not journey or journey[0] != body.session:
+                    raise ProposalFailure("unknown_discovery", "Start private discovery again.", status_code=409)
+                return journey[1]
+        return sessions.get(request, body)
+
+    @contextmanager
+    def active_review(request: Request, body: SessionAction) -> Iterator[CollectionReview]:
+        collection = review(request, body)
+        try:
+            yield collection
+        finally:
+            # A concurrent disconnect or replacement invalidates in-flight results too.
+            if pilot:
+                review(request, body)
 
     @router.post("/start")
     def start(request: Request, body: Start) -> dict:
+        connection = pilot.connected(request) if pilot else None
+        client = connection.http if connection else http
+        if client is None:
+            raise reconnect()
         try:
-            scope = WorkspaceScope("synthetic@example.test", body.label, body.folder, body.first_day, body.last_day)
-            discovery = DiscoverySession(http, scope)
+            if (body.label, body.folder) != (base_scope.label, base_scope.folder):
+                raise ValueError("Invalid scope")
+            scope = replace(base_scope, first_day=body.first_day, last_day=body.last_day)
+            discovery = DiscoverySession(
+                client, scope,
+                message_ids=pilot.config.message_ids if pilot else None,
+                file_ids=pilot.config.file_ids if pilot else None,
+            )
             view = discovery.start(body.terms)
         except ValueError:
             raise ProposalFailure("invalid_discovery", "Check your discovery inputs.") from None
-        return {"session": sessions.start(request, CollectionReview(discovery)), "view": view}
+        except RuntimeError:
+            # A client closed by a simultaneous disconnect cannot issue another read.
+            if pilot and pilot.connected(request) is not connection:
+                raise reconnect() from None
+            raise
+        collection = CollectionReview(discovery)
+        if connection and pilot:
+            with pilot.lock:
+                if pilot.connected(request) is not connection:
+                    raise reconnect()
+                handle = token_urlsafe()
+                connection.journey = handle, collection
+        else:
+            handle = sessions.start(request, collection)
+        return {"session": handle, "view": view}
 
     @router.post("/inspect")
     def inspect(request: Request, body: SessionAction) -> DiscoveryView:
-        return sessions.get(request, body).discovery.inspect_more()
+        with active_review(request, body) as collection:
+            return collection.discovery.inspect_more()
 
     @router.post("/follow-up")
     def follow_up(request: Request, body: FollowUp) -> dict:
-        discovery = sessions.get(request, body).discovery
         try:
-            approval = discovery.approve(body.revision, body.query)
+            with active_review(request, body) as collection:
+                approval = collection.discovery.approve(body.revision, body.query)
         except ValueError:
             raise ProposalFailure("invalid_followup", "Choose an available suggested search.") from None
         return {"messages": approval.messages, "files": approval.files, "stop_reason": approval.stop_reason,
@@ -106,11 +155,20 @@ def discovery_router(http: Client) -> APIRouter:
 
     @router.post("/preview")
     def preview(request: Request, body: Selection) -> ReviewPreview:
-        return sessions.get(request, body).preview(body.candidates)
+        with active_review(request, body) as collection:
+            return collection.preview(body.candidates)
 
     @router.post("/import", status_code=201)
     def publish(request: Request, body: Import, response: Response) -> MatterProposalDetail:
-        sources = sessions.get(request, body).approve(body.preview)
+        with active_review(request, body) as collection:
+            sources = collection.approve(body.preview)
+            if pilot:
+                if available_auth_config(request) is None:
+                    raise ProposalFailure("authentication_unavailable", "Authentication is unavailable.", status_code=503)
+                if request.session["sub"] not in allowed_subjects():
+                    raise ProposalFailure("access_denied", "Access is not allowed.", status_code=403)
+        # The final active_review check authorizes handoff. Subsequent disconnects
+        # cannot revoke the finalized Sources or undo a provider reservation.
         proposal = analyse_finalized_sources(body.metadata, sources, request.app.state.proposal_analysis)
         response.headers["Location"] = f"/api/matter-proposals/{proposal.id}"
         return proposal

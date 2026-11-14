@@ -99,3 +99,72 @@ test("sixth original email leads to an approved PDF and publicly reopened Eviden
     await reader.close();
   }
 });
+
+test("inline reconnection after expiry opens a fresh search", async ({
+  page,
+}) => {
+  let generation = 0;
+  let searches = 0;
+  const root = "**/api/matter-proposals/discovery/";
+  await page.clock.install();
+  await page.route("**/api/access", async (route) => {
+    const response = await route.fetch();
+    await route.fulfill({
+      response,
+      json: { ...(await response.json()), workspace_connection: true },
+    });
+  });
+  await page.route(root + "connect", async (route) => {
+    generation++;
+    await route.fulfill({
+      json: { url: "/app/matter-proposals/new?workspace=ready" },
+    });
+  });
+  await page.route(root + "connection", async (route) => {
+    const now = await page.evaluate(() => Date.now());
+    await route.fulfill({
+      json: {
+        connected: generation > 0,
+        generation: String(generation),
+        expires: generation ? now / 1000 + 300 : null,
+        account: "synthetic@example.test",
+        label: "alder-label",
+        folder: "folder-1",
+        label_name: "Alder correspondence",
+        folder_name: "Alder Trust",
+      },
+    });
+  });
+  page.on("request", (request) => {
+    if (request.url().endsWith("/discovery/start")) searches++;
+  });
+
+  await page.goto("/auth/login?next=/app/matter-proposals/new");
+  await page
+    .getByRole("button", { name: "Discover Workspace Sources" })
+    .click();
+  await page.getByRole("button", { name: "Connect Google Workspace" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Workspace connected" }),
+  ).toBeFocused();
+  expect(searches).toBe(0);
+  await page.getByRole("button", { name: "Start private discovery" }).click();
+  const deed = page.getByRole("checkbox", { name: /· PDF/ }).first();
+  await deed.check();
+  await page.getByRole("button", { name: "Preview exact Sources" }).click();
+  await expect(page.getByLabel(/I approve publishing/)).toBeVisible();
+
+  await page.clock.fastForward(301_000);
+  const reconnect = page.getByRole("button", {
+    name: "Reconnect",
+    exact: true,
+  });
+  await expect(reconnect).toBeVisible();
+  await expect(page.getByLabel(/I approve publishing/)).toHaveCount(0);
+  await reconnect.click();
+  await expect(
+    page.getByRole("button", { name: "Start private discovery" }),
+  ).toBeEnabled();
+  await expect(deed).toHaveCount(0);
+  expect(searches).toBe(1);
+});

@@ -38,7 +38,7 @@ export async function request(
   }
   if (!response.ok) {
     if (init?.method && (response.status === 401 || response.status === 403)) {
-      window.dispatchEvent(new Event("pcg:access-denied"));
+      window.dispatchEvent(new CustomEvent("pcg:access-denied", { detail: response.status }));
     }
     const body = (await response.json().catch(() => undefined)) as
       | { error?: ServiceError }

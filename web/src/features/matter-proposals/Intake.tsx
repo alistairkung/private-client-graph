@@ -7,6 +7,7 @@ import { Icon } from "../../shared/Icon";
 import { useLocale } from "../../shared/locale";
 import { useAccess, WriteGate } from "../../shared/access";
 import { admissionError, addSources } from "./uploads";
+import { WorkspaceConnection } from "./discovery/WorkspaceConnection";
 import { WorkspaceDiscovery } from "./discovery/WorkspaceDiscovery";
 import { FictionalPrompt } from "./FictionalPrompt";
 import {
@@ -19,7 +20,7 @@ import "./intake.css";
 
 export function Intake() {
   const { t } = useLocale();
-  const { access } = useAccess();
+  const { access, sessionEnded } = useAccess();
   const canWrite = access?.can_write === true;
   const [reference, setReference] = useSessionState("intake:reference", "");
   const [title, setTitle] = useSessionState("intake:title", "");
@@ -31,7 +32,7 @@ export function Intake() {
   const [busy, setBusy] = useState(false);
   useNavigationLock(busy);
   const [error, setError] = useSessionState<unknown>("intake:error", undefined);
-  const [discover, setDiscover] = useState(false);
+  const [discover, setDiscover] = useState(() => new URLSearchParams(location.search).has("workspace"));
   const [discoveryBusy, setDiscoveryBusy] = useState(false);
   const [prompt, setPrompt] = useState(false);
   const [dragging, setDragging] = useState(false);
@@ -115,15 +116,26 @@ export function Intake() {
       </div>
       <p className="public-source-notice">{t("Saving a proposal publishes every Source title and its entire extracted text, proposed relationships and Matter reference to anyone, before confirmation. Discard cannot retract copies already read or downloaded.")}</p>
       {!canWrite && <div className="intake-access" id="intake-access">
-        <p>{t("Sign in to upload sources and create a proposal.")}</p>
-        <WriteGate />
+        {discover && sessionEnded ? (
+          <div className="notice error" role="alert">
+            <h2>{t("Your session has expired")}</h2>
+            <a href={"/auth/login?next=" + encodeURIComponent("/app/matter-proposals/new?workspace=connect")}>
+              {t("Sign in again")}
+            </a>
+          </div>
+        ) : (
+          <>
+            <p>{t("Sign in to upload sources and create a proposal.")}</p>
+            <WriteGate />
+          </>
+        )}
       </div>}
       {canWrite && access?.workspace_discovery && (
         <button className="button" disabled={busy || discoveryBusy} onClick={() => setDiscover(!discover)}>
           {t(discover ? "Return to PDF upload" : "Discover Workspace Sources")}
         </button>
       )}
-      {canWrite && access?.workspace_discovery && discover ? <WorkspaceDiscovery onBusy={setDiscoveryBusy} /> : <div className="intake-layout">
+      {canWrite && access?.workspace_discovery && discover ? (access.workspace_connection ? <WorkspaceConnection onBusy={setDiscoveryBusy} /> : <WorkspaceDiscovery onBusy={setDiscoveryBusy} />) : <div className="intake-layout">
         <form onSubmit={submit} className="intake-form" aria-describedby={!canWrite ? "intake-access" : undefined}>
           <fieldset disabled={busy || !canWrite}>
             <legend>{t("Matter identity")}</legend>

@@ -446,3 +446,31 @@ Matter/proposal boundaries and Evergreen use it while retaining existing API
 contracts. Both Matter and proposal reads reconstruct it from relational facts. Confirmation
 copies the complete reviewed state unchanged, transfers the reference claim, and
 consumes the proposal atomically.
+
+### Private synthetic Workspace pilot
+
+In a private single-process practitioner deployment, set `PCG_WORKSPACE_ENABLED=true` to enable delegated discovery. Keep this setting unset on public deployments. The existing local fixture mode runs without these settings. The server fails startup on incomplete pilot configuration. Restarting it clears pilot sessions and requires a new PCG login.
+
+Set the following variables with the `PCG_WORKSPACE_` prefix:
+
+| Suffix | Value |
+| --- | --- |
+| CLIENT_ID, CLIENT_SECRET | A separate Google web OAuth client registered for the exact trusted origin plus `/auth/workspace/callback` |
+| SUBJECT, MAILBOX | Verified Google subject and mailbox of the designated synthetic account |
+| FOLDER, LABEL | The direct Drive folder ID and individual Gmail message label ID |
+| FOLDER_NAME, LABEL_NAME | Practitioner-facing names for those locations |
+| FILE_IDS, MESSAGE_IDS | Comma-separated provider IDs from the synthetic seed manifest, one list per provider |
+
+PCG sign-in authorizes the practitioner. The separate online grant authorizes the synthetic mailbox and Drive account. A one-use OAuth transaction binds PKCE, nonce and state to the current signed login. Access ends at the earlier of token expiry and session expiry. Disconnect, logout and a rejected grant retire the private journey. An item-level denial leaves the connection available to revise the collection.
+
+When the practitioner approves publication, PCG consumes the preview token,
+reacquires the Sources and compares them with the exact approved collection.
+PCG rechecks practitioner eligibility, then authorizes import by verifying the
+active grant and search handle under the same lock used by disconnect.
+Disconnection or expiry before that point rejects the import before analysis.
+Afterward, analysis can finish using the finalized Sources even if Workspace
+disconnects. The database commit makes the proposal public. Reference checks,
+provider authorization and accounting, and recovery by reference after an
+unknown outcome follow the same rules as PDF intake.
+
+Configure the private reverse proxy and any external monitoring to omit discovery bodies, OAuth callback query strings and authorization headers from logs and traces. The app uses server memory for active tokens. The private operator must restrict ingress and disable external HTTP/body tracing. Real account provisioning, seeding and live API verification belong to the subsequent pilot.
