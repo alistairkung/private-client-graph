@@ -9,6 +9,7 @@ import { useAccess, WriteGate } from "../../shared/access";
 import { admissionError, addSources } from "./uploads";
 import { WorkspaceConnection } from "./discovery/WorkspaceConnection";
 import { WorkspaceDiscovery } from "./discovery/WorkspaceDiscovery";
+import { SourceMethod } from "./SourceMethod";
 import { FictionalPrompt } from "./FictionalPrompt";
 import {
   forgetSessionState,
@@ -17,11 +18,13 @@ import {
 } from "../../shared/session-state";
 import { navigate, useNavigationLock } from "../../app/navigation";
 import "./intake.css";
+import "./discovery/discovery.css";
 
 export function Intake() {
   const { t } = useLocale();
-  const { access, sessionEnded } = useAccess();
+  const { access, denial } = useAccess();
   const canWrite = access?.can_write === true;
+  const canChooseMethod = canWrite && access?.workspace_discovery === true;
   const [reference, setReference] = useSessionState("intake:reference", "");
   const [title, setTitle] = useSessionState("intake:title", "");
   const [sources, setSources] = useSessionState<SourceUpload[]>(
@@ -32,7 +35,11 @@ export function Intake() {
   const [busy, setBusy] = useState(false);
   useNavigationLock(busy);
   const [error, setError] = useSessionState<unknown>("intake:error", undefined);
-  const [discover, setDiscover] = useState(() => new URLSearchParams(location.search).has("workspace"));
+  // Undefined keeps the connection lazy until Workspace is first opened.
+  const [discover, setDiscover] = useState<boolean | undefined>(() =>
+    new URLSearchParams(location.search).has("workspace") ? true : undefined
+  );
+  const recoverDiscovery = discover && Boolean(denial);
   const [discoveryBusy, setDiscoveryBusy] = useState(false);
   const [prompt, setPrompt] = useState(false);
   const [dragging, setDragging] = useState(false);
@@ -100,7 +107,7 @@ export function Intake() {
     }
   }
   return (
-    <div className="page intake-page">
+    <div className={"page intake-page" + (canChooseMethod ? " discovery-page" : "")}>
       <a className="back-link" href="/app">
         {t("Back to Matters")}
       </a>
@@ -114,13 +121,16 @@ export function Intake() {
           </p>
         </div>
       </div>
-      <p className="public-source-notice">{t("Saving a proposal publishes every Source title and its entire extracted text, proposed relationships and Matter reference to anyone, before confirmation. Discard cannot retract copies already read or downloaded.")}</p>
-      {!canWrite && <div className="intake-access" id="intake-access">
-        {discover && sessionEnded ? (
-          <div className="notice error" role="alert">
-            <h2>{t("Your session has expired")}</h2>
-            <a href={"/auth/login?next=" + encodeURIComponent("/app/matter-proposals/new?workspace=connect")}>
-              {t("Sign in again")}
+      {(!canWrite || recoverDiscovery) && <div className="intake-access" id="intake-access">
+        {recoverDiscovery ? (
+          <div className="intake-session-ended" role="alert">
+            <span className="session-lock"><Icon name="lock" /></span>
+            <div>
+              <h2>{t(denial === "expired" ? "Your session has expired" : "Workspace access needs a fresh sign-in")}</h2>
+              <p>{t("Sign in and reconnect Workspace to start a fresh search.")}</p>
+            </div>
+            <a className="button" href={"/auth/login?next=" + encodeURIComponent("/app/matter-proposals/new?workspace=connect")}>
+              {t("Sign in again")} <Icon name="arrow" />
             </a>
           </div>
         ) : (
@@ -130,12 +140,17 @@ export function Intake() {
           </>
         )}
       </div>}
-      {canWrite && access?.workspace_discovery && (
-        <button className="button" disabled={busy || discoveryBusy} onClick={() => setDiscover(!discover)}>
-          {t(discover ? "Return to PDF upload" : "Discover Workspace Sources")}
-        </button>
+      {canChooseMethod && (
+        <SourceMethod discover={discover === true} disabled={busy || discoveryBusy} change={setDiscover} />
       )}
-      {canWrite && access?.workspace_discovery && discover ? (access.workspace_connection ? <WorkspaceConnection onBusy={setDiscoveryBusy} /> : <WorkspaceDiscovery onBusy={setDiscoveryBusy} />) : <div className="intake-layout">
+      {canChooseMethod && discover !== undefined && !denial && (
+        <div hidden={!discover}>
+          {access.workspace_connection
+            ? <WorkspaceConnection active={discover} onBusy={setDiscoveryBusy} />
+            : <WorkspaceDiscovery active={discover} onBusy={setDiscoveryBusy} />}
+        </div>
+      )}
+      {!recoverDiscovery && !(canChooseMethod && discover) && <div className="intake-layout">
         <form onSubmit={submit} className="intake-form" aria-describedby={!canWrite ? "intake-access" : undefined}>
           <fieldset disabled={busy || !canWrite}>
             <legend>{t("Matter identity")}</legend>
@@ -276,6 +291,7 @@ export function Intake() {
           </fieldset>
           <fieldset disabled={busy || !canWrite}>
             <legend>{t("Review and submit")}</legend>
+            <p className="intake-publication-note">{t("Saving a proposal publishes every Source title and its entire extracted text, proposed relationships and Matter reference to anyone, before confirmation. Discard cannot retract copies already read or downloaded.")}</p>
             <label className="consent">
               <input
                 type="checkbox"

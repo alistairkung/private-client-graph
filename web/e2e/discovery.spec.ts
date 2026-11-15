@@ -14,29 +14,66 @@ test("sixth original email leads to an approved PDF and publicly reopened Eviden
   });
   try {
     await page.goto("/auth/login?next=/app/matter-proposals/new");
-    await page
-      .getByRole("button", { name: "Discover Workspace Sources" })
-      .click();
+    const upload = page.getByRole("radio", { name: "Upload PDFs" });
+    const workspace = page.getByRole("radio", { name: "Search Workspace" });
+    await expect(upload).toBeChecked();
+    await page.getByLabel("External Matter reference", { exact: true }).fill(reference);
+    await upload.focus();
+    await page.keyboard.press("ArrowRight");
+    await expect(workspace).toBeChecked();
+    await workspace.press("ArrowLeft");
+    await expect(upload).toBeChecked();
+    await expect(page.getByLabel("External Matter reference", { exact: true })).toHaveValue(reference);
+    await workspace.check();
+    // Hold only the second batch so we can interact with the first results deterministically.
+    let releaseBatch!: () => void;
+    const gate = new Promise<void>(resolve => { releaseBatch = resolve; });
+    await page.route("**/discovery/inspect", async route => {
+      await gate;
+      await route.continue();
+    });
     await page.getByRole("button", { name: "Start private discovery" }).click();
-    await expect(page.getByRole("status")).toContainText("5 inspected");
+    await expect(page.getByRole("heading", { name: "Alder Trust", exact: true })).toBeFocused();
+    await expect(page.getByText("Still searching emails and PDFs…")).toBeVisible();
+    await expect(page.getByText("Checked 5 of 5 emails for leads.")).toBeVisible();
     await page.getByRole("button", { name: "Search for Alice Reed" }).click();
-    await page
-      .getByRole("button", { name: "Inspect more original results" })
-      .click();
+    const uninspected = page.getByRole("button", { name: "Read Uninspected email 6" });
+    await uninspected.click();
+    const email = page.getByRole("dialog", { name: "Alice Reed dispatch" });
+    await expect(email).toContainText("Cora Patel will circulate the signed deed.");
+    await expect(email.getByText("corpus@example.invalid")).toBeVisible();
+    await expect(email.getByText("synthetic@example.test")).toBeVisible();
+    await expect(email.getByText("Sent", { exact: true })).toBeVisible();
+    await expect(email.locator("time")).toBeVisible();
+    await expect(email.getByText("Bcc", { exact: true })).toHaveCount(0);
+    await page.keyboard.press("Escape");
+    await expect(email).toHaveCount(0);
+    await expect(uninspected).toBeFocused();
+    await expect(page.getByRole("button", { name: "Preview exact Sources" })).toBeDisabled();
+    await expect(page.getByRole("button", { name: "Search for Mara Voss" })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Search for Cora Patel" })).toHaveCount(0);
+    await page.getByRole("button", { name: "Select all 6 results" }).click();
+    const dispatch = page.getByLabel("Uninspected email 6 · Email", { exact: true });
+    await dispatch.uncheck();
+    releaseBatch();
+    await expect(page.getByText("Original search complete.")).toBeVisible();
     await expect(page.getByRole("blockquote").first()).toHaveText(
       "Mara Voss will circulate the executed appointment separately.",
     );
     await page.getByRole("button", { name: "Search for Mara Voss" }).click();
-    await page.getByLabel("Mara Voss appointment · PDF").check();
-    await page.getByLabel("Alder Trust correspondence 06 · Email").check();
-    await page.getByRole("button", { name: "Move up" }).last().click();
+    await page.getByRole("button", { name: "Add 4 new results" }).click();
+    await page.getByLabel("Alder Trust parking minutes · PDF").uncheck();
+    await expect(page.getByText("8 selected", { exact: true })).toBeVisible();
+    await page.locator("summary").filter({ hasText: "Preview order" }).click();
+    await page.getByRole("button", { name: "Move Mara Voss appointment up" }).click();
     await page.getByRole("button", { name: "Preview exact Sources" }).click();
-    await expect(page.locator(".discovery article pre").nth(1)).toHaveText(
-      "Alice Example is the parent of Ben Example.",
-    );
-    const preview = await page
-      .locator(".discovery article pre")
-      .allTextContents();
+    const articles = page.locator(".discovery article");
+    await expect(articles).toHaveCount(8);
+    const titles = await articles.locator("h3").allTextContents();
+    const preview = await articles.locator("pre").allTextContents();
+    const appointment = titles.indexOf("Mara Voss appointment");
+    expect(appointment).toBeGreaterThanOrEqual(5);
+    expect(preview[appointment]).toBe("Alice Example is the parent of Ben Example.");
     await page.getByLabel("External Matter reference").fill(reference);
     await page.getByLabel("Matter title").fill("Alder Trust review");
     await expect(
@@ -57,20 +94,15 @@ test("sixth original email leads to an approved PDF and publicly reopened Eviden
     const proposal = await (
       await reader.request.get(page.url().replace("/app/", "/api/"))
     ).json();
-    expect(proposal.state.sources).toEqual([
-      {
-        id: "source_001",
-        title: "Alder Trust correspondence 06",
-        text: preview[0],
-      },
-      { id: "source_002", title: "Mara Voss appointment", text: preview[1] },
-    ]);
-    expect(proposal.state.evidence[0]).toMatchObject({
-      source_id: "source_002",
-      supporting_text: preview[1],
-    });
+    const sources = titles.map((title, index) => ({
+      id: "source_" + String(index + 1).padStart(3, "0"), title, text: preview[index],
+    }));
+    expect(proposal.state.sources).toEqual(sources);
+    expect(proposal.state.evidence).toContainEqual(expect.objectContaining({
+      source_id: sources[appointment].id, supporting_text: preview[appointment],
+    }));
     expect(JSON.stringify(proposal)).not.toMatch(
-      /folder-1|alder-label|signed notice|synthetic@example|shortlist/,
+      /folder-1|alder-label|parking minutes|Cora Patel will circulate|synthetic@example|shortlist/,
     );
     await page
       .getByRole("button", { name: "Confirm proposal", exact: true })
@@ -86,7 +118,8 @@ test("sixth original email leads to an approved PDF and publicly reopened Eviden
     ).toBeVisible();
     await reopened.getByRole("tab", { name: "List", exact: true }).click();
     await reopened.locator("#relationship-0").click();
-    await expect(reopened.locator(".source-text mark")).toHaveText(preview[1]);
+    await reopened.locator(".source-tabs button").filter({ hasText: "Mara Voss appointment" }).click();
+    await expect(reopened.locator(".source-text mark")).toHaveText(preview[appointment]);
     await expect(
       reopened.locator(".source-tabs button[aria-pressed=true]"),
     ).toContainText("Mara Voss appointment");
@@ -104,6 +137,7 @@ test("inline reconnection after expiry opens a fresh search", async ({
   page,
 }) => {
   let generation = 0;
+  let expires = 0;
   let searches = 0;
   const root = "**/api/matter-proposals/discovery/";
   await page.clock.install();
@@ -116,6 +150,7 @@ test("inline reconnection after expiry opens a fresh search", async ({
   });
   await page.route(root + "connect", async (route) => {
     generation++;
+    expires = await page.evaluate(() => Date.now() / 1000 + 300);
     await route.fulfill({
       json: { url: "/app/matter-proposals/new?workspace=ready" },
     });
@@ -124,9 +159,9 @@ test("inline reconnection after expiry opens a fresh search", async ({
     const now = await page.evaluate(() => Date.now());
     await route.fulfill({
       json: {
-        connected: generation > 0,
+        connected: expires > now / 1000,
         generation: String(generation),
-        expires: generation ? now / 1000 + 300 : null,
+        expires: expires > now / 1000 ? expires : null,
         account: "synthetic@example.test",
         label: "alder-label",
         folder: "folder-1",
@@ -141,9 +176,14 @@ test("inline reconnection after expiry opens a fresh search", async ({
 
   await page.goto("/auth/login?next=/app/matter-proposals/new");
   await page
-    .getByRole("button", { name: "Discover Workspace Sources" })
+    .getByRole("radio", { name: "Search Workspace" })
     .click();
-  await page.getByRole("button", { name: "Connect Google Workspace" }).click();
+  const connect = page.getByRole("button", { name: "Continue to Google" });
+  await expect(connect).toBeVisible();
+  await expect(page.getByRole("radio", { name: "Search Workspace" })).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(connect).toBeFocused();
+  await connect.press("Enter");
   await expect(
     page.getByRole("heading", { name: "Workspace connected" }),
   ).toBeFocused();
@@ -154,7 +194,19 @@ test("inline reconnection after expiry opens a fresh search", async ({
   await page.getByRole("button", { name: "Preview exact Sources" }).click();
   await expect(page.getByLabel(/I approve publishing/)).toBeVisible();
 
+  const workspace = page.getByRole("radio", { name: "Search Workspace" });
+  const upload = page.getByRole("radio", { name: "Upload PDFs" });
+  const reference = page.getByRole("textbox", { name: "External Matter reference" });
+  await reference.fill("PRIVATE-DRAFT");
+  await workspace.press("ArrowLeft");
+  await expect(upload).toBeChecked();
+  await expect(reference).toHaveValue("");
+  await upload.press("ArrowRight");
+  await expect(reference).toHaveValue("PRIVATE-DRAFT");
+  await expect(page.getByLabel(/I approve publishing/)).toBeVisible();
+  await workspace.press("ArrowLeft");
   await page.clock.fastForward(301_000);
+  await upload.press("ArrowRight");
   const reconnect = page.getByRole("button", {
     name: "Reconnect",
     exact: true,

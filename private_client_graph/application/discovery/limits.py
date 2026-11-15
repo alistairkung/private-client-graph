@@ -8,9 +8,11 @@ class Limits:
     session_requests: int = 160
     action_bytes: int = 12 * 1024 * 1024
     session_bytes: int = 32 * 1024 * 1024
+    original_items: int = 50
 
     def __post_init__(self) -> None:
-        if min(self.action_requests, self.session_requests, self.action_bytes, self.session_bytes) <= 0:
+        if min(self.action_requests, self.session_requests, self.action_bytes,
+               self.session_bytes, self.original_items) <= 0:
             raise ValueError("Discovery limits must be positive")
 
 

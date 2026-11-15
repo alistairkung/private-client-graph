@@ -65,7 +65,7 @@ def test_discovery_actions_are_private_and_bound_to_the_login(monkeypatch, caplo
             "origin": origin, "x-csrftoken": client.cookies[CSRF_COOKIE]})
 
     client.get("/api/access")
-    for endpoint in ("start", "inspect", "follow-up", "preview", "import"):
+    for endpoint in ("start", "inspect", "follow-up", "preview", "preview-next", "import"):
         assert post(endpoint, {}).status_code == 401
         assert client.get(root + endpoint).status_code in {404, 405}
     client.get("/auth/login")

@@ -19,18 +19,19 @@ export interface Access {
 type AccessState =
   | { status: "loading" | "error" }
   | { status: "ready"; access: Access };
+type AccessDenial = "expired" | "forbidden";
 const Context = createContext<{
   state: AccessState;
   access?: Access;
-  sessionEnded: boolean;
+  denial?: AccessDenial;
   refresh: () => void;
-}>({ state: { status: "loading" }, sessionEnded: false, refresh: () => {} });
+}>({ state: { status: "loading" }, refresh: () => {} });
 export const accessDeniedEvent = "pcg:access-denied";
 
 export function AccessProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AccessState>({ status: "loading" });
   const [attempt, setAttempt] = useState(0);
-  const [sessionEnded, setSessionEnded] = useState(false);
+  const [denial, setDenial] = useState<AccessDenial>();
   const wasWriter = useRef(false);
   function refresh() {
     setState({ status: "loading" });
@@ -43,7 +44,6 @@ export function AccessProvider({ children }: { children: ReactNode }) {
       .then((access: Access) => {
         if (!active) return;
         if (wasWriter.current && !access.can_write) clearSessionState();
-        if (access.can_write) setSessionEnded(false);
         wasWriter.current = access.can_write;
         setState({ status: "ready", access });
       })
@@ -54,7 +54,12 @@ export function AccessProvider({ children }: { children: ReactNode }) {
   }, [attempt]);
   useEffect(() => {
     const denied = (event: Event) => {
-      if (event instanceof CustomEvent && event.detail === 401) setSessionEnded(true);
+      // A capability GET can still succeed after a protected POST is rejected.
+      // Keep the denial through that refresh so discovery waits for sign-in.
+      if (event instanceof CustomEvent) {
+        if (event.detail.status === 401) setDenial("expired");
+        else if (event.detail.path.startsWith("/api/matter-proposals/discovery/")) setDenial("forbidden");
+      }
       clearSessionState();
       wasWriter.current = false;
       refresh();
@@ -65,7 +70,7 @@ export function AccessProvider({ children }: { children: ReactNode }) {
   return (
     <Context.Provider value={{
       state,
-      sessionEnded,
+      denial,
       access: state.status === "ready" ? state.access : undefined,
       refresh,
     }}>
@@ -99,7 +104,7 @@ export function WriteGate({ children }: { children?: ReactNode }) {
   if (access.can_write) return children;
   if (access.sign_in_available) {
     return (
-      <a href={"/auth/login?next=" + encodeURIComponent(window.location.pathname)}>
+      <a href={"/auth/login?next=" + encodeURIComponent(window.location.pathname + window.location.search)}>
         {t("Sign in to make changes")}
       </a>
     );

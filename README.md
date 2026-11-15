@@ -64,10 +64,14 @@ For a deterministic walkthrough, use `tests/fixtures/synthetic-proposal.pdf` and
 the local model substitute does not measure extraction quality on arbitrary PDFs.
 
 For offline Workspace discovery, sign in locally, open **New proposal** and choose
-**Discover Workspace Sources**. Start with “Alder Trust”, search for Alice Reed,
-then inspect the next original batch. The sixth email supports a search for Mara
-Voss. Select that email and the appointment PDF, order and preview the Sources,
-then approve publication to save a pending proposal. The PDF contains the
+**Search Workspace**. Start with “Alder Trust”. PCG keeps checking the original
+query in batches of five, up to 50 emails and PDFs combined, while you review
+the results. Follow-up searches run only when you choose them. The sixth email
+supports a search for Mara Voss. Select individual results or all current results,
+then add any new arrivals explicitly. Arrange the collection and preview its
+exact Sources in batches of five. The full collection can contain up to 100,000
+characters and 10 MiB of PDF bytes combined. Publication revalidates the entire
+selection before analysing it as one pending proposal. The appointment PDF contains the
 existing synthetic Alice/Ben relationship fixture. Discovery uses one in-memory
 journey per login and the versioned Alder Trust HTTP fixtures.
 

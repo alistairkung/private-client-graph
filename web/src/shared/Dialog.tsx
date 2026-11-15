@@ -8,11 +8,13 @@ export function Dialog({
   children,
   onClose,
   busy = false,
+  className,
 }: {
   title: string;
   children: ReactNode;
   onClose: () => void;
   busy?: boolean;
+  className?: string;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   const reduced = useReducedMotion();
@@ -28,7 +30,7 @@ export function Dialog({
   }, []);
   return (
     <dialog
-      className="dialog"
+      className={className ? "dialog " + className : "dialog"}
       ref={ref}
       aria-labelledby="dialog-title"
       onCancel={(event) => {

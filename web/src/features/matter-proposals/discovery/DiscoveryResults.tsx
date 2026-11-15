@@ -1,101 +1,153 @@
+import type { Ref } from "react";
+import { Icon } from "../../../shared/Icon";
 import { useLocale } from "../../../shared/locale";
 import type { FollowUp, View } from "./api";
+
+export function SearchSummary({
+  view,
+  folder,
+  label,
+  headingRef,
+  searching,
+  interrupted,
+  retry,
+}: {
+  view: View;
+  folder: string;
+  label: string;
+  headingRef?: Ref<HTMLHeadingElement>;
+  searching: boolean;
+  interrupted: boolean;
+  retry: () => void;
+}) {
+  const { t } = useLocale();
+  const { first_day, last_day } = view.scope;
+  const mailDates = first_day || last_day
+    ? [first_day ?? t("Any start"), last_day ?? t("Any end")].join(" – ")
+    : t("All dates");
+  const unreadable = view.failed.length + view.skipped.length;
+  const unfinished = view.pending.length > 0 || view.more_pages;
+  let progress = t("Original search complete.");
+  if (searching) progress = t("Still searching emails and PDFs…");
+  else if (view.stop_reason === "Original item limit") {
+    progress = t("Stopped at {limit} original results. More matches may be available.", { limit: view.original_item_limit });
+  } else if (interrupted || view.stop_reason === "Original search incomplete") {
+    progress = t("Search interrupted. Results already found are available.");
+  } else if (unfinished) progress = t("This search reached its limit.");
+  return (
+    <header className="discovery-summary">
+      <div className="discovery-summary-top">
+        <div>
+          <p className="discovery-caption">{t("Original search")}</p>
+          <h2 className="discovery-title" ref={headingRef} tabIndex={-1}>{view.original_query}</h2>
+        </div>
+        <dl className="discovery-counts">
+          {[
+            [t("Emails returned"), view.returned_messages.length],
+            [t("PDFs listed"), view.files.length],
+          ].map(([name, count]) => (
+            <div key={name}>
+              <dt>{name}</dt>
+              <dd>{count}</dd>
+            </div>
+          ))}
+        </dl>
+      </div>
+      <dl className="discovery-scope discovery-applied-scope">
+        <div><dt>{t("Drive folder")}</dt><dd>{folder}</dd></div>
+        <div><dt>{t("Gmail label")}</dt><dd>{label}</dd></div>
+        <div><dt>{t("Gmail dates (UTC)")}</dt><dd>{mailDates}</dd></div>
+      </dl>
+      <div className="discovery-inspection">
+        <div role="status" aria-atomic="true">
+          <p className="discovery-search-progress">
+            {searching && <span className="discovery-spinner" aria-hidden="true" />}
+            {progress}
+          </p>
+          {view.returned_messages.length > 0 && (
+            <p>{t("Checked {read} of {total} emails for leads.", {
+              read: view.inspected.length, total: view.returned_messages.length,
+            })}</p>
+          )}
+          {unreadable > 0 && (
+            <p>{t("Unavailable emails: {count}.", { count: unreadable })}</p>
+          )}
+        </div>
+        {view.can_inspect_more && !searching && (
+          <button onClick={retry}>{t("Resume original search")}</button>
+        )}
+      </div>
+    </header>
+  );
+}
+
+function SearchOutcome({ result }: { result: FollowUp }) {
+  const { t } = useLocale();
+  return (
+    <p className="discovery-outcome">
+      {t("Search results")} ·{" "}
+      {t("Emails: {mail} · PDFs: {pdf}", {
+        mail: result.messages.length,
+        pdf: result.files.length,
+      })}
+      {(result.more_pages || result.stop_reason) && " · " + t("Partial results")}
+    </p>
+  );
+}
 
 export function DiscoveryResults({
   view,
   followups,
-  inspect,
   approve,
 }: {
   view: View;
   followups: FollowUp[];
-  inspect: () => void;
   approve: (revision: number, query: string) => void;
 }) {
   const { t } = useLocale();
-  const scope = view.scope;
+  const previous = followups.filter(
+    (f) => !view.suggestions.some((s) => s.query === f.query),
+  );
   return (
-    <section>
-      <h2>{view.original_query}</h2>
-      <p>
-        {scope.mailbox} · {scope.folder} · {scope.label} ·{" "}
-        {t("Gmail dates (UTC)")} {scope.first_day || t("Any start")} –{" "}
-        {scope.last_day || t("Any end")}
+    <section className="discovery-panel">
+      <h2>{t("Suggested follow-up searches")}</h2>
+      <p className="discovery-caption">
+        {t("{used} of 3 searches used", { used: followups.length })}
       </p>
-      <p role="status">
-        {t(
-          "Original search: {mail} emails returned, {read} inspected, {pdf} PDFs listed.",
-          {
-            mail: view.returned_messages.length,
-            read: view.inspected.length,
-            pdf: view.files.length,
-          },
-        )}
-      </p>
-      <details>
-        <summary>{t("Inspection details")}</summary>
-        <ul>
-          {view.inspected.map((id) => (
-            <li key={id}>{view.inspected_titles[id]}</li>
-          ))}
-        </ul>
-        <p>
-          {t("{pending} pending · {skipped} skipped · {failed} failed", {
-            pending: view.pending.length,
-            skipped: view.skipped.length,
-            failed: view.failed.length,
-          })}
-        </p>
-        <p>
-          {t("At this inspection: {requests} requests, {bytes} bytes.", {
-            requests: view.requests,
-            bytes: view.bytes,
-          })}
-        </p>
-      </details>
-      <p>
-        {t(
-          view.more_pages
-            ? "More original result pages remain."
-            : "All original result pages returned.",
-        )}{" "}
-        {view.stop_reason && t(view.stop_reason)}
-      </p>
-      <button
-        disabled={!view.can_inspect_more}
-        onClick={inspect}
-      >
-        {t("Inspect more original results")}
-      </button>
-      <h3>{t("Suggested follow-up searches")}</h3>
-      <ol>
-        {view.suggestions.map((lead) => (
-          <li key={lead.query}>
-            <strong>{lead.query}</strong> · {view.inspected_titles[lead.origin]}
-            <blockquote>{lead.passage}</blockquote>
-            <p>{lead.rationale}</p>
-            <button
-              disabled={
-                followups.length >= 3 ||
-                followups.some((f) => f.query === lead.query)
-              }
-              onClick={() => approve(view.revision, lead.query)}
-            >
-              {t("Search for {name}", { name: lead.query })}
-            </button>
-          </li>
-        ))}
+      {!view.suggestions.length && (
+        <p>{t("No leads in the inspected emails.")}</p>
+      )}
+      <ol className="discovery-leads">
+        {view.suggestions.map((lead) => {
+          const result = followups.find((f) => f.query === lead.query);
+          return (
+            <li key={lead.query}>
+              <h3>{lead.query}</h3>
+              <figure>
+                <blockquote>{lead.passage}</blockquote>
+                <figcaption>{view.inspected_titles[lead.origin]}</figcaption>
+              </figure>
+              <p>{lead.rationale}</p>
+              {result ? (
+                <SearchOutcome result={result} />
+              ) : (
+                <button
+                  disabled={followups.length >= 3}
+                  onClick={() => approve(view.revision, lead.query)}
+                >
+                  <Icon name="search" />
+                  {t("Search for {name}", { name: lead.query })}
+                </button>
+              )}
+            </li>
+          );
+        })}
       </ol>
-      {followups.map((f) => (
-        <p key={f.query}>
-          {f.query} ·{" "}
-          {t("{mail} email hits · {pdf} PDF hits", {
-            mail: f.messages.length,
-            pdf: f.files.length,
-          })}
-          {f.more_pages && " · " + t("More result pages remain.")}{" "}
-          {f.stop_reason && t(f.stop_reason)}
-        </p>
+      {previous.map((f) => (
+        <div key={f.query}>
+          <strong>{f.query}</strong>
+          <SearchOutcome result={f} />
+        </div>
       ))}
     </section>
   );

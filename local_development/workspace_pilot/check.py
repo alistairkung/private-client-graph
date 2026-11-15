@@ -73,7 +73,7 @@ def check(http, directory, account):
     print("PASS Drive direct-parent isolation")
     action = Action(Limits(), Usage())
     reader = WorkspaceReader(http, scope, file_ids=frozenset({ids["appointment"]}))
-    page = reader.drive_page("Mara Voss", "", action)
+    page = reader.drive_page("Mara Voss", "", action, page_size=100)
     require(len(page.get("files", [])) == 1, "Unexpected acquisition candidate count")
     candidate = reader.admitted_file(page["files"][0])
     pdf = reader.preview_pdf(candidate, action)
