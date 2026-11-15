@@ -63,6 +63,18 @@ For a deterministic walkthrough, use `tests/fixtures/synthetic-proposal.pdf` and
 `tests/fixtures/multiple-role-proposal.pdf`. These demonstrate the review workflow;
 the local model substitute does not measure extraction quality on arbitrary PDFs.
 
+For offline Workspace discovery, sign in locally, open **New proposal** and choose
+**Search Workspace**. Start with “Alder Trust”. PCG keeps checking the original
+query in batches of five, up to 50 emails and PDFs combined, while you review
+the results. Follow-up searches run only when you choose them. The sixth email
+supports a search for Mara Voss. Select individual results or all current results,
+then add any new arrivals explicitly. Arrange the collection and preview its
+exact Sources in batches of five. The full collection can contain up to 100,000
+characters and 10 MiB of PDF bytes combined. Publication revalidates the entire
+selection before analysing it as one pending proposal. The appointment PDF contains the
+existing synthetic Alice/Ben relationship fixture. Discovery uses one in-memory
+journey per login and the versioned Alder Trust HTTP fixtures.
+
 Stop with `docker compose --profile practitioner down`. Database state survives
 ordinary restarts; adding `-v` deletes Compose database volumes. See the
 [application setup and deployment guide](docs/workflows/application-setup.md)

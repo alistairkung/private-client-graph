@@ -23,7 +23,7 @@ def extract_fixture(source: str, *, llm: object) -> ExtractionResult:
             )
             for relationship_type, role in roles
         ]
-    else:
+    elif "Alice Example is the parent of Ben Example." in source:
         relationships = [
             RelationshipCandidate(
                 source_name="Alice Example",
@@ -32,6 +32,8 @@ def extract_fixture(source: str, *, llm: object) -> ExtractionResult:
                 supporting_text="Alice Example is the parent of Ben Example.",
             )
         ]
+    else:
+        relationships = []
     return ExtractionResult(relationships=relationships)
 
 

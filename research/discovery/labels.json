@@ -1,0 +1,6 @@
+{
+  "question": "Assemble the original deed, the resignation correspondence and the subsequent appointment for the trustee change.",
+  "relevant": ["pdf:deed", "email:06", "pdf:appointment"],
+  "irrelevant": ["email:01", "email:02", "email:03", "email:04", "email:05", "email:08", "email:09", "pdf:minutes"],
+  "excluded": ["email:07", "pdf:other", "pdf:shortcut"]
+}

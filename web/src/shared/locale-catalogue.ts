@@ -1,3 +1,4 @@
+import { discoveryCatalogue } from "../features/matter-proposals/discovery/translations";
 import { researchRoadmapCatalogue } from "../features/public-research/roadmap-catalogue";
 import { chinese } from "./translations";
 import { researchVisualCatalogue } from "./research/visual-catalogue";
@@ -7,6 +8,7 @@ import { publicResearchCatalogue } from "../features/public-research/catalogue";
 import { showcaseZhCN } from "./public/catalogue";
 
 export const catalogue: Record<string,string> = {
+  ...discoveryCatalogue,
   ...researchEditorialCatalogue,
   ...researchRoadmapCatalogue,
   ...researchVisualCatalogue,

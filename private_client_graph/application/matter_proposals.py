@@ -58,7 +58,13 @@ def analyse_proposal_sources(
     inputs: list[PdfSourceInput],
     config: ProposalAnalysisConfig | None,
 ) -> MatterProposalDetail:
-    sources = acquire_proposal_sources(inputs)
+    return analyse_finalized_sources(metadata, acquire_proposal_sources(inputs), config)
+
+
+def analyse_finalized_sources(
+    metadata: MatterIntakeMetadata, sources: list[Source], config: ProposalAnalysisConfig | None,
+) -> MatterProposalDetail:
+    """Enter the shared analysis path after acquisition and admission are complete."""
     _require_unclaimed_reference(metadata.external_reference)
     pipeline = Pipeline(APPROVED_APPLICATION_PIPELINE_CONFIG,
                         source_extractor=lambda bundle: _extract_proposal_sources(bundle, config))
