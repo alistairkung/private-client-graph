@@ -1,0 +1,8 @@
+{
+  "name": "Temporal Progression: T3 Proposal (Development)",
+  "description": "Stage T3: proposal to replace Alice with Benedict as trustee. Proposal not effective. Current state unchanged from T2.",
+  "id": "benchmark_v1_temporal_dev_1_4",
+  "axis": "temporal",
+  "split": "dev",
+  "matter_family": "benchmark_v1_temporal_progressive"
+}

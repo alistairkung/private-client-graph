@@ -1,0 +1,8 @@
+{
+  "name": "Temporal Progression: T4 Effective Change (Development)",
+  "description": "Stage T4: effective change. Benedict replaces Alice as trustee. Spouse edge remains superseded from T1.",
+  "id": "benchmark_v1_temporal_dev_1_5",
+  "axis": "temporal",
+  "split": "dev",
+  "matter_family": "benchmark_v1_temporal_progressive"
+}
