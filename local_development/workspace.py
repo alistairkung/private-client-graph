@@ -33,11 +33,19 @@ class _PrivateWorkspaceRequests(logging.Filter):
             for arg in record.args))
 
 
-def fixture_client() -> Client:
+def fixture_client(*, alternate_appointment: bool = False) -> Client:
     logging.getLogger("httpx2").addFilter(_private_filter)
     corpus = json.loads((ROOT / "corpus.json").read_text())
     messages = {row["id"]: row for row in corpus["messages"]}
     files = {row["id"]: row for row in corpus["files"]}
+    drive_pages = DRIVE_PAGES
+    if alternate_appointment:
+        messages["06"]["body"] = corpus["alternate_resignation"]
+        files["appointment"]["name"] = corpus["alternate_appointment_title"]
+        drive_pages = DRIVE_PAGES.copy()
+        drive_pages[_DRIVE_SCOPE + """'"Ben Wong"'""", None] = drive_pages.pop(
+            (_DRIVE_SCOPE + """'"Mara Voss"'""", None)
+        )
     media = (ROOT / corpus["appointment_media"]["path"]).read_bytes()
 
     def respond(request: Request) -> Response:
@@ -52,7 +60,7 @@ def fixture_client() -> Client:
         if path.startswith(MAIL + "/") and (row := messages.get(path.rsplit("/", 1)[1])):
             return Response(200, json=message_response(row, params["format"]))
         if path == FILES:
-            ids, next_page = DRIVE_PAGES.get((params["q"], params.get("pageToken")), ([], None))
+            ids, next_page = drive_pages.get((params["q"], params.get("pageToken")), ([], None))
             return Response(200, json={"files": [files[key] for key in ids], "nextPageToken": next_page})
         if path.startswith(FILES + "/") and (row := files.get(path.rsplit("/", 1)[1])):
             if params.get("alt") == "media":
