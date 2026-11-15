@@ -19,6 +19,8 @@ def checkpoint(stage: str, session: DiscoverySession, view: DiscoveryView, opene
         "stage": stage,
         "revision": view.revision,
         "surfaced": sorted(f"{kind}:{key}" for kind, key in session.collection_candidates()),
+        "original_returned_emails": list(view.returned_messages),
+        "original_listed_pdfs": [file.id for file in view.files],
         "original_inspected": list(view.inspected),
         "original_pending": list(view.pending),
         "original_skipped": list(view.skipped),
@@ -70,7 +72,7 @@ def replay(*, expand: bool, alternate: bool, timing: bool = False) -> dict:
         if expand:
             session.approve(view.revision, view.suggestions[0].query)
             stages.append(checkpoint("final_followup", session, view, opened))
-        result = {"checkpoints": stages, "approvals": [approval_record(a) for a in session.approvals]}
+        result: dict = {"checkpoints": stages, "approvals": [approval_record(a) for a in session.approvals]}
     if timing:
         result["offline_replay_ms"] = round(1000 * (perf_counter() - start), 3)
     return result

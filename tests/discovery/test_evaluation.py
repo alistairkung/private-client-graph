@@ -6,7 +6,7 @@ import pytest
 
 from local_development.workspace import fixture_client
 from private_client_graph.application.discovery import DiscoverySession
-from research.discovery.evaluate import evaluate, fraction
+from research.discovery.evaluate import evaluate, fraction, score
 from research.discovery.replay import LIMITS, QUERY, SCOPE, checkpoint
 
 
@@ -62,3 +62,12 @@ def test_exhaustion_keeps_unread_returned_items_and_missing_pages_visible():
     assert point["original_stop"] == "Session request limit"
     assert point["usage"]["requests"] == 1
     assert fraction(0, 0) == {"numerator": 0, "denominator": 0, "value": None}
+
+
+def test_interrupted_approval_with_no_hits_has_unknown_yield():
+    run = {"checkpoints": [], "approvals": [
+        {"hits": [], "more_pages": True, "stop_reason": "Session request limit"},
+        {"hits": [], "more_pages": False, "stop_reason": None},
+    ]}
+    scored = score(run, {"relevant": ["pdf:appointment"], "irrelevant": []})
+    assert [approval["false_lead"] for approval in scored["approvals"]] == [None, True]

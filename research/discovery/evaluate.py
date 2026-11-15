@@ -27,7 +27,12 @@ def score(run: dict, labels: dict) -> dict:
         point["unread_email_hits"] = sorted(key for key in surfaced if key.startswith("email:")
                                              and key.removeprefix("email:") not in read)
     for approval in run["approvals"]:
-        approval["false_lead"] = not bool(set(approval["hits"]) & relevant)
+        if set(approval["hits"]) & relevant:
+            approval["false_lead"] = False
+        elif approval["stop_reason"] or approval["more_pages"]:
+            approval["false_lead"] = None
+        else:
+            approval["false_lead"] = True
     return run
 
 
