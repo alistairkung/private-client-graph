@@ -17,11 +17,16 @@ def test_empty_search_queries_the_scoped_collections_once():
 
     def respond(request):
         requests.append(request)
+        if request.url.path.endswith("/messages"):
+            if "resultSizeEstimate" not in request.url.params["fields"].split(","):
+                return Response(204)
+            return Response(200, json={"resultSizeEstimate": 0})
         return Response(200, json={})
 
     with Client(transport=MockTransport(respond)) as http:
         session = DiscoverySession(http, WorkspaceScope("synthetic@example.test", "alder-label", "folder-1"))
-        session.start("Alder Trust")
+        view = session.start("Alder Trust")
+        assert not view.more_pages and not view.failed
 
     mail, drive = requests
     assert mail.url.path == "/gmail/v1/users/synthetic@example.test/messages"

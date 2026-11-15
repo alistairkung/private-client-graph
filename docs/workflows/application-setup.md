@@ -474,3 +474,5 @@ provider authorization and accounting, and recovery by reference after an
 unknown outcome follow the same rules as PDF intake.
 
 Configure the private reverse proxy and any external monitoring to omit discovery bodies, OAuth callback query strings and authorization headers from logs and traces. The app uses server memory for active tokens. The private operator must restrict ingress and disable external HTTP/body tracing. Real account provisioning, seeding and live API verification belong to the subsequent pilot.
+
+For the dedicated loopback pilot, follow the [synthetic account, seed and live verification procedure](workspace-pilot.md).
