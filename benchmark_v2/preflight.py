@@ -7,6 +7,7 @@ from pathlib import Path
 
 from pydantic import BaseModel, ConfigDict, TypeAdapter
 
+from benchmark_v2.evidence_policy import VERSION, ordinary_evidence
 from private_client_graph.extraction import sourced_extraction_messages
 from private_client_graph.models import ExtractionResult, GroundTruth, SourcedExtractionResult
 from private_client_graph.models.source import Source
@@ -19,6 +20,7 @@ from private_client_graph.research.results import ResearchResult
 from private_client_graph.research.retained_inputs import input_digests, value_digest
 from private_client_graph.research.run_plan import RunPlan
 from private_client_graph.research.runner import execute
+from private_client_graph.research.source_attribution import SourceEvidenceApproval
 from private_client_graph.workbench.case_catalog import frozen_case_metadata, repository_inputs
 from private_client_graph.workbench.run_inspection import read_run
 from private_client_graph.workbench.run_planning import freeze_run, preview_run
@@ -50,7 +52,7 @@ def baseline_configuration() -> dict:
 
 
 def quarantined_input() -> ResearchInput:
-    """Load D13 for offline graph replay. Keep the incompatible ordinary approvals for review."""
+    """Load D13 for offline graph replay. Ordinary eligible-edge approvals are frozen with the v2 targets."""
     directory = STUDY / 'candidates/D13'
     def read(name: str):
         return json.loads((directory / name).read_bytes())
@@ -93,8 +95,10 @@ def verify_development_lock(rows: Sequence[Condition], catalog: dict[str, Resear
         packages[row.condition] = package_commitment(directory)
     lock = json.loads((STUDY / 'development.lock.json').read_bytes())
     documents = {name: hashlib.sha256((STUDY / name).read_bytes()).hexdigest()
-                 for name in ('development.json', 'README.md', 'baseline.json')}
-    if lock != {'documents': documents, 'packages': packages}:
+                 for name in ('development.json', 'README.md', 'baseline.json', 'evidence-policy-v1.md', 'evidence_policy.py')}
+    decisions_module = 'private_client_graph/research/benchmark_decisions.py'
+    scorers = {decisions_module: hashlib.sha256((ROOT / decisions_module).read_bytes()).hexdigest()}
+    if lock != {'documents': documents, 'packages': packages, 'scorers': scorers}:
         raise ValueError('Development package, annotation or protocol differs from its committed revision')
     return families
 
@@ -141,16 +145,20 @@ def inspect_ideal(row: Condition, sample: ResearchInput, result: ResearchResult)
     if decisions['sufficiency']['incomplete']:
         raise ValueError(f'Ideal lacks an annotated sufficient set for {row.condition}')
     if row.condition == 'D13':
-        if score.provenance_failed != 1 or score.provenance_failures != [row.targets.sufficiency[0].edge] or result.source_attribution:
-            raise ValueError('Quarantined legacy evidence discrepancy changed')
-    elif score.provenance_failed or result.source_attribution is None or result.source_attribution.accuracy != 1:
+        packaged = SourceEvidenceApproval.model_validate_json((STUDY / 'candidates/D13/source_evidence.json').read_bytes())
+        eligible = SourceEvidenceApproval(relationships=[r for r in packaged.relationships if r.approved_evidence])
+        if eligible != row.targets.ordinary_source_approval:
+            raise ValueError('Frozen eligible approvals differ from the D13 source-specific answer key')
+    ordinary = ordinary_evidence(result.state, sample.truth, row.targets, sample.source_evidence)
+    attribution = ordinary['source_attribution']
+    if ordinary['quotation']['failed'] or attribution is None or attribution['failed']:
         raise ValueError(f'Ideal quotation or Source mismatch for {row.condition}')
     payload = sourced_extraction_messages(sample.sources)
     byte_count = sum(len(message.encode()) for _, message in payload)
     return dict(condition=row.condition, input_id=row.input_id, case_id=sample.case_id, **input_digests(sample),
                 annotation_digest=value_digest(row.model_dump(mode='json')), source_count=len(sample.sources),
                 message_bytes=byte_count, estimated_message_tokens=(byte_count + 3) // 4,
-                graph=score.model_dump(mode='json'), decisions=decisions,
+                graph=score.model_dump(mode='json'), decisions=decisions, ordinary_evidence=ordinary,
                 legacy_source_attribution=result.source_attribution.model_dump() if result.source_attribution else None)
 
 
@@ -183,12 +191,12 @@ def preflight(root: Path) -> dict:
                                  resolver='none', invocation_cap=len(group), task_call_cap=len(schedule),
                                  model='deepseek-flash', timeout_seconds=90.0).model_dump(mode='json')
                 for group in groups]
-    report = dict(conditions=conditions, baseline_schedule=schedule, proposed_run_configurations=proposed,
+    report = dict(evidence_policy_version=VERSION, conditions=conditions, baseline_schedule=schedule, proposed_run_configurations=proposed,
                   workbench_run=plan.run_id,
                   protocol_sha256=hashlib.sha256((STUDY / 'README.md').read_bytes()).hexdigest(),
                   development_lock_sha256=hashlib.sha256((STUDY / 'development.lock.json').read_bytes()).hexdigest(),
                   paid_attempts=0, development_attempts_proposed=len(schedule), final_attempts_reserved=8,
-                  baseline_reference=pin['revision'], corpus_status='pending independent review and D13 evidence decision',
+                  baseline_reference=pin['revision'], corpus_status='pending independent human semantic review, including joint evidence',
                   estimate_method='ceil(UTF-8 bytes of sourced system and user message contents / 4); excludes schema and chat framing')
     write_json_once(root / 'preflight.json', report)
     return report

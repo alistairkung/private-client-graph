@@ -20,6 +20,8 @@ from private_client_graph.research.run_plan import RunPlan
 from private_client_graph.workbench.run_evaluation import retained_attempts
 from private_client_graph.workbench.run_inspection import read_run
 
+from benchmark_v2.evidence_policy import VERSION as EVIDENCE_POLICY_VERSION, verify_evidence_policy
+
 
 _PlanDigest = Annotated[str, Field(pattern=r'^[a-f0-9]{64}$')]
 
@@ -57,6 +59,9 @@ class ConditionCommitment(ConditionLabels):
 class ReportManifest(BaseModel):
     model_config = ConfigDict(extra='forbid')
     evaluator_version: str = Field(min_length=1)
+    evidence_policy_version: str
+    development_lock_sha256: _PlanDigest | None = None
+    protocol_sha256: _PlanDigest | None = None
     execution_mode: Literal['live', 'recorded', 'replay'] = 'live'
     baseline_plan_digests: list[_PlanDigest] | None = None
     final_plan_digests: list[_PlanDigest] | None = None
@@ -66,6 +71,9 @@ class ReportManifest(BaseModel):
 
     @model_validator(mode='after')
     def verify_roster(self) -> 'ReportManifest':
+        if self.evidence_policy_version != EVIDENCE_POLICY_VERSION:
+            raise ValueError('Report manifest Evidence policy version differs from the implemented policy')
+        verify_evidence_policy()
         for field in ('condition', 'input_id'):
             if len({getattr(row, field) for row in self.conditions}) != len(self.conditions):
                 raise ValueError(f'Study roster requires a unique {field} per condition')

@@ -45,6 +45,7 @@ def test_preflight_replays_all_conditions_without_admitting_the_quarantined_targ
     report = subprocess.run([sys.executable, '-m', 'benchmark_v2.preflight', '--artifacts', str(tmp_path)],
                             cwd=ROOT, check=True, capture_output=True, text=True)
     data = json.loads(report.stdout)
+    assert data['evidence_policy_version'] == 'benchmark_v2_evidence_v1'
     assert len(data['conditions']) == 14
     assert len(data['baseline_schedule']) == 18
     assert data['baseline_schedule'][7:13] == ['D8', 'D9'] * 3
@@ -57,6 +58,11 @@ def test_preflight_replays_all_conditions_without_admitting_the_quarantined_targ
     assert rows['D13']['graph']['tp'] == 3
     assert rows['D13']['graph']['provenance_passed'] == 2
     assert rows['D13']['decisions']['sufficiency']['accuracy'] == 1.0
+    ordinary = rows['D13']['ordinary_evidence']
+    assert ordinary['not_applicable'] == [['Anna Dale', 'trustee_of', 'Seaforth Trust']]
+    for metric in ('quotation', 'source_attribution'):
+        assert ordinary[metric]['assessed'] == ordinary[metric]['passed'] == 2
+        assert sum(r['ordinary_evidence'][metric]['passed'] for r in rows.values()) == 67
     assert rows['D14']['graph']['tp'] == 11
     assert rows['D14']['source_count'] == 8
 
@@ -86,7 +92,7 @@ def test_wrong_source_or_wrong_edge_cannot_complete_a_sufficient_set():
         assert score([trustee, settlor, other, wrong])['sufficiency']['incomplete'] == [target]
     wrong_endpoint = trustee.model_copy(update={'target_name': 'Hillstone Trust'})
     missed = score([wrong_endpoint, settlor, other])
-    assert missed['sufficiency'] == dict(planned=1, assessed=0, complete=[], incomplete=[], missed=[target], accuracy=None)
+    assert missed['sufficiency'] == dict(version='attached_sufficient_set_v1', planned=1, assessed=0, complete=[], incomplete=[], missed=[target], accuracy=None)
     assert missed['required']['absent'] == [target]
     assert missed['forbidden']['present'] == [('Anna Dale', 'trustee_of', 'Hillstone Trust')]
     assert missed['unaffected']['fraction'] is None

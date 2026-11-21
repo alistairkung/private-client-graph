@@ -7,8 +7,11 @@ import json
 from pathlib import Path
 from typing import Any, Literal
 
+from pydantic import TypeAdapter
+
 from private_client_graph.models.evaluation_result import EvaluationResult
-from private_client_graph.research.benchmark_decisions import DecisionTargets, diagnose
+from private_client_graph.research.artifacts import checksum
+from private_client_graph.research.benchmark_decisions import DecisionTargets, SUFFICIENCY_VERSION, diagnose
 from private_client_graph.research.inputs import ResearchInput
 from private_client_graph.research.metrics import estimate_cost
 from private_client_graph.research.results import ResearchResult
@@ -16,6 +19,7 @@ from private_client_graph.research.retained_inputs import value_digest
 from private_client_graph.workbench.run_evaluation import incurred_cost
 from private_client_graph.workbench.run_evaluation_contracts import AttemptCost, Coverage
 
+from benchmark_v2.evidence_policy import VERSION as EVIDENCE_POLICY_VERSION, ordinary_evidence
 from benchmark_v2.report_protocol import (
     ConditionCommitment,
     ConditionLabels as ConditionLabels,
@@ -71,6 +75,7 @@ def final_report(manifest: ReportManifest, baseline: Sequence[Path], final: Sequ
         for index, (a, b) in enumerate(zip(left['conditions'], right['conditions'], strict=True))
     ]
     scored = [pair for pair in pairs if pair['delta'] is not None]
+    paired = {arm: _pool([pair[arm] for pair in scored]) for arm in ('baseline', 'final')}
     return {
         **_report_header(manifest),
         'baseline': left,
@@ -78,7 +83,9 @@ def final_report(manifest: ReportManifest, baseline: Sequence[Path], final: Sequ
         'shared_task_mismatch': task_issue,
         'paired_coverage': {'planned': len(pairs), 'scored': len(scored)},
         'pairs': pairs,
-        'paired_graph': {arm: _pool([pair[arm] for pair in scored])['graph'] for arm in ('baseline', 'final')},
+        'paired_graph': {arm: values['graph'] for arm, values in paired.items()},
+        'paired_ordinary_evidence': {arm: values['ordinary_evidence'] for arm, values in paired.items()},
+        'paired_sufficiency': {arm: values['sufficiency'] for arm, values in paired.items()},
     }
 
 
@@ -134,32 +141,38 @@ def _paired_delta(left: dict[str, Any], right: dict[str, Any]) -> dict[str, Any]
 
 
 def _evidence_delta(left: dict[str, Any], right: dict[str, Any]) -> dict[str, Any]:
-    quote_before, quote_after = left['quote_provenance'], right['quote_provenance']
-    source_before, source_after = left['source_attribution'], right['source_attribution']
+    evidence_before, evidence_after = left['ordinary_evidence'], right['ordinary_evidence']
     decisions_before, decisions_after = left['decisions'], right['decisions']
+    ordinary_delta = None
     sufficiency = None
-    source_attribution = None
-    if decisions_before is not None and decisions_after is not None:
-        sufficiency = _evidence_change(decisions_before['sufficiency'], decisions_after['sufficiency'],
-                                       'complete', 'accuracy')
-    if source_before is not None and source_after is not None:
-        source_attribution = {
-            'passed': source_after['passed'] - source_before['passed'],
-            'assessed': source_after['assessed'] - source_before['assessed'],
-            'accuracy': _difference(source_before['accuracy'], source_after['accuracy']),
+    if evidence_before is not None and evidence_after is not None:
+        quote_before, quote_after = evidence_before['quotation'], evidence_after['quotation']
+        ordinary_delta = {
+            'version': EVIDENCE_POLICY_VERSION,
+            'quotation': _evidence_change(quote_before, quote_after, 'passes'),
+            'source_attribution': _metric_delta(evidence_before['source_attribution'],
+                                                evidence_after['source_attribution']),
         }
-    return {
-        'quote_provenance': _evidence_change(quote_before, quote_after, 'passes', 'accuracy'),
-        'source_attribution': source_attribution,
-        'sufficiency': sufficiency,
-    }
+    if decisions_before is not None and decisions_after is not None:
+        sufficiency = {
+            'version': SUFFICIENCY_VERSION,
+            **_evidence_change(decisions_before['sufficiency'], decisions_after['sufficiency'], 'complete'),
+        }
+    return {'ordinary_evidence': ordinary_delta, 'sufficiency': sufficiency}
 
 
-def _evidence_change(before: dict[str, Any], after: dict[str, Any], edges: str, accuracy: str) -> dict[str, Any]:
+def _metric_delta(before: dict[str, Any] | None, after: dict[str, Any] | None) -> dict[str, Any] | None:
+    if before is None or after is None:
+        return None
+    return {key: _difference(before[key], after[key]) for key in ('passed', 'assessed', 'accuracy')}
+
+
+def _evidence_change(before: dict[str, Any], after: dict[str, Any], edges: str) -> dict[str, Any]:
     return {
         f'{edges}_gained': sorted(set(after[edges]) - set(before[edges])),
         f'{edges}_lost': sorted(set(before[edges]) - set(after[edges])),
-        'accuracy': _difference(before[accuracy], after[accuracy]),
+        'passed': len(after[edges]) - len(before[edges]),
+        'accuracy': _difference(before['accuracy'], after['accuracy']),
         'assessed': after['assessed'] - before['assessed'],
     }
 
@@ -182,6 +195,10 @@ def _report_header(manifest: ReportManifest) -> dict[str, Any]:
     return {
         'manifest_digest': value_digest(manifest.model_dump(mode='json')),
         'evaluator_version': manifest.evaluator_version,
+        'evidence_policy_version': manifest.evidence_policy_version,
+        'sufficiency_version': SUFFICIENCY_VERSION,
+        'development_lock_sha256': manifest.development_lock_sha256,
+        'protocol_sha256': manifest.protocol_sha256,
         'execution_mode': manifest.execution_mode,
         'live_observations': manifest.execution_mode == 'live',
         'matter_families': len({row.matter_family for row in manifest.conditions}),
@@ -280,7 +297,7 @@ def _unavailable(reason: str) -> dict[str, Any]:
     return {
         'state': 'unavailable', 'status': 'unavailable', 'reason': reason,
         'run_id': None, 'observation_id': None,
-        'graph': None, 'quote_provenance': None, 'source_attribution': None,
+        'graph': None, 'legacy_evidence': None, 'ordinary_evidence': None,
         'decisions': None, 'resources': None,
     }
 
@@ -313,8 +330,10 @@ def _observe(run: RunRecord, observation_id: str, extraction_id: str | None, sam
 def _scored_observation(result: ResearchResult, score: EvaluationResult,
                         sample: ResearchInput, labels: DecisionTargets) -> dict[str, Any]:
     decisions = None
+    ordinary = None
     results_sources_match = result.state is not None and result.state.sources == sample.sources
     if result.state is not None and results_sources_match:
+        ordinary = ordinary_evidence(result.state, sample.truth, labels, sample.source_evidence)
         decisions = diagnose(result.state, sample.truth, labels)
         critical = set(decisions['required']['absent'])
         forbidden = set(decisions['forbidden']['present'])
@@ -334,13 +353,15 @@ def _scored_observation(result: ResearchResult, score: EvaluationResult,
             'false_positive_edges': score.false_positive_edges,
             'false_negative_edges': score.false_negative_edges,
         },
-        'quote_provenance': {
-            'passed': score.provenance_passed, 'assessed': score.tp,
-            'accuracy': score.provenance_accuracy,
-            'passes': score.provenance_passes, 'failures': score.provenance_failures,
+        'ordinary_evidence': ordinary,
+        'legacy_evidence': {
+            'quote_provenance': {
+                'passed': score.provenance_passed, 'assessed': score.tp,
+                'accuracy': score.provenance_accuracy,
+                'passes': score.provenance_passes, 'failures': score.provenance_failures,
+            },
+            'source_attribution': result.source_attribution.model_dump() if result.source_attribution else None,
         },
-        'source_attribution': result.source_attribution.model_dump()
-                              if result.source_attribution and results_sources_match else None,
         'decisions': decisions,
         'decision_diagnostic_reason': None if decisions else 'No attached Evidence from the committed Sources.',
     }
@@ -359,7 +380,49 @@ def _pool(observations: list[dict[str, Any]]) -> dict[str, Any]:
         'graph': {'tp': tp, 'fp': fp, 'fn': fn,
                   'f1': (2 * tp / denominator if denominator else 0.0) if scores else None,
                   'exact_graphs': sum(score['exact_graph'] for score in scores)},
+        'ordinary_evidence': _pool_ordinary_evidence(observations),
+        'sufficiency': _pool_sufficiency(observations),
     }
+
+
+def _pool_sufficiency(observations: list[dict[str, Any]]) -> dict[str, Any] | None:
+    rows = [row['decisions']['sufficiency'] for row in observations
+            if row['state'] == 'scored' and row['decisions'] is not None]
+    if not rows:
+        return None
+    assessed = sum(row['assessed'] for row in rows)
+    complete = sum(len(row['complete']) for row in rows)
+    return {
+        'version': SUFFICIENCY_VERSION,
+        'observations': len(rows),
+        'planned': sum(row['planned'] for row in rows),
+        'assessed': assessed, 'complete': complete,
+        'incomplete': sum(len(row['incomplete']) for row in rows),
+        'missed': sum(len(row['missed']) for row in rows),
+        'accuracy': complete / assessed if assessed else None,
+    }
+
+
+def _pool_ordinary_evidence(observations: list[dict[str, Any]]) -> dict[str, Any]:
+    rows = [row['ordinary_evidence'] for row in observations
+            if row['state'] == 'scored' and row['ordinary_evidence'] is not None]
+    return {
+        'version': EVIDENCE_POLICY_VERSION,
+        'not_applicable_edge_observations': sum(len(row['not_applicable']) for row in rows),
+        'quotation': _pool_evidence_measurements([row['quotation'] for row in rows]),
+        'source_attribution': _pool_evidence_measurements(
+            [row['source_attribution'] for row in rows if row['source_attribution'] is not None]),
+    }
+
+
+def _pool_evidence_measurements(rows: list[dict[str, Any]]) -> dict[str, Any] | None:
+    if not rows:
+        return None
+    assessed = sum(row['assessed'] for row in rows)
+    passed = sum(row['passed'] for row in rows)
+    empty_accuracy = 0.0 if any(row['accuracy'] is not None for row in rows) else None
+    return {'observations': len(rows), 'assessed': assessed, 'passed': passed,
+            'failed': assessed - passed, 'accuracy': passed / assessed if assessed else empty_accuracy}
 
 
 def _measurement(values: Sequence[int | float | None], authority_reasons: list[str]) -> dict[str, Any]:
@@ -406,14 +469,17 @@ def _resources(group: list[tuple[RunRecord, list[RetainedAttempt]]]) -> dict[str
 def _development_manifest(labels_path: Path, commitments_path: Path,
                           plan_digests: list[str] | None) -> ReportManifest:
     commitments = json.loads(commitments_path.read_text())
-    labels = json.loads(labels_path.read_text())
+    labels = _locked_development_labels(labels_path, commitments)
     expected = [f'D{index}' for index in range(1, 15)]
     batches = [expected[:7], ['D8', 'D9'], ['D8', 'D9'], ['D8', 'D9'], expected[9:]]
     schedule = [condition for batch in batches for condition in batch]
     if [row['condition'] for row in labels] != expected or commitments['baseline_schedule'] != schedule:
         raise ValueError('Development reporting requires the frozen D1–D14 roster and 18-slot schedule')
     counts = Counter(schedule)
-    rows = {row['condition']: row for row in commitments['conditions']}
+    committed_conditions = commitments['conditions']
+    if [row['condition'] for row in committed_conditions] != expected:
+        raise ValueError('Preflight commitments do not cover the frozen conditions in order')
+    rows = {row['condition']: row for row in committed_conditions}
     fields = ('matter_family', 'case_id', 'source_digest', 'truth_digest', 'extraction_digest', 'annotation_digest')
     conditions = []
     for label in labels:
@@ -423,9 +489,30 @@ def _development_manifest(labels_path: Path, commitments_path: Path,
             raise ValueError(f'Committed input ID differs for {key}')
         conditions.append({**label, **{key: row[key] for key in fields}, 'observations': counts[key]})
     return ReportManifest.model_validate({
-        'evaluator_version': 'semantic_edges_v1', 'conditions': conditions,
-        'baseline_plan_digests': plan_digests, 'development_batches': batches,
+        'evaluator_version': 'semantic_edges_v1',
+        'evidence_policy_version': commitments.get('evidence_policy_version'),
+        'development_lock_sha256': commitments['development_lock_sha256'],
+        'protocol_sha256': commitments['protocol_sha256'],
+        'conditions': conditions, 'baseline_plan_digests': plan_digests, 'development_batches': batches,
     })
+
+
+def _locked_development_labels(path: Path, commitments: dict[str, Any]) -> list[dict[str, Any]]:
+    study = Path(__file__).parent
+    lock_bytes = (study / 'development.lock.json').read_bytes()
+    if commitments.get('development_lock_sha256') != checksum(lock_bytes):
+        raise ValueError('Preflight commitments do not match the frozen development lock')
+    documents = json.loads(lock_bytes)['documents']
+    if commitments.get('protocol_sha256') != documents['README.md']:
+        raise ValueError('Preflight commitments do not match the frozen protocol')
+    for name in ('README.md', 'development.json'):
+        if checksum((study / name).read_bytes()) != documents[name]:
+            raise ValueError(f'Current benchmark artifact differs from the locked {name}')
+    adapter = TypeAdapter(list[ConditionLabels])
+    labels = adapter.validate_json(path.read_bytes())
+    if labels != adapter.validate_json((study / 'development.json').read_bytes()):
+        raise ValueError('Report targets differ from the frozen development labels')
+    return [row.model_dump(mode='json') for row in labels]
 
 
 def main() -> None:

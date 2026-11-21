@@ -1,7 +1,11 @@
 """Benchmark v2 reporting over real frozen Workbench Run artifacts."""
+import json
 from pathlib import Path
 
-from benchmark_v2.report import ReportManifest, development_report
+import pytest
+from pydantic import ValidationError
+
+from benchmark_v2.report import ConditionLabels, ReportManifest, development_report
 from private_client_graph.research.artifacts import Bundle
 from private_client_graph.research.inputs import ResearchInput
 from private_client_graph.research.retained_inputs import input_digests, value_digest
@@ -34,8 +38,14 @@ def _manifest(sample: ResearchInput, *, observations: int = 1, mode: str = 'repl
             'forbidden': [], 'unaffected': [], 'sufficiency': [],
         },
     }
+    return _report_manifest(sample, labels, mode=mode, observations=observations)
+
+
+def _report_manifest(sample: ResearchInput, labels: dict, *, mode: str, observations: int = 1) -> ReportManifest:
+    labels = ConditionLabels.model_validate(labels).model_dump(mode='json')
     return ReportManifest.model_validate({
         'evaluator_version': 'semantic_edges_v1',
+        'evidence_policy_version': 'benchmark_v2_evidence_v1',
         'execution_mode': mode,
         'conditions': [{
             **labels, **input_digests(sample), 'annotation_digest': value_digest(labels),
@@ -70,8 +80,8 @@ def test_development_report_preserves_individual_scores_and_unfrozen_slots(tmp_p
     observed, unfrozen = condition['observations']
     assert observed['graph']['exact_graph'] is True
     assert observed['graph']['f1'] == 1
-    assert observed['quote_provenance']['accuracy'] == 1
-    assert observed['source_attribution']['accuracy'] == 1
+    assert observed['ordinary_evidence']['quotation']['accuracy'] == 1
+    assert observed['ordinary_evidence']['source_attribution']['accuracy'] == 1
     assert observed['decisions']['required']['present'] == [
         ('Daniel Wu', 'beneficiary_of', 'Ashford Family Trust'),
     ]
@@ -114,7 +124,7 @@ def test_paired_report_distinguishes_fixes_regressions_and_missing_pairs(tmp_pat
     assert pair['delta']['fn_regressed'] == [('Margaret Wu', 'spouse_of', 'Thomas Wu')]
     assert pair['delta']['tokens']['input_tokens'] == 50
     assert pair['delta']['tokens']['output_tokens'] == -20
-    assert pair['delta']['quote_provenance']['passes_gained'] == [
+    assert pair['delta']['ordinary_evidence']['quotation']['passes_gained'] == [
         ('Margaret Wu', 'settlor_of', 'Ashford Family Trust'),
     ]
     assert pair['delta']['fingerprints_changed'] is True
@@ -332,3 +342,68 @@ def test_live_final_report_rejects_inconsistent_approved_task_caps(tmp_path, mon
     assert final_report(revised, [baseline.path], [])['shared_task_mismatch'] is None
     assert 'different' in report['shared_task_mismatch']
     assert report['baseline']['coverage']['unavailable'] == report['final']['coverage']['unavailable'] == 1
+
+
+def test_joint_only_target_is_scored_in_sufficiency_and_excluded_from_ordinary_denominators(tmp_path, monkeypatch):
+    from benchmark_v2.preflight import STUDY, quarantined_input
+    from benchmark_v2.report import final_report
+    from private_client_graph.research.provider import ModelResponse
+
+    sample = quarantined_input()
+    monkeypatch.setattr('private_client_graph.workbench.run_planning.repository_inputs', lambda: [sample])
+    labels = next(row for row in json.loads((STUDY / 'development.json').read_bytes()) if row['condition'] == 'D13')
+    manifest = _report_manifest(sample, labels, mode='recorded')
+    left = _freeze(tmp_path, sample, run_key='partial', input_mode='fresh', execution_mode='recorded',
+                   resolver='none', invocation_cap=1)
+    right = _freeze(tmp_path, sample, run_key='complete', input_mode='fresh', execution_mode='recorded',
+                    resolver='none', invocation_cap=1)
+    assert sample.sourced_extraction is not None
+    candidates = sample.sourced_extraction.relationships
+    partial = [item for item in candidates if item.source_id != 'index']
+    execute(left, provider=lambda _: ModelResponse(payload={'relationships': [item.model_dump() for item in partial]}))
+    execute(right, provider=lambda _: ModelResponse(payload=sample.sourced_extraction.model_dump()))
+
+    report = final_report(manifest, [left.path], [right.path])
+    pair = report['pairs'][0]
+    joint = ('Anna Dale', 'trustee_of', 'Seaforth Trust')
+    for arm in ('baseline', 'final'):
+        observation = pair[arm]
+        assert observation['graph']['tp'] == 3
+        assert observation['legacy_evidence']['quote_provenance']['assessed'] == 3
+        assert observation['legacy_evidence']['quote_provenance']['failures'] == [joint]
+        assert observation['legacy_evidence']['source_attribution'] is None
+        ordinary = observation['ordinary_evidence']
+        assert ordinary['not_applicable'] == [joint]
+        assert ordinary['quotation']['assessed'] == ordinary['quotation']['passed'] == 2
+        assert ordinary['source_attribution']['assessed'] == ordinary['source_attribution']['passed'] == 2
+        assert report[arm]['conditions'][0]['ordinary_evidence']['quotation']['assessed'] == 2
+        assert report[arm]['ordinary_evidence']['source_attribution']['assessed'] == 2
+        assert report['paired_ordinary_evidence'][arm]['quotation']['assessed'] == 2
+        assert report['paired_sufficiency'][arm]['planned'] == report['paired_sufficiency'][arm]['assessed'] == 1
+    assert pair['delta']['ordinary_evidence']['quotation']['assessed'] == 0
+    assert pair['delta']['ordinary_evidence']['source_attribution']['assessed'] == 0
+    assert pair['delta']['sufficiency']['complete_gained'] == [joint]
+    assert report['baseline']['sufficiency']['incomplete'] == 1
+    assert report['final']['sufficiency']['complete'] == 1
+    assert pair['baseline']['decisions']['sufficiency']['incomplete'] == [joint]
+    assert pair['final']['decisions']['sufficiency']['complete'] == [joint]
+    assert Bundle.open(left.path).results()[0]['evaluation']['provenance_failed'] == 1
+
+
+def test_manifest_requires_the_frozen_evidence_policy_version():
+    manifest = _manifest(_sample()).model_dump(mode='json')
+    manifest['evidence_policy_version'] = 'unrecognised_policy'
+    with pytest.raises(ValidationError, match='Evidence policy version'):
+        ReportManifest.model_validate(manifest)
+
+
+def test_development_cli_rejects_preflight_for_a_different_lock(tmp_path, monkeypatch):
+    import sys
+
+    from benchmark_v2.report import main
+
+    commitments = tmp_path / 'preflight.json'
+    commitments.write_text(json.dumps({'development_lock_sha256': '0' * 64}))
+    monkeypatch.setattr(sys, 'argv', ['report', 'development', '--commitments', str(commitments)])
+    with pytest.raises(ValueError, match='frozen development lock'):
+        main()

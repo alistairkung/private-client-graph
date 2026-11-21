@@ -223,9 +223,22 @@
         ["Kit Nash", "settlor_of", "Seaforth Trust"],
         ["Rhea Barr", "settlor_of", "Hillstone Trust"]
       ],
+      "ordinary_source_approval": {
+        "relationships": [
+          {
+            "source": "kit_nash", "type": "settlor_of", "target": "seaforth_trust",
+            "approved_evidence": [{"source_id": "letter", "supporting_text": "Kit Nash is the settlor of Seaforth Trust."}]
+          },
+          {
+            "source": "rhea_barr", "type": "settlor_of", "target": "hillstone_trust",
+            "approved_evidence": [{"source_id": "letter", "supporting_text": "Rhea Barr is the settlor of Hillstone Trust."}]
+          }
+        ]
+      },
       "sufficiency": [
         {
           "edge": ["Anna Dale", "trustee_of", "Seaforth Trust"],
+          "joint_only": true,
           "alternatives": [
             [
               {

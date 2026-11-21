@@ -7,7 +7,9 @@ task ledgers.
 
 ## Development baseline
 
-Use the `preflight.json` retained at corpus freeze. Record each approved Run's
+Use the `preflight.json` retained at corpus freeze under
+`benchmark_v2_evidence_v1`. The reporter verifies the receipt's policy version,
+protocol and development lock before opening Runs. Record each approved Run's
 `digest` from `execution.json` before execution. Supply all five digests in
 committed batch order (D1–D7, D8–D9 three times, D10–D14). Repeat
 `--baseline-run` for each available Run. Run paths can be supplied in any order.
@@ -50,11 +52,15 @@ expects baseline first on families 1 and 3 and final first on 2 and 4. Each row 
 `private_client_graph.research.retained_inputs.input_digests` on the frozen input
 template for the three input digests. For `annotation_digest`, use `value_digest`
 on `benchmark_v2.report.ConditionLabels(condition=..., input_id=...,
-targets=...).model_dump(mode='json')`.
+targets=...).model_dump(mode='json')`. The target digest includes the joint-only
+flags and any eligible-edge Source approvals.
 
-The manifest includes the frozen `evaluator_version`, `execution_mode` set to
-`live`, and `baseline_plan_digests` and `final_plan_digests` from the planned
+The manifest includes the frozen `evaluator_version`,
+`evidence_policy_version` set to `benchmark_v2_evidence_v1`, `execution_mode` set
+to `live`, and `baseline_plan_digests` and `final_plan_digests` from the planned
 Workbench Runs' `execution.json` files. Preserve those digests before execution.
+The reporter checks the current Evidence policy and sufficiency scorer against
+the frozen lock for both study phases.
 Both arms use one private task ledger and shared cap. If the approved final
 pipeline requires more calls, freeze both arms under the separately approved
 revised cap. Pass the private manifest and all executed or frozen Runs to the
@@ -74,10 +80,29 @@ Paired graph pooling includes scored pairs with verified ordered Source
 requests and matching captured graph and Source attribution scorers. Known
 reversals of the expected arm order exclude the paired delta. Individual arm
 scores remain visible, and each coverage block gives its denominator.
-Differences are final minus baseline. FP and FN changes list the affected
-edges. Quote and sufficient-set changes list edges gaining or losing support.
-Source attribution changes give both the assessment count and the pass count.
-The original scores beside each delta provide its Evidence denominators.
+Differences are final minus baseline. FP and FN changes list the affected edges.
+
+## Evidence scores
+
+`ordinary_evidence` reports exact quotation and Source association results on
+eligible true positives. Joint-only targets appear in `not_applicable`.
+Their exclusion leaves the graph counts unchanged. Original Workbench Evidence
+scores remain visible per Observation under `legacy_evidence`.
+
+Sufficient sets are assessed independently. A result identifies complete,
+incomplete and missed targets. With zero assessed targets, sufficiency accuracy
+is N/A. Condition, arm and paired pools include counts and the number of
+Observations represented. Evidence pool accuracy uses summed numerators and
+denominators. For joint-only exclusions, the pool counts each excluded
+edge once per Observation that carried its annotation. A missing metric is
+`null`.
+
+Pair rows report the eligible quotation edges and sufficient sets gained or
+lost. Source attribution changes show both the assessed association count and
+the pass count. The scores beside each delta give the original denominators
+for that comparison. [Benchmark v2 Evidence policy](evidence-policy-v1.md)
+
+## Resources
 
 Resources include retained failures and uncertain reservations. Latency is
 summed provider time in seconds. Tokens and latency give measured counts and

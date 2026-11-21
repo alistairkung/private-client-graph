@@ -1,8 +1,10 @@
 {
   "documents": {
-    "development.json": "433f337d77e0a8b99a353ab6165c1faeabf609ac6ebad1c94dda971eca0259f5",
-    "README.md": "fe19e7e3f65720ab09087f93606cdb6f20a1a17855ab8a545daf9d4582aef0fe",
-    "baseline.json": "bee6a4b4ad6e77e0d03880900563671bfeb6974cdb6b9dedd012e0fda1a32d43"
+    "development.json": "6a667cad3d41c639d0c8f834a53482cecb85a9724edee0cd8b288203d40599fd",
+    "README.md": "39eb99dad4990edd111ccf8688f3b1cd308b6ce3df5ecde44ea3a832d9d7b565",
+    "baseline.json": "bee6a4b4ad6e77e0d03880900563671bfeb6974cdb6b9dedd012e0fda1a32d43",
+    "evidence-policy-v1.md": "ffb5153c306078ee8245f9d08e8b444b5eef3046c94bdea2f0ed52b4756db6af",
+    "evidence_policy.py": "04785f0c4f4ad0e8f2b3e4cefd09a3fab6f22a1bbe621daa05af0929243f87aa"
   },
   "packages": {
     "D1": "8e287e7c1db3cc7a2f2e3cf40352563f28adc9309201f4f2f7d56fa2de8974ba",
@@ -19,5 +21,8 @@
     "D12": "de7ad37cb7f3f9250a13bb1da284cd927afd8358b49495e9258522d3f3494cdf",
     "D13": "915338fcafc4262fba5c90942184cffa96b48c8aaebda780b894e98e640e619e",
     "D14": "cb770b0ab81b3e8526239c3f0dc97a59170b205e434418fd7a39016a140b294e"
+  },
+  "scorers": {
+    "private_client_graph/research/benchmark_decisions.py": "3528deccfa51cca9a948a938879a50de170f1e3c993a2934619d6cc0a551113c"
   }
 }

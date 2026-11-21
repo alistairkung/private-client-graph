@@ -2,7 +2,7 @@
 from collections.abc import Iterable
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from private_client_graph.canonical_state import reconstruct_graph
 from private_client_graph.evaluation import _edge, evaluate_graph
@@ -10,13 +10,23 @@ from private_client_graph.models import GroundTruth
 from private_client_graph.models.canonical_state import CanonicalState
 from private_client_graph.models.evaluation_result import SemanticEdge
 
-from .source_attribution import ApprovedSourceEvidence
+from .source_attribution import ApprovedSourceEvidence, SourceEvidenceApproval
+
+
+SUFFICIENCY_VERSION = 'attached_sufficient_set_v1'
 
 
 class SufficientEvidence(BaseModel):
     model_config = ConfigDict(extra='forbid')
     edge: SemanticEdge
+    joint_only: bool = False
     alternatives: list[list[ApprovedSourceEvidence]] = Field(min_length=1)
+
+    @model_validator(mode='after')
+    def check_joint_only(self) -> 'SufficientEvidence':
+        if self.joint_only and any(len({part.source_id for part in group}) < 2 for group in self.alternatives):
+            raise ValueError('Each joint-only alternative requires evidence from multiple Sources')
+        return self
 
 
 class DecisionTargets(BaseModel):
@@ -24,6 +34,7 @@ class DecisionTargets(BaseModel):
     required: list[SemanticEdge] = Field(default_factory=list)
     forbidden: list[SemanticEdge] = Field(default_factory=list)
     unaffected: list[SemanticEdge] = Field(default_factory=list)
+    ordinary_source_approval: SourceEvidenceApproval | None = None
     sufficiency: list[SufficientEvidence] = Field(default_factory=list)
 
 
@@ -62,7 +73,7 @@ def diagnose(state: CanonicalState, truth: GroundTruth, labels: DecisionTargets)
     assessed = annotated & predicted
     return dict(required=_hits(required, predicted), forbidden=_hits(forbidden, predicted),
                 unaffected=_hits(unaffected, predicted), sufficiency=dict(
-                    planned=len(annotated), assessed=len(assessed), complete=sorted(complete),
+                    version=SUFFICIENCY_VERSION, planned=len(annotated), assessed=len(assessed), complete=sorted(complete),
                     incomplete=sorted(assessed - complete), missed=sorted(annotated - predicted),
                     accuracy=len(complete) / len(assessed) if assessed else None))
 

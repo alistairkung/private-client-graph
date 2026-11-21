@@ -2,6 +2,8 @@
 
 Design freeze, 21 November 2026. The unit of generalisation is an independently designed synthetic Matter family. A condition is one fixed bundle, presentation order and complete as-of answer key. A fresh extraction is one Observation within its condition. Record all three counts. This freeze fixes the design and evaluation protocols. The corpus freeze occurs after independent review and offline replay, before tuning.
 
+The pre-execution amendment fixes ordinary metric eligibility and joint evidence scoring for both arms. Independent human approval of each linked case is still required. [Evidence policy, revision 1](evidence-policy-v1.md)
+
 ## Objectives and comparisons
 
 Measure whether PCG reconstructs the complete current graph, including its supporting Evidence. Test whether the unchanged pipeline follows the operative document when recency diverges, preserves current relationships across presentation orders, and identifies the correct endpoint when a fact in another Source is necessary. Later, compare the frozen final pipeline with the unchanged baseline on four new families. Zero errors is a valid result. Hypotheses concern observable decisions and reviewable output.
