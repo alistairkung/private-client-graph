@@ -1,0 +1,8 @@
+{
+  "name": "Alderwick correspondence after execution",
+  "description": "The family mailing request dates from after the sole trustee appointment. Evaluate the complete graph as of 30 June 2025.",
+  "id": "benchmark_v1_authority_dev_3",
+  "axis": "authority",
+  "split": "dev",
+  "matter_family": "benchmark_v2_alderwick"
+}

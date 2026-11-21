@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "relationships": [
+    {
+      "source": "nora",
+      "type": "trustee_of",
+      "target": "trust",
+      "approved_evidence": [
+        {
+          "source_id": "instrument",
+          "supporting_text": "With effect from execution, Nora Pike holds office as sole trustee of the Alderwick Trust."
+        }
+      ]
+    },
+    {
+      "source": "helen",
+      "type": "sibling_of",
+      "target": "felix",
+      "approved_evidence": [
+        {
+          "source_id": "mail",
+          "supporting_text": "My brother, Felix Marr, would like his copy by post this year."
+        }
+      ]
+    }
+  ]
+}
