@@ -1,0 +1,36 @@
+{
+  "status": "candidate packages under private custody; human admission pending",
+  "digest_method": "SHA-256 of compact, sorted-key JSON mapping every package-relative path to its file SHA-256",
+  "records": [
+    {
+      "condition": "H1",
+      "revision": 2,
+      "sha256": "8a1b61cd1e64390683e0133f7ab5a9176cd8723b9c32e14545181fe16cb877da",
+      "review": "Independent overlap and technical review passed; separate ordinary and supplemental evidence replays verified."
+    },
+    {
+      "condition": "H2",
+      "revision": 2,
+      "sha256": "08e583d544286291873b0d6cbfe10c4c82a03f9ec39d837ae2cb504283252ba9",
+      "review": "Independent overlap and technical review passed; separate ordinary and supplemental evidence replays verified."
+    },
+    {
+      "condition": "H3",
+      "revision": 1,
+      "sha256": "f30eff61790f87fbc4752442bdc9b6b03c509f7f89226a85f98479735cd875df",
+      "review": "Independent overlap and masking review passed; quarantined under the ordinary evidence contract."
+    },
+    {
+      "condition": "H4",
+      "revision": 3,
+      "sha256": "62d9b1750ffb951e63f60aabc03f3a4e42c8e2cf6bd381997c1a8a811552be8c",
+      "review": "Replacement family passed independent overlap, semantic and offline technical checks. Human sign-off pending."
+    }
+  ],
+  "private_review_sha256": [
+    "f63b3e492f122d8ccfb604178c6dbefed51ce9042f6b494acc39ce86455b2131",
+    "9f79fbbee1f51ccbb9e61be104d6abfd6989638ed4dd96415aa4f72b2992a408",
+    "6b56ef7973706ea5910f16b40584fc7b23cbd4584e7ce9554ba6b1198ce67648",
+    "5596769deb84f55d13ba8edff3628d0b48306cac0c982c5f6b6fc40d86527a7a"
+  ]
+}
