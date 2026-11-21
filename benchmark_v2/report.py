@@ -2,110 +2,46 @@
 import argparse
 from collections import Counter
 from collections.abc import Sequence
-import json
-from dataclasses import dataclass
 from decimal import Decimal
+import json
 from pathlib import Path
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, FiniteFloat, model_validator
-
 from private_client_graph.models.evaluation_result import EvaluationResult
-from private_client_graph.models.source import Source
-from private_client_graph.research.artifacts import Bundle, checksum
 from private_client_graph.research.benchmark_decisions import DecisionTargets, diagnose
 from private_client_graph.research.inputs import ResearchInput
 from private_client_graph.research.metrics import estimate_cost
-from private_client_graph.research.provider import TokenUsage
 from private_client_graph.research.results import ResearchResult
-from private_client_graph.research.retained_inputs import input_digests, value_digest
-from private_client_graph.research.run_plan import RunPlan
-from private_client_graph.workbench.run_evaluation import incurred_cost, retained_attempts
+from private_client_graph.research.retained_inputs import value_digest
+from private_client_graph.workbench.run_evaluation import incurred_cost
 from private_client_graph.workbench.run_evaluation_contracts import AttemptCost, Coverage
-from private_client_graph.workbench.run_inspection import read_run
+
+from benchmark_v2.report_protocol import (
+    ConditionCommitment,
+    ConditionLabels as ConditionLabels,
+    ReportManifest as ReportManifest,
+    RetainedAttempt,
+    RunRecord,
+    compare_chronology,
+    development_batches,
+    inspect_protocol,
+    open_run,
+    shared_task_mismatch,
+)
 
 
-class ConditionLabels(BaseModel):
-    model_config = ConfigDict(extra='forbid')
-    condition: str = Field(min_length=1)
-    input_id: str = Field(min_length=1)
-    targets: DecisionTargets
-
-
-class ConditionCommitment(ConditionLabels):
-    matter_family: str = Field(min_length=1)
-    case_id: str = Field(min_length=1)
-    observations: int = Field(ge=1)
-    source_digest: str = Field(pattern=r'^[a-f0-9]{64}$')
-    truth_digest: str = Field(pattern=r'^[a-f0-9]{64}$')
-    extraction_digest: str = Field(pattern=r'^[a-f0-9]{64}$')
-    annotation_digest: str = Field(pattern=r'^[a-f0-9]{64}$')
-
-    @model_validator(mode='after')
-    def verify_annotation(self) -> 'ConditionCommitment':
-        labels = self.model_dump(mode='json', include={'condition', 'input_id', 'targets'})
-        if value_digest(labels) != self.annotation_digest:
-            raise ValueError(f'Annotation digest mismatch for {self.condition}')
-        return self
-
-    def mismatch(self, sample: ResearchInput) -> str | None:
-        if sample.case_id != self.case_id or not sample.sources:
-            return 'Case identity or explicit Sources differ from the study commitment.'
-        differences = [kind for kind, digest in input_digests(sample).items() if getattr(self, kind) != digest]
-        return f'Study commitment differs: {", ".join(differences)}.' if differences else None
-
-
-class ReportManifest(BaseModel):
-    model_config = ConfigDict(extra='forbid')
-    evaluator_version: str = Field(min_length=1)
-    execution_mode: Literal['live', 'recorded', 'replay'] = 'live'
-    baseline_plan_digests: list[str] | None = None
-    final_plan_digests: list[str] | None = None
-    conditions: list[ConditionCommitment] = Field(min_length=1)
-
-    @model_validator(mode='after')
-    def verify_roster(self) -> 'ReportManifest':
-        for field in ('condition', 'input_id'):
-            if len({getattr(row, field) for row in self.conditions}) != len(self.conditions):
-                raise ValueError(f'Study roster requires a unique {field} per condition')
-        return self
-
-
-class _Response(BaseModel):
-    usage: TokenUsage = Field(default_factory=TokenUsage)
-    returned_model: str | None = None
-    raw_response: dict[str, Any] = Field(default_factory=dict)
-
-
-class _Request(BaseModel):
-    stage: str
-    sources: list[Source] | None = None
-
-
-class _Attempt(BaseModel):
-    attempt_id: str
-    status: str
-    provider_seconds: FiniteFloat | None = Field(default=None, ge=0)
-    response: _Response = Field(default_factory=_Response)
-    request: _Request | None = None
-
-
-@dataclass(frozen=True)
-class _Run:
-    plan: RunPlan
-    provenance: dict[str, Any]
-    results: dict[str, ResearchResult | None]
-    states: dict[str, tuple[str, str, str | None]]
-    attempts: dict[str, _Attempt]
-    authority_reasons: list[str]
-    code_hashes: dict[str, str]
+_HISTORICAL_FINGERPRINT = 'bc19ba97cbe016479903222bb1578db6'
+_SCORERS = ('private_client_graph/evaluation.py', 'private_client_graph/research/source_attribution.py')
 
 
 def development_report(manifest: ReportManifest, baseline: Sequence[Path]) -> dict[str, Any]:
     """Report all planned baseline Observations, including missing Runs and unscored slots."""
+    batches = None
+    if manifest.execution_mode == 'live':
+        batches = development_batches(manifest, require_approval=bool(baseline))
     return {
         **_report_header(manifest),
-        'baseline': _arm(manifest, baseline, 'baseline'),
+        'baseline': _arm(manifest, [open_run(path) for path in baseline], 'baseline', batches=batches),
     }
 
 
@@ -117,30 +53,48 @@ def final_report(manifest: ReportManifest, baseline: Sequence[Path], final: Sequ
         raise ValueError('Final reporting requires one condition and Observation per Matter family in each arm')
     if manifest.execution_mode == 'live' and not (manifest.baseline_plan_digests and manifest.final_plan_digests):
         raise ValueError('Live final reporting requires the predeclared plan digests for both arms')
-    left = _arm(manifest, baseline, 'baseline')
-    right = _arm(manifest, final, 'final')
-    if {row['run_id'] for row in left['runs']} & {row['run_id'] for row in right['runs']}:
+    baseline_runs = [open_run(path) for path in baseline]
+    final_runs = [open_run(path) for path in final]
+    if {run.plan.run_id for run in baseline_runs} & {run.plan.run_id for run in final_runs}:
         raise ValueError('Final arms must use independent Runs')
-    pairs = [_pair(a, b) for a, b in zip(left['conditions'], right['conditions'], strict=True)]
+    task_issue = None
+    if manifest.execution_mode == 'live':
+        approved = set(manifest.baseline_plan_digests or []) | set(manifest.final_plan_digests or [])
+        task_issue = shared_task_mismatch([run for run in [*baseline_runs, *final_runs]
+                                          if run.provenance['plan_digest'] in approved])
+    left = _arm(manifest, baseline_runs, 'baseline', task_issue=task_issue)
+    right = _arm(manifest, final_runs, 'final', task_issue=task_issue)
+    pairs = [
+        _pair(a, b, first='baseline' if index % 2 == 0 else 'final')
+        for index, (a, b) in enumerate(zip(left['conditions'], right['conditions'], strict=True))
+    ]
     scored = [pair for pair in pairs if pair['delta'] is not None]
     return {
         **_report_header(manifest),
         'baseline': left,
         'final': right,
+        'shared_task_mismatch': task_issue,
         'paired_coverage': {'planned': len(pairs), 'scored': len(scored)},
         'pairs': pairs,
         'paired_graph': {arm: _pool([pair[arm] for pair in scored])['graph'] for arm in ('baseline', 'final')},
     }
 
 
-def _pair(baseline: dict[str, Any], final: dict[str, Any]) -> dict[str, Any]:
+def _pair(baseline: dict[str, Any], final: dict[str, Any],
+          *, first: Literal['baseline', 'final']) -> dict[str, Any]:
     left, right = baseline['observations'][0], final['observations'][0]
+    order = [('baseline', left), ('final', right)]
+    if first == 'final':
+        order.reverse()
+    chronology = compare_chronology([(arm, row.get('extraction_started_at')) for arm, row in order])
     reason = None
     if left['state'] != 'scored' or right['state'] != 'scored':
         reason = 'Both committed Observations must be scored.'
     elif not left['extraction_request_matches'] or not right['extraction_request_matches']:
         reason = 'Both fresh extraction requests must match the exact ordered Sources.'
-    elif left['evaluator_digest'] != right['evaluator_digest'] or left['evaluator_digest'] is None:
+    elif chronology['deviations']:
+        reason = 'Retained extraction start times conflict with the committed arm order.'
+    elif left['scorer_digests'] != right['scorer_digests'] or None in left['scorer_digests'].values():
         reason = 'Frozen evaluator implementations could not be matched.'
     return {
         'condition': baseline['condition'],
@@ -148,6 +102,7 @@ def _pair(baseline: dict[str, Any], final: dict[str, Any]) -> dict[str, Any]:
         'baseline': left,
         'final': right,
         'exclusion_reason': reason,
+        'chronology': chronology,
         'delta': _paired_delta(left, right) if reason is None else None,
     }
 
@@ -230,8 +185,8 @@ def _report_header(manifest: ReportManifest) -> dict[str, Any]:
     }
 
 
-def _arm(manifest: ReportManifest, paths: Sequence[Path], arm: Literal['baseline', 'final']) -> dict[str, Any]:
-    runs = [_read_run(path) for path in paths]
+def _arm(manifest: ReportManifest, runs: list[RunRecord], arm: Literal['baseline', 'final'],
+         *, batches: dict[str, list[str]] | None = None, task_issue: str | None = None) -> dict[str, Any]:
     if len({run.plan.run_id for run in runs}) != len(runs):
         raise ValueError('One arm cannot include a Run more than once')
     expected = {row.input_id for row in manifest.conditions}
@@ -239,103 +194,67 @@ def _arm(manifest: ReportManifest, paths: Sequence[Path], arm: Literal['baseline
         {'run_id': run.plan.run_id, 'input_id': sample.sample_id}
         for run in runs for sample in run.plan.inputs if sample.sample_id not in expected
     ]
-    issues = {run.plan.run_id: _protocol_mismatch(run, manifest, arm) for run in runs}
-    conditions = [_condition(row, runs, issues) for row in manifest.conditions]
+    issues, chronology = inspect_protocol(manifest, runs, arm, batches, task_issue)
+    out_of_order = {key for pair in chronology['deviations'] for key in pair} if chronology else set()
+    conditions = [_condition(row, runs, issues, out_of_order) for row in manifest.conditions]
     observations = [row for condition in conditions for row in condition['observations']]
+    resources = _resources([(run, list(run.attempts.values())) for run in runs])
     return {
         **_pool(observations),
         'conditions': conditions,
         'runs': [{**run.provenance, 'protocol_mismatch': issues[run.plan.run_id]} for run in runs],
         'unexpected_inputs': unexpected,
-        'resources': _resources([(run, list(run.attempts.values())) for run in runs]),
+        'resources': resources,
+        'chronology': chronology,
+        'historical_fingerprint': _historical_fingerprint(runs, issues) if arm == 'baseline' else None,
     }
 
 
-def _protocol_mismatch(run: _Run, manifest: ReportManifest, arm: Literal['baseline', 'final']) -> str | None:
-    plan = run.plan
-    if plan.execution_mode != manifest.execution_mode:
-        return 'Execution mode differs from the study protocol.'
-    if plan.evaluator_version != manifest.evaluator_version:
-        return 'Evaluator version differs from the study protocol.'
-    digests = manifest.baseline_plan_digests if arm == 'baseline' else manifest.final_plan_digests
-    if digests is not None and run.provenance['plan_digest'] not in digests:
-        return 'Run plan digest differs from the study protocol.'
-    if manifest.execution_mode != 'live':
-        return None
-    if plan.input_mode != 'fresh':
-        return 'Live study Observations require a fresh extraction.'
-    if arm == 'final':
-        return None
-    pin = json.loads(Path(__file__).with_name('baseline.json').read_text())
-    if plan.resolver != 'none' or (plan.effective_model or plan.settings.model) != 'deepseek-flash':
-        return 'Live baseline requires full context, no resolver and the pinned model.'
-    if (value_digest(plan.settings.model_dump()) != pin['settings']
-            or run.provenance['code']['prompt_hashes']['sourced_extraction'] != pin['prompt']):
-        return 'Run settings or sourced prompt differ from the live baseline pin.'
-    if run.provenance['code']['dependencies'] != pin['dependencies']:
-        return 'Recorded dependencies differ from the baseline Run.'
-    if any(run.code_hashes.get(path) != expected for path, expected in pin['files'].items() if path != 'uv.lock'):
-        return 'Run code snapshot differs from the live baseline pin.'
-    return None
-
-
-def _read_run(path: Path) -> _Run:
-    bundle = Bundle.open(path)
-    plan = bundle.plan
-    if not isinstance(plan, RunPlan) or not plan.experiment_id or not plan.run_id:
-        raise ValueError(f'Expected a frozen Workbench Run at {path}')
-    detail = read_run(path.parent, plan.experiment_id, path.name)
-    retained, reasons = retained_attempts(bundle)
-    if retained != detail.attempts:
-        raise ValueError(f'Run attempt records changed during inspection: {path}')
-    records = [_Attempt.model_validate(row) for row in retained]
-    attempts = {row.attempt_id: row for row in records}
-    if len(attempts) != len(records):
-        raise ValueError(f'Duplicate retained attempt identity in Run: {path}')
-    coverage = detail.evaluation.aggregate.observations
-    return _Run(
-        plan=plan,
-        provenance={
-            'run_id': plan.run_id,
-            'plan_digest': detail.plan.digest,
-            'artifact_digest': detail.artifact_digest,
-            'lifecycle': detail.lifecycle,
-            'execution_mode': plan.execution_mode,
-            'input_mode': plan.input_mode,
-            'resolver': plan.resolver,
-            'evaluator_version': plan.evaluator_version,
-            'effective_model': plan.effective_model or plan.settings.model,
-            'settings': plan.settings.model_dump(mode='json'),
-            'pricing': detail.pricing,
-            'code': {key: detail.provenance[key] for key in ('git_sha', 'dirty', 'code_digest',
-                                                            'dependencies', 'prompt_hashes')},
-        },
-        results={row.id: row.result for row in detail.observations},
-        states={row.observation_id: (row.state, row.status, row.reason) for row in coverage},
-        attempts=attempts,
-        authority_reasons=reasons,
-        code_hashes={path: checksum(contents.encode()) for path, contents in bundle.manifest['provenance']['code'].items()},
+def _historical_fingerprint(runs: list[RunRecord], issues: dict[str | None, str | None]) -> dict[str, Any]:
+    observed = [
+        _fingerprint(run.attempts[identity])
+        for run in runs if issues[run.plan.run_id] is None
+        for identity in {slot.extraction_attempt_id for slot in run.plan.planned_slots}
+        if identity is not None and identity in run.attempts
+    ]
+    known = sorted({value for value in observed if value is not None})
+    unknown = observed.count(None)
+    comparison = (
+        'drift_observed' if any(value != _HISTORICAL_FINGERPRINT for value in known)
+        else 'unknown' if unknown or not known else 'matched'
     )
+    return {'original': _HISTORICAL_FINGERPRINT, 'observed': known,
+            'unavailable_attempts': unknown, 'comparison': comparison}
 
 
-def _condition(labels: ConditionCommitment, runs: list[_Run],
-               protocol_issues: dict[str | None, str | None]) -> dict[str, Any]:
+def _condition(labels: ConditionCommitment, runs: list[RunRecord], protocol_issues: dict[str | None, str | None],
+               out_of_order: set[str]) -> dict[str, Any]:
     observations: list[dict[str, Any]] = []
+    exclusions: list[dict[str, Any]] = []
     for run in runs:
         sample = next((sample for sample in run.plan.inputs if sample.sample_id == labels.input_id), None)
         if sample is None:
             continue
-        mismatch = protocol_issues[run.plan.run_id] or labels.mismatch(sample)
-        observations.extend(_observe(run, slot.observation_id, slot.extraction_attempt_id, sample, labels, mismatch)
-                            for slot in run.plan.planned_slots
-                            if _template_id(slot.sample_id, slot.extraction_attempt_id) == sample.sample_id)
+        mismatch = protocol_issues[run.plan.run_id]
+        destination = exclusions if mismatch else observations
+        for slot in run.plan.planned_slots:
+            if _template_id(slot.sample_id, slot.extraction_attempt_id) != sample.sample_id:
+                continue
+            row = _observe(run, slot.observation_id, slot.extraction_attempt_id, sample, labels, mismatch)
+            key = f'{run.plan.run_id}/{slot.observation_id}'
+            if key in out_of_order:
+                row['chronology_deviation'] = True
+                if row['state'] == 'scored':
+                    exclusions.append(row)
+                    observations.append(_unavailable('Retained extraction start order differs from the commitment.'))
+                    continue
+            destination.append(row)
 
-    exclusions = []
     if len(observations) > labels.observations:
-        exclusions = observations
+        exclusions.extend(observations)
         observations = [_unavailable('The supplied Runs contain more slots than the study predeclared.')
                         for _ in range(labels.observations)]
-    observations.extend(_unavailable('No supplied Run froze this planned study slot.')
+    observations.extend(_unavailable('No admitted Run froze this planned study slot.')
                         for _ in range(labels.observations - len(observations)))
     return {
         'condition': labels.condition,
@@ -362,7 +281,7 @@ def _unavailable(reason: str) -> dict[str, Any]:
     }
 
 
-def _observe(run: _Run, observation_id: str, extraction_id: str | None, sample: ResearchInput,
+def _observe(run: RunRecord, observation_id: str, extraction_id: str | None, sample: ResearchInput,
              labels: ConditionCommitment, mismatch: str | None) -> dict[str, Any]:
     state, status, reason = run.states[observation_id]
     result = run.results[observation_id]
@@ -375,7 +294,8 @@ def _observe(run: _Run, observation_id: str, extraction_id: str | None, sample: 
     extraction = run.attempts.get(extraction_id) if extraction_id else None
     request = extraction.request if extraction else None
     row.update(state=state, reason=reason,
-               evaluator_digest=run.code_hashes.get('private_client_graph/evaluation.py'),
+               scorer_digests={path: run.code_hashes.get(path) for path in _SCORERS},
+               extraction_started_at=extraction.started_at.isoformat() if extraction and extraction.started_at else None,
                extraction_request_matches=(request is not None and request.stage == 'extraction'
                                            and request.sources == sample.sources))
     if state == 'scored' and extraction_id and not row['extraction_request_matches']:
@@ -445,7 +365,12 @@ def _measurement(values: Sequence[int | float | None], authority_reasons: list[s
             'total': subtotal if len(measured) == len(values) and not authority_reasons else None}
 
 
-def _resources(group: list[tuple[_Run, list[_Attempt]]]) -> dict[str, Any]:
+def _fingerprint(attempt: RetainedAttempt) -> str | None:
+    value = attempt.response.raw_response.get('response_metadata', {}).get('system_fingerprint')
+    return value if isinstance(value, str) and value else None
+
+
+def _resources(group: list[tuple[RunRecord, list[RetainedAttempt]]]) -> dict[str, Any]:
     attempts = [(run, attempt) for run, records in group for attempt in records]
     reasons = sorted({reason for run, _ in group for reason in run.authority_reasons})
     costs = []
@@ -469,16 +394,18 @@ def _resources(group: list[tuple[_Run, list[_Attempt]]]) -> dict[str, Any]:
         'attempts': [{
             'run_id': run.plan.run_id, 'id': attempt.attempt_id, 'status': attempt.status,
             'returned_model': attempt.response.returned_model,
-            'system_fingerprint': attempt.response.raw_response.get('response_metadata', {}).get('system_fingerprint'),
+            'system_fingerprint': _fingerprint(attempt),
         } for run, attempt in attempts],
     }
 
 
-def _development_manifest(labels_path: Path, commitments_path: Path) -> ReportManifest:
+def _development_manifest(labels_path: Path, commitments_path: Path,
+                          plan_digests: list[str] | None) -> ReportManifest:
     commitments = json.loads(commitments_path.read_text())
     labels = json.loads(labels_path.read_text())
     expected = [f'D{index}' for index in range(1, 15)]
-    schedule = expected[:7] + ['D8', 'D9'] * 3 + expected[9:]
+    batches = [expected[:7], ['D8', 'D9'], ['D8', 'D9'], ['D8', 'D9'], expected[9:]]
+    schedule = [condition for batch in batches for condition in batch]
     if [row['condition'] for row in labels] != expected or commitments['baseline_schedule'] != schedule:
         raise ValueError('Development reporting requires the frozen D1–D14 roster and 18-slot schedule')
     counts = Counter(schedule)
@@ -491,7 +418,10 @@ def _development_manifest(labels_path: Path, commitments_path: Path) -> ReportMa
         if row['input_id'] != label['input_id']:
             raise ValueError(f'Committed input ID differs for {key}')
         conditions.append({**label, **{key: row[key] for key in fields}, 'observations': counts[key]})
-    return ReportManifest.model_validate({'evaluator_version': 'semantic_edges_v1', 'conditions': conditions})
+    return ReportManifest.model_validate({
+        'evaluator_version': 'semantic_edges_v1', 'conditions': conditions,
+        'baseline_plan_digests': plan_digests, 'development_batches': batches,
+    })
 
 
 def main() -> None:
@@ -499,6 +429,8 @@ def main() -> None:
     commands = parser.add_subparsers(dest='phase', required=True)
     development = commands.add_parser('development', help='Report the 18-slot development baseline')
     development.add_argument('--commitments', required=True, type=Path, help='Retained preflight.json')
+    development.add_argument('--baseline-plan-digest', action='append',
+                             help='Approved Run plan digest. Repeat in committed batch order.')
     development.add_argument('--labels', default=Path(__file__).with_name('development.json'), type=Path)
     final = commands.add_parser('final', help='Report the four held-out pairs after unsealing')
     final.add_argument('--commitments', required=True, type=Path, help='Private frozen final report manifest')
@@ -508,7 +440,7 @@ def main() -> None:
                              help='Frozen Workbench Run directory. Repeat for multiple Runs.')
     options = parser.parse_args()
     if options.phase == 'development':
-        manifest = _development_manifest(options.labels, options.commitments)
+        manifest = _development_manifest(options.labels, options.commitments, options.baseline_plan_digest)
         report = development_report(manifest, options.baseline_run)
     else:
         manifest = ReportManifest.model_validate_json(options.commitments.read_bytes())
