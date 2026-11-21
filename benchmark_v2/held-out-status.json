@@ -16,9 +16,9 @@
     },
     {
       "condition": "H3",
-      "revision": 1,
-      "sha256": "f30eff61790f87fbc4752442bdc9b6b03c509f7f89226a85f98479735cd875df",
-      "review": "Independent overlap and masking review passed; quarantined under the ordinary evidence contract."
+      "revision": 4,
+      "sha256": "def508ea684b8dfcae9fe278792deab5fdcbb8c5344c7fb0161ff0db6a06923c",
+      "review": "Independent replacement passed technical and overlap review. Quarantined pending independent human approval of the minimum sufficient sets and mutual Source necessity under benchmark_v2_evidence_v1."
     },
     {
       "condition": "H4",
@@ -31,6 +31,24 @@
     "f63b3e492f122d8ccfb604178c6dbefed51ce9042f6b494acc39ce86455b2131",
     "9f79fbbee1f51ccbb9e61be104d6abfd6989638ed4dd96415aa4f72b2992a408",
     "6b56ef7973706ea5910f16b40584fc7b23cbd4584e7ce9554ba6b1198ce67648",
-    "5596769deb84f55d13ba8edff3628d0b48306cac0c982c5f6b6fc40d86527a7a"
+    "5596769deb84f55d13ba8edff3628d0b48306cac0c982c5f6b6fc40d86527a7a",
+    "79901f2a089b2d1f2068c21fa267e867000f60d76f608190d09c709aa1f1bbe2",
+    "9b65f077d2ac7c14f5decd4e8ce5088258089a34e485378251014b002126993d"
+  ],
+  "retired": [
+    {
+      "condition": "H3",
+      "revisions": [
+        {
+          "revision": 1,
+          "sha256": "f30eff61790f87fbc4752442bdc9b6b03c509f7f89226a85f98479735cd875df"
+        },
+        {
+          "revision": 2,
+          "sha256": "e5d644fed479736a3f86e71c382753f34af5f8f48331803d250ecfbbcd485d5e"
+        }
+      ],
+      "reason": "An answer-key detail reached the development context during custody handoff. Exclude this family from final evaluation."
+    }
   ]
 }
