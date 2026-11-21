@@ -1,0 +1,8 @@
+{
+  "name": "Temporal Progression: T1 Divorce (Development)",
+  "description": "Stage T1: divorce finalised. Spouse edge superseded. All other edges unchanged.",
+  "id": "benchmark_v1_temporal_dev_3",
+  "axis": "temporal",
+  "split": "dev",
+  "matter_family": "benchmark_v1_temporal_progressive"
+}
