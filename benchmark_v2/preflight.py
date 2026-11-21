@@ -10,7 +10,7 @@ from pydantic import BaseModel, ConfigDict, TypeAdapter
 from private_client_graph.extraction import sourced_extraction_messages
 from private_client_graph.models import ExtractionResult, GroundTruth, SourcedExtractionResult
 from private_client_graph.models.source import Source
-from private_client_graph.research.artifacts import Bundle, write_json_once
+from private_client_graph.research.artifacts import Bundle, dependency_versions, write_json_once
 from private_client_graph.research.benchmark_decisions import DecisionTargets, diagnose
 from private_client_graph.research.fixtures import ROOT
 from private_client_graph.research.inputs import ResearchInput
@@ -40,6 +40,8 @@ def baseline_configuration() -> dict:
     for path, expected in pin['files'].items():
         if hashlib.sha256((ROOT / path).read_bytes()).hexdigest() != expected:
             raise ValueError(f'Baseline implementation drift in {path}')
+    if dependency_versions() != pin['dependencies']:
+        raise ValueError('Installed baseline dependencies differ from the original Run')
     settings = ModelSettings(timeout_seconds=90.0)
     prompt = sourced_extraction_messages([])[0][1]
     if hashlib.sha256(prompt.encode()).hexdigest() != pin['prompt'] or value_digest(settings.model_dump()) != pin['settings']:

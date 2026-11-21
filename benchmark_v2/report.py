@@ -272,6 +272,8 @@ def _protocol_mismatch(run: _Run, manifest: ReportManifest, arm: Literal['baseli
     if (value_digest(plan.settings.model_dump()) != pin['settings']
             or run.provenance['code']['prompt_hashes']['sourced_extraction'] != pin['prompt']):
         return 'Run settings or sourced prompt differ from the live baseline pin.'
+    if run.provenance['code']['dependencies'] != pin['dependencies']:
+        return 'Recorded dependencies differ from the baseline Run.'
     if any(run.code_hashes.get(path) != expected for path, expected in pin['files'].items() if path != 'uv.lock'):
         return 'Run code snapshot differs from the live baseline pin.'
     return None

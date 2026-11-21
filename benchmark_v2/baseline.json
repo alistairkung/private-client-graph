@@ -33,5 +33,16 @@
     "private_client_graph/research/source_attribution.py": "4c1b142f0f13448f93a7e86acb928093495b07c6e5698c48cb31a0ae0750789c",
     "private_client_graph/resolution.py": "9c330030eaf8367b915fecc9ba611625726dbd97e947f5cec35b4b7b60fb5e18",
     "uv.lock": "a93668b641bea8df7789e6360f7f2881239c430563d63827ee29b9802598be0b"
+  },
+  "dependencies": {
+    "pydantic": "2.13.5",
+    "pydantic-core": "2.46.5",
+    "langchain-core": "1.6.6",
+    "langchain-deepseek": "1.1.1",
+    "langchain-openai": "1.6.7",
+    "openai": "3.23.0",
+    "langsmith": "0.14.3",
+    "httpx": "0.28.1",
+    "httpcore": "1.0.9"
   }
 }
