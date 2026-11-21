@@ -134,6 +134,9 @@ def _metadata(sample: ResearchInput, package: _CasePackage | None, root: Path) -
 def _freeze_sources(sample: ResearchInput, package: _CasePackage) -> None:
     """Freeze original ordered files; compatibility text never establishes attribution."""
     directory = package.directory
+    review = directory / 'pending_semantic_review.md'
+    if review.is_file():
+        sample.origin_hashes[review.name] = hashlib.sha256(review.read_bytes()).hexdigest()
     manifest = directory / 'sources.json'
     if not manifest.exists() and (package.split or (directory / 'source_evidence.json').exists()
                                   or (directory / 'expected_source_extraction.json').exists()):

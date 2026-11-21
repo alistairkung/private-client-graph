@@ -1,0 +1,42 @@
+{
+  "entities": [
+    {
+      "id": "nora",
+      "type": "person",
+      "name": "Nora Pike"
+    },
+    {
+      "id": "helen",
+      "type": "person",
+      "name": "Helen Marr"
+    },
+    {
+      "id": "felix",
+      "type": "person",
+      "name": "Felix Marr"
+    },
+    {
+      "id": "trust",
+      "type": "trust",
+      "name": "Alderwick Trust"
+    }
+  ],
+  "relationships": [
+    {
+      "source": "nora",
+      "type": "trustee_of",
+      "target": "trust",
+      "approved_evidence": [
+        "With effect from execution, Nora Pike holds office as sole trustee of the Alderwick Trust."
+      ]
+    },
+    {
+      "source": "helen",
+      "type": "sibling_of",
+      "target": "felix",
+      "approved_evidence": [
+        "My brother, Felix Marr, would like his copy by post this year."
+      ]
+    }
+  ]
+}

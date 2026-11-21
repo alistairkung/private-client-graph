@@ -1,0 +1,55 @@
+{
+  "entities": [
+    {
+      "id": "anna_dale",
+      "type": "person",
+      "name": "Anna Dale"
+    },
+    {
+      "id": "seaforth_trust",
+      "type": "trust",
+      "name": "Seaforth Trust"
+    },
+    {
+      "id": "kit_nash",
+      "type": "person",
+      "name": "Kit Nash"
+    },
+    {
+      "id": "rhea_barr",
+      "type": "person",
+      "name": "Rhea Barr"
+    },
+    {
+      "id": "hillstone_trust",
+      "type": "trust",
+      "name": "Hillstone Trust"
+    }
+  ],
+  "relationships": [
+    {
+      "source": "anna_dale",
+      "type": "trustee_of",
+      "target": "seaforth_trust",
+      "approved_evidence": [
+        "Anna Dale took office today as trustee of Seaforth Trust under instrument L-29."
+      ]
+    },
+    {
+      "source": "kit_nash",
+      "type": "settlor_of",
+      "target": "seaforth_trust",
+      "approved_evidence": [
+        "Kit Nash is the settlor of Seaforth Trust."
+      ]
+    },
+    {
+      "source": "rhea_barr",
+      "type": "settlor_of",
+      "target": "hillstone_trust",
+      "approved_evidence": [
+        "Rhea Barr is the settlor of Hillstone Trust."
+      ]
+    }
+  ]
+}

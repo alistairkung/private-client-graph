@@ -1,0 +1,18 @@
+{
+  "relationships": [
+    {
+      "source_name": "Nora Pike",
+      "relationship_type": "trustee_of",
+      "target_name": "Alderwick Trust",
+      "supporting_text": "With effect from execution, Nora Pike holds office as sole trustee of the Alderwick Trust.",
+      "source_id": "instrument"
+    },
+    {
+      "source_name": "Helen Marr",
+      "relationship_type": "sibling_of",
+      "target_name": "Felix Marr",
+      "supporting_text": "My brother, Felix Marr, would like his copy by post this year.",
+      "source_id": "mail"
+    }
+  ]
+}

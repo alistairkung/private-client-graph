@@ -1,0 +1,42 @@
+[
+  {
+    "id": "formation",
+    "title": "Opening memorandum",
+    "path": "sources/formation.txt"
+  },
+  {
+    "id": "appointment",
+    "title": "Custodian certificate",
+    "path": "sources/appointment.txt"
+  },
+  {
+    "id": "contact",
+    "title": "Meeting arrangements",
+    "path": "sources/contact.txt"
+  },
+  {
+    "id": "attendance",
+    "title": "Attendance note",
+    "path": "sources/attendance.txt"
+  },
+  {
+    "id": "distribution",
+    "title": "Spring receipts",
+    "path": "sources/distribution.txt"
+  },
+  {
+    "id": "orchard",
+    "title": "Register extract",
+    "path": "sources/orchard.txt"
+  },
+  {
+    "id": "accounts",
+    "title": "Accounts return",
+    "path": "sources/accounts.txt"
+  },
+  {
+    "id": "pending",
+    "title": "September agenda",
+    "path": "sources/pending.txt"
+  }
+]

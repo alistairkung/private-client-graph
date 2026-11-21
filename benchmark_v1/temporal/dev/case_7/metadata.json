@@ -1,0 +1,8 @@
+{
+  "name": "Temporal progression T3 in reverse file order",
+  "description": "The same current-state review through 5 December 2026 with the four Sources presented in reverse chronological order.",
+  "id": "benchmark_v1_temporal_dev_7",
+  "axis": "temporal",
+  "split": "dev",
+  "matter_family": "benchmark_v1_temporal_progressive"
+}

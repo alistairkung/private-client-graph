@@ -1,0 +1,70 @@
+{
+  "relationships": [
+    {
+      "source_name": "Miriam Kwan",
+      "relationship_type": "settlor_of",
+      "target_name": "Fernbank Trust",
+      "supporting_text": "Miriam Kwan established the Fernbank Trust as its settlor."
+    },
+    {
+      "source_name": "Colin Webb",
+      "relationship_type": "trustee_of",
+      "target_name": "Fernbank Trust",
+      "supporting_text": "Colin Webb holds office as sole trustee of the Fernbank Trust with effect from today."
+    },
+    {
+      "source_name": "Miriam Kwan",
+      "relationship_type": "spouse_of",
+      "target_name": "Adrian Kwan",
+      "supporting_text": "Adrian Kwan is my husband."
+    },
+    {
+      "source_name": "Adrian Kwan",
+      "relationship_type": "parent_of",
+      "target_name": "Tessa Kwan",
+      "supporting_text": "Tessa Kwan identified Adrian Kwan and Elin Moss as her parents."
+    },
+    {
+      "source_name": "Elin Moss",
+      "relationship_type": "parent_of",
+      "target_name": "Tessa Kwan",
+      "supporting_text": "Tessa Kwan identified Adrian Kwan and Elin Moss as her parents."
+    },
+    {
+      "source_name": "Tessa Kwan",
+      "relationship_type": "beneficiary_of",
+      "target_name": "Fernbank Trust",
+      "supporting_text": "Tessa Kwan is a beneficiary of the Fernbank Trust."
+    },
+    {
+      "source_name": "Tess Kwan",
+      "relationship_type": "beneficiary_of",
+      "target_name": "Orchard Lane Trust",
+      "supporting_text": "The current beneficiaries of the Orchard Lane Trust are Tess Kwan and Sidney Cross."
+    },
+    {
+      "source_name": "Tess Kwan",
+      "relationship_type": "sibling_of",
+      "target_name": "Logan Price",
+      "supporting_text": "Tess asked us to collect her envelope in person; her brother Logan Price will bring it to reception on Friday."
+    },
+    {
+      "source_name": "Logan Price",
+      "relationship_type": "settlor_of",
+      "target_name": "Orchard Lane Trust",
+      "supporting_text": "Logan Price is recorded as settlor of the Orchard Lane Trust."
+    },
+    {
+      "source_name": "Elin Moss",
+      "relationship_type": "trustee_of",
+      "target_name": "Orchard Lane Trust",
+      "supporting_text": "Elin Moss holds office as trustee of the Orchard Lane Trust."
+    },
+    {
+      "source_name": "Sidney Cross",
+      "relationship_type": "beneficiary_of",
+      "target_name": "Orchard Lane Trust",
+      "supporting_text": "The current beneficiaries of the Orchard Lane Trust are Tess Kwan and Sidney Cross."
+    }
+  ]
+}

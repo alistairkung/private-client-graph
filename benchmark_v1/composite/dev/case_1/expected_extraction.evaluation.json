@@ -1,0 +1,128 @@
+{
+  "tp": 11,
+  "fp": 0,
+  "fn": 0,
+  "precision": 1.0,
+  "recall": 1.0,
+  "f1": 1.0,
+  "true_positive_edges": [
+    [
+      "Adrian Kwan",
+      "parent_of",
+      "Tessa Kwan"
+    ],
+    [
+      "Adrian Kwan",
+      "spouse_of",
+      "Miriam Kwan"
+    ],
+    [
+      "Colin Webb",
+      "trustee_of",
+      "Fernbank Trust"
+    ],
+    [
+      "Elin Moss",
+      "parent_of",
+      "Tessa Kwan"
+    ],
+    [
+      "Elin Moss",
+      "trustee_of",
+      "Orchard Lane Trust"
+    ],
+    [
+      "Logan Price",
+      "settlor_of",
+      "Orchard Lane Trust"
+    ],
+    [
+      "Logan Price",
+      "sibling_of",
+      "Tess Kwan"
+    ],
+    [
+      "Miriam Kwan",
+      "settlor_of",
+      "Fernbank Trust"
+    ],
+    [
+      "Sidney Cross",
+      "beneficiary_of",
+      "Orchard Lane Trust"
+    ],
+    [
+      "Tess Kwan",
+      "beneficiary_of",
+      "Orchard Lane Trust"
+    ],
+    [
+      "Tessa Kwan",
+      "beneficiary_of",
+      "Fernbank Trust"
+    ]
+  ],
+  "false_positive_edges": [],
+  "false_negative_edges": [],
+  "provenance_passed": 11,
+  "provenance_failed": 0,
+  "provenance_accuracy": 1.0,
+  "provenance_passes": [
+    [
+      "Adrian Kwan",
+      "parent_of",
+      "Tessa Kwan"
+    ],
+    [
+      "Adrian Kwan",
+      "spouse_of",
+      "Miriam Kwan"
+    ],
+    [
+      "Colin Webb",
+      "trustee_of",
+      "Fernbank Trust"
+    ],
+    [
+      "Elin Moss",
+      "parent_of",
+      "Tessa Kwan"
+    ],
+    [
+      "Elin Moss",
+      "trustee_of",
+      "Orchard Lane Trust"
+    ],
+    [
+      "Logan Price",
+      "settlor_of",
+      "Orchard Lane Trust"
+    ],
+    [
+      "Logan Price",
+      "sibling_of",
+      "Tess Kwan"
+    ],
+    [
+      "Miriam Kwan",
+      "settlor_of",
+      "Fernbank Trust"
+    ],
+    [
+      "Sidney Cross",
+      "beneficiary_of",
+      "Orchard Lane Trust"
+    ],
+    [
+      "Tess Kwan",
+      "beneficiary_of",
+      "Orchard Lane Trust"
+    ],
+    [
+      "Tessa Kwan",
+      "beneficiary_of",
+      "Fernbank Trust"
+    ]
+  ],
+  "provenance_failures": []
+}
