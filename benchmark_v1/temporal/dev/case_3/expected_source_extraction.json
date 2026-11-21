@@ -1,46 +1,9 @@
 {
   "relationships": [
-    {
-      "source_name": "Eleanor Hartley",
-      "relationship_type": "settlor_of",
-      "target_name": "Hartley Family Trust",
-      "supporting_text": "Eleanor Hartley is the settlor of the Hartley Family Trust.",
-      "source_id": "note_01"
-    },
-    {
-      "source_name": "Eleanor Hartley",
-      "relationship_type": "spouse_of",
-      "target_name": "James Hartley",
-      "supporting_text": "Eleanor Hartley and James Hartley are spouses.",
-      "source_id": "note_01"
-    },
-    {
-      "source_name": "Eleanor Hartley",
-      "relationship_type": "parent_of",
-      "target_name": "Oliver Hartley",
-      "supporting_text": "Eleanor Hartley and James Hartley are the parents of Oliver Hartley.",
-      "source_id": "note_01"
-    },
-    {
-      "source_name": "James Hartley",
-      "relationship_type": "parent_of",
-      "target_name": "Oliver Hartley",
-      "supporting_text": "Eleanor Hartley and James Hartley are the parents of Oliver Hartley.",
-      "source_id": "note_01"
-    },
-    {
-      "source_name": "Oliver Hartley",
-      "relationship_type": "beneficiary_of",
-      "target_name": "Hartley Family Trust",
-      "supporting_text": "Oliver Hartley is a beneficiary of the Hartley Family Trust.",
-      "source_id": "note_01"
-    },
-    {
-      "source_name": "Margaret Hartley",
-      "relationship_type": "trustee_of",
-      "target_name": "Hartley Family Trust",
-      "supporting_text": "Margaret Hartley has been appointed as the sole trustee of the Hartley Family Trust with effect from 11 September 2026, in place of James Hartley.",
-      "source_id": "note_02"
-    }
+    { "source_name": "Alice Tan", "relationship_type": "settlor_of", "target_name": "Pemberton Family Trust", "supporting_text": "Alice Tan is the settlor of the Pemberton Family Trust.", "source_id": "note_01" },
+    { "source_name": "Alice Tan", "relationship_type": "parent_of", "target_name": "Chloe Tan", "supporting_text": "Alice Tan and Benedict Tan are the parents of Chloe Tan.", "source_id": "note_01" },
+    { "source_name": "Benedict Tan", "relationship_type": "parent_of", "target_name": "Chloe Tan", "supporting_text": "Alice Tan and Benedict Tan are the parents of Chloe Tan.", "source_id": "note_01" },
+    { "source_name": "Chloe Tan", "relationship_type": "beneficiary_of", "target_name": "Pemberton Family Trust", "supporting_text": "Chloe Tan is a beneficiary of the Pemberton Family Trust.", "source_id": "note_01" },
+    { "source_name": "Benedict Tan", "relationship_type": "trustee_of", "target_name": "Pemberton Family Trust", "supporting_text": "Benedict Tan is a trustee of the Pemberton Family Trust.", "source_id": "note_01" }
   ]
 }

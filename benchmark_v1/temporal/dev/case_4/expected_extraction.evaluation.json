@@ -1,5 +1,5 @@
 {
-  "tp": 3,
+  "tp": 5,
   "fp": 0,
   "fn": 0,
   "precision": 1.0,
@@ -7,41 +7,61 @@
   "f1": 1.0,
   "true_positive_edges": [
     [
-      "Caroline Nightingale",
-      "beneficiary_of",
-      "Nightingale Family Trust"
+      "Alice Tan",
+      "parent_of",
+      "Chloe Tan"
     ],
     [
-      "Margaret Nightingale",
+      "Alice Tan",
       "settlor_of",
-      "Nightingale Family Trust"
+      "Pemberton Family Trust"
     ],
     [
-      "Margaret Nightingale",
-      "spouse_of",
-      "Thomas Nightingale"
+      "Alice Tan",
+      "trustee_of",
+      "Pemberton Family Trust"
+    ],
+    [
+      "Benedict Tan",
+      "parent_of",
+      "Chloe Tan"
+    ],
+    [
+      "Chloe Tan",
+      "beneficiary_of",
+      "Pemberton Family Trust"
     ]
   ],
   "false_positive_edges": [],
   "false_negative_edges": [],
-  "provenance_passed": 3,
+  "provenance_passed": 5,
   "provenance_failed": 0,
   "provenance_accuracy": 1.0,
   "provenance_passes": [
     [
-      "Caroline Nightingale",
-      "beneficiary_of",
-      "Nightingale Family Trust"
+      "Alice Tan",
+      "parent_of",
+      "Chloe Tan"
     ],
     [
-      "Margaret Nightingale",
+      "Alice Tan",
       "settlor_of",
-      "Nightingale Family Trust"
+      "Pemberton Family Trust"
     ],
     [
-      "Margaret Nightingale",
-      "spouse_of",
-      "Thomas Nightingale"
+      "Alice Tan",
+      "trustee_of",
+      "Pemberton Family Trust"
+    ],
+    [
+      "Benedict Tan",
+      "parent_of",
+      "Chloe Tan"
+    ],
+    [
+      "Chloe Tan",
+      "beneficiary_of",
+      "Pemberton Family Trust"
     ]
   ],
   "provenance_failures": []

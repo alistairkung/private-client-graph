@@ -1,55 +1,17 @@
-# Case: Temporal Precedence — Proposal (Development)
+# T3: Proposal
 
 ## Purpose
-Test whether the pipeline correctly rejects a proposed trustee replacement
-that has not been formally executed, retaining the existing trustee edge.
+Proposal to replace Alice with Benedict. Proposal not effective. Current state unchanged from T2.
 
-## Intended Variable
-Temporal precedence (proposal vs. effective). The combined source contains
-two dated notes:
-- Note 1 (4 April 2025): Rachel Moy is the settlor, Rachel and Simon are
-  spouses and parents of Jasmine. Simon is the sole trustee.
-- Note 2 (9 October 2026): Rachel is *considering* asking Simon to step
-  down and appointing Jonathan. No formal steps taken. The current
-  position remains that Simon is the sole trustee.
-
-The answer key reflects the current state:
-- The Simon trustee edge is **present** (still current).
-- There is **no edge** for Jonathan (proposal never executed).
+## Documents
+`note_01` + `note_02` + `note_03` + `note_04`.
 
 ## Answer Key
-### Required edges (6)
-1. Rachel Moy → settlor_of → Larkfield Family Trust
-2. Rachel Moy → spouse_of → Simon Moy
-3. Rachel Moy → parent_of → Jasmine Moy
-4. Simon Moy → parent_of → Jasmine Moy
-5. Jasmine Moy → beneficiary_of → Larkfield Family Trust
-6. Simon Moy → trustee_of → Larkfield Family Trust
+5 required edges. Absent: spouse (T1), Benedict trustee (T2 correction), proposed Benedict trustee (T3 — not effective).
 
-### Absent (proposed) edges (1)
-1. Jonathan Moy → trustee_of → Larkfield Family Trust (proposed, never effective)
+The Alice trustee edge is approved with two quotes: note_03 ("The correct position is...") and note_04 ("The current position remains..."). Both are valid evidence; approving both prevents provenance failures from either valid quote.
 
-## Source Audit (Bidirectional)
-**Required edges → source:** Every required edge is explicitly supported
-by Note 1 and Note 2. Evidence spans recorded in `ground_truth.json`.
-
-**Absent edge → source:** Note 2 mentions Jonathan as a *proposed*
-replacement. It explicitly states no formal steps have been taken, no deed
-has been executed, and no resignation has been received. The proposal is
-not effective.
-
-**Source → answer key:** Note 2 explicitly states "The current position
-remains that Simon Moy is the sole trustee." No additional supported
-relationship is asserted.
-
-## How to Test This Case
-```bash
-uv run python benchmark_v1/evaluate_case.py \
-    benchmark_v1/temporal/dev/case_5 \
-    benchmark_v1/temporal/dev/case_5/expected_extraction.json
-```
-
-## Contract Check Result (Ideal Extraction)
-**Run:** 2026-11-14
-**Result:** TP: 6, FP: 0, FN: 0, F1: 1.0, Provenance: 1.0
+## Contract Check Result
+**Run:** 2026-11-15
+**Result:** TP: 5, FP: 0, FN: 0, F1: 1.0, Provenance: 1.0
 **Paid provider calls:** 0

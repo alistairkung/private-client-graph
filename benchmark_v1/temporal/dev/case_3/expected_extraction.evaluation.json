@@ -1,5 +1,5 @@
 {
-  "tp": 6,
+  "tp": 5,
   "fp": 0,
   "fn": 0,
   "precision": 1.0,
@@ -7,71 +7,61 @@
   "f1": 1.0,
   "true_positive_edges": [
     [
-      "Eleanor Hartley",
+      "Alice Tan",
       "parent_of",
-      "Oliver Hartley"
+      "Chloe Tan"
     ],
     [
-      "Eleanor Hartley",
+      "Alice Tan",
       "settlor_of",
-      "Hartley Family Trust"
+      "Pemberton Family Trust"
     ],
     [
-      "Eleanor Hartley",
-      "spouse_of",
-      "James Hartley"
-    ],
-    [
-      "James Hartley",
+      "Benedict Tan",
       "parent_of",
-      "Oliver Hartley"
+      "Chloe Tan"
     ],
     [
-      "Margaret Hartley",
+      "Benedict Tan",
       "trustee_of",
-      "Hartley Family Trust"
+      "Pemberton Family Trust"
     ],
     [
-      "Oliver Hartley",
+      "Chloe Tan",
       "beneficiary_of",
-      "Hartley Family Trust"
+      "Pemberton Family Trust"
     ]
   ],
   "false_positive_edges": [],
   "false_negative_edges": [],
-  "provenance_passed": 6,
+  "provenance_passed": 5,
   "provenance_failed": 0,
   "provenance_accuracy": 1.0,
   "provenance_passes": [
     [
-      "Eleanor Hartley",
+      "Alice Tan",
       "parent_of",
-      "Oliver Hartley"
+      "Chloe Tan"
     ],
     [
-      "Eleanor Hartley",
+      "Alice Tan",
       "settlor_of",
-      "Hartley Family Trust"
+      "Pemberton Family Trust"
     ],
     [
-      "Eleanor Hartley",
-      "spouse_of",
-      "James Hartley"
-    ],
-    [
-      "James Hartley",
+      "Benedict Tan",
       "parent_of",
-      "Oliver Hartley"
+      "Chloe Tan"
     ],
     [
-      "Margaret Hartley",
+      "Benedict Tan",
       "trustee_of",
-      "Hartley Family Trust"
+      "Pemberton Family Trust"
     ],
     [
-      "Oliver Hartley",
+      "Chloe Tan",
       "beneficiary_of",
-      "Hartley Family Trust"
+      "Pemberton Family Trust"
     ]
   ],
   "provenance_failures": []

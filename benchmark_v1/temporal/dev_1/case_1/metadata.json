@@ -1,8 +1,0 @@
-{
-  "name": "Temporal Progression: T0 Initial State (Development)",
-  "description": "Stage T0: initial family and trust structure. Six edges. No changes yet.",
-  "id": "benchmark_v1_temporal_dev_1_1",
-  "axis": "temporal",
-  "split": "dev",
-  "matter_family": "benchmark_v1_temporal_progressive"
-}

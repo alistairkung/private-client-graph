@@ -22,6 +22,8 @@ from private_client_graph.workbench.workspaces import create_experiment, update_
 
 AXES = ('aliases', 'authority', 'cross_source', 'distractors', 'hallucination', 'temporal')
 SPLITS = ('dev', 'held_out')
+SIX_AXIS_DEV_IDS = [f'benchmark_v1_{axis}_dev_1_fixture' for axis in AXES]
+PROGRESSIVE_IDS = [f'benchmark_v1_temporal_dev_{ordinal}_fixture' for ordinal in range(2, 7)]
 DEFAULTS = [f'case_{index:02d}_fixture' for index in range(1, 6)]
 LEGACY_SCORES = {
     'case_01_fixture': (6, 0, 0, 6, 0),
@@ -53,7 +55,7 @@ def samples():
 def test_catalog_preserves_legacy_identities_defaults_and_requires_new_case_opt_in(samples):
     catalog = {row.id: row for row in load_case_catalog()}
     expected_new = {f'{case_id(axis, split)}_fixture' for axis in AXES for split in SPLITS}
-    assert set(samples) == set(LEGACY_SCORES) | expected_new
+    assert set(samples) == set(LEGACY_SCORES) | expected_new | set(PROGRESSIVE_IDS)
     assert set(catalog) == set(samples)
     assert default_input_ids() == DEFAULTS
     assert RunConfiguration().input_ids == DEFAULTS
@@ -62,6 +64,40 @@ def test_catalog_preserves_legacy_identities_defaults_and_requires_new_case_opt_
         rows = [catalog[f'{case_id(axis, split)}_fixture'] for axis in AXES]
         assert {row.kind for row in rows} == {'diagnostic' if split == 'dev' else 'heldout'}
         assert all(row.metadata_available and row.axis in AXES and row.split == split for row in rows)
+
+    progressive = [catalog[identity] for identity in PROGRESSIVE_IDS]
+    assert {(row.kind, row.axis, row.split, row.matter_family) for row in progressive} == {
+        ('diagnostic', 'temporal', 'dev', 'benchmark_v1_temporal_progressive'),
+    }
+
+
+def test_progressive_snapshots_extend_sources_and_update_only_current_edges(samples):
+    snapshots = [samples[identity] for identity in PROGRESSIVE_IDS]
+    sources = snapshots[-1].sources
+    assert [source.id for source in sources] == [f'note_{index:02d}' for index in range(1, 6)]
+
+    alice, benedict, chloe = 'Alice Tan', 'Benedict Tan', 'Chloe Tan'
+    trust = 'Pemberton Family Trust'
+    unaffected = {
+        (alice, 'settlor_of', trust),
+        (alice, 'parent_of', chloe),
+        (benedict, 'parent_of', chloe),
+        (chloe, 'beneficiary_of', trust),
+    }
+    expected_trustees = [(benedict, 'note_01'), (benedict, 'note_01'), (alice, 'note_03'),
+                         (alice, 'note_04'), (benedict, 'note_05')]
+    for stage, (sample, (trustee, source_id)) in enumerate(zip(snapshots, expected_trustees, strict=True)):
+        assert sample.sources == sources[:stage + 1]
+        assert all(sample.origin_hashes[f'sources/{source.id}.txt'] ==
+                   snapshots[-1].origin_hashes[f'sources/{source.id}.txt'] for source in sample.sources)
+        candidates = sample.sourced_extraction.relationships
+        edges = {(row.source_name, row.relationship_type, row.target_name) for row in candidates}
+        expected = unaffected | {(trustee, 'trustee_of', trust)}
+        if stage == 0:
+            expected.add((alice, 'spouse_of', benedict))
+        assert edges == expected
+        assert {row.source_id for row in candidates if row.relationship_type == 'trustee_of'} == {source_id}
+        assert {row.source_id for row in candidates if row.relationship_type != 'trustee_of'} == {'note_01'}
 
 
 @pytest.mark.parametrize('axis', AXES)
@@ -127,12 +163,16 @@ def forbidden_provider(request):
     pytest.fail('Saved no-resolution replay must make zero provider calls')
 
 
-def test_all_six_dev_cases_survive_normal_freeze_execute_reopen_and_source_inspection(tmp_path, samples):
-    identities = [f'{case_id(axis, "dev")}_fixture' for axis in AXES]
+@pytest.mark.parametrize('identities', [
+    pytest.param(SIX_AXIS_DEV_IDS, id='six-axis'),
+    pytest.param(PROGRESSIVE_IDS, id='progressive-temporal'),
+])
+def test_dev_cases_survive_normal_freeze_execute_reopen_and_source_inspection(tmp_path, samples, identities):
+    count = len(identities)
     workspace = create_experiment(tmp_path, CreateExperiment(request_id='benchmark-v1', name='Synthetic dev replay'))
     configuration = RunConfiguration(input_ids=identities, input_mode='saved', resolver='none', execution_mode='replay')
     preview = preview_run(configuration, tmp_path)
-    assert (preview.matrix_call_maximum, preview.planned_observations) == (0, 6)
+    assert (preview.matrix_call_maximum, preview.planned_observations) == (0, count)
     update_draft(tmp_path, workspace.id, DraftUpdate(request_id='select', expected_revision=0, configuration=configuration))
     frozen = freeze_run(tmp_path, workspace.id, FreezeRun(request_id='freeze', expected_revision=1))
     bundle = Bundle.open(tmp_path / frozen.id)
@@ -141,19 +181,22 @@ def test_all_six_dev_cases_survive_normal_freeze_execute_reopen_and_source_inspe
     reopened = Bundle.open(tmp_path / frozen.id)
     execute(reopened, provider=forbidden_provider)
     assert reopened.attempt_count == 0
-    assert len(reopened.results()) == 6
+    assert len(reopened.results()) == count
     detail = read_run(tmp_path, workspace.id, frozen.id)
     aggregate = detail.evaluation.aggregate
     assert aggregate.state == 'complete'
-    assert aggregate.coverage.model_dump() == dict(planned=6, scored=6, pending=0, failed=0, uncertain=0, unavailable=0)
+    assert aggregate.coverage.model_dump() == dict(planned=count, scored=count, pending=0, failed=0, uncertain=0, unavailable=0)
     assert (aggregate.tp, aggregate.fp, aggregate.fn, aggregate.f1) == (
         sum(len(samples[identity].truth.relationships) for identity in identities), 0, 0, 1)
     assert detail.evaluation.cost.total == 0
-    assert len(detail.observations) == 6
+    assert len(detail.observations) == count
     for observation in detail.observations:
         sample = samples[observation.sample_id]
         assert observation.metadata.id == sample.sample_id
         assert observation.sources == sample.sources
+        score = observation.result.evaluation
+        edge_count = len(sample.truth.relationships)
+        assert (score.tp, score.fp, score.fn, score.provenance_passed) == (edge_count, 0, 0, edge_count)
         assert observation.result.source_attribution.accuracy == 1
         assert observation.relationships and all(row.outcome == 'matched' for row in observation.relationships)
         sources = {source.id: source.text for source in observation.sources}

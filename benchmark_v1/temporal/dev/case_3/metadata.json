@@ -1,8 +1,8 @@
 {
-  "name": "Temporal Precedence: Death and Succession (Development)",
-  "description": "Tests whether the pipeline distinguishes a death notice from a separate succession document, replaces the trustee edge correctly, and preserves family edges despite the death.",
+  "name": "Temporal Progression: T1 Divorce (Development)",
+  "description": "Stage T1: divorce finalised. Spouse edge superseded. All other edges unchanged.",
   "id": "benchmark_v1_temporal_dev_3",
   "axis": "temporal",
   "split": "dev",
-  "matter_family": "benchmark_v1_temporal_3"
+  "matter_family": "benchmark_v1_temporal_progressive"
 }

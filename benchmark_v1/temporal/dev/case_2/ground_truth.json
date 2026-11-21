@@ -16,6 +16,14 @@
     },
     {
       "source": "person_001",
+      "type": "spouse_of",
+      "target": "person_002",
+      "approved_evidence": [
+        "Alice Tan and Benedict Tan are spouses."
+      ]
+    },
+    {
+      "source": "person_001",
       "type": "parent_of",
       "target": "person_003",
       "approved_evidence": [
@@ -36,6 +44,14 @@
       "target": "trust_001",
       "approved_evidence": [
         "Chloe Tan is a beneficiary of the Pemberton Family Trust."
+      ]
+    },
+    {
+      "source": "person_002",
+      "type": "trustee_of",
+      "target": "trust_001",
+      "approved_evidence": [
+        "Benedict Tan is a trustee of the Pemberton Family Trust."
       ]
     }
   ]

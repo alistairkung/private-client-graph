@@ -1,8 +1,8 @@
 {
-  "name": "Temporal Precedence: Material Correction (Development)",
-  "description": "Tests whether the pipeline applies a later material correction that retracts an earlier sibling assertion, while preserving unaffected family and trust edges.",
+  "name": "Temporal Progression: T2 Correction (Development)",
+  "description": "Stage T2: correction retracts Benedict's trustee assertion and substitutes Alice. Spouse edge remains superseded from T1.",
   "id": "benchmark_v1_temporal_dev_4",
   "axis": "temporal",
   "split": "dev",
-  "matter_family": "benchmark_v1_temporal_4"
+  "matter_family": "benchmark_v1_temporal_progressive"
 }
