@@ -326,5 +326,9 @@ def test_live_final_report_rejects_inconsistent_approved_task_caps(tmp_path, mon
         'baseline_plan_digests': [_plan_digest(baseline)], 'final_plan_digests': [_plan_digest(final)],
     })
     report = final_report(manifest, [baseline.path], [final.path])
+    assert final_report(manifest, [baseline.path], [])['shared_task_mismatch'] == (
+        'Run cap differs from the predeclared final attempt cap.')
+    revised = manifest.model_copy(update={'final_attempt_cap': 2})
+    assert final_report(revised, [baseline.path], [])['shared_task_mismatch'] is None
     assert 'different' in report['shared_task_mismatch']
     assert report['baseline']['coverage']['unavailable'] == report['final']['coverage']['unavailable'] == 1

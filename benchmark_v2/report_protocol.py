@@ -60,6 +60,7 @@ class ReportManifest(BaseModel):
     execution_mode: Literal['live', 'recorded', 'replay'] = 'live'
     baseline_plan_digests: list[_PlanDigest] | None = None
     final_plan_digests: list[_PlanDigest] | None = None
+    final_attempt_cap: int = Field(default=8, ge=1)
     development_batches: list[list[str]] | None = None
     conditions: list[ConditionCommitment] = Field(min_length=1)
 

@@ -60,8 +60,10 @@ def final_report(manifest: ReportManifest, baseline: Sequence[Path], final: Sequ
     task_issue = None
     if manifest.execution_mode == 'live':
         approved = set(manifest.baseline_plan_digests or []) | set(manifest.final_plan_digests or [])
-        task_issue = shared_task_mismatch([run for run in [*baseline_runs, *final_runs]
-                                          if run.provenance['plan_digest'] in approved])
+        approved_runs = [run for run in [*baseline_runs, *final_runs] if run.provenance['plan_digest'] in approved]
+        task_issue = shared_task_mismatch(approved_runs)
+        if task_issue is None and any(run.plan.task_call_cap != manifest.final_attempt_cap for run in approved_runs):
+            task_issue = 'Run cap differs from the predeclared final attempt cap.'
     left = _arm(manifest, baseline_runs, 'baseline', task_issue=task_issue)
     right = _arm(manifest, final_runs, 'final', task_issue=task_issue)
     pairs = [
@@ -94,6 +96,8 @@ def _pair(baseline: dict[str, Any], final: dict[str, Any],
         reason = 'Both fresh extraction requests must match the exact ordered Sources.'
     elif chronology['deviations']:
         reason = 'Retained extraction start times conflict with the committed arm order.'
+    elif chronology['state'] != 'verified':
+        reason = 'Retained extraction start times cannot verify the committed arm order.'
     elif left['scorer_digests'] != right['scorer_digests'] or None in left['scorer_digests'].values():
         reason = 'Frozen evaluator implementations could not be matched.'
     return {

@@ -86,3 +86,5 @@ known subtotal, unpriced count and total. A missing total or delta is
 `null`. Attempted totals describe the supplied Runs. Coverage shows planned
 Observations without a Run. If an extraction is shared by multiple resolver
 Observations, each lists that extraction, and the arm counts it once.
+
+The private manifest defaults final_attempt_cap to eight. Record any separately approved revision before release. Missing or tied extraction timestamps leave each arm visible and exclude the affected paired delta.
