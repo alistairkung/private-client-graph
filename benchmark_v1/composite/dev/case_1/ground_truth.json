@@ -1,0 +1,144 @@
+{
+  "entities": [
+    {
+      "id": "miriam_kwan",
+      "type": "person",
+      "name": "Miriam Kwan"
+    },
+    {
+      "id": "fernbank_trust",
+      "type": "trust",
+      "name": "Fernbank Trust"
+    },
+    {
+      "id": "colin_webb",
+      "type": "person",
+      "name": "Colin Webb"
+    },
+    {
+      "id": "adrian_kwan",
+      "type": "person",
+      "name": "Adrian Kwan"
+    },
+    {
+      "id": "tessa_kwan",
+      "type": "person",
+      "name": "Tessa Kwan"
+    },
+    {
+      "id": "elin_moss",
+      "type": "person",
+      "name": "Elin Moss"
+    },
+    {
+      "id": "tess_kwan",
+      "type": "person",
+      "name": "Tess Kwan"
+    },
+    {
+      "id": "orchard_lane_trust",
+      "type": "trust",
+      "name": "Orchard Lane Trust"
+    },
+    {
+      "id": "logan_price",
+      "type": "person",
+      "name": "Logan Price"
+    },
+    {
+      "id": "sidney_cross",
+      "type": "person",
+      "name": "Sidney Cross"
+    }
+  ],
+  "relationships": [
+    {
+      "source": "miriam_kwan",
+      "type": "settlor_of",
+      "target": "fernbank_trust",
+      "approved_evidence": [
+        "Miriam Kwan established the Fernbank Trust as its settlor."
+      ]
+    },
+    {
+      "source": "colin_webb",
+      "type": "trustee_of",
+      "target": "fernbank_trust",
+      "approved_evidence": [
+        "Colin Webb holds office as sole trustee of the Fernbank Trust with effect from today."
+      ]
+    },
+    {
+      "source": "miriam_kwan",
+      "type": "spouse_of",
+      "target": "adrian_kwan",
+      "approved_evidence": [
+        "Adrian Kwan is my husband."
+      ]
+    },
+    {
+      "source": "adrian_kwan",
+      "type": "parent_of",
+      "target": "tessa_kwan",
+      "approved_evidence": [
+        "Tessa Kwan identified Adrian Kwan and Elin Moss as her parents."
+      ]
+    },
+    {
+      "source": "elin_moss",
+      "type": "parent_of",
+      "target": "tessa_kwan",
+      "approved_evidence": [
+        "Tessa Kwan identified Adrian Kwan and Elin Moss as her parents."
+      ]
+    },
+    {
+      "source": "tessa_kwan",
+      "type": "beneficiary_of",
+      "target": "fernbank_trust",
+      "approved_evidence": [
+        "Tessa Kwan is a beneficiary of the Fernbank Trust."
+      ]
+    },
+    {
+      "source": "tess_kwan",
+      "type": "beneficiary_of",
+      "target": "orchard_lane_trust",
+      "approved_evidence": [
+        "The current beneficiaries of the Orchard Lane Trust are Tess Kwan and Sidney Cross."
+      ]
+    },
+    {
+      "source": "tess_kwan",
+      "type": "sibling_of",
+      "target": "logan_price",
+      "approved_evidence": [
+        "Tess asked us to collect her envelope in person; her brother Logan Price will bring it to reception on Friday."
+      ]
+    },
+    {
+      "source": "logan_price",
+      "type": "settlor_of",
+      "target": "orchard_lane_trust",
+      "approved_evidence": [
+        "Logan Price is recorded as settlor of the Orchard Lane Trust."
+      ]
+    },
+    {
+      "source": "elin_moss",
+      "type": "trustee_of",
+      "target": "orchard_lane_trust",
+      "approved_evidence": [
+        "Elin Moss holds office as trustee of the Orchard Lane Trust."
+      ]
+    },
+    {
+      "source": "sidney_cross",
+      "type": "beneficiary_of",
+      "target": "orchard_lane_trust",
+      "approved_evidence": [
+        "The current beneficiaries of the Orchard Lane Trust are Tess Kwan and Sidney Cross."
+      ]
+    }
+  ]
+}

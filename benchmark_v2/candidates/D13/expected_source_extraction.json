@@ -1,0 +1,32 @@
+{
+  "relationships": [
+    {
+      "source_name": "Anna Dale",
+      "relationship_type": "trustee_of",
+      "target_name": "Seaforth Trust",
+      "source_id": "notice",
+      "supporting_text": "Anna Dale took office today as trustee under instrument L-29."
+    },
+    {
+      "source_name": "Anna Dale",
+      "relationship_type": "trustee_of",
+      "target_name": "Seaforth Trust",
+      "source_id": "index",
+      "supporting_text": "Instrument L-29 belongs to Seaforth Trust."
+    },
+    {
+      "source_name": "Kit Nash",
+      "relationship_type": "settlor_of",
+      "target_name": "Seaforth Trust",
+      "source_id": "letter",
+      "supporting_text": "Kit Nash is the settlor of Seaforth Trust."
+    },
+    {
+      "source_name": "Rhea Barr",
+      "relationship_type": "settlor_of",
+      "target_name": "Hillstone Trust",
+      "source_id": "letter",
+      "supporting_text": "Rhea Barr is the settlor of Hillstone Trust."
+    }
+  ]
+}

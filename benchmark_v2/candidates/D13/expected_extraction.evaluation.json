@@ -1,0 +1,49 @@
+{
+  "tp": 3,
+  "fp": 0,
+  "fn": 0,
+  "precision": 1.0,
+  "recall": 1.0,
+  "f1": 1.0,
+  "true_positive_edges": [
+    [
+      "Anna Dale",
+      "trustee_of",
+      "Seaforth Trust"
+    ],
+    [
+      "Kit Nash",
+      "settlor_of",
+      "Seaforth Trust"
+    ],
+    [
+      "Rhea Barr",
+      "settlor_of",
+      "Hillstone Trust"
+    ]
+  ],
+  "false_positive_edges": [],
+  "false_negative_edges": [],
+  "provenance_passed": 2,
+  "provenance_failed": 1,
+  "provenance_accuracy": 0.6666666666666666,
+  "provenance_passes": [
+    [
+      "Kit Nash",
+      "settlor_of",
+      "Seaforth Trust"
+    ],
+    [
+      "Rhea Barr",
+      "settlor_of",
+      "Hillstone Trust"
+    ]
+  ],
+  "provenance_failures": [
+    [
+      "Anna Dale",
+      "trustee_of",
+      "Seaforth Trust"
+    ]
+  ]
+}

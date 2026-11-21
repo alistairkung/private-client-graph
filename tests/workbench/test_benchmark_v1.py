@@ -54,7 +54,9 @@ def samples():
 def test_catalog_preserves_legacy_identities_defaults_and_requires_new_case_opt_in(samples):
     catalog = {row.id: row for row in load_case_catalog()}
     expected_new = {f'{case_id(axis, split)}_fixture' for axis in AXES for split in SPLITS}
-    assert set(samples) == set(LEGACY_SCORES) | expected_new | set(AUTHORITY_PAIR)
+    v2_development = {f'benchmark_v1_{axis}_dev_{ordinal}_fixture' for axis, ordinal in (
+        ('temporal', 2), ('temporal', 5), ('temporal', 7), ('cross_source', 2), ('composite', 1))}
+    assert set(samples) == set(LEGACY_SCORES) | expected_new | set(AUTHORITY_PAIR) | v2_development
     assert set(catalog) == set(samples)
     assert default_input_ids() == DEFAULTS
     assert RunConfiguration().input_ids == DEFAULTS
