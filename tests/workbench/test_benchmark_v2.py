@@ -130,3 +130,19 @@ def test_linked_condition_hides_only_the_named_trust_and_preserves_both_endpoint
     ideal = SourcedExtractionResult.model_validate(read('expected_source_extraction.json'))
     assert read('expected_extraction.json')['relationships'] == [
         e.model_dump(exclude={'source_id'}) for e in ideal.relationships]
+
+
+def test_pending_v2_fixtures_can_replay_but_cannot_enter_a_paid_workbench_plan():
+    from private_client_graph.research.run_plan import RunPlan
+    sample = next(s for s in repository_inputs() if s.case_id == 'benchmark_v1_composite_dev_1')
+    with pytest.raises(ValueError, match='semantic review'):
+        RunPlan(inputs=[sample], input_mode='fresh', execution_mode='live', kind='live_experiment',
+                fresh_extractions=1, task_call_cap=18, max_calls=1, invocation_cap=1)
+
+
+def test_decision_diagnostic_rejects_duplicate_truth_ids_before_resolving_edges():
+    sample = next(s for s in repository_inputs() if s.case_id == 'benchmark_v1_cross_source_dev_2')
+    result = Pipeline(PipelineConfig()).run_from_sourced_extraction(sample.sources, sample.sourced_extraction)
+    truth = sample.truth.model_copy(update={'entities': [*sample.truth.entities, sample.truth.entities[0]]})
+    with pytest.raises(ValueError, match='Duplicate ground-truth entity ID'):
+        diagnose(result.state, truth, DecisionTargets())

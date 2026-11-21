@@ -20,6 +20,8 @@ In D13, one Source establishes the appointment under a reference and another ide
 
 ## Budget handoff
 
+A pending semantic-review marker on each newly authored development package permits saved replay and prevents live Workbench Run planning until the human admission revision. The original historical controls keep their prior eligibility.
+
 The proposed development ceiling is **18 attempted calls**. Use fresh, full context, the pinned model and settings, resolver none, one extraction per selected input, no retries and a single shared task allowance. The printed sequence gives the exact order: D1–D7, then three successive two-condition Runs of D8 and D9 in that order, then D10–D14. This keeps both temporal orders adjacent within each repetition. Count failures and retain their slots. Preflight is entirely offline. Historical output and ideal replays do not fill fresh slots.
 
 Reserve eight attempted calls after final configuration freeze. The custodian releases four reviewed packages only at that gate. Capture provider fingerprint, usage, latency, and priced or unpriced cost per arm and Matter. A multi-call final arm requires a revised budget before access. The private custody path belongs to the project owner outside the Workbench catalog. See the [frozen protocols](README.md).

@@ -4,8 +4,8 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from private_client_graph.canonical_state import validate_canonical_state
-from private_client_graph.evaluation import _edge
+from private_client_graph.canonical_state import reconstruct_graph
+from private_client_graph.evaluation import _edge, evaluate_graph
 from private_client_graph.models import GroundTruth
 from private_client_graph.models.canonical_state import CanonicalState
 from private_client_graph.models.evaluation_result import SemanticEdge
@@ -43,9 +43,8 @@ def _hits(targets: set[SemanticEdge], predicted: set[SemanticEdge]) -> dict[str,
 
 def diagnose(state: CanonicalState, truth: GroundTruth, labels: DecisionTargets) -> dict[str, Any]:
     """Evaluate only the Evidence attached to each named target; missed targets stay explicit."""
-    validate_canonical_state(state)
-    names = {entity.id: entity.name for entity in truth.entities}
-    expected = {_edge(names[r.source], r.type, names[r.target]) for r in truth.relationships}
+    score = evaluate_graph(reconstruct_graph(state), truth)
+    expected = set(score.true_positive_edges) | set(score.false_negative_edges)
     required, forbidden, unaffected = (_edges(group) for group in (labels.required, labels.forbidden, labels.unaffected))
     annotated = _edges(item.edge for item in labels.sufficiency)
     if (required | unaffected | annotated) - expected or forbidden & expected:
