@@ -1,0 +1,23 @@
+{
+  "committed_at": "2026-11-22T11:17:02.887515+00:00",
+  "judgments": {
+    "A0": {
+      "output_sha256": "392ea3f438bfedaa31d26f213abd9113c5516d9bde86812fa0077f44587d2af4",
+      "packet_sha256": "281ba7062b7e1a83d1c6930ee28bba4ea9fbcaa82e3066695419b1258f217cf0",
+      "thread_id": "01a202f4-d33a-7991-9e23-1bb9d204af69",
+      "committed_at": "2026-11-22T11:14:27.801098+00:00"
+    },
+    "A1": {
+      "output_sha256": "67f3cd459f05ea8bbb6884ada04018bab06e9ed41bdd7fb03e2720ada137df60",
+      "packet_sha256": "2cbbd86545424d0e020fd7443bce7fde02dcca88037243b941cfb801944fbbaa",
+      "thread_id": "01a202f7-0764-7170-8f19-5fcc885e7a00",
+      "committed_at": "2026-11-22T11:16:49.720516+00:00"
+    },
+    "A2": {
+      "output_sha256": "be9b874eef010680853e764cafa9ce035d2fdda65fe07e74c3f9112089e12736",
+      "packet_sha256": "8ffebb9a35392da5e82265f3220f2b8abf4c0564cfcb0026719a6fc532ddb508",
+      "thread_id": "01a202f4-d339-7ea2-8615-cd817c45b971",
+      "committed_at": "2026-11-22T11:14:57.562548+00:00"
+    }
+  }
+}

@@ -1,0 +1,362 @@
+{
+  "key": [
+    {
+      "edge": ["Iona Brell", "trustee_of", "Wrenhollow Settlement"],
+      "ordinary": [
+        {
+          "source_id": "LX6R",
+          "supporting_text": "Maren Voss, exercising the sole power under the Wrenhollow Settlement to appoint replacement trustees, appoints Tamsin Kell in place of Darren Brell in the Second Seat. Darren Brell retires from that seat and Tamsin Kell accepts appointment to it, in each case only upon delivery under clause 2. At that act alone, the retirement and appointment take effect simultaneously: Darren ceases to hold the Second Seat and Tamsin alone holds it in his place. Iona Brell’s First Seat is unaffected."
+        }
+      ],
+      "alternatives": [
+        [
+          {
+            "source_id": "LX6R",
+            "supporting_text": "Maren Voss, exercising the sole power under the Wrenhollow Settlement to appoint replacement trustees, appoints Tamsin Kell in place of Darren Brell in the Second Seat. Darren Brell retires from that seat and Tamsin Kell accepts appointment to it, in each case only upon delivery under clause 2. At that act alone, the retirement and appointment take effect simultaneously: Darren ceases to hold the Second Seat and Tamsin alone holds it in his place. Iona Brell’s First Seat is unaffected."
+          }
+        ]
+      ],
+      "joint_only": false,
+      "reasoning": "LX6R identifies the settlement and Iona Brell’s existing trustee seat and expressly leaves it unchanged on either side of delivery. No escrow evidence is needed. VJ3K proves the founding appointment and acceptance, not the position after its certification time."
+    },
+    {
+      "edge": ["Darren Brell", "trustee_of", "Wrenhollow Settlement"],
+      "ordinary": [],
+      "alternatives": [
+        [
+          {
+            "source_id": "LX6R",
+            "supporting_text": "Maren Voss, exercising the sole power under the Wrenhollow Settlement to appoint replacement trustees, appoints Tamsin Kell in place of Darren Brell in the Second Seat. Darren Brell retires from that seat and Tamsin Kell accepts appointment to it, in each case only upon delivery under clause 2. At that act alone, the retirement and appointment take effect simultaneously: Darren ceases to hold the Second Seat and Tamsin alone holds it in his place. Iona Brell’s First Seat is unaffected.\n\n### 2. Escrow and delivery\nDelivery of this instrument is expressly postponed. Perrin Saye of Orrel Document Custody holds the sole executed original under reference OC-517. Perrin Saye alone may lift the escrow restriction, and only by entering **RELEASED** against that sole original in the escrow control register. That entry, when permitted by the escrow controls, is the sole act of delivery."
+          },
+          {
+            "source_id": "MP2Z",
+            "supporting_text": "**Register as of:** 14:00 BST on 17 September 2026  \n**Issued at:** 14:02 BST on 17 September 2026  \n\n**Register:** Escrow control register used by clause 2  \n**Instrument:** Second Seat — Instrument of retirement and replacement appointment, dated 16 September 2026  \n**Escrow reference:** OC-517  \n**Record covered:** The sole executed original of the instrument identified above  \n\n**Operator:** Perrin Saye  \n**Disposition:** HOLD — release locked until 15:00 BST on 17 September 2026; no earlier release permitted\n\nThe Operator column identifies the person who committed the row. Only my authenticated operator account can commit a disposition in this register. The register does not allow a release operation to commit while a time lock is in force."
+          }
+        ]
+      ],
+      "joint_only": true,
+      "reasoning": "LX6R identifies the incumbent and the only act that ends his tenure, but not whether that act occurred. MP2Z identifies the same original and proves that the act could not occur by 14:20 BST, but does not identify the incumbent. It is the enforced lock, not an assumed 14:20 register observation, that closes the time gap. VJ3K cannot substitute for either fact. This edge is graph-scored; ordinary quotation and attribution are N/A under benchmark_v2_evidence_v1. The joint proof is attached here under attached_sufficient_set_v1."
+    },
+    {
+      "edge": ["Iona Brell", "sibling_of", "Darren Brell"],
+      "ordinary": [
+        {
+          "source_id": "SY7G",
+          "supporting_text": "Darren Brell is my brother. We both used 18 Alder Mews for trust post at the time, and I remember us sharing and sorting that post. I mention this only to explain the duplicate index, not as evidence of identity or authority.\n\nPlease include the full name and statement period in each file label so I can match the copies to the reconciliation records. If you need more information to locate the packs, or if there are verification steps before you can release them, please let me know what you need and how to provide it securely.\n\nThis is a request for archived copies only. I’m not asking for any change to the address or mandate.\n\nKind regards,  \nIona Brell"
+        }
+      ],
+      "alternatives": [
+        [
+          {
+            "source_id": "SY7G",
+            "supporting_text": "Darren Brell is my brother. We both used 18 Alder Mews for trust post at the time, and I remember us sharing and sorting that post. I mention this only to explain the duplicate index, not as evidence of identity or authority.\n\nPlease include the full name and statement period in each file label so I can match the copies to the reconciliation records. If you need more information to locate the packs, or if there are verification steps before you can release them, please let me know what you need and how to provide it securely.\n\nThis is a request for archived copies only. I’m not asking for any change to the address or mandate.\n\nKind regards,  \nIona Brell"
+          }
+        ]
+      ],
+      "joint_only": false,
+      "reasoning": "The sign-off resolves “my” to Iona Brell. Her present-tense statement names Darren Brell as her brother; the archive-only purpose limits the request, not that statement. Neither the shared address nor the two copies of the opening particulars provides another kinship proof. The symmetric edge is recorded once."
+    }
+  ],
+  "disagreements": [
+    {
+      "issue": "Second Seat: extent of the LX6R quotation, not the identity of the trustee or the required sources.",
+      "A": "Uses the joint set LX6R–MP2Z. Its LX6R span adds the prefix and suffix below to the LX6R span attached to Darren Brell in the key.",
+      "B": "Uses the same joint set and the same MP2Z span. Its LX6R span is the one attached in the key.",
+      "exact_LX6R_prefix_in_A": "**Orrel Document Custody reference: OC-517**\n\n### 1. Second Seat handover\n",
+      "exact_LX6R_suffix_in_A": "\n\n**HOLD** prevents release. The time lock binds Perrin Saye, who must not enter **RELEASED** before the recorded earliest permitted time. The arrival of that time does not itself lift the restriction or deliver this instrument.",
+      "decision": "Both spans work. Retain B’s shorter one: it already identifies OC-517 and the exclusive act of delivery, and MP2Z proves the enforced bar on that act. A supplies useful explanation, not a second minimum alternative.",
+      "residual_doubt": "None at cut-off. Neither span establishes an eventual release."
+    },
+    {
+      "issue": "Other scored names, spans and proof routes.",
+      "A": "Uses LX6R alone for Iona Brell’s trusteeship and SY7G alone for her sibling relationship with Darren Brell; treats VJ3K as historical corroboration.",
+      "B": "Uses the identical ordinary and alternative spans for both edges. Describes the SY7G statement as signed and the founding appointments as independently established for their earlier date.",
+      "exact_passages": ["Iona Brell’s First Seat is unaffected.", "This certification is limited to the position at that time and does not certify any later position.", "Darren Brell is my brother.", "Kind regards,  \nIona Brell"],
+      "decision": "No difference in endpoints, predicates or sufficient sets. SY7G has a named sender and sign-off; no independently authenticated signature is needed or established. VJ3K’s independent historical evidence is not independent cut-off evidence.",
+      "residual_doubt": "None affecting either edge."
+    },
+    {
+      "issue": "Disposition of the draft slip and the proposed roof works.",
+      "A": "Marks the combined pencilling-plus-approval claim explicitly contradicted, while accepting the pencilling. Marks a completed booking, commitment or instruction explicitly contradicted at the time of BD4T.",
+      "B": "Separates supported reports of pencilling and non-commitment from the explicitly contradicted claims of finality or completion.",
+      "exact_passages": ["Keep the slip as a draft for the meeting.", "The 28 September slot has not been booked and remains an offer only. No commitment has been made and no payment instruction has been issued."],
+      "decision": "Use separate propositions so the denial of approval does not negate the pencilling, and the denial of booking does not negate the offer. The readings agree on the facts.",
+      "residual_doubt": "Subsequent decisions and acts are not reported."
+    },
+    {
+      "issue": "Availability of MP2Z versus receipt and review by Jules Neston.",
+      "A": "Treats MP2Z as present in the cut-off file, without a separate receipt timestamp.",
+      "B": "Also uses MP2Z for the graph but expressly leaves receipt and review by Jules unresolved.",
+      "exact_passages": ["Add it to the meeting papers when received; flag it at the meeting if still outstanding.", "**Issued at:** 14:02 BST on 17 September 2026", "This extract covers the register through the stated as-of time; the issue time does not extend that period."],
+      "decision": "Compatible. The earlier outstanding request, later issue, file inclusion, actual receipt and review are distinct. No receipt assumption is part of the Second Seat proof.",
+      "residual_doubt": "Actual arrival and review time."
+    }
+  ],
+  "source_audit": [
+    {
+      "source_id": "QF8M",
+      "receipt": "Jules Neston lists the copy as received in HC9W by 15:30 BST on 16 September 2026.",
+      "account": "Evin Rooke’s 12 May 2023 bank record derives from signed opening instructions WM-683. It identifies Iona Brell and Darren Brell as joint payment signatories, both required, with separate correspondence entries at 18 Alder Mews. It concerns servicing, not examination of title. Historical, not shown either superseded or still operative; no scored edge."
+    },
+    {
+      "source_id": "VJ3K",
+      "receipt": "Addressed to Jules Neston and listed as received in HC9W.",
+      "account": "Maren Voss certifies the two founding seats and the written acceptances of 9 May 2023. She identifies the settlement grant as the source of her sole replacement power; her entries record acts. On her own acts and complete office book she certifies no replacement appointment by her through 09:10 BST on 16 September 2026 only. Supports both trustees’ history, not an additional cut-off route."
+    },
+    {
+      "source_id": "LX6R",
+      "receipt": "HC9W lists receipt of the executed-copy extract, not the sole original.",
+      "account": "Jules Neston’s 11:30 BST extract of 16 September 2026 identifies Maren Voss as appointor, Darren Brell as retiring trustee and Tamsin Kell as accepting replacement; signatures and attestations are on file. Preserves Iona Brell’s First Seat. Requires a simultaneous, exclusive Second Seat substitution on permitted delivery. Identifies OC-517, Perrin Saye, the sole original, the register act and its exclusions. Establishes Iona’s office edge alone and the instrument terms for Darren’s joint proof; does not report release or amend bank authority."
+    },
+    {
+      "source_id": "HC9W",
+      "receipt": "Jules Neston’s own internal note at 15:30 BST on 16 September 2026.",
+      "account": "Fixes the meeting, purpose and cut-off; logs three received copies/extracts and the then-outstanding escrow extract. Directs addition on receipt or flagging if outstanding. Tamsin Kell is pencilled as second bank signatory subject to checking; the slip is to remain a draft and any sending decision is to be recorded. Neither a seat determination nor an instruction to the bank."
+    },
+    {
+      "source_id": "BD4T",
+      "receipt": "In the file, addressed to Jules Neston and dated 10:10 BST on 17 September 2026; no separate receipt acknowledgement.",
+      "account": "Nella Daven personally observed ingress at the settlement’s let property, distinguishes interim protection from repair and recommends replacement. Relays Sedgewick Roofworks’ telephone price, conditional booking sum and offered date. Requests the separate survey enclosure and joint approval of the whole spend. Reports no booking, commitment or payment instruction. Names no approvers and establishes no scored office."
+    },
+    {
+      "source_id": "MP2Z",
+      "receipt": "In the file; requested by Jules Neston, issued by Perrin Saye at 14:02 BST on 17 September 2026. Arrival and review are not acknowledged.",
+      "account": "Reports the clause 2 register for the same OC-517 original as of 14:00 BST. Perrin Saye committed HOLD; only Perrin’s authenticated account can commit a disposition. The register bars release before 15:00 BST. Physical custody continued at the as-of time. The extract is not delivery and gives no seat opinion. Supplies the control fact for Darren Brell’s joint proof."
+    },
+    {
+      "source_id": "SY7G",
+      "receipt": "In the file; dated 14:12 BST on 17 September 2026 to Lintmere Bank Archive Services, copying Jules Neston. No acknowledgement, read time or reply.",
+      "account": "Iona Brell reports duplicate indexing and requests two separately labelled electronic statement packs for reconciliation. Reproduces the two WM-683 correspondence blocks from her retained opening mandate, recalls sharing trust post and independently states that Darren Brell is her brother. Requests full-name and period labels and guidance on secure verification if needed. Requests no address or mandate change. Only the direct sibling statement proves a scored edge."
+    }
+  ],
+  "register": [
+    {
+      "claim": "The 14:30 BST meeting on 17 September 2026 is to review the mandate records and decide what, if anything, to send. The reviewed position is at 14:20 BST.",
+      "date": "Meeting and cut-off on 17 September 2026; arrangements recorded the previous afternoon.",
+      "origin": "Meeting brief and internal scheduling note.",
+      "reporter": "Jules Neston, HC9W.",
+      "receipt": "HC9W is Jules’s note of 16 September.",
+      "competitors": "The pencilled slip in HC9W is preparatory.",
+      "disposition": "supported",
+      "reason": "An agenda reserves a decision; it does not record one.",
+      "enquiry": "Record the actual decision, including a decision not to send anything."
+    },
+    {
+      "claim": "At opening Iona Brell and Darren Brell were the two signatories; both had to authorise payments. Each had a separate correspondence entry at 18 Alder Mews.",
+      "date": "12 May 2023.",
+      "origin": "Signed WM-683 opening instructions; the reproduced address blocks share this origin.",
+      "reporter": "Evin Rooke, QF8M, for all particulars; Iona Brell, SY7G, for the blocks in her retained copy.",
+      "receipt": "QF8M logged in HC9W; SY7G in file, copied to Jules at 14:12.",
+      "competitors": "HC9W proposes a later second name only in draft. SY7G reports shared postal use, consistent with separate entries.",
+      "disposition": "supported",
+      "reason": "QF8M expressly requires both signatories. A shared address does not alter that rule or turn a servicing record into evidence of trusteeship."
+    },
+    {
+      "claim": "Either opening signatory could authorise payment alone.",
+      "date": "12 May 2023.",
+      "origin": "Possible misreading of the two individual signatory entries.",
+      "reporter": "No affirmative reporter; Evin Rooke reports the contrary in QF8M.",
+      "receipt": "QF8M logged in HC9W.",
+      "competitors": "QF8M expressly denies sufficiency of either signatory alone.",
+      "disposition": "explicitly contradicted",
+      "reason": "The payment rule is joint; only the correspondence entries are individual."
+    },
+    {
+      "claim": "Iona Brell and Darren Brell were the founding First and Second Seat trustees respectively and accepted in writing. Maren Voss, keeper of the office book, alone held the settlement’s replacement-appointment power and had made no replacement appointment through her certificate time.",
+      "date": "Acceptances 9 May 2023; certification through 09:10 BST on 16 September 2026. Grant date unstated.",
+      "origin": "Founding and acceptance entries; separately the settlement grant; separately Maren’s own acts and complete book.",
+      "reporter": "Maren Voss, VJ3K; LX6R also identifies her sole power.",
+      "receipt": "VJ3K and LX6R logged in HC9W.",
+      "competitors": "LX6R is a later executed instrument, not an earlier appointment omitted from the certificate.",
+      "disposition": "supported",
+      "reason": "The grant confers power; entries do not. Certification is expressly time-limited. A founding trustee is not thereby a settlor, nor is the appointor thereby a trustee."
+    },
+    {
+      "claim": "OC-517 was executed. It leaves the First Seat unaffected and makes Darren Brell’s retirement and Tamsin Kell’s appointment effective together, only upon delivery.",
+      "date": "Executed-copy extract at 11:30 BST on 16 September 2026; effectiveness conditional, not dated by execution.",
+      "origin": "OC-517 clauses 1–2 and execution record.",
+      "reporter": "Jules Neston, LX6R, reporting the instrument signed by Maren Voss, Darren Brell and Tamsin Kell in their stated capacities.",
+      "receipt": "LX6R logged in HC9W.",
+      "competitors": "The appointment wording and signatures in LX6R are subject to the express condition in the same instrument. HC9W concerns a bank draft.",
+      "disposition": "supported",
+      "reason": "This is an executed conditional substitution, not a draft appointment, a vacancy or an overlapping tenure."
+    },
+    {
+      "claim": "Delivery requires Perrin Saye’s permitted RELEASED entry against the sole original. Perrin committed HOLD, with release locked until 15:00 BST, and reported physical custody of that original.",
+      "date": "Rule in OC-517 of 16 September; register as of 14:00 BST on 17 September 2026, issued at 14:02.",
+      "origin": "Instrument’s delivery terms and matching authenticated escrow control register, OC-517.",
+      "reporter": "Jules Neston, LX6R, for the rule; Perrin Saye, MP2Z, for disposition, control and custody.",
+      "receipt": "LX6R logged; MP2Z present and issued before cut-off, actual receipt time unstated.",
+      "competitors": "HC9W’s outstanding request is from the previous afternoon. MP2Z’s issue time does not extend its observation period.",
+      "disposition": "supported",
+      "reason": "Perrin is the operator who committed the row, not merely a person listed as custodian. The system prevents an early release from committing."
+    },
+    {
+      "claim": "Signing, copy circulation, issue of MP2Z or arrival of 15:00 BST itself effects delivery; physical transfer is necessary.",
+      "date": "OC-517 delivery terms applicable on 17 September 2026.",
+      "origin": "Possible readings of execution, custody, report issuance and lock expiry.",
+      "reporter": "None asserts these delivery rules; LX6R and Perrin Saye in MP2Z specify the contrary.",
+      "receipt": "LX6R logged; MP2Z in file without receipt acknowledgement.",
+      "competitors": "LX6R clause 2 and MP2Z’s report limitation.",
+      "disposition": "explicitly contradicted",
+      "reason": "Only the permitted register entry delivers. Physical possession may continue after delivery, so possession alone cannot prove non-delivery."
+    },
+    {
+      "claim": "Iona Brell holds the First Seat and Darren Brell still holds the Second Seat.",
+      "date": "14:20 BST on 17 September 2026.",
+      "origin": "First Seat: unchanged-seat clause. Second Seat: conditional retirement plus enforced lock on the matching original.",
+      "reporter": "Cut-off conclusion from LX6R for Iona and LX6R with MP2Z for Darren; not a seat opinion by Perrin Saye.",
+      "receipt": "LX6R logged; MP2Z issued before cut-off and in file.",
+      "competitors": "VJ3K establishes the earlier baseline; HC9W’s draft names Tamsin Kell for a different role.",
+      "disposition": "supported",
+      "reason": "No check of release is necessary for Iona. For Darren, the lock positively excludes the required delivery act by cut-off."
+    },
+    {
+      "claim": "Tamsin Kell had displaced Darren Brell or shared his Second Seat under OC-517 by cut-off.",
+      "date": "14:20 BST on 17 September 2026.",
+      "origin": "Possible reading of the named successor and signed acceptance without the operative condition.",
+      "reporter": "No completed substitution is reported; LX6R and MP2Z bear on the claim.",
+      "receipt": "LX6R logged; MP2Z in file.",
+      "competitors": "LX6R provides exclusive substitution; MP2Z rules out timely delivery.",
+      "disposition": "explicitly contradicted",
+      "reason": "There is positive counterevidence, not simply a missing completion notice."
+    },
+    {
+      "claim": "A permitted release occurred at or after 15:00 BST.",
+      "date": "At or after 15:00 BST on 17 September 2026, outside the review cut-off.",
+      "origin": "Would require a later disposition against OC-517.",
+      "reporter": "No later reporter; MP2Z reports only the earlier lock.",
+      "receipt": "No later register evidence in the cut-off file.",
+      "competitors": "LX6R denies automatic delivery at the earliest permitted time.",
+      "disposition": "unresolved",
+      "reason": "Earliest permission is not evidence of an act.",
+      "enquiry": "For any later advice dependent on title, ask Perrin Saye for the disposition and time of any actual permitted release against OC-517."
+    },
+    {
+      "claim": "Jules Neston pencilled Tamsin Kell as second signatory on a draft slip, subject to checking the papers.",
+      "date": "15:30 BST on 16 September 2026.",
+      "origin": "Internal draft covering slip as described in the diary note.",
+      "reporter": "Jules Neston, HC9W.",
+      "receipt": "Jules’s own note is in file.",
+      "competitors": "QF8M names Darren Brell at opening; LX6R names Tamsin Kell as conditional trustee successor, not bank signatory.",
+      "disposition": "supported",
+      "reason": "The pencilling is a real preparatory act, not a live mandate."
+    },
+    {
+      "claim": "The slip described by Jules was itself an approved instruction, or Iona Brell’s archive request instructed a mandate or address change.",
+      "date": "HC9W on 16 September; SY7G at 14:12 BST on 17 September 2026.",
+      "origin": "Possible misclassification of internal drafting and archive correspondence.",
+      "reporter": "Jules Neston and Iona Brell expressly limit their respective documents.",
+      "receipt": "HC9W in file; SY7G in file, copied to Jules, receipt unacknowledged.",
+      "competitors": "HC9W directs retention as a draft; SY7G expressly requests archived copies only.",
+      "disposition": "explicitly contradicted",
+      "reason": "Neither document is the claimed instruction."
+    },
+    {
+      "claim": "The bank’s live signatories, payment rule and correspondence settings, any completed amendment or mandate submission, and a decision on what to send are established.",
+      "date": "14:20 BST on 17 September 2026.",
+      "origin": "Would require current bank or instruction records and evidence of a decision.",
+      "reporter": "QF8M reports opening arrangements; HC9W reports preparation; SY7G reports an archive request.",
+      "receipt": "Historical QF8M logged; HC9W and SY7G in file. No live confirmation or meeting outcome supplied.",
+      "competitors": "No supplied document purports to be an operative later bank mandate.",
+      "disposition": "unresolved",
+      "reason": "No change is established, but that does not certify the historical settings as current. Trust title and bank authority are separate.",
+      "enquiry": "Keep the slip in draft. Ask Lintmere Bank to confirm its current records and amendment requirements; establish who may authorise any submission."
+    },
+    {
+      "claim": "Jules Neston had personally received and reviewed MP2Z by cut-off.",
+      "date": "14:20 BST on 17 September 2026.",
+      "origin": "Workflow following the HC9W request.",
+      "reporter": "Jules records the request in HC9W; Perrin Saye records issuance, not receipt, in MP2Z.",
+      "receipt": "MP2Z is supplied, issued at 14:02; no acknowledgement or review time.",
+      "competitors": "HC9W’s outstanding notation predates MP2Z and is not evidence that it remained outstanding.",
+      "disposition": "unresolved",
+      "reason": "File availability is sufficient to assess the evidence here, but not to prove personal review.",
+      "enquiry": "Check that Jules has the matched extract in the meeting papers."
+    },
+    {
+      "claim": "Iona Brell identifies Darren Brell as her brother and recalls their sharing and sorting trust post at 18 Alder Mews.",
+      "date": "Kinship stated at 14:12 BST on 17 September 2026; postal use recalled for the earlier period.",
+      "origin": "Iona Brell’s direct relationship statement and personal recollection, distinct from the copied address blocks.",
+      "reporter": "Iona Brell, SY7G.",
+      "receipt": "SY7G in file, copied to Jules before cut-off; no separate acknowledgement.",
+      "competitors": "QF8M reports a shared correspondence address, not kinship. SY7G disclaims use of the postal explanation as identity or authority evidence.",
+      "disposition": "supported",
+      "reason": "The explicit brother statement supports siblinghood. Neither shared post nor surname establishes residence, marriage, parentage, identity or archive access rights."
+    },
+    {
+      "claim": "Iona requested separately labelled electronic copies of two old statement packs for annual reconciliation, reporting that both had been indexed under the same surname and address.",
+      "date": "14:12 BST on 17 September 2026.",
+      "origin": "Iona’s account of the indexing problem and her request under WM-683.",
+      "reporter": "Iona Brell, SY7G; no independent bank confirmation of indexing.",
+      "receipt": "Addressed to Archive Services, copying Jules; in file without delivery acknowledgement.",
+      "competitors": "QF8M confirms separate opening entries, which is consistent with later duplicate indexing.",
+      "disposition": "supported",
+      "reason": "She asks for the full name and statement period on each label and for secure verification guidance if required, not for revised account settings."
+    },
+    {
+      "claim": "Archive Services verified access, supplied the packs or confirmed a current address.",
+      "date": "By 14:20 BST on 17 September 2026.",
+      "origin": "Would require a response or fulfilment record.",
+      "reporter": "None; Iona Brell reports only her request in SY7G.",
+      "receipt": "No reply or fulfilment record supplied.",
+      "competitors": "QF8M and the copied SY7G blocks concern opening particulars.",
+      "disposition": "unresolved",
+      "reason": "Request, authority to release and actual supply are separate.",
+      "enquiry": "Ask Archive Services what secure checks are needed before releasing either pack."
+    },
+    {
+      "claim": "Nella Daven saw water entering the upstairs landing at 6 Bracken Fold and recommends replacing the failed rear roof covering; temporary protection is in place.",
+      "date": "Reported at 10:10 BST on 17 September 2026; inspection time unstated.",
+      "origin": "Nella Daven’s own inspection and assessment of the settlement’s let property.",
+      "reporter": "Nella Daven, BD4T.",
+      "receipt": "BD4T in file, addressed to Jules; actual receipt time unstated.",
+      "competitors": "BD4T distinguishes her observation from the contractor’s separately requested moisture-survey enclosure.",
+      "disposition": "supported",
+      "reason": "The recommendation is not an approval. Interim protection is not the repair, and the absence of the survey does not negate the observed ingress.",
+      "enquiry": "Check the adequacy of interim protection pending a decision."
+    },
+    {
+      "claim": "Sedgewick Roofworks offered a 28 September slot at £18,600 including VAT, with £4,650 of that total payable at booking if approved. Nella seeks joint approval of £18,600 because it exceeds the stated £10,000 capital-repair threshold.",
+      "date": "Telephone terms and proposal reported at 10:10 BST on 17 September 2026.",
+      "origin": "Contractor’s telephone offer for price and date; BD4T for the threshold, requested approval and condition on booking or instructing payment.",
+      "reporter": "Nella Daven, BD4T.",
+      "receipt": "BD4T in file; no direct written offer or underlying approval rule supplied.",
+      "competitors": "QF8M’s joint payment authority concerns a different decision.",
+      "disposition": "supported",
+      "reason": "The terms and approval requirement are supported as reported. Apply the stated threshold to the full spend, not just the booking amount."
+    },
+    {
+      "claim": "The slot was already booked, a commitment made or a payment instruction issued when BD4T was written.",
+      "date": "10:10 BST on 17 September 2026.",
+      "origin": "Transaction status at proposal time.",
+      "reporter": "Nella Daven, BD4T.",
+      "receipt": "BD4T in file; no separate acknowledgement.",
+      "competitors": "BD4T expressly denies all three and says Nella will not book or instruct payment until joint approval.",
+      "disposition": "explicitly contradicted",
+      "reason": "The offer and recommendation are positive facts; neither is a commitment."
+    },
+    {
+      "claim": "The required repair approvers and governing provision, later approval or booking, continued slot availability, written price confirmation and survey contents are established.",
+      "date": "14:20 BST on 17 September 2026.",
+      "origin": "Would require the approval rule, decision or contractor records beyond the proposal.",
+      "reporter": "Nella Daven reports the request and telephone offer only, BD4T.",
+      "receipt": "No such further records supplied.",
+      "competitors": "BD4T seeks a decision and a copy of the survey; QF8M identifies historical bank signatories, not spending approvers.",
+      "disposition": "unresolved",
+      "reason": "A requested enclosure does not establish its findings. The express denial of booking at 10:10 is not an observation through cut-off.",
+      "enquiry": "Identify who must jointly approve the whole spend and how to document approval separately from payment authority. Obtain the enclosure and written confirmation of price and availability before commitment."
+    },
+    {
+      "claim": "Any further named trustee, sibling, parent, spouse, settlor or beneficiary relationship exists among the file’s endpoints.",
+      "date": "14:20 BST on 17 September 2026.",
+      "origin": "No additional express relationship statement.",
+      "reporter": "None for a further positive edge.",
+      "receipt": "All seven supplied sources considered.",
+      "competitors": "VJ3K and LX6R distinguish office from appointment power; MP2Z distinguishes custody from title; QF8M and SY7G distinguish postal and bank particulars from family status.",
+      "disposition": "unresolved",
+      "reason": "Beyond the three edges in the key, no further positive edge is supported. Do not turn keeper, appointor, custodian, signatory, solicitor, recorder or repair proposer into a trustee. Omission is not a finding that a relationship is false."
+    }
+  ],
+  "unresolved_scored_disputes": []
+}
