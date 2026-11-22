@@ -612,3 +612,90 @@ def test_audit_requires_fresh_masks_for_joint_proof():
     with pytest.raises(ValueError, match="one deletion per Source"):
         verify(masks[:-1])
     verify(masks)
+
+
+def _approved_construction(approved, tmp_path, allowance=10):
+    from benchmark_v3.batch import artifacts
+    from benchmark_v3.design_candidate import CandidateDesign
+
+    _, base = approved
+    ledger = coordinator.open_ledger(tmp_path / "construction")
+    slot = base.portfolio.slots[0]
+    design = CandidateDesign.model_validate({
+        "neutral_brief": "Review family documents.",
+        "cutoff": "2026-11-22",
+        "private_history": "Private design history.",
+        "documentary_references": [],
+        "inventory": [
+            {"source_id": source_id, "author": "Author", "created_on": "2026-11-20",
+             "provenance": "Firsthand.", "participant_brief": "Record only your observation.", "received": received}
+            for source_id, received in (("s1", []), ("s2", ["s1"]))
+        ],
+        "matched": [], "candidates": [EDGE], "required": {"G000": [EDGE]},
+        "expected_graphs": {"G000": [EDGE, ["Test Sibling A", "sibling_of", "Test Sibling B"]]},
+        "evidence_routes": {"G000": ["Firsthand proof."]},
+        "knowledge_boundaries": ["Each author has only the brief."],
+        "documentary_assumptions": ["One file."], "shortcut_predictions": ["A tempting cue."],
+        "independent_review_plan": ["Two full readings."], "open_questions": ["Test sufficiency."],
+        "approximate_source_words": {"s1": 80, "s2": 40},
+    })
+    folder = ledger.root / "approved-designs" / "test-construction" / "G"
+    digest = artifacts.write_bytes(folder / "design.json", commissioning.json_text(design.model_dump(mode="json")).encode())
+    lineage = artifacts.write_json(folder / "revision.json", {
+        "family": "G", "hypothesis": slot.hypothesis.model_dump(mode="json"), "child_design_sha256": digest,
+    })
+    owner = commissioning.proposal_history()["test-g@1"][2]
+    assert owner is not None
+    manifest = BatchManifest.model_validate(base.manifest.model_dump(mode="json") | {
+        "phase": "construction", "batch_id": "test-construction", "repair_cycles": 0,
+        "families": [{"family_id": "G", "hypothesis": slot.hypothesis.model_dump(mode="json"),
+                      "sessions": allowance, "approved_design": {
+                          "design_sha256": digest, "lineage_sha256": lineage,
+                          "hypothesis_decision": owner.model_dump(mode="json"), "planned_masks": 3,
+                      }}],
+    })
+    return ledger, coordinator.Commission(base.portfolio, manifest, _approval(base.portfolio, manifest)), folder
+
+
+def test_approved_construction_starts_with_zero_design_charges(approved, tmp_path, monkeypatch):
+    from benchmark_v3.batch.contracts import AuthoredSource
+
+    ledger, commission, _ = _approved_construction(approved, tmp_path)
+    coordinator.commission_batch(ledger, commission, BOUNDARY)
+    assert ledger.attempts("G") == []
+    workflows = []
+
+    def examine_authoring(self, design):
+        assert design.private_history == "Private design history."
+        workflows.append(self)
+        # Stop just after reserving the first author with no actual model turn.
+        self.job("author-s1", "author", {"author_brief": "Scope only."}, "Fixture", AuthoredSource)
+
+    monkeypatch.setattr(coordinator.FamilyWorkflow, "author", examine_authoring)
+    monkeypatch.setattr(packet, "run_packet", lambda path, before_turn: (_ for _ in ()).throw(OSError("fixture")))
+    coordinator.run_batch(ledger, commission.manifest.batch_id)
+    assert len(workflows) == 1
+    attempts = ledger.attempts("G")
+    assert len(attempts) == 1 and attempts[0]["job"] == "author-s1"
+    transitions = ledger.events(commission.manifest.batch_id, "G")
+    design = next(row for row in transitions if row["name"] == "design")
+    assert design["details"]["sessions"] == []
+    assert design["details"]["inputs"]["approved_design"] == commission.manifest.families[0].approved_design.design_sha256
+
+
+def test_construction_halts_on_changed_approved_bytes(approved, tmp_path):
+    ledger, commission, folder = _approved_construction(approved, tmp_path)
+    coordinator.commission_batch(ledger, commission, BOUNDARY)
+    path = folder / "revision.json"
+    path.chmod(0o600)
+    path.write_text("{}")
+    with pytest.raises(TaskHalted, match="design and lineage"):
+        coordinator.run_batch(ledger, commission.manifest.batch_id)
+    assert ledger.attempts("G") == []
+
+
+def test_construction_preflight_rejects_insufficient_mask_capacity(approved, tmp_path):
+    ledger, commission, _ = _approved_construction(approved, tmp_path, 9)
+    with pytest.raises(ValueError, match="mandatory base sessions"):
+        coordinator.commission_batch(ledger, commission, BOUNDARY)
+    assert ledger.batch_ids() == [] and ledger.attempts("G") == []

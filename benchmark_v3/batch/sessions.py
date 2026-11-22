@@ -7,7 +7,7 @@ from typing import Any, TypeVar
 from pydantic import BaseModel
 
 from benchmark_v3 import commissioning, packet
-from benchmark_v3.batch import artifacts, authorisation
+from benchmark_v3.batch import artifacts, authorisation, construction
 from benchmark_v3.batch.contracts import BatchManifest, Code, Role, Stage
 from benchmark_v3.batch.ledger import Ledger, TaskHalted
 
@@ -34,14 +34,26 @@ class SessionRunner:
     def _require_authority(self) -> None:
         self.ledger.require_running()
         allocation = next(row for row in self.manifest.families if row.family_id == self.family)
-        authorisation.verify_hypothesis(self.family, allocation.hypothesis, self.owner)
+        approved = allocation.approved_design
+        authorisation.verify_hypothesis(
+            self.family, allocation.hypothesis, self.owner, approved.hypothesis_decision if approved else None,
+        )
+        if approved:
+            try:
+                construction.load_design(self.ledger.root, self.manifest.batch_id, allocation)
+            except (ValueError, OSError) as error:
+                raise packet.PacketIsolationError("An approved design or lineage commitment changed.") from error
 
     def run(
         self, stage: Stage, job: str, role: Role, inputs: dict[str, str], instructions: str,
         result_type: type[_T],
     ) -> tuple[_T, dict[str, Any]]:
+        if self.manifest.phase == "construction" and role == "designer":
+            raise Blocked(stage, "input_integrity", "Construction cannot reserve a designer turn.", job=job)
         try:
             self._require_authority()
+        except packet.PacketIsolationError as error:
+            raise Blocked(stage, "isolation", str(error), job=job) from error
         except TaskHalted:
             raise
         except ValueError as error:
@@ -109,5 +121,6 @@ class SessionRunner:
         except packet.PacketIsolationError as error:
             raise Blocked(stage, "isolation", str(error), job=job) from error
         except (ValueError, KeyError, OSError, TypeError) as error:
-            raise Blocked(stage, "input_integrity", str(error), job=job) from error
+            code = "isolation" if self.manifest.phase == "construction" else "input_integrity"
+            raise Blocked(stage, code, str(error), job=job) from error
         return result, evidence | {"status": "completed"}

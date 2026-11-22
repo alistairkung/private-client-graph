@@ -100,10 +100,14 @@ class Ledger:
                 if prior["commitment"] != identity:
                     raise ValueError("Batch configuration changed after commissioning.")
                 return
+            if connection.execute("SELECT 1 FROM batches WHERE phase = 'construction'").fetchone():
+                raise ValueError("This construction ledger is bound to its original batch.")
             if manifest.phase == "expansion" and not connection.execute(
                 "SELECT 1 FROM events WHERE kind = 'pilot_decision' AND next = 'continue'",
             ).fetchone():
                 raise ValueError("Expansion requires the owner's exact pilot review and continuation.")
+            if manifest.phase == "construction" and connection.execute("SELECT 1 FROM batches").fetchone():
+                raise ValueError("Approved construction requires a separate task ledger.")
             if manifest.phase == "pilot" and connection.execute(
                 "SELECT 1 FROM batches WHERE phase = 'pilot'",
             ).fetchone():

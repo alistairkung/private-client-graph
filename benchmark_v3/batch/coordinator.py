@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from benchmark_v3 import commissioning
-from benchmark_v3.batch import artifacts, authorisation
+from benchmark_v3.batch import artifacts, authorisation, construction
 from benchmark_v3.batch.contracts import BatchDecision, BatchManifest, Code, ExceptionRecord
 from benchmark_v3.batch.custody import namespace_directory
 from benchmark_v3.batch.ledger import BudgetExhausted, Ledger, TaskHalted
@@ -40,6 +40,7 @@ def _commission(ledger: Ledger, commission: Commission, boundary: bytes) -> None
     portfolio, manifest, decision = commission.portfolio, commission.manifest, commission.decision
     existing = ledger.batch(manifest.batch_id)
     authorisation.verify_commission(portfolio, manifest, decision, boundary, resuming=existing is not None)
+    construction.verify_designs(ledger.root, manifest, portfolio)
     metadata = {
         "portfolio": portfolio.model_dump(mode="json"), "manifest": manifest.model_dump(mode="json"),
         "decision": decision.model_dump(mode="json"),
@@ -75,6 +76,7 @@ def _verify_resume(ledger: Ledger, commission: Commission) -> None:
     path = ledger.root / "boundary" / f"{manifest.scope.os_boundary_evidence_sha256}.json"
     try:
         authorisation.verify_boundary(manifest, artifacts.read_bytes(path))
+        construction.verify_designs(ledger.root, manifest, commission.portfolio)
     except (ValueError, OSError) as error:
         ledger.block(manifest.batch_id, 1, ExceptionRecord(
             stage="design", family_id=manifest.families[0].family_id, code="isolation",
@@ -138,7 +140,13 @@ def _work_family(ledger: Ledger, commission: Commission, slot: FamilySlot) -> No
             "input_integrity" if workflow.stage in {"design", "freeze", "admission_ready"} else "scientific_review"
         )
         _block(ledger, commission, workflow, code, str(error))
-    if _can_repair(ledger, commission, slot, revision):
+    if commission.manifest.phase == "construction":
+        _, state, blocking = family_status(ledger, batch, slot.family_id)
+        if blocking and blocking["code"] in {"documentary_realism", "scientific_review", "failed_dispatch"}:
+            if state != "quarantined":
+                ledger.event(batch, slot.family_id, revision, "operator_close", "quarantine", state, "quarantined",
+                             {"reference": "Commissioned unattended exception policy.", "exception": blocking})
+    elif _can_repair(ledger, commission, slot, revision):
         _work_family(ledger, commission, slot)
 
 

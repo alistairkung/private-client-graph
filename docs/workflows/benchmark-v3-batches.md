@@ -167,3 +167,22 @@ Evaluation authors need a fresh sealed authoring environment with no mount
 or credentials for development cases, keys, histories or model outputs. The
 custody helpers validate that boundary's configuration and projection. This
 workflow ships development commissioning only.
+
+## Construction from approved designs
+
+The construction phase uses its own ledger. Each family allocation binds
+the owner's hypothesis decision, canonical design and revision lineage
+digests, and the mask estimate used to check capacity. Stage the exact
+design and lineage files under `approved-designs/<batch>/<family>/` in
+private custody. Verify the original isolated packet receipts against the
+referenced lineage before commissioning. The initial ledger has zero
+reservations. The runner projects the approved design into the existing
+authoring workflow and rejects designer reservations.
+
+Construction disables automatic repairs. The shared preflight rechecks
+the committed designs and lineage, then the runner rechecks them at each
+dispatch. Fit the approved author, realism, blind, adjudication, audit
+and estimated mask work within each family's allowance. When the
+independent audit locks its actual mask plan, check the remaining family
+capacity before starting that plan. The ledger retains each charged
+attempt and its terminal evidence.

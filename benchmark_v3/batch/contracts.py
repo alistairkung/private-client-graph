@@ -8,7 +8,7 @@ from pydantic import Field, model_validator
 from benchmark_v3.portfolio import Count, Portfolio, PortfolioDecision
 from benchmark_v3.replay_manifest import LiteralEdit, SavedIdeal
 from benchmark_v3.research_contracts import (
-    Contract, Digest, FamilyId, HypothesisRef, NonemptyNotes, Slug, Text,
+    Contract, Digest, FamilyId, HypothesisRef, NonemptyNotes, OwnerDecision, Slug, Text,
 )
 from private_client_graph.models import SourcedExtractionResult
 from private_client_graph.models.evaluation_result import SemanticEdge
@@ -45,10 +45,18 @@ class IsolationScope(Contract):
     scope_reference: Text
 
 
+class ApprovedDesign(Contract):
+    design_sha256: Digest
+    lineage_sha256: Digest
+    hypothesis_decision: OwnerDecision
+    planned_masks: Count
+
+
 class FamilyAllocation(Contract):
     family_id: FamilyId
     hypothesis: HypothesisRef
     sessions: Count
+    approved_design: ApprovedDesign | None = Field(default=None, exclude_if=lambda value: value is None)
 
 
 class BatchManifest(Contract):
@@ -56,7 +64,7 @@ class BatchManifest(Contract):
     task_id: Slug
     batch_id: Slug
     namespace: Literal["development"]
-    phase: Literal["pilot", "expansion"]
+    phase: Literal["pilot", "expansion", "construction"]
     portfolio_sha256: Digest
     previous_portfolio: Portfolio | None = None
     families: Annotated[list[FamilyAllocation], Field(min_length=1, max_length=20)]
@@ -74,6 +82,13 @@ class BatchManifest(Contract):
             raise ValueError("Allocate distinct families and specify all seven scientific roles.")
         if self.phase == "pilot" and len(families) != 3:
             raise ValueError("An efficiency pilot requires exactly three distinct families.")
+        if self.phase == "construction":
+            if self.repair_cycles or self.previous_portfolio is not None or any(
+                family.approved_design is None for family in self.families
+            ):
+                raise ValueError("Construction requires exact approved designs and zero automatic repairs.")
+        elif any(family.approved_design is not None for family in self.families):
+            raise ValueError("Only a construction batch may import approved designs.")
         if sum(row.sessions for row in self.families) > self.task_session_ceiling:
             raise ValueError("Batch allocations exceed the task-wide session ceiling.")
         return self

@@ -9,11 +9,12 @@ from typing import Any, TypeVar
 from pydantic import BaseModel
 
 from benchmark_v3 import commissioning, replay
-from benchmark_v3.batch import artifacts, science
+from benchmark_v3.batch import artifacts, construction, science
 from benchmark_v3.batch.contracts import (
     Adjudication, AuditReview, AuthoredSource, Code, DesignOutput, Reading, RealismReview,
     Role, Stage,
 )
+from benchmark_v3.batch.ledger import BudgetExhausted
 from benchmark_v3.batch.sessions import Blocked, SessionRunner
 from benchmark_v3.portfolio import FamilySlot
 from benchmark_v3.replay_manifest import BatchFamilyManifest, BatchSourceFreeze, SavedIdeal
@@ -83,7 +84,13 @@ class FamilyWorkflow:
 
     def design(self) -> DesignOutput:
         ref = self.slot.hypothesis
-        if self.runner.revision == 1:
+        allocation = next(row for row in self.runner.manifest.families if row.family_id == self.slot.family_id)
+        if allocation.approved_design:
+            candidate = construction.load_design(self.runner.ledger.root, self.runner.manifest.batch_id, allocation)
+            self.transition_inputs["approved_design"] = allocation.approved_design.design_sha256
+            self.transition_inputs["design_lineage"] = allocation.approved_design.lineage_sha256
+            design = DesignOutput.model_validate(candidate.model_dump(include=set(DesignOutput.model_fields)))
+        elif self.runner.revision == 1:
             design = self.job(
                 "design", "designer", {
                     "hypothesis_revision": f"{ref.hypothesis_id}@{ref.revision}",
@@ -295,6 +302,18 @@ class FamilyWorkflow:
         self, design: DesignOutput, bundles: dict[str, list[Source]], audit: AuditReview,
     ) -> list[dict[str, Any]]:
         results = []
+        if self.runner.manifest.phase == "construction":
+            attempts = self.runner.ledger.attempts(self.slot.family_id)
+            used = {row["job"] for row in attempts}
+            jobs = {f"mask-{index:03}" for index in range(len(audit.masks))}
+            allowance = next(row.sessions for row in self.runner.manifest.families
+                             if row.family_id == self.slot.family_id)
+            needed = len(jobs - used)
+            if needed > allowance - len(attempts):
+                raise BudgetExhausted(
+                    f"The audited mask plan needs {needed} new sessions, with "
+                    f"{allowance - len(attempts)} remaining."
+                )
         for index, mask in enumerate(audit.masks):
             sources = science.mask_sources(mask, bundles[mask.condition])
             reading = self.read(f"mask-{index:03}", "masked", design, sources)
