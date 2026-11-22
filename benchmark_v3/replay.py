@@ -1,4 +1,4 @@
-"""Replay the three frozen Family A ideals with no access to a provider."""
+"""Replay frozen Benchmark v3 ideals with no access to a provider."""
 
 import argparse
 import json
@@ -21,7 +21,7 @@ from private_client_graph.workbench.artifacts import artifact_digest
 from private_client_graph.workbench.run_evaluation import evaluate_run
 
 from .replay_evidence import assess_evidence
-from .replay_manifest import CONDITIONS, ConditionId, VerifiedCondition, VerifiedFamily, load_family
+from .replay_manifest import VerifiedCondition, VerifiedFamily, load_family
 
 
 # benchmark_v2/baseline.json at the protocol's frozen c4a21e5f revision.
@@ -48,7 +48,7 @@ def preflight(manifest: Path, artifacts: Path) -> dict[str, Any]:
         conditions.append(row)
         observed[identity] = edges
     matches = _verify_matched_observations(family, observed)
-    report = dict(schema_version=1, family='A', mode='saved_ideal_replay',
+    report = dict(schema_version=1, family=family.family, mode='saved_ideal_replay',
         manifest_sha256=family.manifest_sha256, freeze_sha256=family.freeze_sha256,
         preview=preview, paid_attempts=0, run_path='run',
         run_artifact_digest=run_digest, aggregate=aggregate, conditions=conditions, matches=matches)
@@ -57,8 +57,8 @@ def preflight(manifest: Path, artifacts: Path) -> dict[str, Any]:
 
 
 def _make_plan(family: VerifiedFamily) -> RunPlan:
-    return RunPlan(task_id='benchmark-v3-family-a-offline', inputs=[
-        _research_input(family.conditions[identity]) for identity in CONDITIONS
+    return RunPlan(task_id=f'benchmark-v3-family-{family.family.lower()}-offline', inputs=[
+        _research_input(condition) for condition in family.conditions.values()
     ], input_mode='saved', execution_mode='replay', resolver='none', repetitions=1)
 
 
@@ -123,7 +123,7 @@ def _read_results(plan: RunPlan, path: Path, prompt_digest: str
     retained = evaluate_run(bundle)
     aggregate = retained.aggregate
     if bundle.attempt_count or bundle.task_attempt_count or retained.cost.attempts:
-        raise ValueError('Offline Family A replay retained a provider attempt')
+        raise ValueError('Offline replay retained a provider attempt')
     results = [ResearchResult.model_validate(row) for row in bundle.results()]
     by_id = {row.sample_id: row for row in results}
     expected_ids = [slot.sample_id for slot in plan.planned_slots]
@@ -140,7 +140,7 @@ def _read_results(plan: RunPlan, path: Path, prompt_digest: str
     return report, by_id, digest
 
 
-def _inspect_result(family: VerifiedFamily, identity: ConditionId, result: ResearchResult
+def _inspect_result(family: VerifiedFamily, identity: str, result: ResearchResult
                     ) -> tuple[dict[str, Any], set[SemanticEdge]]:
     condition = family.conditions[identity]
     saved = condition.saved
@@ -154,8 +154,8 @@ def _inspect_result(family: VerifiedFamily, identity: ConditionId, result: Resea
     if graph_score != result.evaluation:
         raise ValueError(f'Retained Graph evaluation disagrees with the protected scorer for {identity}')
 
-    required, forbidden = ((family.contrast.added, family.contrast.removed) if identity == 'A2'
-                           else (family.contrast.removed, family.contrast.added))
+    required = family.required[identity]
+    forbidden = sorted(family.candidates - set(required))
     graph_edges = set(graph_score.true_positive_edges) | set(graph_score.false_positive_edges)
     decisions = dict(required=required, forbidden=forbidden, unaffected=sorted(family.unaffected),
         required_present=sorted(graph_edges & set(required)), forbidden_present=sorted(graph_edges & set(forbidden)),
@@ -190,28 +190,37 @@ def _require_passing_ideal(identity: str, graph: EvaluationResult, decisions: di
 
 
 def _verify_matched_observations(family: VerifiedFamily,
-                                 observed: dict[ConditionId, set[SemanticEdge]]) -> dict[str, Any]:
-    base, reordered, held = [observed[identity] for identity in CONDITIONS]
-    if base != reordered:
-        raise ValueError('A0/A1 observed Graphs fail exact invariance')
-    removed, added = base - held, held - base
-    if (removed != set(family.contrast.removed) or added != set(family.contrast.added)
-            or base & held != family.unaffected):
-        raise ValueError('A0/A2 observed Graphs fail the exact trustee switch')
-    return dict(invariance=dict(pair=['A0', 'A1'], passed=True, edges=sorted(base)),
-        sensitivity=dict(pair=['A0', 'A2'], passed=True, removed=sorted(removed), added=sorted(added),
-            unaffected=sorted(family.unaffected), changed_source_id=family.contrast.source_id))
+                                 observed: dict[str, set[SemanticEdge]]) -> dict[str, Any]:
+    base, *variants = observed
+    original = observed[base]
+    matches = {}
+    for identity in variants:
+        current = observed[identity]
+        if identity not in family.edits:
+            if original != current:
+                raise ValueError(f'{base}/{identity} observed Graphs fail exact invariance')
+            matches['invariance'] = dict(pair=[base, identity], passed=True, edges=sorted(original))
+            continue
+        removed, added = original - current, current - original
+        prior, required = set(family.required[base]), set(family.required[identity])
+        unchanged = family.unaffected | (prior & required)
+        if removed != prior - required or added != required - prior or original & current != unchanged:
+            raise ValueError(f'{base}/{identity} observed Graphs fail the exact predeclared contrast')
+        label = 'sensitivity' if family.family == 'A' else identity
+        matches[label] = dict(pair=[base, identity], passed=True, removed=sorted(removed),
+            added=sorted(added), unaffected=sorted(family.unaffected), changed_source_id=family.edits[identity].source_id)
+    return matches
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--manifest', type=Path, required=True, help='Explicit frozen Family A replay manifest')
+    parser.add_argument('--manifest', type=Path, required=True, help='Explicit frozen Benchmark v3 replay manifest')
     parser.add_argument('--artifacts', type=Path, required=True, help='New or empty directory for retained replay')
     args = parser.parse_args()
     try:
         report = preflight(args.manifest.resolve(), args.artifacts.resolve())
     except (OSError, ValueError) as error:
-        parser.exit(1, f'Family A offline replay failed: {error}\n')
+        parser.exit(1, f'Benchmark v3 offline replay failed: {error}\n')
     print(json.dumps(report, ensure_ascii=False, indent=2))
 
 

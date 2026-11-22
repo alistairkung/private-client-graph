@@ -59,7 +59,13 @@ each role and verifies that the text stays within its allowed scope.
    rulings and residual doubts against exact Source passages. Commit the
    provisional key before releasing paired bundles and the intervention for
    audit. Commission fresh masked readers for necessity and surviving-proof
-   checks. Keep their responses with the audited revision.
+   checks. Keep their responses with the audited revision. When two planned
+   masks produce identical Source arrays and neutral briefs, verify and record
+   the byte equality before reusing a fresh masked result. For exact proof
+   sets, a surviving one-member deletion can be checked by literal containment
+   in a whole-file masked packet that already failed to prove the edge. The
+   full set and each semantically distinct masked packet still need an
+   independent reading.
 4. If a Source changes, retain the prior revision and link the child to it.
    Send the responsible author only the relevant revision ticket and their
    perspective packet. Repeat affected realism review, both blind passes,
@@ -89,9 +95,11 @@ receipt has no usable output.
 
 ## Offline replay and human disposition
 
-Use the opt-in replay from the repository root once a family has all three frozen
+Use the opt-in replay from the repository root once a family has all its frozen
 Source arrays, a committed declaration, complete adjudicated keys and saved
-ideals. Run `uv run python -m benchmark_v3.replay --manifest PATH/manifest.json --artifacts EMPTY_DIRECTORY`.
+ideals. Family A uses a version 1 manifest. Families B and C use version 2,
+with the preblind freeze declaring each literal edit, both candidate edges,
+and the required edge set for each condition. Run `uv run python -m benchmark_v3.replay --manifest PATH/manifest.json --artifacts EMPTY_DIRECTORY`.
 The preview sets the maximum provider attempts to zero. Reopen the saved Run
 and inspect its coverage, complete graph scores, eligible Source associations,
 same-edge proof, and the exact paired decisions in `preflight.json`. The replay

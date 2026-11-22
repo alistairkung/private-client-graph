@@ -256,7 +256,9 @@ def test_cli_identifies_missing_fixture(package, tmp_path, monkeypatch, capsys):
     with pytest.raises(SystemExit) as exited:
         replay.main()
     assert exited.value.code == 1
-    assert 'Family A offline replay failed:' in capsys.readouterr().err
+    error = capsys.readouterr().err
+    assert 'Benchmark v3 offline replay failed:' in error
+    assert 'A1.json' in error
 
 
 @pytest.mark.parametrize('field', ['source_commitments', 'declared_added'])

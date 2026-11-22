@@ -1,4 +1,4 @@
-"""Apply the frozen v2 evidence policy to a retained Family A result."""
+"""Apply the frozen v2 evidence policy to a retained Benchmark v3 result."""
 
 from typing import Any
 
