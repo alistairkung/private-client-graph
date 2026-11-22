@@ -1,0 +1,283 @@
+{
+  "schema_version": 1,
+  "status": "unregistered_custodian_draft",
+  "digest_scope": "Canonical Hypothesis content only. A registry revision digest also requires validated Architect session provenance.",
+  "drafts": [
+    {
+      "content_sha256": "9a5d9e811b2f7abd6faa039f8ef047647ecd5d1e0854a80e658671e1d1f40c49",
+      "hypothesis": {
+        "schema_version": 2,
+        "hypothesis_id": "routine-trust-record-review",
+        "revision": 1,
+        "previous_revision_sha256": null,
+        "family_id": "H",
+        "title": "Complete graph in a routine trust records review",
+        "status": "proposed",
+        "grounding": {
+          "legal_workflow": "Routine annual review of an existing family trust's records",
+          "retainer": "Help continuing trustees check the trust file before preparing the annual accounts and confirming registration details.",
+          "meeting_purpose": "Agree which relationship and role details the standing file supports at the review date.",
+          "documentary_situation": "Trustees and the adviser assemble the signed terms, confirmation correspondence and the downloaded registration snapshot as part of ordinary administration.",
+          "confidence": "provisional",
+          "references": [
+            {
+              "title": "HMRC · Records to keep for trusts",
+              "url": "https://www.gov.uk/guidance/trust-record-keeping-for-tax-purposes",
+              "relevance": "HMRC describes information and supporting records about the trust, its assets, beneficial owners and decisions. The pilot must establish provenance and effect from the supplied fictional file."
+            },
+            {
+              "title": "HMRC · Manage your trust’s details",
+              "url": "https://www.gov.uk/guidance/manage-your-trusts-registration-service",
+              "relevance": "The service supports updates and downloads of proof of registration showing recorded roles. An administrative snapshot can serve as a credible Source with its own provenance and date."
+            }
+          ],
+          "assumptions": [
+            "The trust is already operating. The terms and authoritative confirmations agree. At least two supported relationship types can arise naturally in four Sources."
+          ],
+          "practitioner_unknowns": [
+            "Confirm ordinary boundaries of the annual review and whether the proposed document mix is credible for a small file."
+          ]
+        },
+        "objective": {
+          "primary_axis": "graph-completeness",
+          "secondary_axes": [
+            "evidence-sufficiency",
+            "administrative-context"
+          ],
+          "failure_mechanism": "A plausible partial graph retains repeatedly named roles but omits an evidenced relationship elsewhere in the ordinary correspondence or attaches only an administrative copy.",
+          "falsifiable_hypothesis": "Against the independently audited complete key, the full file supports recovery of all current relationships and exact eligible evidence while withholding administrative contact inferences. An omission, unsupported relationship or insufficient attachment falsifies faithful recovery for this file.",
+          "coverage_gap": "A–F embed ordinary relationships around interventions. This supplies a dedicated low-difficulty, natural-only workload without F's label collision or G's proposed incidental assertion contrast."
+        },
+        "design": {
+          "scenario": "A continuing trustee gathers a small, coherent file for a routine annual meeting where key relationships arise across the terms and direct correspondence. Administrative contacts are present for genuine file tasks.",
+          "genres_and_provenance": [
+            "Executed instrument extract from the trustee's retained records.",
+            "Direct role confirmation sent by a person with personal knowledge.",
+            "Registration proof downloaded by the authorised trustee or agent.",
+            "Ordinary meeting or accounts correspondence from its actual sender to the adviser."
+          ],
+          "intervention": "One natural condition. Use independent risk-based excerpt and deletion reads for evidence checks.",
+          "invariants": [
+            "Keep the trust identity, review date and genuinely unchanged roles fixed in evidence-removal checks."
+          ],
+          "expected_sensitivity_or_invariance": "Each direct supported relationship should survive distractions. Removing its last sufficient route should withhold that relationship while leaving unaffected relationships supported.",
+          "negative_controls": [
+            "A contact who handles documents supplies no unsupported trustee or beneficiary relationship.",
+            "Receiving or forwarding a document alone supplies no Person–Person relationship."
+          ],
+          "evidence_dependencies": [
+            "Retain direct supporting language with exact Source attribution for each relationship. Record alternate eligible passages only when they independently support the same relationship."
+          ],
+          "shortcut_heuristics": [
+            "Only reading the formal instrument or registration list.",
+            "Promoting meeting attendance or contact frequency to a substantive relationship."
+          ],
+          "success_criteria": [
+            "Two condition-local blind readings and adjudication account for all Sources and all supported relationships.",
+            "Independent review verifies ordinary purpose and custody and confirms that the negative contacts remain unsupported.",
+            "Stop if the file naturally needs an artificial conflict or a legal inference. Quarantine unresolved proof defects or any exposure."
+          ]
+        },
+        "feasibility": {
+          "conditions": 1,
+          "documentary_complexity": "Planned Sources: 4. Routine file with mixed genres and low dependency depth.",
+          "authoring_and_review_effort": "Estimated sessions: 12. Ten mandatory sessions plus two targeted reads. Allow about 1–2 hours of custodian and owner dossier review, subject to disagreement.",
+          "ontology_compatibility": "Use only directly supported Person and Trust relationships. Accounts, registration obligations and contact functions are context.",
+          "infrastructure_reuse": "Use the natural-only path, receipt reuse on resume and saved-ideal replay.",
+          "risks_and_limits": [
+            "The result measures completeness and evidence in one ordinary file. It does not isolate effects of file size, placement or genre."
+          ]
+        }
+      }
+    },
+    {
+      "content_sha256": "d744c337ef22fdcf8c4cdfb54efde5b5c144a500143dcef060b571f85206fca6",
+      "hypothesis": {
+        "schema_version": 2,
+        "hypothesis_id": "issued-birth-record-correction",
+        "revision": 1,
+        "previous_revision_sha256": null,
+        "family_id": "I",
+        "title": "Parentage evidence across a corrected birth registration",
+        "status": "proposed",
+        "grounding": {
+          "legal_workflow": "Review kinship documentation for a preliminary estate administration meeting",
+          "retainer": "Check which asserted family links the executor's received file presently supports before preparing further inquiries.",
+          "meeting_purpose": "Reconcile an older copy with an officially corrected issued record and list which named parentage claims remain supported.",
+          "documentary_situation": "The representative has an earlier full record and a later registrar-issued full record that retains the original entry with a dated marginal correction.",
+          "confidence": "provisional",
+          "references": [
+            {
+              "title": "General Register Office · Removing the wrong father's details",
+              "url": "https://www.gov.uk/government/publications/application-form-to-remove-the-incorrect-fathers-details-from-a-birth-registration/how-to-apply-for-a-correction-to-remove-the-wrong-fathers-details",
+              "relevance": "A dated marginal note removes reliance on the original father's entry. The original entry remains visible. The correction itself does not add a replacement father."
+            },
+            {
+              "title": "HMCTS · Apply for probate with MyHMCTS",
+              "url": "https://www.gov.uk/government/publications/myhmcts-how-to-apply-for-probate-online/apply-for-probate-with-myhmcts",
+              "relevance": "The professional workflow asks about original wills and codicils and describes a paper route when originals or specified copies are unavailable. Will validity and probate entitlement are outside the graph."
+            }
+          ],
+          "assumptions": [
+            "The received issued record expressly says that a named person should not have been recorded as father. The file contains no other sufficient route to that assertion or to a replacement father."
+          ],
+          "practitioner_unknowns": [
+            "Check that the family link matters naturally to the retainer and that lawful custody of both issued records is plausible in this scenario."
+          ]
+        },
+        "objective": {
+          "primary_axis": "versions-and-amendments",
+          "secondary_axes": [
+            "documentary-authority",
+            "origin-and-copies",
+            "evidence-sufficiency"
+          ],
+          "failure_mechanism": "The graph promotes a superseded entry or treats repeated copies of it as independent confirmation despite the authoritative scoped marginal correction.",
+          "falsifiable_hypothesis": "The complete file supports preservation of unchanged family relationships and withholding of the corrected named relationship without inferring a replacement. Extraction of the superseded assertion, invention of a replacement or loss of a supported invariant would falsify recovery.",
+          "coverage_gap": "D varies a provision locator in a signed trust amendment. This tests co-present original and corrected information inside a civil record and the derivative status of an earlier copy. It uses no competing witness design from E."
+        },
+        "design": {
+          "scenario": "A representative brings the earlier issued copy while an authorised participant supplies the later full certificate through ordinary estate correspondence. Both records serve the same particular preliminary kinship check.",
+          "genres_and_provenance": [
+            "Earlier full issued copy held in family records and supplied by the representative.",
+            "Later full certificate from the registration authority with a dated correction.",
+            "Cover correspondence from the participant who supplies the later record.",
+            "Independent document supporting an unrelated current family relationship.",
+            "Adviser intake or query note giving the received-file scope without restating the answer."
+          ],
+          "intervention": "One natural condition. Use excerpt and deletion controls comparing operative correction evidence with the historical printed field and its derivative copies.",
+          "invariants": [
+            "Uncorrected typed relationships and the identities of the people named in the record remain stable."
+          ],
+          "expected_sensitivity_or_invariance": "Withhold only the assertion disclaimed by the actual correction scope. Where a reduced packet lacks enough context, record its independent evidentiary conclusion rather than presuming an artificial record restores truth.",
+          "negative_controls": [
+            "No replacement father inferred from a contact, surname or name in the file.",
+            "No corroboration credited to a forwarded image of the same historical entry.",
+            "An uncorrected named connection remains represented."
+          ],
+          "evidence_dependencies": [
+            "Inspect the record identity, original field, correction scope and issue status together. Blind reviewers separately record the contradicted claim and the exact supporting passages for surviving positive relationships."
+          ],
+          "shortcut_heuristics": [
+            "Original field precedence, newest document wins globally, apparent surname or contact role, and redundant copies counted as independent."
+          ],
+          "success_criteria": [
+            "Both blind readings recognise the stipulated status and correction scope without an answer cue in the cover note.",
+            "Independent audit tests whether trivial chronology or redaction alone reproduces the outcome and records any residual shortcut as a scope limitation.",
+            "Return if the issue chronology or lawful possession is implausible. Quarantine if scoped interpretation requires legal parentage outside the file or if evidence disagreements remain unresolved."
+          ]
+        },
+        "feasibility": {
+          "conditions": 1,
+          "documentary_complexity": "Planned Sources: 5. Moderate file with two co-present record states and ordinary custody context.",
+          "authoring_and_review_effort": "Estimated sessions: 16. Eleven mandatory sessions and up to five targeted independent reads. Allow about 2–3 human hours for format, provenance and scope review.",
+          "ontology_compatibility": "Score supported named parent_of and other expressly documented in-scope relationships. The authoring and annotation design must avoid findings about legal parentage, parental responsibility, succession entitlement or registry procedure.",
+          "infrastructure_reuse": "Use the natural-only workflow and audit masks for status and origin. Saved-ideal replay checks the supported graph and exact Evidence.",
+          "risks_and_limits": [
+            "The old-versus-new order may correlate with authority. Require explicit tracing of the correction to the specific field. This does not resolve the independent-witness contradiction gap."
+          ]
+        }
+      }
+    },
+    {
+      "content_sha256": "97bcadabbad871e2aba24f3574f0d28e868bce44d84628c84d52ac65e24f52c0",
+      "hypothesis": {
+        "schema_version": 2,
+        "hypothesis_id": "documented-testamentary-class-membership",
+        "revision": 1,
+        "previous_revision_sha256": null,
+        "family_id": "J",
+        "title": "Named class membership in a testamentary trust handover",
+        "status": "proposed",
+        "grounding": {
+          "legal_workflow": "Handover from estate administration to continuing trustees",
+          "retainer": "Prepare the continuing trustees' first file review, covering who has documentary support as a current named member of a class identified in the supplied terms.",
+          "meeting_purpose": "Review the file-supported beneficiary relationships and any matters requiring identity confirmation at a dated handover.",
+          "documentary_situation": "The acting record identifies an operative class and a file-specific condition for named inclusion. A separately originated record establishes the relationship or referent required by that condition.",
+          "confidence": "provisional",
+          "references": [
+            {
+              "title": "HMCTS · Apply for probate with MyHMCTS",
+              "url": "https://www.gov.uk/government/publications/myhmcts-how-to-apply-for-probate-online/apply-for-probate-with-myhmcts",
+              "relevance": "The professional workflow asks about original wills and codicils and describes a paper route when originals or specified copies are unavailable. Will validity and probate entitlement are outside the graph."
+            },
+            {
+              "title": "HMRC · Trust Registration Service manual, beneficiary details",
+              "url": "https://www.gov.uk/hmrc-internal-manuals/trust-registration-service-manual/trsm32050",
+              "relevance": "HMRC distinguishes identified beneficiaries from beneficiaries defined as a class. Registration practice supports the genre, while the operative text and documented named membership would determine any in-scope edge."
+            },
+            {
+              "title": "HMRC · Records to keep for trusts",
+              "url": "https://www.gov.uk/guidance/trust-record-keeping-for-tax-purposes",
+              "relevance": "HMRC describes information and supporting records about the trust, its assets, beneficial owners and decisions. The pilot must establish provenance and effect from the supplied fictional file."
+            }
+          ],
+          "assumptions": [
+            "The supplied text expressly establishes operation at cut-off, scope and the named relationship evidence needed for inclusion. The file has room for an unconfirmed person and an unaffected ordinary relationship without forced symmetry."
+          ],
+          "practitioner_unknowns": [
+            "Have a practitioner review the class wording, handover custody and reason for the named evidence record before allowing the file to proceed."
+          ]
+        },
+        "objective": {
+          "primary_axis": "axis-interactions",
+          "secondary_axes": [
+            "cross-source-reasoning",
+            "documentary-authority",
+            "entity-identity",
+            "evidence-sufficiency",
+            "administrative-context"
+          ],
+          "failure_mechanism": "Neither an operative class term nor an independently maintained identity/relationship record alone supports the named beneficiary. Administrative lists may appear to complete either missing dependency.",
+          "falsifiable_hypothesis": "Extraction should attach all necessary passages to the same named beneficiary relationship in the complete condition, withhold it when the qualifying linkage is unconfirmed, and preserve unrelated relationships in both. A one-Source proof, unsupported inclusion, lost invariant or missed supported membership defeats the proposed recovery.",
+          "coverage_gap": "C joins a designation to one of two trusts. J holds the trust fixed and tests a named person's satisfaction of an independently documented class criterion in a working estate file."
+        },
+        "design": {
+          "scenario": "At a handover for one operating testamentary trust, advisers receive the operative terms, the explicit record of effect and separate named relationship material. A working contact schedule and requests for verification serve ordinary administrative purposes.",
+          "genres_and_provenance": [
+            "Filed or certified operative testamentary trust provisions from the estate file.",
+            "Separate handover or effectiveness confirmation by the responsible custodian.",
+            "Direct eligibility-relevant relationship record from its independent source.",
+            "Identity or referent confirmation maintained by a competent participant.",
+            "Working estate contact schedule held by the estate administrator.",
+            "Trustee handover correspondence from the incoming trustees.",
+            "Administration correspondence giving an unrelated supported fact in natural context.",
+            "A neutral agenda or request that explains information outstanding at the meeting."
+          ],
+          "intervention": "One matched sibling changes a single status or scope statement in the independently originated linkage record from expressly verified to still unconfirmed. Keep the supporting terms, referenced people, trust, chronology and all other Source bytes fixed. The designer must verify that both documentary states are plausible before freeze.",
+          "invariants": [
+            "Operative terms, trust office holders, both candidate identities and unrelated supported relationships stay fixed."
+          ],
+          "expected_sensitivity_or_invariance": "Support the target named relationship only where the operative scope and qualifying linkage jointly suffice. Exact deletion of either necessary fact should defeat its same-edge proof in the relevant mask, while unaffected graph relationships stay supported.",
+          "negative_controls": [
+            "Being listed as a contact or potential beneficiary supplies no verified class membership.",
+            "A genuine unrelated family relationship stays supported in both conditions.",
+            "The operative terms or the identity record alone cannot recover the critical named relationship."
+          ],
+          "evidence_dependencies": [
+            "Require a sufficient excerpt subset and proper deletion reads for each contributing Source. Check every licensed alternative and exact Source/quote associations on the same relationship.",
+            "Precommit the exact one-edit comparison and the same roster. Audit complete keys and prove the absent relationship has no separate surviving route."
+          ],
+          "shortcut_heuristics": [
+            "Treating an unverified list as operative, inferring membership from surname, pooling evidence across relationships, or reading the status field without tracing who and what it governs."
+          ],
+          "success_criteria": [
+            "Realism review establishes that every record belongs in the handover and the sibling change has one material effect.",
+            "Independent annotation and masks show the separate necessity of the class term and documented linkage, and preserve invariants.",
+            "Return if a singleton proof or an obvious status-field shortcut explains the target without the mechanism. Quarantine a failed precommitted mask, unresolved disagreement, exposure or unavoidable legal determination."
+          ]
+        },
+        "feasibility": {
+          "conditions": 2,
+          "documentary_complexity": "Planned Sources: 8. Compact composite across several custody origins and two conditions.",
+          "authoring_and_review_effort": "Estimated sessions: 28. Eighteen mandatory sessions plus about ten passes for sufficient subsets, proper deletions and plausible alternative proofs. Allow about 3–5 custodian and owner hours.",
+          "ontology_compatibility": "Score only documented Person, Trust, beneficiary_of and other supported types. A class is a documentary proposition, and the file supplies its expressly evidenced named relationship. Avoid a new entity type or legal interpretation task.",
+          "infrastructure_reuse": "Use one batch literal-edit control, same-edge proof replay and targeted masks. Reuse unaffected author outputs only in a permitted repair.",
+          "risks_and_limits": [
+            "The paired edit and masks test a particular conjunctive dependency. They cannot estimate population prevalence, the effect of administrative volume or a general statistical interaction."
+          ]
+        }
+      }
+    }
+  ]
+}
