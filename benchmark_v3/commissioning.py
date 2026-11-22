@@ -223,6 +223,10 @@ def approved_hypothesis(key: str) -> tuple[Hypothesis, HypothesisRef]:
 
 def designer_brief(key: str) -> dict[str, Any]:
     hypothesis, ref = approved_hypothesis(key)
+    return _designer_brief(hypothesis, ref)
+
+
+def _designer_brief(hypothesis: Hypothesis, ref: HypothesisRef) -> dict[str, Any]:
     if _historical_or_admitted(hypothesis.family_id):
         raise ValueError("An existing admission record reserves this Matter family ID.")
     return {
