@@ -1,0 +1,162 @@
+{
+  "edges": [
+    {
+      "edge": ["Ivor Ellis Kestell", "parent_of", "Tamsin Vera Kestell"],
+      "alternatives": [
+        [
+          {
+            "source_id": "w9d2",
+            "supporting_text": "The entry names Tamsin Vera Kestell as the child and Ivor Ellis Kestell as the father."
+          }
+        ],
+        [
+          {
+            "source_id": "w9d2",
+            "supporting_text": "The will opens by naming Ivor Ellis Kestell of 9 Barrowglass Walk, Darnmere. The executor clause reads “my daughter Tamsin Vera Kestell”."
+          }
+        ],
+        [
+          {
+            "source_id": "n4j8",
+            "supporting_text": "The certified birth entry (Darnmere entry 284 for 1969) names Tamsin as the child and Ivor as the father."
+          }
+        ],
+        [
+          {
+            "source_id": "n4j8",
+            "supporting_text": "The signed original will dated 7 October 2021 names Tamsin as executor, describes her as “my daughter” and leaves the residue to her outright."
+          }
+        ]
+      ],
+      "reason": "The birth entry identifies the father and child; the will identifies the same relationship from Ivor’s perspective. In n4j8 the paragraph names Tamsin Vera Kestell and Ivor Ellis Kestell before describing the estate papers. Its local references resolve without a second Source. Each attached singleton is sufficient for ordinary quotation and attribution. There are four reporting passages but two documentary origins: Orla Fenwick and Seth Calder report the same birth entry and will. The first singleton is also a complete attachment under attached_sufficient_set_v1. No edge requires multiple Sources."
+    }
+  ],
+  "rulings": [
+    {
+      "issue": "Graph membership and direction",
+      "reading_a": "One edge: Ivor Ellis Kestell parent_of Tamsin Vera Kestell.",
+      "reading_b": "The same sole edge in the same direction.",
+      "passages": [
+        {"source_id": "w9d2", "supporting_text": "The entry names Tamsin Vera Kestell as the child and Ivor Ellis Kestell as the father."},
+        {"source_id": "r8c3", "supporting_text": "Kellan Hugh Sorrel is my father."},
+        {"source_id": "m5x7", "supporting_text": "Current full name: [not entered]"},
+        {"source_id": "h3p6", "supporting_text": "I was not present for the conversation and am not giving my own account of it."}
+      ],
+      "disposition": "Both readings upheld.",
+      "reason": "The birth entry supplies two named endpoints. The relay supplies only the father’s name. Its first-person reference cannot be assigned to a named child, even after matching the session and consulting the contact list. Neither reading omits a supported edge."
+    },
+    {
+      "issue": "Extent of the quotation needed for each n4j8 proof route",
+      "reading_a": "Includes the full-name introduction in the will quotation and attaches it as a separate context quotation for the birth entry.",
+      "reading_b": "Attaches each operative sentence alone, resolving the first names and the testator within n4j8.",
+      "passages": [
+        {"source_id": "n4j8", "supporting_text": "Internal intake note — Estate of Ivor Ellis Kestell"},
+        {"source_id": "n4j8", "supporting_text": "Tamsin Vera Kestell made the opening enquiry on 2 March and attended intake with an incomplete folder. The certified death entry records that Ivor Ellis Kestell of 9 Barrowglass Walk, Darnmere, died on 18 February 2026. The signed original will dated 7 October 2021 names Tamsin as executor, describes her as “my daughter”"},
+        {"source_id": "n4j8", "supporting_text": "The signed original will dated 7 October 2021 names Tamsin as executor, describes her as “my daughter” and leaves the residue to her outright."},
+        {"source_id": "n4j8", "supporting_text": "The certified birth entry (Darnmere entry 284 for 1969) names Tamsin as the child and Ivor as the father."}
+      ],
+      "disposition": "Accept both n4j8 proof routes; use B’s minimal attachments. Accept both readings’ w9d2 attachments unchanged.",
+      "reason": "A’s longer passages are faithful and sufficient. Their introductory material explains identity but does not add a third proof route within the note. Since local resolution is allowed, deleting the separately attached introduction does not defeat the birth-entry alternative. The will alternatives differ in excerpt boundaries, not in which instrument or declaration proves the edge."
+    },
+    {
+      "issue": "Executor wording, proof and scope",
+      "reading_a": "Records the nomination and outright residuary gift, without treating them as a grant or a trust role.",
+      "reading_b": "Agrees, distinguishing Tamsin’s report from the executed instrument.",
+      "passages": [
+        {"source_id": "q7m4", "supporting_text": "The will names me as executor and leaves the residue to me outright."},
+        {"source_id": "w9d2", "supporting_text": "Signed original will — dated 7 October 2021. The will opens by naming Ivor Ellis Kestell of 9 Barrowglass Walk, Darnmere. The executor clause reads “my daughter Tamsin Vera Kestell”. The residue clause names Tamsin Vera Kestell outright."},
+        {"source_id": "n4j8", "supporting_text": "No probate application was started at intake."}
+      ],
+      "disposition": "Agreement on the office and gift; neither is an additional scored edge.",
+      "reason": "The enquiry reports the terms; inspection of the signed original supports them. Only the daughter wording, not the nomination or gift, supplies the will-based family edge. The meeting brief defines the cut-off and task; it is not evidence of an appointment, grant or relationship."
+    }
+  ],
+  "register": [
+    {
+      "proposition": "Ivor Ellis Kestell died on 18 February 2026. Tamsin reported his last address as 9 Barrowglass Walk, Darnmere.",
+      "origin_reporter_and_receipt": "Tamsin’s 2 March enquiry (q7m4); certified death entry inspected by Orla at 14:10 on 26 March (w9d2) and described in Seth’s cut-off note (n4j8).",
+      "disposition": "supported",
+      "comparison_and_reason": "The entry confirms the date and associates Ivor with the reported address. The 2021 will also uses that address but does not establish the death or, by itself, the last address. No contrary date or address appears."
+    },
+    {
+      "proposition": "Ivor Ellis Kestell is recorded as the father of Tamsin Vera Kestell.",
+      "origin_reporter_and_receipt": "Darnmere birth entry 284 for 1969 and Ivor’s will of 7 October 2021, both sighted and reported by cut-off in w9d2 and n4j8.",
+      "disposition": "supported",
+      "comparison_and_reason": "The two records agree. Tamsin’s opening enquiry omits the relationship; that omission is not a denial. The unidentified DP-7316 statement does not offer a competing identification of Tamsin’s father."
+    },
+    {
+      "proposition": "The signed original will dated 7 October 2021 names Tamsin as executor and leaves her the residue outright.",
+      "origin_reporter_and_receipt": "Reported by Tamsin on 2 March (q7m4); signed instrument sighted by Orla on 26 March (w9d2) and summarized by Seth (n4j8).",
+      "disposition": "supported",
+      "comparison_and_reason": "The reported terms agree with the instrument. Residue is not necessarily the whole estate. Neither executor nomination nor an outright gift identifies a trustee, a named trust or a beneficiary of a trust."
+    },
+    {
+      "proposition": "Whether the 2021 will is the latest operative instrument, Tamsin intends to act, or there has been a probate application or grant elsewhere.",
+      "origin_reporter_and_receipt": "The will sighting (w9d2) and Seth’s record of the 26 March intake (n4j8) were available by 16:00.",
+      "disposition": "unresolved",
+      "comparison_and_reason": "No later instrument or grant is in the packet. The affirmative procedural fact is narrower: no application was started at intake.",
+      "adviser_question": "Are there later wills or codicils, has anyone applied elsewhere, and does Tamsin wish to act?"
+    },
+    {
+      "proposition": "Leonie Tess Rindle and Nella Ruth Verrow are the complete list for family updates. Tamsin reported both living and said each separately confirmed the spelling of her own current full name.",
+      "origin_reporter_and_receipt": "Tamsin’s separate conversations, reported in her 5 March update (v2k9) and summarized by Seth on 26 March (n4j8).",
+      "disposition": "supported",
+      "comparison_and_reason": "Supported as Tamsin’s report, not as independent verification by Seth or signed evidence from either contact. Send general updates through Tamsin for separate relay, without circulating contact details. Both received the same correction route. Completeness applies to that communications list, not to relatives, heirs or desk attendees."
+    },
+    {
+      "proposition": "One speaker in DP-7316 reported Kellan Hugh Sorrel as the speaker’s father.",
+      "origin_reporter_and_receipt": "Desk conversation at 11:20 on 12 March; relay approved that day (r8c3). Tamsin received it on 12 March. The firm already held her inline forward (h3p6) and retained the native export supplied at intake on 26 March (n4j8).",
+      "disposition": "supported",
+      "comparison_and_reason": "Both copies preserve the same first-person claim; neither names the speaker. This establishes what was said, not independently verified parentage."
+    },
+    {
+      "proposition": "The inline forward and native export are independent accounts of parentage.",
+      "origin_reporter_and_receipt": "Tamsin identifies the text as forwarded in h3p6; Seth records the provenance of both held copies in n4j8 on 26 March.",
+      "disposition": "explicitly contradicted",
+      "comparison_and_reason": "Seth records that both are from the same original message. Either copy evidences the same utterance; the cover message separately evidences receipt and non-attendance."
+    },
+    {
+      "proposition": "DP-7316 had one attendee; the distributed extract lacks the checked-in name.",
+      "origin_reporter_and_receipt": "Merrin Vale’s attendance extract (m5x7), issued 13 March for the 12 March 11:20 session; Tamsin brought the printout to intake on 26 March (n4j8).",
+      "disposition": "supported",
+      "comparison_and_reason": "The reference matches the conversation, not a named speaker. A completed name field would identify the checked-in attendee, not the recipient or the person who booked. The blank neither identifies anyone nor establishes that an identity check failed to occur."
+    },
+    {
+      "proposition": "Tamsin Vera Kestell attended DP-7316 or gave the parentage statement as her own account.",
+      "origin_reporter_and_receipt": "Tamsin’s cover message (h3p6), already held before intake, addresses the 12 March conversation directly.",
+      "disposition": "explicitly contradicted",
+      "comparison_and_reason": "Tamsin expressly disclaims presence and firsthand reporting. Her name as packet recipient in m5x7, signature on h3p6 and attendance at estate intake on 26 March do not contradict that disclaimer."
+    },
+    {
+      "proposition": "Identity of Kellan Hugh Sorrel’s reported child and any specific kinship of the update contacts.",
+      "origin_reporter_and_receipt": "Tamsin’s 5 March contact list (v2k9), the 12 March relay and its forward (r8c3, h3p6), and Merrin’s 13 March extract (m5x7) were all available by the cut-off recorded in n4j8.",
+      "disposition": "unresolved",
+      "comparison_and_reason": "If Leonie spoke, the claim is that Kellan is Leonie’s father; if Nella spoke, it is that Kellan is Nella’s father. Neither reading is preferred. An otherwise unidentified attendee could also have spoken. One statement cannot be credited to both women, and neither the route nor confirmed name spellings fill the blank. No particular relationship between the contacts, or between either contact and Ivor or Tamsin, is stated.",
+      "adviser_question": "If material, can the desk supply a completed checked-in name for DP-7316, or the speaker give a named confirmation tied to the session and a supporting family record? Ask separately through the agreed route what relationship, if any, each contact reports."
+    },
+    {
+      "proposition": "The firm retained the signed original will and the certified birth and death entries.",
+      "origin_reporter_and_receipt": "Orla’s 14:10 sighting and return slip (w9d2) and Seth’s same-day custody note (n4j8), both held by 16:00 on 26 March.",
+      "disposition": "explicitly contradicted",
+      "comparison_and_reason": "All three papers were handed back; the firm retained the slip. Tamsin’s earlier possession of the will and certified death entry, and preference for personal delivery (q7m4), do not establish continuing firm custody.",
+      "adviser_question": "Can Tamsin bring the signed original will and both certified entries back as needed, and can arrangements for custody or copying be agreed?"
+    },
+    {
+      "proposition": "Intake proceeded without starting a probate application and without the Merewick Building Society date-of-death balance confirmation.",
+      "origin_reporter_and_receipt": "Tamsin reported the 27 February balance request in q7m4 on 2 March and confirmed non-receipt at intake on 26 March; Seth recorded both intake matters in n4j8.",
+      "disposition": "supported",
+      "comparison_and_reason": "The later report updates the earlier enquiry without conflict. No balance amount, zero balance or refusal is evidenced.",
+      "adviser_question": "Has the written confirmation arrived since the cut-off? If not, who will follow up, and what other asset or liability records remain to be obtained?"
+    }
+  ],
+  "source_audit": [
+    {"source_id": "q7m4", "finding": "Enquiry, possession report, reported will terms, death, last address and balance request. Neither the shared surname nor the appointment or gift establishes kinship."},
+    {"source_id": "v2k9", "finding": "Names, reported living status, separate relay instructions and shared correction route. No stated kinship or identification of a DP-7316 participant."},
+    {"source_id": "r8c3", "finding": "Native relay names the reported father only. The delivery field is not the identity of the first-person speaker."},
+    {"source_id": "m5x7", "finding": "Independent administrative evidence of one matching session attendee, not independent evidence of parentage. No completed name links the attendee to a named child."},
+    {"source_id": "h3p6", "finding": "Duplicate of the relay for the reported statement; original cover evidence from Tamsin for receipt and non-attendance. No named parent-child pair."},
+    {"source_id": "w9d2", "finding": "Birth-entry and will passages each suffice for the same father-to-child edge. The other clauses, death information and return record add intake facts, not edges."},
+    {"source_id": "n4j8", "finding": "Each of two locally resolved documentary summaries suffices for the same edge. Neither is a new underlying instrument. The note also establishes cut-off handling, message provenance and outstanding papers. Across the file there is no explicit spouse or sibling pair or named trust with a settlor, trustee or beneficiary. Shared children or common parentage would not alone establish marriage or siblinghood; absence of a scored edge is not proof of absence in fact."}
+  ],
+  "residual_scored_disputes": []
+}

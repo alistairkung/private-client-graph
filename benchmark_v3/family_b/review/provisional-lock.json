@@ -1,0 +1,16 @@
+{
+  "B0": {
+    "slot": "judge-01",
+    "session": "0f2ba697-af92-44de-a70c-af6ae320e618",
+    "packet_sha256": "74c39d019f477c37fc14313f9d84149b432744f67a084ee45b920278591b15ec",
+    "output_sha256": "5d4d704cb80751e34b934b55ade534887338627f4aa95f21f429ce8818f24329",
+    "residual_scored_disputes": []
+  },
+  "B1": {
+    "slot": "judge-02",
+    "session": "08325014-5e74-484f-878a-26fd83817f34",
+    "packet_sha256": "b92e28ca7fb7b2de1886649a5e6c37c52c961c5b6e4f1f270edb17f1e38b0fe8",
+    "output_sha256": "abe4d89cec7586e0c59c3d9c79a8f777c22b277ce91b1cd5ef152942d0fa5add",
+    "residual_scored_disputes": []
+  }
+}
