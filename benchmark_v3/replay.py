@@ -199,7 +199,8 @@ def _verify_matched_observations(family: VerifiedFamily,
         if identity not in family.edits:
             if original != current:
                 raise ValueError(f'{base}/{identity} observed Graphs fail exact invariance')
-            matches['invariance'] = dict(pair=[base, identity], passed=True, edges=sorted(original))
+            label = 'invariance' if family.family == 'A' else identity
+            matches[label] = dict(pair=[base, identity], passed=True, edges=sorted(original))
             continue
         removed, added = original - current, current - original
         prior, required = set(family.required[base]), set(family.required[identity])

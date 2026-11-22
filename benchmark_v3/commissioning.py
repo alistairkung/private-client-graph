@@ -8,6 +8,7 @@ from typing import Any, TypeVar
 
 from pydantic import BaseModel, TypeAdapter
 
+from benchmark_v3.portfolio import PortfolioProposal
 from benchmark_v3.research_contracts import (
     AdmittedFamily,
     CoverageRegister,
@@ -28,6 +29,7 @@ _ROOT = Path(__file__).resolve().parent
 ARCHITECT_PROMPT = "instructions/research-architect-v1.md"
 DESIGNER_PROMPT = "instructions/commissioned-designer-v1.md"
 PLANNING_LABELS = {"research_specification", "development_findings", "practice_references"}
+PORTFOLIO_LABELS = {"portfolio_specification", "development_findings", "practice_references"}
 RECONCILIATION_LABELS = {"hypothesis_revision", "admission_dossier", "technical_findings"}
 HISTORICAL_FAMILIES = frozenset({"A", "B", "C"})
 _FAMILY_ID = TypeAdapter(FamilyId)
@@ -98,6 +100,23 @@ def _historical_or_admitted(family: str) -> bool:
     )
 
 
+def admitted_family_ids() -> set[str]:
+    """Read development admission statuses without opening evaluation custody."""
+    admitted = set()
+    for path in sorted(_ROOT.glob("family_*/admission.json")):
+        name = path.parent.name.removeprefix("family_").upper()
+        record = _read_json(trusted_bytes(path.relative_to(_ROOT).as_posix()))
+        if record.get("status") == "admitted":
+            _admission(name)
+            admitted.add(name)
+    return admitted
+
+
+def development_artifact_path(relative_path: str) -> Path:
+    """Resolve a projected development file under the architect custody root."""
+    return _trusted_path(relative_path)
+
+
 def _admission(family: str) -> tuple[dict[str, Any], str]:
     family = _FAMILY_ID.validate_python(family)
     directory = f"family_{family.lower()}"
@@ -116,7 +135,29 @@ def _admission(family: str) -> tuple[dict[str, Any], str]:
         and admission.get("manifest_sha256") == digest(trusted_bytes(f"{directory}/manifest.json"))
     ):
         raise ValueError(f"Family {family} requires a recorded human admission of its manifest.")
+    manifest = _read_json(trusted_bytes(f"{directory}/manifest.json"))
+    if manifest.get("schema_version") == 4:
+        _verify_batch_admission(admission, manifest, directory)
     return admission, digest(content)
+
+
+def _verify_batch_admission(
+    admission: dict[str, Any], manifest: dict[str, Any], directory: str,
+) -> None:
+    files = admission.get("review_files")
+    if not isinstance(files, dict) or not all(isinstance(name, str) for name in files):
+        raise ValueError("Batch admission requires exact review file digests.")
+    required = {
+        "DOSSIER.md", "manifest.json", "freeze.json", "dossier.json", "replay/preflight.json",
+        *(name for condition in manifest["conditions"] for name in (f"{condition}.json", f"sources/{condition}.json")),
+    }
+    if (
+        files.keys() != required or admission.get("approved_conditions") != sorted(manifest["conditions"])
+        or files["freeze.json"] != manifest["freeze_sha256"]
+        or files["dossier.json"] != admission["signature"].get("reviewed_family_sha256")
+        or any(digest(trusted_bytes(f"{directory}/{name}")) != expected for name, expected in files.items())
+    ):
+        raise ValueError("The admitted family differs from the exact reviewed dossier and files.")
 
 
 def _rounds() -> list[PlanningRecord]:
@@ -206,6 +247,15 @@ def prepare_architect(inputs: dict[str, str]) -> tuple[dict[str, str], dict[str,
         raise ValueError("Architect inputs must be nonempty.")
     register = coverage_register()
     axes = [axis.id for axis in register.taxonomy]
+    if inputs.keys() == PORTFOLIO_LABELS:
+        from benchmark_v3.batch.authorisation import admitted_coverage
+
+        planning_inputs = inputs.copy()
+        planning_inputs["research_specification"] = planning_inputs.pop("portfolio_specification")
+        projected, metadata = _prepare_planning(planning_inputs, register, axes)
+        coverage_digest, existing = admitted_coverage()
+        snapshot = {"coverage_sha256": coverage_digest, "existing": [row.model_dump() for row in existing]}
+        return projected | {"admitted_snapshot": json_text(snapshot)}, metadata | {"profile": "portfolio"}
     if inputs.keys() == PLANNING_LABELS:
         return _prepare_planning(inputs, register, axes)
     if inputs.keys() == RECONCILIATION_LABELS:
@@ -313,11 +363,20 @@ def saved_reconciliation(family: AdmittedFamily) -> ReconciliationRecord | None:
 
 def validate_architect_result(
     output: str, metadata: dict[str, Any],
-) -> PlanningResult | ReconciliationResult:
+) -> PlanningResult | ReconciliationResult | PortfolioProposal:
     if metadata["profile"] == "planning":
         plan = _validate_json(PlanningResult, output)
         _validate_plan(plan, metadata)
         return plan
+    if metadata["profile"] == "portfolio":
+        from benchmark_v3.batch.authorisation import verify_portfolio
+
+        portfolio = _validate_json(PortfolioProposal, output)
+        verify_portfolio(portfolio)
+        if any(f"{slot.hypothesis.hypothesis_id}@{slot.hypothesis.revision}"
+               not in metadata["previous_revisions"] for slot in portfolio.slots):
+            raise ValueError("Portfolio slots may reference only staged hypotheses.")
+        return portfolio
     if metadata["profile"] == "reconciliation":
         assessment = _validate_json(ReconciliationResult, output)
         _validate_axes(

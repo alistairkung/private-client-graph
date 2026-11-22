@@ -244,3 +244,10 @@ quarantine against a dated package and annotation digest and evidence policy.
 A pending dossier stays outside execution. A failed or incomplete comparison
 keeps its planned and scored coverage visible. A commissioned development
 family then returns to the Research Architect for coverage reconciliation.
+
+## Batch commissioning
+
+For new Matter families, use the [development batch workflow](benchmark-v3-batches.md).
+The custodian records exact portfolio, hypothesis, budget and isolation approval
+before dispatch. The batch coordinator assembles packets for the same isolated
+runner and retains their receipts across interruptions.

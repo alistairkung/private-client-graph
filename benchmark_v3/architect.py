@@ -8,6 +8,7 @@ from typing import Any
 
 from benchmark_v3 import commissioning
 from benchmark_v3.coverage import render_coverage
+from benchmark_v3.portfolio import Portfolio, PortfolioProposal
 from benchmark_v3.research_contracts import (
     PlanningRecord,
     PlanningResult,
@@ -17,7 +18,7 @@ from benchmark_v3.research_contracts import (
 )
 
 
-def read_architect_packet(directory: Path, profile: str) -> PlanningRecord | ReconciliationRecord:
+def read_architect_packet(directory: Path, profile: str) -> PlanningRecord | ReconciliationRecord | Portfolio:
     """Read a completed packet without writing decisions or admitting a family."""
     if directory.is_symlink() or not directory.is_dir():
         raise ValueError("Use the original architect packet directory.")
@@ -29,11 +30,13 @@ def read_architect_packet(directory: Path, profile: str) -> PlanningRecord | Rec
     metadata = handoff["research"]
     if metadata["profile"] != profile:
         raise ValueError(f"Expected an architect {profile} packet.")
-    if profile == "reconciliation" and receipt.get("handoff_sha256") != commissioning.digest(
+    if profile in {"portfolio", "reconciliation"} and receipt.get("handoff_sha256") != commissioning.digest(
         handoff_bytes,
     ):
-        raise ValueError("The reconciliation handoff digest does not match its receipt.")
+        raise ValueError(f"The {profile} handoff digest does not match its receipt.")
     result = commissioning.validate_architect_result(output.decode("utf-8"), metadata)
+    if isinstance(result, PortfolioProposal):
+        return Portfolio(**result.model_dump(), architect_session=provenance.session)
     if isinstance(result, PlanningResult):
         return PlanningRecord(schema_version=1, provenance=provenance, result=result)
     return ReconciliationRecord(
@@ -91,7 +94,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
     commands.add_parser("coverage", help="Render the canonical qualitative register as Markdown.")
-    for name in ("proposals", "reconcile"):
+    for name in ("proposals", "portfolio", "reconcile"):
         commands.add_parser(name, help="Verify and print a completed architect packet.").add_argument(
             "packet_dir", type=Path,
         )
@@ -100,7 +103,7 @@ def main() -> None:
         if args.command == "coverage":
             print(render_coverage(), end="")
             return
-        profile = "planning" if args.command == "proposals" else "reconciliation"
+        profile = {"proposals": "planning", "portfolio": "portfolio", "reconcile": "reconciliation"}[args.command]
         record = read_architect_packet(args.packet_dir, profile)
         print(record.model_dump_json(indent=2))
     except (ValueError, KeyError, TypeError, OSError) as error:

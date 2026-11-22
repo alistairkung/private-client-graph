@@ -13,24 +13,27 @@ import tempfile
 import threading
 import time
 import tomllib
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
-from pydantic import ValidationError
+from pydantic import BaseModel, ValidationError
 
 from benchmark_v3 import commissioning
+from benchmark_v3.portfolio import FamilySlot, PortfolioProposal
 from benchmark_v3.research_contracts import PlanningResult, ReconciliationResult
 
 
 _INPUTS = {
-    "research_architect": commissioning.PLANNING_LABELS | commissioning.RECONCILIATION_LABELS,
-    "designer": {"hypothesis_revision"},
+    "research_architect": (
+        commissioning.PLANNING_LABELS | commissioning.RECONCILIATION_LABELS | commissioning.PORTFOLIO_LABELS
+    ),
+    "designer": {"hypothesis_revision", "portfolio_slot"},
     "author": {"author_brief", "genre_references", "received_correspondence", "revision_ticket"},
     "realism": {"sources", "neutral_brief", "cutoff", "possession_ledger", "genre_references"},
-    "annotation": {"sources", "neutral_brief", "ontology", "annotation_rules"},
+    "annotation": {"sources", "neutral_brief", "ontology", "annotation_rules", "section_readings"},
     "adjudication": {
         "sources", "annotation_a", "annotation_b", "neutral_brief", "ontology", "annotation_rules",
     },
@@ -72,9 +75,17 @@ class PacketError(Exception):
     """The packet cannot be submitted or its output cannot be admitted."""
 
 
-def run_packet(directory: Path) -> None:
+class PacketIsolationError(PacketError):
+    """The runtime failed an isolation check."""
+
+
+def run_packet(
+    directory: Path, *, before_turn: Callable[[], None] | None = None,
+) -> None:
     """Record the handoff, verify isolation, and publish the completed text and receipt."""
     request = _read_request(directory)
+    if request.get("batch_design") and before_turn is None:
+        raise PacketError("Batch design requires the budgeted coordinator.")
     message = _json_text({"inputs": request["inputs"], "prompt": request["prompt"]})
     handoff = _handoff(request, message)
     handoff_text = _json_text(handoff) + "\n"
@@ -86,7 +97,7 @@ def run_packet(directory: Path) -> None:
         "model_requested": request["model"],
         "effort_requested": request["effort"],
     }
-    if request.get("research", {}).get("profile") == "reconciliation":
+    if before_turn is not None or request.get("research", {}).get("profile") in {"reconciliation", "portfolio"}:
         receipt["handoff_sha256"] = _fingerprint(handoff_text)["sha256"]
     try:
         with _create_runtime() as temporary:
@@ -96,12 +107,14 @@ def run_packet(directory: Path) -> None:
             with _Codex(_server_command(runtime, workspace, request["effort"]), workspace) as codex:
                 isolation = _start_checked_thread(codex, workspace, request)
                 receipt["isolation"] = isolation
+                if before_turn is not None:
+                    before_turn()
                 receipt["submitted_at"] = _timestamp()
                 result = _run_turn(codex, isolation["thread_id"], message, request["effort"])
             output = result.pop("text")
             private_paths = {directory.resolve(), runtime.resolve()}
             if any(str(path) in output for path in private_paths):
-                raise PacketError("Output exposed an unstaged runtime path.")
+                raise PacketIsolationError("Output exposed an unstaged runtime path.")
             if request["role"] == "research_architect":
                 commissioning.validate_architect_result(output, request["research"])
         receipt.update(result)
@@ -113,6 +126,8 @@ def run_packet(directory: Path) -> None:
             else str(error) if isinstance(error, (PacketError, ValueError))
             else type(error).__name__
         )
+        if isinstance(error, PacketIsolationError):
+            receipt["failure_kind"] = "isolation"
         receipt.update(status="rejected", reason=reason, completed_at=_timestamp())
         _write_new(directory / "receipt.json", _json_text(receipt) + "\n")
         raise PacketError(reason) from None
@@ -164,8 +179,13 @@ def _prepare_research_handoff(request: dict[str, Any]) -> None:
         if request["prompt"] != "research-architect-v1":
             raise ValueError("Select the versioned research-architect-v1 prompt.")
         inputs, context = commissioning.prepare_architect(request["inputs"])
-        schema = PlanningResult if context["profile"] == "planning" else ReconciliationResult
+        profiles: dict[str, type[BaseModel]] = {
+            "planning": PlanningResult, "reconciliation": ReconciliationResult, "portfolio": PortfolioProposal,
+        }
+        schema = profiles[context["profile"]]
         instructions = commissioning.trusted_bytes(commissioning.ARCHITECT_PROMPT).decode("utf-8")
+        if context["profile"] == "portfolio":
+            instructions = commissioning.trusted_bytes("instructions/batch-portfolio-v1.md").decode("utf-8")
         request["prompt"] = (
             f"{instructions}\nActive profile: {context['profile']}\n"
             f"Output schema: {_json_text(schema.model_json_schema())}"
@@ -173,13 +193,34 @@ def _prepare_research_handoff(request: dict[str, Any]) -> None:
         request["inputs"] = inputs
         request["research"] = context
     if request["role"] == "designer":
-        if request["prompt"] != "commissioned-designer-v1" or request["inputs"].keys() != {
-            "hypothesis_revision",
-        }:
-            raise ValueError("Design requires a human-approved hypothesis revision and the versioned prompt.")
-        brief = commissioning.designer_brief(request["inputs"]["hypothesis_revision"])
-        request["inputs"] = {"capability_brief": _json_text(brief)}
-        request["prompt"] = commissioning.trusted_bytes(commissioning.DESIGNER_PROMPT).decode("utf-8")
+        _prepare_designer(request)
+
+
+def _prepare_designer(request: dict[str, Any]) -> None:
+    version = request["prompt"]
+    batch_design = version == "commissioned-designer-batch-v1"
+    labels = {"hypothesis_revision", "portfolio_slot"} if batch_design else {"hypothesis_revision"}
+    if version not in {"commissioned-designer-v1", "commissioned-designer-batch-v1"} or (
+        request["inputs"].keys() != labels
+    ):
+        raise ValueError("Design requires a human-approved hypothesis revision and the versioned prompt.")
+    brief = commissioning.designer_brief(request["inputs"]["hypothesis_revision"])
+    prompt = commissioning.trusted_bytes(commissioning.DESIGNER_PROMPT).decode("utf-8")
+    if batch_design:
+        from benchmark_v3.batch.contracts import DesignOutput
+
+        slot = FamilySlot.model_validate(commissioning._read_json(request["inputs"]["portfolio_slot"]))
+        if slot.hypothesis.model_dump() != brief["commission"] or slot.family_id != brief["family_id"]:
+            raise ValueError("The designer slot differs from the approved hypothesis.")
+        brief["approved_workload"] = slot.model_dump(include={
+            "tier", "expected_sources", "workflow", "natural_condition", "matched_conditions",
+            "independent_authoring",
+        }, mode="json")
+        instructions = commissioning.trusted_bytes("instructions/batch-designer-v1.md").decode("utf-8")
+        prompt += f"\n{instructions}\nOutput schema: {_json_text(DesignOutput.model_json_schema())}"
+    elif brief["family_id"] not in {"D", "E", "F"}:
+        raise ValueError("New families require approved batch commissioning.")
+    request.update(batch_design=batch_design, prompt=prompt, inputs={"capability_brief": _json_text(brief)})
 
 
 def _validation_reason(error: ValidationError) -> str:
@@ -237,7 +278,7 @@ def _timestamp() -> str:
 
 def _create_runtime() -> tempfile.TemporaryDirectory:
     if sys.platform != "darwin":
-        raise PacketError("The packet permission profile is verified only on macOS.")
+        raise PacketIsolationError("The packet permission profile is verified only on macOS.")
     return tempfile.TemporaryDirectory(dir="/private/tmp", prefix="benchmark-packet-")
 
 
@@ -316,7 +357,7 @@ def _start_checked_thread(
     })
     thread = started["thread"]
     if not isinstance(thread, dict):
-        raise PacketError("Codex did not return valid thread metadata.")
+        raise PacketIsolationError("Codex did not return valid thread metadata.")
     expected = {
         "cwd": str(workspace.resolve()),
         "runtimeWorkspaceRoots": [],
@@ -329,7 +370,7 @@ def _start_checked_thread(
         "reasoningEffort": request["effort"],
     }
     if any(started.get(key) != value for key, value in expected.items()):
-        raise PacketError("Codex did not confirm the requested isolation, model, and effort.")
+        raise PacketIsolationError("Codex did not confirm the requested isolation, model, and effort.")
     if (
         thread.get("ephemeral") is not True
         or thread.get("environments") != []
@@ -337,13 +378,13 @@ def _start_checked_thread(
         or any(thread.get(key) is not None for key in ("path", "forkedFromId", "parentThreadId"))
         or any(workspace.iterdir())
     ):
-        raise PacketError("Codex did not start an empty, isolated ephemeral thread.")
+        raise PacketIsolationError("Codex did not start an empty, isolated ephemeral thread.")
 
     inventory = codex.request("mcpServerStatus/list", {"threadId": thread["id"]})
     if "nextCursor" not in inventory or inventory["nextCursor"] is not None:
-        raise PacketError("Codex did not return a complete connector inventory.")
+        raise PacketIsolationError("Codex did not return a complete connector inventory.")
     if not isinstance(inventory.get("data"), list):
-        raise PacketError("Codex did not return a complete connector inventory.")
+        raise PacketIsolationError("Codex did not return a complete connector inventory.")
     for server in inventory["data"]:
         if not (
             isinstance(server, dict)
@@ -352,7 +393,7 @@ def _start_checked_thread(
             and server.get("resources") == []
             and server.get("resourceTemplates") == []
         ):
-            raise PacketError("Codex reported an active or unverified connector.")
+            raise PacketIsolationError("Codex reported an active or unverified connector.")
     return {
         "thread_id": thread["id"],
         "codex_session_id": thread["sessionId"],
@@ -390,9 +431,9 @@ def _run_turn(codex: "_Codex", thread_id: str, message: str, effort: str) -> dic
         params = event.get("params", {})
         if method in _ITEM_EVENTS or method in {"turn/completed", "thread/tokenUsage/updated"}:
             if params.get("threadId") != thread_id:
-                raise PacketError("Codex reported events from another thread.")
+                raise PacketIsolationError("Codex reported events from another thread.")
             if "turnId" in params and params["turnId"] != turn_id:
-                raise PacketError("Codex reported events from another turn.")
+                raise PacketIsolationError("Codex reported events from another turn.")
         if method == "item/completed":
             item = params["item"]
             if item["type"] == "agentMessage" and item.get("phase") == "final_answer":
@@ -420,7 +461,7 @@ def _run_turn(codex: "_Codex", thread_id: str, message: str, effort: str) -> dic
 
 def _check_item(item: dict[str, Any]) -> None:
     if not isinstance(item, dict) or item.get("type") not in _ITEM_TYPES:
-        raise PacketError("Codex reported an unexpected item or tool action.")
+        raise PacketIsolationError("Codex reported an unexpected item or tool action.")
 
 
 class _Codex:
@@ -515,13 +556,13 @@ class _Codex:
 
 def _check_notification(method: str, reply: dict[str, Any]) -> None:
     if "id" in reply:
-        raise PacketError("Codex requested an action.")
+        raise PacketIsolationError("Codex requested an action.")
     if method in _UNEXPECTED_NOTIFICATIONS or method.startswith(
         ("hook/", "command/", "process/", "fuzzyFileSearch/", "thread/realtime/"),
     ):
-        raise PacketError("Codex reported an unexpected runtime action or error.")
+        raise PacketIsolationError("Codex reported an unexpected runtime action or error.")
     if method.startswith("item/") and method not in _ITEM_NOTIFICATIONS:
-        raise PacketError("Codex reported an unexpected item or tool action.")
+        raise PacketIsolationError("Codex reported an unexpected item or tool action.")
     if method in _ITEM_EVENTS:
         _check_item(reply["params"]["item"])
 

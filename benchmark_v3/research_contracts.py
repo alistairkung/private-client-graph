@@ -70,7 +70,7 @@ class Design(Contract):
 
 
 class Feasibility(Contract):
-    conditions: Annotated[int, Field(strict=True, ge=2)]
+    conditions: Annotated[int, Field(strict=True, ge=1)]
     documentary_complexity: Text
     authoring_and_review_effort: Text
     ontology_compatibility: Text
@@ -79,7 +79,7 @@ class Feasibility(Contract):
 
 
 class Hypothesis(Contract):
-    schema_version: Literal[1]
+    schema_version: Literal[1, 2]
     hypothesis_id: Slug
     revision: Revision
     previous_revision_sha256: Digest | None
@@ -95,6 +95,8 @@ class Hypothesis(Contract):
     def require_revision_lineage(self) -> Self:
         if (self.revision == 1) != (self.previous_revision_sha256 is None):
             raise ValueError("Only revision 1 has no previous revision digest.")
+        if self.schema_version == 1 and self.feasibility.conditions < 2:
+            raise ValueError("Version 1 hypotheses require a matched condition.")
         return self
 
 

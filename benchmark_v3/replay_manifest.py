@@ -7,6 +7,7 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter, model_validator
 
+from benchmark_v3.research_contracts import FamilyId as ResearchFamilyId
 from private_client_graph.evaluation import _edge
 from private_client_graph.graph import ENDPOINT_TYPES
 from private_client_graph.models import GroundTruth, SourcedExtractionResult
@@ -77,6 +78,14 @@ class CommissionedFamilyManifest(BaseModel):
     conditions: dict[str, Sha256]
 
 
+class BatchFamilyManifest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    schema_version: Literal[4]
+    family: ResearchFamilyId
+    freeze_sha256: Sha256
+    conditions: dict[str, Sha256]
+
+
 class SourceCommitments(BaseModel):
     # The custodian's freeze also records provenance outside the replay contract.
     order: dict[str, list[str]]
@@ -99,6 +108,13 @@ class MatchedSourceFreeze(SourceCommitments):
 class CommissionedSourceFreeze(SourceCommitments):
     intervention: LiteralEdit
     candidates: list[SemanticEdge] = Field(min_length=1)
+    required: dict[str, list[SemanticEdge]]
+
+
+class BatchSourceFreeze(SourceCommitments):
+    natural: str
+    variants: dict[str, LiteralEdit | None]
+    candidates: list[SemanticEdge]
     required: dict[str, list[SemanticEdge]]
 
 
@@ -133,7 +149,7 @@ class VerifiedCondition:
 
 @dataclass(frozen=True)
 class VerifiedFamily:
-    family: FamilyId
+    family: str
     manifest_sha256: str
     freeze_sha256: str
     conditions: dict[str, VerifiedCondition]
@@ -147,6 +163,9 @@ def load_family(manifest_path: Path) -> VerifiedFamily:
     """Bind the saved ideals and ordered Sources before verifying the contrasts."""
     manifest_bytes = manifest_path.read_bytes()
     raw = _read_json(manifest_bytes)
+    if isinstance(raw, dict) and raw.get('schema_version') == 4:
+        batch = BatchFamilyManifest.model_validate(raw)
+        return _load_batch_family(manifest_path.parent, batch, checksum(manifest_bytes))
     if isinstance(raw, dict) and raw.get('schema_version') == 2:
         manifest = MatchedFamilyManifest.model_validate(raw)
         return _load_matched_family(manifest_path.parent, manifest, checksum(manifest_bytes))
@@ -155,6 +174,50 @@ def load_family(manifest_path: Path) -> VerifiedFamily:
         return _load_commissioned_family(manifest_path.parent, commissioned, checksum(manifest_bytes))
     family_a = FamilyManifest.model_validate(raw)
     return _load_family_a(manifest_path.parent, family_a, checksum(manifest_bytes))
+
+
+def _load_batch_family(root: Path, manifest: BatchFamilyManifest, digest: str) -> VerifiedFamily:
+    freeze = BatchSourceFreeze.model_validate(
+        _read_json(_verified_bytes(root / "freeze.json", manifest.freeze_sha256)),
+    )
+    identities = [freeze.natural, *sorted(freeze.variants)]
+    expected = [f"{manifest.family}{index:03}" for index in range(len(identities))]
+    commitments = (manifest.conditions, freeze.order, freeze.sources_sha256,
+                   freeze.source_commitments, freeze.required)
+    if identities != expected or any(entry.keys() != set(expected) for entry in commitments):
+        raise ValueError("Batch manifest and preblind freeze must cover the same ordered conditions.")
+    conditions = {identity: _load_condition(root, identity, manifest.conditions[identity], freeze)
+                  for identity in identities}
+    natural = conditions[freeze.natural]
+    natural_edges = truth_edges(natural.saved.truth)
+    candidates = _declared_edges(freeze.candidates)
+    unaffected = natural_edges.keys() - candidates
+    required = {identity: _declared_edges(edges) for identity, edges in freeze.required.items()}
+    edits = {}
+    for identity, condition in conditions.items():
+        saved = condition.saved
+        if not required[identity] <= candidates or truth_edges(saved.truth).keys() != unaffected | required[identity]:
+            raise ValueError(f"{identity} truth differs from the preblind graph declaration.")
+        if not required[identity] <= {_edge(*proof.edge) for proof in saved.sufficient_evidence}:
+            raise ValueError(f"{identity} is missing a sufficient-evidence set for a critical edge.")
+        if identity == freeze.natural:
+            continue
+        edit = freeze.variants[identity]
+        if edit is None:
+            if (condition.sources == natural.sources
+                    or {source.id: source for source in condition.sources}
+                    != {source.id: source for source in natural.sources}
+                    or condition.annotation_sha256 != natural.annotation_sha256):
+                raise ValueError(f"{identity} must change only the order of the natural Sources.")
+        else:
+            _verify_edit(freeze.natural, identity, natural.sources, condition.sources, edit)
+            edits[identity] = edit
+        if {entity.name: entity.type for entity in saved.truth.entities} != {
+            entity.name: entity.type for entity in natural.saved.truth.entities
+        }:
+            raise ValueError(f"{identity} changed the matched entity roster.")
+    return VerifiedFamily(manifest.family, digest, manifest.freeze_sha256, conditions, edits,
+                          {identity: sorted(edges) for identity, edges in required.items()}, candidates, unaffected)
 
 
 def _load_family_a(root: Path, manifest: FamilyManifest, digest: str) -> VerifiedFamily:
