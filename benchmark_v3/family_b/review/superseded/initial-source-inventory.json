@@ -1,0 +1,44 @@
+{
+  "B0": {
+    "ordered_source_sha256": "b206a6d6c7d5c5e5199ce25f3c0b6f9411e750b58b14da767eeb8350ddeae6de",
+    "source_order": [
+      "q7m4",
+      "v2k9",
+      "r8c3",
+      "m5x7",
+      "h3p6",
+      "w9d2",
+      "n4j8"
+    ],
+    "body_sha256": {
+      "q7m4": "2cf83b8f63939664a328e35548e55f4cc1a323f7262ef6e95fff08b5db06065f",
+      "v2k9": "444f422a9c033fbe375abc9bcd48cac4d9cf8ea79e9a09497a5c1ab35c77e43d",
+      "r8c3": "8b45a81e24cbe5a8dfbc260a7482fc54394041648577c8488d2ec7ddfb45b59d",
+      "m5x7": "0e6192ce95f0881cf506616aff0910a12daabb5b61030ac1d24b4ba4f6b0fc95",
+      "h3p6": "77d768505ee666946a2c05e76a237568d524b3915f2bc925576e8d43ae561ce5",
+      "w9d2": "b8589a69f6b8d787de377533950a8102cab6ba7de1efc085027e960f2f8e0374",
+      "n4j8": "a7aeed2afa598baeab55ad6d8d44438c42680c70a81a3f74fed3a3d0267a7f7b"
+    }
+  },
+  "B1": {
+    "ordered_source_sha256": "70d72f09f55b30a34cd1c7bf4ab9781c97d2d49886e1249b91077566b4114418",
+    "source_order": [
+      "q7m4",
+      "v2k9",
+      "r8c3",
+      "m5x7",
+      "h3p6",
+      "w9d2",
+      "n4j8"
+    ],
+    "body_sha256": {
+      "q7m4": "2cf83b8f63939664a328e35548e55f4cc1a323f7262ef6e95fff08b5db06065f",
+      "v2k9": "444f422a9c033fbe375abc9bcd48cac4d9cf8ea79e9a09497a5c1ab35c77e43d",
+      "r8c3": "8b45a81e24cbe5a8dfbc260a7482fc54394041648577c8488d2ec7ddfb45b59d",
+      "m5x7": "6368ca670972498e261b7897b52f4564e5323658eaf421d3f106341f161671a3",
+      "h3p6": "77d768505ee666946a2c05e76a237568d524b3915f2bc925576e8d43ae561ce5",
+      "w9d2": "b8589a69f6b8d787de377533950a8102cab6ba7de1efc085027e960f2f8e0374",
+      "n4j8": "a7aeed2afa598baeab55ad6d8d44438c42680c70a81a3f74fed3a3d0267a7f7b"
+    }
+  }
+}

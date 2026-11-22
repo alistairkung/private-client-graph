@@ -1,0 +1,70 @@
+{
+  "cutoff": "2026-03-26T16:00:00+00:00",
+  "meeting_brief": "For the first substantive meeting, prepare a probate intake summary for Ivor Ellis Kestell’s estate using only material held at 4 pm on 26 March 2026. Set out what the file supports about the people and their family relationships, distinguish reported relationships from those supported by other records, and identify originals and other papers still to obtain.",
+  "sources": [
+    {
+      "id": "q7m4",
+      "title": "Initial enquiry about Ivor Kestell’s estate",
+      "perspective": "Tamsin Vera Kestell, named executor",
+      "recipient": "Enquiries, Hollin Sedge Legal",
+      "custody_path": "2 March 2026: emailed by Tamsin to the enquiries inbox and saved there under the estate name; sent copy retained by Tamsin.",
+      "genre": "Private opening enquiry modelled on the will, death and estate-administration details used in an England and Wales probate intake.",
+      "purpose": "Arrange an initial visit and explain what papers are ready and what remains outstanding."
+    },
+    {
+      "id": "v2k9",
+      "title": "Family update list",
+      "perspective": "Tamsin Vera Kestell, maintaining the estate’s family correspondence list",
+      "recipient": "Hollin Sedge Legal intake team",
+      "custody_path": "5 March 2026: prepared and emailed by Tamsin; filed as a separate contact sheet rather than added to the opening enquiry.",
+      "genre": "Executor’s private contact record; the headings and handling instructions are local to this file.",
+      "purpose": "Record the current names and communication preferences of two people on the family update list."
+    },
+    {
+      "id": "r8c3",
+      "title": "Family statement sent through the desk relay",
+      "perspective": "The sole attendee at conversation DP-7316, writing in the first person; the desk relay supplies the email wrapper.",
+      "recipient": "Tamsin Vera Kestell, nominated estate contact",
+      "custody_path": "12 March 2026: attendee entered and approved the text at the desk; the relay delivered it to Tamsin at 11:38. Tamsin retained that message and later forwarded it. On 26 March Tamsin supplied the native received copy to the adviser. The inline forward reproduces the displayed relay header and statement. Both received copies derive from the same attendee statement.",
+      "genre": "Firsthand family statement using a fictional community desk’s approved-text relay. The relay uses its own sending address and puts the conversation reference, not an attendee name or personal address, on the released message.",
+      "purpose": "Send the attendee’s own statement to the nominated estate contact in the form approved at the desk."
+    },
+    {
+      "id": "m5x7",
+      "title": "Single-row attendance extract",
+      "perspective": "Merrin Vale, registration keeper, Darnmere Papers Desk",
+      "recipient": "Tamsin Vera Kestell, nominated packet recipient",
+      "custody_path": "13 March 2026: issued electronically by the registration keeper to Tamsin, separately from the relay message. On 26 March, Tamsin brought a printout to Hollin Sedge Legal, which retained it.",
+      "genre": "Fictional local registration extract, maintained separately from statement text. Its field definitions are the desk’s own record convention.",
+      "purpose": "Release the attendance row and explain what its fields refer to without commenting on anything said during the session."
+    },
+    {
+      "id": "h3p6",
+      "title": "Forward of desk relay message",
+      "perspective": "Tamsin Vera Kestell, forwarding from her own inbox",
+      "recipient": "Hollin Sedge Legal intake team",
+      "custody_path": "17 March 2026: forwarded by Tamsin from the inbox that received the 12 March relay message; filed by Hollin Sedge Legal as an incoming email.",
+      "genre": "Ordinary email forward with the original displayed header and message text reproduced inline.",
+      "purpose": "Pass on the original relay message unchanged for attachment to the estate intake file.",
+      "origin_parent": "r8c3"
+    },
+    {
+      "id": "w9d2",
+      "title": "Records sighted and returned at intake",
+      "perspective": "Orla Fenwick, documents clerk, Hollin Sedge Legal",
+      "recipient": "Estate intake adviser, Hollin Sedge Legal",
+      "custody_path": "26 March 2026, 14:10: made at the counter while Tamsin presented the papers; signed slip filed internally and all three papers handed back to Tamsin before she left.",
+      "genre": "Fictional firm’s counter sighting slip. A sighting slip records what staff read and returned; it is not a certification or probate determination.",
+      "purpose": "Preserve the relevant details read directly from the papers and prevent uncertainty over where they were left."
+    },
+    {
+      "id": "n4j8",
+      "title": "Intake visit and brief for first substantive meeting",
+      "perspective": "Seth Calder, estate intake adviser, Hollin Sedge Legal",
+      "recipient": "Adviser assigned to the first substantive meeting",
+      "custody_path": "26 March 2026, 15:40: written after Tamsin’s intake visit and saved in the firm’s estate intake file.",
+      "genre": "Private pre-meeting attendance note and custody checklist under the fictional firm’s own intake procedure.",
+      "purpose": "Record the limited intake visit, set the scope of the first substantive meeting and flag outstanding papers."
+    }
+  ]
+}

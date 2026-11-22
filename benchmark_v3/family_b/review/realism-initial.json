@@ -1,0 +1,89 @@
+{
+  "status": "repair",
+  "per_source": [
+    {
+      "id": "q7m4",
+      "findings": [
+        "Tamsin Vera Kestell’s 2 March email to Hollin Sedge Legal is a credible opening enquiry from the named executor. The reported death on 18 February, balance request on 27 February and subsequent appointment enquiry form a coherent sequence. The firm holds the email, not the papers mentioned in it.",
+        "The preference to bring the original will rather than post it and the question about attending before the balance arrives are ordinary practical details. The will and death-entry details are initially Tamsin’s account and are later supported by the sighting slip. The email does not claim to enclose anything."
+      ]
+    },
+    {
+      "id": "v2k9",
+      "findings": [
+        "Tamsin’s 5 March email to the intake team works as a separately filed correspondence list. The instruction to relay updates separately without circulating contact details gives it a practical purpose. 'Complete' describes the update list, not Ivor’s family.",
+        "Tamsin reports that Leonie Tess Rindle and Nella Ruth Verrow are living and separately confirmed their current name spellings. The emphasis on exact names and a common corrections route is somewhat pointed, but credible for a contact record. Neither detail establishes kinship or identifies who used that route. The list is in the email body."
+      ]
+    },
+    {
+      "id": "r8c3",
+      "findings": [
+        "The sole attendee supplied and approved the first-person statement; the Darnmere Papers Desk supplied the email wrapper. The 12 March session start at 11:20 is distinct from the 11:38 delivery to Tamsin recorded in the ledger. The one-line statement fits a relay of approved text rather than a desk-authored account.",
+        "The shared-route To line is consistent with the stated local workflow if it is a display label rather than a list of actual recipients. It does not identify the author or establish who else received the message. The ledger records that Tamsin supplied the native received message to the adviser on 26 March. The statement reports parentage; it does not verify it."
+      ]
+    },
+    {
+      "id": "m5x7",
+      "findings": [
+        "Merrin Vale issued the extract to Tamsin on 13 March, separately from the relay. The firm retained the printout Tamsin brought on 26 March, not the underlying register or check-in record. The field definitions are unusually explicit for one row, but plausibly explain a local extract to an outside recipient; they do not establish a formal identity check.",
+        "In the first copy, '[not entered]' leaves the sole attendee unnamed. It does not establish that the desk never recorded or checked a name. In the second copy, the current-full-name field names Leonie Tess Rindle. The matching unique reference DP-7316, session time and single-attendee count support attributing the first-person statement to Leonie. The extract does not corroborate that Kellan Hugh Sorrel is her father."
+      ]
+    },
+    {
+      "id": "h3p6",
+      "findings": [
+        "Tamsin’s forward to the firm, filed on 17 March according to the ledger, has a credible filing purpose. Her statement that she was not present is unusually explicit but usefully distinguishes forwarding from witnessing.",
+        "The quoted header fields and statement match the supplied relay text. They are reproduced inline, not described as a native attachment. The separately supplied native message and the forward carry the same attendee’s account; neither is a second account. The visible match does not establish byte-for-byte identity of the email records."
+      ]
+    },
+    {
+      "id": "w9d2",
+      "findings": [
+        "Orla Fenwick’s internal slip records a plausible counter check at 14:10 on 26 March: what she read, when she read it and what she handed back. The firm retained the slip, not the signed original will or the two certified entries.",
+        "The death-entry details support Ivor Ellis Kestell’s address and date of death. The will dated 7 October 2021 names Tamsin as executor and outright residuary beneficiary and describes her as Ivor’s daughter. The separately sighted certified birth entry, Darnmere entry 284 for 1969, supports that relationship by naming Ivor as her father. The slip records a sighting, not certification by the firm or a determination of the will’s validity."
+      ]
+    },
+    {
+      "id": "n4j8",
+      "findings": [
+        "Seth Calder’s 15:40 internal handover is credible after the 14:10 intake visit and before the 16:00 cutoff. It correctly distinguishes sighted and returned papers from retained material, records that no application was started, and gives the next adviser a practical checklist. The explicit evidence distinctions are somewhat didactic but useful in a handover.",
+        "The first copy’s note correctly leaves the speaker unidentified and makes any request for a completed extract conditional on follow-up. In the second copy, the same note contradicts the named attendance row already in the file: it leaves the speaker unidentified and requests attendance evidence already held. Its separate conclusion that the reported parentage lacks independent support remains correct."
+      ]
+    }
+  ],
+  "limitations": [
+    "Neither copy establishes how Leonie Tess Rindle, Nella Ruth Verrow or Kellan Hugh Sorrel is related to Ivor. The update list is not a family tree, and the relay does not independently prove parentage.",
+    "The desk’s reference, check-in and routing conventions are plausible local practices as described in the packet. A named attendance row supports attribution under those conventions without proving the attendee’s legal identity or the truth of the statement.",
+    "The sighting slip supports the details transcribed from the three papers. It neither puts those papers in the firm’s custody nor establishes that they are all required for a probate application."
+  ],
+  "absent_items": [
+    {
+      "item": "Merewick Building Society’s date-of-death balance confirmation",
+      "position": "Requested on 27 February and still outstanding at intake in both copies."
+    },
+    {
+      "item": "Signed original will and certified birth and death entries",
+      "position": "Sighted and returned to Tamsin on 26 March. Obtain them back as needed; the firm holds the sighting slip only."
+    },
+    {
+      "item": "Completed attendance extract or equivalent desk confirmation identifying the DP-7316 attendee",
+      "position": "Absent from the first copy and worth seeking only if attribution needs follow-up. The second copy already contains the named extract."
+    },
+    {
+      "item": "Separate evidence of the reported parentage",
+      "position": "Absent from both copies. If the relationship matters, seek corroboration separately from any attendance evidence."
+    }
+  ],
+  "revision_tickets": [
+    {
+      "id": "n4j8",
+      "issue": "The second copy’s intake note contradicts the retained attendance extract and treats the attendee’s identity as still outstanding.",
+      "proposed_minimal_correction": "In the second copy only, attribute the statement to Leonie Tess Rindle by matching the named sole-attendee row to DP-7316 and the session time. Remove the request for a completed extract in that copy, but retain the qualification that the parentage is unverified and the conditional request for separate evidence."
+    },
+    {
+      "id": "r8c3",
+      "issue": "The custody ledger describes the inline forward as reproducing the native message’s 'same bytes', overstating what the supplied record shows about the forwarding boundary.",
+      "proposed_minimal_correction": "Say that the forward reproduces the displayed relay header and statement inline, and that the separately supplied native message and the forward derive from the same attendee statement."
+    }
+  ]
+}
