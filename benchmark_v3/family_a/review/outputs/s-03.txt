@@ -1,0 +1,7 @@
+At 14:20 BST on 17 September 2026, the supplied record does not establish a named current trustee of the **Wrenhollow Settlement** for either seat.
+
+- **First Seat:** No holder is identified.
+- **Second Seat:** Darren Brell is the documented founding holder and may still hold the seat. In **VJ3K**, Maren Voss certifies that “Darren Brell accepted the appointment in writing on 9 May 2023” and that she has “made no replacement appointment through 09:10 BST on 16 September 2026.” That certification does not cover the period up to the meeting cut-off or establish that Darren did not otherwise leave office.
+- **OC-517:** This instrument had neither retired its outgoing trustee nor appointed Tamsin Kell by the cut-off. **LX6R** says Tamsin accepts “only upon delivery under clause 2” and that “the retirement and appointment take effect simultaneously.” The 14:00 register extract (**MP2Z**), issued at 14:02, identifies the same sole executed original and records “release locked until 15:00 BST on 17 September 2026; no earlier release permitted.” The supplied excerpt does not name the outgoing trustee. The hold therefore rules out a change under OC-517, but does not resolve whether Darren remained, the seat was vacant, or someone else held it.
+
+**Bank authority:** No old mandate is supplied. Maren’s “sole power to appoint replacement trustees” (**VJ3K**) establishes neither trusteeship nor bank signing authority. Obtain the complete office record through the cut-off and verify the bank’s mandate separately before sending any instruction.

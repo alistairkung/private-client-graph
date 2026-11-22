@@ -1,0 +1,684 @@
+{
+  "schema_version": 1,
+  "family": "A",
+  "mode": "saved_ideal_replay",
+  "manifest_sha256": "b81002b2547ebb80c77bde6fd67191578eceeb558fcd2fb125746573db2538d4",
+  "freeze_sha256": "1d0e11cec8cb6227eada03543f95c3f73aad8e2093f84d296e4bb76e2e928489",
+  "preview": {
+    "input_mode": "saved",
+    "execution_mode": "replay",
+    "resolver": "none",
+    "maximum_paid_slots": 0,
+    "planned_observations": 3,
+    "sourced_prompt_sha256": "d67afaeb19c26448a6779d9576800cc50ca399c634ad81a1a02b847be0a9dfae",
+    "inputs": [
+      {
+        "id": "benchmark_v3_a0",
+        "source_count": 7,
+        "ordered_sources_sha256": "b913d728e62023cf6430f17b9e46a09e2017c98e4aa27c1298002747e25fdeac",
+        "source_body_sha256": {
+          "QF8M": "638057d12d9c197e86e9cb722e1adb1910d78217c85f81d672812d50343a2bfe",
+          "VJ3K": "733dac36de08db15ede483205796c325dacea9ceb3d8a44664f77d61cc32e2ec",
+          "LX6R": "f68a028364c1ab0c4f861eba4593ec5c2a57dee471fd08bc01be41eb1cdc942b",
+          "HC9W": "84990332ecc5f16134b6573d7d7d402e403f7f825affe153c9790e059aa3c09d",
+          "BD4T": "4579a91dffaf216766ad055881785377d07a7d9119df5a4906b6cc0f434eb6ca",
+          "MP2Z": "ff0792679e7ca3e42baa2849471c07939f1fca515aa2702468682965d0419d48",
+          "SY7G": "c82024d880fd22862abd5bb87d9cd97cff2e5297d2fff4bf85168905b5d45b6f"
+        },
+        "messages_sha256": "4546ce89970c38b036bc4e3bb22a95cd1bc9243347ee6ce67cbe4a78f031191b",
+        "message_bytes": 12835,
+        "estimated_message_tokens": 3209
+      },
+      {
+        "id": "benchmark_v3_a1",
+        "source_count": 7,
+        "ordered_sources_sha256": "537ca992e2a24787fd8a151be811af9766bd58635b88244aa481181bf0f7909e",
+        "source_body_sha256": {
+          "SY7G": "c82024d880fd22862abd5bb87d9cd97cff2e5297d2fff4bf85168905b5d45b6f",
+          "MP2Z": "ff0792679e7ca3e42baa2849471c07939f1fca515aa2702468682965d0419d48",
+          "BD4T": "4579a91dffaf216766ad055881785377d07a7d9119df5a4906b6cc0f434eb6ca",
+          "HC9W": "84990332ecc5f16134b6573d7d7d402e403f7f825affe153c9790e059aa3c09d",
+          "VJ3K": "733dac36de08db15ede483205796c325dacea9ceb3d8a44664f77d61cc32e2ec",
+          "QF8M": "638057d12d9c197e86e9cb722e1adb1910d78217c85f81d672812d50343a2bfe",
+          "LX6R": "f68a028364c1ab0c4f861eba4593ec5c2a57dee471fd08bc01be41eb1cdc942b"
+        },
+        "messages_sha256": "81af1a4bbbe1bc4d638c06d6e2cf28f6cafee22a7d7f1f7d8769acb9f021dedc",
+        "message_bytes": 12835,
+        "estimated_message_tokens": 3209
+      },
+      {
+        "id": "benchmark_v3_a2",
+        "source_count": 7,
+        "ordered_sources_sha256": "1b52ad474b357afcbc593d46489178cd400d68e1b8e077c8d53b2a5f30dd30c1",
+        "source_body_sha256": {
+          "QF8M": "638057d12d9c197e86e9cb722e1adb1910d78217c85f81d672812d50343a2bfe",
+          "VJ3K": "733dac36de08db15ede483205796c325dacea9ceb3d8a44664f77d61cc32e2ec",
+          "LX6R": "f68a028364c1ab0c4f861eba4593ec5c2a57dee471fd08bc01be41eb1cdc942b",
+          "HC9W": "84990332ecc5f16134b6573d7d7d402e403f7f825affe153c9790e059aa3c09d",
+          "BD4T": "4579a91dffaf216766ad055881785377d07a7d9119df5a4906b6cc0f434eb6ca",
+          "MP2Z": "e08ff9a2ea14b3baaff8ce3b231be5b5bedceb781ffd241ad9d4f8c17d8ff7d2",
+          "SY7G": "c82024d880fd22862abd5bb87d9cd97cff2e5297d2fff4bf85168905b5d45b6f"
+        },
+        "messages_sha256": "1ac515398aa7f75f0acee6cd89cf8a1530ce7cf4ce6025dcd76180af4d6beaeb",
+        "message_bytes": 12882,
+        "estimated_message_tokens": 3221
+      }
+    ],
+    "token_estimate": "Ceiling of UTF-8 message bytes divided by four, excluding schema and framing."
+  },
+  "paid_attempts": 0,
+  "run_path": "run",
+  "run_artifact_digest": "5bcb0913320e0ef7704216e7c2e5c7c70e4224ef512a42de92ce49600d4b9819",
+  "aggregate": {
+    "coverage": {
+      "planned": 3,
+      "scored": 3,
+      "pending": 0,
+      "failed": 0,
+      "uncertain": 0,
+      "unavailable": 0
+    },
+    "tp": 9,
+    "fp": 0,
+    "fn": 0,
+    "micro_precision": 1.0,
+    "micro_recall": 1.0,
+    "micro_f1": 1.0
+  },
+  "conditions": [
+    {
+      "condition": "A0",
+      "sample_id": "benchmark_v3_a0",
+      "condition_sha256": "7a501b57a13f852ac54c30397ef75c7b3c105ebe14ccd6e2b491e7755c44b07d",
+      "ordered_sources_sha256": "b913d728e62023cf6430f17b9e46a09e2017c98e4aa27c1298002747e25fdeac",
+      "annotation_sha256": {
+        "truth": "c0de74116af2ba835de4a6fcacc1c1f0bc921bcc1121a338a73602fdd027ef67",
+        "source_approval": "a85a14472c0361acd7db8e770b52d551f14a10d28cf12f98a8e1a946aada4a74",
+        "sufficient_evidence": "9d8fe7fd9bfbe5e58cdc0a4fe12b3353b9f75d24535ff6f545d9711fcd19c47e"
+      },
+      "planned": 1,
+      "attempted": 1,
+      "scored": 1,
+      "exact_graph": true,
+      "graph": {
+        "tp": 3,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "true_positive_edges": [
+          [
+            "Darren Brell",
+            "sibling_of",
+            "Iona Brell"
+          ],
+          [
+            "Iona Brell",
+            "trustee_of",
+            "Wrenhollow Settlement"
+          ],
+          [
+            "Tamsin Kell",
+            "trustee_of",
+            "Wrenhollow Settlement"
+          ]
+        ],
+        "false_positive_edges": [],
+        "false_negative_edges": [],
+        "provenance_passed": 2,
+        "provenance_failed": 1,
+        "provenance_accuracy": 0.6666666666666666,
+        "provenance_passes": [
+          [
+            "Darren Brell",
+            "sibling_of",
+            "Iona Brell"
+          ],
+          [
+            "Iona Brell",
+            "trustee_of",
+            "Wrenhollow Settlement"
+          ]
+        ],
+        "provenance_failures": [
+          [
+            "Tamsin Kell",
+            "trustee_of",
+            "Wrenhollow Settlement"
+          ]
+        ]
+      },
+      "decisions": {
+        "required": [
+          [
+            "Tamsin Kell",
+            "trustee_of",
+            "Wrenhollow Settlement"
+          ]
+        ],
+        "forbidden": [
+          [
+            "Darren Brell",
+            "trustee_of",
+            "Wrenhollow Settlement"
+          ]
+        ],
+        "unaffected": [
+          [
+            "Darren Brell",
+            "sibling_of",
+            "Iona Brell"
+          ],
+          [
+            "Iona Brell",
+            "trustee_of",
+            "Wrenhollow Settlement"
+          ]
+        ],
+        "required_present": [
+          [
+            "Tamsin Kell",
+            "trustee_of",
+            "Wrenhollow Settlement"
+          ]
+        ],
+        "forbidden_present": [],
+        "unaffected_present": [
+          [
+            "Darren Brell",
+            "sibling_of",
+            "Iona Brell"
+          ],
+          [
+            "Iona Brell",
+            "trustee_of",
+            "Wrenhollow Settlement"
+          ]
+        ]
+      },
+      "ordinary_evidence": {
+        "version": "benchmark_v2_evidence_v1",
+        "not_applicable": [
+          [
+            "Tamsin Kell",
+            "trustee_of",
+            "Wrenhollow Settlement"
+          ]
+        ],
+        "quotation": {
+          "assessed": 2,
+          "passed": 2,
+          "failed": 0,
+          "accuracy": 1.0,
+          "passes": [
+            [
+              "Darren Brell",
+              "sibling_of",
+              "Iona Brell"
+            ],
+            [
+              "Iona Brell",
+              "trustee_of",
+              "Wrenhollow Settlement"
+            ]
+          ],
+          "failures": []
+        },
+        "source_attribution": {
+          "version": "source_attribution_v1",
+          "assessed": 2,
+          "passed": 2,
+          "failed": 0,
+          "accuracy": 1.0,
+          "failures": []
+        },
+        "sufficiency": {
+          "version": "attached_sufficient_set_v1",
+          "planned": 1,
+          "assessed": 1,
+          "complete": 1,
+          "incomplete": 0,
+          "missed": 0,
+          "complete_over_correct": 1.0,
+          "complete_over_planned": 1.0,
+          "targets": [
+            {
+              "edge": [
+                "Tamsin Kell",
+                "trustee_of",
+                "Wrenhollow Settlement"
+              ],
+              "status": "complete",
+              "missing_by_alternative": []
+            }
+          ]
+        }
+      },
+      "legacy_source_attribution": null,
+      "runtime_seconds": 0.0003819582052528858,
+      "usage": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "cached_tokens": 0
+      },
+      "incremental_cost": 0.0
+    },
+    {
+      "condition": "A1",
+      "sample_id": "benchmark_v3_a1",
+      "condition_sha256": "0d3d78bd3dc78d87c661752659d17027e1b6ac59a91ca47e1b2f4e52f7f80213",
+      "ordered_sources_sha256": "537ca992e2a24787fd8a151be811af9766bd58635b88244aa481181bf0f7909e",
+      "annotation_sha256": {
+        "truth": "c0de74116af2ba835de4a6fcacc1c1f0bc921bcc1121a338a73602fdd027ef67",
+        "source_approval": "a85a14472c0361acd7db8e770b52d551f14a10d28cf12f98a8e1a946aada4a74",
+        "sufficient_evidence": "9d8fe7fd9bfbe5e58cdc0a4fe12b3353b9f75d24535ff6f545d9711fcd19c47e"
+      },
+      "planned": 1,
+      "attempted": 1,
+      "scored": 1,
+      "exact_graph": true,
+      "graph": {
+        "tp": 3,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "true_positive_edges": [
+          [
+            "Darren Brell",
+            "sibling_of",
+            "Iona Brell"
+          ],
+          [
+            "Iona Brell",
+            "trustee_of",
+            "Wrenhollow Settlement"
+          ],
+          [
+            "Tamsin Kell",
+            "trustee_of",
+            "Wrenhollow Settlement"
+          ]
+        ],
+        "false_positive_edges": [],
+        "false_negative_edges": [],
+        "provenance_passed": 2,
+        "provenance_failed": 1,
+        "provenance_accuracy": 0.6666666666666666,
+        "provenance_passes": [
+          [
+            "Darren Brell",
+            "sibling_of",
+            "Iona Brell"
+          ],
+          [
+            "Iona Brell",
+            "trustee_of",
+            "Wrenhollow Settlement"
+          ]
+        ],
+        "provenance_failures": [
+          [
+            "Tamsin Kell",
+            "trustee_of",
+            "Wrenhollow Settlement"
+          ]
+        ]
+      },
+      "decisions": {
+        "required": [
+          [
+            "Tamsin Kell",
+            "trustee_of",
+            "Wrenhollow Settlement"
+          ]
+        ],
+        "forbidden": [
+          [
+            "Darren Brell",
+            "trustee_of",
+            "Wrenhollow Settlement"
+          ]
+        ],
+        "unaffected": [
+          [
+            "Darren Brell",
+            "sibling_of",
+            "Iona Brell"
+          ],
+          [
+            "Iona Brell",
+            "trustee_of",
+            "Wrenhollow Settlement"
+          ]
+        ],
+        "required_present": [
+          [
+            "Tamsin Kell",
+            "trustee_of",
+            "Wrenhollow Settlement"
+          ]
+        ],
+        "forbidden_present": [],
+        "unaffected_present": [
+          [
+            "Darren Brell",
+            "sibling_of",
+            "Iona Brell"
+          ],
+          [
+            "Iona Brell",
+            "trustee_of",
+            "Wrenhollow Settlement"
+          ]
+        ]
+      },
+      "ordinary_evidence": {
+        "version": "benchmark_v2_evidence_v1",
+        "not_applicable": [
+          [
+            "Tamsin Kell",
+            "trustee_of",
+            "Wrenhollow Settlement"
+          ]
+        ],
+        "quotation": {
+          "assessed": 2,
+          "passed": 2,
+          "failed": 0,
+          "accuracy": 1.0,
+          "passes": [
+            [
+              "Darren Brell",
+              "sibling_of",
+              "Iona Brell"
+            ],
+            [
+              "Iona Brell",
+              "trustee_of",
+              "Wrenhollow Settlement"
+            ]
+          ],
+          "failures": []
+        },
+        "source_attribution": {
+          "version": "source_attribution_v1",
+          "assessed": 2,
+          "passed": 2,
+          "failed": 0,
+          "accuracy": 1.0,
+          "failures": []
+        },
+        "sufficiency": {
+          "version": "attached_sufficient_set_v1",
+          "planned": 1,
+          "assessed": 1,
+          "complete": 1,
+          "incomplete": 0,
+          "missed": 0,
+          "complete_over_correct": 1.0,
+          "complete_over_planned": 1.0,
+          "targets": [
+            {
+              "edge": [
+                "Tamsin Kell",
+                "trustee_of",
+                "Wrenhollow Settlement"
+              ],
+              "status": "complete",
+              "missing_by_alternative": []
+            }
+          ]
+        }
+      },
+      "legacy_source_attribution": null,
+      "runtime_seconds": 0.00010741711594164371,
+      "usage": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "cached_tokens": 0
+      },
+      "incremental_cost": 0.0
+    },
+    {
+      "condition": "A2",
+      "sample_id": "benchmark_v3_a2",
+      "condition_sha256": "f21ad438482b05c0d35b034c521011c8f4f5da6f07ec392feaa9d86a1214fdc2",
+      "ordered_sources_sha256": "1b52ad474b357afcbc593d46489178cd400d68e1b8e077c8d53b2a5f30dd30c1",
+      "annotation_sha256": {
+        "truth": "eccc06ae33c94cd0994ed0f51cb78fb17db64ea3532e5102be03ee583ddfa296",
+        "source_approval": "a85a14472c0361acd7db8e770b52d551f14a10d28cf12f98a8e1a946aada4a74",
+        "sufficient_evidence": "8e36411998996c292b330bc768c6f9a76142850abd5a2e073ef3e1aef1db25a3"
+      },
+      "planned": 1,
+      "attempted": 1,
+      "scored": 1,
+      "exact_graph": true,
+      "graph": {
+        "tp": 3,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "true_positive_edges": [
+          [
+            "Darren Brell",
+            "sibling_of",
+            "Iona Brell"
+          ],
+          [
+            "Darren Brell",
+            "trustee_of",
+            "Wrenhollow Settlement"
+          ],
+          [
+            "Iona Brell",
+            "trustee_of",
+            "Wrenhollow Settlement"
+          ]
+        ],
+        "false_positive_edges": [],
+        "false_negative_edges": [],
+        "provenance_passed": 2,
+        "provenance_failed": 1,
+        "provenance_accuracy": 0.6666666666666666,
+        "provenance_passes": [
+          [
+            "Darren Brell",
+            "sibling_of",
+            "Iona Brell"
+          ],
+          [
+            "Iona Brell",
+            "trustee_of",
+            "Wrenhollow Settlement"
+          ]
+        ],
+        "provenance_failures": [
+          [
+            "Darren Brell",
+            "trustee_of",
+            "Wrenhollow Settlement"
+          ]
+        ]
+      },
+      "decisions": {
+        "required": [
+          [
+            "Darren Brell",
+            "trustee_of",
+            "Wrenhollow Settlement"
+          ]
+        ],
+        "forbidden": [
+          [
+            "Tamsin Kell",
+            "trustee_of",
+            "Wrenhollow Settlement"
+          ]
+        ],
+        "unaffected": [
+          [
+            "Darren Brell",
+            "sibling_of",
+            "Iona Brell"
+          ],
+          [
+            "Iona Brell",
+            "trustee_of",
+            "Wrenhollow Settlement"
+          ]
+        ],
+        "required_present": [
+          [
+            "Darren Brell",
+            "trustee_of",
+            "Wrenhollow Settlement"
+          ]
+        ],
+        "forbidden_present": [],
+        "unaffected_present": [
+          [
+            "Darren Brell",
+            "sibling_of",
+            "Iona Brell"
+          ],
+          [
+            "Iona Brell",
+            "trustee_of",
+            "Wrenhollow Settlement"
+          ]
+        ]
+      },
+      "ordinary_evidence": {
+        "version": "benchmark_v2_evidence_v1",
+        "not_applicable": [
+          [
+            "Darren Brell",
+            "trustee_of",
+            "Wrenhollow Settlement"
+          ]
+        ],
+        "quotation": {
+          "assessed": 2,
+          "passed": 2,
+          "failed": 0,
+          "accuracy": 1.0,
+          "passes": [
+            [
+              "Darren Brell",
+              "sibling_of",
+              "Iona Brell"
+            ],
+            [
+              "Iona Brell",
+              "trustee_of",
+              "Wrenhollow Settlement"
+            ]
+          ],
+          "failures": []
+        },
+        "source_attribution": {
+          "version": "source_attribution_v1",
+          "assessed": 2,
+          "passed": 2,
+          "failed": 0,
+          "accuracy": 1.0,
+          "failures": []
+        },
+        "sufficiency": {
+          "version": "attached_sufficient_set_v1",
+          "planned": 1,
+          "assessed": 1,
+          "complete": 1,
+          "incomplete": 0,
+          "missed": 0,
+          "complete_over_correct": 1.0,
+          "complete_over_planned": 1.0,
+          "targets": [
+            {
+              "edge": [
+                "Darren Brell",
+                "trustee_of",
+                "Wrenhollow Settlement"
+              ],
+              "status": "complete",
+              "missing_by_alternative": []
+            }
+          ]
+        }
+      },
+      "legacy_source_attribution": null,
+      "runtime_seconds": 8.283322677016258e-05,
+      "usage": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "cached_tokens": 0
+      },
+      "incremental_cost": 0.0
+    }
+  ],
+  "matches": {
+    "invariance": {
+      "pair": [
+        "A0",
+        "A1"
+      ],
+      "passed": true,
+      "edges": [
+        [
+          "Darren Brell",
+          "sibling_of",
+          "Iona Brell"
+        ],
+        [
+          "Iona Brell",
+          "trustee_of",
+          "Wrenhollow Settlement"
+        ],
+        [
+          "Tamsin Kell",
+          "trustee_of",
+          "Wrenhollow Settlement"
+        ]
+      ]
+    },
+    "sensitivity": {
+      "pair": [
+        "A0",
+        "A2"
+      ],
+      "passed": true,
+      "removed": [
+        [
+          "Tamsin Kell",
+          "trustee_of",
+          "Wrenhollow Settlement"
+        ]
+      ],
+      "added": [
+        [
+          "Darren Brell",
+          "trustee_of",
+          "Wrenhollow Settlement"
+        ]
+      ],
+      "unaffected": [
+        [
+          "Darren Brell",
+          "sibling_of",
+          "Iona Brell"
+        ],
+        [
+          "Iona Brell",
+          "trustee_of",
+          "Wrenhollow Settlement"
+        ]
+      ],
+      "changed_source_id": "MP2Z"
+    }
+  }
+}

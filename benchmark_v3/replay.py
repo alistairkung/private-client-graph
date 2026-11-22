@@ -24,6 +24,10 @@ from .replay_evidence import assess_evidence
 from .replay_manifest import CONDITIONS, ConditionId, VerifiedCondition, VerifiedFamily, load_family
 
 
+# benchmark_v2/baseline.json at the protocol's frozen c4a21e5f revision.
+FROZEN_SOURCED_PROMPT_SHA256 = 'd67afaeb19c26448a6779d9576800cc50ca399c634ad81a1a02b847be0a9dfae'
+
+
 def preflight(manifest: Path, artifacts: Path) -> dict[str, Any]:
     """Verify the matched inputs, replay the saved ideals, and audit the reopened Run."""
     family = load_family(manifest)
@@ -76,6 +80,8 @@ def _make_preview(plan: RunPlan) -> dict[str, Any]:
     if plan.maximum_attempts or plan.max_calls or plan.invocation_cap or plan.task_call_cap:
         raise ValueError('The saved replay preview must authorize zero paid slots')
     prompt_digest = checksum(SOURCED_EXTRACTION_PROMPT.encode('utf-8'))
+    if prompt_digest != FROZEN_SOURCED_PROMPT_SHA256:
+        raise ValueError('Sourced extraction prompt differs from the frozen baseline')
     inputs = []
     for sample in plan.inputs:
         assert sample.sources is not None

@@ -273,3 +273,11 @@ def test_audits_individual_source_and_semantic_declarations(package, tmp_path, f
     _write(manifest_path, manifest)
     with pytest.raises(ValueError, match='Source commitment mismatch|switch differs'):
         replay.preflight(manifest_path, tmp_path / 'artifacts')
+
+
+def test_excludes_changed_sourced_prompt_before_run_creation(package, tmp_path, monkeypatch):
+    monkeypatch.setattr(replay, 'SOURCED_EXTRACTION_PROMPT', 'A changed prompt')
+    artifacts = tmp_path / 'artifacts'
+    with pytest.raises(ValueError, match='differs from the frozen baseline'):
+        replay.preflight(_freeze(package), artifacts)
+    assert not artifacts.exists()

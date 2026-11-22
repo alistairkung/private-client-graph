@@ -1,0 +1,226 @@
+[
+  {
+    "reader": "m-09",
+    "origin": "A0",
+    "purpose": "Remove every identifying join across the instrument, diary and register. Preserve named parties, operative effects and disposition. Test whether the file selects the relevant row by indirect association or elimination.",
+    "changes": [
+      {
+        "source_id": "LX6R",
+        "field": "text",
+        "old": "Perrin Saye of Orrel Document Custody",
+        "new": "[particulars unavailable]"
+      },
+      {
+        "source_id": "LX6R",
+        "field": "text",
+        "old": "Perrin Saye",
+        "new": "[particulars unavailable]"
+      },
+      {
+        "source_id": "LX6R",
+        "field": "text",
+        "old": "Orrel Document Custody",
+        "new": "[particulars unavailable]"
+      },
+      {
+        "source_id": "LX6R",
+        "field": "text",
+        "old": "OC-517",
+        "new": "[particulars unavailable]"
+      },
+      {
+        "source_id": "HC9W",
+        "field": "text",
+        "old": "Perrin Saye at Orrel Document Custody",
+        "new": "[particulars unavailable]"
+      },
+      {
+        "source_id": "HC9W",
+        "field": "text",
+        "old": "OC-517",
+        "new": "[particulars unavailable]"
+      },
+      {
+        "source_id": "MP2Z",
+        "field": "text",
+        "old": "# Orrel Document Custody",
+        "new": "[particulars unavailable]"
+      },
+      {
+        "source_id": "MP2Z",
+        "field": "text",
+        "old": "## Custody Register Extract — Wrenhollow Settlement",
+        "new": "[particulars unavailable]"
+      },
+      {
+        "source_id": "MP2Z",
+        "field": "text",
+        "old": "**Requested by:** Jules Neston, Fennick Vale Solicitors  ",
+        "new": "**Requested by:** [particulars unavailable]"
+      },
+      {
+        "source_id": "MP2Z",
+        "field": "text",
+        "old": "**Issued by:** Perrin Saye, Orrel Document Custody  ",
+        "new": "**Issued by:** [particulars unavailable]"
+      },
+      {
+        "source_id": "MP2Z",
+        "field": "text",
+        "old": "**Register:** Escrow control register used by clause 2  ",
+        "new": "**Register:** [particulars unavailable]"
+      },
+      {
+        "source_id": "MP2Z",
+        "field": "text",
+        "old": "**Instrument:** Second Seat — Instrument of retirement and replacement appointment, dated 16 September 2026  ",
+        "new": "**Instrument:** [particulars unavailable]"
+      },
+      {
+        "source_id": "MP2Z",
+        "field": "text",
+        "old": "**Escrow reference:** OC-517  ",
+        "new": "**Escrow reference:** [particulars unavailable]"
+      },
+      {
+        "source_id": "MP2Z",
+        "field": "text",
+        "old": "**Operator:** Perrin Saye  ",
+        "new": "**Operator:** [particulars unavailable]"
+      },
+      {
+        "source_id": "MP2Z",
+        "field": "title",
+        "old": "Escrow disposition register extract",
+        "new": "Register extract"
+      },
+      {
+        "source_id": "MP2Z",
+        "field": "text",
+        "old": "at Orrel Document Custody",
+        "new": "[custody location unavailable]"
+      },
+      {
+        "source_id": "MP2Z",
+        "field": "text",
+        "old": "under clause 2",
+        "new": "[clause reference unavailable]"
+      }
+    ],
+    "keep_sources": null,
+    "brief_edit": null,
+    "ordered_sha256": "52e24fa6d0292835beb7fd7ed56504c23909b2603418b203157f4a0c7cd070a7"
+  },
+  {
+    "reader": "m-10",
+    "origin": "A2",
+    "purpose": "Remove every identifying join across the instrument, diary and register. Preserve named parties, operative effects and disposition. Test whether the file selects the relevant row by indirect association or elimination.",
+    "changes": [
+      {
+        "source_id": "LX6R",
+        "field": "text",
+        "old": "Perrin Saye of Orrel Document Custody",
+        "new": "[particulars unavailable]"
+      },
+      {
+        "source_id": "LX6R",
+        "field": "text",
+        "old": "Perrin Saye",
+        "new": "[particulars unavailable]"
+      },
+      {
+        "source_id": "LX6R",
+        "field": "text",
+        "old": "Orrel Document Custody",
+        "new": "[particulars unavailable]"
+      },
+      {
+        "source_id": "LX6R",
+        "field": "text",
+        "old": "OC-517",
+        "new": "[particulars unavailable]"
+      },
+      {
+        "source_id": "HC9W",
+        "field": "text",
+        "old": "Perrin Saye at Orrel Document Custody",
+        "new": "[particulars unavailable]"
+      },
+      {
+        "source_id": "HC9W",
+        "field": "text",
+        "old": "OC-517",
+        "new": "[particulars unavailable]"
+      },
+      {
+        "source_id": "MP2Z",
+        "field": "text",
+        "old": "# Orrel Document Custody",
+        "new": "[particulars unavailable]"
+      },
+      {
+        "source_id": "MP2Z",
+        "field": "text",
+        "old": "## Custody Register Extract — Wrenhollow Settlement",
+        "new": "[particulars unavailable]"
+      },
+      {
+        "source_id": "MP2Z",
+        "field": "text",
+        "old": "**Requested by:** Jules Neston, Fennick Vale Solicitors  ",
+        "new": "**Requested by:** [particulars unavailable]"
+      },
+      {
+        "source_id": "MP2Z",
+        "field": "text",
+        "old": "**Issued by:** Perrin Saye, Orrel Document Custody  ",
+        "new": "**Issued by:** [particulars unavailable]"
+      },
+      {
+        "source_id": "MP2Z",
+        "field": "text",
+        "old": "**Register:** Escrow control register used by clause 2  ",
+        "new": "**Register:** [particulars unavailable]"
+      },
+      {
+        "source_id": "MP2Z",
+        "field": "text",
+        "old": "**Instrument:** Second Seat — Instrument of retirement and replacement appointment, dated 16 September 2026  ",
+        "new": "**Instrument:** [particulars unavailable]"
+      },
+      {
+        "source_id": "MP2Z",
+        "field": "text",
+        "old": "**Escrow reference:** OC-517  ",
+        "new": "**Escrow reference:** [particulars unavailable]"
+      },
+      {
+        "source_id": "MP2Z",
+        "field": "text",
+        "old": "**Operator:** Perrin Saye  ",
+        "new": "**Operator:** [particulars unavailable]"
+      },
+      {
+        "source_id": "MP2Z",
+        "field": "title",
+        "old": "Escrow disposition register extract",
+        "new": "Register extract"
+      },
+      {
+        "source_id": "MP2Z",
+        "field": "text",
+        "old": "at Orrel Document Custody",
+        "new": "[custody location unavailable]"
+      },
+      {
+        "source_id": "MP2Z",
+        "field": "text",
+        "old": "under clause 2",
+        "new": "[clause reference unavailable]"
+      }
+    ],
+    "keep_sources": null,
+    "brief_edit": null,
+    "ordered_sha256": "b2413fd132ea6030c6ab7cd5d8c42f81a73267cd3c5b53ff8f860eae185ee56c"
+  }
+]

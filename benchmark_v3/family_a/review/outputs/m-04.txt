@@ -1,0 +1,8 @@
+At 14:20 BST on 17 September 2026, **Iona Brell held the First Seat and Tamsin Kell held the Second Seat** of the trust identified as **[settlement name unavailable]**. The record does not disclose its name.
+
+- **Iona Brell — `trustee_of` — [settlement name unavailable].** LX6R independently states: “Iona Brell’s First Seat is unaffected.” VJ3K records her founding appointment and acceptance, but its certification does not extend beyond 09:10 BST on 16 September.
+- **Tamsin Kell — `trustee_of` — [settlement name unavailable].** The sufficient set is **LX6R + MP2Z**; neither suffices alone (standalone quotation and attribution: N/A). LX6R makes the handover effective “only upon delivery under clause 2” and specifies entry of “**RELEASED** against that sole original in the escrow control register.” MP2Z identifies that register and original as OC-517 and reports “RELEASED — 12:20 BST on 17 September 2026”. Perrin Saye committed the entry; the register cannot commit a release while time-locked. Darren Brell therefore ceased to hold the seat at 12:20. The register extract covers through 14:00; retained custody does not negate delivery, and nothing supplied shows a later change.
+
+**Bank authority:** QF8M names Iona Brell and Darren Brell and states “both signatories must authorise a payment instruction”. HC9W’s pencilled substitution is only a draft. No bank mandate change is established; verify Lintmere’s requirements before sending instructions.
+
+**Incidental edge:** Iona Brell — `sibling_of` — Darren Brell (symmetric). SY7G, signed “Iona Brell”: “Darren Brell is my brother.”

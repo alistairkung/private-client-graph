@@ -1,0 +1,8 @@
+The records identify the same trust as **[settlement name unavailable]**. Its exact name cannot be established from the packet.
+
+- **First Seat — Iona Brell, trustee of that settlement at 14:20 BST.** LX6R independently states, “Iona Brell’s First Seat is unaffected.” VJ3K corroborates the founding appointment: “Iona Brell accepted the appointment in writing on 9 May 2023.” Its no-replacement certification ends at 09:10 BST on 16 September.
+- **Second Seat — Darren Brell, trustee of that settlement at 14:20 BST; Tamsin Kell had not taken office.** The sufficient set is **LX6R + MP2Z**; neither alone establishes the cut-off holder (ordinary quotation and attribution: N/A). LX6R: “Darren Brell retires from that seat and Tamsin Kell accepts appointment to it, in each case only upon delivery under clause 2.” Delivery requires Perrin Saye’s permitted RELEASED entry for OC-517. MP2Z: “HOLD — release locked until 15:00 BST on 17 September 2026; no earlier release permitted”. The snapshot ends at 14:00, but the lock rules out delivery by 14:20. Signing and circulating copies do not deliver the instrument; the file does not establish whether release occurred later.
+
+**Bank mandate, separately:** QF8M records the opening position: “Iona Brell and Darren Brell are the two named signatories for the settlement account.” Both had to authorise payments. HC9W’s pencilled substitution is a draft, not proof of a mandate change. Verify the live mandate before sending instructions.
+
+**Family relationship:** SY7G (“From: Iona Brell”) independently establishes that Iona Brell and Darren Brell are siblings: “Darren Brell is my brother.”

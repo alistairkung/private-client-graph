@@ -1,0 +1,7 @@
+**At 14:20 BST on 17 September 2026, the supplied record establishes no named trustee of the Wrenhollow Settlement.** It does not identify a first-seat holder, name the second-seat incumbent, or expressly link instrument OC-517 to the Wrenhollow Settlement.
+
+**Second seat:** LX6R says, “Tamsin Kell accepts appointment to it, in each case only upon delivery under clause 2.” It identifies “the sole executed original under reference OC-517” and says, “That entry, when permitted by the escrow controls, is the sole act of delivery.” MP2Z identifies OC-517 as the second-seat instrument, names Perrin Saye as operator, and records “HOLD — release locked until 15:00 BST on 17 September 2026; no earlier release permitted”. The register snapshot was as of 14:00 and issued at 14:02; actual receipt time is not shown.
+
+Together, those passages rule out Tamsin taking office **under OC-517** by the cut-off. The instrument likewise had not effected the incumbent’s retirement. Whoever validly held that seat would remain in it absent a separate effective change; the file does not establish who that was, whether there was a vacancy, or whether another instrument affected either seat. Perrin’s custody and release role does not establish trusteeship.
+
+**Old bank authority:** Neither excerpt establishes who could act under the existing Lintmere Bank mandate or whether that authority remained current. Verify the trust and seat holders from the governing records, and verify the bank mandate separately before sending any amendment.

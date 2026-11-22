@@ -1,0 +1,137 @@
+{
+  "condition": "A0",
+  "truth": {
+    "entities": [
+      {
+        "id": "person_darren_brell",
+        "type": "person",
+        "name": "Darren Brell"
+      },
+      {
+        "id": "person_iona_brell",
+        "type": "person",
+        "name": "Iona Brell"
+      },
+      {
+        "id": "person_tamsin_kell",
+        "type": "person",
+        "name": "Tamsin Kell"
+      },
+      {
+        "id": "trust_wrenhollow_settlement",
+        "type": "trust",
+        "name": "Wrenhollow Settlement"
+      }
+    ],
+    "relationships": [
+      {
+        "source": "person_darren_brell",
+        "type": "sibling_of",
+        "target": "person_iona_brell",
+        "approved_evidence": [
+          "Darren Brell is my brother. We both used 18 Alder Mews for trust post at the time, and I remember us sharing and sorting that post. I mention this only to explain the duplicate index, not as evidence of identity or authority.\n\nPlease include the full name and statement period in each file label so I can match the copies to the reconciliation records. If you need more information to locate the packs, or if there are verification steps before you can release them, please let me know what you need and how to provide it securely.\n\nThis is a request for archived copies only. I’m not asking for any change to the address or mandate.\n\nKind regards,  \nIona Brell"
+        ]
+      },
+      {
+        "source": "person_iona_brell",
+        "type": "trustee_of",
+        "target": "trust_wrenhollow_settlement",
+        "approved_evidence": [
+          "**Wrenhollow Settlement**  \n**Certified extract from the office book**\n\nTo: Jules Neston, Fennick Vale Solicitors  \nFrom: Maren Voss, keeper of the office book  \nDate and time of extract: 16 September 2026, 09:10 BST  \nPurpose: Standing-records request\n\n**Founding record**\n\n**First Seat — Iona Brell.** The founding record names Iona Brell as the founding trustee for the First Seat. Iona Brell accepted the appointment in writing on 9 May 2023.",
+          "Maren Voss, exercising the sole power under the Wrenhollow Settlement to appoint replacement trustees, appoints Tamsin Kell in place of Darren Brell in the Second Seat. Darren Brell retires from that seat and Tamsin Kell accepts appointment to it, in each case only upon delivery under clause 2. At that act alone, the retirement and appointment take effect simultaneously: Darren ceases to hold the Second Seat and Tamsin alone holds it in his place. Iona Brell’s First Seat is unaffected."
+        ]
+      },
+      {
+        "source": "person_tamsin_kell",
+        "type": "trustee_of",
+        "target": "trust_wrenhollow_settlement",
+        "approved_evidence": []
+      }
+    ]
+  },
+  "source_approval": {
+    "schema_version": 1,
+    "relationships": [
+      {
+        "source": "person_darren_brell",
+        "type": "sibling_of",
+        "target": "person_iona_brell",
+        "approved_evidence": [
+          {
+            "source_id": "SY7G",
+            "supporting_text": "Darren Brell is my brother. We both used 18 Alder Mews for trust post at the time, and I remember us sharing and sorting that post. I mention this only to explain the duplicate index, not as evidence of identity or authority.\n\nPlease include the full name and statement period in each file label so I can match the copies to the reconciliation records. If you need more information to locate the packs, or if there are verification steps before you can release them, please let me know what you need and how to provide it securely.\n\nThis is a request for archived copies only. I’m not asking for any change to the address or mandate.\n\nKind regards,  \nIona Brell"
+          }
+        ]
+      },
+      {
+        "source": "person_iona_brell",
+        "type": "trustee_of",
+        "target": "trust_wrenhollow_settlement",
+        "approved_evidence": [
+          {
+            "source_id": "VJ3K",
+            "supporting_text": "**Wrenhollow Settlement**  \n**Certified extract from the office book**\n\nTo: Jules Neston, Fennick Vale Solicitors  \nFrom: Maren Voss, keeper of the office book  \nDate and time of extract: 16 September 2026, 09:10 BST  \nPurpose: Standing-records request\n\n**Founding record**\n\n**First Seat — Iona Brell.** The founding record names Iona Brell as the founding trustee for the First Seat. Iona Brell accepted the appointment in writing on 9 May 2023."
+          },
+          {
+            "source_id": "LX6R",
+            "supporting_text": "Maren Voss, exercising the sole power under the Wrenhollow Settlement to appoint replacement trustees, appoints Tamsin Kell in place of Darren Brell in the Second Seat. Darren Brell retires from that seat and Tamsin Kell accepts appointment to it, in each case only upon delivery under clause 2. At that act alone, the retirement and appointment take effect simultaneously: Darren ceases to hold the Second Seat and Tamsin alone holds it in his place. Iona Brell’s First Seat is unaffected."
+          }
+        ]
+      }
+    ]
+  },
+  "ideal": {
+    "relationships": [
+      {
+        "source_name": "Darren Brell",
+        "relationship_type": "sibling_of",
+        "target_name": "Iona Brell",
+        "source_id": "SY7G",
+        "supporting_text": "Darren Brell is my brother. We both used 18 Alder Mews for trust post at the time, and I remember us sharing and sorting that post. I mention this only to explain the duplicate index, not as evidence of identity or authority.\n\nPlease include the full name and statement period in each file label so I can match the copies to the reconciliation records. If you need more information to locate the packs, or if there are verification steps before you can release them, please let me know what you need and how to provide it securely.\n\nThis is a request for archived copies only. I’m not asking for any change to the address or mandate.\n\nKind regards,  \nIona Brell"
+      },
+      {
+        "source_name": "Iona Brell",
+        "relationship_type": "trustee_of",
+        "target_name": "Wrenhollow Settlement",
+        "source_id": "VJ3K",
+        "supporting_text": "**Wrenhollow Settlement**  \n**Certified extract from the office book**\n\nTo: Jules Neston, Fennick Vale Solicitors  \nFrom: Maren Voss, keeper of the office book  \nDate and time of extract: 16 September 2026, 09:10 BST  \nPurpose: Standing-records request\n\n**Founding record**\n\n**First Seat — Iona Brell.** The founding record names Iona Brell as the founding trustee for the First Seat. Iona Brell accepted the appointment in writing on 9 May 2023."
+      },
+      {
+        "source_name": "Tamsin Kell",
+        "relationship_type": "trustee_of",
+        "target_name": "Wrenhollow Settlement",
+        "source_id": "LX6R",
+        "supporting_text": "Maren Voss, exercising the sole power under the Wrenhollow Settlement to appoint replacement trustees, appoints Tamsin Kell in place of Darren Brell in the Second Seat. Darren Brell retires from that seat and Tamsin Kell accepts appointment to it, in each case only upon delivery under clause 2. At that act alone, the retirement and appointment take effect simultaneously: Darren ceases to hold the Second Seat and Tamsin alone holds it in his place. Iona Brell’s First Seat is unaffected.\n\n### 2. Escrow and delivery\nDelivery of this instrument is expressly postponed. Perrin Saye of Orrel Document Custody holds the sole executed original under reference OC-517. Perrin Saye alone may lift the escrow restriction, and only by entering **RELEASED** against that sole original in the escrow control register. That entry, when permitted by the escrow controls, is the sole act of delivery."
+      },
+      {
+        "source_name": "Tamsin Kell",
+        "relationship_type": "trustee_of",
+        "target_name": "Wrenhollow Settlement",
+        "source_id": "MP2Z",
+        "supporting_text": "**Register:** Escrow control register used by clause 2  \n**Instrument:** Second Seat — Instrument of retirement and replacement appointment, dated 16 September 2026  \n**Escrow reference:** OC-517  \n**Record covered:** The sole executed original of the instrument identified above  \n\n**Operator:** Perrin Saye  \n**Disposition:** RELEASED — 12:20 BST on 17 September 2026\n\nThe Operator column identifies the person who committed the row. Only my authenticated operator account can commit a disposition in this register. The register does not allow a release operation to commit while a time lock is in force."
+      }
+    ]
+  },
+  "sufficient_evidence": [
+    {
+      "edge": [
+        "Tamsin Kell",
+        "trustee_of",
+        "Wrenhollow Settlement"
+      ],
+      "joint_only": true,
+      "alternatives": [
+        [
+          {
+            "source_id": "LX6R",
+            "supporting_text": "Maren Voss, exercising the sole power under the Wrenhollow Settlement to appoint replacement trustees, appoints Tamsin Kell in place of Darren Brell in the Second Seat. Darren Brell retires from that seat and Tamsin Kell accepts appointment to it, in each case only upon delivery under clause 2. At that act alone, the retirement and appointment take effect simultaneously: Darren ceases to hold the Second Seat and Tamsin alone holds it in his place. Iona Brell’s First Seat is unaffected.\n\n### 2. Escrow and delivery\nDelivery of this instrument is expressly postponed. Perrin Saye of Orrel Document Custody holds the sole executed original under reference OC-517. Perrin Saye alone may lift the escrow restriction, and only by entering **RELEASED** against that sole original in the escrow control register. That entry, when permitted by the escrow controls, is the sole act of delivery."
+          },
+          {
+            "source_id": "MP2Z",
+            "supporting_text": "**Register:** Escrow control register used by clause 2  \n**Instrument:** Second Seat — Instrument of retirement and replacement appointment, dated 16 September 2026  \n**Escrow reference:** OC-517  \n**Record covered:** The sole executed original of the instrument identified above  \n\n**Operator:** Perrin Saye  \n**Disposition:** RELEASED — 12:20 BST on 17 September 2026\n\nThe Operator column identifies the person who committed the row. Only my authenticated operator account can commit a disposition in this register. The register does not allow a release operation to commit while a time lock is in force."
+          }
+        ]
+      ]
+    }
+  ]
+}

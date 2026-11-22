@@ -1,0 +1,8 @@
+At 14:20 BST on 17 September 2026, the supplied record establishes two `trustee_of` relationships for the **Wrenhollow Settlement**:
+
+- **Iona Brell — First Seat.** LX6R alone suffices: it identifies the trust (“under the Wrenhollow Settlement”) and states, “Iona Brell’s First Seat is unaffected.” Ordinary quotation and attribution: LX6R.
+- **Tamsin Kell — Second Seat.** The sufficient set is **LX6R + MP2Z**; neither suffices alone, so ordinary quotation and attribution are N/A. LX6R identifies the trust and says Maren Voss “appoints Tamsin Kell in place of Darren Brell in the Second Seat,” with effect “only upon delivery under clause 2.” It identifies the “sole executed original under reference OC-517” and makes the authorized register entry “the sole act of delivery.” MP2Z, the clause 2 register, matches “**Escrow reference:** OC-517,” identifies “**Operator:** Perrin Saye,” and records “**Disposition:** RELEASED — 12:20 BST on 17 September 2026.” It also states, “The register does not allow a release operation to commit while a time lock is in force.”
+
+Perrin Saye’s recorded release precedes the cut-off and makes the replacement effective. LX6R expressly says “Darren ceases to hold the Second Seat and Tamsin alone holds it in his place.” Darren’s continued trusteeship in that seat is therefore contradicted. Maren’s appointment power does not establish trusteeship.
+
+**Bank authority remains unresolved.** Neither source shows the existing mandate, who may instruct Lintmere Bank, or whether the bank received notice. Check those separately before sending instructions.

@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "family": "A",
+  "freeze_sha256": "1d0e11cec8cb6227eada03543f95c3f73aad8e2093f84d296e4bb76e2e928489",
+  "conditions": {
+    "A0": "7a501b57a13f852ac54c30397ef75c7b3c105ebe14ccd6e2b491e7755c44b07d",
+    "A1": "0d3d78bd3dc78d87c661752659d17027e1b6ac59a91ca47e1b2f4e52f7f80213",
+    "A2": "f21ad438482b05c0d35b034c521011c8f4f5da6f07ec392feaa9d86a1214fdc2"
+  },
+  "contrast": {
+    "source_id": "MP2Z",
+    "before": "RELEASED — 12:20 BST on 17 September 2026",
+    "after": "HOLD — release locked until 15:00 BST on 17 September 2026; no earlier release permitted",
+    "removed": [
+      [
+        "Tamsin Kell",
+        "trustee_of",
+        "Wrenhollow Settlement"
+      ]
+    ],
+    "added": [
+      [
+        "Darren Brell",
+        "trustee_of",
+        "Wrenhollow Settlement"
+      ]
+    ]
+  }
+}

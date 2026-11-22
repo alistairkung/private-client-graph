@@ -1,0 +1,304 @@
+[
+  {
+    "reader": "m-01",
+    "origin": "A0",
+    "purpose": "Disposition or operative event unavailable. Same resulting bytes from A2 after masking its disposition.",
+    "changes": [
+      {
+        "source_id": "MP2Z",
+        "field": "text",
+        "old": "RELEASED — 12:20 BST on 17 September 2026",
+        "new": "[unavailable]"
+      }
+    ],
+    "keep_sources": null,
+    "brief_edit": null,
+    "ordered_sha256": "a30893ff51b19f4b6f83b59eef95388b18984b357fdcc7dde0526fdd6c7200f2"
+  },
+  {
+    "reader": "m-02",
+    "origin": "A0",
+    "purpose": "Both people’s identity-to-office assignments removed, including execution blocks, founding entry and tentative draft. Names in the bank and family records retained.",
+    "changes": [
+      {
+        "source_id": "VJ3K",
+        "field": "text",
+        "old": "Darren Brell",
+        "new": "[name unavailable]"
+      },
+      {
+        "source_id": "LX6R",
+        "field": "text",
+        "old": "Darren Brell",
+        "new": "[name unavailable]"
+      },
+      {
+        "source_id": "LX6R",
+        "field": "text",
+        "old": "Darren",
+        "new": "[name unavailable]"
+      },
+      {
+        "source_id": "LX6R",
+        "field": "text",
+        "old": "Tamsin Kell",
+        "new": "[name unavailable]"
+      },
+      {
+        "source_id": "LX6R",
+        "field": "text",
+        "old": "Tamsin",
+        "new": "[name unavailable]"
+      },
+      {
+        "source_id": "HC9W",
+        "field": "text",
+        "old": "Tamsin Kell",
+        "new": "[name unavailable]"
+      }
+    ],
+    "keep_sources": null,
+    "brief_edit": null,
+    "ordered_sha256": "e068f4d6b64297c1dd578d65c3f32af72efb761728e3c3223221f927ed96e8da"
+  },
+  {
+    "reader": "m-03",
+    "origin": "A0",
+    "purpose": "Operative terms and repeated clause references removed. Execution capacities, escrow identifier, independently recorded disposition, old office, bank and draft materials remain.",
+    "changes": [
+      {
+        "source_id": "LX6R",
+        "field": "text",
+        "old": "Maren Voss, exercising the sole power under the Wrenhollow Settlement to appoint replacement trustees, appoints Tamsin Kell in place of Darren Brell in the Second Seat. Darren Brell retires from that seat and Tamsin Kell accepts appointment to it, in each case only upon delivery under clause 2. At that act alone, the retirement and appointment take effect simultaneously: Darren ceases to hold the Second Seat and Tamsin alone holds it in his place. ",
+        "new": "[unavailable] "
+      },
+      {
+        "source_id": "LX6R",
+        "field": "text",
+        "old": "### 2. Escrow and delivery\nDelivery of this instrument is expressly postponed. Perrin Saye of Orrel Document Custody holds the sole executed original under reference OC-517. Perrin Saye alone may lift the escrow restriction, and only by entering **RELEASED** against that sole original in the escrow control register. That entry, when permitted by the escrow controls, is the sole act of delivery.\n\n**HOLD** prevents release. The time lock binds Perrin Saye, who must not enter **RELEASED** before the recorded earliest permitted time. The arrival of that time does not itself lift the restriction or deliver this instrument.\n\nSigning the original and circulating this extract or any other copy do not constitute delivery or effect the handover. Perrin Saye may retain physical possession of the original after release; no physical transfer is required for delivery.\n\n",
+        "new": "[unavailable]\n\n"
+      },
+      {
+        "source_id": "MP2Z",
+        "field": "text",
+        "old": " used by clause 2",
+        "new": ""
+      },
+      {
+        "source_id": "MP2Z",
+        "field": "text",
+        "old": ", and does not constitute delivery under clause 2",
+        "new": ""
+      }
+    ],
+    "keep_sources": null,
+    "brief_edit": null,
+    "ordered_sha256": "3ac3b0b12a285e6322292cc0b1de3bc355f8251914dae1420dad96add82cc605"
+  },
+  {
+    "reader": "m-04",
+    "origin": "A0",
+    "purpose": "Named trust identity masked everywhere, including the repeated meeting brief. The office and transaction state may still be recoverable for an unnamed trust.",
+    "changes": [
+      {
+        "source_id": "QF8M",
+        "field": "text",
+        "old": "Wrenhollow Settlement",
+        "new": "[settlement name unavailable]"
+      },
+      {
+        "source_id": "VJ3K",
+        "field": "text",
+        "old": "Wrenhollow Settlement",
+        "new": "[settlement name unavailable]"
+      },
+      {
+        "source_id": "LX6R",
+        "field": "text",
+        "old": "Wrenhollow Settlement",
+        "new": "[settlement name unavailable]"
+      },
+      {
+        "source_id": "HC9W",
+        "field": "text",
+        "old": "Wrenhollow Settlement",
+        "new": "[settlement name unavailable]"
+      },
+      {
+        "source_id": "BD4T",
+        "field": "text",
+        "old": "Wrenhollow Settlement",
+        "new": "[settlement name unavailable]"
+      },
+      {
+        "source_id": "MP2Z",
+        "field": "text",
+        "old": "Wrenhollow Settlement",
+        "new": "[settlement name unavailable]"
+      },
+      {
+        "source_id": "SY7G",
+        "field": "text",
+        "old": "Wrenhollow Settlement",
+        "new": "[settlement name unavailable]"
+      }
+    ],
+    "keep_sources": null,
+    "brief_edit": [
+      "Wrenhollow Settlement",
+      "[settlement name unavailable]"
+    ],
+    "ordered_sha256": "0d3840c4c1fa515af987cb8d6045b898c4b1c301dcc338a4e2d14319db142998"
+  },
+  {
+    "reader": "m-05",
+    "origin": "A2",
+    "purpose": "Both people’s identity-to-office assignments removed, including execution blocks, founding entry and tentative draft. Names in the bank and family records retained.",
+    "changes": [
+      {
+        "source_id": "VJ3K",
+        "field": "text",
+        "old": "Darren Brell",
+        "new": "[name unavailable]"
+      },
+      {
+        "source_id": "LX6R",
+        "field": "text",
+        "old": "Darren Brell",
+        "new": "[name unavailable]"
+      },
+      {
+        "source_id": "LX6R",
+        "field": "text",
+        "old": "Darren",
+        "new": "[name unavailable]"
+      },
+      {
+        "source_id": "LX6R",
+        "field": "text",
+        "old": "Tamsin Kell",
+        "new": "[name unavailable]"
+      },
+      {
+        "source_id": "LX6R",
+        "field": "text",
+        "old": "Tamsin",
+        "new": "[name unavailable]"
+      },
+      {
+        "source_id": "HC9W",
+        "field": "text",
+        "old": "Tamsin Kell",
+        "new": "[name unavailable]"
+      }
+    ],
+    "keep_sources": null,
+    "brief_edit": null,
+    "ordered_sha256": "5f5784be0aa552a07289c8d751ddc79cf959ba0048327f41e38eb02e1ade1598"
+  },
+  {
+    "reader": "m-06",
+    "origin": "A2",
+    "purpose": "Operative terms and repeated clause references removed. Execution capacities, escrow identifier, independently recorded disposition, old office, bank and draft materials remain.",
+    "changes": [
+      {
+        "source_id": "LX6R",
+        "field": "text",
+        "old": "Maren Voss, exercising the sole power under the Wrenhollow Settlement to appoint replacement trustees, appoints Tamsin Kell in place of Darren Brell in the Second Seat. Darren Brell retires from that seat and Tamsin Kell accepts appointment to it, in each case only upon delivery under clause 2. At that act alone, the retirement and appointment take effect simultaneously: Darren ceases to hold the Second Seat and Tamsin alone holds it in his place. ",
+        "new": "[unavailable] "
+      },
+      {
+        "source_id": "LX6R",
+        "field": "text",
+        "old": "### 2. Escrow and delivery\nDelivery of this instrument is expressly postponed. Perrin Saye of Orrel Document Custody holds the sole executed original under reference OC-517. Perrin Saye alone may lift the escrow restriction, and only by entering **RELEASED** against that sole original in the escrow control register. That entry, when permitted by the escrow controls, is the sole act of delivery.\n\n**HOLD** prevents release. The time lock binds Perrin Saye, who must not enter **RELEASED** before the recorded earliest permitted time. The arrival of that time does not itself lift the restriction or deliver this instrument.\n\nSigning the original and circulating this extract or any other copy do not constitute delivery or effect the handover. Perrin Saye may retain physical possession of the original after release; no physical transfer is required for delivery.\n\n",
+        "new": "[unavailable]\n\n"
+      },
+      {
+        "source_id": "MP2Z",
+        "field": "text",
+        "old": " used by clause 2",
+        "new": ""
+      },
+      {
+        "source_id": "MP2Z",
+        "field": "text",
+        "old": ", and does not constitute delivery under clause 2",
+        "new": ""
+      }
+    ],
+    "keep_sources": null,
+    "brief_edit": null,
+    "ordered_sha256": "115cac436f8dcccef919dc88cb8524957a336b919b210d8e405d9b5d42a9dc27"
+  },
+  {
+    "reader": "m-07",
+    "origin": "A2",
+    "purpose": "Named trust identity masked everywhere, including the repeated meeting brief. The office and transaction state may still be recoverable for an unnamed trust.",
+    "changes": [
+      {
+        "source_id": "QF8M",
+        "field": "text",
+        "old": "Wrenhollow Settlement",
+        "new": "[settlement name unavailable]"
+      },
+      {
+        "source_id": "VJ3K",
+        "field": "text",
+        "old": "Wrenhollow Settlement",
+        "new": "[settlement name unavailable]"
+      },
+      {
+        "source_id": "LX6R",
+        "field": "text",
+        "old": "Wrenhollow Settlement",
+        "new": "[settlement name unavailable]"
+      },
+      {
+        "source_id": "HC9W",
+        "field": "text",
+        "old": "Wrenhollow Settlement",
+        "new": "[settlement name unavailable]"
+      },
+      {
+        "source_id": "BD4T",
+        "field": "text",
+        "old": "Wrenhollow Settlement",
+        "new": "[settlement name unavailable]"
+      },
+      {
+        "source_id": "MP2Z",
+        "field": "text",
+        "old": "Wrenhollow Settlement",
+        "new": "[settlement name unavailable]"
+      },
+      {
+        "source_id": "SY7G",
+        "field": "text",
+        "old": "Wrenhollow Settlement",
+        "new": "[settlement name unavailable]"
+      }
+    ],
+    "keep_sources": null,
+    "brief_edit": [
+      "Wrenhollow Settlement",
+      "[settlement name unavailable]"
+    ],
+    "ordered_sha256": "4e9bdbc2ba8d060b2f7fa917c4bfcd838da5ac2b284cc33810423f54dfd52433"
+  },
+  {
+    "reader": "m-08",
+    "origin": "A2",
+    "purpose": "Expiry-only deletion. HOLD is still reported at 14:00, but the file cut-off is 14:20.",
+    "changes": [
+      {
+        "source_id": "MP2Z",
+        "field": "text",
+        "old": "15:00 BST on 17 September 2026",
+        "new": "[expiry unavailable]"
+      }
+    ],
+    "keep_sources": null,
+    "brief_edit": null,
+    "ordered_sha256": "c51b30ed78e592b8f63a457a355f61de0379beb1ddc8cbcaca83930c8d638019"
+  }
+]

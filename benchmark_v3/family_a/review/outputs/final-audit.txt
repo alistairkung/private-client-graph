@@ -1,0 +1,67 @@
+{
+  "technical_disposition": "Ready to issue corrected technical keys at 14:20 BST on 17 September 2026. Each condition has three scored edges and one sufficient joint proof of its Second Seat edge. Exclude the failed A2 alternative; no condition requires quarantine.",
+  "conditions": {
+    "all": {
+      "common_edges": [
+        ["Iona Brell", "trustee_of", "Wrenhollow Settlement"],
+        ["Iona Brell", "sibling_of", "Darren Brell"]
+      ],
+      "ordinary_approvals": "Retain VJ3K and LX6R as separate singleton alternatives for Iona’s First Seat, restoring VJ3K in A2. The certificate limits Maren’s account of replacements to 09:10 on 16 September; it does not terminate Iona’s accepted office. LX6R independently identifies and preserves that office. Retain SY7G alone for the symmetric sibling edge, counted once: Iona calls Darren her brother. The sender line and sign-off attribute one assertion, not two proofs."
+    },
+    "A0": {
+      "second_seat": ["Tamsin Kell", "trustee_of", "Wrenhollow Settlement"],
+      "proof": "A0 alternative 1 only; joint_only=true, ordinary=[]."
+    },
+    "A1": {
+      "second_seat": ["Tamsin Kell", "trustee_of", "Wrenhollow Settlement"],
+      "proof": "Inherit the exact audited A0 approvals. The seven Source objects are identical by ID, title and text, in A0 positions [7,6,5,4,2,1,3]. This is order invariance, not a separate isolation trial or approval of an additional quotation variant."
+    },
+    "A2": {
+      "second_seat": ["Darren Brell", "trustee_of", "Wrenhollow Settlement"],
+      "proof": "A2 alternative 1 only; joint_only=true, ordinary=[]. Comparison with A0 finds only the MP2Z disposition replaced. Reading the changed row under the unchanged instrument removes Tamsin’s edge and adds Darren’s; the intended intervention is not evidence."
+    }
+  },
+  "accepted_critical_routes": [
+    {
+      "alternative": "A0 alternative 1, inherited by A1",
+      "exact_excerpts": "s-01, ordered [LX6R, MP2Z], SHA-256 a443111d76862876cfd9c1c2196aefda8a4fd8cd1fe8ece6852702c9a4e793f0",
+      "ruling": "s-01 identified Tamsin Kell and the named settlement from these excerpts alone. LX6R makes Darren’s retirement and Tamsin’s sole succession simultaneous on permitted delivery. MP2Z matches clause 2, OC-517 and the sole original, and identifies Perrin Saye as committing RELEASED at 12:20. Only Perrin’s authenticated account can commit a disposition, and a locked release cannot commit. The entry therefore delivered the instrument before cut-off; the later extract did not.",
+      "deletions": "Omit pair 0 (LX6R): the remaining register excerpt is contained in m-02’s non-identifying view; the act cannot name the successor. Omit pair 1 (MP2Z): the instrument excerpt is contained in m-01’s view; the condition is known but its satisfaction is not."
+    },
+    {
+      "alternative": "A2 alternative 1",
+      "exact_excerpts": "s-02, ordered [LX6R, MP2Z], SHA-256 985f115df227927c61e86dd96624e94e28df916777f58ae5f07fe301df90f689",
+      "ruling": "s-02 identified Darren Brell and the named settlement. LX6R names the incumbent and makes permitted delivery necessary to end his tenure. The matching MP2Z row says HOLD until 15:00 with no earlier release permitted, and the register prevents a locked release from committing. That affirmative restriction, not silence after the 14:00 snapshot, excludes the required act at 14:20. Tamsin had not taken office; 15:00 itself would not deliver the instrument.",
+      "deletions": "Omit pair 0 (LX6R): the remaining excerpt is contained in m-05’s view; the lock cannot name the continuing holder. Omit pair 1 (MP2Z): the remaining excerpt is contained in m-01’s view; delivery is unresolved. These and the A0 pair omissions are containment tests against independently read, non-identifying supersets, not four fresh singleton reads."
+    }
+  ],
+  "rejected_critical_routes": [
+    {
+      "alternative": "A2 alternative 2 in the earlier comparison",
+      "exact_excerpts": "s-03, ordered [VJ3K, LX6R conditional fragment, LX6R delivery fragment, MP2Z], with the intervening LX6R text unavailable; SHA-256 e2f728f71ce5c703cb510d239ba7da84e5929d24ad57ad4e266ab5cbf4a234d4",
+      "ruling": "Failed intact isolation. s-03 established both Darren’s accepted founding office and non-delivery of OC-517, but did not identify Darren as the holder whose retirement that instrument postponed. The objection is material: the VJ3K certificate ends before the transaction, and the selected LX6R fragments do not supply that link. This is not a finding that Darren left office or that the seat was vacant. VJ3K remains evidence of prior tenure, not an approved alternative proof of current tenure. Importing the missing identification from full LX6R would use the direct route, not validate this one.",
+      "deletions": "Omit pair 0: s-04 found non-delivery but no named incumbent. Omit pair 1: s-05 found a founding holder and non-delivery but no operative retirement condition. Omit pair 2: s-06 lacked the exclusive delivery rule and link from the conditional fragment to the locked original. Omit pair 3: the remaining excerpts are contained in m-01’s disposition-blind view. Negative omissions cannot rescue a failed intact set. At whole-document level VJ3K is not indispensable: full LX6R + MP2Z already suffice."
+    }
+  ],
+  "remaining_scored_disputes": [],
+  "masking": {
+    "observed": [
+      "m-01: hiding the disposition left both conditional outcomes open. m-08: retaining HOLD but hiding its expiry left open a permitted release between 14:00 and 14:20.",
+      "m-02 and m-05: with the Second Seat role-to-name links unavailable, readers recovered effective replacement and blocked replacement respectively, but not the holder’s name. Darren’s survival as a name in bank or family material did not resolve his office.",
+      "m-03 and m-06: execution capacities plus RELEASED or HOLD did not establish the handover without the operative terms.",
+      "m-04 and m-07: readers still identified Tamsin and Darren respectively, but could not name the settlement. These masks defeat the exact triple, not identification of the person.",
+      "m-09 and m-10: readers saw the release or lock but could not connect the row and operator to the instrument’s authorised control. Neither disposition established the holder without that match."
+    ],
+    "scope": "These are supplied reader outcomes for the tested views, not proof that every word, identifier or masked cue is individually necessary. A combined mask can remove several ways of making the same link. The wider mask plan is not a record of further trials. Some readers narrowed Iona’s evidence to LX6R or required both First Seat documents; the dated limit on the certificate does not support that restriction. Their Second Seat findings need not be discarded on that account."
+  },
+  "shortcut_limits": {
+    "singletons": "No full Source alone establishes the named Second Seat holder at cut-off in any condition. LX6R lacks the disposition; MP2Z lacks the named succession and its effect; VJ3K cannot resolve the later transaction. QF8M concerns opening bank authority, HC9W a draft, BD4T proposed works, and SY7G archive correspondence and kinship. This file audit is not a claim of fresh trials on every singleton in every order.",
+    "predictions": "In A0/A1/A2 order, latest-dated SY7G and titles/IDs alone give no holder. Last-presented replacement promotion gives abstain/Tamsin/abstain; even the A1 hit lacks delivery. Union of named incumbents and successors gives both people in every state; draft promotion gives Tamsin throughout. First-mentioned candidate and most frequent full name both give Darren throughout (10 occurrences to Tamsin’s 4). Merging the Brells corrupts the First Seat and sibling endpoints in every graph and loses the exact A2 Second Seat endpoint. These are rule predictions, not reader trials; a coincidentally correct name earns no evidence approval."
+  },
+  "other_limits": {
+    "time_and_custody": "MP2Z covers through 14:00 and was issued at 14:02. It does not observe 14:00–14:20, prove when Jules read it, or give a title opinion. The completed 12:20 act in A0/A1 and the through-cut-off bar in A2 resolve different questions. Prior lock history in A0/A1 and eventual release in A2 are unknown. Signing, circulating copies and retaining physical custody do not decide delivery.",
+    "companion_register": "Maren’s replacement power and Perrin’s custody and register authority are not trusteeships. WM-683 required both Iona and Darren to authorise payments at opening; it does not confirm the live mandate. Jules’s pencilled Tamsin slip was a draft, not a sending decision or bank acceptance. Iona’s request for two separately labelled archive packs was not an amendment or proof of access; its copied address blocks and QF8M share an origin. Nella’s roof inspection was firsthand, but the £18,600 VAT-inclusive price and 28 September slot were a reported telephone offer. Joint approval was sought for the full sum, not just the included £4,650 booking payment. The slot was unbooked at proposal time; approvers, survey findings and later action are unconfirmed. Spending approval is distinct from bank payment authority.",
+    "coverage": "The losing Second Seat claim is affirmatively excluded in each state; no further ontology edge is supported. Absence of support for other relationships is not a denial. Only the surviving exact critical excerpts are approved, not repaired fragments or other plausible but untested combinations."
+  },
+  "human_decision": "No residual scored dispute or unverified indispensable proof requires item quarantine. Keep A2 alternative 2 out of scoring. Technical readiness is not human admission, and no human admission decision is recorded here. The final keys can be issued with the surviving approvals only."
+}

@@ -1,0 +1,9 @@
+**First Seat — Iona Brell, trustee_of Wrenhollow Settlement.** Independent quotation sets:
+- VJ3K: “Wrenhollow Settlement”; “The founding record names Iona Brell as the founding trustee for the First Seat.” Maren Voss accepted no later-position certification: “I have made no replacement appointment through 09:10 BST on 16 September 2026.”
+- LX6R: “Wrenhollow Settlement”; “Iona Brell’s First Seat is unaffected.”
+
+**Second Seat — incumbent remains; neither name is establishable.** VJ3K records “[name unavailable] as the founding trustee for the Second Seat.” LX6R makes both changes effective “only upon delivery under clause 2”; MP2Z reports the 14:00 register entry: “HOLD — release locked until 15:00 BST on 17 September 2026; no earlier release permitted”. Thus the executed instrument could not have transferred the seat by 14:20. Signing, circulating copies and reaching 15:00 are not delivery. The incumbent’s and replacement’s identities remain unresolved; Darren cannot be assigned either role.
+
+**Other supported edge:** Iona Brell and Darren Brell are siblings (symmetric). Independent set: SY7G, “From: Iona Brell”; “Darren Brell is my brother.” Neither named edge requires multiple sources.
+
+**Bank authority:** QF8M records Iona and Darren as opening signatories and says “both signatories must authorise a payment instruction”. This is not trust title or confirmation of a current mandate. HC9W logs receipt of QF8M, VJ3K and LX6R; its covering slip is draft only. MP2Z and SY7G are timed before cut-off, but receipt times aren’t shown. Verify unredacted seat records and the live bank mandate before sending a change.

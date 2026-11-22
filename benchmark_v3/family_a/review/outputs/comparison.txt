@@ -1,0 +1,369 @@
+{
+  "decision": {
+    "cut_off": "14:20 BST on 17 September 2026",
+    "A0_A1": "Pass for graph and evidence approvals. The seven Source objects are unchanged and reordered. Independent review supports the same three edges, the same two ordinary proofs of the First Seat, the same sibling proof and the same joint-only Second Seat proof. The selected quotation boundaries were not all identical.",
+    "A0_A2": "Pass for the precise graph switch: remove Tamsin Kell, trustee_of, Wrenhollow Settlement; add Darren Brell, trustee_of, Wrenhollow Settlement. Fail for unchanged approvals in the provisional keys as written: A2 wrongly drops VJ3K as ordinary evidence for Iona Brell. Restore it. Also distinguish the alternative source for Darren’s incumbency from the sources needed to establish non-delivery.",
+    "corrected_result": "Three edges in each state. Only the Second Seat changes. A1 inherits the audited A0 rows. Neither a change in bank authority nor a decision to send anything to the bank is established."
+  },
+  "shared_graph": {
+    "intersection": [
+      ["Iona Brell", "trustee_of", "Wrenhollow Settlement"],
+      ["Iona Brell", "sibling_of", "Darren Brell"]
+    ],
+    "A0_A1_only": [["Tamsin Kell", "trustee_of", "Wrenhollow Settlement"]],
+    "A2_only": [["Darren Brell", "trustee_of", "Wrenhollow Settlement"]],
+    "convention": "The sibling edge is symmetric and counted once. There is one holder of the Second Seat, not a vacancy or a shared tenure."
+  },
+  "critical_proof": {
+    "instrument": "LX6R identifies Darren Brell as incumbent, Tamsin Kell as his replacement, and Maren Voss as exercising the replacement power. Retirement and appointment take effect together only on delivery. For OC-517, delivery is Perrin Saye’s permitted RELEASED entry against the sole executed original in the clause 2 register. Execution, circulation and physical transfer are not that test.",
+    "A0_A1": "MP2Z matches the instrument, original and register. It identifies Perrin as the operator who committed RELEASED at 12:20. Only Perrin’s authenticated account can commit a disposition and a locked release cannot commit. Thus the entry was the permitted act, not merely a proposal or a report of custody. At 12:20 Darren ceased and Tamsin took the seat alone. The register need not be observed at 14:20 to prove that completed event; there is no later displacement in the file.",
+    "A2": "MP2Z instead records HOLD, release locked until 15:00 with no earlier release permitted. This is more than the absence of a RELEASED row at 14:00. LX6R denies effect to anything but a permitted release, and the register also prevents an early release from committing. The lock therefore excludes the necessary act at the 14:20 cut-off. Darren remains; Tamsin has not taken the seat. Even at 15:00 an actual permitted entry would still be necessary.",
+    "time_and_custody": "In all cases MP2Z covers the register through 14:00 and was issued at 14:02. Neither issuance nor inclusion in the packet is delivery, an extension of coverage, a trustee opinion, or proof of when Jules Neston read it. Retention of the original is compatible with either state."
+  },
+  "alternative_routes": {
+    "First_Seat": "Two ordinary singleton routes in every bundle: VJ3K records Iona’s accepted standing appointment, which nothing in the file ends; LX6R independently identifies her existing seat and preserves it. The end time of Maren’s no-replacement certificate is not an expiry date for Iona’s office.",
+    "sibling": "One ordinary singleton route: Iona’s own statement in SY7G. Either the From line or her sign-off identifies the speaker. These are alternative attributions of the same assertion, not two independent kinship proofs.",
+    "Second_Seat_RELEASED": "One sufficient source pair, LX6R and MP2Z. The instrument supplies the exclusive succession and delivery terms; the register supplies the matching permitted act. Neither VJ3K nor the signatory draft supplies an alternative proof of Tamsin taking office.",
+    "Second_Seat_HOLD": {
+      "direct": "LX6R supplies both the incumbent and the condition ending his office. MP2Z supplies the matching enforced lock beyond cut-off. This is the only inclusion-minimal set of whole Source objects.",
+      "founding_record_route": "Alternatively take Darren’s accepted Second Seat from VJ3K, take only the retirement-on-delivery condition and delivery rule from LX6R, and exclude delivery using MP2Z. This is a sufficient route using different evidence for the prior seat. It is minimal for those selected facts, not a second minimal set of whole documents: unabridged LX6R already names Darren. The second attached alternative in the A2 row deliberately does not use LX6R to name the incumbent.",
+      "two_warrants_for_the_bar": "The dated no-earlier-release restriction excludes a permitted entry under the instrument; the register’s own control also excludes a committed release while locked. These warrants are grouped under the same LX6R–MP2Z quotations, not counted as two independent register observations.",
+      "rejected_shorter_routes": "VJ3K with MP2Z gives a prior holder and a locked instrument, but without LX6R does not say that Darren’s retirement takes effect only on delivery. VJ3K with LX6R lacks the disposition. LX6R alone leaves the condition open. Neither a dated certificate, mere possession, nor silence after 14:00 establishes the affirmative bar."
+    }
+  },
+  "singleton_audit": [
+    {
+      "source_id": "QF8M",
+      "critical_Second_Seat": "None in A0, A1 or A2.",
+      "other": "Iona Brell and Darren Brell are joint payment signatories at opening, not identified here as current trustees. The bank expressly did not examine trust title."
+    },
+    {
+      "source_id": "VJ3K",
+      "critical_Second_Seat": "None in any state at cut-off. Darren’s accepted founding Second Seat is explicit, but there is a later instrument specifically addressing his retirement. The certificate stops at 09:10 on 16 September and cannot decide the outcome of that instrument.",
+      "other": "Yes for Iona’s First Seat in all three: accepted standing office with no competing First Seat change. Also establishes Maren’s sole replacement power, not a trustee edge for Maren."
+    },
+    {
+      "source_id": "LX6R",
+      "critical_Second_Seat": "None in any state at cut-off. It names both parties, their prior and prospective capacities, and the exclusive condition, but does not say whether the release occurred.",
+      "other": "Yes for Iona’s unaffected First Seat in all three. This identification does not depend on delivery."
+    },
+    {
+      "source_id": "HC9W",
+      "critical_Second_Seat": "None in any state. Tamsin is pencilled in for a different role, subject to checking.",
+      "other": "Establishes the meeting arrangements, receipt of three earlier papers and a then-outstanding request. Not an executed mandate amendment or a later register observation."
+    },
+    {
+      "source_id": "BD4T",
+      "critical_Second_Seat": "None in any state. Neither a trustee nor a spending approver is named in that capacity.",
+      "other": "Inspection findings, a telephone offer and a request for joint expenditure approval do not confer office."
+    },
+    {
+      "source_id": "MP2Z",
+      "critical_Second_Seat": "None in any state. RELEASED proves a register act; HOLD proves a time restriction. Neither version names the incumbent or successor or states the operative succession terms.",
+      "other": "Perrin is the authenticated disposition operator and custodian, not a trustee by reason of those functions."
+    },
+    {
+      "source_id": "SY7G",
+      "critical_Second_Seat": "None in any state. Its named people and copied correspondence blocks do not identify a seat holder.",
+      "other": "Yes for the sibling edge in every state: Iona identifies Darren as her brother. This is not an inference from their surname or address."
+    }
+  ],
+  "shortcuts": {
+    "scope": "Predictions below concern the Second Seat unless stated otherwise. T means the Tamsin Kell trustee edge, D the Darren Brell trustee edge, and — abstention. Predictions are listed in A0, A1, A2 order. A coincidentally correct name is not approved evidence.",
+    "latest_dated": {
+      "rule": "Take the latest dated communication, SY7G at 14:12, and read its trustee assertion.",
+      "prediction": ["—", "—", "—"],
+      "fails": "All three. If forced to choose the only Second Seat candidate named in that communication, the prediction is D, D, D: wrong in A0 and A1."
+    },
+    "last_presented": {
+      "rule": "Use the final Source only, promoting its named replacement if it contains one.",
+      "prediction": ["—", "T", "—"],
+      "fails": "A0 and A2 abstain on SY7G; A1 happens to select T from LX6R but cannot prove delivery. A literal final-source-only current-holder test abstains in all three. A forced candidate-name fallback on SY7G gives D, T, D, wrong in A0 and order-dependent between A0 and A1."
+    },
+    "union_all": {
+      "rule": "Keep founding, retiring and accepting trustees without testing supersession or delivery.",
+      "prediction": [["D", "T"], ["D", "T"], ["D", "T"]],
+      "fails": "All three: an extra D in A0/A1 and an extra T in A2."
+    },
+    "draft_promotion": {
+      "prediction": ["T", "T", "T"],
+      "fails": "Wrong holder in A2; invalid proof in all three. If the prediction is instead a current bank-signatory edge for Tamsin, none of the three establishes it and it is not an ontology edge."
+    },
+    "first_named": {
+      "rule": "Choose the first of the two Second Seat candidates encountered in presentation order.",
+      "prediction": ["D", "D", "D"],
+      "fails": "A0 and A1. QF8M starts A0/A2 and SY7G starts A1. Neither first document asserts Darren’s current office. Without the candidate restriction, the first named people are Evin Rooke, Iona Brell and Evin Rooke respectively, none the Second Seat answer."
+    },
+    "most_frequently_named": {
+      "rule": "Count exact full-name occurrences of each Second Seat candidate in the seven Source bodies once per bundle, including headings, correspondence blocks and execution lists, not pronouns, short names, keys or the prompt. Darren: QF8M 2, VJ3K 3, LX6R 3, SY7G 2 = 10. Tamsin: LX6R 3, HC9W 1 = 4.",
+      "prediction": ["D", "D", "D"],
+      "fails": "A0 and A1. Reordering and the name-free disposition edit do not change the counts."
+    },
+    "merge_similar_names": {
+      "rule": "Collapse Iona Brell and Darren Brell to a single Brell endpoint on surname or correspondence-address similarity.",
+      "prediction": ["T with a merged First Seat endpoint", "T with a merged First Seat endpoint", "merged Brell, not distinguishable Darren Brell"],
+      "fails": "With the disposition otherwise read correctly, the exact Second Seat endpoint fails in A2 and the full graph fails in all three: the First Seat endpoint is corrupted and siblinghood becomes a self-relation. If merging is restricted just to Darren Brell versus Tamsin Kell, there is no similar-name match and hence no selection by that rule."
+    },
+    "titles_IDs_only": {
+      "prediction": ["—", "—", "—"],
+      "fails": "All three; neither a title nor an opaque ID gives the named current holder. In particular the MP2Z title and ID are identical across the switch. A forced choice between D and T from that metadata alone is a tie."
+    }
+  },
+  "minimal_set_deletions": {
+    "method": "Tests are of the stated facts in isolation against the fixed cut-off, not predictions about a reader. A deletion removes the proposition, not just one phrase if a duplicate still supplies it. Source deletion and fact deletion are distinguished.",
+    "First_Seat_VJ3K": {
+      "alone": "The identified, accepted founding First Seat of Iona in this settlement suffices as a standing appointment, in the absence of any displacement of that seat.",
+      "remove_appointment_or_endpoint_binding": "No accepted First Seat of the named person in the named trust is then established by this route. No release fact is needed or tested."
+    },
+    "First_Seat_LX6R": {
+      "alone": "The instrument identifies Iona’s existing First Seat in the named settlement and leaves it unaffected.",
+      "remove_identified_unaffected_seat": "The Second Seat transaction alone does not establish Iona’s office."
+    },
+    "sibling_SY7G": {
+      "alone": "Identified speaker Iona plus the express brother statement naming Darren suffices.",
+      "remove_speaker_binding": "An unidentified speaker’s brother is not an edge to Iona.",
+      "remove_named_brother_assertion": "Two names, a shared surname, an address and shared post do not establish siblinghood."
+    },
+    "T_RELEASED": {
+      "alone": "Exclusive appointment of Tamsin in Darren’s place on delivery + definition of delivery as the permitted entry by Perrin + match to this sole original/register + committed permitted RELEASED before cut-off suffices.",
+      "remove_named_conditional_succession": "A release does not identify Tamsin as trustee or end Darren’s tenure.",
+      "remove_delivery_rule": "A disposition is not linked to satisfaction of the succession condition.",
+      "remove_record_match": "A release on an unidentified or different record cannot deliver this instrument.",
+      "remove_completed_timely_permitted_act": "The signature and conditional nomination remain; timely delivery is open.",
+      "whole_sources": "LX6R + MP2Z alone works. Minus LX6R: no named succession or effect. Minus MP2Z: no completed act."
+    },
+    "D_HOLD_direct": {
+      "alone": "Incumbent Darren in LX6R + retirement only on delivery + exclusive permitted-entry rule + match to the controlled original + affirmative bar extending past 14:20 suffices.",
+      "remove_incumbent": "Non-delivery leaves an unidentified incumbent in place.",
+      "remove_retirement_condition": "Blocking release need not block retirement.",
+      "remove_exclusive_delivery_rule": "The lock need not exclude every effective means of delivery.",
+      "remove_record_match": "The lock need not govern this retirement instrument.",
+      "remove_bar_through_cut_off": "A conditional retirement and an earlier register observation do not decide the 14:20 position. An undated HOLD with no constraint through cut-off would not bridge the gap.",
+      "whole_sources": "LX6R + MP2Z alone works. Minus LX6R: a locked original, no identified incumbent or seat effect. Minus MP2Z: named incumbent, unknown delivery."
+    },
+    "D_HOLD_founding_record": {
+      "alone": "Darren’s accepted Second Seat from VJ3K + the instrument’s retirement-on-delivery condition + its exclusive permitted-entry rule + matching original/register + the lock through cut-off suffices without using LX6R’s identification of Darren.",
+      "remove_VJ3K_incumbency": "These selected remaining facts exclude a handover but do not name the continuing holder.",
+      "remove_retirement_condition": "The certificate and lock alone do not say when the prior holder retires.",
+      "remove_exclusive_delivery_rule": "Failure to release is not shown to exclude delivery by another means.",
+      "remove_record_match": "No bar is established for the particular handover.",
+      "remove_bar_through_cut_off": "The earlier accepted office could have ended by the prescribed act.",
+      "whole_sources": "With full documents, removing VJ3K does NOT break the conclusion: it restores the direct two-document route. Removing LX6R or MP2Z does break it. Thus an indispensable third document must not be demanded."
+    },
+    "control_redundancies": "On RELEASED, the operator row, account restriction and commit control explain attribution and permission; it is not necessary to reconstruct a prior HOLD or its expiry time. On HOLD, removing only the system-control sentence leaves the explicit no-earlier-permission rule; removing only the instrument’s explanatory HOLD paragraph leaves its permitted-entry condition and MP2Z’s enforced lock. Neither deletion removes the entire through-cut-off bar."
+  },
+  "full_file_mask_plan": {
+    "protocol": "Use copies of all seven Source objects in each bundle, including titles, headers, bodies, quoted copies, local references, signatures and the neutral brief. Apply a factor mask everywhere it is stated or recoverable; propagate it to A1 by Source identity, not position. Keep unrelated facts and the comparison state fixed. Withhold the frozen intervention, declared triples, provisional keys, rationales, registers and audit output from any masked view: they repeat both facts and answers. If rendered as text in a test view, redact their copies too. Do not use a label, filename, ID mapping or replacement token that encodes the removed value.",
+    "factors": [
+      {
+        "factor": "Standing offices and named endpoints",
+        "locations": "VJ3K founding-seat headings, names, acceptances and certification; LX6R trust and seat headings, conditional appointment paragraph, Darren ceases/Tamsin alone clause, Iona unaffected clause and execution capacities. For an all-route prior-holder mask, remove both VJ3K’s Second Seat baseline and every LX6R identification of Darren as incumbent, including 'in place of', retirement and signing capacity. For a single-route test mask only the chosen origin and leave the other route explicitly available. Apply the same distinction to the two First Seat proofs."
+      },
+      {
+        "factor": "Appointment, retirement, exclusivity and their dependence on delivery",
+        "locations": "LX6R title, Second Seat heading, operative appointment, retirement/acceptance, 'only upon delivery', simultaneous cessation and sole succession, signing roles, and clause 2 statements about what does or does not effect the handover. Mask descriptive copies in HC9W’s papers list and MP2Z’s instrument description wherever they convey the targeted fact. A document title may reveal that a retirement is contemplated but does not establish it has happened."
+      },
+      {
+        "factor": "Exclusive delivery act, permitted operator and control",
+        "locations": "LX6R escrow heading and all clause 2 references to the sole original, Perrin alone, the required permitted RELEASED entry, HOLD, clock expiry, copies and retained possession. MP2Z register/record/operator labels, authenticated-account and commit-control explanations and report-versus-delivery disclaimer. HC9W names the requested escrow record and Perrin; remove these echoes if masking operator or register identity. Do not leave a negative paraphrase that identifies the unique act by elimination."
+      },
+      {
+        "factor": "Match between instrument and control row",
+        "locations": "Mask the cross-record join, not just 'OC-517': LX6R heading, custody reference, original and clause 2; MP2Z title, settlement header, clause number, instrument name/date/seat, reference, original, custodian and register; HC9W’s received-papers description and outstanding request repeat the date, custodian, reference and document pair. Inspect the brief and all titles for a residual unique match. Preserve WM-683 as a distinct bank reference; it is not an alternative custody link."
+      },
+      {
+        "factor": "Completed permitted release before cut-off, or affirmative no-earlier-release lock beyond cut-off",
+        "locations": "MP2Z disposition, RELEASED and 12:20 together, or HOLD, 15:00 and 'no earlier release permitted' together; include any duplicate state/date in a rendered heading, extract, comparison or summary. For an attribution mask include both Operator and the prose about who committed the row; for an enforceability mask cover both MP2Z control language and LX6R’s permitted-entry and binding-lock language. For a state-only mask retain the common rule and as-of/issue times, which do not say which state occurred. Do not substitute a missing row for proof of HOLD."
+      },
+      {
+        "factor": "Cut-off and chronological comparison",
+        "locations": "Neutral brief and HC9W both state 14:20 and the 14:30 meeting; mask both and any equivalent relative-time statement when testing the comparison time. Distinguish VJ3K’s certification time, LX6R’s execution-extract time, MP2Z’s as-of, issue and disposition/earliest-permitted times, HC9W’s dated descriptions and SY7G/BD4T’s communication times. A mask of event time must remove a recoverable duplicate, not erase unrelated dates as though they were the event."
+      },
+      {
+        "factor": "Sibling assertion and speaker binding",
+        "locations": "SY7G’s brother sentence is the relationship assertion. For speaker masking inspect From, sign-off, first-person wording and named correspondence blocks; for an identity-link mask inspect QF8M’s corresponding WM-683 names/address and SY7G’s reproduced blocks. Do not treat either the blocks or Iona’s memory of sorting post as a second brother assertion."
+      }
+    ],
+    "cross_check": "Scan every condition, including QF8M and SY7G for repeated names and WM-683 particulars; HC9W for the proposed Tamsin signatory, indirect instrument descriptions and requested register; BD4T for the settlement name but no seat determination. Distinguish masking a name everywhere from masking only the proposition that the person holds a seat: ordinary bank mentions should survive a seat-only mask. The neutral brief supplies the trust, purpose and cut-off, not the holder or status. No masked-reader responses were supplied or inferred."
+  },
+  "matched_diff": {
+    "A0_order": ["QF8M", "VJ3K", "LX6R", "HC9W", "BD4T", "MP2Z", "SY7G"],
+    "A1_order": ["SY7G", "MP2Z", "BD4T", "HC9W", "VJ3K", "QF8M", "LX6R"],
+    "A1_positions_in_A0_one_based": [7, 6, 5, 4, 2, 1, 3],
+    "A0_A1_content": "Same id, title and text for each matched Source. No insertion, deletion or content replacement. Edge ordering, symmetric orientation and extra contiguous quotation context do not change the approvals.",
+    "A0_A2_content": "Same order, IDs, titles and other text. Only the MP2Z disposition value changes.",
+    "before": "RELEASED — 12:20 BST on 17 September 2026",
+    "after": "HOLD — release locked until 15:00 BST on 17 September 2026; no earlier release permitted",
+    "declared_vs_observed": "The file independently supports exactly the declared edge deletion and addition. It does not support the provisional loss of an unaffected VJ3K approval."
+  },
+  "completeness": {
+    "trust_administration": "Iona Brell and Darren Brell accepted the founding First and Second Seats in writing on 9 May 2023. Wrenhollow Settlement grants Maren Voss the sole replacement power; her book records her acts rather than conferring that power. Her own acts and complete book support no replacement by her through 09:10 BST on 16 September only. LX6R is an executed-copy extract at 11:30 that day. Maren signed as appointor, Darren as retiring trustee and Tamsin as accepting replacement; signatures are not delivery.",
+    "bank_and_meeting": "Evin Rooke’s QF8M records the signed 12 May 2023 WM-683 opening instructions: Iona and Darren both had to authorise payment; either alone was insufficient. Separate correspondence blocks used 18 Alder Mews. HC9W records that Jules Neston had QF8M, VJ3K and LX6R by 15:30 on 16 September; MP2Z was then outstanding. The slip naming Tamsin was expressly a draft. At the 14:30 meeting the question is what, if anything, to send. The file does not confirm live signatories, current addresses, submission, approval or bank acceptance. Verify the live mandate and bank requirements separately from title.",
+    "archive": "At 14:12 on 17 September Iona requested two separately labelled electronic statement packs under WM-683 for reconciliation, with full names and statement periods, and asked about secure verification. Her copied address blocks share the opening instructions’ origin. Sharing and sorting post is her own recollection; the brother statement is her own kinship evidence. She did not request an address or mandate change. Entitlement, acknowledgement and fulfilment are not established.",
+    "roof": "At 10:10 on 17 September Nella Daven reported water entering the upstairs landing at 6 Bracken Fold, temporary protection and her recommendation to replace the failed rear covering. Her observation does not depend on the separately requested moisture survey. She relayed Sedgewick Roofworks’ telephone price and offered 28 September slot: £18,600 including VAT, of which £4,650 is payable at booking if approved. The reported £10,000 threshold applies to the whole spend. Joint approval was sought, not given by the proposal; the slot was unbooked, with no commitment or payment instruction at proposal time. Required approvers, survey contents, continuing availability and later action remain unconfirmed. Spending approval and bank payment authority are different decisions.",
+    "coverage": "All seven Sources are accounted for. No further trustee, sibling, parent, spouse, settlor or beneficiary edge is supported. The replaced or not-yet-effective Second Seat claim is affirmatively excluded in its respective state; omission of other unsupported relationships is not an affirmative denial."
+  },
+  "disputes": {
+    "ordinary_evidence": "Reject the A2 provisional ruling that VJ3K is merely historical for Iona. Its limitation concerns the period certified free of replacements, not the term of the accepted appointment. The only later seat transaction leaves her unaffected. Restore VJ3K to both ordinary and singleton-alternative evidence, exactly as in A0/A1. Do not extend this treatment to Darren without resolving the transaction that actually addresses his seat.",
+    "minimality": "Retain joint-only scoring and no ordinary quotation for either critical Second Seat edge. The A2 provisional conclusion about the minimal whole-source pair is correct; its account of fact routes is incomplete if it excludes the accepted founding appointment as an alternative source of incumbency. Conversely, counting the three full documents as a second minimal document set would also be an error.",
+    "quotation_check": "The VJ3K source has a blank line between '**Certified extract from the office book**' and 'To: Jules Neston, Fennick Vale Solicitors', not a Markdown hard break immediately followed by 'To:'. The rows preserve the blank line. In SY7G the retained span runs from the brother statement to Iona’s sign-off. This identifies the speaker without asserting an authenticated signature. In LX6R/MP2Z the shorter and longer provisional spans describe the same matched rule and row; headings, issue times and the extra lock explanation do not create independent proofs. Exact spans below retain the source’s Markdown, apostrophes, dash and line breaks.",
+    "unresolved_scored_objections": []
+  },
+  "limitations": "This is a file ruling at the stated cut-off, not a fresh certification by the bank, book keeper or custodian. MP2Z does not observe 14:00–14:20. In A0/A1 the earliest permitted release time and prior lock history are unspecified; in A2 eventual release is unknown. Dates of issue, addressing and copying do not prove personal receipt or review. These limitations do not leave the scored holder unresolved.",
+  "final_rows": {
+    "A0": [
+      {
+        "edge": ["Iona Brell", "trustee_of", "Wrenhollow Settlement"],
+        "ordinary": [
+          {
+            "source_id": "VJ3K",
+            "supporting_text": "**Wrenhollow Settlement**  \n**Certified extract from the office book**\n\nTo: Jules Neston, Fennick Vale Solicitors  \nFrom: Maren Voss, keeper of the office book  \nDate and time of extract: 16 September 2026, 09:10 BST  \nPurpose: Standing-records request\n\n**Founding record**\n\n**First Seat — Iona Brell.** The founding record names Iona Brell as the founding trustee for the First Seat. Iona Brell accepted the appointment in writing on 9 May 2023."
+          },
+          {
+            "source_id": "LX6R",
+            "supporting_text": "Maren Voss, exercising the sole power under the Wrenhollow Settlement to appoint replacement trustees, appoints Tamsin Kell in place of Darren Brell in the Second Seat. Darren Brell retires from that seat and Tamsin Kell accepts appointment to it, in each case only upon delivery under clause 2. At that act alone, the retirement and appointment take effect simultaneously: Darren ceases to hold the Second Seat and Tamsin alone holds it in his place. Iona Brell’s First Seat is unaffected."
+          }
+        ],
+        "alternatives": [
+          [
+            {
+              "source_id": "VJ3K",
+              "supporting_text": "**Wrenhollow Settlement**  \n**Certified extract from the office book**\n\nTo: Jules Neston, Fennick Vale Solicitors  \nFrom: Maren Voss, keeper of the office book  \nDate and time of extract: 16 September 2026, 09:10 BST  \nPurpose: Standing-records request\n\n**Founding record**\n\n**First Seat — Iona Brell.** The founding record names Iona Brell as the founding trustee for the First Seat. Iona Brell accepted the appointment in writing on 9 May 2023."
+            }
+          ],
+          [
+            {
+              "source_id": "LX6R",
+              "supporting_text": "Maren Voss, exercising the sole power under the Wrenhollow Settlement to appoint replacement trustees, appoints Tamsin Kell in place of Darren Brell in the Second Seat. Darren Brell retires from that seat and Tamsin Kell accepts appointment to it, in each case only upon delivery under clause 2. At that act alone, the retirement and appointment take effect simultaneously: Darren ceases to hold the Second Seat and Tamsin alone holds it in his place. Iona Brell’s First Seat is unaffected."
+            }
+          ]
+        ],
+        "joint_only": false,
+        "reasoning": "Accepted standing First Seat with no displacement; independently, express identification and preservation of Iona’s seat. Neither route needs the register."
+      },
+      {
+        "edge": ["Tamsin Kell", "trustee_of", "Wrenhollow Settlement"],
+        "ordinary": [],
+        "alternatives": [
+          [
+            {
+              "source_id": "LX6R",
+              "supporting_text": "Maren Voss, exercising the sole power under the Wrenhollow Settlement to appoint replacement trustees, appoints Tamsin Kell in place of Darren Brell in the Second Seat. Darren Brell retires from that seat and Tamsin Kell accepts appointment to it, in each case only upon delivery under clause 2. At that act alone, the retirement and appointment take effect simultaneously: Darren ceases to hold the Second Seat and Tamsin alone holds it in his place. Iona Brell’s First Seat is unaffected.\n\n### 2. Escrow and delivery\nDelivery of this instrument is expressly postponed. Perrin Saye of Orrel Document Custody holds the sole executed original under reference OC-517. Perrin Saye alone may lift the escrow restriction, and only by entering **RELEASED** against that sole original in the escrow control register. That entry, when permitted by the escrow controls, is the sole act of delivery."
+            },
+            {
+              "source_id": "MP2Z",
+              "supporting_text": "**Register:** Escrow control register used by clause 2  \n**Instrument:** Second Seat — Instrument of retirement and replacement appointment, dated 16 September 2026  \n**Escrow reference:** OC-517  \n**Record covered:** The sole executed original of the instrument identified above  \n\n**Operator:** Perrin Saye  \n**Disposition:** RELEASED — 12:20 BST on 17 September 2026\n\nThe Operator column identifies the person who committed the row. Only my authenticated operator account can commit a disposition in this register. The register does not allow a release operation to commit while a time lock is in force."
+            }
+          ]
+        ],
+        "joint_only": true,
+        "reasoning": "The named successor alone takes the seat on permitted delivery. Perrin’s committed 12:20 entry on the matching sole original satisfied that condition before cut-off. Neither document proves the edge alone."
+      },
+      {
+        "edge": ["Iona Brell", "sibling_of", "Darren Brell"],
+        "ordinary": [
+          {
+            "source_id": "SY7G",
+            "supporting_text": "Darren Brell is my brother. We both used 18 Alder Mews for trust post at the time, and I remember us sharing and sorting that post. I mention this only to explain the duplicate index, not as evidence of identity or authority.\n\nPlease include the full name and statement period in each file label so I can match the copies to the reconciliation records. If you need more information to locate the packs, or if there are verification steps before you can release them, please let me know what you need and how to provide it securely.\n\nThis is a request for archived copies only. I’m not asking for any change to the address or mandate.\n\nKind regards,  \nIona Brell"
+          }
+        ],
+        "alternatives": [
+          [
+            {
+              "source_id": "SY7G",
+              "supporting_text": "Darren Brell is my brother. We both used 18 Alder Mews for trust post at the time, and I remember us sharing and sorting that post. I mention this only to explain the duplicate index, not as evidence of identity or authority.\n\nPlease include the full name and statement period in each file label so I can match the copies to the reconciliation records. If you need more information to locate the packs, or if there are verification steps before you can release them, please let me know what you need and how to provide it securely.\n\nThis is a request for archived copies only. I’m not asking for any change to the address or mandate.\n\nKind regards,  \nIona Brell"
+            }
+          ]
+        ],
+        "joint_only": false,
+        "reasoning": "Iona’s sign-off resolves ‘my’; her brother statement supplies kinship directly. The address and archive purpose do not supply a second proof."
+      }
+    ],
+    "A2": [
+      {
+        "edge": ["Iona Brell", "trustee_of", "Wrenhollow Settlement"],
+        "ordinary": [
+          {
+            "source_id": "VJ3K",
+            "supporting_text": "**Wrenhollow Settlement**  \n**Certified extract from the office book**\n\nTo: Jules Neston, Fennick Vale Solicitors  \nFrom: Maren Voss, keeper of the office book  \nDate and time of extract: 16 September 2026, 09:10 BST  \nPurpose: Standing-records request\n\n**Founding record**\n\n**First Seat — Iona Brell.** The founding record names Iona Brell as the founding trustee for the First Seat. Iona Brell accepted the appointment in writing on 9 May 2023."
+          },
+          {
+            "source_id": "LX6R",
+            "supporting_text": "Maren Voss, exercising the sole power under the Wrenhollow Settlement to appoint replacement trustees, appoints Tamsin Kell in place of Darren Brell in the Second Seat. Darren Brell retires from that seat and Tamsin Kell accepts appointment to it, in each case only upon delivery under clause 2. At that act alone, the retirement and appointment take effect simultaneously: Darren ceases to hold the Second Seat and Tamsin alone holds it in his place. Iona Brell’s First Seat is unaffected."
+          }
+        ],
+        "alternatives": [
+          [
+            {
+              "source_id": "VJ3K",
+              "supporting_text": "**Wrenhollow Settlement**  \n**Certified extract from the office book**\n\nTo: Jules Neston, Fennick Vale Solicitors  \nFrom: Maren Voss, keeper of the office book  \nDate and time of extract: 16 September 2026, 09:10 BST  \nPurpose: Standing-records request\n\n**Founding record**\n\n**First Seat — Iona Brell.** The founding record names Iona Brell as the founding trustee for the First Seat. Iona Brell accepted the appointment in writing on 9 May 2023."
+            }
+          ],
+          [
+            {
+              "source_id": "LX6R",
+              "supporting_text": "Maren Voss, exercising the sole power under the Wrenhollow Settlement to appoint replacement trustees, appoints Tamsin Kell in place of Darren Brell in the Second Seat. Darren Brell retires from that seat and Tamsin Kell accepts appointment to it, in each case only upon delivery under clause 2. At that act alone, the retirement and appointment take effect simultaneously: Darren ceases to hold the Second Seat and Tamsin alone holds it in his place. Iona Brell’s First Seat is unaffected."
+            }
+          ]
+        ],
+        "joint_only": false,
+        "reasoning": "Accepted standing First Seat with no displacement; independently, express identification and preservation of Iona’s seat. Neither route needs the register."
+      },
+      {
+        "edge": ["Darren Brell", "trustee_of", "Wrenhollow Settlement"],
+        "ordinary": [],
+        "alternatives": [
+          [
+            {
+              "source_id": "LX6R",
+              "supporting_text": "Maren Voss, exercising the sole power under the Wrenhollow Settlement to appoint replacement trustees, appoints Tamsin Kell in place of Darren Brell in the Second Seat. Darren Brell retires from that seat and Tamsin Kell accepts appointment to it, in each case only upon delivery under clause 2. At that act alone, the retirement and appointment take effect simultaneously: Darren ceases to hold the Second Seat and Tamsin alone holds it in his place. Iona Brell’s First Seat is unaffected.\n\n### 2. Escrow and delivery\nDelivery of this instrument is expressly postponed. Perrin Saye of Orrel Document Custody holds the sole executed original under reference OC-517. Perrin Saye alone may lift the escrow restriction, and only by entering **RELEASED** against that sole original in the escrow control register. That entry, when permitted by the escrow controls, is the sole act of delivery."
+            },
+            {
+              "source_id": "MP2Z",
+              "supporting_text": "**Register as of:** 14:00 BST on 17 September 2026  \n**Issued at:** 14:02 BST on 17 September 2026  \n\n**Register:** Escrow control register used by clause 2  \n**Instrument:** Second Seat — Instrument of retirement and replacement appointment, dated 16 September 2026  \n**Escrow reference:** OC-517  \n**Record covered:** The sole executed original of the instrument identified above  \n\n**Operator:** Perrin Saye  \n**Disposition:** HOLD — release locked until 15:00 BST on 17 September 2026; no earlier release permitted\n\nThe Operator column identifies the person who committed the row. Only my authenticated operator account can commit a disposition in this register. The register does not allow a release operation to commit while a time lock is in force."
+            }
+          ],
+          [
+            {
+              "source_id": "VJ3K",
+              "supporting_text": "**Second Seat — Darren Brell.** The founding record names Darren Brell as the founding trustee for the Second Seat. Darren Brell accepted the appointment in writing on 9 May 2023.\n\n**Replacement power and appointments**\n\nWrenhollow Settlement grants me, Maren Voss, the sole power to appoint replacement trustees. That grant is the source of my authority. The entries recording my acts are separate from the grant: they record what I have done, rather than confer the power to do it.\n\n**Certification**\n\nI certify that the founding-seat and written acceptance entries are accurately set out above. On the basis of my own acts and the complete office book that I keep, I also certify that I have made no replacement appointment through 09:10 BST on 16 September 2026."
+            },
+            {
+              "source_id": "LX6R",
+              "supporting_text": "Tamsin Kell accepts appointment to it, in each case only upon delivery under clause 2. At that act alone, the retirement and appointment take effect simultaneously:"
+            },
+            {
+              "source_id": "LX6R",
+              "supporting_text": "Delivery of this instrument is expressly postponed. Perrin Saye of Orrel Document Custody holds the sole executed original under reference OC-517. Perrin Saye alone may lift the escrow restriction, and only by entering **RELEASED** against that sole original in the escrow control register. That entry, when permitted by the escrow controls, is the sole act of delivery."
+            },
+            {
+              "source_id": "MP2Z",
+              "supporting_text": "**Register as of:** 14:00 BST on 17 September 2026  \n**Issued at:** 14:02 BST on 17 September 2026  \n\n**Register:** Escrow control register used by clause 2  \n**Instrument:** Second Seat — Instrument of retirement and replacement appointment, dated 16 September 2026  \n**Escrow reference:** OC-517  \n**Record covered:** The sole executed original of the instrument identified above  \n\n**Operator:** Perrin Saye  \n**Disposition:** HOLD — release locked until 15:00 BST on 17 September 2026; no earlier release permitted\n\nThe Operator column identifies the person who committed the row. Only my authenticated operator account can commit a disposition in this register. The register does not allow a release operation to commit while a time lock is in force."
+            }
+          ]
+        ],
+        "joint_only": true,
+        "reasoning": "Darren is identified either as the incumbent in the conditional handover or by his accepted founding office. The documented retirement requires permitted delivery, affirmatively barred until after cut-off. The second route varies the source of prior tenure, not the condition or lock; it does not make VJ3K mandatory or ordinary cut-off evidence for Darren alone."
+      },
+      {
+        "edge": ["Iona Brell", "sibling_of", "Darren Brell"],
+        "ordinary": [
+          {
+            "source_id": "SY7G",
+            "supporting_text": "Darren Brell is my brother. We both used 18 Alder Mews for trust post at the time, and I remember us sharing and sorting that post. I mention this only to explain the duplicate index, not as evidence of identity or authority.\n\nPlease include the full name and statement period in each file label so I can match the copies to the reconciliation records. If you need more information to locate the packs, or if there are verification steps before you can release them, please let me know what you need and how to provide it securely.\n\nThis is a request for archived copies only. I’m not asking for any change to the address or mandate.\n\nKind regards,  \nIona Brell"
+          }
+        ],
+        "alternatives": [
+          [
+            {
+              "source_id": "SY7G",
+              "supporting_text": "Darren Brell is my brother. We both used 18 Alder Mews for trust post at the time, and I remember us sharing and sorting that post. I mention this only to explain the duplicate index, not as evidence of identity or authority.\n\nPlease include the full name and statement period in each file label so I can match the copies to the reconciliation records. If you need more information to locate the packs, or if there are verification steps before you can release them, please let me know what you need and how to provide it securely.\n\nThis is a request for archived copies only. I’m not asking for any change to the address or mandate.\n\nKind regards,  \nIona Brell"
+            }
+          ]
+        ],
+        "joint_only": false,
+        "reasoning": "Iona’s sign-off resolves ‘my’; her brother statement supplies kinship directly. The address and archive purpose do not supply a second proof."
+      }
+    ]
+  }
+}

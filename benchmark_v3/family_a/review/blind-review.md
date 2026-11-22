@@ -11,3 +11,11 @@ In A0 and A1, both readers offered the office-book extract and the executed inst
 | A0 | [Reader P](outputs/A0-p.txt) · [Reader Q](outputs/A0-q.txt) |
 | A1 | [Reader P](outputs/A1-p.txt) · [Reader Q](outputs/A1-q.txt) |
 | A2 | [Reader P](outputs/A2-p.txt) · [Reader Q](outputs/A2-q.txt) |
+
+## Adjudication
+
+Each adjudicator received one ordered bundle and its two committed answers. The three provisional rulings were committed together before disclosure of the matched intervention. They record both readers’ positions, the exact passages, dispositions, residual doubts and a Source-by-Source completeness audit. All three adjudicators reported an empty list of unresolved scored disputes. Questions about the live bank mandate, roof consent, receipt versus actual reading of the extract and the underlying execution originals remain in their companion registers.
+
+[Provisional lock](provisional-lock.json) · [A0 ruling and register](outputs/A0-judgment.txt) · [A1 ruling and register](outputs/A1-judgment.txt) · [A2 ruling and register](outputs/A2-judgment.txt)
+
+After mask and excerpt review the final auditor retained one critical proof per state and rejected the candidate A2 route using the earlier certificate with truncated deed clauses. All three keys also approve VJ3K and LX6R separately for Iona. The certificate bounds the keeper’s report and the file supplies no competing change to that seat. [Final decisions](outputs/final-audit.txt)

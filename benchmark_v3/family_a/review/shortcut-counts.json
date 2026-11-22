@@ -1,0 +1,38 @@
+{
+  "counting_rule": "Case-sensitive whole first-name tokens in each UTF-8 Source body, including repeated and copied text. Counts are descriptive. The two candidates for the changing seat are Darren and Tamsin.",
+  "conditions": {
+    "A0": {
+      "body_counts": {
+        "Darren": 11,
+        "Tamsin": 5,
+        "Iona": 9
+      },
+      "first_named_changing_candidate": "Darren",
+      "last_id": "SY7G",
+      "latest_dated_id": "SY7G",
+      "names_in_titles_or_ids": []
+    },
+    "A1": {
+      "body_counts": {
+        "Darren": 11,
+        "Tamsin": 5,
+        "Iona": 9
+      },
+      "first_named_changing_candidate": "Darren",
+      "last_id": "LX6R",
+      "latest_dated_id": "SY7G",
+      "names_in_titles_or_ids": []
+    },
+    "A2": {
+      "body_counts": {
+        "Darren": 11,
+        "Tamsin": 5,
+        "Iona": 9
+      },
+      "first_named_changing_candidate": "Darren",
+      "last_id": "SY7G",
+      "latest_dated_id": "SY7G",
+      "names_in_titles_or_ids": []
+    }
+  }
+}

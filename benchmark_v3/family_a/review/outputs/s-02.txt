@@ -1,0 +1,8 @@
+At 14:20 BST on 17 September 2026, **Iona Brell holds the First Seat and Darren Brell holds the Second Seat of the Wrenhollow Settlement.**
+
+- **Iona Brell — `trustee_of` — Wrenhollow Settlement.** LX6R independently establishes the trust and seat: “Maren Voss, exercising the sole power under the Wrenhollow Settlement to appoint replacement trustees, appoints Tamsin Kell in place of Darren Brell in the Second Seat.” “Iona Brell’s First Seat is unaffected.”
+- **Darren Brell — `trustee_of` — Wrenhollow Settlement.** Both sources are needed; standalone quotation and attribution are N/A. **LX6R:** “Maren Voss, exercising the sole power under the Wrenhollow Settlement to appoint replacement trustees, appoints Tamsin Kell in place of Darren Brell in the Second Seat.” “Darren Brell retires from that seat and Tamsin Kell accepts appointment to it, in each case only upon delivery under clause 2.” “Perrin Saye of Orrel Document Custody holds the sole executed original under reference OC-517.” “That entry, when permitted by the escrow controls, is the sole act of delivery.” **MP2Z:** “**Escrow reference:** OC-517”; “HOLD — release locked until 15:00 BST on 17 September 2026; no earlier release permitted”.
+
+Perrin Saye’s 14:00 register entry, issued at 14:02, rules out delivery by 14:20 and thus contradicts Tamsin Kell holding the seat then. It does not establish whether or when release occurred after the cut-off.
+
+**Bank authority:** No mandate is supplied. Neither seat establishes who can sign or instruct Lintmere Bank. Ask for the operative mandate before sending any change instruction.
