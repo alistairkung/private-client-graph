@@ -1,0 +1,289 @@
+{
+  "edges": [
+    {
+      "edge": ["Ellis Harnett", "settlor_of", "Alder Quay Settlement"],
+      "alternatives": [
+        [
+          {"source_id": "m4v7", "supporting_text": "ALDER QUAY SETTLEMENT — CERTIFIED SELECTED-CLAUSE EXTRACT"},
+          {"source_id": "m4v7", "supporting_text": "Settlor: Ellis Harnett"}
+        ]
+      ],
+      "reason": "The certified extract identifies the settlement and its settlor. Settling the trust is distinct from holding a current power to approve an addition or payment."
+    },
+    {
+      "edge": ["Nell Carvane", "trustee_of", "Alder Quay Settlement"],
+      "alternatives": [
+        [
+          {"source_id": "j8f2", "supporting_text": "Prepare for separate discretionary distribution decisions for the Alder Quay Settlement and the Flint Orchard Settlement, in that order."},
+          {"source_id": "j8f2", "supporting_text": "I have booked one slot on 17 June with Nell Carvane and Tobin Rell. The appointments book shows both in office for both settlements, with no change entered since the deeds were lodged."}
+        ],
+        [
+          {"source_id": "m4v7", "supporting_text": "ALDER QUAY SETTLEMENT — CERTIFIED SELECTED-CLAUSE EXTRACT"},
+          {"source_id": "m4v7", "supporting_text": "Original trustees: Nell Carvane and Tobin Rell"},
+          {"source_id": "j8f2", "supporting_text": "The appointments book shows both in office for both settlements, with no change entered since the deeds were lodged."}
+        ]
+      ],
+      "reason": "The secretary identifies both incumbents in the context of the two trustee decisions. The express-title route identifies Nell's original office from the Alder deed and establishes continuity from the appointments book. The booking itself is not proof of office."
+    },
+    {
+      "edge": ["Tobin Rell", "trustee_of", "Alder Quay Settlement"],
+      "alternatives": [
+        [
+          {"source_id": "j8f2", "supporting_text": "Prepare for separate discretionary distribution decisions for the Alder Quay Settlement and the Flint Orchard Settlement, in that order."},
+          {"source_id": "j8f2", "supporting_text": "I have booked one slot on 17 June with Nell Carvane and Tobin Rell. The appointments book shows both in office for both settlements, with no change entered since the deeds were lodged."}
+        ],
+        [
+          {"source_id": "m4v7", "supporting_text": "ALDER QUAY SETTLEMENT — CERTIFIED SELECTED-CLAUSE EXTRACT"},
+          {"source_id": "m4v7", "supporting_text": "Original trustees: Nell Carvane and Tobin Rell"},
+          {"source_id": "j8f2", "supporting_text": "The appointments book shows both in office for both settlements, with no change entered since the deeds were lodged."}
+        ]
+      ],
+      "reason": "The appointments-book report covers Tobin as well as Nell. The Alder deed expressly supplies his original office; the book reports it unchanged."
+    },
+    {
+      "edge": ["Ione Berrick", "beneficiary_of", "Alder Quay Settlement"],
+      "alternatives": [
+        [
+          {"source_id": "m4v7", "supporting_text": "ALDER QUAY SETTLEMENT — CERTIFIED SELECTED-CLAUSE EXTRACT"},
+          {"source_id": "m4v7", "supporting_text": "The original discretionary objects are Ione Berrick and Emmett Vann."},
+          {"source_id": "m4v7", "supporting_text": "Existing objects remain unless separately removed by deed."}
+        ]
+      ],
+      "reason": "Ione is a named, continuing discretionary object; no removal is evidenced. This is eligibility, not a payment appointment. Her correspondence does not independently identify a trust of which she is an object."
+    },
+    {
+      "edge": ["Emmett Vann", "beneficiary_of", "Alder Quay Settlement"],
+      "alternatives": [
+        [
+          {"source_id": "m4v7", "supporting_text": "ALDER QUAY SETTLEMENT — CERTIFIED SELECTED-CLAUSE EXTRACT"},
+          {"source_id": "m4v7", "supporting_text": "The original discretionary objects are Ione Berrick and Emmett Vann."},
+          {"source_id": "m4v7", "supporting_text": "Existing objects remain unless separately removed by deed."}
+        ]
+      ],
+      "reason": "Emmett is the other named original object; addition does not displace him, and no separate removal is evidenced."
+    },
+    {
+      "edge": ["Cora Teague", "settlor_of", "Flint Orchard Settlement"],
+      "alternatives": [
+        [
+          {"source_id": "x2c9", "supporting_text": "Settlement: Flint Orchard Settlement"},
+          {"source_id": "x2c9", "supporting_text": "Settlor: Cora Teague"}
+        ]
+      ],
+      "reason": "Flint Orchard's own certified deed extract expressly identifies Cora as settlor."
+    },
+    {
+      "edge": ["Nell Carvane", "trustee_of", "Flint Orchard Settlement"],
+      "alternatives": [
+        [
+          {"source_id": "j8f2", "supporting_text": "Prepare for separate discretionary distribution decisions for the Alder Quay Settlement and the Flint Orchard Settlement, in that order."},
+          {"source_id": "j8f2", "supporting_text": "I have booked one slot on 17 June with Nell Carvane and Tobin Rell. The appointments book shows both in office for both settlements, with no change entered since the deeds were lodged."}
+        ],
+        [
+          {"source_id": "x2c9", "supporting_text": "Settlement: Flint Orchard Settlement"},
+          {"source_id": "x2c9", "supporting_text": "Original trustees: Nell Carvane and Tobin Rell"},
+          {"source_id": "j8f2", "supporting_text": "The appointments book shows both in office for both settlements, with no change entered since the deeds were lodged."}
+        ]
+      ],
+      "reason": "The book report covers both settlements. For express identification of the office at Flint Orchard, use its deed and the reported continuity, not the Alder deed."
+    },
+    {
+      "edge": ["Tobin Rell", "trustee_of", "Flint Orchard Settlement"],
+      "alternatives": [
+        [
+          {"source_id": "j8f2", "supporting_text": "Prepare for separate discretionary distribution decisions for the Alder Quay Settlement and the Flint Orchard Settlement, in that order."},
+          {"source_id": "j8f2", "supporting_text": "I have booked one slot on 17 June with Nell Carvane and Tobin Rell. The appointments book shows both in office for both settlements, with no change entered since the deeds were lodged."}
+        ],
+        [
+          {"source_id": "x2c9", "supporting_text": "Settlement: Flint Orchard Settlement"},
+          {"source_id": "x2c9", "supporting_text": "Original trustees: Nell Carvane and Tobin Rell"},
+          {"source_id": "j8f2", "supporting_text": "The appointments book shows both in office for both settlements, with no change entered since the deeds were lodged."}
+        ]
+      ],
+      "reason": "The book report identifies Tobin as a continuing incumbent. The deed supplies the express original trustee title; its certification is not itself a fresh appointment."
+    },
+    {
+      "edge": ["Ione Berrick", "beneficiary_of", "Flint Orchard Settlement"],
+      "alternatives": [
+        [
+          {"source_id": "x2c9", "supporting_text": "Settlement: Flint Orchard Settlement"},
+          {"source_id": "x2c9", "supporting_text": "The named Objects are Ione Berrick and Orla Penrick."},
+          {"source_id": "x2c9", "supporting_text": "Existing Objects remain Objects unless separately removed by deed."}
+        ]
+      ],
+      "reason": "Ione is independently named under this deed too. No removal is evidenced; neither her Alder eligibility nor her expense correspondence is the proof of her Flint eligibility."
+    },
+    {
+      "edge": ["Orla Penrick", "beneficiary_of", "Flint Orchard Settlement"],
+      "alternatives": [
+        [
+          {"source_id": "x2c9", "supporting_text": "Settlement: Flint Orchard Settlement"},
+          {"source_id": "x2c9", "supporting_text": "The named Objects are Ione Berrick and Orla Penrick."},
+          {"source_id": "x2c9", "supporting_text": "Existing Objects remain Objects unless separately removed by deed."}
+        ]
+      ],
+      "reason": "Orla is a named discretionary object of Flint Orchard. No separate removal is evidenced; the power to benefit her is not a decision to pay her."
+    }
+  ],
+  "register": [
+    {
+      "matter": "Alder Quay Settlement — first decision paper",
+      "origin_reporter": "Lodged deed PD-6834-R, certified in selected extract by Tess Arnay (m4v7); incumbency from the appointments book via Maren Dovell (j8f2).",
+      "effective_and_received": "Deed dated 21 October 2022; extract certified 9 June 2026 and held by cut-off. Office checked as reported on 12 June.",
+      "disposition": "supported",
+      "finding": "Consider Ione Berrick and Emmett Vann. Nell Carvane and Tobin Rell exercise discretion over income and capital jointly. No object is entitled to payment before an appointment in that object's favour. Record of prior payment authorisations in this packet: none identified; there is no recorded decision reference, recipient or sum to enter.",
+      "competition_and_reason": "Rhea Marden is a possible addition, not a confirmed Alder object; SD-Q7M2 expressly appoints no property. Ione's request about Sella Quist, EX-K4 and the meeting booking are not appointments. The lack of a decision in this pack is not proof that none exists elsewhere."
+    },
+    {
+      "matter": "Flint Orchard Settlement — second decision paper",
+      "origin_reporter": "Lodged deed PD-6894-R, certified in extract by Bram Lerrit (x2c9); appointments book reported by Maren Dovell (j8f2).",
+      "effective_and_received": "Deed dated 21 October 2022; extract certified 9 June 2026 and held by cut-off. Office checked as reported on 12 June.",
+      "disposition": "supported",
+      "finding": "Consider Ione Berrick and Orla Penrick. Nell Carvane and Tobin Rell act together over income and capital. They may apply funds directly for an Object's benefit, but eligibility alone gives no right to payment. Record of prior payment authorisations in this packet: none identified; no recorded decision reference, recipient or sum.",
+      "competition_and_reason": "Do not carry Emmett Vann across from Alder, treat Rhea Marden as confirmed for Flint, or turn a power to apply funds for Ione's benefit into an appointment for Sella's own benefit. There is no Flint decision evidenced by the letter, accounts entry or designation."
+    },
+    {
+      "matter": "Authority for an addition, distinct from authority for a distribution",
+      "origin_reporter": "Alder clause 6 in m4v7 (Arnay); Flint clause 8 in x2c9 (Lerrit).",
+      "effective_and_received": "Terms of the respective 21 October 2022 deeds, available in the certified extracts at cut-off.",
+      "disposition": "supported",
+      "finding": "For either named parent, all serving trustees must act together by deed to add a named living individual other than the settlor or a serving trustee. Alder expressly dispenses with settlor consent; Flint requires no other person's consent. Joint delivery as a deed gives effect. The trustees may identify the parent at custody delivery by linking its lodged reference to the designation reference; a trust name on the instrument is unnecessary. Existing objects continue unless separately removed by deed. Both deeds specify England and Wales law.",
+      "competition_and_reason": "The custody service records the delivery; it does not choose the parent, designate the object or consent in place of the trustees. A request, a signature alone, an administrative listing and a joint distribution decision are not interchangeable."
+    },
+    {
+      "matter": "What SD-Q7M2 actually says and who executed it",
+      "origin_reporter": "Signed paper designation by Nell Carvane and Tobin Rell; checking clerk Alys Morcant (h6q3). Della Pennick, records assistant, attended and witnessed each signature.",
+      "effective_and_received": "Checked against the signed paper before handover on 26 March 2026; transcript held by cut-off. Effect expressly deferred to joint delivery.",
+      "disposition": "supported",
+      "finding": "The subject and the scope, unlike the parent name, are legible: “Rhea Marden, a living individual, is designated as an additional Object eligible for discretionary appointments of income and capital under the parent deed for which the trustees jointly deliver this instrument as a deed.” She is neither named settlor nor either named serving trustee of the two candidate settlements.",
+      "competition_and_reason": "This is a transcript of an executed instrument, not a draft. Morcant expressly does not attest to delivery. Neither the two signatures nor the shared trustees identify which settlement the trustees specified."
+    },
+    {
+      "matter": "Joint delivery of one original",
+      "origin_reporter": "Gideon Sarn, handover officer and maker of the Merefold live register entry, reporting by certified single-entry extract r5n8.",
+      "effective_and_received": "11:30 GMT on 26 March 2026; extract certified 11 June and held by cut-off.",
+      "disposition": "supported",
+      "finding": "Sarn identifies SD-Q7M2 and records: “At 11:30 GMT on 26 March 2026, Nell Carvane and Tobin Rell attended together and released one signed paper original for immediate delivery as a deed, not in escrow.” Both confirmed the parent reference against the instrument reference at handover. The original was vaulted that day.",
+      "competition_and_reason": "This is independent evidence of the act that Morcant did not witness or certify, not an independent recital of Rhea's name. The register extract is a copy of that entry, not a second handover. One original, not an escrow deposit, series of counterparts or two trust-specific deliveries, is recorded."
+    },
+    {
+      "matter": "Parent identification — two concrete named readings",
+      "origin_reporter": "Rhea's designation in h6q3; Sarn's r5n8 transcription, “Instrument reference: SD-Q7M2” and “Parent deed reference: PD-68?4-R”; lodged references in m4v7 and x2c9.",
+      "effective_and_received": "Identification was made at delivery on 26 March. All four records were held at the 12 June cut-off, but the missing character was not recovered in them.",
+      "disposition": "unresolved",
+      "readings": [
+        {
+          "condition": "If the unreadable character was 3, the reference was PD-6834-R, the Alder Quay Settlement parent. On that reading the deed and joint delivery add Rhea under Alder from 11:30 GMT on 26 March, without removing Ione or Emmett.",
+          "conditional_edge": ["Rhea Marden", "beneficiary_of", "Alder Quay Settlement"],
+          "competing_edge_not_established_by_that_delivery": ["Rhea Marden", "beneficiary_of", "Flint Orchard Settlement"]
+        },
+        {
+          "condition": "If the unreadable character was 9, the reference was PD-6894-R, the Flint Orchard Settlement parent. On that reading the deed and joint delivery add Rhea under Flint from the same time, without removing Ione or Orla.",
+          "conditional_edge": ["Rhea Marden", "beneficiary_of", "Flint Orchard Settlement"],
+          "competing_edge_not_established_by_that_delivery": ["Rhea Marden", "beneficiary_of", "Alder Quay Settlement"]
+        }
+      ],
+      "competition_and_reason": "Withhold both named edges at cut-off. The question mark is an unreadable or unreproducible character, not a certified digit. The issued copy's defect does not show the trustees failed to identify a parent. Conversely, the match on SD-Q7M2 links the instrument to the handover but cannot supply the trust: labels come from shared stock, without trust or sequence meaning. Neither meeting order, deed date, trustee identity, original-object overlap nor proximity of the documents distinguishes the readings. The extract is for one entry only, not an exhaustive search of the service."
+    },
+    {
+      "matter": "Claim that the designation awards money, replaces an object or acts for both trusts",
+      "origin_reporter": "Operative limitation in h6q3, read with the single delivery in r5n8 and continuation clauses in m4v7 and x2c9.",
+      "effective_and_received": "At delivery on 26 March; records held by cut-off.",
+      "disposition": "explicitly contradicted",
+      "finding": "“This instrument makes that addition only. It does not remove any Object, appoint any property, direct any payment or alter any other provision of the parent deed.” It attaches to the singular parent specified at delivery.",
+      "competition_and_reason": "Rhea's eligibility under the parent actually used is the only substantive change shown. Even complete proof of the parent would not establish a payment. One delivery for one parent does not add her to both."
+    },
+    {
+      "matter": "Travel estimate and Sella Quist's limited authority",
+      "origin_reporter": "Ione Berrick's own 18 February letter b9k4, addressed to Nell Carvane and Tobin Rell.",
+      "effective_and_received": "Letter dated 18 February; in the pack at cut-off. It describes the estimate as of the letter, not a June update.",
+      "disposition": "supported",
+      "finding": "The replacement estimate had not come in and the old one was no longer reliable. Sella helps with envelopes and paperwork and has Ione's permission to pass on the replacement estimate when it arrives. Ione offers to sign confirmations herself. No replacement is supplied here.",
+      "competition_and_reason": "This narrow permission is not evidence of a general agency, authority to sign or receive distributions for Ione, a family relationship, or Sella's own eligibility. Addressing both trustees identifies no particular parent deed. Whether an estimate has since become available is unresolved."
+    },
+    {
+      "matter": "Request for Sella in her own right",
+      "origin_reporter": "Ione Berrick in b9k4, not the trustees.",
+      "effective_and_received": "18 February request, held by cut-off; no effective date of any resulting trustee action is evidenced.",
+      "disposition": "supported",
+      "finding": "Ione reports Sella turned down shifts to help and asks the trustees to consider helping Sella in her own right if appropriate. Ione acknowledges she does not know what either deed permits and expects expenses to be accounted for separately.",
+      "competition_and_reason": "Sella is not named among either deed's stated objects or in SD-Q7M2 as an addition. Her request for consideration through Ione is not a designation, an award for lost shifts, a decision reference or an entitlement. No Sella beneficiary edge for either settlement is established."
+    },
+    {
+      "matter": "Claim that Ione requested a standing payment, redirection or deduction",
+      "origin_reporter": "Ione's express limits in b9k4.",
+      "effective_and_received": "At the 18 February request, received by cut-off.",
+      "disposition": "explicitly contradicted",
+      "finding": "“I’m not asking for a standing payment, for any payment meant for me to go to Sella, or for anything to be deducted from a payment to me.”",
+      "competition_and_reason": "The own-right request and the limited permission to transmit an estimate cannot be used as contrary instructions."
+    },
+    {
+      "matter": "Ordinary office finance — EX-K4, separately from both decisions",
+      "origin_reporter": "Sella's submitted claim; Una Cresset, Accounts Administrator, reconciled it to the office operating account in t3w6. Ione's b9k4 acknowledges some outlays but is not a voucher.",
+      "effective_and_received": "£12.60 reimbursement matched on 5 June; reconciliation dated 11 June, held by cut-off.",
+      "disposition": "supported",
+      "finding": "Sella submitted £12.60 postage and £8.40 print-shop charges for getting Ione's papers to the office. The postage slip supported the £12.60 reimbursed from the office operating account. Neither item has been recharged. Sella is payee and queries contact for EX-K4 only.",
+      "competition_and_reason": "EX-K4 is an expense reference, not a settlement distribution decision. Cresset holds no distribution instruction for the claim. An office payee is not thereby a trust object, representative for all purposes or recipient of appointed trust property."
+    },
+    {
+      "matter": "Ordinary finance query still open — £8.40 print-shop charge",
+      "origin_reporter": "Una Cresset's expense list versus her receipt and payment check, t3w6.",
+      "effective_and_received": "Open at 11 June reconciliation; no resolution supplied by cut-off.",
+      "disposition": "unresolved",
+      "finding": "Substantiation and disposition of the claim remain open. The list mentions a receipt, but the office did not receive it and has no copy or substitute voucher.",
+      "competition_and_reason": "The stronger assertion that the £8.40 was paid or is an authorised outstanding balance is explicitly contradicted: “The amount has not been paid and is not an authorised balance.” Do not add it to a distribution list, pay it again as postage, or net it against Ione."
+    },
+    {
+      "matter": "Meeting control and proof conventions",
+      "origin_reporter": "Maren Dovell, Meeting Secretary, in j8f2; source provenance detailed in source_audit.",
+      "effective_and_received": "Preparation set closed at 16:00 BST on 12 June 2026 for the booked 17 June slot.",
+      "disposition": "supported",
+      "finding": "Prepare separate working papers and minute entries, Alder first and Flint second. Keep late papers separate for the meeting and ordinary finance queries outside the decision papers. The note expressly authorises no payment.",
+      "competition_and_reason": "For benchmark_v2_evidence_v1, the independent single-source routes are m4v7 for Alder's settlor and named objects, x2c9 for Flint's settlor and named objects, and j8f2 for the four incumbencies in meeting context. The deeds explicitly identify the trustee office but say “Original trustees”; the book, not the act of certifying those extracts, supplies the current-office check. The routes using the deeds and the book therefore share the book's continuity evidence. No positive edge is multi-source-only on the contextual reading of j8f2. Complete sets are attached to the corresponding edges for attached_sufficient_set_v1. The multi-source Rhea inquiry lacks a determinate named endpoint; it is not a positive edge with merely N/A quotation or attribution."
+    }
+  ],
+  "source_audit": [
+    {
+      "source_id": "j8f2",
+      "origin_and_receipt": "Maren Dovell's 12 June administrative note, in the closed set; reports the appointments book and her own booking and instructions.",
+      "graph_check": "Positive current-office evidence for Nell Carvane and Tobin Rell at each named settlement, incidental to meeting preparation. Not a second deed, a trustee decision, an object list, or proof that any specific payment has been authorised."
+    },
+    {
+      "source_id": "m4v7",
+      "origin_and_receipt": "Tess Arnay's 9 June certified selected-clause copy of the lodged Alder deed dated 21 October 2022, held by cut-off; schedule omitted.",
+      "graph_check": "Source for Ellis Harnett, Ione Berrick and Emmett Vann in their respective roles and for both trustees' original titles. Establishes PD-6834-R, joint discretion, addition on joint delivery and continuation. It cannot read the missing delivery digit. The certificate and quoted clauses share one deed origin, not two independent appointments."
+    },
+    {
+      "source_id": "x2c9",
+      "origin_and_receipt": "Bram Lerrit's 9 June certified extract of the lodged Flint deed dated 21 October 2022, held by cut-off; schedules not reproduced.",
+      "graph_check": "Source for Cora Teague, Ione Berrick and Orla Penrick in their respective roles and both original trustee titles. Establishes PD-6894-R, joint discretion including direct application for an Object, addition on joint delivery and continuation. Similar terms do not make this a copy of the Alder deed or resolve the missing digit."
+    },
+    {
+      "source_id": "h6q3",
+      "origin_and_receipt": "Alys Morcant's transcript checked against the signed designation on 26 March before handover, held by cut-off.",
+      "graph_check": "Identifies SD-Q7M2, Rhea Marden, the terms, the two signers and Della Pennick's attestations. Transcript and signed text share an origin. No named parent or attestation of delivery, so no independent named trustee or Rhea-to-trust edge here. A witness or clerk is not a trustee by reason of signing or certification."
+    },
+    {
+      "source_id": "r5n8",
+      "origin_and_receipt": "Gideon Sarn's 11 June certified single-entry copy of his live register record of the 26 March handover, held by cut-off.",
+      "graph_check": "Independent event evidence, linked to h6q3 by exact instrument reference. Establishes both persons' immediate joint release and confirmation of a parent reference, but not the missing character, the object's name or the designation's provisions independently. Does not identify a second delivery or make the custodian a trustee."
+    },
+    {
+      "source_id": "b9k4",
+      "origin_and_receipt": "Ione Berrick's 18 February letter; held by cut-off, exact arrival not stated.",
+      "graph_check": "Evidence of the estimate problem, Sella's help, limited permission and own-right request with express exclusions. No independent trust-specific beneficiary or trustee proof, appointment, consent to diversion, or kinship assertion."
+    },
+    {
+      "source_id": "t3w6",
+      "origin_and_receipt": "Una Cresset's 11 June EX-K4 reconciliation, including the 5 June operating-account match; held by cut-off.",
+      "graph_check": "Evidence of the office reimbursement, open voucher query and limits of Sella's payee/contact role. No distribution instruction or scored edge. Across the entire file there is no explicit parent_of, sibling_of or spouse_of relationship."
+    }
+  ],
+  "questions": [
+    "Alder first: can the adviser check the full lodged PD-6834-R deed, omitted schedule, subsequent additions or removals, and current office records before the trustees settle the eligible list? Are there any actual joint appointments, minutes or unpaid authorised sums to reconcile to Alder's payment records, with decision references?",
+    "Flint second: can the same checks be made independently against PD-6894-R, its schedules, amendments, current offices, appointment minutes and payment ledger? If direct application for an Object is proposed, whose benefit, amount, purpose and joint decision will the Flint minute record?",
+    "Can Merefold or the trustees provide a legible, authenticated handover record or other reliable contemporaneous evidence of the full parent reference that both trustees stated against SD-Q7M2? Keep any response received after cut-off separate for the meeting; do not put Rhea on either confirmed list by guessing.",
+    "Has the replacement travel estimate arrived, for what need and amount, and for which decision is it relevant? Obtain Ione's own confirmation where needed. Does any proposed help concern Ione's benefit, or Sella in her own right? For the latter, what proper settlement-specific eligibility basis exists, or would an effective addition by all serving trustees be needed before any separate exercise of distribution discretion?",
+    "Separate accounts query: can Sella or the print shop supply the missing £8.40 receipt or an acceptable substitute to Una Cresset for EX-K4? Leave the item unpaid and unauthorised pending ordinary expense review; retain the £12.60 operating-account match without treating it as trust expenditure."
+  ]
+}
