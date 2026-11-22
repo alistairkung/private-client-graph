@@ -63,8 +63,10 @@ def test_public_blind_readings_bind_the_frozen_source_bytes_and_peer_commits():
 def test_admission_commitments_cover_final_ruling_and_accepted_excerpts():
     marker = _read(FAMILY / 'admission.json')
     assert marker['manifest_sha256'] == _sha(FAMILY / 'manifest.json')
-    assert marker['status'] == 'pending_human_admission'
-    assert marker['owner_decision'] is marker['signature'] is None
+    assert marker['status'] == 'admitted' and marker['owner_decision'] == 'accept'
+    assert marker['signature']['verbatim_reply'] == 'accepted'
+    assert marker['signature']['reviewed_commit'] == '2fe04ef1eb1df86638868de10038decc8989086d'
+    assert marker['manifest_sha256'] == 'b81002b2547ebb80c77bde6fd67191578eceeb558fcd2fb125746573db2538d4'
     assert marker['dispatched'] is False
     for name, digest in marker['review_files'].items():
         assert _sha(FAMILY / name) == digest

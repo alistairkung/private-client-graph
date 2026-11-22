@@ -1,8 +1,14 @@
 {
   "family": "A",
-  "status": "pending_human_admission",
-  "owner_decision": null,
-  "signature": null,
+  "status": "admitted",
+  "owner_decision": "accept",
+  "signature": {
+    "source": "Student owner’s reply to the Family A admission handoff in Codex",
+    "verbatim_reply": "accepted",
+    "recorded_at": "2026-11-22T11:42:34+00:00",
+    "reviewed_commit": "2fe04ef1eb1df86638868de10038decc8989086d",
+    "reviewed_admission_sha256": "ced4b9337b1af0e1f49607b1edb039b1d120ab67fe15ec4e1688e0bc3cd1283e"
+  },
   "dispatched": false,
   "evidence_policy": "benchmark_v2_evidence_v1",
   "proof_policy": "attached_sufficient_set_v1",
