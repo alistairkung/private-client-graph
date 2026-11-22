@@ -1,0 +1,69 @@
+{
+  "cutoff": "2026-06-12T16:00:00+01:00",
+  "meeting_brief": "Prepare for separate discretionary distribution decisions for the Alder Quay Settlement and the Flint Orchard Settlement, in that order. Use the administered records held at 16:00 BST on 12 June 2026. For each settlement, distinguish who may be considered from what has already been authorised for payment, and note anything the trustees should check before deciding.",
+  "sources": [
+    {
+      "id": "j8f2",
+      "title": "Meeting preparation note — 17 June",
+      "perspective": "Maren Dovell, meeting secretary at Brindlewick Trust Office",
+      "recipient": "Kit Wenslow, Tarnstile Advisory",
+      "custody_path": "12 June 2026: prepared in the trustees' office and sent to the adviser's secure intake at 15:50 BST; the administered record set closes at 16:00 BST.",
+      "genre_or_assumption": "Ordinary adviser briefing note for a joint diary slot with separate trustee business.",
+      "business_purpose": "Set the meeting agenda, evidence cut-off and decision-recording arrangements."
+    },
+    {
+      "id": "m4v7",
+      "title": "Alder Quay Settlement — certified deed extract",
+      "perspective": "Tess Arnay, Brindlewick Trust Office deed-records clerk",
+      "recipient": "Kit Wenslow, Tarnstile Advisory",
+      "custody_path": "Deed dated 21 October 2022 and lodged with Merefold on 24 October 2022 at the trustees' direction; extract checked against the lodged deed and sent to Tarnstile Advisory on 9 June 2026.",
+      "genre_or_assumption": "Selective certified deed extract for an England and Wales discretionary trust. The joint-delivery procedure is a term of this deed.",
+      "business_purpose": "Supply the foundation deed identity, trustee appointments, original objects and relevant powers without including the property schedule."
+    },
+    {
+      "id": "x2c9",
+      "title": "Flint Orchard Settlement — certified deed extract",
+      "perspective": "Bram Lerrit, Brindlewick Trust Office deed-records clerk",
+      "recipient": "Kit Wenslow, Tarnstile Advisory",
+      "custody_path": "Deed dated 21 October 2022 and lodged with Merefold on 24 October 2022 at the trustees' direction; extract checked against the lodged deed and sent to Tarnstile Advisory on 9 June 2026.",
+      "genre_or_assumption": "Selective certified deed extract for an England and Wales discretionary trust. The joint-delivery procedure is a term of this deed.",
+      "business_purpose": "Supply the foundation deed identity and the relevant provisions on eligibility, appointments and later additions."
+    },
+    {
+      "id": "h6q3",
+      "title": "Supplemental Beneficiary Designation — checked transcript",
+      "perspective": "Alys Morcant, signing-room clerk transcribing the executed instrument",
+      "recipient": "Brindlewick Trust Office records desk, for the trustees' administered file",
+      "custody_path": "26 March 2026: executed and checked at the joint trustees' office before the original left the signing room; transcript retained by the records desk and copied to the adviser on 10 June 2026.",
+      "genre_or_assumption": "Transcript of an executed supplemental deed, with visible attestation reproduced in text. The checked copy is not another counterpart.",
+      "business_purpose": "Preserve the operative text and attestation for administration while the signed original goes into custody."
+    },
+    {
+      "id": "r5n8",
+      "title": "Merefold deed accession register — certified single-entry extract",
+      "perspective": "Gideon Sarn, Merefold Deed Services custody officer who accepted the original",
+      "recipient": "Brindlewick Trust Office, for onward supply to its adviser",
+      "custody_path": "26 March 2026: handover accepted at the trustees' office and entered in Merefold's register; paper original lodged in Merefold's common deed vault that day. Certified extract issued on 11 June 2026 and supplied to the adviser the same day.",
+      "genre_or_assumption": "Independent institutional custody register. The service logs joint delivery and parent-instrument identifications without exercising trustee powers.",
+      "business_purpose": "Evidence receipt of the executed original and record the parent deed identified at delivery."
+    },
+    {
+      "id": "b9k4",
+      "title": "Letter from Ione Berrick about future expenses",
+      "perspective": "Ione Berrick, writing personally to the two trustees",
+      "recipient": "Nell Carvane and Tobin Rell, care of Brindlewick Trust Office",
+      "custody_path": "18 February 2026: signed letter posted to the trustees; received 20 February and scanned to general correspondence; copy supplied to the adviser on 10 June 2026.",
+      "genre_or_assumption": "Informal correspondence expressing a beneficiary's wishes, not an exercise of a settlement power.",
+      "business_purpose": "Explain a change in the writer's likely needs, identify a practical contact, and communicate a personal wish."
+    },
+    {
+      "id": "t3w6",
+      "title": "EX-K4 — office expense reconciliation",
+      "perspective": "Una Cresset, Brindlewick Trust Office accounts administrator",
+      "recipient": "Trustees' records desk and adviser pack compiler",
+      "custody_path": "11 June 2026: signed after reconciliation of the office bank feed and expense slips; saved to general accounts and copied to the adviser that day.",
+      "genre_or_assumption": "Internal expense and reimbursement record. The trust office runs a separate operating account for small administrative outlays.",
+      "business_purpose": "Reconcile one reimbursement and carry an unvouched balance as a query rather than a payment."
+    }
+  ]
+}

@@ -1,0 +1,216 @@
+{
+  "protocol_sha256": "7b8fa95a3ddb87a96b2dec1977f330f7822ac522342a2f381e55081175e59ead",
+  "base": "C0",
+  "family": "C",
+  "cutoff": "2026-06-12T16:00:00+01:00",
+  "realism_output_sha256": "9075ffcf2590979900958a8610afc8a3b4523366ff8775a58c8ce004dcbd9655",
+  "order": {
+    "C0": [
+      "j8f2",
+      "m4v7",
+      "x2c9",
+      "h6q3",
+      "r5n8",
+      "b9k4",
+      "t3w6"
+    ],
+    "C1": [
+      "j8f2",
+      "m4v7",
+      "x2c9",
+      "h6q3",
+      "r5n8",
+      "b9k4",
+      "t3w6"
+    ],
+    "C2": [
+      "j8f2",
+      "m4v7",
+      "x2c9",
+      "h6q3",
+      "r5n8",
+      "b9k4",
+      "t3w6"
+    ]
+  },
+  "sources_sha256": {
+    "C0": "afaa100061091a755beee91d7f489d28acb61b6c88295c85451cb16d5a412595",
+    "C1": "4c965cca6f918cda1fd7dc7867071df397c8d041509985bbc95595c661bc8a95",
+    "C2": "b63c713b695910d4fcb87ccdbe96b8093cf6144118b95251c03a6746352c1da1"
+  },
+  "source_commitments": {
+    "C0": {
+      "j8f2": {
+        "id_sha256": "074c9d659feeed1fa4b3a09b2cfb8816b30541bd6765e5c5817d0372849241b5",
+        "title_sha256": "f32ace1ef2b1faeb2053c9dc6f84e4c9d587b0f2cdcca8368a9fdac33db12962",
+        "body_sha256": "0a3de23a5c3d1726751ee221d9980c7421daac14c3052d3da79eed58ffbb6b2e",
+        "serialized_source_sha256": "477b4711941fc978e5a96358050be08a1af28c5eb9eba0784b556b99474ebdc4"
+      },
+      "m4v7": {
+        "id_sha256": "550ee971ac518a91541b6bf6115563042bd597efcf0c65860b082ffa95d9a0b7",
+        "title_sha256": "9be9190e1a71b931afe28dfc56971f5deb817fc1a975ca54387bee778fdaf054",
+        "body_sha256": "848bad303b20c87a568c670dbfcc32a401968969fa7e1f9f9efa664660293540",
+        "serialized_source_sha256": "c9162a6bdc05e912a051e8b76c8a07b315211d99dadadc0f778c0f617c31671a"
+      },
+      "x2c9": {
+        "id_sha256": "236a73950d779a4c0caa765be55b89034a84f454637c54ef85641088993f55ec",
+        "title_sha256": "2faa18514096e81b11dfe1381560e17e257da1a9098f5e0ff01154da294dd8ad",
+        "body_sha256": "9ab5dd4bb7775c85a6d98152da85542a79db752d4a98e9e1896ba70d6cfc21a8",
+        "serialized_source_sha256": "fe5c8fb41239933e28ce522bfeb4f20d34a04f2ae8371d8be6322733a000230a"
+      },
+      "h6q3": {
+        "id_sha256": "a0071dfa4e8c9b3f15dcabe9b95f60f99346151fd97ef33e155eb0416a02e48b",
+        "title_sha256": "88bd0e69ac16640d46a744c47a1ce98f484bfc00151159f908a207b8e681c331",
+        "body_sha256": "4941945ebd3f81fd804eed33ab25ca58f83af3712bdc8016bbd1c92e0edf95f0",
+        "serialized_source_sha256": "75c50fbe13e68d7f88fcfad974e2cf78c0f1786f1dd44e622a942e1be15bace3"
+      },
+      "r5n8": {
+        "id_sha256": "e55fcaf084e7ef8946663aea534ec6f77d96da050f4e2cae1f0252eadea0f1c9",
+        "title_sha256": "6e88a43c1f5139398f91fe63104979a739b8337403943588464c992ea352ad73",
+        "body_sha256": "ae5a4d8b2958fceb497f3f538d42d972717397f5583ce90f3296c5995f2163c9",
+        "serialized_source_sha256": "1502a26726e6c26628105db4b72251bc6efbcf60c8ad2686f4f089a105c0e016"
+      },
+      "b9k4": {
+        "id_sha256": "51be18aab9d28b40c657b56d0307e037f5bbf2c5ea8398c299f87cd6e7673698",
+        "title_sha256": "9e7c5bf13f041cb7f52cd5f278b551c487f342ea87cc01e181abb64e61cb695c",
+        "body_sha256": "8d4ee6d2efdbcdb653f5082cc4ec391fcc5807a29aec9a6a07aa4a1c0d6c9a28",
+        "serialized_source_sha256": "8b64766d7711ea0573b530cbe69d05e99001b939632802ec7cb4a6662eaf9557"
+      },
+      "t3w6": {
+        "id_sha256": "9e354edffb77eae4f7c199ee3e2b6a7df614b28ac78facb929e4e8c15d0c06f0",
+        "title_sha256": "d1cfabc9baaf1f26dd8482739135971350751047e3a9219e8bd666d33209830e",
+        "body_sha256": "739d9069e354dc87f68eeff2eaeb6dbfbb9334566b1a29301352a02ff75b6bcb",
+        "serialized_source_sha256": "2e7d24b7d5375dab5f643d4ef4ea81ff2c6f3f3cfee4101c3302db41839fb70d"
+      }
+    },
+    "C1": {
+      "j8f2": {
+        "id_sha256": "074c9d659feeed1fa4b3a09b2cfb8816b30541bd6765e5c5817d0372849241b5",
+        "title_sha256": "f32ace1ef2b1faeb2053c9dc6f84e4c9d587b0f2cdcca8368a9fdac33db12962",
+        "body_sha256": "0a3de23a5c3d1726751ee221d9980c7421daac14c3052d3da79eed58ffbb6b2e",
+        "serialized_source_sha256": "477b4711941fc978e5a96358050be08a1af28c5eb9eba0784b556b99474ebdc4"
+      },
+      "m4v7": {
+        "id_sha256": "550ee971ac518a91541b6bf6115563042bd597efcf0c65860b082ffa95d9a0b7",
+        "title_sha256": "9be9190e1a71b931afe28dfc56971f5deb817fc1a975ca54387bee778fdaf054",
+        "body_sha256": "848bad303b20c87a568c670dbfcc32a401968969fa7e1f9f9efa664660293540",
+        "serialized_source_sha256": "c9162a6bdc05e912a051e8b76c8a07b315211d99dadadc0f778c0f617c31671a"
+      },
+      "x2c9": {
+        "id_sha256": "236a73950d779a4c0caa765be55b89034a84f454637c54ef85641088993f55ec",
+        "title_sha256": "2faa18514096e81b11dfe1381560e17e257da1a9098f5e0ff01154da294dd8ad",
+        "body_sha256": "9ab5dd4bb7775c85a6d98152da85542a79db752d4a98e9e1896ba70d6cfc21a8",
+        "serialized_source_sha256": "fe5c8fb41239933e28ce522bfeb4f20d34a04f2ae8371d8be6322733a000230a"
+      },
+      "h6q3": {
+        "id_sha256": "a0071dfa4e8c9b3f15dcabe9b95f60f99346151fd97ef33e155eb0416a02e48b",
+        "title_sha256": "88bd0e69ac16640d46a744c47a1ce98f484bfc00151159f908a207b8e681c331",
+        "body_sha256": "4941945ebd3f81fd804eed33ab25ca58f83af3712bdc8016bbd1c92e0edf95f0",
+        "serialized_source_sha256": "75c50fbe13e68d7f88fcfad974e2cf78c0f1786f1dd44e622a942e1be15bace3"
+      },
+      "r5n8": {
+        "id_sha256": "e55fcaf084e7ef8946663aea534ec6f77d96da050f4e2cae1f0252eadea0f1c9",
+        "title_sha256": "6e88a43c1f5139398f91fe63104979a739b8337403943588464c992ea352ad73",
+        "body_sha256": "b8ab655e4863d67df53527ade99d2ab1f6a3ae3e7c940b234e1eda546f0380a7",
+        "serialized_source_sha256": "e9a87de2d363a07c7834dc5c1cb7aa7e5e98e3b6a9e85e9cf74898a5f9838232"
+      },
+      "b9k4": {
+        "id_sha256": "51be18aab9d28b40c657b56d0307e037f5bbf2c5ea8398c299f87cd6e7673698",
+        "title_sha256": "9e7c5bf13f041cb7f52cd5f278b551c487f342ea87cc01e181abb64e61cb695c",
+        "body_sha256": "8d4ee6d2efdbcdb653f5082cc4ec391fcc5807a29aec9a6a07aa4a1c0d6c9a28",
+        "serialized_source_sha256": "8b64766d7711ea0573b530cbe69d05e99001b939632802ec7cb4a6662eaf9557"
+      },
+      "t3w6": {
+        "id_sha256": "9e354edffb77eae4f7c199ee3e2b6a7df614b28ac78facb929e4e8c15d0c06f0",
+        "title_sha256": "d1cfabc9baaf1f26dd8482739135971350751047e3a9219e8bd666d33209830e",
+        "body_sha256": "739d9069e354dc87f68eeff2eaeb6dbfbb9334566b1a29301352a02ff75b6bcb",
+        "serialized_source_sha256": "2e7d24b7d5375dab5f643d4ef4ea81ff2c6f3f3cfee4101c3302db41839fb70d"
+      }
+    },
+    "C2": {
+      "j8f2": {
+        "id_sha256": "074c9d659feeed1fa4b3a09b2cfb8816b30541bd6765e5c5817d0372849241b5",
+        "title_sha256": "f32ace1ef2b1faeb2053c9dc6f84e4c9d587b0f2cdcca8368a9fdac33db12962",
+        "body_sha256": "0a3de23a5c3d1726751ee221d9980c7421daac14c3052d3da79eed58ffbb6b2e",
+        "serialized_source_sha256": "477b4711941fc978e5a96358050be08a1af28c5eb9eba0784b556b99474ebdc4"
+      },
+      "m4v7": {
+        "id_sha256": "550ee971ac518a91541b6bf6115563042bd597efcf0c65860b082ffa95d9a0b7",
+        "title_sha256": "9be9190e1a71b931afe28dfc56971f5deb817fc1a975ca54387bee778fdaf054",
+        "body_sha256": "848bad303b20c87a568c670dbfcc32a401968969fa7e1f9f9efa664660293540",
+        "serialized_source_sha256": "c9162a6bdc05e912a051e8b76c8a07b315211d99dadadc0f778c0f617c31671a"
+      },
+      "x2c9": {
+        "id_sha256": "236a73950d779a4c0caa765be55b89034a84f454637c54ef85641088993f55ec",
+        "title_sha256": "2faa18514096e81b11dfe1381560e17e257da1a9098f5e0ff01154da294dd8ad",
+        "body_sha256": "9ab5dd4bb7775c85a6d98152da85542a79db752d4a98e9e1896ba70d6cfc21a8",
+        "serialized_source_sha256": "fe5c8fb41239933e28ce522bfeb4f20d34a04f2ae8371d8be6322733a000230a"
+      },
+      "h6q3": {
+        "id_sha256": "a0071dfa4e8c9b3f15dcabe9b95f60f99346151fd97ef33e155eb0416a02e48b",
+        "title_sha256": "88bd0e69ac16640d46a744c47a1ce98f484bfc00151159f908a207b8e681c331",
+        "body_sha256": "4941945ebd3f81fd804eed33ab25ca58f83af3712bdc8016bbd1c92e0edf95f0",
+        "serialized_source_sha256": "75c50fbe13e68d7f88fcfad974e2cf78c0f1786f1dd44e622a942e1be15bace3"
+      },
+      "r5n8": {
+        "id_sha256": "e55fcaf084e7ef8946663aea534ec6f77d96da050f4e2cae1f0252eadea0f1c9",
+        "title_sha256": "6e88a43c1f5139398f91fe63104979a739b8337403943588464c992ea352ad73",
+        "body_sha256": "509fc3e43acfa5735df97df983332617ca7509e9d31fc0a91f515b87bcf9c893",
+        "serialized_source_sha256": "ad60bb0977a8d21561a5ab74a673962f06c7ed5d2ad57a499928e2fec9e859fb"
+      },
+      "b9k4": {
+        "id_sha256": "51be18aab9d28b40c657b56d0307e037f5bbf2c5ea8398c299f87cd6e7673698",
+        "title_sha256": "9e7c5bf13f041cb7f52cd5f278b551c487f342ea87cc01e181abb64e61cb695c",
+        "body_sha256": "8d4ee6d2efdbcdb653f5082cc4ec391fcc5807a29aec9a6a07aa4a1c0d6c9a28",
+        "serialized_source_sha256": "8b64766d7711ea0573b530cbe69d05e99001b939632802ec7cb4a6662eaf9557"
+      },
+      "t3w6": {
+        "id_sha256": "9e354edffb77eae4f7c199ee3e2b6a7df614b28ac78facb929e4e8c15d0c06f0",
+        "title_sha256": "d1cfabc9baaf1f26dd8482739135971350751047e3a9219e8bd666d33209830e",
+        "body_sha256": "739d9069e354dc87f68eeff2eaeb6dbfbb9334566b1a29301352a02ff75b6bcb",
+        "serialized_source_sha256": "2e7d24b7d5375dab5f643d4ef4ea81ff2c6f3f3cfee4101c3302db41839fb70d"
+      }
+    }
+  },
+  "interventions": {
+    "C1": {
+      "source_id": "r5n8",
+      "before": "Parent deed reference: PD-6894-R",
+      "after": "Parent deed reference: PD-6834-R"
+    },
+    "C2": {
+      "source_id": "r5n8",
+      "before": "Parent deed reference: PD-6894-R",
+      "after": "Parent deed reference: PD-68?4-R"
+    }
+  },
+  "candidates": [
+    [
+      "Rhea Marden",
+      "beneficiary_of",
+      "Flint Orchard Settlement"
+    ],
+    [
+      "Rhea Marden",
+      "beneficiary_of",
+      "Alder Quay Settlement"
+    ]
+  ],
+  "required": {
+    "C0": [
+      [
+        "Rhea Marden",
+        "beneficiary_of",
+        "Flint Orchard Settlement"
+      ]
+    ],
+    "C1": [
+      [
+        "Rhea Marden",
+        "beneficiary_of",
+        "Alder Quay Settlement"
+      ]
+    ],
+    "C2": []
+  }
+}

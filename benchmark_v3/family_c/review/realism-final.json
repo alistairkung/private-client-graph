@@ -1,0 +1,132 @@
+[
+  {
+    "status": "pass",
+    "per_source": [
+      {
+        "id": "j8f2",
+        "finding": "Maren Dovell’s 12 June note to adviser Kit Wenslow is a credible agenda and records-handling instruction. The 15:50 secure transmission precedes the 16:00 BST cut-off. One 17 June slot with separate working papers and minute entries fits the stated trustee appointments. The appointments book is cited, not enclosed. The note neither records a distribution decision nor authorises payment."
+      },
+      {
+        "id": "m4v7",
+        "finding": "Tess Arnay’s 9 June certified extract to the adviser is a plausible selective copy of the 21 October 2022 Alder Quay deed lodged as PD-6834-R. The disclosed schedule omission is consistent with the extract’s purpose. Clauses 3, 4 and 6 distinguish original objects, payment appointments and later additions. Identification by a jointly stated parent reference is unusually specific but credible as an express deed term for shared custody, not a general rule."
+      },
+      {
+        "id": "x2c9",
+        "finding": "Bram Lerrit’s 9 June certification to the adviser identifies the separately lodged Flint Orchard deed, PD-6894-R, and discloses that schedules were not reproduced. The format and phrasing are distinct from Alder Quay’s while covering comparable business. Clauses 2, 5 and 8 distinguish eligibility, direct application for an object’s benefit and addition by joint delivery. The register’s evidential role does not give the custodian a trustee power."
+      },
+      {
+        "id": "h6q3",
+        "finding": "Alys Morcant’s same-day transcript for the trustees’ records desk, forwarded on 10 June, is credible as a record made before the original left the signing room. It reproduces both deed signatures and separate attestations by one witness present in person. The reference SD-Q7M2 identifies the instrument, not its parent. The transcript is neither another counterpart nor evidence of delivery, and the instrument adds an object only; it makes no payment appointment."
+      },
+      {
+        "id": "r5n8",
+        "finding": "Gideon Sarn’s 11 June certified extract went to the trust office for onward supply to the adviser. It records both trustees confirming PD-6894-R against SD-Q7M2 and releasing one signed original for immediate delivery at 11:30 GMT on 26 March, not in escrow. This establishes the Flint Orchard link on the supplied record. The explanation ruling out title searches and counterpart numbering is unusually explicit, but credible in a certified extract explaining shared-custody conventions. The vault original was not forwarded."
+      },
+      {
+        "id": "b9k4",
+        "finding": "Ione Berrick’s personal letter to both trustees has a credible postal, scanning and forwarding path; intake supplies the year omitted from the heading. The stale estimate and practical help with paperwork are ordinary operational details. Permission to pass on an estimate is not payment authority. Ione’s wish for Sella Quist to be considered in her own right is not a designation or a request to redirect, deduct from or set up payments."
+      },
+      {
+        "id": "t3w6",
+        "finding": "Una Cresset’s 11 June reconciliation for the records desk and pack compiler credibly distinguishes the £12.60 postage reimbursement through the office operating account from the unpaid, unauthorised £8.40 print-shop query. The postage slip was attached to the underlying claim, not stated to accompany this copy. Neither item was recharged. Sella’s payee and queries-contact entry is confined to EX-K4; it is not a settlement payment instruction."
+      }
+    ],
+    "limitations": [
+      "The cut-off file supports Ione Berrick and Emmett Vann for Alder Quay, and Ione Berrick, Orla Penrick and Rhea Marden for Flint Orchard. Rhea was added to Flint Orchard on joint delivery on 26 March. No removal or addition of Sella is evidenced. The adviser has certified extracts and a transcript, not the full deeds, supplemental original or appointments book.",
+      "No distribution authorisation for either settlement is evidenced in the pack. That is not proof that the underlying decision and payment registers contain no entries. Reconcile each settlement separately before deciding or paying, and keep any later papers outside the closed preparation set."
+    ],
+    "absent_items": [
+      "The replacement travel estimate is not supplied; Ione says the old estimate is unreliable.",
+      "The £8.40 print-shop receipt or substitute voucher is expressly missing. This is an ordinary finance query.",
+      "Any existing settlement-specific appointment or signed decision minute and corresponding payment entry are not supplied."
+    ],
+    "revision_tickets": []
+  },
+  {
+    "status": "pass",
+    "per_source": [
+      {
+        "id": "j8f2",
+        "finding": "Maren Dovell’s briefing was sent to the adviser at 15:50 BST on 12 June, coherently ahead of the 16:00 cut-off. Separate papers and minutes for a shared 17 June slot are operationally credible. The appointments-book statement reports the secretary’s check, not an enclosed record. The briefing is not a decision or authority to pay."
+      },
+      {
+        "id": "m4v7",
+        "finding": "Tess Arnay’s certified selected clauses give the adviser the identity, original objects and relevant powers of the 21 October 2022 Alder Quay deed, PD-6834-R, without the property schedule. Checking the lodged deed before issuing the extract is a plausible custody path. The bespoke procedure for jointly identifying the parent at delivery is coherent with shared custody. Clause 4 still requires a separate appointment for payment."
+      },
+      {
+        "id": "x2c9",
+        "finding": "Bram Lerrit’s 9 June extract to the adviser credibly identifies Flint Orchard as PD-6894-R. Its different layout and clause numbering are compatible with a separately administered deed. The omitted schedules are disclosed. The wording distinguishes direct application for an object’s benefit from a right to payment, and the joint-delivery provision treats the custodian as recorder rather than decision-maker."
+      },
+      {
+        "id": "h6q3",
+        "finding": "Alys Morcant checked the text and visible attestations against the signed paper on 26 March for the trustees’ file; the adviser received a copy on 10 June. Two separately attested signatures before the same in-person witness are plausible. The lack of a settlement name accords with the stated delivery procedure. The transcript does not certify that procedure was completed, and the designation does not appoint property or direct payment."
+      },
+      {
+        "id": "r5n8",
+        "finding": "The receiving officer’s 11 June certification to the trust office for onward supply records immediate joint delivery of one signed original at 11:30 GMT on 26 March. It records the trustees themselves matching SD-Q7M2 to PD-6834-R, establishing the Alder Quay link on the supplied record. The original stayed in the common vault. The express disclaimers about title searches, numbering and question marks read like explanatory boilerplate; they do not undermine the legible handover entry."
+      },
+      {
+        "id": "b9k4",
+        "finding": "The February letter is credibly personal in tone and was scanned from correspondence addressed to both trustees; the ledger supplies the year and intake dates. Ione permits Sella to forward paperwork and asks about help for her in her own right. The detailed exclusions clarify the request rather than create an instruction. No new estimate is enclosed, and the letter does not alter either deed or establish a payment mandate."
+      },
+      {
+        "id": "t3w6",
+        "finding": "The accounts administrator’s reconciliation has a credible internal audience and a routine voucher-to-bank trail for the £12.60 office reimbursement. The historic postage-slip attachment is not represented as part of the adviser copy. The £8.40 is an unvouched, unpaid query, not an authorised balance. Neither item was recharged to a settlement; Sella’s remit entry does not support eligibility or a distribution."
+      }
+    ],
+    "limitations": [
+      "The cut-off file supports Ione Berrick, Emmett Vann and Rhea Marden for Alder Quay, and Ione Berrick and Orla Penrick for Flint Orchard. Rhea was added to Alder Quay on joint delivery on 26 March. No removal or addition of Sella is evidenced. The adviser does not hold the full deeds, supplemental original or underlying appointments book.",
+      "No distribution authorisation is evidenced for either settlement. Check each settlement’s own decision and disbursement records before treating that as a confirmed nil position. Any late papers should be presented separately."
+    ],
+    "absent_items": [
+      "The replacement travel estimate is not in the file.",
+      "The £8.40 print-shop receipt or substitute voucher is expressly absent and belongs on the ordinary finance query list.",
+      "Any existing settlement-specific distribution decision and matching payment record are not supplied."
+    ],
+    "revision_tickets": []
+  },
+  {
+    "status": "pass",
+    "per_source": [
+      {
+        "id": "j8f2",
+        "finding": "The secretary’s secure briefing to the adviser at 15:50 BST on 12 June credibly sets the 16:00 cut-off and provides for separate 17 June trust business within one diary slot. The appointments book is referenced but not enclosed. The instruction to handle late papers separately is workable, and the note itself authorises nothing."
+      },
+      {
+        "id": "m4v7",
+        "finding": "Tess Arnay’s selective certification from the lodged 21 October 2022 Alder Quay deed credibly establishes PD-6834-R and the original objects. The property schedule is expressly outside the extract. Clause 6 permits the trustees to supply the parent reference at delivery rather than write the settlement name on the designation. That local rule explains the form but does not supply an unreadable character in the delivery evidence."
+      },
+      {
+        "id": "x2c9",
+        "finding": "Bram Lerrit’s 9 June certified extract is a credible separate record from Flint Orchard’s lodged deed, PD-6894-R. Its selection and format are consistent with the advisory purpose and the disclosed schedule omission. Joint delivery and the register’s recording role are plausible as express local terms. The Flint Orchard reference is established by this extract, but the extract cannot establish which reference the trustees gave at handover."
+      },
+      {
+        "id": "h6q3",
+        "finding": "The internal transcript is plausibly checked and retained before the executed original leaves the signing room, then copied to the adviser on 10 June. It reproduces the named designation and both in-person attestations without purporting to be another original. It neither identifies a parent independently of delivery nor directs a payment. Its limited certification cannot resolve the parent-reference gap."
+      },
+      {
+        "id": "r5n8",
+        "finding": "The accepting officer’s certified extract, sent via the trust office, credibly records immediate joint delivery of one signed original of SD-Q7M2 at 11:30 GMT on 26 March. The issued copy gives PD-68?4-R and expressly certifies no inferred character. Both supplied parent references fit what can be read. The detailed handover narrative establishes the source of the entry, not the missing digit; the shared stock label and vault location do not resolve it. This is a disclosed limit of the copy, not a contradiction or evidence that delivery failed."
+      },
+      {
+        "id": "b9k4",
+        "finding": "The personal letter to both trustees, scanned from February correspondence, credibly explains the stale estimate and Sella’s limited help with paperwork. The ledger dates the otherwise yearless letter. Permission to pass on an estimate and a wish for help in Sella’s own right create neither beneficiary status nor payment authority. The missing estimate is not claimed as an enclosure."
+      },
+      {
+        "id": "t3w6",
+        "finding": "The 11 June accounts reconciliation is consistent with an internal office reimbursement process. It reports £12.60 paid from the office account against a postage slip in the underlying claim, and £8.40 unpaid and unauthorised without a voucher. The forwarded reconciliation is not the voucher file. No recharge or distribution instruction is recorded, and Sella’s contact and payee details are limited to EX-K4."
+      }
+    ],
+    "limitations": [
+      "The confirmed lists are Ione Berrick and Emmett Vann for Alder Quay, and Ione Berrick and Orla Penrick for Flint Orchard. Leave Rhea Marden’s allocation unresolved in both papers until the actual parent reference confirmed at delivery is verified. Do not count her in both or conclude that she was not validly added to either. No removal or addition of Sella is evidenced.",
+      "The adviser holds selective extracts and a transcript, not the original deeds or the underlying appointments book. No distribution authorisation is evidenced for either settlement; reconcile the respective decision and payment records. Any later confirmation should be put before the meeting separately, without changing the cut-off file."
+    ],
+    "absent_items": [
+      "Legible contemporaneous evidence of the full parent reference given at handover, such as a further certified extract if Merefold can verify the missing character.",
+      "The replacement travel estimate is not supplied.",
+      "The £8.40 print-shop receipt or substitute voucher is expressly missing. This is a separate ordinary finance query.",
+      "Any existing settlement-specific appointment or signed decision minute and corresponding payment entry are not supplied."
+    ],
+    "revision_tickets": []
+  }
+]

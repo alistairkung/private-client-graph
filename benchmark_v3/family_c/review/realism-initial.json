@@ -1,0 +1,81 @@
+{
+  "status": "repair",
+  "per_source": [
+    {
+      "id": "j8f2",
+      "findings": [
+        "Maren Dovell's 12 June note is consistent with a meeting secretary briefing Kit Wenslow. The 15:50 BST secure intake precedes the 16:00 cut-off, and the 17 June meeting date is distinct from both. One diary slot with separate papers and minute entries is credible; the note is not a minute or payment instruction.",
+        "The note reports the appointments-book check without presenting the book as enclosed. Its parallel instructions are repetitive but useful for keeping the two settlements' decisions separate. The late-paper instruction is a plausible local filing rule."
+      ]
+    },
+    {
+      "id": "m4v7",
+      "findings": [
+        "Tess Arnay certifies selected clauses for Kit Wenslow; she is not represented as having authored the 2022 deed. The deed date, lodging on 24 October 2022 and extract certification and transmission on 9 June 2026 are consistent. The schedule is expressly omitted, not said to be enclosed.",
+        "PD-6834-R, the named objects Ione Berrick and Emmett Vann, and the distinction between eligibility and joint appointment give the extract a practical purpose. Clause 6's identification-at-delivery procedure is unusual but coherent as an express term of this deed: both trustees must link the designation to the lodged parent reference. The custodian records their act and does not exercise their power."
+      ]
+    },
+    {
+      "id": "x2c9",
+      "findings": [
+        "Bram Lerrit's selected extract to Kit Wenslow follows the same plausible lodging and certification chronology. The different clause headings and layout are credible variation in extracts prepared by different clerks. The omitted schedules limit the extract's scope; they are not missing promised enclosures.",
+        "PD-6894-R identifies a distinct deed naming Ione Berrick and Orla Penrick. Clause 5's power to apply funds directly for an object's benefit is not an appointment or authority to help a non-object in their own right. Clause 8 makes parent identification at joint delivery workable without naming the settlement on the designation; that is a local deed term, not a presumed rule of trust practice."
+      ]
+    },
+    {
+      "id": "h6q3",
+      "findings": [
+        "Alys Morcant's transcript was checked against the signed paper in the signing room on 26 March, retained on the administered file and copied to the adviser on 10 June. It reproduces deed language and each trustee's signature and attestation by a named witness present in person. This is plausible evidence of execution, not another original or counterpart, and the clerk expressly does not certify delivery.",
+        "SD-Q7M2 names Rhea Marden as a living individual and makes an addition only. The unnamed parent and the express exclusions of removal, appointment and payment are precise but have a drafting purpose given the delivery procedure. The transcript alone neither identifies the settlement nor authorises payment."
+      ]
+    },
+    {
+      "id": "r5n8",
+      "findings": [
+        "Gideon Sarn is identified as the officer who received the original at the trustees' office and entered the handover. Joint release of one signed original at 11:30 GMT on 26 March for immediate delivery, followed by vault lodging that day, is coherent. Certification on 11 June to Brindlewick for onward supply to the adviser fits the ledger; the extract, not the original, crosses that boundary.",
+        "Read separately, copy 1 records PD-6894-R and supports delivery of SD-Q7M2 for Flint Orchard; copy 2 records PD-6834-R and supports delivery for Alder Quay. Copy 3 records PD-68?4-R and supports the handover but does not establish either parent. Neither the other supplied copies nor the shared trustees, vault or instrument label can supply the missing character in copy 3.",
+        "The escrow and original-count details are credible custody facts. The denials about title searches and beneficiary files, the counterpart discussion and the shared-stock explanation read more like answers to anticipated questions than ordinary entry text. The extract does not clearly separate that commentary from the entry it certifies or explain where the question mark in copy 3 originated."
+      ]
+    },
+    {
+      "id": "b9k4",
+      "findings": [
+        "Ione Berrick's personal letter is appropriately addressed to both trustees through Brindlewick. The ledger supplies the year absent from the handwritten-style date and traces posting on 18 February, receipt and scanning on 20 February, and supply of a copy on 10 June.",
+        "The stale estimate, practical help with papers and offer of personal confirmation sound like ordinary correspondence. The detailed disclaimers are unusually comprehensive but compatible with keeping Sella Quist's proposed help separate from Ione's own position. Permission to pass on an estimate is not payment authority, and the wish to help Sella does not make her an object. No estimate is claimed as enclosed."
+      ]
+    },
+    {
+      "id": "t3w6",
+      "findings": [
+        "Una Cresset's 11 June reconciliation for the records desk and pack compiler fits the same-day internal filing and adviser-copy route. EX-K4, the 5 June bank match and the separate treatment of a vouched and an unvouched item give it credible operational detail.",
+        "The £12.60 was reimbursed from the office operating account and not recharged; it is not evidence of a trust distribution. The £8.40 remains unpaid and unauthorised. Sella's payee and contact entry is limited to EX-K4. The postage slip was attached to the underlying claim, not stated to accompany this copy; the print-shop receipt is expressly absent despite being mentioned on the expense list."
+      ]
+    }
+  ],
+  "limitations": [
+    "All three copies were reviewed separately. The only source-text variation is the parent-reference field in r5n8. An unresolved parent in copy 3 is an evidential limitation, not a reason to presume delivery to both settlements or that delivery failed.",
+    "The appointments-book entry, full deeds and schedules, signed supplemental original, and underlying accounting records are described or summarised rather than reproduced. The supplied copies are fit for the stated limited checks but do not substitute for inspecting those records if a material point is disputed.",
+    "No settlement-specific distribution minute, appointment or payment instruction is supplied. No distribution authorisation is evidenced in this packet; that does not establish that none exists elsewhere. EX-K4 is a separate office finance record."
+  ],
+  "absent_items": [
+    {
+      "item": "Print-shop receipt or acceptable substitute voucher for £8.40",
+      "basis": "EX-K4 expressly says the office has neither. This is an ordinary outstanding finance query, not a distribution item."
+    },
+    {
+      "item": "Replacement travel estimate for Ione Berrick",
+      "basis": "The February letter says it had not arrived and the old estimate was no longer reliable. No later estimate is supplied in the closed set."
+    },
+    {
+      "item": "Separate recorded distribution decision for either settlement, if one exists",
+      "basis": "The meeting note calls for a decision reference for each authorised payment, but none is supplied. Check each settlement's own record rather than treating correspondence or reimbursement as a substitute."
+    }
+  ],
+  "revision_tickets": [
+    {
+      "id": "r5n8",
+      "issue": "In copy 3, the certified extract does not say whether the question mark is a literal register character or marks a character that could not be reproduced. The distinction matters because this field is the only recorded link to a parent deed. The boundary between extracted entry text and the officer's explanation is also unclear.",
+      "proposed_minimal_correction": "Have the issuer label the extracted fields separately from any explanatory note and state, after checking the register, what the question mark represents. If the character cannot be verified, mark it explicitly as unresolved and leave the parent unidentified. Do not import a digit from either other copy."
+    }
+  ]
+}

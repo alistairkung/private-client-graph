@@ -1,0 +1,65 @@
+{
+  "C0": {
+    "ordered_source_sha256": "b809e265b909e8874f96e01809fd494a070a900139875e913795cda32588654d",
+    "source_order": [
+      "j8f2",
+      "m4v7",
+      "x2c9",
+      "h6q3",
+      "r5n8",
+      "b9k4",
+      "t3w6"
+    ],
+    "body_sha256": {
+      "j8f2": "0a3de23a5c3d1726751ee221d9980c7421daac14c3052d3da79eed58ffbb6b2e",
+      "m4v7": "848bad303b20c87a568c670dbfcc32a401968969fa7e1f9f9efa664660293540",
+      "x2c9": "9ab5dd4bb7775c85a6d98152da85542a79db752d4a98e9e1896ba70d6cfc21a8",
+      "h6q3": "4941945ebd3f81fd804eed33ab25ca58f83af3712bdc8016bbd1c92e0edf95f0",
+      "r5n8": "96dbc86afd16019170098f3069862847296b93be4a9bc2bd3318ab9638b146c3",
+      "b9k4": "8d4ee6d2efdbcdb653f5082cc4ec391fcc5807a29aec9a6a07aa4a1c0d6c9a28",
+      "t3w6": "739d9069e354dc87f68eeff2eaeb6dbfbb9334566b1a29301352a02ff75b6bcb"
+    }
+  },
+  "C1": {
+    "ordered_source_sha256": "1218ac3267a8cb559016ae4ecf31015191f9da555bcd5ba410f951aa0f0c67a4",
+    "source_order": [
+      "j8f2",
+      "m4v7",
+      "x2c9",
+      "h6q3",
+      "r5n8",
+      "b9k4",
+      "t3w6"
+    ],
+    "body_sha256": {
+      "j8f2": "0a3de23a5c3d1726751ee221d9980c7421daac14c3052d3da79eed58ffbb6b2e",
+      "m4v7": "848bad303b20c87a568c670dbfcc32a401968969fa7e1f9f9efa664660293540",
+      "x2c9": "9ab5dd4bb7775c85a6d98152da85542a79db752d4a98e9e1896ba70d6cfc21a8",
+      "h6q3": "4941945ebd3f81fd804eed33ab25ca58f83af3712bdc8016bbd1c92e0edf95f0",
+      "r5n8": "f7f13f643486ce8ee651e1acefea8b1f3cda444fe0b4fe731364d6c4720606d5",
+      "b9k4": "8d4ee6d2efdbcdb653f5082cc4ec391fcc5807a29aec9a6a07aa4a1c0d6c9a28",
+      "t3w6": "739d9069e354dc87f68eeff2eaeb6dbfbb9334566b1a29301352a02ff75b6bcb"
+    }
+  },
+  "C2": {
+    "ordered_source_sha256": "ea372d24262908256ac94ec5f9e6dcb2089ec1b526a05c4915ec3b7df9dacd43",
+    "source_order": [
+      "j8f2",
+      "m4v7",
+      "x2c9",
+      "h6q3",
+      "r5n8",
+      "b9k4",
+      "t3w6"
+    ],
+    "body_sha256": {
+      "j8f2": "0a3de23a5c3d1726751ee221d9980c7421daac14c3052d3da79eed58ffbb6b2e",
+      "m4v7": "848bad303b20c87a568c670dbfcc32a401968969fa7e1f9f9efa664660293540",
+      "x2c9": "9ab5dd4bb7775c85a6d98152da85542a79db752d4a98e9e1896ba70d6cfc21a8",
+      "h6q3": "4941945ebd3f81fd804eed33ab25ca58f83af3712bdc8016bbd1c92e0edf95f0",
+      "r5n8": "8903ea62a28515919bcb474c3e24d97033fd0c3c5dec1cd572160196346de736",
+      "b9k4": "8d4ee6d2efdbcdb653f5082cc4ec391fcc5807a29aec9a6a07aa4a1c0d6c9a28",
+      "t3w6": "739d9069e354dc87f68eeff2eaeb6dbfbb9334566b1a29301352a02ff75b6bcb"
+    }
+  }
+}

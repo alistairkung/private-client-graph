@@ -1,0 +1,63 @@
+{
+  "status": "repair",
+  "per_source": [
+    {
+      "id": "j8f2",
+      "finding": "Maren Dovell’s 12 June meeting note to Kit Wenslow is a credible adviser brief. The ledger places it in secure intake at 15:50 BST, before the 16:00 cut-off. One diary slot on 17 June with separate working papers and minute entries is plausible for two settlements with the same trustees. The repeated instructions are appropriate to an agenda: the note neither records a distribution decision nor authorises payment.",
+      "copy_and_custody": "Unchanged in all three copies. The appointments book is cited, not said to be enclosed. The note reports that both trustees remain in office; it is not the underlying appointment record. Its dispatch time does not establish that there were no other arrivals before 16:00. Papers received after the cut-off should be kept separate from the closed set."
+    },
+    {
+      "id": "m4v7",
+      "finding": "Tess Arnay’s 9 June certified extract to Kit Wenslow serves a credible purpose: it supplies the identity and operative clauses of the Alder Quay deed dated 21 October 2022, which the ledger says was lodged with Merefold on 24 October. It identifies PD-6834-R, Ellis Harnett, the original trustees and the original objects, Ione Berrick and Emmett Vann. The distinction between eligibility and a joint appointment is clear. The procedure for identifying the parent at joint delivery is unusually specific but plausible as an express term of this deed, not as an assumed general custody rule.",
+      "copy_and_custody": "Unchanged in all three copies. Certification is confined to the selected provisions checked against the lodged deed. The skipped clause numbers and expressly omitted property schedule are consistent with that scope; no schedule is promised as an enclosure. The close similarity to Flint Orchard’s provisions is consistent with common drafting, but the near-matching parent references make exact transcription important."
+    },
+    {
+      "id": "x2c9",
+      "finding": "Bram Lerrit’s 9 June certified extract to Kit Wenslow likewise has a credible purpose and custody path from a deed dated 21 October 2022 and lodged on 24 October. It identifies Flint Orchard as PD-6894-R, with Cora Teague as settlor and Ione Berrick and Orla Penrick as the original objects. Its different clause numbering and express power to apply funds directly for an object’s benefit give the extract its own operative content. That power is not a payment instruction. Clause 8 expressly provides for joint delivery by parent reference; the custodian records the act rather than exercising the power.",
+      "copy_and_custody": "Unchanged in all three copies. The certificate concerns the extract checked against Flint Orchard’s own lodged deed; the schedules are expressly not reproduced. The shared deed date, trustees and custody service are plausible but cannot identify which settlement received a later designation."
+    },
+    {
+      "id": "h6q3",
+      "finding": "Alys Morcant’s checked transcript to the trustees’ records desk credibly preserves the operative wording and attestations of SD-Q7M2 while the signed original leaves the office. The check on 26 March before handover and forwarding to the adviser on 10 June are consistent with the ledger. Separate signature and witness lines, with Della Pennick identified as attending in person for each signature, are plausible deed-copy detail. The transcript records an addition of Rhea Marden only: no removal, appointment of property or payment. Not naming the settlement on the face is permissible under the supplied deed terms if the trustees identify it at delivery.",
+      "copy_and_custody": "Unchanged in all three copies. The signing-room clerk certifies wording and attestations, not delivery; the typed signature markers are not the original signatures. The transcript is not a counterpart or an independent source for the parent reference. The express exclusions are somewhat exhaustive, but they reasonably define the limited effect of the instrument. No additional enclosure is claimed."
+    },
+    {
+      "id": "r5n8",
+      "finding": "Gideon Sarn’s 11 June certified extract, addressed to Brindlewick for onward supply and passed to the adviser that day according to the ledger, is a plausible way to evidence the 26 March handover. The officer describes both trustees confirming the reference against SD-Q7M2 and releasing one signed original immediately as a deed, not in escrow, at 11:30 GMT. The time, release status and vault movement are useful operational details. The combined explanations about title searches, shared reference stock, counterparts and unreadable characters are unusually dense for a single-entry extract. They can plausibly be officer commentary, but should be distinguished from the register fields and do not establish facts beyond this entry.",
+      "copy_findings": [
+        "Copy 1 gives PD-6894-R. Read on its own with the signed-text transcript and Flint Orchard’s deed, it supports Rhea’s addition to Flint Orchard, not Alder Quay.",
+        "Copy 2 gives PD-6834-R. Read on its own with the transcript and Alder Quay’s deed, it supports Rhea’s addition to Alder Quay, not Flint Orchard.",
+        "Copy 3 gives PD-68?4-R. Under the stated convention, the question mark is neither a literal character nor a certified digit. This copy supports the fact of joint handover but does not identify the receiving settlement. It does not show that delivery failed or that both settlements received the designation."
+      ],
+      "copy_and_custody": "All three purport to extract the same single entry, with the same instrument reference, event and certification date. The two complete parent references conflict, and the ledger supplies no issue history or forwarding evidence that explains the discrepancy. One recorded original and a shared reference stock provide no basis for treating the variants as separate deliveries. The defect is the unresolved provenance of the parent field, not the use of a qualified unreadable character in itself."
+    },
+    {
+      "id": "b9k4",
+      "finding": "Ione Berrick’s personal letter to Nell Carvane and Tobin Rell credibly updates a travel estimate and explains Sella Quist’s practical role. The letter gives only 18 February; the ledger supplies the year, receipt on 20 February and the route from the general correspondence scan to the adviser on 10 June. Its unusually explicit exclusions of a standing payment, redirection and deduction read as clarification of a personal wish, not an exercise of a deed power. Sella may pass on an estimate, not act generally for Ione or receive a distribution in her place. The request to consider Sella in her own right does not add her as an object of either settlement.",
+      "copy_and_custody": "Unchanged in all three copies. The old estimate is described as unreliable and the replacement had not arrived when Ione wrote. Neither is represented as enclosed. The letter does not establish whether a replacement arrived by the June cut-off."
+    },
+    {
+      "id": "t3w6",
+      "finding": "Una Cresset’s 11 June EX-K4 reconciliation for the records desk and pack compiler is credible ordinary accounts work. The ledger describes a signed record saved to general accounts and copied that day; the supplied text identifies the preparer but does not reproduce a signature. It distinguishes the £12.60 postage reimbursement matched to the office operating account on 5 June from the £8.40 unvouched print charge, which remains unpaid and unauthorised. Neither item was recharged to a settlement. The remit contact and payee fields are specific to EX-K4; the explicit disclaimer about distribution instructions is slightly pointed but useful in a mixed adviser pack.",
+      "copy_and_custody": "Unchanged in all three copies. The postage slip is described as attached to the underlying claim, not the supplied reconciliation. The bank line and remit entry are referred to rather than reproduced. The missing print voucher is an ordinary finance exception, not an outstanding distribution."
+    }
+  ],
+  "limitations": [
+    "The extracts and transcript support a bounded review of the supplied records, not inspection of the complete deeds, original signatures, trustee appointment instruments or official accession record. The described joint-delivery and office-account procedures are local to this file.",
+    "No settlement-specific distribution resolution, appointment or payment instruction is supplied for either settlement. The correct finding is that no distribution authorisation is evidenced in the closed set, not that no authorisation exists. Eligibility, Ione’s letter and the EX-K4 reimbursement do not establish one.",
+    "An item cited as held elsewhere is not an unsupported claim that it was enclosed. The appointments book, claim attachments and bank records would be useful corroboration if relied on at the meeting."
+  ],
+  "absent_items": [
+    "A traceable custodian confirmation of the full parent reference at the SD-Q7M2 handover, supported by the contemporaneous entry or handover record and tied to the extract actually forwarded.",
+    "For each settlement, any recorded distribution decision or deed of appointment relied on, with its corresponding payment instruction and ledger or bank entry if payment was made.",
+    "The replacement travel estimate for Ione, if received by the cut-off; the February letter does not supply it.",
+    "The print-shop receipt or acceptable substitute voucher for the £8.40 EX-K4 query, expressly absent from the office file."
+  ],
+  "revision_tickets": [
+    {
+      "id": "r5n8",
+      "issue": "The same certified single entry appears with two incompatible complete parent references and one incomplete rendering, without an issuance or forwarding trail that accounts for the differences. The field determines which settlement may consider Rhea.",
+      "proposed_minimal_correction": "Retain all three copies and ask Merefold to verify the parent reference against its contemporaneous entry or handover record. Obtain a dated clarification identifying the extract actually issued and explaining any correction or reproduction defect, and record the onward transmission. Do not complete the unreadable character from another copy or rely on the disputed attribution until verified. Keep any clarification received after 16:00 BST on 12 June separate from the closed set."
+    }
+  ]
+}
