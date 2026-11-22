@@ -24,7 +24,9 @@ of a nested Seatbelt profile. The custodian ran the probe in the host shell
 with the exact named `benchmark_packet` profile from the factory. The
 workspace sentinel was readable. A synthetic sentinel in shared private
 temporary storage and a synthetic sentinel in the repository both received
-OS permission denials. The probe submitted zero model turns. The
+OS permission denials. The preflight was repeated before the authorized
+retry and produced byte-identical evidence. The probes submitted zero
+model turns. The
 [probe results](os-boundary.json) are bound to the proposed manifest with
 SHA-256 `ea1bc3f5d64b79f1596cd28cacf0d4ec8008040ee504ef98db93db759178ab01`.
 The pinned packet implementation SHA-256 is
@@ -73,7 +75,7 @@ Run the focused deterministic checks with the following command.
 uv run --locked pytest -q tests/test_benchmark_v3_batch.py tests/test_benchmark_v3_architect.py tests/test_benchmark_v3_packet.py tests/research/test_v3_family_admission_packages.py tests/research/test_v3_commissioned_replay.py tests/research/test_v3_matched_replay.py
 ```
 
-The focused suite passed 95 tests. A temporary fixture-only concurrency
+The focused suite passed 95 tests on both planning passes. A temporary fixture-only concurrency
 probe wrapped the existing family worker to record peak occupancy and
 verified distinct receipts, no additional attempts on reopen and the
 exception summary at both limits. The repository suite passed 1,026 tests
@@ -103,16 +105,54 @@ findings. If reconciliation changes the admitted snapshot before
 commissioning, the final portfolio must bind that new snapshot. This
 planning task records neither a reconciliation nor a new disposition.
 
-## Observed planning turn
+## Architect receipts
 
-The live planning attempt confirmed the requested model and High effort,
-an ephemeral thread with no parent context, an empty workspace, no
-instruction sources, no attached environments or workspace roots, the
-named read-only network-disabled profile, and six configured connectors
-reported disabled. The runner then rejected the scientific output on its
-schema, after the turn. The [sanitized attempt summary](architect-attempt.json)
-commits the private original handoff and rejection receipt by SHA-256.
-The runner did not publish the rejected response or token usage.
-The one submitted Architect attempt consumes the planning allowance.
-There was no authoring session, blind reading of new Sources or live
-Benchmark v3 extraction.
+The [initial attempt](architect-attempt.json) was rejected because each
+proposal supplied `design.success_criteria` as a string. The runner
+retained the rejection receipt and published no response or usage.
+The owner authorized up to two preparation-only turns. The
+[planning retry](architect-planning-retry.json) used schema-derived
+array guidance and produced the [validated planning record](../../rounds/2026-11-22-efficiency-pilot.json).
+The subsequent [portfolio receipt](architect-portfolio-receipt.json)
+binds the exact output and handoff to the [portfolio](portfolio.json).
+Both completed turns reported `gpt-6.2-sol` at High, fresh ephemeral
+threads, empty workspaces, no inherited instructions or mounts, the
+named network-disabled read-only profile, six disabled connectors and
+zero observed tool actions.
+
+The two completed turns reported 28,493 and 29,018 tokens, or 57,511
+in total. The rejected first turn is charged as a session with unknown
+usage. Pilot preparation used three scientific sessions across both
+passes. Paid PCG extraction and live Matter construction remained at
+zero.
+
+## Human design checkpoint
+
+The portfolio requires human acceptance of each design's retainer,
+meeting purpose, participant knowledge, record origins and custody path
+before authoring. The stock coordinator proceeds directly from design
+to authoring. Use this staged procedure to honor the portfolio.
+
+1. After exact owner execution approval, commission to the approved
+   custody ledger. Before dispatch, load the saved commission, verify
+   the approved boundary and approval commitments, and acquire the
+   coordinator lock.
+2. Run only the existing `FamilyWorkflow.design()` stage for each
+   selected family under that lock, using its commissioned
+   `SessionRunner`. Stop at the persisted `design.json` commitment.
+   Keep the complete design private. On an exception, preserve the
+   receipt and reservation and stop before authoring. Use the existing
+   uncertainty and isolation rules for recovery.
+3. Have the human reviewer record acceptance of each exact design
+   digest. Reverify the files against those commitments before
+   invoking the existing batch run. This is a custodian-enforced
+   review. The stock command has no enforcement hook for this gate.
+4. Run the approved batch from the same custody only after the
+   design checkpoint is cleared. Package and stop at consolidated
+   human admission.
+
+A fixture-only check used the commissioned ledger and existing design
+stage to dispatch exactly three mock designs and zero authors at the
+checkpoint. The stock run resumed from those commitments and produced
+three technical dossiers, with zero additional design dispatches. No
+real pilot design or authoring was run.

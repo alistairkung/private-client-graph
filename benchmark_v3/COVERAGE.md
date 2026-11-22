@@ -126,6 +126,9 @@ No verified findings recorded.
 
 | Hypothesis | Family | Status | Revision digest |
 | --- | --- | --- | --- |
+| `routine-trust-records-completeness@1` · P1: Routine trust records review | H | proposed | `06ef87b2ff166f92519c45234f36ffe6c63bcbe614eba22a92c0a966bbf7a670` |
+| `certified-extract-record-basis@1` · P2: Record authority with issue status held fixed | I | proposed | `c85fc859ea1e432e456a3debe241432e44b94467d0d0b754243ab52801ccf737` |
+| `authenticated-copy-and-delivery@1` · P3: An authenticated copy linked to timely delivery | J | proposed | `ae0b12a8394582bbeaab5b0280c1da93390b4e35cb249c743001bdfd454e89d5` |
 | `scoped-trust-amendment@1` · Scoped replacement within one trust instrument | D | approved | `20288d9f35aa29585353393c40d6f6e317fc9fee302b7e35a989b8306224fcb8` |
 | `independent-parentage-disagreement@1` · Independent reports about the same relationship | E | approved | `1c6fbc49c9be191bc6dab14845e0db2afe94675f10f6634c54d897bacede2cae` |
 | `complete-record-label-collision@1` · A shared display label across complete records | F | approved | `86c152a0d7816d83f3de38c16d265f7619ce7ccf08223d22e116b04bb98ea09c` |

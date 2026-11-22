@@ -3,8 +3,8 @@
 This is a development planning proposal for human review. The target is
 20 independent development Matters and 20 separately held-out evaluation
 Matters. Admission quality determines where development can stop.
-The pilot can bring development to eight independent families if every
-new dossier receives human admission.
+If all three pilot dossiers receive human admission, development reaches
+eight independent families and seventeen conditions.
 
 ## Admitted coverage
 
@@ -37,9 +37,11 @@ research question, section and cross-section review, context capacity,
 annotation strategy and budget need separate design. The giant slot
 and the remaining workload mix carry no commissioning authority.
 
-Keep independently originated contradiction, alternative amendment
-mechanisms, broader identity interactions and separately controlled
-administrative load open where the new hypotheses do not close them.
+Future allocations still need independent contradiction, other amendment
+mechanisms, authoritative-identifier collisions and controlled administrative
+load. All three pilot retainers concern trust administration. The pilot varies
+the documentary reasoning and workload while leaving wider practice diversity
+for future allocations.
 Technical validation of one synthetic family bounds coverage to its
 specific mechanism. Retrieval, OCR and legal determinations outside the
 Person/Trust ontology remain outside the supplied-text study. Future
@@ -48,9 +50,9 @@ histories, Sources, keys or review outputs.
 
 ## Operating limits
 
-The proposed manifest orders family submission H, I, J and allows up
-to three workers. The executor schedules workers independently. There
-is no promised order of first completion. Each family has a separate
+The manifest lists H, I, J in ascending review complexity and allows up
+to three workers. The executor can start all three without a serial
+completion dependency. Each family has a separate
 workspace and fixed stage dependencies. Within a family the design
 precommits the independent history, retainer, Source chronology and any
 single matched edit before condition review. Authors receive only
@@ -80,87 +82,91 @@ consolidated digest-addressed admission summary with exceptions and
 efficiency measurements. See [measurement](MEASUREMENT.md) and
 [readiness](READINESS.md).
 
-## Pilot concepts and allocations
+## Research Architect hypotheses
 
-The [versioned concept drafts](concepts.json) contain the retainer,
-documentary scenario and references, axes, falsifiable graph expectation,
-controls, evidence requirements and stopping criteria. These are
-unregistered custodian drafts for the Architect to independently assess.
+The [validated planning round](../../rounds/2026-11-22-efficiency-pilot.json)
+records each proposal's retainer, provenance, axes, falsifiable hypothesis,
+controls, expected graph and Evidence properties, and reasons to return or
+quarantine. The independent designs still need to establish documentary
+realism. The public references ground the genres. Within each fictional file,
+its own records must establish scope and effect. [HMRC trust record keeping](https://www.gov.uk/guidance/trust-record-keeping-for-tax-purposes) · [HMRC registration proof](https://www.gov.uk/guidance/manage-your-trusts-registration-service)
 
-| Family | Workload and hypothesis | Sources × conditions | Base + targeted reads | Planned ceiling | Indicative total tokens at estimate |
-| --- | --- | ---: | ---: | ---: | ---: |
-| H · P1 | Routine trust records review. Recover the full graph and exact Evidence in ordinary corroborating records. Administrative contacts supply negative controls. | 4 × 1 | 10 + 2 | 16 | 96,000–180,000 |
-| I · P2 | Preliminary estate kinship check. A formally corrected birth record preserves its original printing. Withhold the specifically disclaimed relationship, retain unrelated links and avoid inventing a replacement. | 5 × 1 | 11 + 5 | 20 | 128,000–240,000 |
-| J · P3 | Testamentary trust handover. Test whether named class membership needs both operative scope and independently verified linkage. The matched condition leaves the linkage unconfirmed. Contact entries are negative controls. | 8 × 2 | 18 + 10 | 36 | 224,000–420,000 |
-| **Total** | **Three independent histories and four conditions** | **17 natural Sources** | **39 + 17** | **72** | **448,000–840,000** |
+| Family | Workload and scientific contribution | Sources × conditions | Core + checks + reserve | Proposed ceiling |
+| --- | --- | ---: | ---: | ---: |
+| H · P1 | Routine records and expense review. Recover the complete graph from the trust extract and signed schedule. Masking expense material should preserve the graph. Expense-handling contacts provide a negative control. | 5 × 1 | 11 + 4 + 1 | 20 |
+| I · P2 | Moderate reconciliation of a certified transcription and a registration snapshot. Change only the underlying record basis. The date, row, certification and issue status stay fixed. Verify that a sufficient route includes the governing authority as well as the exact named row. | 5 × 2 | 15 + 4 + 1 | 25 |
+| J · P3 | Compact composite involving an authenticated reproduction and evidence of timely delivery. Change only the enclosure reference that links the designation to a dated receipt. Test each necessary route with independent masks. | 8 × 2 | 18 + 7 + 1 | 34 |
+| **Total** | **Three independent histories and five conditions** | **18 natural Sources** | **44 + 15 + 3** | **79** |
 
-H tests ordinary completeness and direct Evidence with minimal dependency.
-I tests scope, provenance and the authority of an issued marginal
-correction, distinct from E's competing witnesses. J tests conjunctive
-proof and the effect of withholding one qualifying link, bounded to a
-single composite and independent masks. HMCTS, the General Register Office and HMRC document the genres. The proposed factual
-relationships are fictional design assumptions. [HMRC trust records](https://www.gov.uk/guidance/trust-record-keeping-for-tax-purposes) · [GRO correction guidance](https://www.gov.uk/government/publications/application-form-to-remove-the-incorrect-fathers-details-from-a-birth-registration/how-to-apply-for-a-correction-to-remove-the-wrong-fathers-details) · [HMCTS probate workflow](https://www.gov.uk/government/publications/myhmcts-how-to-apply-for-probate-online/apply-for-probate-with-myhmcts) · [HMRC beneficiary records](https://www.gov.uk/hmrc-internal-manuals/trust-registration-service-manual/trsm32050)
+H adds a routine completeness benchmark and tests whether shortcuts such
+as reading only the principal deed lose supported relationships. I fixes
+issue status and timing, unlike A's release test and D's amendment scope.
+The later registration snapshot is an unchanged negative control. A
+record-basis shortcut could predict I's graph delta, so require the
+authority passage on the same relationship. J holds authentication
+fixed across the pair and varies the delivery link. Separate masks
+test component necessity. The design supports a file-specific conjunction.
+A signed date or a receipt for another enclosure cannot establish timely
+delivery of the designation. The matched pair cannot identify separate
+main effects.
 
-Base role counts are three designs, seventeen document authors, four
-realism reviews, eight full blind readings, four adjudications and three
-adversarial audits. The estimated seventeen additional readings cover
-risk-based masks. The 72-session ceiling includes 16 contingent slots for
-uncertainty, extra masks or a scoped repair. An early realism repair of one
-Source may fit by reusing unaffected authors. A later objection, cascading
-rewrite or replay of a full audit may exhaust the ceiling. In that event
-stop with the retained objection and charged attempts. A valid repair
-still needs every review triggered by the revised lock.
+The estimated 44 core sessions comprise three designs, eighteen Source
+authors, five realism reviews, ten full blind readings, five adjudications
+and three adversarial audits. The Architect added fifteen independent
+excerpt or mask checks and three reserve sessions for a working estimate
+of 62. The proposed 79-session ceiling provides seventeen more slots
+for evidence checks, uncertain attempts or a repair. I's estimate stays
+within the 10–20 target. Its ceiling accommodates possible matched
+provenance rechecks. J has the largest buffer because an exact proof
+may require deletion tests across multiple independent records. A
+late or cascading repair can still exhaust the allowance. Retain every
+charged attempt and stop when the ceiling cannot cover the required gate.
 
-The planned model is `gpt-6.2-sol` at Medium for perspective-specific
-writers and High for design, realism, full and masked annotation,
-adjudication and adversarial audit. Use High for the Research Architect's
-separate planning or reconciliation work. The coordinator and validation
-are deterministic. Use Low effort for routine custodian orchestration
-when agent assistance is needed. The local catalogue supports these
-efforts. Live per-packet verification remains required. At 72 charged
-attempts the corresponding rough range is 576,000–1,080,000 tokens.
-A human review allowance of 6–10 hours across the three dossiers is
-provisional. Codex billing, throughput under contention and wall-clock
-completion are unmeasured. The 72 slots are a proposed construction cap.
-The Architect planning attempt is accounted for separately.
+Use `gpt-6.2-sol` at Medium for perspective-specific authors and High
+for design, realism, full and masked annotation, adjudication and
+adversarial audit. High was used for Architect planning and allocation.
+Coordination and validation are deterministic. Use Low effort for
+routine custodian orchestration when agent assistance is needed. The
+local CLI catalogue supports these settings. Each live packet must
+verify its effective settings before submission.
 
-## Exact draft identities and owner decision
+At the working estimate of 62 sessions, budget roughly 496,000–930,000
+tokens. At the ceiling of 79, the historical range would imply roughly
+632,000–1,185,000 tokens. This estimate does not cap context or token
+usage. The Architect estimated technical audit effort of 3–5 hours for
+H, 4–7 for I and 6–10 for J, plus 4–9 hours of owner review across the
+three. These are indicative person-hour estimates. Billed Codex cost,
+elapsed execution time and throughput under contention are unmeasured.
+Architect preparation is accounted for separately from construction.
 
-| Record | Revision | SHA-256 |
+## Consolidated owner approval
+
+The [portfolio](portfolio.json) and [batch manifest](manifest.json)
+are in the factory's versioned formats. The factory verified the
+portfolio receipt, registered hypothesis lineage, admitted snapshot,
+allocation and scope commitments. Every hypothesis remains proposed.
+The stock coordinator checks exact owner decisions before commissioning.
+
+| Record | Revision | Canonical SHA-256 |
 | --- | --- | --- |
-| [Development portfolio draft](portfolio-draft.json) | `development-efficiency-pilot@1` | `298a028097fdae74deff45c190cf3243064f8ee035436de01efbe1269670426d` |
-| [Batch manifest draft](manifest-draft.json) | `efficiency-pilot-v1@1` | `1ff5a4a86d0622947132d734573b5e9863c52aa8dde43a3b1871fb31eb0b754c` |
-| H | `routine-trust-record-review@1` | `9a5d9e811b2f7abd6faa039f8ef047647ecd5d1e0854a80e658671e1d1f40c49` |
-| I | `issued-birth-record-correction@1` | `d744c337ef22fdcf8c4cdfb54efde5b5c144a500143dcef060b571f85206fca6` |
-| J | `documented-testamentary-class-membership@1` | `97bcadabbad871e2aba24f3574f0d28e868bce44d84628c84d52ac65e24f52c0` |
+| Portfolio | `development-efficiency-pilot@1` | `12f150333e12b94588b1c2bc703f89e681d48298e6b6c851f4f741118ab2e5be` |
+| Batch manifest | `efficiency-pilot-v1`, schema 1, first proposal | `9b80f5e8ca38a8d0a59a5630e4be527a68599ad7a439815920dc887e372ce516` |
+| H | `routine-trust-records-completeness@1` | `06ef87b2ff166f92519c45234f36ffe6c63bcbe614eba22a92c0a966bbf7a670` |
+| I | `certified-extract-record-basis@1` | `c85fc859ea1e432e456a3debe241432e44b94467d0d0b754243ab52801ccf737` |
+| J | `authenticated-copy-and-delivery@1` | `ae0b12a8394582bbeaab5b0280c1da93390b4e35cb249c743001bdfd454e89d5` |
 
-The portfolio and manifest values are draft file checksums. The three
-concept values commit their canonical Hypothesis content. The actual
-registry digest also commits validated Architect session provenance. The
-drafts explicitly leave those registry references and the final portfolio
-binding empty.
+Please approve or return this exact package in one decision. Approval covers
+the portfolio and the three hypothesis revisions above, the manifest with
+a ceiling of 79 sessions allocated 20 / 25 / 34, the named model settings,
+and authorization to execute through consolidated human admission. The
+validated portfolio calls for a private human design review before any
+author packet. Use the [staged design checkpoint](READINESS.md#human-design-checkpoint)
+because the stock run advances directly to authoring. The owner must still
+decide each technical dossier separately at the admission handoff.
 
-The one authorized [Architect attempt](architect-attempt.json) ran on the
-verified host, `gpt-6.2-sol` High, under the permanent planning profile.
-The runner rejected the output because each proposal supplied
-`design.success_criteria` in the wrong type and retained no usable output or token usage.
-One scientific session was spent on planning. Construction sessions and
-paid PCG extraction calls were both zero.
-
-The planning profile emits new proposals and the portfolio profile can
-allocate only already registered revisions. Its completed receipt binds
-the portfolio to the Architect session. To reach the execution decision,
-the owner can authorize up to two additional preparation-only Architect
-turns. First, run one fresh planning packet with explicit array guidance
-for all list fields, including `success_criteria`, and register only a
-completed, validated record. Second, run one portfolio packet against
-those registered revisions and rebind the manifest to its verified digest.
-The second turn depends on a usable first result. A failure stops the
-preparation without another attempt.
-
-Bring the resulting exact portfolio, three hypothesis revisions, and
-manifest back for **one consolidated execution decision**. That decision
-covers the portfolio digest, each hypothesis digest, shared and per-family
-ceilings, role/model settings, and permission to run through the
-consolidated human admission handoff. This draft leaves the execution
-gate closed.
+The [planning retry](architect-planning-retry.json) and
+[portfolio turn](architect-portfolio-receipt.json) used the two authorized
+preparation-only sessions. Together with the original schema rejection,
+the pilot preparation used three Architect sessions. Matter construction
+sessions and paid PCG extraction calls remain zero. Formal D/F
+reconciliation remains required before development freeze.

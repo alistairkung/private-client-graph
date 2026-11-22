@@ -1,46 +1,41 @@
 {
   "schema_version": 1,
-  "status": "custodian_draft_pending_architect_and_owner",
   "task_id": "benchmark-v3-efficiency",
   "batch_id": "efficiency-pilot-v1",
-  "revision": 1,
   "namespace": "development",
   "phase": "pilot",
-  "portfolio_sha256": null,
+  "portfolio_sha256": "12f150333e12b94588b1c2bc703f89e681d48298e6b6c851f4f741118ab2e5be",
   "previous_portfolio": null,
   "families": [
     {
       "family_id": "H",
       "hypothesis": {
-        "hypothesis_id": "routine-trust-record-review",
+        "hypothesis_id": "routine-trust-records-completeness",
         "revision": 1,
-        "hypothesis_sha256": null,
-        "draft_content_sha256": "9a5d9e811b2f7abd6faa039f8ef047647ecd5d1e0854a80e658671e1d1f40c49"
-      },
-      "sessions": 16
-    },
-    {
-      "family_id": "I",
-      "hypothesis": {
-        "hypothesis_id": "issued-birth-record-correction",
-        "revision": 1,
-        "hypothesis_sha256": null,
-        "draft_content_sha256": "d744c337ef22fdcf8c4cdfb54efde5b5c144a500143dcef060b571f85206fca6"
+        "hypothesis_sha256": "06ef87b2ff166f92519c45234f36ffe6c63bcbe614eba22a92c0a966bbf7a670"
       },
       "sessions": 20
     },
     {
+      "family_id": "I",
+      "hypothesis": {
+        "hypothesis_id": "certified-extract-record-basis",
+        "revision": 1,
+        "hypothesis_sha256": "c85fc859ea1e432e456a3debe241432e44b94467d0d0b754243ab52801ccf737"
+      },
+      "sessions": 25
+    },
+    {
       "family_id": "J",
       "hypothesis": {
-        "hypothesis_id": "documented-testamentary-class-membership",
+        "hypothesis_id": "authenticated-copy-and-delivery",
         "revision": 1,
-        "hypothesis_sha256": null,
-        "draft_content_sha256": "97bcadabbad871e2aba24f3574f0d28e868bce44d84628c84d52ac65e24f52c0"
+        "hypothesis_sha256": "ae0b12a8394582bbeaab5b0280c1da93390b4e35cb249c743001bdfd454e89d5"
       },
-      "sessions": 36
+      "sessions": 34
     }
   ],
-  "task_session_ceiling": 72,
+  "task_session_ceiling": 79,
   "max_parallel_families": 3,
   "repair_cycles": 1,
   "scope": {
@@ -89,6 +84,7 @@
   },
   "stop_conditions": [
     "Halt the task on a shared isolation incident or unverified approval or implementation commitment.",
+    "Pause after the budgeted design checkpoints, before any author packet. Require human review of each exact committed design for retainer, meeting purpose, participant knowledge, record origins and custody. Use the staged procedure in the pilot readiness report.",
     "Halt the affected family on uncertainty, integrity failure, the family or task allowance, unresolved realism or evidence objection, or a new hypothesis or repair outside the authorized scope.",
     "Stop at consolidated human admission review. Expansion, baseline and evaluation require distinct authority."
   ]
