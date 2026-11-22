@@ -1,0 +1,20 @@
+{
+  "C0": [
+    {
+      "slot": "read-05",
+      "session": "e1ee9395-53bd-455b-b9c8-ca83b3029c6e",
+      "thread": "01a20322-29cb-7512-a4b8-46a33b14a3f6",
+      "model": "gpt-6.2-sol",
+      "packet_sha256": "600c483639c12dacad5ed7663ead63b60290eb840d11720a204600ac524e68cb",
+      "output_sha256": "55cb8bf0145838de5d91f60621379d04d7867c917d9ed1e4564e63c451e6aaac"
+    },
+    {
+      "slot": "read-06",
+      "session": "0b698091-c063-4370-82a7-e2d058467095",
+      "thread": "01a20322-29cb-7641-a307-a9f220406854",
+      "model": "gpt-6.2-astra",
+      "packet_sha256": "600c483639c12dacad5ed7663ead63b60290eb840d11720a204600ac524e68cb",
+      "output_sha256": "31e2ee8cd33895ee46b36ecae0e788ff2808cee71f941b2db507551cf8bcde26"
+    }
+  ]
+}

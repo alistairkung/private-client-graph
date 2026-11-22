@@ -1,0 +1,197 @@
+{
+  "edges": [
+    {
+      "edge": ["Ivor Ellis Kestell", "parent_of", "Tamsin Vera Kestell"],
+      "alternatives": [
+        [
+          {
+            "source_id": "w9d2",
+            "supporting_text": "The entry names Tamsin Vera Kestell as the child and Ivor Ellis Kestell as the father."
+          }
+        ],
+        [
+          {
+            "source_id": "w9d2",
+            "supporting_text": "The will opens by naming Ivor Ellis Kestell of 9 Barrowglass Walk, Darnmere. The executor clause reads “my daughter Tamsin Vera Kestell”."
+          }
+        ],
+        [
+          {
+            "source_id": "n4j8",
+            "supporting_text": "Tamsin Vera Kestell made the opening enquiry on 2 March and attended intake with an incomplete folder. The certified death entry records that Ivor Ellis Kestell of 9 Barrowglass Walk, Darnmere, died on 18 February 2026. The signed original will dated 7 October 2021 names Tamsin as executor, describes her as “my daughter”"
+          }
+        ],
+        [
+          {
+            "source_id": "n4j8",
+            "supporting_text": "Tamsin Vera Kestell made the opening enquiry on 2 March and attended intake with an incomplete folder. The certified death entry records that Ivor Ellis Kestell of 9 Barrowglass Walk, Darnmere, died on 18 February 2026."
+          },
+          {
+            "source_id": "n4j8",
+            "supporting_text": "The certified birth entry (Darnmere entry 284 for 1969) names Tamsin as the child and Ivor as the father."
+          }
+        ]
+      ],
+      "reason": "The direction is father to child. The certified birth entry and Ivor Ellis Kestell’s signed will are distinct documentary origins. Orla Fenwick reports sighting both at 14:10 on 26 March; Seth Calder’s note summarizes the same records, not additional independent corroboration. In his note, the local references Tamsin and Ivor resolve to the full names in the same paragraph. Each alternative uses only one Source, so ordinary quotation and attribution apply under benchmark_v2_evidence_v1. The first listed set is a complete attachment for this edge under attached_sufficient_set_v1. No supported edge requires multiple Sources."
+    }
+  ],
+  "register": [
+    {
+      "proposition": "Ivor Ellis Kestell is the father of Tamsin Vera Kestell.",
+      "origin": "Certified Darnmere birth entry 284 for 1969 and Ivor Ellis Kestell’s signed will dated 7 October 2021.",
+      "reporter": "Orla Fenwick in w9d2; Seth Calder in n4j8 summarizes the same sighted records.",
+      "effective_date": "1969 birth entry; 7 October 2021 declaration in the will; relationship supported at the 26 March 2026 cut-off.",
+      "receipt_by_cutoff": "Both papers sighted at 14:10 on 26 March and returned; the firm retained the sighting slip.",
+      "competing_passages": "None. q7m4 reports the will appointments and gift but does not state the parentage; that omission is not a conflict.",
+      "disposition": "supported",
+      "reason": "The birth entry expressly identifies father and child; the will independently identifies Tamsin as the testator’s daughter."
+    },
+    {
+      "proposition": "Ivor Ellis Kestell died on 18 February 2026; his last address was reported as 9 Barrowglass Walk, Darnmere.",
+      "origin": "Tamsin Vera Kestell’s opening enquiry and the certified death entry. The will gives the same address.",
+      "reporter": "Tamsin Vera Kestell in q7m4; Orla Fenwick in w9d2; Seth Calder in n4j8.",
+      "effective_date": "18 February 2026 for the death; last address reported on 2 March 2026.",
+      "receipt_by_cutoff": "The 2 March enquiry was held; the certified death entry was sighted and returned on 26 March at the intake visit.",
+      "competing_passages": "None. The death entry records the death date and associates Ivor with the stated address.",
+      "disposition": "supported",
+      "reason": "The death entry corroborates the date. The last-address characterization is Tamsin’s report, consistent with the address in the records."
+    },
+    {
+      "proposition": "The signed original will dated 7 October 2021 names Tamsin Vera Kestell as executor and leaves the residue to her outright.",
+      "origin": "Ivor Ellis Kestell’s signed original will.",
+      "reporter": "Tamsin Vera Kestell in q7m4; Orla Fenwick in w9d2; Seth Calder in n4j8.",
+      "effective_date": "Will dated 7 October 2021; provisions relevant to the estate following the death on 18 February 2026.",
+      "receipt_by_cutoff": "Reported on 2 March; original sighted at 14:10 on 26 March and returned.",
+      "competing_passages": "None. Tamsin’s initial report agrees with the sighting records.",
+      "disposition": "supported",
+      "reason": "These are the terms of the signed instrument sighted, not proof of a grant, final entitlement, or distribution. An outright residuary gift does not establish that Tamsin is a trust beneficiary."
+    },
+    {
+      "proposition": "Whether the sighted will is the latest operative testamentary instrument and whether any grant or other probate action exists beyond what is recorded at intake.",
+      "origin": "The signed will and the intake record.",
+      "reporter": "Orla Fenwick in w9d2; Seth Calder in n4j8.",
+      "effective_date": "As of 4 pm on 26 March 2026.",
+      "receipt_by_cutoff": "The sighting and intake notes were held; no grant, later will or codicil is shown in the packet.",
+      "competing_passages": "n4j8 expressly says no probate application was started at intake. q7m4 and the sighted will concern testamentary nomination, not issuance of a grant.",
+      "disposition": "unresolved",
+      "reason": "The file supports the nomination and the limited fact that intake did not start an application. It does not settle the status of any other probate action or establish that no later testamentary document exists."
+    },
+    {
+      "proposition": "Leonie Tess Rindle and Nella Ruth Verrow are the two named contacts on Tamsin Vera Kestell’s complete family-update list. Tamsin reported both living and each separately confirming the spelling of her own current full name.",
+      "origin": "Tamsin Vera Kestell’s separate conversations with the two contacts.",
+      "reporter": "Tamsin Vera Kestell in v2k9; Seth Calder summarizes her report in n4j8.",
+      "effective_date": "Reported on 5 March 2026; latest status in the packet at cut-off.",
+      "receipt_by_cutoff": "The 5 March update was held and summarized in the 26 March intake note.",
+      "competing_passages": "None. n4j8 is a summary, not a separate check with the contacts.",
+      "disposition": "supported",
+      "reason": "Use Tamsin for separate general updates without circulating their contact details. Both received the same correction route. The list is complete for updates, not a pedigree or a list of heirs. The file does not independently verify either contact’s living status."
+    },
+    {
+      "proposition": "In conversation DP-7316, an unnamed speaker said, “Kellan Hugh Sorrel is my father.”",
+      "origin": "The participant’s first-person statement in the 12 March 2026 Darnmere Papers Desk conversation.",
+      "reporter": "Darnmere Papers Desk relay in r8c3; Tamsin Vera Kestell forwards that relay in h3p6.",
+      "effective_date": "12 March 2026 at 11:20; relay approved the same day.",
+      "receipt_by_cutoff": "Tamsin received the relay on 12 March. The firm already held her inline forward at intake and retained the native .eml export supplied on 26 March.",
+      "competing_passages": "r8c3 and h3p6 reproduce the same statement. m5x7 matches the reference and time but contains no conversation text or completed attendee name.",
+      "disposition": "supported",
+      "reason": "The file supports that the statement was made, not that an identified named person is Kellan Hugh Sorrel’s child."
+    },
+    {
+      "proposition": "The native relay export and inline forward are independently originated accounts of the DP-7316 statement.",
+      "origin": "The single original relay message and the intake record identifying both copies.",
+      "reporter": "Tamsin Vera Kestell in h3p6; Seth Calder in n4j8.",
+      "effective_date": "Relay of 12 March 2026; copies compared in the intake record of 26 March 2026.",
+      "receipt_by_cutoff": "Both versions were held by cut-off.",
+      "competing_passages": "n4j8 says both are from the same original message; h3p6 expressly identifies its text as a forward.",
+      "disposition": "explicitly contradicted",
+      "reason": "There are two documentary copies, not two witnesses or independently originated statements."
+    },
+    {
+      "proposition": "DP-7316 had one attendee, but the distributed extract does not name the attendee or establish whether an identity check took place.",
+      "origin": "Darnmere Papers Desk attendance register extract m5x7.",
+      "reporter": "Merrin Vale, registration keeper; Seth Calder records that Tamsin brought the printout.",
+      "effective_date": "Session on 12 March 2026 at 11:20; extract issued on 13 March 2026.",
+      "receipt_by_cutoff": "Tamsin supplied the printout at intake on 26 March.",
+      "competing_passages": "m5x7 lists Tamsin as nominated packet recipient but gives the attendee field as “[not entered]”. It expressly distinguishes the checked-in attendee from the packet recipient and the name used to book.",
+      "disposition": "supported",
+      "reason": "The matching reference joins the two records to the same conversation, but the extract supplies no attendee name to join to the relay. The blank is not a finding that identity was unchecked, nor does a one-attendee count identify who attended."
+    },
+    {
+      "proposition": "Tamsin Vera Kestell attended DP-7316 or supplied the parentage statement as her own first-person account.",
+      "origin": "Tamsin Vera Kestell’s forwarding cover message.",
+      "reporter": "Tamsin Vera Kestell in h3p6.",
+      "effective_date": "Her account concerns the conversation of 12 March 2026.",
+      "receipt_by_cutoff": "The firm already held the forward before the 26 March intake.",
+      "competing_passages": "h3p6 says, “I was not present for the conversation and am not giving my own account of it.” m5x7 names her only as the packet recipient.",
+      "disposition": "explicitly contradicted",
+      "reason": "Neither the signature on the cover message nor the recipient field should be used to identify the speaker of the forwarded statement."
+    },
+    {
+      "proposition": "Withheld competing readings: Kellan Hugh Sorrel is the father of Leonie Tess Rindle; Kellan Hugh Sorrel is the father of Nella Ruth Verrow.",
+      "origin": "The unattributed first-person statement in DP-7316, read with the family-update list and incomplete attendance extract.",
+      "reporter": "Unnamed speaker via the desk relay in r8c3 and its copy h3p6; Tamsin Vera Kestell reports the contact names and shared route in v2k9; Merrin Vale supplies the administrative extract m5x7.",
+      "effective_date": "5 March contact list; 12 March statement and session; 13 March extract; unresolved at the 26 March cut-off.",
+      "receipt_by_cutoff": "The list, both versions of the relay, and the incomplete extract were available by cut-off.",
+      "competing_passages": "Either named contact could have used the shared route; neither is identified as the attendee. The update list does not expressly restrict who could attend. The matched reference identifies the session, not the speaker.",
+      "disposition": "unresolved",
+      "reason": "If Leonie was the speaker, the statement reports Kellan as Leonie’s father; if Nella was the speaker, it reports him as Nella’s father. Neither reading is preferred on this record, and the file does not exclude another unnamed attendee. Do not attach the same first-person statement to both contacts or infer any kinship between the contacts and Ivor Ellis Kestell."
+    },
+    {
+      "proposition": "No additional named family relationship or trust role is established in the packet.",
+      "origin": "The update list, relay and attendance materials, and sighting and intake records.",
+      "reporter": "Tamsin Vera Kestell, the desk relay, Merrin Vale, Orla Fenwick and Seth Calder in their respective records.",
+      "effective_date": "At 4 pm on 26 March 2026.",
+      "receipt_by_cutoff": "All supplied Sources considered.",
+      "competing_passages": "The update list uses a family label without specifying kinship; the relay contains an unresolved first-person reference; the will identifies an outright gift rather than a trust role.",
+      "disposition": "unresolved",
+      "reason": "The file does not identify any other parent-child pair, spouse or sibling pair, or named trust with a settlor, trustee or beneficiary. These omissions do not disprove such relationships. Neither common parentage nor shared children would, by itself, establish a scored sibling or spouse edge."
+    },
+    {
+      "proposition": "The three sighted papers were returned, no probate application was started at intake, and the Merewick Building Society date-of-death balance confirmation remained outstanding.",
+      "origin": "Intake sighting and handling record, plus Tamsin Vera Kestell’s balance request and status report.",
+      "reporter": "Orla Fenwick in w9d2; Seth Calder in n4j8; Tamsin Vera Kestell in q7m4 and at intake as reported in n4j8.",
+      "effective_date": "Balance requested on 27 February 2026; sighting at 14:10 on 26 March 2026; status at the meeting cut-off.",
+      "receipt_by_cutoff": "The firm retained the sighting slip, not the signed original will or either certified entry. The balance confirmation had not arrived.",
+      "competing_passages": "None. The 26 March update confirms the outstanding status first reported in the 2 March enquiry.",
+      "disposition": "supported",
+      "reason": "Arrange for the papers to be brought back as needed. The outstanding balance is not evidence of a zero balance."
+    }
+  ],
+  "source_audit": [
+    {
+      "source_id": "q7m4",
+      "graph_assessment": "No edge. This is the 2 March opening enquiry: it identifies Ivor Ellis Kestell and Tamsin Vera Kestell and reports the death, address, will terms and outstanding balance. It does not call Tamsin Ivor’s daughter."
+    },
+    {
+      "source_id": "v2k9",
+      "graph_assessment": "No edge. It identifies Leonie Tess Rindle and Nella Ruth Verrow as update contacts and records Tamsin’s reports about them. It establishes neither a particular family relationship nor authorship of a correction sent through the shared route."
+    },
+    {
+      "source_id": "r8c3",
+      "graph_assessment": "No named edge. The original relay identifies Kellan Hugh Sorrel as the father of the speaker but does not give the speaker’s name. The reference and time identify the conversation."
+    },
+    {
+      "source_id": "m5x7",
+      "graph_assessment": "No edge alone or in combination with the relay at cut-off. The matching row confirms a single attendee and explains how a completed name field would be populated, but the distributed field is not completed."
+    },
+    {
+      "source_id": "h3p6",
+      "graph_assessment": "No named edge. The forward is an alternate copy of r8c3, not independent testimony. The cover message documents Tamsin’s receipt and expressly disclaims attendance and firsthand reporting."
+    },
+    {
+      "source_id": "w9d2",
+      "graph_assessment": "Independently sufficient as a Source for the Ivor-to-Tamsin parent_of edge, by either the certified birth entry or the signed original will. The death-entry and document-return remarks support the register, not another edge."
+    },
+    {
+      "source_id": "n4j8",
+      "graph_assessment": "Independently sufficient as a Source for the same parent_of edge, by either summarized instrument with the local full-name context. It summarizes the same documentary origins as w9d2 and also records provenance, custody and outstanding papers. It does not fill the DP-7316 identity gap."
+    }
+  ],
+  "questions": [
+    "Can Tamsin Vera Kestell bring back the signed original will dated 7 October 2021 and the certified birth and death entries? What should be retained or copied, and what arrangements should be made for the original will?",
+    "Are there any later wills or codicils, or any probate application or grant elsewhere? Does Tamsin wish to act under the executor nomination?",
+    "Can Merrin Vale supply a completed or authenticated DP-7316 record confirming the checked-in attendee’s full name for 12 March 2026 at 11:20? Can the identified speaker confirm the statement directly and supply a relationship record if relevant to the estate?",
+    "What are Leonie Tess Rindle’s and Nella Ruth Verrow’s exact relationships, if any, to Ivor Ellis Kestell, and are there other relevant relatives or contacts not on the update list?",
+    "Has Merewick Building Society now supplied the date-of-death balance, and what other asset and liability records are needed?"
+  ]
+}

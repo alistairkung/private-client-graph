@@ -1,0 +1,43 @@
+{
+  "B0": {
+    "shared": [
+      [
+        "Ivor Ellis Kestell",
+        "parent_of",
+        "Tamsin Vera Kestell"
+      ]
+    ],
+    "reader_one_only": [],
+    "reader_two_only": [],
+    "alternative_differences": [
+      [
+        "Ivor Ellis Kestell",
+        "parent_of",
+        "Tamsin Vera Kestell"
+      ]
+    ]
+  },
+  "B1": {
+    "shared": [
+      [
+        "Ivor Ellis Kestell",
+        "parent_of",
+        "Tamsin Vera Kestell"
+      ],
+      [
+        "Kellan Hugh Sorrel",
+        "parent_of",
+        "Leonie Tess Rindle"
+      ]
+    ],
+    "reader_one_only": [],
+    "reader_two_only": [],
+    "alternative_differences": [
+      [
+        "Ivor Ellis Kestell",
+        "parent_of",
+        "Tamsin Vera Kestell"
+      ]
+    ]
+  }
+}
