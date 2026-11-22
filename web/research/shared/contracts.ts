@@ -540,6 +540,7 @@ export type RunObservation = {
   source: string | null;
   sources: Array<Source> | null;
   result: ResearchResult | null;
+  langfuse_trace_ids: Array<string>;
   relationships: Array<RelationshipOutcome>;
 };
 
