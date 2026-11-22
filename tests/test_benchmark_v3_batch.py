@@ -13,8 +13,11 @@ import pytest
 
 from benchmark_v3 import commissioning, packet
 from benchmark_v3.batch import admission, authorisation, coordinator, custody, science
-from benchmark_v3.batch.contracts import AdmissionDecisions, BatchDecision, BatchManifest, DesignOutput, PilotDecision
+from benchmark_v3.batch.contracts import (
+    AdmissionDecisions, AuthoredSource, BatchDecision, BatchManifest, DesignOutput, DesignReview, PilotDecision,
+)
 from benchmark_v3.batch.ledger import BudgetExhausted, TaskHalted
+from benchmark_v3.batch.sessions import Blocked
 from benchmark_v3.portfolio import Portfolio
 from benchmark_v3.replay_manifest import BatchSourceFreeze, load_family, source_commitments
 from private_client_graph.models.source import Source
@@ -289,6 +292,88 @@ def test_batch_demo_resume_package_and_consolidated_admission(approved, transpor
     records = admission.record_admissions(ledger, decisions)
     assert [json.loads(record.read_bytes())["status"] for record in records] == ["admitted", "returned"]
     assert admission.record_admissions(ledger, decisions) == records
+
+
+@pytest.fixture
+def design_gated(approved):
+    ledger, initial = approved
+    manifest = initial.manifest.model_copy(update={"schema_version": 2, "max_parallel_families": 3})
+    commission = coordinator.Commission(initial.portfolio, manifest, _approval(initial.portfolio, manifest))
+    coordinator.commission_batch(ledger, commission, BOUNDARY)
+    return ledger, commission
+
+
+def _design_approval(ledger, commission):
+    preview = coordinator.preview_design_review(ledger, commission.manifest.batch_id)
+    return DesignReview.model_validate(preview | {
+        "schema_version": 1, "owner": OWNER, "decided_on": TODAY,
+        "decision_reference": "Explicit fixture design review.",
+    })
+
+
+def test_stock_run_pauses_for_all_designs_and_reuses_them_after_review(design_gated, transport):
+    ledger, commission = design_gated
+    batch = commission.manifest.batch_id
+    calls, _, _ = transport
+    coordinator.run_batch(ledger, batch)
+    assert set((family, job) for family, _, job, _ in calls) == {(family, "design") for family in "GHI"}
+    assert all(len(ledger.attempts(family)) == 1 for family in "GHI")
+
+    coordinator.run_batch(ledger, batch)
+    assert len(calls) == 3
+    runner = commission.session_runner(ledger, "G", 1)
+    with pytest.raises(Blocked, match="accept every committed design"):
+        runner.run("author", "author-src1", "author", {}, "Fixture author.", AuthoredSource)
+    assert len(ledger.attempts("G")) == 1
+
+    review = _design_approval(ledger, commission)
+    with pytest.raises(ValueError, match="commissioning owner and exact manifest"):
+        coordinator.record_design_review(ledger, review.model_copy(update={"owner": "Other owner"}))
+    with pytest.raises(ValueError, match="commissioning owner and exact manifest"):
+        coordinator.record_design_review(ledger, review.model_copy(update={"manifest_sha256": "0" * 64}))
+    with pytest.raises(ValueError, match="every exact committed design"):
+        coordinator.record_design_review(ledger, review.model_copy(update={"designs": review.designs[:2]}))
+    altered = review.designs[0].model_copy(update={"design_sha256": "0" * 64})
+    with pytest.raises(ValueError, match="every exact committed design"):
+        coordinator.record_design_review(ledger, review.model_copy(update={"designs": [altered, *review.designs[1:]]}))
+    assert not ledger.events(batch)
+
+    coordinator.record_design_review(ledger, review)
+    coordinator.record_design_review(ledger, review)
+    assert len(ledger.events(batch)) == 1
+    coordinator.run_batch(ledger, batch)
+    assert sum(job == "design" for _, _, job, _ in calls) == 3
+    assert _status(ledger, batch) == dict.fromkeys("GHI", "admission_ready")
+
+
+def test_design_review_rechecks_committed_bytes_before_any_author(design_gated, transport):
+    ledger, commission = design_gated
+    batch = commission.manifest.batch_id
+    calls, _, _ = transport
+    coordinator.run_batch(ledger, batch)
+    review = _design_approval(ledger, commission)
+    coordinator.record_design_review(ledger, review)
+    design = commission.session_runner(ledger, "I", 1).directory / "design.json"
+    design.chmod(0o600)
+    design.write_bytes(design.read_bytes() + b"\n")
+    with pytest.raises(ValueError, match="committed design bytes changed"):
+        coordinator.run_batch(ledger, batch)
+    assert len(calls) == 3
+    assert all(len(ledger.attempts(family)) == 1 for family in "GHI")
+
+
+def test_design_only_resume_reopens_completed_receipts_without_authoring(design_gated, transport):
+    ledger, commission = design_gated
+    batch = commission.manifest.batch_id
+    calls, behavior, _ = transport
+    behavior["G", "design"] = "interrupt_after_receipt"
+    with pytest.raises(Interrupted):
+        coordinator.run_batch(ledger, batch)
+    with pytest.raises(ValueError, match="no committed design"):
+        _design_approval(ledger, commission)
+    coordinator.run_batch(ledger, batch)
+    assert len(_design_approval(ledger, commission).designs) == 3
+    assert len(calls) == 3 and all(job == "design" for _, _, job, _ in calls)
 
 
 def test_dispatch_receipt_survives_interruption_without_repeat(approved, transport):

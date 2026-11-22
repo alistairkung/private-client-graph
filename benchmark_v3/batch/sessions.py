@@ -7,7 +7,7 @@ from typing import Any, TypeVar
 from pydantic import BaseModel
 
 from benchmark_v3 import commissioning, packet
-from benchmark_v3.batch import artifacts, authorisation
+from benchmark_v3.batch import artifacts, authorisation, design_review
 from benchmark_v3.batch.contracts import BatchManifest, Code, Role, Stage
 from benchmark_v3.batch.ledger import Ledger, TaskHalted
 
@@ -31,20 +31,25 @@ class SessionRunner:
     directory: Path
     owner: str
 
-    def _require_authority(self) -> None:
+    def _require_authority(self, role: Role) -> None:
         self.ledger.require_running()
         allocation = next(row for row in self.manifest.families if row.family_id == self.family)
         authorisation.verify_hypothesis(self.family, allocation.hypothesis, self.owner)
+        if (
+            role != "designer" and self.manifest.requires_design_review
+            and design_review.recorded_review(self.ledger, self.manifest, self.owner) is None
+        ):
+            raise ValueError("The commissioning owner must accept every committed design before authoring.")
 
     def run(
         self, stage: Stage, job: str, role: Role, inputs: dict[str, str], instructions: str,
         result_type: type[_T],
     ) -> tuple[_T, dict[str, Any]]:
         try:
-            self._require_authority()
+            self._require_authority(role)
         except TaskHalted:
             raise
-        except ValueError as error:
+        except (ValueError, OSError) as error:
             raise Blocked(stage, "input_integrity", str(error), job=job) from error
         allocation = self.manifest.models[role]
         prompt = instructions if role == "designer" else (
@@ -63,7 +68,7 @@ class SessionRunner:
         if fresh:
             try:
                 artifacts.write_json(path / "request.json", request)
-                packet.run_packet(path, before_turn=self._require_authority)
+                packet.run_packet(path, before_turn=lambda: self._require_authority(role))
             except (packet.PacketError, OSError, ValueError) as error:
                 if not (path / "receipt.json").is_file():
                     code: Code = "isolation" if isinstance(error, packet.PacketIsolationError) else "uncertain_dispatch"

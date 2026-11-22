@@ -72,6 +72,17 @@ the pilot changes hypotheses, resource assumptions or other scientific inputs.
 | Technical replay | Schema v4 manifest, protected canonical graph and scorer, quote and Source attribution checks, exact sufficient sets and zero paid provider attempts |
 | Admission package | Family dossier, retained replay and exact file commitments |
 
+A schema 2 batch manifest requires a batch-wide human design review.
+The initial `run` advances each eligible family through design only.
+`designs CUSTODY BATCH` prints the exact manifest and design digests
+when every design has committed. The commissioning owner reviews the
+private designs and explicitly accepts the complete digest set. Record
+the dated decision with `review-designs CUSTODY DECISION`, using
+`schema design-review` for the contract. Then resume with `run`. The
+coordinator rechecks the design files and the session runner verifies
+the decision before downstream reservations and submissions. A schema 1
+manifest retains its original execution behavior.
+
 The runner projects each role's packet from the approved plan and earlier
 artifacts. An author receives only the participant brief and received
 correspondence. Each blind reader receives one condition in isolation.

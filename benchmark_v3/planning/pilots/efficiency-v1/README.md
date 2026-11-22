@@ -150,19 +150,19 @@ The stock coordinator checks exact owner decisions before commissioning.
 | Record | Revision | Canonical SHA-256 |
 | --- | --- | --- |
 | Portfolio | `development-efficiency-pilot@1` | `12f150333e12b94588b1c2bc703f89e681d48298e6b6c851f4f741118ab2e5be` |
-| Batch manifest | `efficiency-pilot-v1`, schema 1, first proposal | `9b80f5e8ca38a8d0a59a5630e4be527a68599ad7a439815920dc887e372ce516` |
+| Batch manifest | `efficiency-pilot-v1`, schema 2 | `97cbf92914e2fec9637bed838fc6837b99d3effbf3606b41b51cb49f7e25e027` |
 | H | `routine-trust-records-completeness@1` | `06ef87b2ff166f92519c45234f36ffe6c63bcbe614eba22a92c0a966bbf7a670` |
 | I | `certified-extract-record-basis@1` | `c85fc859ea1e432e456a3debe241432e44b94467d0d0b754243ab52801ccf737` |
 | J | `authenticated-copy-and-delivery@1` | `ae0b12a8394582bbeaab5b0280c1da93390b4e35cb249c743001bdfd454e89d5` |
 
-Please approve or return this exact package in one decision. Approval covers
-the portfolio and the three hypothesis revisions above, the manifest with
-a ceiling of 79 sessions allocated 20 / 25 / 34, the named model settings,
-and authorization to execute through consolidated human admission. The
-validated portfolio calls for a private human design review before any
-author packet. Use the [staged design checkpoint](READINESS.md#human-design-checkpoint)
-because the stock run advances directly to authoring. The owner must still
-decide each technical dossier separately at the admission handoff.
+The owner accepted the scientific direction and resource allocation at
+`aed65c42ce02ea9af86705877cbd51b7f4caf39c`. The schema 2 manifest
+adds an enforced human design review and binds the zero paid PCG
+extraction limit. Its digest supersedes the schema 1 manifest. The
+portfolio, hypotheses and resource settings retain their reviewed
+commitments. The [pending approval and dispatch instructions](APPROVAL.md)
+cover final execution authorization, the pause after three committed
+designs, and the separate release to authoring.
 
 The [planning retry](architect-planning-retry.json) and
 [portfolio turn](architect-portfolio-receipt.json) used the two authorized

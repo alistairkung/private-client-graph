@@ -1,5 +1,5 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "task_id": "benchmark-v3-efficiency",
   "batch_id": "efficiency-pilot-v1",
   "namespace": "development",
@@ -84,8 +84,8 @@
   },
   "stop_conditions": [
     "Halt the task on a shared isolation incident or unverified approval or implementation commitment.",
-    "Pause after the budgeted design checkpoints, before any author packet. Require human review of each exact committed design for retainer, meeting purpose, participant knowledge, record origins and custody. Use the staged procedure in the pilot readiness report.",
+    "Pause the stock runner after all three exact committed designs and before any author reservation. Require the commissioning owner to accept all three design digests after reviewing retainer, meeting purpose, participant knowledge, record origins and custody.",
     "Halt the affected family on uncertainty, integrity failure, the family or task allowance, unresolved realism or evidence objection, or a new hypothesis or repair outside the authorized scope.",
-    "Stop at consolidated human admission review. Expansion, baseline and evaluation require distinct authority."
+    "Stop at consolidated human admission review. Paid PCG extraction is capped at zero. Expansion, baseline and evaluation require distinct authority."
   ]
 }

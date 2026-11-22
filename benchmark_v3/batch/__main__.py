@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 
 from benchmark_v3.batch import admission, artifacts, authorisation, coordinator, freeze
-from benchmark_v3.batch.contracts import AdmissionDecisions, BatchDecision, BatchManifest, PilotDecision
+from benchmark_v3.batch.contracts import AdmissionDecisions, BatchDecision, BatchManifest, DesignReview, PilotDecision
 from benchmark_v3.portfolio import Portfolio
 from benchmark_v3.research_contracts import Contract
 
@@ -14,7 +14,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
     commands.add_parser("schema").add_argument(
-        "contract", choices=("portfolio", "manifest", "approval", "pilot", "admissions", "freeze"),
+        "contract", choices=("portfolio", "manifest", "approval", "design-review", "pilot", "admissions", "freeze"),
     )
     commands.add_parser("coverage")
     digest = commands.add_parser("digest")
@@ -24,14 +24,14 @@ def main() -> None:
     commission.add_argument("custody", type=Path)
     for name in ("portfolio", "manifest", "approval", "boundary"):
         commission.add_argument(name, type=Path)
-    for name in ("run", "package", "reconcile", "quarantine", "freeze-preview"):
+    for name in ("run", "designs", "package", "reconcile", "quarantine", "freeze-preview"):
         command = commands.add_parser(name)
         command.add_argument("custody", type=Path)
         command.add_argument("batch")
         if name in {"reconcile", "quarantine"}:
             command.add_argument("family")
             command.add_argument("reference")
-    for name in ("pilot-review", "admit", "freeze"):
+    for name in ("review-designs", "pilot-review", "admit", "freeze"):
         command = commands.add_parser(name)
         command.add_argument("custody", type=Path)
         command.add_argument("decisions", type=Path)
@@ -45,7 +45,7 @@ def main() -> None:
 def _execute(args: argparse.Namespace) -> None:
     contracts: dict[str, type[Contract]] = {
         "portfolio": Portfolio, "manifest": BatchManifest, "approval": BatchDecision,
-        "pilot": PilotDecision, "admissions": AdmissionDecisions, "freeze": freeze.FreezeDecision,
+        "design-review": DesignReview, "pilot": PilotDecision, "admissions": AdmissionDecisions, "freeze": freeze.FreezeDecision,
     }
     if args.command == "schema":
         print(json.dumps(contracts[args.contract].model_json_schema(), indent=2))
@@ -68,6 +68,11 @@ def _execute(args: argparse.Namespace) -> None:
             coordinator.commission_batch(ledger, commission, artifacts.read_bytes(args.boundary.absolute()))
         case "run":
             coordinator.run_batch(ledger, args.batch)
+        case "designs":
+            print(json.dumps(coordinator.preview_design_review(ledger, args.batch), indent=2))
+        case "review-designs":
+            review = artifacts.read_contract(args.decisions.absolute(), DesignReview)
+            coordinator.record_design_review(ledger, review)
         case "package":
             path, digest = admission.package_batch(ledger, args.batch)
             print(f"{path}\n{digest}")

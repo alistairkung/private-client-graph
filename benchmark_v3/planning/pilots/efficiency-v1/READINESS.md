@@ -129,30 +129,22 @@ zero.
 ## Human design checkpoint
 
 The portfolio requires human acceptance of each design's retainer,
-meeting purpose, participant knowledge, record origins and custody path
-before authoring. The stock coordinator proceeds directly from design
-to authoring. Use this staged procedure to honor the portfolio.
+meeting purpose, participant knowledge, record origins and custody
+before authoring. The schema 2 manifest makes that a batch-wide gate.
+The first stock run commits each approved design under its existing
+reservation and stops. Further runs without review can finish interrupted
+designs from retained receipts and cannot reserve author sessions.
 
-1. After exact owner execution approval, commission to the approved
-   custody ledger. Before dispatch, load the saved commission, verify
-   the approved boundary and approval commitments, and acquire the
-   coordinator lock.
-2. Run only the existing `FamilyWorkflow.design()` stage for each
-   selected family under that lock, using its commissioned
-   `SessionRunner`. Stop at the persisted `design.json` commitment.
-   Keep the complete design private. On an exception, preserve the
-   receipt and reservation and stop before authoring. Use the existing
-   uncertainty and isolation rules for recovery.
-3. Have the human reviewer record acceptance of each exact design
-   digest. Reverify the files against those commitments before
-   invoking the existing batch run. This is a custodian-enforced
-   review. The stock command has no enforcement hook for this gate.
-4. Run the approved batch from the same custody only after the
-   design checkpoint is cleared. Package and stop at consolidated
-   human admission.
+The owner must accept the exact manifest and all three design digests
+in one dated review. The coordinator verifies that every accepted
+design still matches the ledger transition and the committed file.
+The session runner checks the review before reserving or submitting a
+downstream packet. Human review stays private. Apply the existing
+exception and uncertainty process if a design does not reach the
+checkpoint. See the [dispatch instructions](APPROVAL.md).
 
-A fixture-only check used the commissioned ledger and existing design
-stage to dispatch exactly three mock designs and zero authors at the
-checkpoint. The stock run resumed from those commitments and produced
-three technical dossiers, with zero additional design dispatches. No
-real pilot design or authoring was run.
+Mock tests verify the initial pause and idempotent reopen, a direct
+author request blocked before reservation, rejection of incomplete or
+stale decisions, a tampered design blocking every author, and correct
+reuse of interrupted and reviewed designs. The older schema remains
+valid for its existing manifests.

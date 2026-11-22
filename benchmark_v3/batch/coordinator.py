@@ -7,8 +7,8 @@ from pathlib import Path
 from typing import Any
 
 from benchmark_v3 import commissioning
-from benchmark_v3.batch import artifacts, authorisation
-from benchmark_v3.batch.contracts import BatchDecision, BatchManifest, Code, ExceptionRecord
+from benchmark_v3.batch import artifacts, authorisation, design_review
+from benchmark_v3.batch.contracts import BatchDecision, BatchManifest, Code, DesignReview, ExceptionRecord
 from benchmark_v3.batch.custody import namespace_directory
 from benchmark_v3.batch.ledger import BudgetExhausted, Ledger, TaskHalted
 from benchmark_v3.batch.sessions import Blocked, SessionRunner
@@ -64,10 +64,35 @@ def run_batch(ledger: Ledger, batch_id: str) -> None:
         commission = load_commission(ledger, batch_id)
         ledger.require_running()
         _verify_resume(ledger, commission)
+        manifest = commission.manifest
+        review = design_review.recorded_review(ledger, manifest, commission.decision.owner)
+        design_only = manifest.requires_design_review and review is None
         slots = {slot.family_id: slot for slot in commission.portfolio.slots}
-        with ThreadPoolExecutor(max_workers=commission.manifest.max_parallel_families) as executor:
-            list(executor.map(lambda family: _work_family(ledger, commission, slots[family.family_id]),
-                              commission.manifest.families))
+        with ThreadPoolExecutor(max_workers=manifest.max_parallel_families) as executor:
+            list(executor.map(
+                lambda family: _work_family(ledger, commission, slots[family.family_id], design_only=design_only),
+                manifest.families,
+            ))
+
+
+def preview_design_review(ledger: Ledger, batch_id: str) -> dict[str, Any]:
+    with ledger.coordinator_lock():
+        ledger.require_running()
+        manifest = load_commission(ledger, batch_id).manifest
+        return {
+            "batch_id": manifest.batch_id,
+            "manifest_sha256": authorisation.commitment(manifest),
+            "designs": [design.model_dump() for design in design_review.committed_designs(ledger, manifest)],
+        }
+
+
+def record_design_review(ledger: Ledger, review: DesignReview) -> None:
+    with ledger.coordinator_lock():
+        commission = load_commission(ledger, review.batch_id)
+        ledger.require_running()
+        _verify_resume(ledger, commission)
+        design_review.verify_review(ledger, commission.manifest, commission.decision.owner, review)
+        ledger.event(review.batch_id, None, 0, "design_review", "owner", None, None, review.model_dump(mode="json"))
 
 
 def _verify_resume(ledger: Ledger, commission: Commission) -> None:
@@ -103,9 +128,13 @@ def family_status(ledger: Ledger, batch_id: str, family: str) -> tuple[int, str,
     return revision, state, blocking
 
 
-def _work_family(ledger: Ledger, commission: Commission, slot: FamilySlot) -> None:
+def _work_family(
+    ledger: Ledger, commission: Commission, slot: FamilySlot, *, design_only: bool = False,
+) -> None:
     batch = commission.manifest.batch_id
     revision, state, blocking = family_status(ledger, batch, slot.family_id)
+    if design_only and state != "design":
+        return
     if state in {"admitted", "quarantined"} or state == "returned" and not _can_repair(
         ledger, commission, slot, revision,
     ):
@@ -123,7 +152,10 @@ def _work_family(ledger: Ledger, commission: Commission, slot: FamilySlot) -> No
     )
     try:
         ledger.require_running()
-        workflow.run()
+        if design_only:
+            workflow.design()
+        else:
+            workflow.run()
     except TaskHalted:
         return
     except Blocked as error:
@@ -138,7 +170,7 @@ def _work_family(ledger: Ledger, commission: Commission, slot: FamilySlot) -> No
             "input_integrity" if workflow.stage in {"design", "freeze", "admission_ready"} else "scientific_review"
         )
         _block(ledger, commission, workflow, code, str(error))
-    if _can_repair(ledger, commission, slot, revision):
+    if not design_only and _can_repair(ledger, commission, slot, revision):
         _work_family(ledger, commission, slot)
 
 

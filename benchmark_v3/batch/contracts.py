@@ -52,7 +52,7 @@ class FamilyAllocation(Contract):
 
 
 class BatchManifest(Contract):
-    schema_version: Literal[1]
+    schema_version: Literal[1, 2] = Field(description="Schema 2 requires a batch-wide human design review.")
     task_id: Slug
     batch_id: Slug
     namespace: Literal["development"]
@@ -66,6 +66,10 @@ class BatchManifest(Contract):
     scope: IsolationScope
     models: dict[Role, Allocation]
     stop_conditions: NonemptyNotes
+
+    @property
+    def requires_design_review(self) -> bool:
+        return self.schema_version == 2
 
     @model_validator(mode="after")
     def verify_allocations(self) -> Self:
@@ -86,6 +90,27 @@ class BatchDecision(Contract):
     owner: Text
     decided_on: date
     decision_reference: Text
+
+
+class DesignCommitment(Contract):
+    family_id: FamilyId
+    design_sha256: Digest
+
+
+class DesignReview(Contract):
+    schema_version: Literal[1]
+    batch_id: Slug
+    manifest_sha256: Digest
+    owner: Text
+    decided_on: date
+    decision_reference: Text
+    designs: Annotated[list[DesignCommitment], Field(min_length=1, max_length=20)]
+
+    @model_validator(mode="after")
+    def verify_unique_families(self) -> Self:
+        if len({design.family_id for design in self.designs}) != len(self.designs):
+            raise ValueError("Supply one design approval per family.")
+        return self
 
 
 class PilotDecision(Contract):
