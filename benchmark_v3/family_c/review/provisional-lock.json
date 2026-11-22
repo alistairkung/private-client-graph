@@ -1,0 +1,23 @@
+{
+  "C0": {
+    "slot": "judge-03",
+    "session": "53bf0c3c-3fbb-4aa2-854c-7a955b24dc8e",
+    "packet_sha256": "ffcb571f3180e3673472d3fa49f8532eae33f825139faf207d06f96ce620f072",
+    "output_sha256": "a5f94a21b8c43f57cc153b6f91ea0e8c954e465fcc64fde8b2040ebb39a6f6f0",
+    "residual_scored_disputes": []
+  },
+  "C1": {
+    "slot": "judge-04",
+    "session": "3e31a905-bb6c-4e18-a3dc-4c3212cdbd75",
+    "packet_sha256": "049320e80bbf04b709dd4853bba4375dd372f3fd226aa90814af7e3ca0e1ec37",
+    "output_sha256": "9af6353aec9c86d8f132bcc47a2dfb58c0acb309c797cec34dec959f2a461c4d",
+    "residual_scored_disputes": []
+  },
+  "C2": {
+    "slot": "judge-05",
+    "session": "708564dd-c932-4604-bc98-115c041bd957",
+    "packet_sha256": "4dd1ee9e82e8dc4cbe8d0ca63a371d26b6ffa6455cfe62af16cbb59aeb3ac98e",
+    "output_sha256": "fd9ff0ed9c712b6f21b653b3db8d86cdad8c9116e466f57564fee7c333deeab4",
+    "residual_scored_disputes": []
+  }
+}
