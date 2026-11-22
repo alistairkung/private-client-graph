@@ -6,7 +6,8 @@ from pathlib import Path
 
 from benchmark_v3.batch import admission, artifacts, authorisation, coordinator, freeze
 from benchmark_v3.batch.contracts import (
-    AdmissionDecisions, AnnotationRecovery, BatchDecision, BatchManifest, DeferredExceptionReview, DesignReview,
+    AdmissionDecisions, AnnotationRecovery, BatchDecision, BatchManifest, BudgetAmendment, DeferredExceptionReview,
+    DesignReview, FamilyContinuation,
     PilotDecision, SourceCutoffRecovery,
 )
 from benchmark_v3.portfolio import Portfolio
@@ -19,7 +20,7 @@ def main() -> None:
     commands.add_parser("schema").add_argument(
         "contract", choices=(
             "portfolio", "manifest", "approval", "design-review", "source-cutoff-recovery",
-            "annotation-recovery", "deferred-exception-review", "pilot", "admissions", "freeze",
+            "annotation-recovery", "deferred-exception-review", "budget-amendment", "family-continuation", "pilot", "admissions", "freeze",
         ),
     )
     commands.add_parser("coverage")
@@ -38,7 +39,7 @@ def main() -> None:
             command.add_argument("family")
             command.add_argument("reference")
     for name in ("recover-source-cutoffs", "recover-annotation", "record-deferred-review",
-                 "review-designs", "pilot-review", "admit", "freeze"):
+                 "review-designs", "amend-budget", "continue-family", "pilot-review", "admit", "freeze"):
         command = commands.add_parser(name)
         command.add_argument("custody", type=Path)
         command.add_argument("decisions", type=Path)
@@ -54,6 +55,7 @@ def _execute(args: argparse.Namespace) -> None:
         "portfolio": Portfolio, "manifest": BatchManifest, "approval": BatchDecision,
         "design-review": DesignReview, "source-cutoff-recovery": SourceCutoffRecovery,
         "annotation-recovery": AnnotationRecovery, "deferred-exception-review": DeferredExceptionReview,
+        "budget-amendment": BudgetAmendment, "family-continuation": FamilyContinuation,
         "pilot": PilotDecision, "admissions": AdmissionDecisions, "freeze": freeze.FreezeDecision,
     }
     if args.command == "schema":
@@ -88,6 +90,12 @@ def _execute(args: argparse.Namespace) -> None:
         case "record-deferred-review":
             deferred = artifacts.read_contract(args.decisions.absolute(), DeferredExceptionReview)
             coordinator.record_deferred_review(ledger, deferred)
+        case "amend-budget":
+            amendment = artifacts.read_contract(args.decisions.absolute(), BudgetAmendment)
+            print(coordinator.apply_budget_amendment(ledger, amendment))
+        case "continue-family":
+            release = artifacts.read_contract(args.decisions.absolute(), FamilyContinuation)
+            coordinator.continue_family(ledger, release)
         case "review-designs":
             review = artifacts.read_contract(args.decisions.absolute(), DesignReview)
             coordinator.record_design_review(ledger, review)

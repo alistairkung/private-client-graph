@@ -12,10 +12,10 @@ from uuid import uuid4
 import pytest
 
 from benchmark_v3 import commissioning, packet
-from benchmark_v3.batch import admission, artifacts, authorisation, coordinator, custody, science
+from benchmark_v3.batch import adjudication_contract, admission, artifacts, authorisation, coordinator, custody, science
 from benchmark_v3.batch.contracts import (
-    AdmissionDecisions, AnnotationRecovery, AuthoredSource, BatchDecision, BatchManifest, DeferredExceptionReview,
-    DesignOutput, DesignReview, PilotDecision, SourceCutoffRecovery,
+    AdmissionDecisions, AnnotationRecovery, AuthoredSource, BatchDecision, BatchManifest, BudgetAmendment,
+    DeferredExceptionReview, DesignOutput, DesignReview, FamilyContinuation, PilotDecision, SourceCutoffRecovery,
 )
 from benchmark_v3.batch.ledger import BudgetExhausted, TaskHalted
 from benchmark_v3.batch.sessions import Blocked
@@ -822,7 +822,7 @@ def annotation_exception(design_gated, transport, request):
 
     exact = QUOTE.replace(" is ", "\n\nis ")
     submitted = exact.replace("\n\n", "\n")
-    text = f"Synthetic record:\n{exact}" + (f"\n\n{exact}" if getattr(request, "param", False) else "")
+    text = f"Synthetic record:\n{exact}" + (f"\n\n{exact}" if getattr(request, "param", False) is True else "")
     behavior["G", "author-src1"] = lambda _: {"title": "Test record", "text": text}
 
     def annotation(inputs, quote):
@@ -832,7 +832,8 @@ def annotation_exception(design_gated, transport, request):
             "reviewed_sources": [item["id"] for item in json.loads(inputs["sources"])], "open_questions": [],
         }
 
-    behavior["G", "reading-000-a-full"] = lambda inputs: annotation(inputs, exact)
+    first_quote = f"Synthetic record:\n{exact}" if getattr(request, "param", False) == "disagreed" else exact
+    behavior["G", "reading-000-a-full"] = lambda inputs: annotation(inputs, first_quote)
     behavior["G", "reading-000-b-full"] = lambda inputs: annotation(inputs, submitted)
     behavior["G", "adjudicate-000"] = lambda inputs: json.loads(json.dumps(
         _output("adjudication", "G", "fixture", inputs),
@@ -925,7 +926,9 @@ def test_deferred_owner_reviews_do_not_release_either_family(design_gated, trans
     payload = _design_approval(ledger, commission).model_dump(mode="json") | {"schema_version": 2}
     payload["designs"][2].update(disposition="return", reason="Check the chain.")
     coordinator.record_design_review(ledger, DesignReview.model_validate(payload))
-    behavior["H", "realism-000"] = "return"
+    behavior["H", "realism-000"] = lambda inputs: _output("realism", "H", "fixture", inputs) | {
+        "verdict": "return", "objections": ["Clarify one record."], "repair_tickets": {"src1": "Use native wording."},
+    }
     coordinator.run_batch(ledger, batch)
     original_status = _status(ledger, batch)
     assert original_status == {"G": "admission_ready", "H": "returned", "I": "pending_design_review"}
@@ -974,6 +977,35 @@ def test_deferred_owner_reviews_do_not_release_either_family(design_gated, trans
     assert [event["details"] for family in "HI" for event in ledger.events(batch, family)
             if event["kind"] == "deferred_review"] == [scope, merits]
 
+    amended = _amendment(ledger, commission)
+    budget_digest = coordinator.apply_budget_amendment(ledger, amended)
+    for family, draft, release in (
+        ("H", scope, {"action": "repair_execution", "direct_sources": ["src1"],
+                      "scope_review_sha256": authorisation.commitment(DeferredExceptionReview.model_validate(scope))}),
+        ("I", merits, {"action": "child_activation", "child_design_sha256": child,
+                       "merits_review_sha256": authorisation.commitment(DeferredExceptionReview.model_validate(merits))}),
+    ):
+        decision = FamilyContinuation.model_validate(_exception_owner(commission, family) | {
+            "budget_amendment_sha256": budget_digest, "release": release,
+        })
+        with pytest.raises(ValueError, match="bind the recorded budget"):
+            coordinator.continue_family(ledger, decision.model_copy(update={"budget_amendment_sha256": "0" * 64}))
+        coordinator.continue_family(ledger, decision)
+        coordinator.continue_family(ledger, decision)
+    behavior.pop(("H", "realism-000"))
+    coordinator.run_batch(ledger, batch)
+    assert _status(ledger, batch) == dict.fromkeys("GHI", "admission_ready")
+    new_authors = [(family, parent, job, inputs) for family, parent, job, inputs in calls[cursor:] if job.startswith("author")]
+    assert {(family, parent, job) for family, parent, job, _ in new_authors} == {
+        ("H", "H@2", "author-src1"), ("I", "I@2", "author-src1"), ("I", "I@2", "author-src2"),
+    }
+    assert new_authors and all("revision_ticket" in inputs if f == "H" else "revision_ticket" not in inputs
+                               for f, _, _, inputs in new_authors)
+    assert all(job != "design" for _, _, job, _ in calls[cursor:])
+    assert coordinator.apply_budget_amendment(ledger, amended) == budget_digest
+    assert authorisation.commitment(artifacts.read_contract(directory / "design.json", DesignOutput)) == child
+
+
 
 def test_recovery_stops_before_a_mask_plan_exceeds_remaining_slots(annotation_exception, transport):
     ledger, batch, _, calls, draft, _, _ = annotation_exception
@@ -991,3 +1023,116 @@ def test_recovery_stops_before_a_mask_plan_exceeds_remaining_slots(annotation_ex
     assert "3 new sessions with 2 available" in error["evidence"]
     assert [job for _, _, job, _ in calls[cursor:]] == ["adjudicate-000", "audit"]
     assert len(ledger.attempts("G")) == 8
+
+
+def _amendment(ledger, commission):
+    return BudgetAmendment.model_validate({
+        "schema_version": 1, "batch_id": commission.manifest.batch_id,
+        "manifest_sha256": authorisation.commitment(commission.manifest),
+        "portfolio_sha256": authorisation.commitment(commission.portfolio),
+        "original_approval_sha256": authorisation.commitment(commission.decision),
+        "owner": OWNER, "decided_on": TODAY, "decision_reference": "Fixture owner amendment.",
+        "reason": "Additional isolated reading sections.",
+        "previous": {"shared": 37, "families": dict.fromkeys("GHI", 10)},
+        "allocation": {"shared": 39, "families": {"G": 12, "H": 13, "I": 14}},
+        "completed_charges": {family: len(ledger.attempts(family)) for family in "GHI"},
+    })
+
+
+def test_budget_amendment_is_append_only_and_no_transfer(approved, transport):
+    ledger, commission = approved
+    coordinator.commission_batch(ledger, commission, BOUNDARY)
+    decision = _amendment(ledger, commission)
+    with pytest.raises(ValueError, match="commissioning owner"):
+        coordinator.apply_budget_amendment(ledger, decision.model_copy(update={"owner": "Other"}))
+    with pytest.raises(ValueError, match="exact completed charges"):
+        coordinator.apply_budget_amendment(ledger, decision.model_copy(update={
+            "completed_charges": {"G": 1, "H": 0, "I": 0},
+        }))
+    with pytest.raises(ValueError, match="without moving"):
+        lower = decision.allocation.model_copy(update={"families": {"G": 9, "H": 16, "I": 14}})
+        coordinator.apply_budget_amendment(ledger, decision.model_copy(update={"allocation": lower}))
+    before = ledger.batch(commission.manifest.batch_id)
+    coordinator.apply_budget_amendment(ledger, decision)
+    assert ledger.batch(commission.manifest.batch_id) == before
+    with ledger.connect() as connection:
+        assert connection.execute("SELECT ceiling FROM task").fetchone()[0] == 37
+        assert dict(connection.execute("SELECT id, allowance FROM families")) == dict.fromkeys("GHI", 10)
+    assert ledger.effective_budget() == decision.allocation
+    for number in range(12):
+        assert ledger.reserve("G", 1, f"fixture-{number}", "design", {}, str(number))
+    with pytest.raises(BudgetExhausted, match="Family"):
+        ledger.reserve("G", 1, "surplus", "design", {}, "x")
+    coordinator.apply_budget_amendment(ledger, decision)
+    with pytest.raises(ValueError, match="immutable"):
+        coordinator.apply_budget_amendment(ledger, decision.model_copy(update={"reason": "Overwrite."}))
+
+
+@pytest.mark.parametrize("annotation_exception", ["disagreed"], indirect=True)
+@pytest.mark.parametrize("fresh_valid", [True, False])
+def test_fresh_adjudication_uses_only_actual_disputes_and_is_single_attempt(annotation_exception, transport, fresh_valid):
+    ledger, batch, runner, calls, draft, _, _ = annotation_exception
+    _, behavior, _ = transport
+    coordinator.recover_annotation(ledger, AnnotationRecovery.model_validate(draft))
+    fixture_reply = behavior["G", "adjudicate-000"]
+    disputed = commissioning.json_text(EDGE)
+    surplus = '["Agreed","parent_of","Edge"]'
+    behavior["G", "adjudicate-000"] = lambda inputs: fixture_reply(inputs) | {
+        "disagreement_resolutions": {disputed: "Resolve the proof.", surplus: "Already agreed."},
+    }
+    coordinator.run_batch(ledger, batch)
+    assert coordinator.family_status(ledger, batch, "G")[2]["evidence"] == (
+        "Adjudication must resolve every graph or attached-evidence disagreement."
+    )
+    commission = coordinator.load_commission(ledger, batch)
+    digest = coordinator.apply_budget_amendment(ledger, _amendment(ledger, commission))
+    _, failed, _ = runner.committed_packet("adjudicate", "adjudicate-000", "adjudication")
+    recovery = next(event["details"] for event in ledger.events(batch, "G") if event["name"] == "annotation-newline")
+    release = FamilyContinuation.model_validate(_exception_owner(commission, "G") | {
+        "budget_amendment_sha256": digest, "release": {
+            "action": "fresh_adjudication", "output_sha256": failed["output_sha256"],
+            "receipt_sha256": failed["receipt_sha256"], "annotation_derivative_sha256": recovery["derivative_sha256"],
+            "disagreement_count": 1,
+        },
+    })
+    coordinator.continue_family(ledger, release)
+    behavior["G", "adjudicate-000-fresh"] = lambda inputs: fixture_reply(inputs) | {
+        "disagreement_resolutions": {disputed: "Resolve the proof."} if fresh_valid else {},
+    }
+    if fresh_valid:
+        behavior["G", "audit"] = lambda inputs: _output("audit", "G", "fixture", inputs) | {
+            "risks": ["reader_disagreement"], "masks": [{
+                "risk": "reader_disagreement", "condition": "G000", "included": ["src2"],
+                "present": [], "absent": [EDGE], "reason": "Check disputed proof.", "question": "What holds?",
+            }],
+        }
+    cursor = len(calls)
+    coordinator.run_batch(ledger, batch)
+    coordinator.run_batch(ledger, batch)
+    assert [v[2] for v in calls[cursor:]] == (
+        ["adjudicate-000-fresh", "audit", "mask-000"] if fresh_valid else ["adjudicate-000-fresh"]
+    )
+    old = runner.committed_packet("adjudicate", "adjudicate-000", "adjudication")[1]
+    assert old == failed
+    request = next(a for a in ledger.attempts("G") if a["job"] == "adjudicate-000-fresh")
+    inputs = json.loads(request["request"])
+    assert set(inputs["inputs"]) == {"sources", "neutral_brief", "ontology", "annotation_rules",
+                                      "annotation_a", "annotation_b"}
+    assert "Already agreed." not in request["request"]
+    schema = json.loads(inputs["prompt"].split("Output schema: ", 1)[1])
+    assert schema["properties"]["disagreement_resolutions"] == {
+        "type": "object", "properties": {disputed: {"type": "string", "minLength": 1}},
+        "required": [disputed], "additionalProperties": False, "minProperties": 1, "maxProperties": 1,
+    }
+    assert coordinator.family_status(ledger, batch, "G")[1] == ("admission_ready" if fresh_valid else "adjudicate")
+
+
+def test_three_disagreement_ids_are_order_stable_and_duplicate_json_is_rejected():
+    edges = [tuple(EDGE), ("Tina", "parent_of", "Mina"), ("Eleanor", "parent_of", "Eva")]
+    ids = adjudication_contract.resolution_ids(edges)
+    assert len(ids) == 3 and ids == adjudication_contract.resolution_ids(list(reversed(edges)))
+    assert adjudication_contract.output_schema(ids)["properties"]["disagreement_resolutions"]["required"] == ids
+    with pytest.raises(ValueError, match="unique disagreement IDs"):
+        adjudication_contract.resolution_ids([*edges, edges[0]])
+    with pytest.raises(ValueError, match="unique JSON keys"):
+        commissioning._read_json('{"disagreement_resolutions":{"same":"first","same":"duplicate"}}')

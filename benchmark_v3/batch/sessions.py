@@ -7,7 +7,7 @@ from typing import Any, TypeVar
 from pydantic import BaseModel
 
 from benchmark_v3 import commissioning, packet
-from benchmark_v3.batch import annotation_recovery, artifacts, authorisation, design_review
+from benchmark_v3.batch import annotation_recovery, artifacts, authorisation, continuation, design_review
 from benchmark_v3.batch.contracts import BatchManifest, Code, Role, Stage
 from benchmark_v3.batch.ledger import Ledger, TaskHalted
 
@@ -33,46 +33,58 @@ class SessionRunner:
 
     def _require_authority(self, role: Role) -> None:
         self.ledger.require_running()
-        if any(row["kind"] == "deferred_review"
-               for row in self.ledger.events(self.manifest.batch_id, self.family)):
+        events = self.ledger.events(self.manifest.batch_id, self.family)
+        release = continuation.family_release(events, self.revision)
+        if release is not None:
+            continuation.verify_authority(self, release)
+        elif any(row["kind"] in {"deferred_review", "family_release"} for row in events):
             raise ValueError("The owner decision defers this family pending separate execution approval.")
         allocation = next(row for row in self.manifest.families if row.family_id == self.family)
         authorisation.verify_hypothesis(self.family, allocation.hypothesis, self.owner)
         if role != "designer" and self.manifest.requires_design_review:
             review = design_review.recorded_review(self.ledger, self.manifest, self.owner)
-            if review is None or not review.accepts(self.family):
+            activated = release is not None and release["decision"]["release"]["action"] == "child_activation"
+            if review is None or not (review.accepts(self.family) or activated):
                 raise ValueError("The commissioning owner must accept this exact design before authoring.")
 
     def run(
         self, stage: Stage, job: str, role: Role, inputs: dict[str, str], instructions: str,
-        result_type: type[_T],
+        result_type: type[_T], *, output_schema: dict[str, Any] | None = None,
     ) -> tuple[_T, dict[str, Any]]:
         try:
             self._require_authority(role)
         except TaskHalted:
             raise
+        except packet.PacketIsolationError as error:
+            raise Blocked(stage, "isolation", str(error), job=job) from error
         except (ValueError, OSError) as error:
             raise Blocked(stage, "input_integrity", str(error), job=job) from error
         allocation = self.manifest.models[role]
         prompt = instructions if role == "designer" else (
             f"{instructions}\nReturn one JSON object. Output schema: "
-            f"{commissioning.json_text(result_type.model_json_schema())}"
+            f"{commissioning.json_text(output_schema or result_type.model_json_schema())}"
         )
         request = dict(
             role=role, **allocation.model_dump(mode="json"),
             parent=f"{self.family}@{self.revision}", inputs=inputs, prompt=prompt,
         )
         path = self.directory / "packets" / job
+        release = continuation.recorded(self)
+        if (release and release["decision"]["release"]["action"] == "fresh_adjudication"
+                and role == "adjudication" and job != "adjudicate-000-fresh"):
+            raise ValueError("Only one fresh adjudication job is authorised.")
         fresh = self.ledger.reserve(
             self.family, self.revision, job, stage, request,
             commissioning.digest(commissioning.json_text(request).encode()),
-            reuse_only=role in {"designer", "author", "realism", "annotation"}
-            and annotation_recovery.recorded(self) is not None,
+            reuse_only=(role in {"designer", "author", "realism", "annotation"}
+                        and annotation_recovery.recorded(self) is not None)
+            or (role == "designer" and release is not None),
+            active_only=release is not None,
         )
         if fresh:
             try:
                 artifacts.write_json(path / "request.json", request)
-                packet.run_packet(path, before_turn=lambda: self._require_authority(role))
+                packet.run_packet(path, before_turn=lambda: self._before_turn(role, stage, release is not None))
             except (packet.PacketError, OSError, ValueError) as error:
                 if not (path / "receipt.json").is_file():
                     code: Code = "isolation" if isinstance(error, packet.PacketIsolationError) else "uncertain_dispatch"
@@ -83,6 +95,11 @@ class SessionRunner:
             self.manifest.batch_id, self.family, self.revision, "session", job, stage, stage, evidence,
         )
         return result_type.model_validate(commissioning._read_json(result)), evidence
+
+    def _before_turn(self, role: Role, stage: Stage, continuation_active: bool) -> None:
+        self._require_authority(role)
+        if continuation_active:
+            self.ledger.verify_active_stage(self.family, self.revision, stage)
 
     def read_reserved(
         self, stage: Stage, job: str, request: dict[str, Any],

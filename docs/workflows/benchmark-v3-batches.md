@@ -159,6 +159,22 @@ repair scope or the merits of a proposed child design. Both decisions hold
 the family at its existing gate. Repair execution, child activation and
 budget amendments require separate authority and a tested release path.
 
+Use `amend-budget CUSTODY DECISION` for an explicit pilot ceiling increase.
+It binds the original owner approval, manifest, portfolio and completed
+charges. The reservation transaction reads the additive amendment before
+spending. Original allocations and historical charges stay in the ledger.
+Family allocations cannot decrease or transfer under this operation.
+
+Use `continue-family CUSTODY DECISION` to release an exact scientific
+exception against the recorded budget amendment. A repair release binds the
+held scope and participant-safe natural tickets. A child activation binds
+the held merits decision and immutable child design. A fresh adjudication
+binds the failed receipt and approved blind derivative, rederives the
+disagreement IDs and publishes only those IDs in the output schema. Its
+single distinct job preserves the charged original. These releases do not
+dispatch sessions by themselves. The normal run checks active revisions,
+exact commitments and remaining capacity before reserving science packets.
+
 The default allows one new scientific revision for participant-safe natural
 documentary repairs. Reuse unaffected author results and regenerate the
 affected recipients' records in chronology. Repeat all subsequent reviews.

@@ -178,6 +178,51 @@ class DeferredExceptionReview(OwnerFamilyReview):
     disposition: Annotated[RepairScopeReview | ChildDesignMerits, Field(discriminator="status")]
 
 
+class BudgetAllocation(Contract):
+    shared: Count
+    families: dict[FamilyId, Count]
+
+
+class BudgetAmendment(Contract):
+    schema_version: Literal[1]
+    batch_id: Slug
+    manifest_sha256: Digest
+    portfolio_sha256: Digest
+    original_approval_sha256: Digest
+    owner: Text
+    decided_on: date
+    decision_reference: Text
+    reason: Text
+    previous: BudgetAllocation
+    allocation: BudgetAllocation
+    completed_charges: dict[FamilyId, Annotated[int, Field(strict=True, ge=0)]]
+
+
+class FreshAdjudication(Contract):
+    action: Literal["fresh_adjudication"]
+    output_sha256: Digest
+    receipt_sha256: Digest
+    annotation_derivative_sha256: Digest
+    disagreement_count: Count
+
+
+class RepairExecution(Contract):
+    action: Literal["repair_execution"]
+    scope_review_sha256: Digest
+    direct_sources: Annotated[list[SourceId], Field(min_length=1)]
+
+
+class ChildActivation(Contract):
+    action: Literal["child_activation"]
+    merits_review_sha256: Digest
+    child_design_sha256: Digest
+
+
+class FamilyContinuation(OwnerFamilyReview):
+    budget_amendment_sha256: Digest
+    release: Annotated[FreshAdjudication | RepairExecution | ChildActivation, Field(discriminator="action")]
+
+
 class PilotDecision(Contract):
     schema_version: Literal[1]
     pilot_batch_id: Slug

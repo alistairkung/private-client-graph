@@ -20,7 +20,7 @@ def package_batch(ledger: Ledger, batch_id: str) -> tuple[Path, str]:
             "schema_version": 1, "batch_id": batch_id, "phase": manifest.phase,
             "portfolio_sha256": manifest.portfolio_sha256,
             "state": _batch_state(families),
-            "task_session_ceiling": manifest.task_session_ceiling,
+            "task_session_ceiling": ledger.effective_budget().shared,
             "families": families,
         }
         content = (commissioning.json_text(snapshot) + "\n").encode()

@@ -9,7 +9,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from benchmark_v3.batch.contracts import BatchManifest, ExceptionRecord, Stage
+from benchmark_v3.batch.contracts import BatchManifest, BudgetAllocation, BudgetAmendment, ExceptionRecord, Stage
 from benchmark_v3.commissioning import digest, json_text
 
 SCHEMA = """
@@ -144,9 +144,47 @@ class Ledger:
         with closing(self.connect()) as connection:
             self.check_halt(connection)
 
+    def effective_budget(self) -> BudgetAllocation:
+        with closing(self.connect()) as connection:
+            return self._effective_budget(connection)
+
+    def _effective_budget(self, connection: sqlite3.Connection) -> BudgetAllocation:
+        shared = connection.execute("SELECT ceiling FROM task").fetchone()[0]
+        families = dict(connection.execute("SELECT id, allowance FROM families").fetchall())
+        record = connection.execute(
+            "SELECT details FROM events WHERE kind = 'budget_amendment' ORDER BY sequence DESC LIMIT 1",
+        ).fetchone()
+        if record:
+            amendment = BudgetAmendment.model_validate_json(record["details"])
+            shared = amendment.allocation.shared
+            families.update(amendment.allocation.families)
+        return BudgetAllocation(shared=shared, families=families)
+
+    def amend_budget(self, amendment: BudgetAmendment) -> None:
+        with self.transaction() as connection:
+            self.check_halt(connection)
+            prior = connection.execute("SELECT details FROM events WHERE kind = 'budget_amendment'").fetchone()
+            details = amendment.model_dump(mode="json")
+            if prior is not None:
+                if json.loads(prior["details"]) != details:
+                    raise ValueError("The recorded budget amendment is immutable.")
+                return
+            previous = self._effective_budget(connection)
+            allocation = amendment.allocation
+            charged = dict.fromkeys(previous.families, 0)
+            charged.update(dict(connection.execute("SELECT family, COUNT(*) FROM attempts GROUP BY family")))
+            if previous != amendment.previous or charged != amendment.completed_charges:
+                raise ValueError("The amendment must bind the exact original ceilings and charged state.")
+            if (allocation.families.keys() != previous.families.keys()
+                    or sum(allocation.families.values()) != allocation.shared
+                    or allocation.shared <= previous.shared
+                    or any(allocation.families[key] < value for key, value in previous.families.items())):
+                raise ValueError("An amendment must increase the shared ceiling without moving any family allocation.")
+            self._append(connection, amendment.batch_id, None, 0, "budget_amendment", "owner", None, None, details)
+
     def reserve(
         self, family: str, revision: int, job: str, stage: Stage, request: dict[str, Any], request_sha256: str,
-        *, reuse_only: bool = False,
+        *, reuse_only: bool = False, active_only: bool = False,
     ) -> bool:
         with self.transaction() as connection:
             self.check_halt(connection)
@@ -160,19 +198,36 @@ class Ledger:
                 return False
             if reuse_only:
                 raise ValueError("Annotation recovery cannot reserve an earlier scientific job.")
-            if connection.execute("SELECT COUNT(*) FROM attempts").fetchone()[0] >= connection.execute(
-                "SELECT ceiling FROM task",
-            ).fetchone()[0]:
+            if active_only:
+                self._verify_active_stage(connection, family, revision, stage)
+            budget = self._effective_budget(connection)
+            if connection.execute("SELECT COUNT(*) FROM attempts").fetchone()[0] >= budget.shared:
                 raise BudgetExhausted("Task-wide scientific-session ceiling reached.")
             used = connection.execute("SELECT COUNT(*) FROM attempts WHERE family = ?", (family,)).fetchone()[0]
-            allowance = connection.execute("SELECT allowance FROM families WHERE id = ?", (family,)).fetchone()[0]
-            if used >= allowance:
+            if used >= budget.families[family]:
                 raise BudgetExhausted("Family scientific-session allowance reached.")
             connection.execute(
                 "INSERT INTO attempts VALUES (?, ?, ?, ?, ?, ?, ?)",
                 (*key, stage, json_text(request), request_sha256, timestamp()),
             )
             return True
+
+    def verify_active_stage(self, family: str, revision: int, stage: Stage) -> None:
+        with closing(self.connect()) as connection:
+            self.check_halt(connection)
+            self._verify_active_stage(connection, family, revision, stage)
+
+    @staticmethod
+    def _verify_active_stage(connection: sqlite3.Connection, family: str, revision: int, stage: Stage) -> None:
+        rows = connection.execute(
+            """SELECT revision, kind, next FROM events WHERE family = ?
+               AND kind IN ('family_release', 'transition', 'disposition', 'human_decision',
+                            'operator_close', 'exception', 'task_halt', 'reconcile')
+               ORDER BY sequence DESC""", (family,),
+        )
+        latest = rows.fetchone()
+        if latest is None or (latest["revision"], latest["next"]) != (revision, stage):
+            raise ValueError("A new continuation packet requires the active revision and stage.")
 
     def require_capacity(self, family: str, revision: int, jobs: set[str]) -> None:
         with self.transaction() as connection:
@@ -181,10 +236,9 @@ class Ledger:
                 "SELECT revision, job FROM attempts WHERE family = ?", (family,),
             ).fetchall()
             remaining_jobs = jobs - {row["job"] for row in attempts if row["revision"] == revision}
-            allowance = connection.execute("SELECT allowance FROM families WHERE id = ?", (family,)).fetchone()[0]
-            ceiling = connection.execute("SELECT ceiling FROM task").fetchone()[0]
+            budget = self._effective_budget(connection)
             used = connection.execute("SELECT COUNT(*) FROM attempts").fetchone()[0]
-            remaining = min(allowance - len(attempts), ceiling - used)
+            remaining = min(budget.families[family] - len(attempts), budget.shared - used)
             if len(remaining_jobs) > remaining:
                 raise BudgetExhausted(
                     f"Precommitted mask plan needs {len(remaining_jobs)} new sessions with {remaining} available.",
@@ -230,7 +284,8 @@ class Ledger:
             (batch, family, revision, kind, name, *payload, timestamp()),
         )
 
-    def block(self, batch: str, revision: int, exception: ExceptionRecord) -> None:
+    def block(self, batch: str, revision: int, exception: ExceptionRecord, *, continuation: bool = False) -> None:
         kind = "task_halt" if exception.remaining_work == "task_halted" else "exception"
-        self.event(batch, exception.family_id, revision, kind, f"{exception.stage}-{exception.code}",
+        name = f"{exception.stage}-{exception.code}" + ("-continuation" if continuation else "")
+        self.event(batch, exception.family_id, revision, kind, name,
                    exception.stage, None, exception.model_dump(mode="json"))

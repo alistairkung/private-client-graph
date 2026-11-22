@@ -7,10 +7,11 @@ from pathlib import Path
 from typing import Any
 
 from benchmark_v3 import commissioning
-from benchmark_v3.batch import annotation_recovery, artifacts, authorisation, design_recovery, design_review, exception_review
+from benchmark_v3.batch import annotation_recovery, artifacts, authorisation, continuation, design_recovery, design_review, exception_review
 from benchmark_v3.batch.contracts import (
-    AnnotationRecovery, BatchDecision, BatchManifest, Code, DeferredExceptionReview, DesignReview,
-    ExceptionRecord, OwnerFamilyReview, RepairScopeReview, SourceCutoffRecovery,
+    AnnotationRecovery, BatchDecision, BatchManifest, BudgetAmendment, ChildDesignMerits, Code,
+    DeferredExceptionReview, DesignReview, ExceptionRecord, FamilyContinuation, FreshAdjudication,
+    OwnerFamilyReview, RepairExecution, RepairScopeReview, SourceCutoffRecovery,
 )
 from benchmark_v3.batch.custody import namespace_directory
 from benchmark_v3.batch.ledger import BudgetExhausted, Ledger, TaskHalted
@@ -74,7 +75,8 @@ def run_batch(ledger: Ledger, batch_id: str) -> None:
         with ThreadPoolExecutor(max_workers=manifest.max_parallel_families) as executor:
             list(executor.map(
                 lambda family: _work_family(ledger, commission, slots[family.family_id], design_only=design_only),
-                (family for family in manifest.families if review is None or review.accepts(family.family_id)),
+                (family for family in manifest.families if review is None or review.accepts(family.family_id)
+                 or continuation.family_release(ledger.events(batch_id, family.family_id)) is not None),
             ))
 
 
@@ -181,11 +183,11 @@ def family_status(ledger: Ledger, batch_id: str, family: str) -> tuple[int, str,
     for record in records:
         if record["revision"] != revision:
             continue
-        if record["kind"] in {"transition", "disposition", "human_decision", "operator_close", "design_return"}:
+        if record["kind"] in {"transition", "disposition", "human_decision", "operator_close", "design_return", "family_release"}:
             state = record["next"] or state
         if record["kind"] in {"exception", "task_halt"}:
             blocking = record["details"]
-        if record["kind"] == "reconcile":
+        if record["kind"] in {"reconcile", "family_release"}:
             blocking = None
     return revision, state, blocking
 
@@ -262,7 +264,7 @@ def _block(
         repair_permitted=repair,
         human_action=None if repair else actions.get(code, "Review the retained scientific objection."),
         remaining_work="task_halted" if code == "isolation" else "family_halted",
-    ))
+    ), continuation=workflow.release is not None)
 
 
 def reconcile_dispatch(ledger: Ledger, batch_id: str, family: str, reference: str) -> None:
@@ -351,3 +353,80 @@ def _owner_family_review(
     slot = next(row for row in commission.portfolio.slots if row.family_id == decision.family_id)
     authorisation.verify_hypothesis(slot.family_id, slot.hypothesis, decision.owner)
     return commission, slot, review
+
+
+def apply_budget_amendment(ledger: Ledger, decision: BudgetAmendment) -> str:
+    with ledger.coordinator_lock():
+        ledger.require_running()
+        commission = load_commission(ledger, decision.batch_id)
+        if (commission.manifest.phase != "pilot" or ledger.batch_ids() != [decision.batch_id]
+                or decision.owner != commission.decision.owner
+                or decision.manifest_sha256 != authorisation.commitment(commission.manifest)
+                or decision.portfolio_sha256 != authorisation.commitment(commission.portfolio)
+                or decision.original_approval_sha256 != authorisation.commitment(commission.decision)):
+            raise ValueError("The amendment requires the original pilot, commissioning owner and exact commitments.")
+        _verify_resume(ledger, commission)
+        prior = continuation.recorded_budget(ledger.events(decision.batch_id))
+        if prior is None:
+            _verify_completed_charges(ledger, commission, decision.completed_charges)
+        ledger.amend_budget(decision)
+        return authorisation.commitment(decision)
+
+
+def _verify_completed_charges(ledger: Ledger, commission: Commission, expected: dict[str, int]) -> None:
+    attempts = {row.family_id: ledger.attempts(row.family_id) for row in commission.manifest.families}
+    if expected != {family: len(rows) for family, rows in attempts.items()}:
+        raise ValueError("The amendment must bind the exact completed charges for every family.")
+    for family, rows in attempts.items():
+        for row in rows:
+            runner = commission.session_runner(ledger, family, row["revision"])
+            role = commissioning._read_json(row["request"])["role"]
+            runner.committed_packet(row["stage"], row["job"], role)
+
+
+def continue_family(ledger: Ledger, decision: FamilyContinuation) -> None:
+    with ledger.coordinator_lock():
+        commission, slot, review = _owner_family_review(ledger, decision)
+        budget = continuation.recorded_budget(ledger.events(decision.batch_id))
+        if budget is None or authorisation.commitment(budget) != decision.budget_amendment_sha256:
+            raise ValueError("The family release must bind the recorded budget amendment.")
+        events = ledger.events(decision.batch_id, decision.family_id)
+        existing = continuation.family_release(events)
+        payload = decision.model_dump(mode="json")
+        if existing is not None:
+            if existing["decision"] != payload:
+                raise ValueError("The family continuation is immutable.")
+            return
+
+        revision, state, blocking = family_status(ledger, decision.batch_id, decision.family_id)
+        runner = commission.session_runner(ledger, decision.family_id, revision)
+        commitment = next(row.design_sha256 for row in review.designs if row.family_id == decision.family_id)
+        release = decision.release
+        record: dict[str, Any] = {"decision": payload, "design_sha256": commitment}
+
+        if isinstance(release, FreshAdjudication):
+            if (not review.accepts(slot.family_id) or state != "adjudicate" or not blocking
+                    or blocking["code"] != "scientific_review" or blocking["evidence"]
+                    != "Adjudication must resolve every graph or attached-evidence disagreement."):
+                raise ValueError("A fresh adjudication requires the exact retained resolution-contract halt.")
+            record["resolution_ids"] = continuation.fresh_resolution_ids(runner, release)
+            next_revision, next_stage = revision, "adjudicate"
+        else:
+            next_revision, next_stage = revision + 1, "design"
+            if isinstance(release, RepairExecution):
+                held = continuation.deferred(events, revision, release.scope_review_sha256).disposition
+                if (revision != 1 or state != "returned" or not review.accepts(slot.family_id)
+                        or not isinstance(held, RepairScopeReview) or held.design_sha256 != commitment):
+                    raise ValueError("Repair execution requires the first approved documentary scope.")
+                exception_review.verify_repair_scope(runner, slot, held, blocking)
+                record["repair_tickets"] = continuation.repair_tickets(runner, held, release.direct_sources)
+            else:
+                held = continuation.deferred(events, revision, release.merits_review_sha256).disposition
+                if (state != "pending_design_review" or review.accepts(slot.family_id)
+                        or not isinstance(held, ChildDesignMerits)
+                        or held.child_design_sha256 != release.child_design_sha256):
+                    raise ValueError("Activation requires the exact held child merits decision.")
+                exception_review.verify_child_merits(runner, slot, held)
+                record["design_sha256"] = held.child_design_sha256
+        ledger.event(decision.batch_id, decision.family_id, next_revision, "family_release",
+                     release.action, state, next_stage, record)

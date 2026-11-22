@@ -9,7 +9,7 @@ from typing import Any, TypeVar
 from pydantic import BaseModel
 
 from benchmark_v3 import commissioning, packet, replay
-from benchmark_v3.batch import annotation_recovery, artifacts, design_recovery, science
+from benchmark_v3.batch import adjudication_contract, annotation_recovery, artifacts, continuation, design_recovery, science
 from benchmark_v3.batch.contracts import (
     Adjudication, AuditReview, AuthoredSource, Code, DesignOutput, Reading, RealismReview,
     Role, Stage,
@@ -32,6 +32,7 @@ class FamilyWorkflow:
         self.stage: Stage = "design"
         self.sessions: list[dict[str, Any]] = []
         self.repair_tickets: dict[str, str] = {}
+        self.release = continuation.recorded(runner)
         self.transition_inputs: dict[str, str] = {
             "hypothesis": slot.hypothesis.hypothesis_sha256,
             "portfolio": runner.manifest.portfolio_sha256,
@@ -53,8 +54,11 @@ class FamilyWorkflow:
 
     def job(
         self, key: str, role: Role, inputs: dict[str, str], instructions: str, result_type: type[_T],
+        *, output_schema: dict[str, Any] | None = None,
     ) -> _T:
-        result, receipt = self.runner.run(self.stage, key, role, inputs, instructions, result_type)
+        result, receipt = self.runner.run(
+            self.stage, key, role, inputs, instructions, result_type, output_schema=output_schema,
+        )
         self.sessions.append(receipt)
         return result
 
@@ -89,6 +93,9 @@ class FamilyWorkflow:
             self.sessions.append(receipt)
         elif recovery_only:
             raise ValueError("No owner-authorized Source cut-off recovery was recorded.")
+        elif self.release and self.runner.revision > 1:
+            design = continuation.released_design(self.runner, self.release)
+            self.repair_tickets = self.release.get("repair_tickets", {})
         elif self.runner.revision == 1:
             design = self.job(
                 "design", "designer", {
@@ -137,7 +144,7 @@ class FamilyWorkflow:
             if ticket:
                 inputs["revision_ticket"] = ticket
                 changed.add(brief.source_id)
-            result = self.authored(brief.source_id, inputs, reuse=self.runner.revision > 1 and ticket is None)
+            result = self.authored(brief.source_id, inputs, reuse=bool(tickets) and ticket is None)
             sources[brief.source_id] = Source(id=brief.source_id, title=result.title, text=result.text)
         natural = list(sources.values())
         return natural
@@ -145,13 +152,10 @@ class FamilyWorkflow:
     def authored(self, identity: str, inputs: dict[str, str], *, reuse: bool) -> AuthoredSource:
         name = f"author-{identity}"
         if reuse:
-            events = self.runner.ledger.events(self.runner.manifest.batch_id, self.slot.family_id)
-            original = next(event["details"] for event in events if event["kind"] == "session"
-                            and event["name"] == name and event["revision"] == 1)
-            path = self.directory.parent / "1" / "packets" / name / "output.txt"
-            content = artifacts.read_bytes(path)
-            if commissioning.digest(content) != original["output_sha256"]:
-                raise ValueError("An unaffected authored Source changed before repair.")
+            original = continuation.previous_runner(self.runner)
+            content, _, request = original.committed_packet("author", name, "author")
+            if request["inputs"] != inputs:
+                raise ValueError("An unaffected author packet changed before repair.")
             return AuthoredSource.model_validate(commissioning._read_json(content))
         return self.job(
             name, "author", inputs, "Write this one fictional record from the participant's dated perspective. "
@@ -254,16 +258,7 @@ class FamilyWorkflow:
         result = {}
         for index, (condition, sources) in enumerate(bundles.items()):
             first, second = readings[condition]
-            # The condition name is assigned by the custodian after the response.
-            review = self.job(
-                f"adjudicate-{index:03}", "adjudication", _reading_inputs(design, sources) | {
-                    "annotation_a": first.model_dump_json(), "annotation_b": second.model_dump_json(),
-                },
-                "Commit one provisional complete key for this file alone. Set key.condition to 'local'. "
-                "Account for every Source. Explain all edge and evidence disagreements with canonical "
-                "JSON arrays of [source name, relationship type, target name] as resolution-map keys. "
-                "Use compact JSON without spaces and sort names for symmetric edges.", Adjudication,
-            )
+            review = self._adjudicate_condition(index, design, sources, first, second, agreements[condition])
             if review.key.condition != "local":
                 raise ValueError("Adjudication must return a condition-local provisional key.")
             review = review.model_copy(update={"key": review.key.model_copy(update={"condition": condition})})
@@ -272,6 +267,37 @@ class FamilyWorkflow:
             artifacts.write_json(self.directory / "family" / f"{condition}.json", review.key.model_dump(mode="json"))
         self.advance("audit", {"provisional": _models(result)}, gate="all condition-local keys locked before disclosure")
         return result
+
+    def _adjudicate_condition(
+        self, index: int, design: DesignOutput, sources: list[Source], first: Reading, second: Reading,
+        agreement: dict[str, Any],
+    ) -> Adjudication:
+        inputs = _reading_inputs(design, sources) | {
+            "annotation_a": first.model_dump_json(), "annotation_b": second.model_dump_json(),
+        }
+        prompt = (
+            "Commit one provisional complete key for this file alone. Set key.condition to 'local'. "
+            "Account for every Source. Explain all edge and evidence disagreements with canonical "
+            "JSON arrays of [source name, relationship type, target name] as resolution-map keys. "
+            "Use compact JSON without spaces and sort names for symmetric edges."
+        )
+        job = f"adjudicate-{index:03}"
+        if not self.release:
+            return self.job(job, "adjudication", inputs, prompt, Adjudication)
+        ids = adjudication_contract.resolution_ids(agreement["disagreements"])
+        if self.release["decision"]["release"]["action"] == "fresh_adjudication":
+            if index != 0 or ids != self.release["resolution_ids"]:
+                raise ValueError("The actual disputes differ from the owner-bound adjudication preflight.")
+            job = f"{job}-fresh"
+        prompt += (
+            " The required properties of disagreement_resolutions are exactly the disputed IDs. "
+            "Use unresolved for remaining scientific objections to the provisional key. "
+            "Include ordinary practitioner follow-up in the relevant source_audit entry."
+        )
+        return self.job(
+            job, "adjudication", inputs, prompt, Adjudication,
+            output_schema=adjudication_contract.output_schema(ids),
+        )
 
     def audit(
         self, design: DesignOutput, bundles: dict[str, list[Source]], freeze: BatchSourceFreeze,
@@ -311,7 +337,7 @@ class FamilyWorkflow:
         self, design: DesignOutput, bundles: dict[str, list[Source]], audit: AuditReview,
     ) -> list[dict[str, Any]]:
         jobs = {f"mask-{index:03}": mask for index, mask in enumerate(audit.masks)}
-        if annotation_recovery.recorded(self.runner) is not None:
+        if self.release or annotation_recovery.recorded(self.runner) is not None:
             self.runner.ledger.require_capacity(self.runner.family, self.runner.revision, set(jobs))
         results = []
         for index, (job, mask) in enumerate(jobs.items()):
@@ -379,7 +405,8 @@ class FamilyWorkflow:
     def reject(
         self, code: Code, evidence: str, *, repair_tickets: dict[str, str] | None = None, quarantine: bool = False,
     ) -> None:
-        permitted = bool(repair_tickets) and self.runner.revision <= self.runner.manifest.repair_cycles
+        permitted = (self.release is None and bool(repair_tickets)
+                     and self.runner.revision <= self.runner.manifest.repair_cycles)
         target = "quarantined" if quarantine or (repair_tickets and not permitted) else "returned"
         self.record("disposition", self.stage, self.stage, target, {
             "repair_permitted": permitted, "repair_tickets": repair_tickets or {},
