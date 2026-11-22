@@ -171,8 +171,13 @@ held scope and participant-safe natural tickets. A child activation binds
 the held merits decision and immutable child design. A fresh adjudication
 binds the failed receipt and approved blind derivative, rederives the
 disagreement IDs and publishes only those IDs in the output schema. Its
-single distinct job preserves the charged original. These releases do not
-dispatch sessions by themselves. The normal run checks active revisions,
+single distinct job preserves the charged original. A separately authorised
+complete-evidence adjudication binds the retained fresh receipt and reproduces
+its ordinary Source approval failure. The packet states the full-key
+requirements for both ordinary and joint-only edges and retains the exact
+dispute schema. Its own job preserves both earlier attempts. Use
+`run CUSTODY BATCH --family FAMILY` for family-scoped dispatch. These releases
+do not dispatch sessions by themselves. The normal run checks active revisions,
 exact commitments and remaining capacity before reserving science packets.
 
 The default allows one new scientific revision for participant-safe natural

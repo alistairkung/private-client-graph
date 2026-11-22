@@ -35,6 +35,8 @@ def main() -> None:
         command = commands.add_parser(name)
         command.add_argument("custody", type=Path)
         command.add_argument("batch")
+        if name == "run":
+            command.add_argument("--family")
         if name in {"reconcile", "quarantine"}:
             command.add_argument("family")
             command.add_argument("reference")
@@ -78,7 +80,7 @@ def _execute(args: argparse.Namespace) -> None:
             )
             coordinator.commission_batch(ledger, commission, artifacts.read_bytes(args.boundary.absolute()))
         case "run":
-            coordinator.run_batch(ledger, args.batch)
+            coordinator.run_batch(ledger, args.batch, family_id=args.family)
         case "designs":
             print(json.dumps(coordinator.preview_design_review(ledger, args.batch), indent=2))
         case "recover-source-cutoffs":

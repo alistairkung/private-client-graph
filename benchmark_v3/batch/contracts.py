@@ -199,7 +199,7 @@ class BudgetAmendment(Contract):
 
 
 class FreshAdjudication(Contract):
-    action: Literal["fresh_adjudication"]
+    action: Literal["fresh_adjudication", "complete_evidence_adjudication"]
     output_sha256: Digest
     receipt_sha256: Digest
     annotation_derivative_sha256: Digest

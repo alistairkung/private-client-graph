@@ -33,6 +33,7 @@ class FamilyWorkflow:
         self.sessions: list[dict[str, Any]] = []
         self.repair_tickets: dict[str, str] = {}
         self.release = continuation.recorded(runner)
+        self.release_action = self.release["decision"]["release"]["action"] if self.release else None
         self.transition_inputs: dict[str, str] = {
             "hypothesis": slot.hypothesis.hypothesis_sha256,
             "portfolio": runner.manifest.portfolio_sha256,
@@ -285,18 +286,22 @@ class FamilyWorkflow:
         if not self.release:
             return self.job(job, "adjudication", inputs, prompt, Adjudication)
         ids = adjudication_contract.resolution_ids(agreement["disagreements"])
-        if self.release["decision"]["release"]["action"] == "fresh_adjudication":
+        released_job = adjudication_contract.RELEASE_JOBS.get(self.release_action or "")
+        if released_job:
             if index != 0 or ids != self.release["resolution_ids"]:
                 raise ValueError("The actual disputes differ from the owner-bound adjudication preflight.")
-            job = f"{job}-fresh"
+            job = released_job
         prompt += (
             " The required properties of disagreement_resolutions are exactly the disputed IDs. "
             "Use unresolved for remaining scientific objections to the provisional key. "
             "Include ordinary practitioner follow-up in the relevant source_audit entry."
         )
+        complete = self.release_action == "complete_evidence_adjudication"
+        if complete:
+            prompt += adjudication_contract.COMPLETE_EVIDENCE_INSTRUCTIONS
         return self.job(
             job, "adjudication", inputs, prompt, Adjudication,
-            output_schema=adjudication_contract.output_schema(ids),
+            output_schema=adjudication_contract.output_schema(ids, complete_evidence=complete),
         )
 
     def audit(

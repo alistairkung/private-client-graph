@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 
 
 def family_release(events: list[dict[str, Any]], revision: int | None = None) -> dict[str, Any] | None:
-    return next((row["details"] for row in events if row["kind"] == "family_release"
+    return next((row["details"] for row in reversed(events) if row["kind"] == "family_release"
                  and (revision is None or row["revision"] == revision)), None)
 
 
@@ -70,7 +70,9 @@ def deferred(events: list[dict[str, Any]], revision: int, expected: str) -> Defe
 
 
 def fresh_resolution_ids(runner: "SessionRunner", release: FreshAdjudication) -> list[str]:
-    output, receipt, request = runner.committed_packet("adjudicate", "adjudicate-000", "adjudication")
+    complete = release.action == "complete_evidence_adjudication"
+    previous_job = adjudication_contract.RELEASE_JOBS["fresh_adjudication"] if complete else "adjudicate-000"
+    output, receipt, request = runner.committed_packet("adjudicate", previous_job, "adjudication")
     if (receipt["output_sha256"], receipt["receipt_sha256"]) != (release.output_sha256, release.receipt_sha256):
         raise ValueError("The fresh adjudication must bind the failed output and receipt.")
     recovery = annotation_recovery.recorded(runner)
@@ -88,11 +90,32 @@ def fresh_resolution_ids(runner: "SessionRunner", release: FreshAdjudication) ->
             or inputs["sources"] != request_a["inputs"]["sources"]):
         raise ValueError("The failed packet did not use the two committed blind readings and frozen Sources.")
     sources = [Source.model_validate(row) for row in commissioning._read_json(inputs["sources"])]
-    ids = adjudication_contract.resolution_ids(science.compare_readings(first, derivative, sources)["disagreements"])
-    old_resolutions = Adjudication.model_validate(commissioning._read_json(output)).disagreement_resolutions
-    if len(ids) != release.disagreement_count or set(old_resolutions) == set(ids):
+    agreement = science.compare_readings(first, derivative, sources)
+    ids = adjudication_contract.resolution_ids(agreement["disagreements"])
+    review = Adjudication.model_validate(commissioning._read_json(output))
+    if len(ids) != release.disagreement_count:
+        raise ValueError("The verified readings must reproduce the authorised dispute count.")
+    if complete:
+        _verify_source_approval_failure(runner, review, sources, agreement)
+    elif set(review.disagreement_resolutions) == set(ids):
         raise ValueError("The failed packet must reproduce the exact authorised disagreement contract failure.")
     return ids
+
+
+def _verify_source_approval_failure(
+    runner: "SessionRunner", review: Adjudication, sources: list[Source], agreement: dict[str, Any],
+) -> None:
+    runner.committed_packet("adjudicate", "adjudicate-000", "adjudication")
+    if review.key.condition != "local":
+        raise ValueError("The retained fresh adjudication must use the condition-local key.")
+    key = review.key.model_copy(update={"condition": f"{runner.family}000"})
+    try:
+        science.verify_adjudication(key.condition, review.model_copy(update={"key": key}), sources, agreement)
+    except ValueError as error:
+        if str(error) == adjudication_contract.SOURCE_APPROVAL_FAILURE:
+            return
+        raise ValueError("The retained adjudication did not reproduce its Source approval failure.") from error
+    raise ValueError("The retained adjudication already passes complete evidence validation.")
 
 
 def released_design(runner: "SessionRunner", record: dict[str, Any]) -> DesignOutput:

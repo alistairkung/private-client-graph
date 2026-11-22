@@ -1069,7 +1069,7 @@ def test_budget_amendment_is_append_only_and_no_transfer(approved, transport):
 
 
 @pytest.mark.parametrize("annotation_exception", ["disagreed"], indirect=True)
-@pytest.mark.parametrize("fresh_valid", [True, False])
+@pytest.mark.parametrize("fresh_valid", [True, False, "evidence", "evidence_invalid"])
 def test_fresh_adjudication_uses_only_actual_disputes_and_is_single_attempt(annotation_exception, transport, fresh_valid):
     ledger, batch, runner, calls, draft, _, _ = annotation_exception
     _, behavior, _ = transport
@@ -1096,9 +1096,23 @@ def test_fresh_adjudication_uses_only_actual_disputes_and_is_single_attempt(anno
         },
     })
     coordinator.continue_family(ledger, release)
-    behavior["G", "adjudicate-000-fresh"] = lambda inputs: fixture_reply(inputs) | {
-        "disagreement_resolutions": {disputed: "Resolve the proof."} if fresh_valid else {},
-    }
+    evidence_recovery = isinstance(fresh_valid, str)
+
+    def fresh_reply(inputs):
+        output = fixture_reply(inputs) | {
+            "disagreement_resolutions": {disputed: "Resolve the proof."} if fresh_valid else {},
+        }
+        if evidence_recovery:
+            key = output["key"]
+            key["truth"]["relationships"][0]["approved_evidence"] = []
+            key["source_approval"]["relationships"][0]["approved_evidence"] = []
+            key["ideal"]["relationships"] = []
+            proof = key["sufficient_evidence"][0]
+            proof["joint_only"] = True
+            proof["alternatives"][0].append({"source_id": "src2", "supporting_text": "Ordinary synthetic note."})
+        return output
+
+    behavior["G", "adjudicate-000-fresh"] = fresh_reply
     if fresh_valid:
         behavior["G", "audit"] = lambda inputs: _output("audit", "G", "fixture", inputs) | {
             "risks": ["reader_disagreement"], "masks": [{
@@ -1110,7 +1124,7 @@ def test_fresh_adjudication_uses_only_actual_disputes_and_is_single_attempt(anno
     coordinator.run_batch(ledger, batch)
     coordinator.run_batch(ledger, batch)
     assert [v[2] for v in calls[cursor:]] == (
-        ["adjudicate-000-fresh", "audit", "mask-000"] if fresh_valid else ["adjudicate-000-fresh"]
+        ["adjudicate-000-fresh", "audit", "mask-000"] if fresh_valid is True else ["adjudicate-000-fresh"]
     )
     old = runner.committed_packet("adjudicate", "adjudicate-000", "adjudication")[1]
     assert old == failed
@@ -1124,7 +1138,46 @@ def test_fresh_adjudication_uses_only_actual_disputes_and_is_single_attempt(anno
         "type": "object", "properties": {disputed: {"type": "string", "minLength": 1}},
         "required": [disputed], "additionalProperties": False, "minProperties": 1, "maxProperties": 1,
     }
-    assert coordinator.family_status(ledger, batch, "G")[1] == ("admission_ready" if fresh_valid else "adjudicate")
+    assert coordinator.family_status(ledger, batch, "G")[1] == (
+        "admission_ready" if fresh_valid is True else "adjudicate"
+    )
+    if evidence_recovery:
+        _, retained, _ = runner.committed_packet("adjudicate", "adjudicate-000-fresh", "adjudication")
+        assert coordinator.family_status(ledger, batch, "G")[2]["evidence"] == (
+            adjudication_contract.SOURCE_APPROVAL_FAILURE
+        )
+        authorised = FamilyContinuation.model_validate(release.model_dump(mode="json") | {"release": {
+            "action": "complete_evidence_adjudication", "output_sha256": retained["output_sha256"],
+            "receipt_sha256": retained["receipt_sha256"], "annotation_derivative_sha256": recovery["derivative_sha256"],
+            "disagreement_count": 1,
+        }})
+        wrong = authorised.release.model_copy(update={"receipt_sha256": "0" * 64})
+        with pytest.raises(ValueError, match="bind the failed output and receipt"):
+            coordinator.continue_family(ledger, authorised.model_copy(update={"release": wrong}))
+        coordinator.continue_family(ledger, authorised)
+        coordinator.continue_family(ledger, authorised)
+        coordinator.continue_family(ledger, release)
+        passed = fresh_valid == "evidence"
+        behavior["G", "adjudicate-000-evidence"] = lambda inputs: (
+            fixture_reply(inputs) | {"disagreement_resolutions": {disputed: "Resolve the proof."}}
+            if passed else fresh_reply(inputs)
+        )
+        cursor = len(calls)
+        other_attempts = [ledger.attempts(family) for family in ("H", "I")]
+        coordinator.run_batch(ledger, batch, family_id="G")
+        coordinator.run_batch(ledger, batch, family_id="G")
+        assert [v[2] for v in calls[cursor:]] == (
+            ["adjudicate-000-evidence", "audit", "mask-000"] if passed else ["adjudicate-000-evidence"]
+        )
+        assert [ledger.attempts(family) for family in ("H", "I")] == other_attempts
+        assert coordinator.family_status(ledger, batch, "G")[1] == ("admission_ready" if passed else "adjudicate")
+        assert runner.committed_packet("adjudicate", "adjudicate-000-fresh", "adjudication")[1] == retained
+        final = next(a for a in ledger.attempts("G") if a["job"] == "adjudicate-000-evidence")
+        final_request = json.loads(final["request"])
+        assert final_request["inputs"] == inputs["inputs"]
+        assert adjudication_contract.COMPLETE_EVIDENCE_INSTRUCTIONS in final_request["prompt"]
+        contract = json.loads(final_request["prompt"].split("Output schema: ", 1)[1])
+        assert contract["$defs"]["SourceEvidenceRelationship"]["properties"]["approved_evidence"]["minItems"] == 1
 
 
 def test_three_disagreement_ids_are_order_stable_and_duplicate_json_is_rejected():

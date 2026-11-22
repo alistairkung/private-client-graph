@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from benchmark_v3 import commissioning
-from benchmark_v3.batch import annotation_recovery, artifacts, authorisation, continuation, design_recovery, design_review, exception_review
+from benchmark_v3.batch import adjudication_contract, annotation_recovery, artifacts, authorisation, continuation, design_recovery, design_review, exception_review
 from benchmark_v3.batch.contracts import (
     AnnotationRecovery, BatchDecision, BatchManifest, BudgetAmendment, ChildDesignMerits, Code,
     DeferredExceptionReview, DesignReview, ExceptionRecord, FamilyContinuation, FreshAdjudication,
@@ -63,7 +63,7 @@ def load_commission(ledger: Ledger, batch_id: str) -> Commission:
     )
 
 
-def run_batch(ledger: Ledger, batch_id: str) -> None:
+def run_batch(ledger: Ledger, batch_id: str, *, family_id: str | None = None) -> None:
     with ledger.coordinator_lock():
         commission = load_commission(ledger, batch_id)
         ledger.require_running()
@@ -72,10 +72,13 @@ def run_batch(ledger: Ledger, batch_id: str) -> None:
         review = design_review.recorded_review(ledger, manifest, commission.decision.owner)
         design_only = manifest.requires_design_review and review is None
         slots = {slot.family_id: slot for slot in commission.portfolio.slots}
+        selected = [family for family in manifest.families if family_id in (None, family.family_id)]
+        if not selected:
+            raise ValueError("The requested family is outside this batch.")
         with ThreadPoolExecutor(max_workers=manifest.max_parallel_families) as executor:
             list(executor.map(
                 lambda family: _work_family(ledger, commission, slots[family.family_id], design_only=design_only),
-                (family for family in manifest.families if review is None or review.accepts(family.family_id)
+                (family for family in selected if review is None or review.accepts(family.family_id)
                  or continuation.family_release(ledger.events(batch_id, family.family_id)) is not None),
             ))
 
@@ -264,7 +267,8 @@ def _block(
         repair_permitted=repair,
         human_action=None if repair else actions.get(code, "Review the retained scientific objection."),
         remaining_work="task_halted" if code == "isolation" else "family_halted",
-    ), continuation=workflow.release is not None)
+    ), continuation=workflow.release is not None,
+        qualifier="complete-evidence" if workflow.release_action == "complete_evidence_adjudication" else None)
 
 
 def reconcile_dispatch(ledger: Ledger, batch_id: str, family: str, reference: str) -> None:
@@ -393,10 +397,18 @@ def continue_family(ledger: Ledger, decision: FamilyContinuation) -> None:
         events = ledger.events(decision.batch_id, decision.family_id)
         existing = continuation.family_release(events)
         payload = decision.model_dump(mode="json")
-        if existing is not None:
-            if existing["decision"] != payload:
+        prior = next((row["details"] for row in events if row["kind"] == "family_release"
+                      and row["name"] == decision.release.action), None)
+        if prior is not None:
+            if prior["decision"] != payload:
                 raise ValueError("The family continuation is immutable.")
             return
+        complete = decision.release.action == "complete_evidence_adjudication"
+        if complete:
+            if not existing or existing["decision"]["release"]["action"] != "fresh_adjudication":
+                raise ValueError("Complete-evidence recovery requires the retained first continuation.")
+        elif existing is not None:
+            raise ValueError("The family continuation is immutable.")
 
         revision, state, blocking = family_status(ledger, decision.batch_id, decision.family_id)
         runner = commission.session_runner(ledger, decision.family_id, revision)
@@ -405,10 +417,11 @@ def continue_family(ledger: Ledger, decision: FamilyContinuation) -> None:
         record: dict[str, Any] = {"decision": payload, "design_sha256": commitment}
 
         if isinstance(release, FreshAdjudication):
+            reason = (adjudication_contract.SOURCE_APPROVAL_FAILURE if complete
+                      else "Adjudication must resolve every graph or attached-evidence disagreement.")
             if (not review.accepts(slot.family_id) or state != "adjudicate" or not blocking
-                    or blocking["code"] != "scientific_review" or blocking["evidence"]
-                    != "Adjudication must resolve every graph or attached-evidence disagreement."):
-                raise ValueError("A fresh adjudication requires the exact retained resolution-contract halt.")
+                    or blocking["code"] != "scientific_review" or blocking["evidence"] != reason):
+                raise ValueError("A fresh adjudication requires its exact retained adjudication halt.")
             record["resolution_ids"] = continuation.fresh_resolution_ids(runner, release)
             next_revision, next_stage = revision, "adjudicate"
         else:

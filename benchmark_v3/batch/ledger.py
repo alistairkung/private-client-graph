@@ -284,8 +284,11 @@ class Ledger:
             (batch, family, revision, kind, name, *payload, timestamp()),
         )
 
-    def block(self, batch: str, revision: int, exception: ExceptionRecord, *, continuation: bool = False) -> None:
+    def block(self, batch: str, revision: int, exception: ExceptionRecord, *, continuation: bool = False,
+              qualifier: str | None = None) -> None:
         kind = "task_halt" if exception.remaining_work == "task_halted" else "exception"
         name = f"{exception.stage}-{exception.code}" + ("-continuation" if continuation else "")
+        if qualifier is not None:
+            name = f"{name}-{qualifier}"
         self.event(batch, exception.family_id, revision, kind, name,
                    exception.stage, None, exception.model_dump(mode="json"))
