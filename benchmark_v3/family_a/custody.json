@@ -1,0 +1,110 @@
+{
+  "meeting": "The 14:30 BST meeting on 17 September 2026 is to review the Wrenhollow Settlement’s bank mandate records and agree what, if anything, to send to Lintmere Bank. The cut-off for the position under review is 14:20 BST on 17 September 2026.",
+  "sources": [
+    {
+      "id": "QF8M",
+      "title": "Original account mandate record",
+      "author": "Evin Rooke, Lintmere Bank",
+      "genre": "Bank mandate record",
+      "parent_sources": [],
+      "transmission": "Lintmere Bank retained the operative record on 12 May 2023 and supplied Iona a copy. Iona supplied a copy to Jules on 15 September 2026; both hold copies, not the bank record.",
+      "source_body_words": 186,
+      "body_sha256": "638057d12d9c197e86e9cb722e1adb1910d78217c85f81d672812d50343a2bfe",
+      "origin_session": "01a202d4-f555-7cd1-9f57-9d0d29b3576f",
+      "parent_revision": null
+    },
+    {
+      "id": "VJ3K",
+      "title": "Certified extract from the settlement office book",
+      "author": "Maren Voss, appointor and bookkeeper",
+      "genre": "Certified administrative record extract",
+      "parent_sources": [],
+      "transmission": "Maren retained the office book and founding acceptances. She transmitted only her certified extract to Jules on 16 September at 09:25 BST; he has the extract, not the underlying records.",
+      "source_body_words": 217,
+      "body_sha256": "733dac36de08db15ede483205796c325dacea9ceb3d8a44664f77d61cc32e2ec",
+      "origin_session": "01a202d4-f555-7183-a825-1b1bac6e1c9d",
+      "parent_revision": null
+    },
+    {
+      "id": "LX6R",
+      "title": "Instrument of retirement and appointment",
+      "author": "Jules Neston, instrument drafter",
+      "genre": "Executed instrument with express postponement of delivery",
+      "parent_sources": [
+        "VJ3K"
+      ],
+      "transmission": "The signatories saw the instrument at execution. Perrin took possession of the sole executed original at 11:45 BST on 16 September; Jules received an executed copy at 12:05 BST. There is no further transfer of the original through the cut-off.",
+      "source_body_words": 294,
+      "body_sha256": "f68a028364c1ab0c4f861eba4593ec5c2a57dee471fd08bc01be41eb1cdc942b",
+      "origin_session": "01a202e4-5e85-74e3-a0e8-570fd228bf6a",
+      "parent_revision": null
+    },
+    {
+      "id": "HC9W",
+      "title": "Bank mandate meeting diary note",
+      "author": "Jules Neston, meeting solicitor",
+      "genre": "Solicitor’s internal diary note",
+      "parent_sources": [
+        "QF8M",
+        "VJ3K",
+        "LX6R"
+      ],
+      "transmission": "Entered in the solicitor’s matter file on 16 September. Not sent to the bank, the family or the custodian.",
+      "source_body_words": 180,
+      "body_sha256": "84990332ecc5f16134b6573d7d7d402e403f7f825affe153c9790e059aa3c09d",
+      "origin_session": "01a202e5-2042-74b1-be8f-1fa7f7d02d7f",
+      "parent_revision": null
+    },
+    {
+      "id": "BD4T",
+      "title": "Roof works proposal for consideration",
+      "author": "Nella Daven, property administrator",
+      "genre": "Property administrator’s spending proposal",
+      "parent_sources": [],
+      "transmission": "Nella sent the proposal itself to Jules on 17 September. He filed it without enclosures.",
+      "source_body_words": 259,
+      "body_sha256": "4579a91dffaf216766ad055881785377d07a7d9119df5a4906b6cc0f434eb6ca",
+      "origin_session": "01a202e4-a331-7e90-a4dc-967235e20d97",
+      "parent_revision": null
+    },
+    {
+      "id": "MP2Z",
+      "title": "Escrow disposition register extract",
+      "author": "Perrin Saye, release custodian",
+      "genre": "As-of extract from a custody register",
+      "parent_sources": [
+        "LX6R"
+      ],
+      "transmission": "Perrin sent the requested extract to Jules at 14:02 BST on 17 September. Jules received it then; no copy went to the bank or family before Iona’s email.",
+      "source_body_words": 185,
+      "body_sha256": "ff0792679e7ca3e42baa2849471c07939f1fca515aa2702468682965d0419d48",
+      "origin_session": "01a202e8-02f8-7873-bdc2-59418de6407b",
+      "parent_revision": "e996f512fc22d8ab19486e9238626d27d040691c7e8d988b6d1f6929bf7188db"
+    },
+    {
+      "id": "SY7G",
+      "title": "Archived statement packs under WM-683",
+      "author": "Iona Brell, family participant and archive-service correspondent",
+      "genre": "Routine customer email to bank archive services",
+      "parent_sources": [
+        "QF8M"
+      ],
+      "transmission": "Iona sent the email to Lintmere Bank’s archive-service inbox at 14:12 BST on 17 September and copied Jules. She did not attach the mandate or any deed papers.",
+      "source_body_words": 219,
+      "body_sha256": "c82024d880fd22862abd5bb87d9cd97cff2e5297d2fff4bf85168905b5d45b6f",
+      "origin_session": "01a202e4-5e85-7232-8666-6123fda1c293",
+      "parent_revision": null
+    }
+  ],
+  "other_receipts": [
+    {
+      "record": "Cut-off extract request",
+      "transmission": "Jules made the request by telephone on 16 September before entering HC9W. This was a request only: Jules did not then possess the extract."
+    },
+    {
+      "record": "Sedgewick Roofworks moisture-survey enclosure",
+      "transmission": "Referenced in BD4T but not transmitted. Nella asked Sedgewick Roofworks for a separate copy; neither she nor Jules has received it by the meeting."
+    }
+  ],
+  "correspondence_origin": "The archive email quotes names/address from the 2023 mandate. Its kinship statement comes from the sender. Source order in the authoring ledger is chronological."
+}

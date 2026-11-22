@@ -1,0 +1,217 @@
+{
+  "schema_version": 1,
+  "family": "A",
+  "admission": "pending",
+  "created_at": "2026-11-22T10:58:40.815412+00:00",
+  "protocol_sha256": "7b8fa95a3ddb87a96b2dec1977f330f7822ac522342a2f381e55081175e59ead",
+  "cutoff": "2026-09-17T14:20:00+01:00",
+  "neutral_brief": "The 14:30 BST meeting on 17 September 2026 is to review the Wrenhollow Settlement’s bank mandate records and agree what, if anything, to send to Lintmere Bank. The cut-off for the position under review is 14:20 BST on 17 September 2026.",
+  "order": {
+    "A0": [
+      "QF8M",
+      "VJ3K",
+      "LX6R",
+      "HC9W",
+      "BD4T",
+      "MP2Z",
+      "SY7G"
+    ],
+    "A1": [
+      "SY7G",
+      "MP2Z",
+      "BD4T",
+      "HC9W",
+      "VJ3K",
+      "QF8M",
+      "LX6R"
+    ],
+    "A2": [
+      "QF8M",
+      "VJ3K",
+      "LX6R",
+      "HC9W",
+      "BD4T",
+      "MP2Z",
+      "SY7G"
+    ]
+  },
+  "sources_sha256": {
+    "A0": "b913d728e62023cf6430f17b9e46a09e2017c98e4aa27c1298002747e25fdeac",
+    "A1": "537ca992e2a24787fd8a151be811af9766bd58635b88244aa481181bf0f7909e",
+    "A2": "1b52ad474b357afcbc593d46489178cd400d68e1b8e077c8d53b2a5f30dd30c1"
+  },
+  "source_commitments": {
+    "A0": {
+      "QF8M": {
+        "title_sha256": "ed612fe740fd49ed1f754a5c722584f9bef4865c6f51c57cdf156fcc5028ad28",
+        "id_sha256": "2f0a7c66874fa6b231dbf1d28f7a8702edb984c72843939053d2b5eab4d4764d",
+        "body_sha256": "638057d12d9c197e86e9cb722e1adb1910d78217c85f81d672812d50343a2bfe",
+        "serialized_source_sha256": "5196f64c155602020e848e8ace79dd3fc02d06d1aac6c76618c65ffc0a2de78f"
+      },
+      "VJ3K": {
+        "title_sha256": "eee43d24e5c65be1f4b8a2e46606701731faadd14e3810e9fee0e4105c6f0405",
+        "id_sha256": "c59be0c8701ad51aa91a4ea5833f78fabde40e3994d4752ab245e74dc6a5492e",
+        "body_sha256": "733dac36de08db15ede483205796c325dacea9ceb3d8a44664f77d61cc32e2ec",
+        "serialized_source_sha256": "c41ddad91fcfa2e5bb982797c23f1b7f854a822dbf329fd0a7646b46e8c663ed"
+      },
+      "LX6R": {
+        "title_sha256": "cf4f73a8af0866e2ada253ee81322daffa5af24cbf1df08a29d0f60404e4eb23",
+        "id_sha256": "3b8b1a90c5397b4dc77f31b7bfdb9518d1f591f01aba77bb320aa9464e3a8603",
+        "body_sha256": "f68a028364c1ab0c4f861eba4593ec5c2a57dee471fd08bc01be41eb1cdc942b",
+        "serialized_source_sha256": "27d50b29fee83cb6ad2715b18ebb7f9fdfccd843a152f7a604726db362943ace"
+      },
+      "HC9W": {
+        "title_sha256": "7f07e421082b0ed0a710076765557abfc20968ed4a4ae3a38e2b292e91d78d1b",
+        "id_sha256": "6353587d14666960bc26dd2aa48ff8ffbe4b05b8792e04347d4fe4f04b0abf6e",
+        "body_sha256": "84990332ecc5f16134b6573d7d7d402e403f7f825affe153c9790e059aa3c09d",
+        "serialized_source_sha256": "089f6fee6d2a73edbf1ee48ca66bc7f3487c5edda203db4d87f02efe98f338f2"
+      },
+      "BD4T": {
+        "title_sha256": "8fc5c37f28b09b2edf90729aebf6a088947b9126f2875e0194296748b6daf82a",
+        "id_sha256": "49cf2e04b3eaa1d89d77c4fe509eb4393b25d5f0d301ed10caffb34afe8ea186",
+        "body_sha256": "4579a91dffaf216766ad055881785377d07a7d9119df5a4906b6cc0f434eb6ca",
+        "serialized_source_sha256": "2ced4470c3755ade45768ac34e75a756488f88984a6dafba527edfd068b1394f"
+      },
+      "MP2Z": {
+        "title_sha256": "64b8acaa108965b8dfb018245238f8f2325226007f2c239b9f9a4d61aa474ece",
+        "id_sha256": "09bb0eef88e4a13e3c6d76594e688f11935da7031f5df53e7c224e5487642d3e",
+        "body_sha256": "ff0792679e7ca3e42baa2849471c07939f1fca515aa2702468682965d0419d48",
+        "serialized_source_sha256": "105f22cb78935e070c7005e8a8c7724f3a5eb978436a11b1dc04c9bf024f6c4b"
+      },
+      "SY7G": {
+        "title_sha256": "a74e82e6363bad37c743f966fd96f58de0203e2b94170a1aadbff2383cbe8bef",
+        "id_sha256": "d27911087d6d72e60b1348b875c63009d85c6faf0c543eede69277eea5e7a2f3",
+        "body_sha256": "c82024d880fd22862abd5bb87d9cd97cff2e5297d2fff4bf85168905b5d45b6f",
+        "serialized_source_sha256": "8e1be162902519843fa81323207a2b4f1f56de66fb446d1b3235b05dc2378482"
+      }
+    },
+    "A1": {
+      "SY7G": {
+        "title_sha256": "a74e82e6363bad37c743f966fd96f58de0203e2b94170a1aadbff2383cbe8bef",
+        "id_sha256": "d27911087d6d72e60b1348b875c63009d85c6faf0c543eede69277eea5e7a2f3",
+        "body_sha256": "c82024d880fd22862abd5bb87d9cd97cff2e5297d2fff4bf85168905b5d45b6f",
+        "serialized_source_sha256": "8e1be162902519843fa81323207a2b4f1f56de66fb446d1b3235b05dc2378482"
+      },
+      "MP2Z": {
+        "title_sha256": "64b8acaa108965b8dfb018245238f8f2325226007f2c239b9f9a4d61aa474ece",
+        "id_sha256": "09bb0eef88e4a13e3c6d76594e688f11935da7031f5df53e7c224e5487642d3e",
+        "body_sha256": "ff0792679e7ca3e42baa2849471c07939f1fca515aa2702468682965d0419d48",
+        "serialized_source_sha256": "105f22cb78935e070c7005e8a8c7724f3a5eb978436a11b1dc04c9bf024f6c4b"
+      },
+      "BD4T": {
+        "title_sha256": "8fc5c37f28b09b2edf90729aebf6a088947b9126f2875e0194296748b6daf82a",
+        "id_sha256": "49cf2e04b3eaa1d89d77c4fe509eb4393b25d5f0d301ed10caffb34afe8ea186",
+        "body_sha256": "4579a91dffaf216766ad055881785377d07a7d9119df5a4906b6cc0f434eb6ca",
+        "serialized_source_sha256": "2ced4470c3755ade45768ac34e75a756488f88984a6dafba527edfd068b1394f"
+      },
+      "HC9W": {
+        "title_sha256": "7f07e421082b0ed0a710076765557abfc20968ed4a4ae3a38e2b292e91d78d1b",
+        "id_sha256": "6353587d14666960bc26dd2aa48ff8ffbe4b05b8792e04347d4fe4f04b0abf6e",
+        "body_sha256": "84990332ecc5f16134b6573d7d7d402e403f7f825affe153c9790e059aa3c09d",
+        "serialized_source_sha256": "089f6fee6d2a73edbf1ee48ca66bc7f3487c5edda203db4d87f02efe98f338f2"
+      },
+      "VJ3K": {
+        "title_sha256": "eee43d24e5c65be1f4b8a2e46606701731faadd14e3810e9fee0e4105c6f0405",
+        "id_sha256": "c59be0c8701ad51aa91a4ea5833f78fabde40e3994d4752ab245e74dc6a5492e",
+        "body_sha256": "733dac36de08db15ede483205796c325dacea9ceb3d8a44664f77d61cc32e2ec",
+        "serialized_source_sha256": "c41ddad91fcfa2e5bb982797c23f1b7f854a822dbf329fd0a7646b46e8c663ed"
+      },
+      "QF8M": {
+        "title_sha256": "ed612fe740fd49ed1f754a5c722584f9bef4865c6f51c57cdf156fcc5028ad28",
+        "id_sha256": "2f0a7c66874fa6b231dbf1d28f7a8702edb984c72843939053d2b5eab4d4764d",
+        "body_sha256": "638057d12d9c197e86e9cb722e1adb1910d78217c85f81d672812d50343a2bfe",
+        "serialized_source_sha256": "5196f64c155602020e848e8ace79dd3fc02d06d1aac6c76618c65ffc0a2de78f"
+      },
+      "LX6R": {
+        "title_sha256": "cf4f73a8af0866e2ada253ee81322daffa5af24cbf1df08a29d0f60404e4eb23",
+        "id_sha256": "3b8b1a90c5397b4dc77f31b7bfdb9518d1f591f01aba77bb320aa9464e3a8603",
+        "body_sha256": "f68a028364c1ab0c4f861eba4593ec5c2a57dee471fd08bc01be41eb1cdc942b",
+        "serialized_source_sha256": "27d50b29fee83cb6ad2715b18ebb7f9fdfccd843a152f7a604726db362943ace"
+      }
+    },
+    "A2": {
+      "QF8M": {
+        "title_sha256": "ed612fe740fd49ed1f754a5c722584f9bef4865c6f51c57cdf156fcc5028ad28",
+        "id_sha256": "2f0a7c66874fa6b231dbf1d28f7a8702edb984c72843939053d2b5eab4d4764d",
+        "body_sha256": "638057d12d9c197e86e9cb722e1adb1910d78217c85f81d672812d50343a2bfe",
+        "serialized_source_sha256": "5196f64c155602020e848e8ace79dd3fc02d06d1aac6c76618c65ffc0a2de78f"
+      },
+      "VJ3K": {
+        "title_sha256": "eee43d24e5c65be1f4b8a2e46606701731faadd14e3810e9fee0e4105c6f0405",
+        "id_sha256": "c59be0c8701ad51aa91a4ea5833f78fabde40e3994d4752ab245e74dc6a5492e",
+        "body_sha256": "733dac36de08db15ede483205796c325dacea9ceb3d8a44664f77d61cc32e2ec",
+        "serialized_source_sha256": "c41ddad91fcfa2e5bb982797c23f1b7f854a822dbf329fd0a7646b46e8c663ed"
+      },
+      "LX6R": {
+        "title_sha256": "cf4f73a8af0866e2ada253ee81322daffa5af24cbf1df08a29d0f60404e4eb23",
+        "id_sha256": "3b8b1a90c5397b4dc77f31b7bfdb9518d1f591f01aba77bb320aa9464e3a8603",
+        "body_sha256": "f68a028364c1ab0c4f861eba4593ec5c2a57dee471fd08bc01be41eb1cdc942b",
+        "serialized_source_sha256": "27d50b29fee83cb6ad2715b18ebb7f9fdfccd843a152f7a604726db362943ace"
+      },
+      "HC9W": {
+        "title_sha256": "7f07e421082b0ed0a710076765557abfc20968ed4a4ae3a38e2b292e91d78d1b",
+        "id_sha256": "6353587d14666960bc26dd2aa48ff8ffbe4b05b8792e04347d4fe4f04b0abf6e",
+        "body_sha256": "84990332ecc5f16134b6573d7d7d402e403f7f825affe153c9790e059aa3c09d",
+        "serialized_source_sha256": "089f6fee6d2a73edbf1ee48ca66bc7f3487c5edda203db4d87f02efe98f338f2"
+      },
+      "BD4T": {
+        "title_sha256": "8fc5c37f28b09b2edf90729aebf6a088947b9126f2875e0194296748b6daf82a",
+        "id_sha256": "49cf2e04b3eaa1d89d77c4fe509eb4393b25d5f0d301ed10caffb34afe8ea186",
+        "body_sha256": "4579a91dffaf216766ad055881785377d07a7d9119df5a4906b6cc0f434eb6ca",
+        "serialized_source_sha256": "2ced4470c3755ade45768ac34e75a756488f88984a6dafba527edfd068b1394f"
+      },
+      "MP2Z": {
+        "title_sha256": "64b8acaa108965b8dfb018245238f8f2325226007f2c239b9f9a4d61aa474ece",
+        "id_sha256": "09bb0eef88e4a13e3c6d76594e688f11935da7031f5df53e7c224e5487642d3e",
+        "body_sha256": "e08ff9a2ea14b3baaff8ce3b231be5b5bedceb781ffd241ad9d4f8c17d8ff7d2",
+        "serialized_source_sha256": "4d101a2cdc8e2a6b0bbd460626052b7e7e03e3ab6bb8e1182ee4ed2094955a45"
+      },
+      "SY7G": {
+        "title_sha256": "a74e82e6363bad37c743f966fd96f58de0203e2b94170a1aadbff2383cbe8bef",
+        "id_sha256": "d27911087d6d72e60b1348b875c63009d85c6faf0c543eede69277eea5e7a2f3",
+        "body_sha256": "c82024d880fd22862abd5bb87d9cd97cff2e5297d2fff4bf85168905b5d45b6f",
+        "serialized_source_sha256": "8e1be162902519843fa81323207a2b4f1f56de66fb446d1b3235b05dc2378482"
+      }
+    }
+  },
+  "intervention": {
+    "source_id": "MP2Z",
+    "before": "RELEASED — 12:20 BST on 17 September 2026",
+    "after": "HOLD — release locked until 15:00 BST on 17 September 2026; no earlier release permitted"
+  },
+  "declared_removed": [
+    [
+      "Tamsin Kell",
+      "trustee_of",
+      "Wrenhollow Settlement"
+    ]
+  ],
+  "declared_added": [
+    [
+      "Darren Brell",
+      "trustee_of",
+      "Wrenhollow Settlement"
+    ]
+  ],
+  "predeclared_hypotheses": {
+    "A0_A1": "Same graph, unchanged evidence approvals, same ordered Source objects under a non-identity permutation.",
+    "A0_A2": {
+      "removed": [
+        "Tamsin Kell",
+        "trustee_of",
+        "Wrenhollow Settlement"
+      ],
+      "added": [
+        "Darren Brell",
+        "trustee_of",
+        "Wrenhollow Settlement"
+      ],
+      "all_other_edges_and_approvals": "identical"
+    }
+  },
+  "discovery": [
+    "A0",
+    "A1",
+    "A2"
+  ]
+}
