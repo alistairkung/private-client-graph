@@ -1,0 +1,31 @@
+{
+  "edges": [],
+  "citation_reasons": [],
+  "unresolved": [
+    {
+      "proposition": "Kellan Hugh Sorrel is the father of Leonie Tess Rindle.",
+      "disposition": "unresolved",
+      "evidence": [
+        {
+          "source_id": "m5x7",
+          "quotation": "Reference: DP-7316  \nSession: 12 March 2026 at 11:20  \nAttendees: 1  \nCurrent full name: Leonie Tess Rindle\n\nEach reference belongs to one conversation and is the reference printed on the text issued to the attendee. When completed, the name field records the checked-in attendee’s current full name, copied from the check-in record."
+        },
+        {
+          "source_id": "h3p6",
+          "quotation": "Conversation reference: DP-7316\nDate approved: 12 March 2026\nConversation start: 11:20\n\nKellan Hugh Sorrel is my father."
+        }
+      ],
+      "assessment": "The matching reference identifies the same conversation, and the check-in-derived name identifies Leonie Tess Rindle as its sole checked-in attendee. The text was issued to the attendee, but receipt does not establish who spoke, wrote or adopted the first-person statement. The statement reports that Kellan Hugh Sorrel is the unidentified speaker’s father. Leonie may be that speaker, but the file does not establish it. No passage contradicts the proposed relationship.",
+      "timing": "The session and recorded approval date are both 12 March 2026. The approval entry does not identify the approver, and no separate receipt date is given. Both extracts are in the supplied cut-off file."
+    },
+    {
+      "proposition": "Leonie Tess Rindle or Kellan Hugh Sorrel has a relationship to Ivor Ellis Kestell or a role in his estate.",
+      "disposition": "unresolved",
+      "assessment": "Neither extract identifies any such connection. Silence does not contradict one."
+    }
+  ],
+  "follow_up": [
+    "Obtain the original or complete DP-7316 record and any contemporaneous transcript, speaker label, signature or approval record. Confirm who said or adopted the statement and who approved the text.",
+    "Ask how Leonie Tess Rindle and Kellan Hugh Sorrel relate to Ivor Ellis Kestell or his estate, and obtain supporting records for any relationship reported."
+  ]
+}

@@ -1,0 +1,155 @@
+{
+  "check-b01": {
+    "case": "B1",
+    "kind": "proof_subset",
+    "pairs": [
+      {
+        "source_id": "r8c3",
+        "supporting_text": "Conversation reference: DP-7316\nDate approved: 12 March 2026\nConversation start: 11:20\n\nKellan Hugh Sorrel is my father."
+      },
+      {
+        "source_id": "m5x7",
+        "supporting_text": "Reference: DP-7316  \nSession: 12 March 2026 at 11:20  \nAttendees: 1  \nCurrent full name: Leonie Tess Rindle\n\nEach reference belongs to one conversation and is the reference printed on the text issued to the attendee. When completed, the name field records the checked-in attendee’s current full name, copied from the check-in record."
+      }
+    ],
+    "source_array_sha256": "245ffdf1ce1763f441acee626934a620e5e8b16487a6e54b2f00f3d6fc569b0f",
+    "output_sha256": "6604c7ab3be95b7f51a9f93d8cce46cde099b83e721afaba82271927a4ab4ef8",
+    "observed_critical": [
+      [
+        "Kellan Hugh Sorrel",
+        "parent_of",
+        "Leonie Tess Rindle"
+      ]
+    ],
+    "expected_critical": [
+      [
+        "Kellan Hugh Sorrel",
+        "parent_of",
+        "Leonie Tess Rindle"
+      ]
+    ],
+    "passed": true
+  },
+  "check-b02": {
+    "case": "B1",
+    "kind": "proof_subset",
+    "pairs": [
+      {
+        "source_id": "h3p6",
+        "supporting_text": "Conversation reference: DP-7316\nDate approved: 12 March 2026\nConversation start: 11:20\n\nKellan Hugh Sorrel is my father."
+      },
+      {
+        "source_id": "m5x7",
+        "supporting_text": "Reference: DP-7316  \nSession: 12 March 2026 at 11:20  \nAttendees: 1  \nCurrent full name: Leonie Tess Rindle\n\nEach reference belongs to one conversation and is the reference printed on the text issued to the attendee. When completed, the name field records the checked-in attendee’s current full name, copied from the check-in record."
+      }
+    ],
+    "source_array_sha256": "39b6c844a1fdb5dc10beab04cb7c4f937c40d831a910295d25e6b47b29b3f22d",
+    "output_sha256": "e482ece281e4516e3c7fe338c35cb2ff591eed3c88922e97a559e030421a2180",
+    "observed_critical": [],
+    "expected_critical": [
+      [
+        "Kellan Hugh Sorrel",
+        "parent_of",
+        "Leonie Tess Rindle"
+      ]
+    ],
+    "passed": false,
+    "disposition": "excluded_from_key",
+    "reason": "The fresh reader could not establish that the relay reproduced the named sole attendee’s statement using this forwarded excerpt package. Both independent native excerpt readings support the critical decision. The forward persists as a copy in the file."
+  },
+  "check-b03": {
+    "case": "B1",
+    "kind": "proof_subset",
+    "pairs": [
+      {
+        "source_id": "h3p6",
+        "supporting_text": "Dear Hollin Sedge Legal intake team,\n\nPlease file the message below with Ivor Ellis Kestell’s estate papers under conversation reference DP-7316. It is the message I received from the Darnmere Papers Desk relay on 12 March 2026. I was not present for the conversation and am not giving my own account of it.\n\nTamsin Vera Kestell\n\n---------- Forwarded message ----------\nFrom: Darnmere Papers Desk relay\nTo: Estate family-update list (shared route)\nSubject: Ivor Ellis Kestell’s estate papers\nConversation reference: DP-7316\nDate approved: 12 March 2026\nConversation start: 11:20\n\nKellan Hugh Sorrel is my father."
+      },
+      {
+        "source_id": "m5x7",
+        "supporting_text": "Reference: DP-7316  \nSession: 12 March 2026 at 11:20  \nAttendees: 1  \nCurrent full name: Leonie Tess Rindle\n\nEach reference belongs to one conversation and is the reference printed on the text issued to the attendee. When completed, the name field records the checked-in attendee’s current full name, copied from the check-in record."
+      }
+    ],
+    "source_array_sha256": "d0ccfcbd1f628594ef0b1dffe13a3946df781efa197eea5e146cdd6b016c0453",
+    "output_sha256": "a0259700dff2216ad33a0c0d792fea3c7ec974fb8646652f1932966f5fcfb150",
+    "observed_critical": [],
+    "expected_critical": [
+      [
+        "Kellan Hugh Sorrel",
+        "parent_of",
+        "Leonie Tess Rindle"
+      ]
+    ],
+    "passed": false,
+    "disposition": "excluded_from_key",
+    "reason": "The fresh reader could not establish that the relay reproduced the named sole attendee’s statement using this forwarded excerpt package. Both independent native excerpt readings support the critical decision. The forward persists as a copy in the file."
+  },
+  "check-b04": {
+    "case": "B1",
+    "kind": "proof_subset",
+    "pairs": [
+      {
+        "source_id": "r8c3",
+        "supporting_text": "From: Darnmere Papers Desk relay\nTo: Estate family-update list (shared route)\nSubject: Ivor Ellis Kestell’s estate papers\nConversation reference: DP-7316\nDate approved: 12 March 2026\nConversation start: 11:20\n\nKellan Hugh Sorrel is my father."
+      },
+      {
+        "source_id": "m5x7",
+        "supporting_text": "Reference: DP-7316  \nSession: 12 March 2026 at 11:20  \nAttendees: 1  \nCurrent full name: Leonie Tess Rindle\n\nEach reference belongs to one conversation and is the reference printed on the text issued to the attendee. When completed, the name field records the checked-in attendee’s current full name, copied from the check-in record."
+      }
+    ],
+    "source_array_sha256": "d2f82f71a3fb4caf33e5b349a9e9aba3b0665974f4f72a602c46fc6ff0bdb771",
+    "output_sha256": "59de9c588e86e42dcf97f8e5348f9153d5bf0ba62aecff80b2b41b6f8f3547e9",
+    "observed_critical": [
+      [
+        "Kellan Hugh Sorrel",
+        "parent_of",
+        "Leonie Tess Rindle"
+      ]
+    ],
+    "expected_critical": [
+      [
+        "Kellan Hugh Sorrel",
+        "parent_of",
+        "Leonie Tess Rindle"
+      ]
+    ],
+    "passed": true
+  },
+  "mask-b01": {
+    "case": "B1",
+    "kind": "fact_mask",
+    "substitutions": [
+      [
+        "r8c3",
+        "Kellan Hugh Sorrel is my father.",
+        "[Statement text unavailable.]"
+      ],
+      [
+        "h3p6",
+        "Kellan Hugh Sorrel is my father.",
+        "[Statement text unavailable.]"
+      ]
+    ],
+    "source_array_sha256": "7c050c4bfb4489e06a94d1d5ed0f012d61743535d4d0a465f415365069d999c8",
+    "output_sha256": "92c5d2718ab541b322c761f21bd568b7f70eda9b85f806387712a4df1828ade9",
+    "observed_critical": [],
+    "expected_critical": [],
+    "passed": true
+  },
+  "mask-b02": {
+    "case": "B1",
+    "kind": "fact_mask",
+    "substitutions": [
+      [
+        "m5x7",
+        "Reference: DP-7316  \nSession: 12 March 2026 at 11:20  ",
+        "Reference: [not visible]\nSession: [not visible]"
+      ]
+    ],
+    "source_array_sha256": "da70a8be348385df68479067663d555df038c407b55f8fdd4c58a6f08db05a5e",
+    "output_sha256": "e6d8cab60d0fe007478dfbde83985dd94e95a064e8cabadac59e2ca550b6be8f",
+    "observed_critical": [],
+    "expected_critical": [],
+    "passed": true
+  }
+}

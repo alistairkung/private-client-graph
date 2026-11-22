@@ -1,0 +1,9 @@
+{
+  "schema_version": 2,
+  "family": "B",
+  "freeze_sha256": "61c04f2633929fae579d14b96c81b96d61b667f1273d6bd20280cf75519509d5",
+  "conditions": {
+    "B0": "bfba2ac182a66c3ab8429ec909d207a1755d02c28bde5b1e6742712ca1ac9597",
+    "B1": "72a246520d853efcf6d69dc68125f3e85e65b9578e1bbff2b0a738e12e3aa25f"
+  }
+}

@@ -1,0 +1,241 @@
+{
+  "conditions": {
+    "C0": {
+      "required": [
+        [
+          "Rhea Marden",
+          "beneficiary_of",
+          "Flint Orchard Settlement"
+        ]
+      ],
+      "forbidden": [
+        [
+          "Rhea Marden",
+          "beneficiary_of",
+          "Alder Quay Settlement"
+        ]
+      ],
+      "unaffected": [
+        [
+          "Ellis Harnett",
+          "settlor_of",
+          "Alder Quay Settlement"
+        ],
+        [
+          "Nell Carvane",
+          "trustee_of",
+          "Alder Quay Settlement"
+        ],
+        [
+          "Tobin Rell",
+          "trustee_of",
+          "Alder Quay Settlement"
+        ],
+        [
+          "Ione Berrick",
+          "beneficiary_of",
+          "Alder Quay Settlement"
+        ],
+        [
+          "Emmett Vann",
+          "beneficiary_of",
+          "Alder Quay Settlement"
+        ],
+        [
+          "Cora Teague",
+          "settlor_of",
+          "Flint Orchard Settlement"
+        ],
+        [
+          "Nell Carvane",
+          "trustee_of",
+          "Flint Orchard Settlement"
+        ],
+        [
+          "Tobin Rell",
+          "trustee_of",
+          "Flint Orchard Settlement"
+        ],
+        [
+          "Ione Berrick",
+          "beneficiary_of",
+          "Flint Orchard Settlement"
+        ],
+        [
+          "Orla Penrick",
+          "beneficiary_of",
+          "Flint Orchard Settlement"
+        ]
+      ]
+    },
+    "C1": {
+      "required": [
+        [
+          "Rhea Marden",
+          "beneficiary_of",
+          "Alder Quay Settlement"
+        ]
+      ],
+      "forbidden": [
+        [
+          "Rhea Marden",
+          "beneficiary_of",
+          "Flint Orchard Settlement"
+        ]
+      ],
+      "unaffected": [
+        [
+          "Ellis Harnett",
+          "settlor_of",
+          "Alder Quay Settlement"
+        ],
+        [
+          "Nell Carvane",
+          "trustee_of",
+          "Alder Quay Settlement"
+        ],
+        [
+          "Tobin Rell",
+          "trustee_of",
+          "Alder Quay Settlement"
+        ],
+        [
+          "Ione Berrick",
+          "beneficiary_of",
+          "Alder Quay Settlement"
+        ],
+        [
+          "Emmett Vann",
+          "beneficiary_of",
+          "Alder Quay Settlement"
+        ],
+        [
+          "Cora Teague",
+          "settlor_of",
+          "Flint Orchard Settlement"
+        ],
+        [
+          "Nell Carvane",
+          "trustee_of",
+          "Flint Orchard Settlement"
+        ],
+        [
+          "Tobin Rell",
+          "trustee_of",
+          "Flint Orchard Settlement"
+        ],
+        [
+          "Ione Berrick",
+          "beneficiary_of",
+          "Flint Orchard Settlement"
+        ],
+        [
+          "Orla Penrick",
+          "beneficiary_of",
+          "Flint Orchard Settlement"
+        ]
+      ]
+    },
+    "C2": {
+      "required": [],
+      "forbidden": [
+        [
+          "Rhea Marden",
+          "beneficiary_of",
+          "Alder Quay Settlement"
+        ],
+        [
+          "Rhea Marden",
+          "beneficiary_of",
+          "Flint Orchard Settlement"
+        ]
+      ],
+      "unaffected": [
+        [
+          "Ellis Harnett",
+          "settlor_of",
+          "Alder Quay Settlement"
+        ],
+        [
+          "Nell Carvane",
+          "trustee_of",
+          "Alder Quay Settlement"
+        ],
+        [
+          "Tobin Rell",
+          "trustee_of",
+          "Alder Quay Settlement"
+        ],
+        [
+          "Ione Berrick",
+          "beneficiary_of",
+          "Alder Quay Settlement"
+        ],
+        [
+          "Emmett Vann",
+          "beneficiary_of",
+          "Alder Quay Settlement"
+        ],
+        [
+          "Cora Teague",
+          "settlor_of",
+          "Flint Orchard Settlement"
+        ],
+        [
+          "Nell Carvane",
+          "trustee_of",
+          "Flint Orchard Settlement"
+        ],
+        [
+          "Tobin Rell",
+          "trustee_of",
+          "Flint Orchard Settlement"
+        ],
+        [
+          "Ione Berrick",
+          "beneficiary_of",
+          "Flint Orchard Settlement"
+        ],
+        [
+          "Orla Penrick",
+          "beneficiary_of",
+          "Flint Orchard Settlement"
+        ]
+      ]
+    }
+  },
+  "negative_controls": [
+    {
+      "proposition": "SD-Q7M2 was delivered for Alder Quay in C0, for Flint Orchard in C1, or for both settlements in any condition.",
+      "status": "explicitly contradicted",
+      "basis": "r5n8 records one signed original against one parent, not a counterpart series; h6q3 designates under the singular parent of delivery. The fully legible references exclude the rival destination in C0 and C1. C2 excludes a dual designation by this act, not either individual reading."
+    },
+    {
+      "proposition": "SD-Q7M2 removed an existing object, appointed property or directed payment.",
+      "status": "explicitly contradicted",
+      "basis": "h6q3 expressly limits the instrument to the addition. The original objects remain under the continuation clauses. Eligibility is not entitlement; the custodian did not exercise trustee discretion."
+    },
+    {
+      "proposition": "The meeting note is a payment authority.",
+      "status": "explicitly contradicted",
+      "basis": "j8f2 states: “This note authorises no payment.” A common meeting slot cannot supply either settlement's joint decision."
+    },
+    {
+      "proposition": "Ione requested a standing payment, diversion to Sella, or deduction from a payment to Ione.",
+      "status": "explicitly contradicted",
+      "basis": "b9k4 expressly disclaims all three. Help for Sella in her own right is not an assignment, an instruction to pay Sella for Ione, or a request to exercise Flint's direct-benefit power."
+    },
+    {
+      "proposition": "The £8.40 is paid or an authorised balance, the office received its receipt, or either EX-K4 item was recharged.",
+      "status": "explicitly contradicted",
+      "basis": "t3w6 expressly reports the opposite on each point. Sella is the payee and queries contact for EX-K4 only. Una holds no distribution instruction for it; the £12.60 reimbursement was an office operating expense."
+    },
+    {
+      "proposition": "Other named kinship, trust offices, or cross-trust eligibility.",
+      "status": "unresolved",
+      "basis": "No parent_of, sibling_of or spouse_of statement is supplied. Co-service, help, witnessing and similar surnames are not kinship evidence. Neither move Emmett Vann to Flint nor Orla Penrick to Alder. Do not infer object status, general agency, signing power or authority to receive a distribution from correspondence, an expense remit or service to the trustees. Silence is not a permanent exclusion."
+    }
+  ],
+  "evidence_policy": "benchmark_v2_evidence_v1",
+  "proof_policy": "attached_sufficient_set_v1"
+}

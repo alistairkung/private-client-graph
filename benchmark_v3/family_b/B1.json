@@ -1,0 +1,126 @@
+{
+  "condition": "B1",
+  "truth": {
+    "entities": [
+      {
+        "id": "ivor-ellis-kestell",
+        "type": "person",
+        "name": "Ivor Ellis Kestell"
+      },
+      {
+        "id": "kellan-hugh-sorrel",
+        "type": "person",
+        "name": "Kellan Hugh Sorrel"
+      },
+      {
+        "id": "leonie-tess-rindle",
+        "type": "person",
+        "name": "Leonie Tess Rindle"
+      },
+      {
+        "id": "nella-ruth-verrow",
+        "type": "person",
+        "name": "Nella Ruth Verrow"
+      },
+      {
+        "id": "tamsin-vera-kestell",
+        "type": "person",
+        "name": "Tamsin Vera Kestell"
+      }
+    ],
+    "relationships": [
+      {
+        "source": "ivor-ellis-kestell",
+        "type": "parent_of",
+        "target": "tamsin-vera-kestell",
+        "approved_evidence": [
+          "The entry names Tamsin Vera Kestell as the child and Ivor Ellis Kestell as the father.",
+          "The will opens by naming Ivor Ellis Kestell of 9 Barrowglass Walk, Darnmere. The executor clause reads “my daughter Tamsin Vera Kestell”.",
+          "Tamsin Vera Kestell made the opening enquiry on 2 March and attended intake with an incomplete folder. The certified death entry records that Ivor Ellis Kestell of 9 Barrowglass Walk, Darnmere, died on 18 February 2026. The signed original will dated 7 October 2021 names Tamsin as executor, describes her as “my daughter” and leaves the residue to her outright. The certified birth entry (Darnmere entry 284 for 1969) names Tamsin as the child and Ivor as the father.",
+          "Tamsin Vera Kestell made the opening enquiry on 2 March and attended intake with an incomplete folder. The certified death entry records that Ivor Ellis Kestell of 9 Barrowglass Walk, Darnmere, died on 18 February 2026. The signed original will dated 7 October 2021 names Tamsin as executor, describes her as “my daughter” and leaves the residue to her outright."
+        ]
+      },
+      {
+        "source": "kellan-hugh-sorrel",
+        "type": "parent_of",
+        "target": "leonie-tess-rindle",
+        "approved_evidence": []
+      }
+    ]
+  },
+  "source_approval": {
+    "schema_version": 1,
+    "relationships": [
+      {
+        "source": "ivor-ellis-kestell",
+        "type": "parent_of",
+        "target": "tamsin-vera-kestell",
+        "approved_evidence": [
+          {
+            "source_id": "w9d2",
+            "supporting_text": "The entry names Tamsin Vera Kestell as the child and Ivor Ellis Kestell as the father."
+          },
+          {
+            "source_id": "w9d2",
+            "supporting_text": "The will opens by naming Ivor Ellis Kestell of 9 Barrowglass Walk, Darnmere. The executor clause reads “my daughter Tamsin Vera Kestell”."
+          },
+          {
+            "source_id": "n4j8",
+            "supporting_text": "Tamsin Vera Kestell made the opening enquiry on 2 March and attended intake with an incomplete folder. The certified death entry records that Ivor Ellis Kestell of 9 Barrowglass Walk, Darnmere, died on 18 February 2026. The signed original will dated 7 October 2021 names Tamsin as executor, describes her as “my daughter” and leaves the residue to her outright. The certified birth entry (Darnmere entry 284 for 1969) names Tamsin as the child and Ivor as the father."
+          },
+          {
+            "source_id": "n4j8",
+            "supporting_text": "Tamsin Vera Kestell made the opening enquiry on 2 March and attended intake with an incomplete folder. The certified death entry records that Ivor Ellis Kestell of 9 Barrowglass Walk, Darnmere, died on 18 February 2026. The signed original will dated 7 October 2021 names Tamsin as executor, describes her as “my daughter” and leaves the residue to her outright."
+          }
+        ]
+      }
+    ]
+  },
+  "sufficient_evidence": [
+    {
+      "edge": [
+        "Kellan Hugh Sorrel",
+        "parent_of",
+        "Leonie Tess Rindle"
+      ],
+      "joint_only": true,
+      "alternatives": [
+        [
+          {
+            "source_id": "r8c3",
+            "supporting_text": "Conversation reference: DP-7316\nDate approved: 12 March 2026\nConversation start: 11:20\n\nKellan Hugh Sorrel is my father."
+          },
+          {
+            "source_id": "m5x7",
+            "supporting_text": "Reference: DP-7316  \nSession: 12 March 2026 at 11:20  \nAttendees: 1  \nCurrent full name: Leonie Tess Rindle\n\nEach reference belongs to one conversation and is the reference printed on the text issued to the attendee. When completed, the name field records the checked-in attendee’s current full name, copied from the check-in record."
+          }
+        ]
+      ]
+    }
+  ],
+  "ideal": {
+    "relationships": [
+      {
+        "source_name": "Ivor Ellis Kestell",
+        "relationship_type": "parent_of",
+        "target_name": "Tamsin Vera Kestell",
+        "source_id": "w9d2",
+        "supporting_text": "The entry names Tamsin Vera Kestell as the child and Ivor Ellis Kestell as the father."
+      },
+      {
+        "source_name": "Kellan Hugh Sorrel",
+        "relationship_type": "parent_of",
+        "target_name": "Leonie Tess Rindle",
+        "source_id": "r8c3",
+        "supporting_text": "Conversation reference: DP-7316\nDate approved: 12 March 2026\nConversation start: 11:20\n\nKellan Hugh Sorrel is my father."
+      },
+      {
+        "source_name": "Kellan Hugh Sorrel",
+        "relationship_type": "parent_of",
+        "target_name": "Leonie Tess Rindle",
+        "source_id": "m5x7",
+        "supporting_text": "Reference: DP-7316  \nSession: 12 March 2026 at 11:20  \nAttendees: 1  \nCurrent full name: Leonie Tess Rindle\n\nEach reference belongs to one conversation and is the reference printed on the text issued to the attendee. When completed, the name field records the checked-in attendee’s current full name, copied from the check-in record."
+      }
+    ]
+  }
+}

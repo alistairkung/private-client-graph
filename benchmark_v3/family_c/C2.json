@@ -1,0 +1,329 @@
+{
+  "condition": "C2",
+  "truth": {
+    "entities": [
+      {
+        "id": "alder-quay-settlement",
+        "type": "trust",
+        "name": "Alder Quay Settlement"
+      },
+      {
+        "id": "cora-teague",
+        "type": "person",
+        "name": "Cora Teague"
+      },
+      {
+        "id": "ellis-harnett",
+        "type": "person",
+        "name": "Ellis Harnett"
+      },
+      {
+        "id": "emmett-vann",
+        "type": "person",
+        "name": "Emmett Vann"
+      },
+      {
+        "id": "flint-orchard-settlement",
+        "type": "trust",
+        "name": "Flint Orchard Settlement"
+      },
+      {
+        "id": "ione-berrick",
+        "type": "person",
+        "name": "Ione Berrick"
+      },
+      {
+        "id": "nell-carvane",
+        "type": "person",
+        "name": "Nell Carvane"
+      },
+      {
+        "id": "orla-penrick",
+        "type": "person",
+        "name": "Orla Penrick"
+      },
+      {
+        "id": "rhea-marden",
+        "type": "person",
+        "name": "Rhea Marden"
+      },
+      {
+        "id": "tobin-rell",
+        "type": "person",
+        "name": "Tobin Rell"
+      }
+    ],
+    "relationships": [
+      {
+        "source": "cora-teague",
+        "type": "settlor_of",
+        "target": "flint-orchard-settlement",
+        "approved_evidence": [
+          "Settlement: Flint Orchard Settlement\nDeed date: 21 October 2022\nLodged parent deed reference: PD-6894-R\nSettlor: Cora Teague"
+        ]
+      },
+      {
+        "source": "ellis-harnett",
+        "type": "settlor_of",
+        "target": "alder-quay-settlement",
+        "approved_evidence": [
+          "ALDER QUAY SETTLEMENT — CERTIFIED SELECTED-CLAUSE EXTRACT\n\nTo: Kit Wenslow, Tarnstile Advisory\nDeed date: 21 October 2022\nLodged parent deed reference: PD-6834-R\nSettlor: Ellis Harnett"
+        ]
+      },
+      {
+        "source": "emmett-vann",
+        "type": "beneficiary_of",
+        "target": "alder-quay-settlement",
+        "approved_evidence": [
+          "ALDER QUAY SETTLEMENT — CERTIFIED SELECTED-CLAUSE EXTRACT\n\nTo: Kit Wenslow, Tarnstile Advisory\nDeed date: 21 October 2022\nLodged parent deed reference: PD-6834-R\nSettlor: Ellis Harnett\nOriginal trustees: Nell Carvane and Tobin Rell\n\n3. Original discretionary objects\nThe original discretionary objects are Ione Berrick and Emmett Vann.\n\n4. Discretion over income and capital\nThe trustees exercise their discretion over income and capital jointly. No object is entitled to a payment before an appointment is made in that object’s favour.\n\n6. Addition of discretionary objects\nThe trustees for the time being may, acting unanimously and without the settlor’s consent, add by deed any named living individual other than the settlor or a serving trustee. The designation takes effect on joint delivery as a deed.\n\nWhere the trustees use the common deed custody service, they may identify the settlement at delivery by jointly stating its lodged parent reference and associating that reference with the unique reference written on the designation. The settlement name need not appear in the designation. The custodian only memorialises delivery.\n\nExisting objects remain unless separately removed by deed."
+        ]
+      },
+      {
+        "source": "ione-berrick",
+        "type": "beneficiary_of",
+        "target": "alder-quay-settlement",
+        "approved_evidence": [
+          "ALDER QUAY SETTLEMENT — CERTIFIED SELECTED-CLAUSE EXTRACT\n\nTo: Kit Wenslow, Tarnstile Advisory\nDeed date: 21 October 2022\nLodged parent deed reference: PD-6834-R\nSettlor: Ellis Harnett\nOriginal trustees: Nell Carvane and Tobin Rell\n\n3. Original discretionary objects\nThe original discretionary objects are Ione Berrick and Emmett Vann.\n\n4. Discretion over income and capital\nThe trustees exercise their discretion over income and capital jointly. No object is entitled to a payment before an appointment is made in that object’s favour.\n\n6. Addition of discretionary objects\nThe trustees for the time being may, acting unanimously and without the settlor’s consent, add by deed any named living individual other than the settlor or a serving trustee. The designation takes effect on joint delivery as a deed.\n\nWhere the trustees use the common deed custody service, they may identify the settlement at delivery by jointly stating its lodged parent reference and associating that reference with the unique reference written on the designation. The settlement name need not appear in the designation. The custodian only memorialises delivery.\n\nExisting objects remain unless separately removed by deed."
+        ]
+      },
+      {
+        "source": "ione-berrick",
+        "type": "beneficiary_of",
+        "target": "flint-orchard-settlement",
+        "approved_evidence": [
+          "Settlement: Flint Orchard Settlement\nDeed date: 21 October 2022\nLodged parent deed reference: PD-6894-R\nSettlor: Cora Teague\nOriginal trustees: Nell Carvane and Tobin Rell\n\nClause 2 — Objects\nThe named Objects are Ione Berrick and Orla Penrick."
+        ]
+      },
+      {
+        "source": "nell-carvane",
+        "type": "trustee_of",
+        "target": "alder-quay-settlement",
+        "approved_evidence": [
+          "Prepare for separate discretionary distribution decisions for the Alder Quay Settlement and the Flint Orchard Settlement, in that order. Use the administered records held at 16:00 BST on 12 June 2026. For each settlement, distinguish who may be considered from what has already been authorised for payment, and note anything the trustees should check before deciding.\n\nI have booked one slot on 17 June with Nell Carvane and Tobin Rell. The appointments book shows both in office for both settlements, with no change entered since the deeds were lodged."
+        ]
+      },
+      {
+        "source": "nell-carvane",
+        "type": "trustee_of",
+        "target": "flint-orchard-settlement",
+        "approved_evidence": [
+          "Prepare for separate discretionary distribution decisions for the Alder Quay Settlement and the Flint Orchard Settlement, in that order. Use the administered records held at 16:00 BST on 12 June 2026. For each settlement, distinguish who may be considered from what has already been authorised for payment, and note anything the trustees should check before deciding.\n\nI have booked one slot on 17 June with Nell Carvane and Tobin Rell. The appointments book shows both in office for both settlements, with no change entered since the deeds were lodged."
+        ]
+      },
+      {
+        "source": "orla-penrick",
+        "type": "beneficiary_of",
+        "target": "flint-orchard-settlement",
+        "approved_evidence": [
+          "Settlement: Flint Orchard Settlement\nDeed date: 21 October 2022\nLodged parent deed reference: PD-6894-R\nSettlor: Cora Teague\nOriginal trustees: Nell Carvane and Tobin Rell\n\nClause 2 — Objects\nThe named Objects are Ione Berrick and Orla Penrick."
+        ]
+      },
+      {
+        "source": "tobin-rell",
+        "type": "trustee_of",
+        "target": "alder-quay-settlement",
+        "approved_evidence": [
+          "Prepare for separate discretionary distribution decisions for the Alder Quay Settlement and the Flint Orchard Settlement, in that order. Use the administered records held at 16:00 BST on 12 June 2026. For each settlement, distinguish who may be considered from what has already been authorised for payment, and note anything the trustees should check before deciding.\n\nI have booked one slot on 17 June with Nell Carvane and Tobin Rell. The appointments book shows both in office for both settlements, with no change entered since the deeds were lodged."
+        ]
+      },
+      {
+        "source": "tobin-rell",
+        "type": "trustee_of",
+        "target": "flint-orchard-settlement",
+        "approved_evidence": [
+          "Prepare for separate discretionary distribution decisions for the Alder Quay Settlement and the Flint Orchard Settlement, in that order. Use the administered records held at 16:00 BST on 12 June 2026. For each settlement, distinguish who may be considered from what has already been authorised for payment, and note anything the trustees should check before deciding.\n\nI have booked one slot on 17 June with Nell Carvane and Tobin Rell. The appointments book shows both in office for both settlements, with no change entered since the deeds were lodged."
+        ]
+      }
+    ]
+  },
+  "source_approval": {
+    "schema_version": 1,
+    "relationships": [
+      {
+        "source": "cora-teague",
+        "type": "settlor_of",
+        "target": "flint-orchard-settlement",
+        "approved_evidence": [
+          {
+            "source_id": "x2c9",
+            "supporting_text": "Settlement: Flint Orchard Settlement\nDeed date: 21 October 2022\nLodged parent deed reference: PD-6894-R\nSettlor: Cora Teague"
+          }
+        ]
+      },
+      {
+        "source": "ellis-harnett",
+        "type": "settlor_of",
+        "target": "alder-quay-settlement",
+        "approved_evidence": [
+          {
+            "source_id": "m4v7",
+            "supporting_text": "ALDER QUAY SETTLEMENT — CERTIFIED SELECTED-CLAUSE EXTRACT\n\nTo: Kit Wenslow, Tarnstile Advisory\nDeed date: 21 October 2022\nLodged parent deed reference: PD-6834-R\nSettlor: Ellis Harnett"
+          }
+        ]
+      },
+      {
+        "source": "emmett-vann",
+        "type": "beneficiary_of",
+        "target": "alder-quay-settlement",
+        "approved_evidence": [
+          {
+            "source_id": "m4v7",
+            "supporting_text": "ALDER QUAY SETTLEMENT — CERTIFIED SELECTED-CLAUSE EXTRACT\n\nTo: Kit Wenslow, Tarnstile Advisory\nDeed date: 21 October 2022\nLodged parent deed reference: PD-6834-R\nSettlor: Ellis Harnett\nOriginal trustees: Nell Carvane and Tobin Rell\n\n3. Original discretionary objects\nThe original discretionary objects are Ione Berrick and Emmett Vann.\n\n4. Discretion over income and capital\nThe trustees exercise their discretion over income and capital jointly. No object is entitled to a payment before an appointment is made in that object’s favour.\n\n6. Addition of discretionary objects\nThe trustees for the time being may, acting unanimously and without the settlor’s consent, add by deed any named living individual other than the settlor or a serving trustee. The designation takes effect on joint delivery as a deed.\n\nWhere the trustees use the common deed custody service, they may identify the settlement at delivery by jointly stating its lodged parent reference and associating that reference with the unique reference written on the designation. The settlement name need not appear in the designation. The custodian only memorialises delivery.\n\nExisting objects remain unless separately removed by deed."
+          }
+        ]
+      },
+      {
+        "source": "ione-berrick",
+        "type": "beneficiary_of",
+        "target": "alder-quay-settlement",
+        "approved_evidence": [
+          {
+            "source_id": "m4v7",
+            "supporting_text": "ALDER QUAY SETTLEMENT — CERTIFIED SELECTED-CLAUSE EXTRACT\n\nTo: Kit Wenslow, Tarnstile Advisory\nDeed date: 21 October 2022\nLodged parent deed reference: PD-6834-R\nSettlor: Ellis Harnett\nOriginal trustees: Nell Carvane and Tobin Rell\n\n3. Original discretionary objects\nThe original discretionary objects are Ione Berrick and Emmett Vann.\n\n4. Discretion over income and capital\nThe trustees exercise their discretion over income and capital jointly. No object is entitled to a payment before an appointment is made in that object’s favour.\n\n6. Addition of discretionary objects\nThe trustees for the time being may, acting unanimously and without the settlor’s consent, add by deed any named living individual other than the settlor or a serving trustee. The designation takes effect on joint delivery as a deed.\n\nWhere the trustees use the common deed custody service, they may identify the settlement at delivery by jointly stating its lodged parent reference and associating that reference with the unique reference written on the designation. The settlement name need not appear in the designation. The custodian only memorialises delivery.\n\nExisting objects remain unless separately removed by deed."
+          }
+        ]
+      },
+      {
+        "source": "ione-berrick",
+        "type": "beneficiary_of",
+        "target": "flint-orchard-settlement",
+        "approved_evidence": [
+          {
+            "source_id": "x2c9",
+            "supporting_text": "Settlement: Flint Orchard Settlement\nDeed date: 21 October 2022\nLodged parent deed reference: PD-6894-R\nSettlor: Cora Teague\nOriginal trustees: Nell Carvane and Tobin Rell\n\nClause 2 — Objects\nThe named Objects are Ione Berrick and Orla Penrick."
+          }
+        ]
+      },
+      {
+        "source": "nell-carvane",
+        "type": "trustee_of",
+        "target": "alder-quay-settlement",
+        "approved_evidence": [
+          {
+            "source_id": "j8f2",
+            "supporting_text": "Prepare for separate discretionary distribution decisions for the Alder Quay Settlement and the Flint Orchard Settlement, in that order. Use the administered records held at 16:00 BST on 12 June 2026. For each settlement, distinguish who may be considered from what has already been authorised for payment, and note anything the trustees should check before deciding.\n\nI have booked one slot on 17 June with Nell Carvane and Tobin Rell. The appointments book shows both in office for both settlements, with no change entered since the deeds were lodged."
+          }
+        ]
+      },
+      {
+        "source": "nell-carvane",
+        "type": "trustee_of",
+        "target": "flint-orchard-settlement",
+        "approved_evidence": [
+          {
+            "source_id": "j8f2",
+            "supporting_text": "Prepare for separate discretionary distribution decisions for the Alder Quay Settlement and the Flint Orchard Settlement, in that order. Use the administered records held at 16:00 BST on 12 June 2026. For each settlement, distinguish who may be considered from what has already been authorised for payment, and note anything the trustees should check before deciding.\n\nI have booked one slot on 17 June with Nell Carvane and Tobin Rell. The appointments book shows both in office for both settlements, with no change entered since the deeds were lodged."
+          }
+        ]
+      },
+      {
+        "source": "orla-penrick",
+        "type": "beneficiary_of",
+        "target": "flint-orchard-settlement",
+        "approved_evidence": [
+          {
+            "source_id": "x2c9",
+            "supporting_text": "Settlement: Flint Orchard Settlement\nDeed date: 21 October 2022\nLodged parent deed reference: PD-6894-R\nSettlor: Cora Teague\nOriginal trustees: Nell Carvane and Tobin Rell\n\nClause 2 — Objects\nThe named Objects are Ione Berrick and Orla Penrick."
+          }
+        ]
+      },
+      {
+        "source": "tobin-rell",
+        "type": "trustee_of",
+        "target": "alder-quay-settlement",
+        "approved_evidence": [
+          {
+            "source_id": "j8f2",
+            "supporting_text": "Prepare for separate discretionary distribution decisions for the Alder Quay Settlement and the Flint Orchard Settlement, in that order. Use the administered records held at 16:00 BST on 12 June 2026. For each settlement, distinguish who may be considered from what has already been authorised for payment, and note anything the trustees should check before deciding.\n\nI have booked one slot on 17 June with Nell Carvane and Tobin Rell. The appointments book shows both in office for both settlements, with no change entered since the deeds were lodged."
+          }
+        ]
+      },
+      {
+        "source": "tobin-rell",
+        "type": "trustee_of",
+        "target": "flint-orchard-settlement",
+        "approved_evidence": [
+          {
+            "source_id": "j8f2",
+            "supporting_text": "Prepare for separate discretionary distribution decisions for the Alder Quay Settlement and the Flint Orchard Settlement, in that order. Use the administered records held at 16:00 BST on 12 June 2026. For each settlement, distinguish who may be considered from what has already been authorised for payment, and note anything the trustees should check before deciding.\n\nI have booked one slot on 17 June with Nell Carvane and Tobin Rell. The appointments book shows both in office for both settlements, with no change entered since the deeds were lodged."
+          }
+        ]
+      }
+    ]
+  },
+  "sufficient_evidence": [],
+  "ideal": {
+    "relationships": [
+      {
+        "source_name": "Cora Teague",
+        "relationship_type": "settlor_of",
+        "target_name": "Flint Orchard Settlement",
+        "source_id": "x2c9",
+        "supporting_text": "Settlement: Flint Orchard Settlement\nDeed date: 21 October 2022\nLodged parent deed reference: PD-6894-R\nSettlor: Cora Teague"
+      },
+      {
+        "source_name": "Ellis Harnett",
+        "relationship_type": "settlor_of",
+        "target_name": "Alder Quay Settlement",
+        "source_id": "m4v7",
+        "supporting_text": "ALDER QUAY SETTLEMENT — CERTIFIED SELECTED-CLAUSE EXTRACT\n\nTo: Kit Wenslow, Tarnstile Advisory\nDeed date: 21 October 2022\nLodged parent deed reference: PD-6834-R\nSettlor: Ellis Harnett"
+      },
+      {
+        "source_name": "Emmett Vann",
+        "relationship_type": "beneficiary_of",
+        "target_name": "Alder Quay Settlement",
+        "source_id": "m4v7",
+        "supporting_text": "ALDER QUAY SETTLEMENT — CERTIFIED SELECTED-CLAUSE EXTRACT\n\nTo: Kit Wenslow, Tarnstile Advisory\nDeed date: 21 October 2022\nLodged parent deed reference: PD-6834-R\nSettlor: Ellis Harnett\nOriginal trustees: Nell Carvane and Tobin Rell\n\n3. Original discretionary objects\nThe original discretionary objects are Ione Berrick and Emmett Vann.\n\n4. Discretion over income and capital\nThe trustees exercise their discretion over income and capital jointly. No object is entitled to a payment before an appointment is made in that object’s favour.\n\n6. Addition of discretionary objects\nThe trustees for the time being may, acting unanimously and without the settlor’s consent, add by deed any named living individual other than the settlor or a serving trustee. The designation takes effect on joint delivery as a deed.\n\nWhere the trustees use the common deed custody service, they may identify the settlement at delivery by jointly stating its lodged parent reference and associating that reference with the unique reference written on the designation. The settlement name need not appear in the designation. The custodian only memorialises delivery.\n\nExisting objects remain unless separately removed by deed."
+      },
+      {
+        "source_name": "Ione Berrick",
+        "relationship_type": "beneficiary_of",
+        "target_name": "Alder Quay Settlement",
+        "source_id": "m4v7",
+        "supporting_text": "ALDER QUAY SETTLEMENT — CERTIFIED SELECTED-CLAUSE EXTRACT\n\nTo: Kit Wenslow, Tarnstile Advisory\nDeed date: 21 October 2022\nLodged parent deed reference: PD-6834-R\nSettlor: Ellis Harnett\nOriginal trustees: Nell Carvane and Tobin Rell\n\n3. Original discretionary objects\nThe original discretionary objects are Ione Berrick and Emmett Vann.\n\n4. Discretion over income and capital\nThe trustees exercise their discretion over income and capital jointly. No object is entitled to a payment before an appointment is made in that object’s favour.\n\n6. Addition of discretionary objects\nThe trustees for the time being may, acting unanimously and without the settlor’s consent, add by deed any named living individual other than the settlor or a serving trustee. The designation takes effect on joint delivery as a deed.\n\nWhere the trustees use the common deed custody service, they may identify the settlement at delivery by jointly stating its lodged parent reference and associating that reference with the unique reference written on the designation. The settlement name need not appear in the designation. The custodian only memorialises delivery.\n\nExisting objects remain unless separately removed by deed."
+      },
+      {
+        "source_name": "Ione Berrick",
+        "relationship_type": "beneficiary_of",
+        "target_name": "Flint Orchard Settlement",
+        "source_id": "x2c9",
+        "supporting_text": "Settlement: Flint Orchard Settlement\nDeed date: 21 October 2022\nLodged parent deed reference: PD-6894-R\nSettlor: Cora Teague\nOriginal trustees: Nell Carvane and Tobin Rell\n\nClause 2 — Objects\nThe named Objects are Ione Berrick and Orla Penrick."
+      },
+      {
+        "source_name": "Nell Carvane",
+        "relationship_type": "trustee_of",
+        "target_name": "Alder Quay Settlement",
+        "source_id": "j8f2",
+        "supporting_text": "Prepare for separate discretionary distribution decisions for the Alder Quay Settlement and the Flint Orchard Settlement, in that order. Use the administered records held at 16:00 BST on 12 June 2026. For each settlement, distinguish who may be considered from what has already been authorised for payment, and note anything the trustees should check before deciding.\n\nI have booked one slot on 17 June with Nell Carvane and Tobin Rell. The appointments book shows both in office for both settlements, with no change entered since the deeds were lodged."
+      },
+      {
+        "source_name": "Nell Carvane",
+        "relationship_type": "trustee_of",
+        "target_name": "Flint Orchard Settlement",
+        "source_id": "j8f2",
+        "supporting_text": "Prepare for separate discretionary distribution decisions for the Alder Quay Settlement and the Flint Orchard Settlement, in that order. Use the administered records held at 16:00 BST on 12 June 2026. For each settlement, distinguish who may be considered from what has already been authorised for payment, and note anything the trustees should check before deciding.\n\nI have booked one slot on 17 June with Nell Carvane and Tobin Rell. The appointments book shows both in office for both settlements, with no change entered since the deeds were lodged."
+      },
+      {
+        "source_name": "Orla Penrick",
+        "relationship_type": "beneficiary_of",
+        "target_name": "Flint Orchard Settlement",
+        "source_id": "x2c9",
+        "supporting_text": "Settlement: Flint Orchard Settlement\nDeed date: 21 October 2022\nLodged parent deed reference: PD-6894-R\nSettlor: Cora Teague\nOriginal trustees: Nell Carvane and Tobin Rell\n\nClause 2 — Objects\nThe named Objects are Ione Berrick and Orla Penrick."
+      },
+      {
+        "source_name": "Tobin Rell",
+        "relationship_type": "trustee_of",
+        "target_name": "Alder Quay Settlement",
+        "source_id": "j8f2",
+        "supporting_text": "Prepare for separate discretionary distribution decisions for the Alder Quay Settlement and the Flint Orchard Settlement, in that order. Use the administered records held at 16:00 BST on 12 June 2026. For each settlement, distinguish who may be considered from what has already been authorised for payment, and note anything the trustees should check before deciding.\n\nI have booked one slot on 17 June with Nell Carvane and Tobin Rell. The appointments book shows both in office for both settlements, with no change entered since the deeds were lodged."
+      },
+      {
+        "source_name": "Tobin Rell",
+        "relationship_type": "trustee_of",
+        "target_name": "Flint Orchard Settlement",
+        "source_id": "j8f2",
+        "supporting_text": "Prepare for separate discretionary distribution decisions for the Alder Quay Settlement and the Flint Orchard Settlement, in that order. Use the administered records held at 16:00 BST on 12 June 2026. For each settlement, distinguish who may be considered from what has already been authorised for payment, and note anything the trustees should check before deciding.\n\nI have booked one slot on 17 June with Nell Carvane and Tobin Rell. The appointments book shows both in office for both settlements, with no change entered since the deeds were lodged."
+      }
+    ]
+  }
+}

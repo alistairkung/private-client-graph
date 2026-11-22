@@ -1,0 +1,240 @@
+{
+  "check-c01": {
+    "case": "C0",
+    "kind": "proof_subset",
+    "pairs": [
+      {
+        "source_id": "x2c9",
+        "supporting_text": "Settlement: Flint Orchard Settlement\nDeed date: 21 October 2022\nLodged parent deed reference: PD-6894-R\nSettlor: Cora Teague\nOriginal trustees: Nell Carvane and Tobin Rell\n\nClause 2 — Objects\nThe named Objects are Ione Berrick and Orla Penrick.\n\nClause 5 — Income and capital\nThe trustees act together in exercising their discretionary power over income and capital. They may apply funds directly for an Object’s benefit. Eligibility alone creates no right to payment.\n\nClause 8 — Addition of Objects\nAll serving trustees, acting together, may by deed add any named living individual other than the settlor or a serving trustee. No other person’s consent is required.\n\nAn addition takes effect when the trustees jointly deliver the designation as a deed. On delivery through the common custody service, the trustees may identify the settlement by giving its lodged parent deed reference against the unique reference written on the designation."
+      },
+      {
+        "source_id": "h6q3",
+        "supporting_text": "SUPPLEMENTAL BENEFICIARY DESIGNATION  \nInstrument reference: SD-Q7M2\n\nRhea Marden, a living individual, is designated as an additional Object eligible for discretionary appointments of income and capital under the parent deed for which the trustees jointly deliver this instrument as a deed.\n\nThis instrument makes that addition only. It does not remove any Object, appoint any property, direct any payment or alter any other provision of the parent deed. It takes effect on joint delivery by the trustees as a deed.\n\nEXECUTION\n\nSigned as a deed by Nell Carvane: [signed]  \nIn the presence of Della Pennick: [signed]\n\nSigned as a deed by Tobin Rell: [signed]  \nIn the presence of Della Pennick: [signed]"
+      },
+      {
+        "source_id": "r5n8",
+        "supporting_text": "Instrument reference: SD-Q7M2  \nParent deed reference: PD-6894-R\n\nAt 11:30 GMT on 26 March 2026, Nell Carvane and Tobin Rell attended together and released one signed paper original for immediate delivery as a deed, not in escrow. At handover, both confirmed the parent deed reference against the instrument reference on the face of the paper."
+      }
+    ],
+    "source_array_sha256": "80a785bb22a8b857028f6c0f33b052d717e637bb86f1918d5f298b9e9c921428",
+    "output_sha256": "c626b4b772c52c33ac8233ed89b6d381eab12892893ed6682349702e5a0f881b",
+    "observed_critical": [
+      [
+        "Rhea Marden",
+        "beneficiary_of",
+        "Flint Orchard Settlement"
+      ]
+    ],
+    "expected_critical": [
+      [
+        "Rhea Marden",
+        "beneficiary_of",
+        "Flint Orchard Settlement"
+      ]
+    ],
+    "passed": true
+  },
+  "check-c02": {
+    "case": "C1",
+    "kind": "proof_subset",
+    "pairs": [
+      {
+        "source_id": "m4v7",
+        "supporting_text": "ALDER QUAY SETTLEMENT — CERTIFIED SELECTED-CLAUSE EXTRACT\n\nTo: Kit Wenslow, Tarnstile Advisory\nDeed date: 21 October 2022\nLodged parent deed reference: PD-6834-R\nSettlor: Ellis Harnett\nOriginal trustees: Nell Carvane and Tobin Rell\n\n3. Original discretionary objects\nThe original discretionary objects are Ione Berrick and Emmett Vann.\n\n4. Discretion over income and capital\nThe trustees exercise their discretion over income and capital jointly. No object is entitled to a payment before an appointment is made in that object’s favour.\n\n6. Addition of discretionary objects\nThe trustees for the time being may, acting unanimously and without the settlor’s consent, add by deed any named living individual other than the settlor or a serving trustee. The designation takes effect on joint delivery as a deed.\n\nWhere the trustees use the common deed custody service, they may identify the settlement at delivery by jointly stating its lodged parent reference and associating that reference with the unique reference written on the designation."
+      },
+      {
+        "source_id": "h6q3",
+        "supporting_text": "SUPPLEMENTAL BENEFICIARY DESIGNATION  \nInstrument reference: SD-Q7M2\n\nRhea Marden, a living individual, is designated as an additional Object eligible for discretionary appointments of income and capital under the parent deed for which the trustees jointly deliver this instrument as a deed.\n\nThis instrument makes that addition only. It does not remove any Object, appoint any property, direct any payment or alter any other provision of the parent deed. It takes effect on joint delivery by the trustees as a deed.\n\nEXECUTION\n\nSigned as a deed by Nell Carvane: [signed]  \nIn the presence of Della Pennick: [signed]\n\nSigned as a deed by Tobin Rell: [signed]  \nIn the presence of Della Pennick: [signed]"
+      },
+      {
+        "source_id": "r5n8",
+        "supporting_text": "Instrument reference: SD-Q7M2  \nParent deed reference: PD-6834-R\n\nAt 11:30 GMT on 26 March 2026, Nell Carvane and Tobin Rell attended together and released one signed paper original for immediate delivery as a deed, not in escrow. At handover, both confirmed the parent deed reference against the instrument reference on the face of the paper."
+      }
+    ],
+    "source_array_sha256": "e28510c00d0f5873765d6cd4c90769c5446dda9d54b8ff527971528e9ed2026e",
+    "output_sha256": "4f82f49251535ac7c4261fe0d310b2c008f52fa2594ad4be3a0206a41c9e6e61",
+    "observed_critical": [
+      [
+        "Rhea Marden",
+        "beneficiary_of",
+        "Alder Quay Settlement"
+      ]
+    ],
+    "expected_critical": [
+      [
+        "Rhea Marden",
+        "beneficiary_of",
+        "Alder Quay Settlement"
+      ]
+    ],
+    "passed": true
+  },
+  "mask-c01": {
+    "case": "C0",
+    "kind": "fact_mask",
+    "substitutions": [
+      [
+        "h6q3",
+        "Rhea Marden, a living individual, is designated as an additional Object eligible for discretionary appointments of income and capital under the parent deed for which the trustees jointly deliver this instrument as a deed.",
+        "[Designation wording not visible.]"
+      ]
+    ],
+    "source_array_sha256": "2afe0075da7ad4d4730710b0f51c4087ee15c5cf4ec9a901c5541aff80c89a2c",
+    "output_sha256": "591a344069e0ff2ef6e9e147c12a9bd6f6d0b5cf9c603736c564e31abe904838",
+    "observed_critical": [],
+    "expected_critical": [],
+    "passed": true
+  },
+  "mask-c02": {
+    "case": "C0",
+    "kind": "fact_mask",
+    "substitutions": [
+      [
+        "m4v7",
+        "Lodged parent deed reference: PD-6834-R",
+        "Lodged parent deed reference: [reference not visible]"
+      ],
+      [
+        "m4v7",
+        "I certify that I checked this selected-clause extract against the lodged Alder Quay Settlement deed, parent deed reference PD-6834-R, and that it accurately sets out the provisions identified above.",
+        "I certify that I checked this selected-clause extract against the lodged Alder Quay Settlement deed, parent deed reference [reference not visible], and that it accurately sets out the provisions identified above."
+      ],
+      [
+        "x2c9",
+        "Lodged parent deed reference: PD-6894-R",
+        "Lodged parent deed reference: [reference not visible]"
+      ]
+    ],
+    "source_array_sha256": "14547a7d203f5d6490060006eafa664680032c95dddbd4dcd88c06b8c79dda6b",
+    "output_sha256": "fe528153725d93b016143c5f8c8477c054df402cffa89d0093c147d0cb41ce64",
+    "observed_critical": [],
+    "expected_critical": [],
+    "passed": true
+  },
+  "mask-c03": {
+    "case": "C0",
+    "kind": "fact_mask",
+    "substitutions": [
+      [
+        "r5n8",
+        "At 11:30 GMT on 26 March 2026, Nell Carvane and Tobin Rell attended together and released one signed paper original for immediate delivery as a deed, not in escrow. At handover, both confirmed the parent deed reference against the instrument reference on the face of the paper. I made the register entry from that handover, not from a trust-title search or a beneficiary file, and placed the original in the common deed vault that day.",
+        "The original was received and placed in the common deed vault. The handover disposition is not shown in this copy."
+      ],
+      [
+        "r5n8",
+        "The custody classification records receipt of one signed paper original released for immediate delivery as a deed, rather than held in escrow.",
+        "The disposition field cannot be read on this copy."
+      ]
+    ],
+    "source_array_sha256": "b1b85b926df312401440f3bd04841e7c4bd69da1c70d7564059f0b6055e59dd3",
+    "output_sha256": "33cbb3bc6e11e0e822963e9019ec1325feb5eb39e47fbc678c48a126bc2cd638",
+    "observed_critical": [],
+    "expected_critical": [],
+    "passed": true
+  },
+  "mask-c04": {
+    "case": "C0",
+    "kind": "fact_mask",
+    "substitutions": [
+      [
+        "r5n8",
+        "Instrument reference: SD-Q7M2  ",
+        "Instrument reference: [not visible]"
+      ],
+      [
+        "r5n8",
+        "At 11:30 GMT on 26 March 2026, Nell Carvane and Tobin Rell attended together and released one signed paper original for immediate delivery as a deed, not in escrow. At handover, both confirmed the parent deed reference against the instrument reference on the face of the paper. I made the register entry from that handover, not from a trust-title search or a beneficiary file, and placed the original in the common deed vault that day.",
+        "The presenters jointly released one signed paper original for immediate delivery as a deed, not in escrow. They confirmed the parent deed reference against the instrument reference on the face of the paper. I made the register entry at handover and placed the original in the common deed vault."
+      ]
+    ],
+    "source_array_sha256": "c2ff41d57243d6780a9c89f59d313b8a1ec1a1d8d4215d9d539c84d5de6fc584",
+    "output_sha256": "1574dc82b70e91f5c52b5cf4b68556c5d2ced768a70efd46e52a12bf545db607",
+    "observed_critical": [],
+    "expected_critical": [],
+    "passed": true
+  },
+  "mask-c05": {
+    "case": "C1",
+    "kind": "fact_mask",
+    "substitutions": [
+      [
+        "h6q3",
+        "Rhea Marden, a living individual, is designated as an additional Object eligible for discretionary appointments of income and capital under the parent deed for which the trustees jointly deliver this instrument as a deed.",
+        "[Designation wording not visible.]"
+      ]
+    ],
+    "source_array_sha256": "9a89724ced826987cf776d7c69d4bdcfc1107f9accd527483034ed6a1f1baab8",
+    "output_sha256": "828c13fc52498a6bcb7685af5b643f8df9acd4067039676b3ee396015e981635",
+    "observed_critical": [],
+    "expected_critical": [],
+    "passed": true
+  },
+  "mask-c06": {
+    "case": "C1",
+    "kind": "fact_mask",
+    "substitutions": [
+      [
+        "m4v7",
+        "Lodged parent deed reference: PD-6834-R",
+        "Lodged parent deed reference: [reference not visible]"
+      ],
+      [
+        "m4v7",
+        "I certify that I checked this selected-clause extract against the lodged Alder Quay Settlement deed, parent deed reference PD-6834-R, and that it accurately sets out the provisions identified above.",
+        "I certify that I checked this selected-clause extract against the lodged Alder Quay Settlement deed, parent deed reference [reference not visible], and that it accurately sets out the provisions identified above."
+      ],
+      [
+        "x2c9",
+        "Lodged parent deed reference: PD-6894-R",
+        "Lodged parent deed reference: [reference not visible]"
+      ]
+    ],
+    "source_array_sha256": "9b69489ee6c38c12772c1b711f43d4e181cfce7cfbabc6b0b7c7171aea5620b0",
+    "output_sha256": "345e3a87bc131903ff37e12057e45eb437dc3b04573a93c397b939a0cf37bac1",
+    "observed_critical": [],
+    "expected_critical": [],
+    "passed": true
+  },
+  "mask-c07": {
+    "case": "C1",
+    "kind": "fact_mask",
+    "substitutions": [
+      [
+        "r5n8",
+        "At 11:30 GMT on 26 March 2026, Nell Carvane and Tobin Rell attended together and released one signed paper original for immediate delivery as a deed, not in escrow. At handover, both confirmed the parent deed reference against the instrument reference on the face of the paper. I made the register entry from that handover, not from a trust-title search or a beneficiary file, and placed the original in the common deed vault that day.",
+        "The original was received and placed in the common deed vault. The handover disposition is not shown in this copy."
+      ],
+      [
+        "r5n8",
+        "The custody classification records receipt of one signed paper original released for immediate delivery as a deed, rather than held in escrow.",
+        "The disposition field cannot be read on this copy."
+      ]
+    ],
+    "source_array_sha256": "2c844c4770d64807e929f5b4e623867aa9660850ec4b673edf3725e0a1c74e7b",
+    "output_sha256": "7fb61a8cc639a13379502abc51d86866f9cd12a38d7e5f9dd29e4841916ed2ab",
+    "observed_critical": [],
+    "expected_critical": [],
+    "passed": true
+  },
+  "mask-c08": {
+    "case": "C1",
+    "kind": "fact_mask",
+    "substitutions": [
+      [
+        "r5n8",
+        "Instrument reference: SD-Q7M2  ",
+        "Instrument reference: [not visible]"
+      ],
+      [
+        "r5n8",
+        "At 11:30 GMT on 26 March 2026, Nell Carvane and Tobin Rell attended together and released one signed paper original for immediate delivery as a deed, not in escrow. At handover, both confirmed the parent deed reference against the instrument reference on the face of the paper. I made the register entry from that handover, not from a trust-title search or a beneficiary file, and placed the original in the common deed vault that day.",
+        "The presenters jointly released one signed paper original for immediate delivery as a deed, not in escrow. They confirmed the parent deed reference against the instrument reference on the face of the paper. I made the register entry at handover and placed the original in the common deed vault."
+      ]
+    ],
+    "source_array_sha256": "4684a379fb0bcead8ef1c192cedb4f6134871f3e719d4cfc6471610132670ead",
+    "output_sha256": "98105a3439e7e69d7928ab7dadb4dccbead452dfcb906b8289e3a02415711d08",
+    "observed_critical": [],
+    "expected_critical": [],
+    "passed": true
+  }
+}

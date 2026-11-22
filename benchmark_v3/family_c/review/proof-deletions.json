@@ -1,0 +1,106 @@
+[
+  {
+    "case": "C0",
+    "edge": [
+      "Rhea Marden",
+      "beneficiary_of",
+      "Flint Orchard Settlement"
+    ],
+    "full_read": "check-c01",
+    "alternative": [
+      {
+        "source_id": "x2c9",
+        "supporting_text": "Settlement: Flint Orchard Settlement\nDeed date: 21 October 2022\nLodged parent deed reference: PD-6894-R\nSettlor: Cora Teague\nOriginal trustees: Nell Carvane and Tobin Rell\n\nClause 2 — Objects\nThe named Objects are Ione Berrick and Orla Penrick.\n\nClause 5 — Income and capital\nThe trustees act together in exercising their discretionary power over income and capital. They may apply funds directly for an Object’s benefit. Eligibility alone creates no right to payment.\n\nClause 8 — Addition of Objects\nAll serving trustees, acting together, may by deed add any named living individual other than the settlor or a serving trustee. No other person’s consent is required.\n\nAn addition takes effect when the trustees jointly deliver the designation as a deed. On delivery through the common custody service, the trustees may identify the settlement by giving its lodged parent deed reference against the unique reference written on the designation."
+      },
+      {
+        "source_id": "h6q3",
+        "supporting_text": "SUPPLEMENTAL BENEFICIARY DESIGNATION  \nInstrument reference: SD-Q7M2\n\nRhea Marden, a living individual, is designated as an additional Object eligible for discretionary appointments of income and capital under the parent deed for which the trustees jointly deliver this instrument as a deed.\n\nThis instrument makes that addition only. It does not remove any Object, appoint any property, direct any payment or alter any other provision of the parent deed. It takes effect on joint delivery by the trustees as a deed.\n\nEXECUTION\n\nSigned as a deed by Nell Carvane: [signed]  \nIn the presence of Della Pennick: [signed]\n\nSigned as a deed by Tobin Rell: [signed]  \nIn the presence of Della Pennick: [signed]"
+      },
+      {
+        "source_id": "r5n8",
+        "supporting_text": "Instrument reference: SD-Q7M2  \nParent deed reference: PD-6894-R\n\nAt 11:30 GMT on 26 March 2026, Nell Carvane and Tobin Rell attended together and released one signed paper original for immediate delivery as a deed, not in escrow. At handover, both confirmed the parent deed reference against the instrument reference on the face of the paper."
+      }
+    ],
+    "deletions": [
+      {
+        "removed_source": "x2c9",
+        "survivor_sources": [
+          "h6q3",
+          "r5n8"
+        ],
+        "evidence_container": "mask-c02",
+        "passed": true
+      },
+      {
+        "removed_source": "h6q3",
+        "survivor_sources": [
+          "x2c9",
+          "r5n8"
+        ],
+        "evidence_container": "mask-c01",
+        "passed": true
+      },
+      {
+        "removed_source": "r5n8",
+        "survivor_sources": [
+          "x2c9",
+          "h6q3"
+        ],
+        "evidence_container": "mask-c03",
+        "passed": true
+      }
+    ]
+  },
+  {
+    "case": "C1",
+    "edge": [
+      "Rhea Marden",
+      "beneficiary_of",
+      "Alder Quay Settlement"
+    ],
+    "full_read": "check-c02",
+    "alternative": [
+      {
+        "source_id": "m4v7",
+        "supporting_text": "ALDER QUAY SETTLEMENT — CERTIFIED SELECTED-CLAUSE EXTRACT\n\nTo: Kit Wenslow, Tarnstile Advisory\nDeed date: 21 October 2022\nLodged parent deed reference: PD-6834-R\nSettlor: Ellis Harnett\nOriginal trustees: Nell Carvane and Tobin Rell\n\n3. Original discretionary objects\nThe original discretionary objects are Ione Berrick and Emmett Vann.\n\n4. Discretion over income and capital\nThe trustees exercise their discretion over income and capital jointly. No object is entitled to a payment before an appointment is made in that object’s favour.\n\n6. Addition of discretionary objects\nThe trustees for the time being may, acting unanimously and without the settlor’s consent, add by deed any named living individual other than the settlor or a serving trustee. The designation takes effect on joint delivery as a deed.\n\nWhere the trustees use the common deed custody service, they may identify the settlement at delivery by jointly stating its lodged parent reference and associating that reference with the unique reference written on the designation."
+      },
+      {
+        "source_id": "h6q3",
+        "supporting_text": "SUPPLEMENTAL BENEFICIARY DESIGNATION  \nInstrument reference: SD-Q7M2\n\nRhea Marden, a living individual, is designated as an additional Object eligible for discretionary appointments of income and capital under the parent deed for which the trustees jointly deliver this instrument as a deed.\n\nThis instrument makes that addition only. It does not remove any Object, appoint any property, direct any payment or alter any other provision of the parent deed. It takes effect on joint delivery by the trustees as a deed.\n\nEXECUTION\n\nSigned as a deed by Nell Carvane: [signed]  \nIn the presence of Della Pennick: [signed]\n\nSigned as a deed by Tobin Rell: [signed]  \nIn the presence of Della Pennick: [signed]"
+      },
+      {
+        "source_id": "r5n8",
+        "supporting_text": "Instrument reference: SD-Q7M2  \nParent deed reference: PD-6834-R\n\nAt 11:30 GMT on 26 March 2026, Nell Carvane and Tobin Rell attended together and released one signed paper original for immediate delivery as a deed, not in escrow. At handover, both confirmed the parent deed reference against the instrument reference on the face of the paper."
+      }
+    ],
+    "deletions": [
+      {
+        "removed_source": "m4v7",
+        "survivor_sources": [
+          "h6q3",
+          "r5n8"
+        ],
+        "evidence_container": "mask-c06",
+        "passed": true
+      },
+      {
+        "removed_source": "h6q3",
+        "survivor_sources": [
+          "m4v7",
+          "r5n8"
+        ],
+        "evidence_container": "mask-c05",
+        "passed": true
+      },
+      {
+        "removed_source": "r5n8",
+        "survivor_sources": [
+          "m4v7",
+          "h6q3"
+        ],
+        "evidence_container": "mask-c07",
+        "passed": true
+      }
+    ]
+  }
+]

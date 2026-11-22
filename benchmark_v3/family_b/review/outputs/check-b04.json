@@ -1,0 +1,43 @@
+{
+  "edges": [
+    ["Kellan Hugh Sorrel", "parent_of", "Leonie Tess Rindle"]
+  ],
+  "citation_reasons": [
+    {
+      "edge": ["Kellan Hugh Sorrel", "parent_of", "Leonie Tess Rindle"],
+      "disposition": "supported",
+      "minimum_sufficient_alternatives": [
+        [
+          ["r8c3", "Conversation reference: DP-7316\nDate approved: 12 March 2026\nConversation start: 11:20\n\nKellan Hugh Sorrel is my father."],
+          ["m5x7", "Reference: DP-7316  \nSession: 12 March 2026 at 11:20  \nAttendees: 1  \nCurrent full name: Leonie Tess Rindle\n\nEach reference belongs to one conversation and is the reference printed on the text issued to the attendee. When completed, the name field records the checked-in attendee’s current full name, copied from the check-in record."]
+        ]
+      ],
+      "attached_sufficient_set_v1": "The sole sufficient alternative is attached above.",
+      "benchmark_v2_evidence_v1": {
+        "ordinary_quotation": "N/A",
+        "ordinary_attribution": "N/A",
+        "reason": "Neither source independently establishes both endpoints and the relationship."
+      },
+      "origin_and_reporter": "The first-person claim appears in the conversation text relayed by the Darnmere Papers Desk. The session extract identifies Leonie Tess Rindle as the sole checked-in attendee and explains that the name comes from the check-in record and that the unique conversation reference is printed on the text issued to the attendee. The shared reference DP-7316 links the claim to Leonie; the matching date and time corroborate the match. The session extract supports speaker identification, not parentage independently.",
+      "date_and_receipt": "The conversation and session are recorded for 11:20 on 12 March 2026, and the relayed text was approved that day. That dates the report, not the start or legal basis of the relationship. Both extracts were held by 4 pm on 26 March 2026; exact receipt times are not stated.",
+      "competing_passages": "None. The shared distribution route does not identify the speaker; the linked session record does."
+    }
+  ],
+  "unresolved": [
+    {
+      "proposition": "Whether independent records verify the reported parentage or establish its legal basis.",
+      "disposition": "unresolved",
+      "reason": "The conversation reports fatherhood; the session extract verifies the attendee’s identity, not the family relationship. Neither extract distinguishes biological from other legal parentage."
+    },
+    {
+      "proposition": "Whether Kellan Hugh Sorrel or Leonie Tess Rindle has a family relationship to Ivor Ellis Kestell or a role or entitlement in his estate.",
+      "disposition": "unresolved",
+      "reason": "The subject line supplies estate context, but neither extract states a relationship to Ivor, an appointment, or an entitlement. The shared recipient list establishes none of these."
+    }
+  ],
+  "follow_up": [
+    "Obtain the original issued conversation text for DP-7316 and the underlying check-in record; confirm the attribution with Leonie Tess Rindle if needed.",
+    "Ask what independent parentage evidence is available if the relationship matters to the estate.",
+    "Ask why the conversation was included in the estate file and obtain any papers that establish either person’s connection to Ivor Ellis Kestell or his estate."
+  ]
+}

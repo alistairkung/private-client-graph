@@ -1,0 +1,13 @@
+# Benchmark v3 coverage register
+
+The research custodian maintains this register. The unit of construction is the Matter family. Each set of conditions shares one documentary lineage. The register belongs to the custodian and stays outside blind packets.
+
+| Family | Primary axis | Secondary axes | Controlled intervention | Independently verified difficulty | Limitations |
+| --- | --- | --- | --- | --- | --- |
+| [A · Wrenhollow](family_a/DOSSIER.md) | Temporal effectiveness | Source order, documentary authority, evidence | Registered release versus a positive hold. A separate condition reorders identical Sources. | The changing office turns on the operative instrument and the custodian's disposition. A2 supports incumbent continuation. The order-only contrast preserves the complete key. | One two-person office transfer. Some explanatory wording cues attention. The independent audit excluded an alternative evidence route. |
+| [B · Estate Administration](family_b/DOSSIER.md) | Identity uncertainty | Provenance, restraint, evidence | Complete one attendance field for the same conversation. | Both blind pairs preserved the ordinary parent edge. B0 admits both plausible speaker readings. B1 supports one reported named parent edge by joining the keyed statement with a separately maintained record. The forward and export share one informant. | Two distinct current names under one desk procedure. The resolved name happens to be first in the update list. The pair cannot distinguish an exact identity read from a heuristic that combines field completeness with that list position on edge selection alone. |
+| [C · Two Trusts](family_c/DOSSIER.md) | Cross-Source endpoint | Trust ambiguity, joint proof | Swap or partially obscure the parent-deed reference on one custody entry. | Both reader pairs agreed on the endpoint licensed by their legible reference. Across the pair of conditions that endpoint switches. C2 left either allocation possible, with no named target edge licensed. Ten other edges survived all three files. | Two settlements with common trustees and a deliberately matched delivery procedure. Selective deed extracts and one custody record bound the claim. |
+
+The family files cover one unresolved speaker, one unresolved instrument allocation and one controlled timing decision. They leave larger identity collisions, conflicts between independently originated assertions, and more than two viable instrument or authority paths open for future coverage work.
+
+Family A is [admitted](family_a/admission.json). The [estate](family_b/admission.json) and [Two Trusts](family_c/admission.json) decisions are separate and pending human admission.

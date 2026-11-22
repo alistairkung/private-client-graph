@@ -1,0 +1,77 @@
+{
+  "conditions": {
+    "B0": {
+      "required": [],
+      "forbidden": [
+        [
+          "Kellan Hugh Sorrel",
+          "parent_of",
+          "Leonie Tess Rindle"
+        ],
+        [
+          "Kellan Hugh Sorrel",
+          "parent_of",
+          "Nella Ruth Verrow"
+        ]
+      ],
+      "unaffected": [
+        [
+          "Ivor Ellis Kestell",
+          "parent_of",
+          "Tamsin Vera Kestell"
+        ]
+      ]
+    },
+    "B1": {
+      "required": [
+        [
+          "Kellan Hugh Sorrel",
+          "parent_of",
+          "Leonie Tess Rindle"
+        ]
+      ],
+      "forbidden": [
+        [
+          "Kellan Hugh Sorrel",
+          "parent_of",
+          "Nella Ruth Verrow"
+        ]
+      ],
+      "unaffected": [
+        [
+          "Ivor Ellis Kestell",
+          "parent_of",
+          "Tamsin Vera Kestell"
+        ]
+      ]
+    }
+  },
+  "negative_controls": [
+    {
+      "condition": "both",
+      "disposition": "explicitly contradicted",
+      "proposition": "Tamsin Vera Kestell attended DP-7316 or gave the statement as her own account.",
+      "basis": "In h3p6 Tamsin says: “I was not present for the conversation and am not giving my own account of it.” Packet recipient, forwarder and attendee at the later estate intake are different capacities from speaker on 12 March."
+    },
+    {
+      "condition": "both",
+      "disposition": "explicitly contradicted",
+      "proposition": "The native export and inline forward are independent accounts of parentage.",
+      "basis": "n4j8: “The firm retained the export with the inline forward; both are from the same original message.” The cover of h3p6 is evidence of receipt and non-attendance, not corroboration of what the speaker said."
+    },
+    {
+      "condition": "B1",
+      "disposition": "explicitly contradicted",
+      "proposition": "Nella Ruth Verrow was the DP-7316 attendee, or the distributed row has no attendee name.",
+      "basis": "m5x7 records one attendee and names Leonie Tess Rindle in the checked-in name field. The unchanged explanation of the marker “[not entered]” is not the value of that field in B1."
+    },
+    {
+      "condition": "both",
+      "disposition": "unresolved",
+      "proposition": "Any further sibling_of, spouse_of, settlor_of, trustee_of or beneficiary_of edge.",
+      "basis": "There is no explicit sibling or spouse pair and no named trust with a stated party. A contact list is not a pedigree; common parentage would not alone score siblings, nor shared children a marriage. An executor nomination is not a trusteeship, and an outright residuary gift is not a trust interest. Missing edges are not findings of nonexistence."
+    }
+  ],
+  "evidence_policy": "benchmark_v2_evidence_v1",
+  "proof_policy": "attached_sufficient_set_v1"
+}

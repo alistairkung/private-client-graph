@@ -1,0 +1,30 @@
+{
+  "edges": [],
+  "citation_reasons": [],
+  "unresolved": [
+    {
+      "proposition": "Kellan Hugh Sorrel is the father of the person speaking in the relayed statement.",
+      "disposition": "unresolved",
+      "origin": "The statement appears in a message from the Darnmere Papers Desk relay. The underlying speaker is not identified.",
+      "reporter": "Tamsin Vera Kestell forwarded the relay message. She reports receiving it on 12 March 2026.",
+      "date_and_receipt": "The relay lists 12 March 2026 as its approval date. That dates the message, not the onset or legal basis of the claimed parentage. Both extracts were held at the 4 pm cut-off on 26 March 2026; the date intake received the forward is not stated.",
+      "passages": [
+        ["h3p6", "Conversation reference: DP-7316\nDate approved: 12 March 2026\nConversation start: 11:20\n\nKellan Hugh Sorrel is my father."],
+        ["m5x7", "Reference: DP-7316  \nSession: 12 March 2026 at 11:20  \nAttendees: 1  \nCurrent full name: Leonie Tess Rindle"],
+        ["m5x7", "Each reference belongs to one conversation and is the reference printed on the text issued to the attendee. When completed, the name field records the checked-in attendee’s current full name, copied from the check-in record."],
+        ["h3p6", "I was not present for the conversation and am not giving my own account of it."]
+      ],
+      "supported_context": "The check-in extract identifies Leonie Tess Rindle as the sole checked-in attendee. The matching reference and session time link the relay message to that conversation.",
+      "reason": "Leonie is a plausible referent for “my,” but neither extract identifies her as the speaker or establishes that the relay reproduced her words. The shared reference identifies the conversation, not the speaker. Tamsin expressly disclaims giving her own account, so her signature cannot resolve “my” either. That disclaimer does not contradict any claim about her actual parentage. Neither source alone nor the two together establish a named child for the edge."
+    },
+    {
+      "proposition": "Leonie Tess Rindle, Kellan Hugh Sorrel or Tamsin Vera Kestell has a specified family relationship to Ivor Ellis Kestell.",
+      "disposition": "unresolved",
+      "reason": "The forwarding note and relay subject identify the estate papers, not a family relationship to Ivor. The shared surname does not establish kinship."
+    }
+  ],
+  "follow_up": [
+    "Obtain the original DP-7316 text issued to the attendee and any available contemporaneous record identifying who said “Kellan Hugh Sorrel is my father.” Ask the Darnmere Papers Desk whether the relay reproduced the attendee-issued text or was separately prepared.",
+    "Confirm the speaker’s full name and, if the claimed parentage matters to the estate, obtain appropriate supporting records. Ask how each named person is connected to Ivor Ellis Kestell."
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "schema_version": 2,
+  "family": "C",
+  "freeze_sha256": "26768473a68e3bdf4c324f30be4e2b0b7b316bde3f5605fcfabcdb12049eeebd",
+  "conditions": {
+    "C0": "eca67f9b3d07d826326e9688fd32bf054787f3c2de9257aebce1b2639e3ed17e",
+    "C1": "6a7f96b70b7cef00166c0c3e79a53ce880b575bf5d8021cd298dcc7e67c778f9",
+    "C2": "432cb0dfff049fd6fba1f936a16180d9b9eb932d9935f6878f60afb50c12fb39"
+  }
+}

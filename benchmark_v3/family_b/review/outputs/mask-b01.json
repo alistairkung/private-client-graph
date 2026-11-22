@@ -1,0 +1,76 @@
+{
+  "edges": [
+    ["Ivor Ellis Kestell", "parent_of", "Tamsin Vera Kestell"]
+  ],
+  "citation_reasons": [
+    {
+      "edge": ["Ivor Ellis Kestell", "parent_of", "Tamsin Vera Kestell"],
+      "disposition": "supported",
+      "reason": "Two underlying instruments support the relationship: the certified 1969 birth entry names Ivor Ellis Kestell as the father, and the signed 7 October 2021 will identifies Tamsin Vera Kestell as his daughter. Orla Fenwick sighted both at 14:10 on 26 March 2026. Seth Calder’s intake note supplies alternative citations to the same instruments, not two additional independent origins. No passage in the cut-off file conflicts with the relationship.",
+      "benchmark_v2_evidence_v1": {
+        "ordinary_quotation_and_attribution": "Applicable. Each alternative below is sufficient on its own.",
+        "requires_multiple_sources": false
+      },
+      "minimum_sufficient_alternatives": [
+        [
+          ["w9d2", "Certified birth entry — Darnmere entry 284 for 1969. The entry names Tamsin Vera Kestell as the child and Ivor Ellis Kestell as the father."]
+        ],
+        [
+          ["w9d2", "Signed original will — dated 7 October 2021. The will opens by naming Ivor Ellis Kestell of 9 Barrowglass Walk, Darnmere. The executor clause reads “my daughter Tamsin Vera Kestell”."]
+        ],
+        [
+          ["n4j8", "Tamsin Vera Kestell made the opening enquiry on 2 March and attended intake with an incomplete folder. The certified death entry records that Ivor Ellis Kestell of 9 Barrowglass Walk, Darnmere, died on 18 February 2026. The signed original will dated 7 October 2021 names Tamsin as executor, describes her as “my daughter” and leaves the residue to her outright."]
+        ],
+        [
+          ["n4j8", "Tamsin Vera Kestell made the opening enquiry on 2 March and attended intake with an incomplete folder. The certified death entry records that Ivor Ellis Kestell of 9 Barrowglass Walk, Darnmere, died on 18 February 2026. The signed original will dated 7 October 2021 names Tamsin as executor, describes her as “my daughter” and leaves the residue to her outright. The certified birth entry (Darnmere entry 284 for 1969) names Tamsin as the child and Ivor as the father."]
+        ]
+      ],
+      "attached_sufficient_set_v1": [
+        ["w9d2", "Certified birth entry — Darnmere entry 284 for 1969. The entry names Tamsin Vera Kestell as the child and Ivor Ellis Kestell as the father."]
+      ]
+    }
+  ],
+  "unresolved": [
+    {
+      "proposition": "Leonie Tess Rindle and Nella Ruth Verrow were the two family-update contacts.",
+      "disposition": "supported",
+      "basis": "In the 5 March update (v2k9), Tamsin Vera Kestell reported that both were living and that each separately confirmed her current full name and requested updates. The 26 March intake note (n4j8) records the list and routing instructions. This establishes their reported contact status, not a pedigree or independent verification of Nella Ruth Verrow’s name or either person’s living status at the cut-off."
+    },
+    {
+      "proposition": "Leonie Tess Rindle was the sole checked-in attendee for DP-7316.",
+      "disposition": "supported",
+      "basis": "Merrin Vale’s attendance extract, issued 13 March and brought to intake on 26 March (m5x7, n4j8), records one attendee at the 12 March 11:20 session and gives Leonie Tess Rindle as the checked-in current full name. The relay record and forward (r8c3, h3p6) identify the same reference and session. Tamsin Vera Kestell is the nominated packet recipient, not the person named in the attendee field. Neither the recipient field nor the shared update route identifies who made any particular assertion."
+    },
+    {
+      "proposition": "DP-7316 supplies a family relationship involving Leonie Tess Rindle or Nella Ruth Verrow.",
+      "disposition": "unresolved",
+      "basis": "Both relay versions show only “[Statement text unavailable.]”. The register establishes attendance, not what was said. Tamsin Vera Kestell says she was not present and was forwarding the message, not giving her own account (h3p6). The firm already held the forward and retained the native export supplied on 26 March (n4j8). The claim that they are independent accounts is explicitly contradicted by n4j8: they are copies of one original message. The body, any assertion it contains, and the attribution of that assertion remain open."
+    },
+    {
+      "proposition": "Any further parent, sibling, spouse or trust relationship in the ontology.",
+      "disposition": "unresolved",
+      "basis": "The complete family-update list is a list for communications, not a complete family tree. Neither the list, the shared route nor attendance establishes kinship. The file does not show that Tamsin Vera Kestell was Ivor Ellis Kestell’s only child. No passage establishes a sibling or spouse edge, identifies a named trust, or establishes a trust role. The outright residue clause is not evidence of a trust. These omissions do not contradict the existence of other relationships."
+    },
+    {
+      "proposition": "Ivor Ellis Kestell died on 18 February 2026 and was of 9 Barrowglass Walk, Darnmere.",
+      "disposition": "supported",
+      "basis": "Tamsin Vera Kestell reported the death and last address on 2 March (q7m4). The certified death entry sighted on 26 March independently records the name, address and death date (w9d2, n4j8). No competing account appears."
+    },
+    {
+      "proposition": "The signed 7 October 2021 will names Tamsin Vera Kestell as executor and leaves her the residue outright.",
+      "disposition": "supported",
+      "basis": "Tamsin Vera Kestell reported both terms on 2 March (q7m4); the instrument sighted on 26 March supports them (w9d2, n4j8). This establishes what the sighted will says, not that a grant has issued, that the residue has passed, or that there is no later will or codicil. The appointment and outright gift are outside the graph ontology."
+    },
+    {
+      "proposition": "The firm retained the signed original will and certified entries, started a probate application, or received the Merewick balance confirmation by the cut-off.",
+      "disposition": "explicitly contradicted",
+      "basis": "Orla Fenwick returned all three papers after sighting them at 14:10 on 26 March (w9d2). The firm retained the sighting slip, not the papers, and no application was started at intake (n4j8). Tamsin Vera Kestell requested the date-of-death balance on 27 February and confirmed at intake that the confirmation had not arrived (q7m4, n4j8). The balance itself remains unknown."
+    }
+  ],
+  "follow_up": [
+    "Arrange for Tamsin Vera Kestell to bring back the signed original will dated 7 October 2021 and the certified birth and death entries. Ask whether she knows of any later will or codicil.",
+    "Obtain the written date-of-death balance confirmation from Merewick Building Society and ask what other estate assets and liabilities need documenting.",
+    "If DP-7316 matters to the advice, obtain the complete approved statement and confirm who made or adopted any relevant assertion. Preserve the attendance extract and treat the export and forward as copies of the same message.",
+    "Ask what relationships, if any, Leonie Tess Rindle and Nella Ruth Verrow report to Ivor Ellis Kestell or to one another, and what records support those reports. In the meantime, relay general updates separately through Tamsin Vera Kestell without circulating contact details."
+  ]
+}

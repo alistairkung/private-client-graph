@@ -1,0 +1,136 @@
+{
+  "disposition": "ready_for_owner_review",
+  "residual_scored_disputes": [],
+  "evidence_findings": {
+    "cutoff": "4 pm on 26 March 2026. B0 and B1 are separate hypothetical files. The comparison notes, keys and test readings are audit material, not estate evidence.",
+    "complete_graphs": {
+      "B0": [
+        ["Ivor Ellis Kestell", "parent_of", "Tamsin Vera Kestell"]
+      ],
+      "B1": [
+        ["Ivor Ellis Kestell", "parent_of", "Tamsin Vera Kestell"],
+        ["Kellan Hugh Sorrel", "parent_of", "Leonie Tess Rindle"]
+      ]
+    },
+    "edge_evidence": [
+      {
+        "files": ["B0", "B1"],
+        "edge": ["Ivor Ellis Kestell", "parent_of", "Tamsin Vera Kestell"],
+        "disposition": "supported",
+        "basis": "Two documentary origins agree: Darnmere birth entry 284 for 1969 records the father and child; Ivor's signed will of 7 October 2021 calls Tamsin his daughter. Orla Fenwick sighted both at 14:10 on 26 March; Seth Calder summarizes the same instruments. These are four citation routes, not four independent origins. Tamsin's 2 March enquiry omits kinship but does not deny it.",
+        "benchmark_v2_evidence_v1": "Ordinary quotation and attribution apply to each singleton below. The death-entry sentence in Seth's note anchors Ivor's full name; it does not prove parentage.",
+        "approved_minimum_sufficient_alternatives": {
+          "A": [
+            ["w9d2", "The entry names Tamsin Vera Kestell as the child and Ivor Ellis Kestell as the father."]
+          ],
+          "B": [
+            ["w9d2", "The will opens by naming Ivor Ellis Kestell of 9 Barrowglass Walk, Darnmere. The executor clause reads “my daughter Tamsin Vera Kestell”."]
+          ],
+          "C": [
+            ["n4j8", "Tamsin Vera Kestell made the opening enquiry on 2 March and attended intake with an incomplete folder. The certified death entry records that Ivor Ellis Kestell of 9 Barrowglass Walk, Darnmere, died on 18 February 2026. The signed original will dated 7 October 2021 names Tamsin as executor, describes her as “my daughter” and leaves the residue to her outright. The certified birth entry (Darnmere entry 284 for 1969) names Tamsin as the child and Ivor as the father."]
+          ],
+          "D": [
+            ["n4j8", "Tamsin Vera Kestell made the opening enquiry on 2 March and attended intake with an incomplete folder. The certified death entry records that Ivor Ellis Kestell of 9 Barrowglass Walk, Darnmere, died on 18 February 2026. The signed original will dated 7 October 2021 names Tamsin as executor, describes her as “my daughter” and leaves the residue to her outright."]
+          ]
+        },
+        "attached_sufficient_set_v1": [
+          ["w9d2", "The entry names Tamsin Vera Kestell as the child and Ivor Ellis Kestell as the father."]
+        ]
+      },
+      {
+        "file": "B1",
+        "edge": ["Kellan Hugh Sorrel", "parent_of", "Leonie Tess Rindle"],
+        "disposition": "supported as Leonie's report, not independently verified parentage",
+        "basis": "The 12 March first-person assertion supplies the father and the relationship. Merrin Vale's check-in extract identifies Leonie as the sole attendee of the uniquely referenced conversation whose text was issued to the attendee. The session time also matches. The register establishes identity in that capacity, not the truth or legal basis of fatherhood.",
+        "benchmark_v2_evidence_v1": {
+          "graph_scored": true,
+          "ordinary_quotation": "N/A",
+          "ordinary_attribution": "N/A",
+          "reason": "Every sufficient route needs more than one Source."
+        },
+        "approved_alternatives": "The committed critical key approves one set, attached in full below.",
+        "attached_sufficient_set_v1": [
+          ["r8c3", "Conversation reference: DP-7316\nDate approved: 12 March 2026\nConversation start: 11:20\n\nKellan Hugh Sorrel is my father."],
+          ["m5x7", "Reference: DP-7316  \nSession: 12 March 2026 at 11:20  \nAttendees: 1  \nCurrent full name: Leonie Tess Rindle\n\nEach reference belongs to one conversation and is the reference printed on the text issued to the attendee. When completed, the name field records the checked-in attendee’s current full name, copied from the check-in record."]
+        ],
+        "additional_documentary_route_not_in_committed_key": [
+          ["h3p6", "Conversation reference: DP-7316\nDate approved: 12 March 2026\nConversation start: 11:20\n\nKellan Hugh Sorrel is my father."],
+          ["m5x7", "Reference: DP-7316  \nSession: 12 March 2026 at 11:20  \nAttendees: 1  \nCurrent full name: Leonie Tess Rindle\n\nEach reference belongs to one conversation and is the reference printed on the text issued to the attendee. When completed, the name field records the checked-in attendee’s current full name, copied from the check-in record."]
+        ],
+        "copy_ruling": "The full file identifies h3p6 as a copy carrying the same keyed assertion. That explains why the comparison recognized a substitute documentary route. Its isolated readings failed; it is neither a second approved attachment nor a second witness."
+      }
+    ],
+    "source_coverage": "Read alone, q7m4 reports estate facts, not kinship; v2k9 names update contacts, not relatives in specified degrees; r8c3 names the father, not the child; m5x7 records attendance, not fatherhood; h3p6 preserves an unnamed first-person account and identifies only its forwarder. Each of w9d2 and n4j8 independently supports the Ivor-to-Tamsin edge and no other. Reading from child to father yields the same directed pairs, not converse parent_of edges.",
+    "companion_register": [
+      {
+        "disposition": "supported",
+        "finding": "Ivor Ellis Kestell died on 18 February 2026. Tamsin gave 9 Barrowglass Walk, Darnmere as his last address on 2 March (q7m4). The certified death entry sighted on 26 March records the same address and death date (w9d2, n4j8). The 2021 will uses the address but does not prove death or last residence."
+      },
+      {
+        "disposition": "supported",
+        "finding": "The sighted will nominates Tamsin Vera Kestell as executor and leaves her the residue outright. Tamsin reported both terms in q7m4; Orla recorded the executor-clause description and residue in w9d2; Seth expressly recorded nomination and gift in n4j8. They agree about the office, but the enquiry is not the appointing instrument. It is the daughter wording, not the office or gift, that supports kinship. Residue need not be the whole estate."
+      },
+      {
+        "disposition": "supported",
+        "finding": "On 5 March Tamsin reported separate conversations with Leonie Tess Rindle and Nella Ruth Verrow: both were living, each confirmed her current name spelling, and each requested updates (v2k9). Seth repeated that report on 26 March (n4j8), not an independent life-status check. Send general updates through Tamsin separately without sharing contact details. The shared correction route is not authority for wider disclosure."
+      },
+      {
+        "disposition": "supported",
+        "finding": "DP-7316 began at 11:20 on 12 March; the message was approved and received by Tamsin that day (r8c3, h3p6). Merrin's extract was issued on 13 March. Tamsin brought the printout and native export on 26 March; the firm already held the forward and retained both message versions (n4j8). Continuing custody of the printout is not specified."
+      },
+      {
+        "disposition": "explicitly contradicted",
+        "finding": "Tamsin's h3p6 cover expressly denies attending the conversation or giving her own account. Her signature, packet-recipient designation and later attendance at estate intake do not identify her as the speaker. The claim of two independent accounts is also contradicted: n4j8 identifies one original message."
+      },
+      {
+        "disposition": "explicitly contradicted",
+        "finding": "The firm did not keep the signed original will or the certified birth and death entries: Orla handed all three back after sighting, and Seth recorded retention of the slip instead (w9d2, n4j8). Seth expressly records that no application was started at this intake."
+      },
+      {
+        "disposition": "supported",
+        "finding": "Tamsin requested the Merewick Building Society date-of-death balance on 27 February, reported non-receipt on 2 March and confirmed it was still outstanding at intake (q7m4, n4j8). Intake proceeded without it; neither an amount nor a refusal is evidenced."
+      }
+    ]
+  },
+  "masking_findings": {
+    "positive_checks": "check-b01 read the exact attached native pair; check-b04 read the native message with its additional headers and the same register passage. Each returned Kellan Hugh Sorrel parent_of Leonie Tess Rindle, in that direction and as a report. The longer excerpt contains the approved one; it is not another origin or a different minimum Source set.",
+    "proof_deletions": [
+      {
+        "deleted_from_approved_pair": "r8c3",
+        "survivor": "The entire attached m5x7 passage, verbatim.",
+        "independent_cover": "mask-b01 retains that passage in a larger B1 file and withholds the father sentence in both message locations. It still identifies Leonie as the attendee, but returns no named Kellan edge. It contains no denial of fatherhood that would explain away an otherwise sufficient surviving subset."
+      },
+      {
+        "deleted_from_approved_pair": "m5x7",
+        "survivor": "The entire attached r8c3 passage, verbatim.",
+        "independent_cover": "mask-b02 retains that passage and the forward, but withholds both the reference and session on the register row. Leonie's name remains visible without a usable link to this assertion. The reading returns no named Kellan edge and does not contradict the assertion. This covers the survivor in a larger file; it was not a literal whole-Source deletion run."
+      }
+    ],
+    "necessity": "Both negative super-packages retain the unaffected Ivor-to-Tamsin edge. Together with B0 they distinguish loss of assertion, loss of usable session link and loss of attendee name. Neither a particular message copy nor the contact list, custody narrative or a third capacity witness is logically necessary in the full documentary file. Removing just one repeated identifier is not a clean link mask.",
+    "adverse_checks": "check-b02 and check-b03 returned no named edge from the forwarded excerpt plus register, even with the forwarding cover restored. Their objection was that attendance and issuance do not expressly certify who spoke or adopted the words. That is an attribution limit, not contrary testimony. The short forwarded quotation is textually identical to the native one, so the mixed readings do not demonstrate a substantive evidentiary difference between copies. They do explain the narrower committed attachment key."
+  },
+  "matched_findings": {
+    "intervention": "Same seven Sources, titles and order. Only m5x7's current-name value changes, from [not entered] to Leonie Tess Rindle. The blank-marker explanation remains in both. The predeclared critical result is met: neither candidate in B0; only Kellan Hugh Sorrel parent_of Leonie Tess Rindle added in B1; nothing removed.",
+    "paired_unresolved_file": "Both blind B0 readings retain the documented Ivor-to-Tamsin edge and withhold both Kellan candidates. B0 establishes one attendee and one first-person report, not zero attendance or a failed identity check. Leonie could have reported her father, Nella could have reported hers, or a person outside the update list could have spoken. The two readings' agreement does not identify that person.",
+    "forbidden_scores": "In B1 the populated sole-attendee row explicitly contradicts Nella being that attendee and the claim that the row is blank. It does not contradict Kellan being Nella's father in fact: that edge remains unresolved and unscored in both files. Neither contact's relationship to Ivor, Kellan's relationship to Tamsin, nor any further parent, sibling, spouse or trust edge is established. Silence is not a finding of nonexistence."
+  },
+  "shortcut_findings": [
+    "Latest date or last Source selects the unchanged intake material, not the changed identification. The later register identifies the attendee; it does not supersede the earlier statement.",
+    "Choosing the first update contact guesses Leonie in B0 too; choosing the packet recipient wrongly selects Tamsin. List order was not varied, so a filled-field-gated first-contact guess is not independently ruled out by the paired outputs.",
+    "Shared surnames and confirmed spellings do not resolve 'my'. A union of standalone edges misses the joint B1 proof; joining the assertion to every contact invents children. Pooling the two hypothetical files leaks the B1 name into B0.",
+    "An administrative entry is competent on check-in, not parentage. No rival draft or successive operative instrument was tested. Executor is not thereby trustee, and outright residue is not a trust interest. Common parentage alone would not score siblings, nor shared children a marriage.",
+    "Source IDs, titles and ordering are unchanged. Neither the condition label, the declared candidate nor the mere presence of a filled field supplies the named relationship."
+  ],
+  "limitations": [
+    "The B1 inference rests on this desk's one-conversation reference, sole attendee and first-person text. There is no signed speaker attribution or independent parentage record. The session dates the report, not the beginning or legal character of fatherhood.",
+    "Recorded isolated results support the committed native attachment, not unanimous reproducibility of the attribution. The forward-route exclusion is a scoring decision, not proof that the copy loses its words or that native format authenticates the speaker.",
+    "The four ordinary citations are documentarily sufficient. The contiguous n4j8 birth-entry citation necessarily includes the intervening will sentence; that excerpt alone does not experimentally isolate the birth basis. Proposed additional masks are not recorded test results.",
+    "This file proves the sighted will's terms, not that it is the latest will, that Tamsin will act, that a grant exists or that residue has been distributed."
+  ],
+  "owner_focus": [
+    "Review the distinction between the full-file copy route and the single approved isolated attachment. Do not count the adverse reads as a negation of Leonie's report or the positive reads as independent witnesses. Admission remains the owner's decision.",
+    "Arrange personal return of the signed original will and certified birth and death entries as needed. Ask about later wills or codicils, Tamsin's intention to act, and proceedings or a grant elsewhere.",
+    "Chase the written Merewick balance and identify remaining asset and liability papers; agree whether the substantive meeting needs to await them.",
+    "If DP-7316 matters to administration, seek a completed keyed identity record in B0, or direct named confirmation of the issued statement in B1. Seek an independent family record if parentage matters. Ask separately, through the agreed route, how the contacts or Kellan are connected to the estate rather than treating the update list as a pedigree."
+  ]
+}

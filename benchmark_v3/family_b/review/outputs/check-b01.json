@@ -1,0 +1,43 @@
+{
+  "edges": [
+    ["Kellan Hugh Sorrel", "parent_of", "Leonie Tess Rindle"]
+  ],
+  "citation_reasons": [
+    {
+      "edge": ["Kellan Hugh Sorrel", "parent_of", "Leonie Tess Rindle"],
+      "disposition": "supported",
+      "basis": "The relationship is supported as Leonie Tess Rindle’s report. In r8c3 the speaker names Kellan Hugh Sorrel as their father but does not name themselves. In m5x7 the same unique conversation reference, DP-7316, identifies a session with one attendee and ties the issued text to that attendee, whose current full name is recorded as Leonie Tess Rindle. The session date and time agree, but the unique reference is what establishes the link.",
+      "origin_and_reporter": "The parentage assertion originates with the attendee speaking in r8c3. The administrative extract m5x7 reports the attendee’s name from the check-in record; it identifies the speaker but does not independently corroborate parentage.",
+      "relevant_date": "The session was on 12 March 2026 at 11:20, and r8c3 records approval on 12 March 2026. Neither extract states when the parental relationship began.",
+      "receipt_by_cutoff": "Both extracts were in the supplied file at 4 pm on 26 March 2026; their individual receipt dates are not stated.",
+      "competing_passages": [],
+      "benchmark_v2_evidence_v1": {
+        "quotation": "N/A",
+        "attribution": "N/A",
+        "reason": "Neither source independently establishes both named endpoints and the relationship."
+      },
+      "attached_sufficient_set_v1": [
+        [
+          ["r8c3", "Conversation reference: DP-7316\nDate approved: 12 March 2026\nConversation start: 11:20\n\nKellan Hugh Sorrel is my father."],
+          ["m5x7", "Reference: DP-7316  \nSession: 12 March 2026 at 11:20  \nAttendees: 1  \nCurrent full name: Leonie Tess Rindle\n\nEach reference belongs to one conversation and is the reference printed on the text issued to the attendee. When completed, the name field records the checked-in attendee’s current full name, copied from the check-in record."]
+        ]
+      ]
+    }
+  ],
+  "unresolved": [
+    {
+      "proposition": "The precise basis of the reported father–child relationship",
+      "disposition": "unresolved",
+      "reason": "The attendee says “my father.” Neither extract distinguishes biological parentage, adoption, or another use of that term. The check-in record supports the attendee’s identity, not the nature of the relationship."
+    },
+    {
+      "proposition": "A relationship between either named person and Ivor Ellis Kestell, or a role in his estate",
+      "disposition": "unresolved",
+      "reason": "Neither extract mentions Ivor Ellis Kestell, an estate role, a trust, or an operative instrument. The reported parentage alone establishes no entitlement or authority in the estate."
+    }
+  ],
+  "follow_up": [
+    "Obtain the complete approved conversation text issued under DP-7316 and the underlying check-in record to verify the extract and attendee identification.",
+    "Ask the adviser how either person is connected to Ivor Ellis Kestell and whether the reported parentage affects the estate. If it does, obtain the relevant civil registration or other parentage records and any estate instrument relied on."
+  ]
+}

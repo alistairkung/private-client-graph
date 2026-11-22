@@ -1,0 +1,72 @@
+{
+  "pairs": {
+    "C0/C1": {
+      "source_id": "r5n8",
+      "before": "Parent deed reference: PD-6894-R",
+      "after": "Parent deed reference: PD-6834-R",
+      "utf8_offset": 205,
+      "order_unchanged": true,
+      "serialized_source_fields_unchanged_except_one_body_field": true,
+      "unchanged_sources": [
+        "j8f2",
+        "m4v7",
+        "x2c9",
+        "h6q3",
+        "b9k4",
+        "t3w6"
+      ]
+    },
+    "C0/C2": {
+      "source_id": "r5n8",
+      "before": "Parent deed reference: PD-6894-R",
+      "after": "Parent deed reference: PD-68?4-R",
+      "utf8_offset": 205,
+      "order_unchanged": true,
+      "serialized_source_fields_unchanged_except_one_body_field": true,
+      "unchanged_sources": [
+        "j8f2",
+        "m4v7",
+        "x2c9",
+        "h6q3",
+        "b9k4",
+        "t3w6"
+      ]
+    },
+    "C1/C2": {
+      "source_id": "r5n8",
+      "before": "Parent deed reference: PD-6834-R",
+      "after": "Parent deed reference: PD-68?4-R",
+      "utf8_offset": 205,
+      "order_unchanged": true,
+      "serialized_source_fields_unchanged_except_one_body_field": true,
+      "unchanged_sources": [
+        "j8f2",
+        "m4v7",
+        "x2c9",
+        "h6q3",
+        "b9k4",
+        "t3w6"
+      ]
+    }
+  },
+  "conditions": {
+    "C0": {
+      "source_count": 7,
+      "words": 1392,
+      "case_json_sha256": "8caf7ab34a1a24fbb0770cbd87f3d379f3901874498c638d72a80809298399f5",
+      "ordered_source_sha256": "afaa100061091a755beee91d7f489d28acb61b6c88295c85451cb16d5a412595"
+    },
+    "C1": {
+      "source_count": 7,
+      "words": 1392,
+      "case_json_sha256": "c3fae528b80a8fada6673357a0c9ce02f81c472e99a9959b70f5f04281056c3c",
+      "ordered_source_sha256": "4c965cca6f918cda1fd7dc7867071df397c8d041509985bbc95595c661bc8a95"
+    },
+    "C2": {
+      "source_count": 7,
+      "words": 1392,
+      "case_json_sha256": "83b0235a6be480512e32a505c80a2ff1014249d0d742f0450fc25b986855483c",
+      "ordered_source_sha256": "b63c713b695910d4fcb87ccdbe96b8093cf6144118b95251c03a6746352c1da1"
+    }
+  }
+}

@@ -1,0 +1,68 @@
+{
+  "family": "B",
+  "status": "pending_human_admission",
+  "owner_decision": null,
+  "signature": null,
+  "dispatched": false,
+  "technical_disposition": "ready_for_owner_review",
+  "paid_pcg_extraction_attempts": 0,
+  "protocol_sha256": "7b8fa95a3ddb87a96b2dec1977f330f7822ac522342a2f381e55081175e59ead",
+  "evidence_policy": "benchmark_v2_evidence_v1",
+  "proof_policy": "attached_sufficient_set_v1",
+  "manifest_sha256": "ba9bad4f1c2dad88473daa24c5866697db16d2160f1c09c3b50bdd8a485fba0b",
+  "freeze_sha256": "61c04f2633929fae579d14b96c81b96d61b667f1273d6bd20280cf75519509d5",
+  "ledger_sha256": "4f6b173f909b05ca4f4c414d3a4c0a00ee42975cff6e602f7240a461f41820f4",
+  "ordered_sources": {
+    "B0": "715a74166e9ff8b063a7d3854498733f411f0c1050259f85843258c302997dde",
+    "B1": "6bd40b894f21964ebe9e9438651e0458bf4b0a8e67c2bc74ebfcf6c70d76123b"
+  },
+  "keys": {
+    "B0": {
+      "truth": "bfcdeb9105199883178b88487dbbf0eb7c40404591cc54e946adf54912d171de",
+      "source_approval": "3b926adb89c0c2cf32b2f01c2ea3b9454914bfe43d35f9c9726168972b91daf2",
+      "sufficient_evidence": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "B1": {
+      "truth": "1905555f6258919387bbf068f27dbaa384e2014b1fa7dd3d325b583b8df04cc5",
+      "source_approval": "3b926adb89c0c2cf32b2f01c2ea3b9454914bfe43d35f9c9726168972b91daf2",
+      "sufficient_evidence": "6de4dfa2e51bd07f9f54ec52809feeb73bfdf523874e256efe59fdf2f6b926bb"
+    }
+  },
+  "scored_targets_sha256": "e5591c15442315a9f654205cef9f9e2d4f3e97ffae1607fe2db76e1fdd4ae956",
+  "annotation_rules_sha256": "beed73831f96c822eed28ac051c4ace0910d90cae606c9e86e35c5938d2255f5",
+  "review_files": {
+    "../families_b_c_isolation.md": "4855153772d78bcec505670d567ec8ae5386b79db703cec89430b2e60e940c4e",
+    "../families_b_c_os_boundary.json": "ea1bc3f5d64b79f1596cd28cacf0d4ec8008040ee504ef98db93db759178ab01",
+    "DOSSIER.md": "276bcea8b4ee1a94bd6383ceb2dced9c3bd9ca9c863df02ed5478267c24e7004",
+    "custody.json": "3daaea1aff9470f111d48e148a5a174b7cfcbfc82598b7d5ee392d29a6c667d5",
+    "review/agreement.json": "b4f064919fd55f105d7c6c44f049404dd47e353f9b62ee611706e0f373e42dd6",
+    "review/blind-lock.json": "f346a4b6d9aca5e5636ef4453299352bc77e2632f19d67dd5a24d400a4361644",
+    "review/mask-results.json": "f9e6ab8465f6048dbab267814aa0cd8f6c2bd02574e3a2fbc0a873224f024204",
+    "review/matched-sources.json": "42814a326cbc0d5adb5adc3b5c995932f6e6f60f603f9a2ec112dc2ed55857a6",
+    "review/offline-replay.json": "cd1add56eb5daa2cb85bba43e97e44747f24bd46d186a720dc8797acf011489d",
+    "review/outputs/B0-a.json": "f2c8b44e0307f21d21ea11831279f22ec3ab6b450416467b30780845c4392bcf",
+    "review/outputs/B0-b.json": "8d8c71b636fae81980a084d08a73c68ad69dbd2aa97f71b6443f252f6b4cafb8",
+    "review/outputs/B0-judgment.json": "5d4d704cb80751e34b934b55ade534887338627f4aa95f21f429ce8818f24329",
+    "review/outputs/B1-a.json": "7dd1ff54dff5c6ac12c20a6846bd96d7271d4cf465bbc94b8351c879f2c0d257",
+    "review/outputs/B1-b.json": "d38cad1128eb852c140e393308fb164eee656a1e2391433ab711bf0b646f14f4",
+    "review/outputs/B1-judgment.json": "abe4d89cec7586e0c59c3d9c79a8f777c22b277ce91b1cd5ef152942d0fa5add",
+    "review/outputs/check-b01.json": "6604c7ab3be95b7f51a9f93d8cce46cde099b83e721afaba82271927a4ab4ef8",
+    "review/outputs/check-b02.json": "e482ece281e4516e3c7fe338c35cb2ff591eed3c88922e97a559e030421a2180",
+    "review/outputs/check-b03.json": "a0259700dff2216ad33a0c0d792fea3c7ec974fb8646652f1932966f5fcfb150",
+    "review/outputs/check-b04.json": "59de9c588e86e42dcf97f8e5348f9153d5bf0ba62aecff80b2b41b6f8f3547e9",
+    "review/outputs/closing-audit.json": "c6e06088d6b6df70238e776d4483a6e7c2c95c7fd37a17d08e2c74b1e137ac41",
+    "review/outputs/comparison.json": "d5d8ee7f076527258cbed4b388c1a702bf9a62b6cf84eefa206963395683df8c",
+    "review/outputs/mask-b01.json": "92c5d2718ab541b322c761f21bd568b7f70eda9b85f806387712a4df1828ade9",
+    "review/outputs/mask-b02.json": "e6d8cab60d0fe007478dfbde83985dd94e95a064e8cabadac59e2ca550b6be8f",
+    "review/proof-deletions.json": "479d1e5b92bcbc401a0e5215210ee435fb0b3c71f928057d0a6bd4c8a7ec5d83",
+    "review/provisional-lock.json": "4e4dcb7a37e5eb2f90b23f88bce7738293539eec7378aa92f3ffa264a65aa333",
+    "review/quotation-ruling.json": "fb8e716f97395dfb1141717da925e0db4b7c2f83284b1392daf6bbc0d006b123",
+    "review/realism-final.json": "e738328904588cb77d552ccf222bfb0c5ea35c9ae74cc87cf51be8a722b69cad",
+    "review/realism-initial.json": "22247b19ce5758398e33f4822ee27eb99483d8df958e452f751a0a01bf4ea35e",
+    "review/scored-targets.json": "e5591c15442315a9f654205cef9f9e2d4f3e97ffae1607fe2db76e1fdd4ae956",
+    "review/superseded/initial-source-inventory.json": "ac4d79463dfbbd594368806b7763286bd77a0e73470a22c025412e6951c43807",
+    "review/superseded/n4j8.txt": "a7aeed2afa598baeab55ad6d8d44438c42680c70a81a3f74fed3a3d0267a7f7b",
+    "../instructions/annotation.md": "beed73831f96c822eed28ac051c4ace0910d90cae606c9e86e35c5938d2255f5",
+    "../instructions/ontology.md": "6c280a20a9c945a8b34c5b19cf8550a3ab5283e030f50a98141808170e34c6c9"
+  }
+}

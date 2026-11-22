@@ -1,0 +1,81 @@
+{
+  "family": "C",
+  "status": "pending_human_admission",
+  "owner_decision": null,
+  "signature": null,
+  "dispatched": false,
+  "technical_disposition": "ready_for_owner_review",
+  "paid_pcg_extraction_attempts": 0,
+  "protocol_sha256": "7b8fa95a3ddb87a96b2dec1977f330f7822ac522342a2f381e55081175e59ead",
+  "evidence_policy": "benchmark_v2_evidence_v1",
+  "proof_policy": "attached_sufficient_set_v1",
+  "manifest_sha256": "03d8c25c36767fda54ab3f8430eb0f2d9c31845d55a27b68d02ab2d43dcb2868",
+  "freeze_sha256": "26768473a68e3bdf4c324f30be4e2b0b7b316bde3f5605fcfabcdb12049eeebd",
+  "ledger_sha256": "4f6b173f909b05ca4f4c414d3a4c0a00ee42975cff6e602f7240a461f41820f4",
+  "ordered_sources": {
+    "C0": "afaa100061091a755beee91d7f489d28acb61b6c88295c85451cb16d5a412595",
+    "C1": "4c965cca6f918cda1fd7dc7867071df397c8d041509985bbc95595c661bc8a95",
+    "C2": "b63c713b695910d4fcb87ccdbe96b8093cf6144118b95251c03a6746352c1da1"
+  },
+  "keys": {
+    "C0": {
+      "truth": "bd070a38a903932f61a325deb049913bc1f82aab872aaa69f80beb5132dbe0f4",
+      "source_approval": "2b01448c569684174cb65a2051be8cb9d0cfc10d9f3923732dfafebc8bb5800c",
+      "sufficient_evidence": "c169896b833b54a43f85cd9ff049d7ec74c6dbd2dd365488738a8649adce25d5"
+    },
+    "C1": {
+      "truth": "93d3b20290ceba595c48707ba079b47fed4fd8f582acfbc2fc6a28d45264ac4c",
+      "source_approval": "2b01448c569684174cb65a2051be8cb9d0cfc10d9f3923732dfafebc8bb5800c",
+      "sufficient_evidence": "baf1719a5460ced2f9dc51f840642949bbf3b821f37dd7367b778088189f1f61"
+    },
+    "C2": {
+      "truth": "23061ec8263463b34536992f9516ad924f8be257ee1da08c4aee8be94774ec21",
+      "source_approval": "2b01448c569684174cb65a2051be8cb9d0cfc10d9f3923732dfafebc8bb5800c",
+      "sufficient_evidence": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    }
+  },
+  "scored_targets_sha256": "c16da73d787a5fda51b89c051d82f8d534585b580566e20dcd43d9d78aa79d52",
+  "annotation_rules_sha256": "beed73831f96c822eed28ac051c4ace0910d90cae606c9e86e35c5938d2255f5",
+  "review_files": {
+    "../families_b_c_isolation.md": "4855153772d78bcec505670d567ec8ae5386b79db703cec89430b2e60e940c4e",
+    "../families_b_c_os_boundary.json": "ea1bc3f5d64b79f1596cd28cacf0d4ec8008040ee504ef98db93db759178ab01",
+    "DOSSIER.md": "cae6662f48a3c2c3593ed7a8cbe9a4ef00da7fcbce44c74d979d9e4d91fb9fe2",
+    "custody.json": "33012ae72c3a8e03f525da42f9ef042eb932e14eb0e3c1d56ab61641ad1dbf45",
+    "review/agreement.json": "c13485138bac3624883c5562bf2a4e2580cc62cc232e3ae5164788b1175d3ebd",
+    "review/blind-lock.json": "dee31267f96d3f23e545c8457895734f08cf834f7c6dc0552c25a710f208c5fc",
+    "review/mask-results.json": "7c4b1d66508eb6e27f2ec5cb4f9d01392460bf1beb55998159cb98e4b1e42d69",
+    "review/matched-sources.json": "136bb0760feb59c6c6464d57996913598d5088577d9f2e7a24297137eb6e37b6",
+    "review/offline-replay.json": "4f611558601e1e861af81a2ac5e294d60700e17b0d8a98cb8e7776e60114b9a6",
+    "review/outputs/C0-a.json": "55cb8bf0145838de5d91f60621379d04d7867c917d9ed1e4564e63c451e6aaac",
+    "review/outputs/C0-b.json": "31e2ee8cd33895ee46b36ecae0e788ff2808cee71f941b2db507551cf8bcde26",
+    "review/outputs/C0-judgment.json": "a5f94a21b8c43f57cc153b6f91ea0e8c954e465fcc64fde8b2040ebb39a6f6f0",
+    "review/outputs/C1-a.json": "d04d4e8881df51b9a91487a564f379a6d71dcba2b8d3525d52e51d3e085197b9",
+    "review/outputs/C1-b.json": "1ca03a43b6a5a820efcb68f643da15e869cd4e6c405de4922acee09b791e4d3a",
+    "review/outputs/C1-judgment.json": "9af6353aec9c86d8f132bcc47a2dfb58c0acb309c797cec34dec959f2a461c4d",
+    "review/outputs/C2-a.json": "59307d3d4a5c78c657b9283db6220a61988472d588c9db4a978e3ee712cddfc9",
+    "review/outputs/C2-b.json": "dadf2a96b83087b319a873634a7c591e2d13d86ada3445ec49a5db0fefabf39c",
+    "review/outputs/C2-judgment.json": "fd9ff0ed9c712b6f21b653b3db8d86cdad8c9116e466f57564fee7c333deeab4",
+    "review/outputs/check-c01.json": "c626b4b772c52c33ac8233ed89b6d381eab12892893ed6682349702e5a0f881b",
+    "review/outputs/check-c02.json": "4f82f49251535ac7c4261fe0d310b2c008f52fa2594ad4be3a0206a41c9e6e61",
+    "review/outputs/closing-audit.json": "03af30e009d5ca978988e03fae7558f9b379238fcfa328271fae06dd1a3d02a7",
+    "review/outputs/comparison.json": "f171e64a024fe4c1009ee288d80bcfa753d2029d9d22a92dd47eaf3dae34f1d5",
+    "review/outputs/mask-c01.json": "591a344069e0ff2ef6e9e147c12a9bd6f6d0b5cf9c603736c564e31abe904838",
+    "review/outputs/mask-c02.json": "fe528153725d93b016143c5f8c8477c054df402cffa89d0093c147d0cb41ce64",
+    "review/outputs/mask-c03.json": "33cbb3bc6e11e0e822963e9019ec1325feb5eb39e47fbc678c48a126bc2cd638",
+    "review/outputs/mask-c04.json": "1574dc82b70e91f5c52b5cf4b68556c5d2ced768a70efd46e52a12bf545db607",
+    "review/outputs/mask-c05.json": "828c13fc52498a6bcb7685af5b643f8df9acd4067039676b3ee396015e981635",
+    "review/outputs/mask-c06.json": "345e3a87bc131903ff37e12057e45eb437dc3b04573a93c397b939a0cf37bac1",
+    "review/outputs/mask-c07.json": "7fb61a8cc639a13379502abc51d86866f9cd12a38d7e5f9dd29e4841916ed2ab",
+    "review/outputs/mask-c08.json": "98105a3439e7e69d7928ab7dadb4dccbead452dfcb906b8289e3a02415711d08",
+    "review/proof-deletions.json": "62e542161bf744d50c8c8298673ad17975e237b3770a167cbffbc1e6737446cb",
+    "review/provisional-lock.json": "a6ba16da3ad908e21d600ae9c8dba1112f4055fa53f768096e5b74c750e50363",
+    "review/realism-final.json": "9075ffcf2590979900958a8610afc8a3b4523366ff8775a58c8ce004dcbd9655",
+    "review/realism-inconclusive.json": "d5ed74cbbe165532affe1bfae6ac3b282f98753c3ade265d58b40b237d473052",
+    "review/realism-initial.json": "eb5ec706cfeb465bb0902d39df1abc92600a69cfcbe5c373465df8b8e5ab2235",
+    "review/scored-targets.json": "c16da73d787a5fda51b89c051d82f8d534585b580566e20dcd43d9d78aa79d52",
+    "review/superseded/initial-source-inventory.json": "b5fec7c708511f614aa61a021534e094c931f2e153f3b2b89cb3d908a4b20231",
+    "review/superseded/r5n8.txt": "96dbc86afd16019170098f3069862847296b93be4a9bc2bd3318ab9638b146c3",
+    "../instructions/annotation.md": "beed73831f96c822eed28ac051c4ace0910d90cae606c9e86e35c5938d2255f5",
+    "../instructions/ontology.md": "6c280a20a9c945a8b34c5b19cf8550a3ab5283e030f50a98141808170e34c6c9"
+  }
+}

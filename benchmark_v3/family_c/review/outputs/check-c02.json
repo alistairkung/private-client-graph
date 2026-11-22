@@ -1,0 +1,185 @@
+{
+  "edges": [
+    ["Ellis Harnett", "settlor_of", "Alder Quay Settlement"],
+    ["Nell Carvane", "trustee_of", "Alder Quay Settlement"],
+    ["Tobin Rell", "trustee_of", "Alder Quay Settlement"],
+    ["Ione Berrick", "beneficiary_of", "Alder Quay Settlement"],
+    ["Emmett Vann", "beneficiary_of", "Alder Quay Settlement"],
+    ["Rhea Marden", "beneficiary_of", "Alder Quay Settlement"]
+  ],
+  "citation_reasons": {
+    "cut_off": "16:00 BST on 12 June 2026",
+    "edge_evidence": [
+      {
+        "edge": ["Ellis Harnett", "settlor_of", "Alder Quay Settlement"],
+        "reason": "The certified extract identifies both the settlement and its settlor. The later designation does not alter the parent deed except to add an object.",
+        "benchmark_v2_evidence_v1": {"quotation_and_attribution": "supported", "independent_source_ids": ["m4v7"]},
+        "attached_sufficient_set_v1": [
+          [
+            ["m4v7", "ALDER QUAY SETTLEMENT — CERTIFIED SELECTED-CLAUSE EXTRACT"],
+            ["m4v7", "Settlor: Ellis Harnett"]
+          ]
+        ]
+      },
+      {
+        "edge": ["Nell Carvane", "trustee_of", "Alder Quay Settlement"],
+        "reason": "The deed names Nell as an original trustee. The custody record corroborates continuation in office by recording her joint delivery with the other original trustee using the parent reference and instrument reference, the procedure the parent deed provides for the trustees. The original appointment alone is not a current-office certification; the custody record alone identifies Nell as a participant, not by office or by the settlement's full name.",
+        "benchmark_v2_evidence_v1": {"quotation": "N/A", "attribution": "N/A", "multiple_sources_required": true},
+        "attached_sufficient_set_v1": [
+          [
+            ["m4v7", "ALDER QUAY SETTLEMENT — CERTIFIED SELECTED-CLAUSE EXTRACT"],
+            ["m4v7", "Lodged parent deed reference: PD-6834-R\nSettlor: Ellis Harnett\nOriginal trustees: Nell Carvane and Tobin Rell"],
+            ["m4v7", "Where the trustees use the common deed custody service, they may identify the settlement at delivery by jointly stating its lodged parent reference and associating that reference with the unique reference written on the designation."],
+            ["r5n8", "Instrument reference: SD-Q7M2  \nParent deed reference: PD-6834-R\n\nAt 11:30 GMT on 26 March 2026, Nell Carvane and Tobin Rell attended together and released one signed paper original for immediate delivery as a deed, not in escrow. At handover, both confirmed the parent deed reference against the instrument reference on the face of the paper."]
+          ]
+        ]
+      },
+      {
+        "edge": ["Tobin Rell", "trustee_of", "Alder Quay Settlement"],
+        "reason": "The deed names Tobin as an original trustee. The custody record corroborates continuation in office by recording his joint delivery with the other original trustee using the parent reference and instrument reference. Neither the original listing nor the attendee entry alone independently establishes the current office.",
+        "benchmark_v2_evidence_v1": {"quotation": "N/A", "attribution": "N/A", "multiple_sources_required": true},
+        "attached_sufficient_set_v1": [
+          [
+            ["m4v7", "ALDER QUAY SETTLEMENT — CERTIFIED SELECTED-CLAUSE EXTRACT"],
+            ["m4v7", "Lodged parent deed reference: PD-6834-R\nSettlor: Ellis Harnett\nOriginal trustees: Nell Carvane and Tobin Rell"],
+            ["m4v7", "Where the trustees use the common deed custody service, they may identify the settlement at delivery by jointly stating its lodged parent reference and associating that reference with the unique reference written on the designation."],
+            ["r5n8", "Instrument reference: SD-Q7M2  \nParent deed reference: PD-6834-R\n\nAt 11:30 GMT on 26 March 2026, Nell Carvane and Tobin Rell attended together and released one signed paper original for immediate delivery as a deed, not in escrow. At handover, both confirmed the parent deed reference against the instrument reference on the face of the paper."]
+          ]
+        ]
+      },
+      {
+        "edge": ["Ione Berrick", "beneficiary_of", "Alder Quay Settlement"],
+        "reason": "The parent deed expressly names Ione as an original discretionary object. No supplied instrument displaces that provision; SD-Q7M2 expressly makes an addition only. Eligibility is not a payment entitlement.",
+        "benchmark_v2_evidence_v1": {"quotation_and_attribution": "supported", "independent_source_ids": ["m4v7"]},
+        "attached_sufficient_set_v1": [
+          [
+            ["m4v7", "ALDER QUAY SETTLEMENT — CERTIFIED SELECTED-CLAUSE EXTRACT"],
+            ["m4v7", "The original discretionary objects are Ione Berrick and Emmett Vann."]
+          ]
+        ]
+      },
+      {
+        "edge": ["Emmett Vann", "beneficiary_of", "Alder Quay Settlement"],
+        "reason": "The parent deed expressly names Emmett as an original discretionary object. No supplied instrument displaces that provision; SD-Q7M2 expressly makes an addition only. Eligibility is not a payment entitlement.",
+        "benchmark_v2_evidence_v1": {"quotation_and_attribution": "supported", "independent_source_ids": ["m4v7"]},
+        "attached_sufficient_set_v1": [
+          [
+            ["m4v7", "ALDER QUAY SETTLEMENT — CERTIFIED SELECTED-CLAUSE EXTRACT"],
+            ["m4v7", "The original discretionary objects are Ione Berrick and Emmett Vann."]
+          ]
+        ]
+      },
+      {
+        "edge": ["Rhea Marden", "beneficiary_of", "Alder Quay Settlement"],
+        "reason": "The proof works in both directions: the parent extract identifies Alder Quay as PD-6834-R, the custody record pairs PD-6834-R with SD-Q7M2 at immediate joint delivery, and the signed SD-Q7M2 names Rhea. Starting with Rhea's designation reaches the same settlement through the same references. The matching instrument references identify one instrument; they are not independent reports of Rhea's designation. The designation alone neither identifies the settlement nor proves delivery, and the custody record alone neither names Rhea nor states the instrument's terms.",
+        "benchmark_v2_evidence_v1": {"quotation": "N/A", "attribution": "N/A", "multiple_sources_required": true},
+        "attached_sufficient_set_v1": [
+          [
+            ["m4v7", "ALDER QUAY SETTLEMENT — CERTIFIED SELECTED-CLAUSE EXTRACT"],
+            ["m4v7", "Lodged parent deed reference: PD-6834-R\nSettlor: Ellis Harnett\nOriginal trustees: Nell Carvane and Tobin Rell"],
+            ["m4v7", "The trustees for the time being may, acting unanimously and without the settlor’s consent, add by deed any named living individual other than the settlor or a serving trustee. The designation takes effect on joint delivery as a deed.\n\nWhere the trustees use the common deed custody service, they may identify the settlement at delivery by jointly stating its lodged parent reference and associating that reference with the unique reference written on the designation."],
+            ["h6q3", "Instrument reference: SD-Q7M2\n\nRhea Marden, a living individual, is designated as an additional Object eligible for discretionary appointments of income and capital under the parent deed for which the trustees jointly deliver this instrument as a deed."],
+            ["h6q3", "Signed as a deed by Nell Carvane: [signed]  \nIn the presence of Della Pennick: [signed]\n\nSigned as a deed by Tobin Rell: [signed]  \nIn the presence of Della Pennick: [signed]"],
+            ["r5n8", "Instrument reference: SD-Q7M2  \nParent deed reference: PD-6834-R\n\nAt 11:30 GMT on 26 March 2026, Nell Carvane and Tobin Rell attended together and released one signed paper original for immediate delivery as a deed, not in escrow. At handover, both confirmed the parent deed reference against the instrument reference on the face of the paper."]
+          ]
+        ]
+      }
+    ],
+    "material_propositions": [
+      {
+        "proposition": "Alder Quay's parent deed identifies Ellis as settlor, Nell and Tobin as original trustees, and Ione and Emmett as original discretionary objects.",
+        "origin": "Parent deed PD-6834-R.",
+        "reporter": "The certified selected-clause extract addressed to Kit Wenslow, m4v7; the certifier is not named.",
+        "effective_date": "Deed dated 21 October 2022.",
+        "receipt_by_cut_off": "Included in the administered packet; no separate receipt timestamp is supplied.",
+        "competing_passages": [],
+        "disposition": "supported",
+        "reason": "The extract expressly states each original role. The later designation expressly preserves the original objects."
+      },
+      {
+        "proposition": "Nell and Tobin are supported as Alder Quay's serving trustees at the cut-off.",
+        "origin": "The original appointments in PD-6834-R and the later joint exercise of the deed's delivery procedure.",
+        "reporter": "m4v7 reports the original appointments; r5n8 records the joint handover; h6q3 separately shows both signatures on the designation.",
+        "effective_date": "Original appointments recorded in the deed dated 21 October 2022; later joint conduct on 26 March 2026.",
+        "receipt_by_cut_off": "All three records are included in the administered packet; no separate receipt timestamps are supplied.",
+        "competing_passages": [],
+        "disposition": "supported",
+        "reason": "The later conduct corroborates the original appointments. The descriptions 'Original trustees', signatories and attendees establish different facts; none is a separately dated certification of the trustee roster at the meeting."
+      },
+      {
+        "proposition": "SD-Q7M2 added Rhea as an Alder Quay discretionary object on joint delivery, not merely on signature.",
+        "origin": "The signed designation SD-Q7M2, operating under clause 6 of PD-6834-R.",
+        "reporter": "h6q3 shows the signed instrument and its terms; r5n8 records immediate joint delivery and the jointly confirmed reference pairing; m4v7 links the parent reference to Alder Quay and supplies the power.",
+        "effective_date": "11:30 GMT on 26 March 2026; the signature date is not supplied.",
+        "receipt_by_cut_off": "All three records are included in the administered packet; no separate receipt timestamps are supplied.",
+        "competing_passages": [],
+        "disposition": "supported",
+        "reason": "The delivery record establishes the operative event and identifies the otherwise unnamed parent deed. It records immediate delivery, not escrow. Clause 6 does not require the settlor's consent."
+      },
+      {
+        "proposition": "SD-Q7M2 removed an existing object, appointed property or directed payment.",
+        "origin": "A possible reading of the designation, not an assertion made by a source.",
+        "reporter": "h6q3 contains the operative limitation; m4v7 separately requires an appointment before an object is entitled to payment.",
+        "effective_date": "The designation's limited effect began on delivery on 26 March 2026.",
+        "receipt_by_cut_off": "Both records are included in the administered packet; no separate receipt timestamps are supplied.",
+        "competing_passages": [
+          ["h6q3", "This instrument makes that addition only. It does not remove any Object, appoint any property, direct any payment or alter any other provision of the parent deed."],
+          ["m4v7", "The trustees exercise their discretion over income and capital jointly. No object is entitled to a payment before an appointment is made in that object’s favour."]
+        ],
+        "disposition": "explicitly contradicted",
+        "reason": "The designation expressly excludes those effects. That does not rule out a separate appointment outside the packet."
+      }
+    ],
+    "other_recorded_facts": [
+      {
+        "fact": "Della Pennick is shown as the witness to both signatures on SD-Q7M2, not as a trustee or recorded handover attendee.",
+        "evidence": ["h6q3", "In the presence of Della Pennick: [signed]"]
+      },
+      {
+        "fact": "Kit Wenslow of Tarnstile Advisory is the addressee of the certified extract; this does not establish any trust office, payment authority or individual receipt timestamp.",
+        "evidence": ["m4v7", "To: Kit Wenslow, Tarnstile Advisory"]
+      }
+    ]
+  },
+  "unresolved": [
+    {
+      "settlement": "Alder Quay Settlement",
+      "proposition": "A separate appointment or payment authorisation was made for any object by the cut-off.",
+      "origin": "Would require a separate appointment or authorisation record.",
+      "reporter": "None in the supplied packet.",
+      "effective_date": "Unknown.",
+      "receipt_by_cut_off": "No such record is supplied.",
+      "competing_passages": [],
+      "disposition": "unresolved",
+      "reason": "The supplied file establishes eligibility for Ione Berrick, Emmett Vann and Rhea Marden, but establishes no authorised payment. Silence does not prove that none was authorised."
+    },
+    {
+      "settlement": "Flint Orchard Settlement",
+      "proposition": "The identities of its settlor, serving trustees and eligible objects, and the existence of any authorised payment.",
+      "origin": "The brief names the settlement; no governing or operative record for it is supplied.",
+      "reporter": "Neutral brief only.",
+      "effective_date": "Unknown.",
+      "receipt_by_cut_off": "No Flint Orchard instrument or administrative record is supplied.",
+      "competing_passages": [],
+      "disposition": "unresolved",
+      "reason": "No scored edge or payment authorisation is established for Flint Orchard. The Alder Quay reference pairing cannot be carried over to it."
+    }
+  ],
+  "follow_up": [
+    {
+      "settlement": "Alder Quay Settlement",
+      "checks": [
+        "Consider Ione Berrick, Emmett Vann and Rhea Marden as discretionary objects, not as payees already entitled to payment.",
+        "Ask the adviser to confirm the current trustee and object records against the complete deed and any later instruments, and to check for separate appointments, resolutions, payment instructions or outstanding commitments.",
+        "Before acting, confirm that the serving trustees make any new income or capital appointment jointly and record it separately from the beneficiary designation."
+      ]
+    },
+    {
+      "settlement": "Flint Orchard Settlement",
+      "checks": [
+        "Obtain its governing deed, amendments, current trustee and object records, and any appointment and payment records before deciding whom to consider or what may be paid.",
+        "Keep this decision separate; do not infer shared trustees, beneficiaries or payment authority from the fact that both settlements appear in the brief."
+      ]
+    }
+  ]
+}

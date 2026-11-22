@@ -1,0 +1,377 @@
+{
+  "schema_version": 1,
+  "family": "B",
+  "mode": "saved_ideal_replay",
+  "manifest_sha256": "ba9bad4f1c2dad88473daa24c5866697db16d2160f1c09c3b50bdd8a485fba0b",
+  "freeze_sha256": "61c04f2633929fae579d14b96c81b96d61b667f1273d6bd20280cf75519509d5",
+  "preview": {
+    "input_mode": "saved",
+    "execution_mode": "replay",
+    "resolver": "none",
+    "maximum_paid_slots": 0,
+    "planned_observations": 2,
+    "sourced_prompt_sha256": "d67afaeb19c26448a6779d9576800cc50ca399c634ad81a1a02b847be0a9dfae",
+    "inputs": [
+      {
+        "id": "benchmark_v3_b0",
+        "source_count": 7,
+        "ordered_sources_sha256": "715a74166e9ff8b063a7d3854498733f411f0c1050259f85843258c302997dde",
+        "source_body_sha256": {
+          "q7m4": "2cf83b8f63939664a328e35548e55f4cc1a323f7262ef6e95fff08b5db06065f",
+          "v2k9": "444f422a9c033fbe375abc9bcd48cac4d9cf8ea79e9a09497a5c1ab35c77e43d",
+          "r8c3": "8b45a81e24cbe5a8dfbc260a7482fc54394041648577c8488d2ec7ddfb45b59d",
+          "m5x7": "0e6192ce95f0881cf506616aff0910a12daabb5b61030ac1d24b4ba4f6b0fc95",
+          "h3p6": "77d768505ee666946a2c05e76a237568d524b3915f2bc925576e8d43ae561ce5",
+          "w9d2": "b8589a69f6b8d787de377533950a8102cab6ba7de1efc085027e960f2f8e0374",
+          "n4j8": "64f6b3e26954bea8e395b91411a147d17074543437d2a5392c34639ecee5f97f"
+        },
+        "messages_sha256": "cc027f5fdec47d4a36fe61b02b2375b35846e4d9049ab0bdedcef70d99ae63bd",
+        "message_bytes": 8861,
+        "estimated_message_tokens": 2216
+      },
+      {
+        "id": "benchmark_v3_b1",
+        "source_count": 7,
+        "ordered_sources_sha256": "6bd40b894f21964ebe9e9438651e0458bf4b0a8e67c2bc74ebfcf6c70d76123b",
+        "source_body_sha256": {
+          "q7m4": "2cf83b8f63939664a328e35548e55f4cc1a323f7262ef6e95fff08b5db06065f",
+          "v2k9": "444f422a9c033fbe375abc9bcd48cac4d9cf8ea79e9a09497a5c1ab35c77e43d",
+          "r8c3": "8b45a81e24cbe5a8dfbc260a7482fc54394041648577c8488d2ec7ddfb45b59d",
+          "m5x7": "6368ca670972498e261b7897b52f4564e5323658eaf421d3f106341f161671a3",
+          "h3p6": "77d768505ee666946a2c05e76a237568d524b3915f2bc925576e8d43ae561ce5",
+          "w9d2": "b8589a69f6b8d787de377533950a8102cab6ba7de1efc085027e960f2f8e0374",
+          "n4j8": "64f6b3e26954bea8e395b91411a147d17074543437d2a5392c34639ecee5f97f"
+        },
+        "messages_sha256": "b3bd404d021030da2bbdcd48b07dc02e83582a1ea1610033ce8c24207825bdf6",
+        "message_bytes": 8866,
+        "estimated_message_tokens": 2217
+      }
+    ],
+    "token_estimate": "Ceiling of UTF-8 message bytes divided by four, excluding schema and framing."
+  },
+  "paid_attempts": 0,
+  "run_path": "run",
+  "run_artifact_digest": "7b5ff24eca44d7916c690588156c4c5c23ba4595356f369dfa1049403b2e7b83",
+  "aggregate": {
+    "coverage": {
+      "planned": 2,
+      "scored": 2,
+      "pending": 0,
+      "failed": 0,
+      "uncertain": 0,
+      "unavailable": 0
+    },
+    "tp": 3,
+    "fp": 0,
+    "fn": 0,
+    "micro_precision": 1.0,
+    "micro_recall": 1.0,
+    "micro_f1": 1.0
+  },
+  "conditions": [
+    {
+      "condition": "B0",
+      "sample_id": "benchmark_v3_b0",
+      "condition_sha256": "bfba2ac182a66c3ab8429ec909d207a1755d02c28bde5b1e6742712ca1ac9597",
+      "ordered_sources_sha256": "715a74166e9ff8b063a7d3854498733f411f0c1050259f85843258c302997dde",
+      "annotation_sha256": {
+        "truth": "bfcdeb9105199883178b88487dbbf0eb7c40404591cc54e946adf54912d171de",
+        "source_approval": "3b926adb89c0c2cf32b2f01c2ea3b9454914bfe43d35f9c9726168972b91daf2",
+        "sufficient_evidence": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "planned": 1,
+      "attempted": 1,
+      "scored": 1,
+      "exact_graph": true,
+      "graph": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "true_positive_edges": [
+          [
+            "Ivor Ellis Kestell",
+            "parent_of",
+            "Tamsin Vera Kestell"
+          ]
+        ],
+        "false_positive_edges": [],
+        "false_negative_edges": [],
+        "provenance_passed": 1,
+        "provenance_failed": 0,
+        "provenance_accuracy": 1.0,
+        "provenance_passes": [
+          [
+            "Ivor Ellis Kestell",
+            "parent_of",
+            "Tamsin Vera Kestell"
+          ]
+        ],
+        "provenance_failures": []
+      },
+      "decisions": {
+        "required": [],
+        "forbidden": [
+          [
+            "Kellan Hugh Sorrel",
+            "parent_of",
+            "Leonie Tess Rindle"
+          ],
+          [
+            "Kellan Hugh Sorrel",
+            "parent_of",
+            "Nella Ruth Verrow"
+          ]
+        ],
+        "unaffected": [
+          [
+            "Ivor Ellis Kestell",
+            "parent_of",
+            "Tamsin Vera Kestell"
+          ]
+        ],
+        "required_present": [],
+        "forbidden_present": [],
+        "unaffected_present": [
+          [
+            "Ivor Ellis Kestell",
+            "parent_of",
+            "Tamsin Vera Kestell"
+          ]
+        ]
+      },
+      "ordinary_evidence": {
+        "version": "benchmark_v2_evidence_v1",
+        "not_applicable": [],
+        "quotation": {
+          "assessed": 1,
+          "passed": 1,
+          "failed": 0,
+          "accuracy": 1.0,
+          "passes": [
+            [
+              "Ivor Ellis Kestell",
+              "parent_of",
+              "Tamsin Vera Kestell"
+            ]
+          ],
+          "failures": []
+        },
+        "source_attribution": {
+          "version": "source_attribution_v1",
+          "assessed": 1,
+          "passed": 1,
+          "failed": 0,
+          "accuracy": 1.0,
+          "failures": []
+        },
+        "sufficiency": {
+          "version": "attached_sufficient_set_v1",
+          "planned": 0,
+          "assessed": 0,
+          "complete": 0,
+          "incomplete": 0,
+          "missed": 0,
+          "complete_over_correct": null,
+          "complete_over_planned": null,
+          "targets": []
+        }
+      },
+      "legacy_source_attribution": {
+        "version": "source_attribution_v1",
+        "assessed": 1,
+        "passed": 1,
+        "failed": 0,
+        "accuracy": 1.0,
+        "failures": []
+      },
+      "runtime_seconds": 0.0003894579131156206,
+      "usage": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "cached_tokens": 0
+      },
+      "incremental_cost": 0.0
+    },
+    {
+      "condition": "B1",
+      "sample_id": "benchmark_v3_b1",
+      "condition_sha256": "72a246520d853efcf6d69dc68125f3e85e65b9578e1bbff2b0a738e12e3aa25f",
+      "ordered_sources_sha256": "6bd40b894f21964ebe9e9438651e0458bf4b0a8e67c2bc74ebfcf6c70d76123b",
+      "annotation_sha256": {
+        "truth": "1905555f6258919387bbf068f27dbaa384e2014b1fa7dd3d325b583b8df04cc5",
+        "source_approval": "3b926adb89c0c2cf32b2f01c2ea3b9454914bfe43d35f9c9726168972b91daf2",
+        "sufficient_evidence": "6de4dfa2e51bd07f9f54ec52809feeb73bfdf523874e256efe59fdf2f6b926bb"
+      },
+      "planned": 1,
+      "attempted": 1,
+      "scored": 1,
+      "exact_graph": true,
+      "graph": {
+        "tp": 2,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "true_positive_edges": [
+          [
+            "Ivor Ellis Kestell",
+            "parent_of",
+            "Tamsin Vera Kestell"
+          ],
+          [
+            "Kellan Hugh Sorrel",
+            "parent_of",
+            "Leonie Tess Rindle"
+          ]
+        ],
+        "false_positive_edges": [],
+        "false_negative_edges": [],
+        "provenance_passed": 1,
+        "provenance_failed": 1,
+        "provenance_accuracy": 0.5,
+        "provenance_passes": [
+          [
+            "Ivor Ellis Kestell",
+            "parent_of",
+            "Tamsin Vera Kestell"
+          ]
+        ],
+        "provenance_failures": [
+          [
+            "Kellan Hugh Sorrel",
+            "parent_of",
+            "Leonie Tess Rindle"
+          ]
+        ]
+      },
+      "decisions": {
+        "required": [
+          [
+            "Kellan Hugh Sorrel",
+            "parent_of",
+            "Leonie Tess Rindle"
+          ]
+        ],
+        "forbidden": [
+          [
+            "Kellan Hugh Sorrel",
+            "parent_of",
+            "Nella Ruth Verrow"
+          ]
+        ],
+        "unaffected": [
+          [
+            "Ivor Ellis Kestell",
+            "parent_of",
+            "Tamsin Vera Kestell"
+          ]
+        ],
+        "required_present": [
+          [
+            "Kellan Hugh Sorrel",
+            "parent_of",
+            "Leonie Tess Rindle"
+          ]
+        ],
+        "forbidden_present": [],
+        "unaffected_present": [
+          [
+            "Ivor Ellis Kestell",
+            "parent_of",
+            "Tamsin Vera Kestell"
+          ]
+        ]
+      },
+      "ordinary_evidence": {
+        "version": "benchmark_v2_evidence_v1",
+        "not_applicable": [
+          [
+            "Kellan Hugh Sorrel",
+            "parent_of",
+            "Leonie Tess Rindle"
+          ]
+        ],
+        "quotation": {
+          "assessed": 1,
+          "passed": 1,
+          "failed": 0,
+          "accuracy": 1.0,
+          "passes": [
+            [
+              "Ivor Ellis Kestell",
+              "parent_of",
+              "Tamsin Vera Kestell"
+            ]
+          ],
+          "failures": []
+        },
+        "source_attribution": {
+          "version": "source_attribution_v1",
+          "assessed": 1,
+          "passed": 1,
+          "failed": 0,
+          "accuracy": 1.0,
+          "failures": []
+        },
+        "sufficiency": {
+          "version": "attached_sufficient_set_v1",
+          "planned": 1,
+          "assessed": 1,
+          "complete": 1,
+          "incomplete": 0,
+          "missed": 0,
+          "complete_over_correct": 1.0,
+          "complete_over_planned": 1.0,
+          "targets": [
+            {
+              "edge": [
+                "Kellan Hugh Sorrel",
+                "parent_of",
+                "Leonie Tess Rindle"
+              ],
+              "status": "complete",
+              "missing_by_alternative": []
+            }
+          ]
+        }
+      },
+      "legacy_source_attribution": null,
+      "runtime_seconds": 8.683302439749241e-05,
+      "usage": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "cached_tokens": 0
+      },
+      "incremental_cost": 0.0
+    }
+  ],
+  "matches": {
+    "B1": {
+      "pair": [
+        "B0",
+        "B1"
+      ],
+      "passed": true,
+      "removed": [],
+      "added": [
+        [
+          "Kellan Hugh Sorrel",
+          "parent_of",
+          "Leonie Tess Rindle"
+        ]
+      ],
+      "unaffected": [
+        [
+          "Ivor Ellis Kestell",
+          "parent_of",
+          "Tamsin Vera Kestell"
+        ]
+      ],
+      "changed_source_id": "m5x7"
+    }
+  }
+}

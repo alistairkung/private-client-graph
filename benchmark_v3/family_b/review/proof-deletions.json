@@ -1,0 +1,39 @@
+[
+  {
+    "case": "B1",
+    "edge": [
+      "Kellan Hugh Sorrel",
+      "parent_of",
+      "Leonie Tess Rindle"
+    ],
+    "full_read": "check-b01",
+    "alternative": [
+      {
+        "source_id": "r8c3",
+        "supporting_text": "Conversation reference: DP-7316\nDate approved: 12 March 2026\nConversation start: 11:20\n\nKellan Hugh Sorrel is my father."
+      },
+      {
+        "source_id": "m5x7",
+        "supporting_text": "Reference: DP-7316  \nSession: 12 March 2026 at 11:20  \nAttendees: 1  \nCurrent full name: Leonie Tess Rindle\n\nEach reference belongs to one conversation and is the reference printed on the text issued to the attendee. When completed, the name field records the checked-in attendee’s current full name, copied from the check-in record."
+      }
+    ],
+    "deletions": [
+      {
+        "removed_source": "r8c3",
+        "survivor_sources": [
+          "m5x7"
+        ],
+        "evidence_container": "mask-b01",
+        "passed": true
+      },
+      {
+        "removed_source": "m5x7",
+        "survivor_sources": [
+          "r8c3"
+        ],
+        "evidence_container": "mask-b02",
+        "passed": true
+      }
+    ]
+  }
+]

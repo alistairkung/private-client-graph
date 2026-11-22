@@ -1,0 +1,160 @@
+{
+  "edges": [
+    ["Cora Teague", "settlor_of", "Flint Orchard Settlement"],
+    ["Nell Carvane", "trustee_of", "Flint Orchard Settlement"],
+    ["Tobin Rell", "trustee_of", "Flint Orchard Settlement"],
+    ["Ione Berrick", "beneficiary_of", "Flint Orchard Settlement"],
+    ["Orla Penrick", "beneficiary_of", "Flint Orchard Settlement"],
+    ["Rhea Marden", "beneficiary_of", "Flint Orchard Settlement"]
+  ],
+  "citation_reasons": {
+    "cut_off": "16:00 BST on 12 June 2026. All three extracts are in the supplied cut-off file; their individual receipt times are not stated. The handover time in r5n8 is an event time, not a file-receipt time.",
+    "record_origins": {
+      "x2c9": "Parent deed extract, dated 21 October 2022. It identifies the settlement, its settlor and original trustees, its named Objects, and the rules for discretionary appointments and additions. No separate extract reporter is identified.",
+      "h6q3": "Supplemental designation signed by Nell Carvane and Tobin Rell, with Della Pennick signing as witness to each. It identifies the instrument and its intended addition, but does not name the parent settlement or establish that delivery occurred. No separate extract reporter or signing date is stated.",
+      "r5n8": "Handover record reporting the two signatories' joint release and confirmation of the reference match at 11:30 GMT on 26 March 2026. The reporter is not named. The record identifies the delivery event and the linked references, but does not state the designation's substantive terms."
+    },
+    "by_edge": [
+      {
+        "edge": ["Cora Teague", "settlor_of", "Flint Orchard Settlement"],
+        "status": "supported",
+        "reason": "The parent deed expressly names the settlor and settlement. Neither later extract makes a competing claim.",
+        "benchmark_v2_evidence_v1": {"quotation_and_attribution": "x2c9 independently supports the edge through the passage in the attached set."},
+        "minimum_sufficient_sets": [
+          {
+            "attached_sufficient_set_v1": true,
+            "pairs": [
+              ["x2c9", "Settlement: Flint Orchard Settlement\nDeed date: 21 October 2022\nLodged parent deed reference: PD-6894-R\nSettlor: Cora Teague"]
+            ]
+          }
+        ]
+      },
+      {
+        "edge": ["Nell Carvane", "trustee_of", "Flint Orchard Settlement"],
+        "status": "supported",
+        "reason": "The parent deed establishes original office, not continuing office on its own. The designation and linked handover show Nell Carvane acting jointly with Tobin Rell in the trustee-only addition procedure for this settlement on 26 March 2026. No competing appointment or cessation is recorded by the cut-off. The handover alone shows participation, not the capacity in which she acted.",
+        "benchmark_v2_evidence_v1": {"quotation": "N/A", "attribution": "N/A"},
+        "minimum_sufficient_sets": [
+          {
+            "attached_sufficient_set_v1": true,
+            "pairs": [
+              ["x2c9", "Settlement: Flint Orchard Settlement\nDeed date: 21 October 2022\nLodged parent deed reference: PD-6894-R\nSettlor: Cora Teague\nOriginal trustees: Nell Carvane and Tobin Rell"],
+              ["x2c9", "Clause 8 — Addition of Objects\nAll serving trustees, acting together, may by deed add any named living individual other than the settlor or a serving trustee. No other person’s consent is required.\n\nAn addition takes effect when the trustees jointly deliver the designation as a deed. On delivery through the common custody service, the trustees may identify the settlement by giving its lodged parent deed reference against the unique reference written on the designation."],
+              ["h6q3", "Instrument reference: SD-Q7M2  \n\nRhea Marden, a living individual, is designated as an additional Object eligible for discretionary appointments of income and capital under the parent deed for which the trustees jointly deliver this instrument as a deed."],
+              ["h6q3", "Signed as a deed by Nell Carvane: [signed]  \nIn the presence of Della Pennick: [signed]\n\nSigned as a deed by Tobin Rell: [signed]  \nIn the presence of Della Pennick: [signed]"],
+              ["r5n8", "Instrument reference: SD-Q7M2  \nParent deed reference: PD-6894-R\n\nAt 11:30 GMT on 26 March 2026, Nell Carvane and Tobin Rell attended together and released one signed paper original for immediate delivery as a deed, not in escrow. At handover, both confirmed the parent deed reference against the instrument reference on the face of the paper."]
+            ]
+          }
+        ]
+      },
+      {
+        "edge": ["Tobin Rell", "trustee_of", "Flint Orchard Settlement"],
+        "status": "supported",
+        "reason": "The parent deed establishes original office, not continuing office on its own. The designation and linked handover show Tobin Rell acting jointly with Nell Carvane in the trustee-only addition procedure for this settlement on 26 March 2026. No competing appointment or cessation is recorded by the cut-off. The handover alone shows participation, not the capacity in which he acted.",
+        "benchmark_v2_evidence_v1": {"quotation": "N/A", "attribution": "N/A"},
+        "minimum_sufficient_sets": [
+          {
+            "attached_sufficient_set_v1": true,
+            "pairs": [
+              ["x2c9", "Settlement: Flint Orchard Settlement\nDeed date: 21 October 2022\nLodged parent deed reference: PD-6894-R\nSettlor: Cora Teague\nOriginal trustees: Nell Carvane and Tobin Rell"],
+              ["x2c9", "Clause 8 — Addition of Objects\nAll serving trustees, acting together, may by deed add any named living individual other than the settlor or a serving trustee. No other person’s consent is required.\n\nAn addition takes effect when the trustees jointly deliver the designation as a deed. On delivery through the common custody service, the trustees may identify the settlement by giving its lodged parent deed reference against the unique reference written on the designation."],
+              ["h6q3", "Instrument reference: SD-Q7M2  \n\nRhea Marden, a living individual, is designated as an additional Object eligible for discretionary appointments of income and capital under the parent deed for which the trustees jointly deliver this instrument as a deed."],
+              ["h6q3", "Signed as a deed by Nell Carvane: [signed]  \nIn the presence of Della Pennick: [signed]\n\nSigned as a deed by Tobin Rell: [signed]  \nIn the presence of Della Pennick: [signed]"],
+              ["r5n8", "Instrument reference: SD-Q7M2  \nParent deed reference: PD-6894-R\n\nAt 11:30 GMT on 26 March 2026, Nell Carvane and Tobin Rell attended together and released one signed paper original for immediate delivery as a deed, not in escrow. At handover, both confirmed the parent deed reference against the instrument reference on the face of the paper."]
+            ]
+          }
+        ]
+      },
+      {
+        "edge": ["Ione Berrick", "beneficiary_of", "Flint Orchard Settlement"],
+        "status": "supported",
+        "reason": "Clause 2 names Ione Berrick as an Object of the 21 October 2022 deed. The later designation expressly removes no Object; its omission of Ione Berrick is not a competing claim. Object status establishes eligibility, not a right to payment.",
+        "benchmark_v2_evidence_v1": {"quotation_and_attribution": "x2c9 independently supports the edge through the passages in the attached set."},
+        "minimum_sufficient_sets": [
+          {
+            "attached_sufficient_set_v1": true,
+            "pairs": [
+              ["x2c9", "Settlement: Flint Orchard Settlement"],
+              ["x2c9", "Clause 2 — Objects\nThe named Objects are Ione Berrick and Orla Penrick."]
+            ]
+          }
+        ]
+      },
+      {
+        "edge": ["Orla Penrick", "beneficiary_of", "Flint Orchard Settlement"],
+        "status": "supported",
+        "reason": "Clause 2 names Orla Penrick as an Object of the 21 October 2022 deed. The later designation expressly removes no Object; its omission of Orla Penrick is not a competing claim. Object status establishes eligibility, not a right to payment.",
+        "benchmark_v2_evidence_v1": {"quotation_and_attribution": "x2c9 independently supports the edge through the passages in the attached set."},
+        "minimum_sufficient_sets": [
+          {
+            "attached_sufficient_set_v1": true,
+            "pairs": [
+              ["x2c9", "Settlement: Flint Orchard Settlement"],
+              ["x2c9", "Clause 2 — Objects\nThe named Objects are Ione Berrick and Orla Penrick."]
+            ]
+          }
+        ]
+      },
+      {
+        "edge": ["Rhea Marden", "beneficiary_of", "Flint Orchard Settlement"],
+        "status": "supported",
+        "reason": "The designation names Rhea Marden, the handover links SD-Q7M2 to PD-6894-R and records immediate joint delivery as a deed at 11:30 GMT on 26 March 2026, and the parent deed identifies PD-6894-R as Flint Orchard Settlement and makes joint delivery effective. The original Objects list predates and does not contradict this addition. Signing alone would not make the addition effective; a reference match alone would not establish whom the instrument adds.",
+        "benchmark_v2_evidence_v1": {"quotation": "N/A", "attribution": "N/A"},
+        "minimum_sufficient_sets": [
+          {
+            "attached_sufficient_set_v1": true,
+            "pairs": [
+              ["x2c9", "Settlement: Flint Orchard Settlement\nDeed date: 21 October 2022\nLodged parent deed reference: PD-6894-R\nSettlor: Cora Teague\nOriginal trustees: Nell Carvane and Tobin Rell"],
+              ["x2c9", "Clause 8 — Addition of Objects\nAll serving trustees, acting together, may by deed add any named living individual other than the settlor or a serving trustee. No other person’s consent is required.\n\nAn addition takes effect when the trustees jointly deliver the designation as a deed. On delivery through the common custody service, the trustees may identify the settlement by giving its lodged parent deed reference against the unique reference written on the designation."],
+              ["h6q3", "Instrument reference: SD-Q7M2  \n\nRhea Marden, a living individual, is designated as an additional Object eligible for discretionary appointments of income and capital under the parent deed for which the trustees jointly deliver this instrument as a deed."],
+              ["h6q3", "Signed as a deed by Nell Carvane: [signed]  \nIn the presence of Della Pennick: [signed]\n\nSigned as a deed by Tobin Rell: [signed]  \nIn the presence of Della Pennick: [signed]"],
+              ["r5n8", "Instrument reference: SD-Q7M2  \nParent deed reference: PD-6894-R\n\nAt 11:30 GMT on 26 March 2026, Nell Carvane and Tobin Rell attended together and released one signed paper original for immediate delivery as a deed, not in escrow. At handover, both confirmed the parent deed reference against the instrument reference on the face of the paper."]
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "unresolved": {
+    "settlements_in_decision_order": [
+      {
+        "settlement": "Alder Quay Settlement",
+        "status": "unresolved",
+        "eligibility": "No supplied extract identifies an eligible person or officeholder for this settlement.",
+        "payment": "No payment authority is evidenced. The absence of Alder Quay records does not establish that it has no beneficiaries or prior authorisations."
+      },
+      {
+        "settlement": "Flint Orchard Settlement",
+        "eligibility": "Ione Berrick, Orla Penrick and Rhea Marden may be considered for discretionary appointments of income and capital on the supplied record.",
+        "payment": "No payment authorisation is evidenced for any of them. Whether a separate authorisation exists is unresolved."
+      }
+    ],
+    "companion_register": [
+      {
+        "proposition": "Flint Orchard trustees act together over income and capital and may apply funds directly for an Object's benefit.",
+        "status": "supported",
+        "reason": "Clause 5 of x2c9 states the power and says eligibility alone creates no right to payment. No later extract changes it."
+      },
+      {
+        "proposition": "SD-Q7M2 removed existing Objects, appointed property or directed a payment on delivery.",
+        "status": "explicitly contradicted",
+        "reason": "h6q3 expressly limits the instrument to the addition and disclaims removal, appointment of property and payment direction. r5n8 records delivery, not a distribution decision."
+      },
+      {
+        "proposition": "Della Pennick witnessed the two signatures.",
+        "status": "supported",
+        "reason": "h6q3 records her signatures as witness. It does not establish trustee office, a consent role, payment authority or attendance at handover."
+      },
+      {
+        "proposition": "There is a family relationship between any named people, or any Flint Orchard relationship also applies to Alder Quay.",
+        "status": "unresolved",
+        "reason": "The packet supplies no explicit family or cross-settlement link. Joint office, joint attendance and appearance in the same instrument do not prove one."
+      }
+    ]
+  },
+  "follow_up": [
+    "Alder Quay Settlement: Obtain its governing deed, amendments, current trustee and eligibility records, and any existing appointment or payment authorisation before considering a distribution.",
+    "Flint Orchard Settlement: Confirm that the executed original and custody record match the references, that Nell Carvane and Tobin Rell were all the serving trustees at delivery, and that no later instrument changed the trustee or Object list.",
+    "Flint Orchard Settlement: Check for any separate existing appointment or payment authority. If the trustees decide to make a new distribution, record their joint decision, the amount, and how the funds will be applied for the selected Object's benefit."
+  ]
+}

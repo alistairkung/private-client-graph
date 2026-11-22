@@ -1,0 +1,1341 @@
+{
+  "schema_version": 1,
+  "family": "C",
+  "mode": "saved_ideal_replay",
+  "manifest_sha256": "03d8c25c36767fda54ab3f8430eb0f2d9c31845d55a27b68d02ab2d43dcb2868",
+  "freeze_sha256": "26768473a68e3bdf4c324f30be4e2b0b7b316bde3f5605fcfabcdb12049eeebd",
+  "preview": {
+    "input_mode": "saved",
+    "execution_mode": "replay",
+    "resolver": "none",
+    "maximum_paid_slots": 0,
+    "planned_observations": 3,
+    "sourced_prompt_sha256": "d67afaeb19c26448a6779d9576800cc50ca399c634ad81a1a02b847be0a9dfae",
+    "inputs": [
+      {
+        "id": "benchmark_v3_c0",
+        "source_count": 7,
+        "ordered_sources_sha256": "afaa100061091a755beee91d7f489d28acb61b6c88295c85451cb16d5a412595",
+        "source_body_sha256": {
+          "j8f2": "0a3de23a5c3d1726751ee221d9980c7421daac14c3052d3da79eed58ffbb6b2e",
+          "m4v7": "848bad303b20c87a568c670dbfcc32a401968969fa7e1f9f9efa664660293540",
+          "x2c9": "9ab5dd4bb7775c85a6d98152da85542a79db752d4a98e9e1896ba70d6cfc21a8",
+          "h6q3": "4941945ebd3f81fd804eed33ab25ca58f83af3712bdc8016bbd1c92e0edf95f0",
+          "r5n8": "ae5a4d8b2958fceb497f3f538d42d972717397f5583ce90f3296c5995f2163c9",
+          "b9k4": "8d4ee6d2efdbcdb653f5082cc4ec391fcc5807a29aec9a6a07aa4a1c0d6c9a28",
+          "t3w6": "739d9069e354dc87f68eeff2eaeb6dbfbb9334566b1a29301352a02ff75b6bcb"
+        },
+        "messages_sha256": "57893b649f50a31aadd9c62c92cb4ca86f479fb31eebd9878dc99e8b85f4f8eb",
+        "message_bytes": 11840,
+        "estimated_message_tokens": 2960
+      },
+      {
+        "id": "benchmark_v3_c1",
+        "source_count": 7,
+        "ordered_sources_sha256": "4c965cca6f918cda1fd7dc7867071df397c8d041509985bbc95595c661bc8a95",
+        "source_body_sha256": {
+          "j8f2": "0a3de23a5c3d1726751ee221d9980c7421daac14c3052d3da79eed58ffbb6b2e",
+          "m4v7": "848bad303b20c87a568c670dbfcc32a401968969fa7e1f9f9efa664660293540",
+          "x2c9": "9ab5dd4bb7775c85a6d98152da85542a79db752d4a98e9e1896ba70d6cfc21a8",
+          "h6q3": "4941945ebd3f81fd804eed33ab25ca58f83af3712bdc8016bbd1c92e0edf95f0",
+          "r5n8": "b8ab655e4863d67df53527ade99d2ab1f6a3ae3e7c940b234e1eda546f0380a7",
+          "b9k4": "8d4ee6d2efdbcdb653f5082cc4ec391fcc5807a29aec9a6a07aa4a1c0d6c9a28",
+          "t3w6": "739d9069e354dc87f68eeff2eaeb6dbfbb9334566b1a29301352a02ff75b6bcb"
+        },
+        "messages_sha256": "01b508f93381e3cddbb8341b81bc2559d999203214cbfe4da62c4b7fa0f637b3",
+        "message_bytes": 11840,
+        "estimated_message_tokens": 2960
+      },
+      {
+        "id": "benchmark_v3_c2",
+        "source_count": 7,
+        "ordered_sources_sha256": "b63c713b695910d4fcb87ccdbe96b8093cf6144118b95251c03a6746352c1da1",
+        "source_body_sha256": {
+          "j8f2": "0a3de23a5c3d1726751ee221d9980c7421daac14c3052d3da79eed58ffbb6b2e",
+          "m4v7": "848bad303b20c87a568c670dbfcc32a401968969fa7e1f9f9efa664660293540",
+          "x2c9": "9ab5dd4bb7775c85a6d98152da85542a79db752d4a98e9e1896ba70d6cfc21a8",
+          "h6q3": "4941945ebd3f81fd804eed33ab25ca58f83af3712bdc8016bbd1c92e0edf95f0",
+          "r5n8": "509fc3e43acfa5735df97df983332617ca7509e9d31fc0a91f515b87bcf9c893",
+          "b9k4": "8d4ee6d2efdbcdb653f5082cc4ec391fcc5807a29aec9a6a07aa4a1c0d6c9a28",
+          "t3w6": "739d9069e354dc87f68eeff2eaeb6dbfbb9334566b1a29301352a02ff75b6bcb"
+        },
+        "messages_sha256": "b675266d1269483e71bfd8512d6eadc281567df0f56727360ec5dc311436bd3c",
+        "message_bytes": 11840,
+        "estimated_message_tokens": 2960
+      }
+    ],
+    "token_estimate": "Ceiling of UTF-8 message bytes divided by four, excluding schema and framing."
+  },
+  "paid_attempts": 0,
+  "run_path": "run",
+  "run_artifact_digest": "7e97e5d11f45a54aa8b1efc1a25c7ac8b8b06872a7f8716164e5a3a3ade10a20",
+  "aggregate": {
+    "coverage": {
+      "planned": 3,
+      "scored": 3,
+      "pending": 0,
+      "failed": 0,
+      "uncertain": 0,
+      "unavailable": 0
+    },
+    "tp": 32,
+    "fp": 0,
+    "fn": 0,
+    "micro_precision": 1.0,
+    "micro_recall": 1.0,
+    "micro_f1": 1.0
+  },
+  "conditions": [
+    {
+      "condition": "C0",
+      "sample_id": "benchmark_v3_c0",
+      "condition_sha256": "eca67f9b3d07d826326e9688fd32bf054787f3c2de9257aebce1b2639e3ed17e",
+      "ordered_sources_sha256": "afaa100061091a755beee91d7f489d28acb61b6c88295c85451cb16d5a412595",
+      "annotation_sha256": {
+        "truth": "bd070a38a903932f61a325deb049913bc1f82aab872aaa69f80beb5132dbe0f4",
+        "source_approval": "2b01448c569684174cb65a2051be8cb9d0cfc10d9f3923732dfafebc8bb5800c",
+        "sufficient_evidence": "c169896b833b54a43f85cd9ff049d7ec74c6dbd2dd365488738a8649adce25d5"
+      },
+      "planned": 1,
+      "attempted": 1,
+      "scored": 1,
+      "exact_graph": true,
+      "graph": {
+        "tp": 11,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "true_positive_edges": [
+          [
+            "Cora Teague",
+            "settlor_of",
+            "Flint Orchard Settlement"
+          ],
+          [
+            "Ellis Harnett",
+            "settlor_of",
+            "Alder Quay Settlement"
+          ],
+          [
+            "Emmett Vann",
+            "beneficiary_of",
+            "Alder Quay Settlement"
+          ],
+          [
+            "Ione Berrick",
+            "beneficiary_of",
+            "Alder Quay Settlement"
+          ],
+          [
+            "Ione Berrick",
+            "beneficiary_of",
+            "Flint Orchard Settlement"
+          ],
+          [
+            "Nell Carvane",
+            "trustee_of",
+            "Alder Quay Settlement"
+          ],
+          [
+            "Nell Carvane",
+            "trustee_of",
+            "Flint Orchard Settlement"
+          ],
+          [
+            "Orla Penrick",
+            "beneficiary_of",
+            "Flint Orchard Settlement"
+          ],
+          [
+            "Rhea Marden",
+            "beneficiary_of",
+            "Flint Orchard Settlement"
+          ],
+          [
+            "Tobin Rell",
+            "trustee_of",
+            "Alder Quay Settlement"
+          ],
+          [
+            "Tobin Rell",
+            "trustee_of",
+            "Flint Orchard Settlement"
+          ]
+        ],
+        "false_positive_edges": [],
+        "false_negative_edges": [],
+        "provenance_passed": 10,
+        "provenance_failed": 1,
+        "provenance_accuracy": 0.9090909090909091,
+        "provenance_passes": [
+          [
+            "Cora Teague",
+            "settlor_of",
+            "Flint Orchard Settlement"
+          ],
+          [
+            "Ellis Harnett",
+            "settlor_of",
+            "Alder Quay Settlement"
+          ],
+          [
+            "Emmett Vann",
+            "beneficiary_of",
+            "Alder Quay Settlement"
+          ],
+          [
+            "Ione Berrick",
+            "beneficiary_of",
+            "Alder Quay Settlement"
+          ],
+          [
+            "Ione Berrick",
+            "beneficiary_of",
+            "Flint Orchard Settlement"
+          ],
+          [
+            "Nell Carvane",
+            "trustee_of",
+            "Alder Quay Settlement"
+          ],
+          [
+            "Nell Carvane",
+            "trustee_of",
+            "Flint Orchard Settlement"
+          ],
+          [
+            "Orla Penrick",
+            "beneficiary_of",
+            "Flint Orchard Settlement"
+          ],
+          [
+            "Tobin Rell",
+            "trustee_of",
+            "Alder Quay Settlement"
+          ],
+          [
+            "Tobin Rell",
+            "trustee_of",
+            "Flint Orchard Settlement"
+          ]
+        ],
+        "provenance_failures": [
+          [
+            "Rhea Marden",
+            "beneficiary_of",
+            "Flint Orchard Settlement"
+          ]
+        ]
+      },
+      "decisions": {
+        "required": [
+          [
+            "Rhea Marden",
+            "beneficiary_of",
+            "Flint Orchard Settlement"
+          ]
+        ],
+        "forbidden": [
+          [
+            "Rhea Marden",
+            "beneficiary_of",
+            "Alder Quay Settlement"
+          ]
+        ],
+        "unaffected": [
+          [
+            "Cora Teague",
+            "settlor_of",
+            "Flint Orchard Settlement"
+          ],
+          [
+            "Ellis Harnett",
+            "settlor_of",
+            "Alder Quay Settlement"
+          ],
+          [
+            "Emmett Vann",
+            "beneficiary_of",
+            "Alder Quay Settlement"
+          ],
+          [
+            "Ione Berrick",
+            "beneficiary_of",
+            "Alder Quay Settlement"
+          ],
+          [
+            "Ione Berrick",
+            "beneficiary_of",
+            "Flint Orchard Settlement"
+          ],
+          [
+            "Nell Carvane",
+            "trustee_of",
+            "Alder Quay Settlement"
+          ],
+          [
+            "Nell Carvane",
+            "trustee_of",
+            "Flint Orchard Settlement"
+          ],
+          [
+            "Orla Penrick",
+            "beneficiary_of",
+            "Flint Orchard Settlement"
+          ],
+          [
+            "Tobin Rell",
+            "trustee_of",
+            "Alder Quay Settlement"
+          ],
+          [
+            "Tobin Rell",
+            "trustee_of",
+            "Flint Orchard Settlement"
+          ]
+        ],
+        "required_present": [
+          [
+            "Rhea Marden",
+            "beneficiary_of",
+            "Flint Orchard Settlement"
+          ]
+        ],
+        "forbidden_present": [],
+        "unaffected_present": [
+          [
+            "Cora Teague",
+            "settlor_of",
+            "Flint Orchard Settlement"
+          ],
+          [
+            "Ellis Harnett",
+            "settlor_of",
+            "Alder Quay Settlement"
+          ],
+          [
+            "Emmett Vann",
+            "beneficiary_of",
+            "Alder Quay Settlement"
+          ],
+          [
+            "Ione Berrick",
+            "beneficiary_of",
+            "Alder Quay Settlement"
+          ],
+          [
+            "Ione Berrick",
+            "beneficiary_of",
+            "Flint Orchard Settlement"
+          ],
+          [
+            "Nell Carvane",
+            "trustee_of",
+            "Alder Quay Settlement"
+          ],
+          [
+            "Nell Carvane",
+            "trustee_of",
+            "Flint Orchard Settlement"
+          ],
+          [
+            "Orla Penrick",
+            "beneficiary_of",
+            "Flint Orchard Settlement"
+          ],
+          [
+            "Tobin Rell",
+            "trustee_of",
+            "Alder Quay Settlement"
+          ],
+          [
+            "Tobin Rell",
+            "trustee_of",
+            "Flint Orchard Settlement"
+          ]
+        ]
+      },
+      "ordinary_evidence": {
+        "version": "benchmark_v2_evidence_v1",
+        "not_applicable": [
+          [
+            "Rhea Marden",
+            "beneficiary_of",
+            "Flint Orchard Settlement"
+          ]
+        ],
+        "quotation": {
+          "assessed": 10,
+          "passed": 10,
+          "failed": 0,
+          "accuracy": 1.0,
+          "passes": [
+            [
+              "Cora Teague",
+              "settlor_of",
+              "Flint Orchard Settlement"
+            ],
+            [
+              "Ellis Harnett",
+              "settlor_of",
+              "Alder Quay Settlement"
+            ],
+            [
+              "Emmett Vann",
+              "beneficiary_of",
+              "Alder Quay Settlement"
+            ],
+            [
+              "Ione Berrick",
+              "beneficiary_of",
+              "Alder Quay Settlement"
+            ],
+            [
+              "Ione Berrick",
+              "beneficiary_of",
+              "Flint Orchard Settlement"
+            ],
+            [
+              "Nell Carvane",
+              "trustee_of",
+              "Alder Quay Settlement"
+            ],
+            [
+              "Nell Carvane",
+              "trustee_of",
+              "Flint Orchard Settlement"
+            ],
+            [
+              "Orla Penrick",
+              "beneficiary_of",
+              "Flint Orchard Settlement"
+            ],
+            [
+              "Tobin Rell",
+              "trustee_of",
+              "Alder Quay Settlement"
+            ],
+            [
+              "Tobin Rell",
+              "trustee_of",
+              "Flint Orchard Settlement"
+            ]
+          ],
+          "failures": []
+        },
+        "source_attribution": {
+          "version": "source_attribution_v1",
+          "assessed": 10,
+          "passed": 10,
+          "failed": 0,
+          "accuracy": 1.0,
+          "failures": []
+        },
+        "sufficiency": {
+          "version": "attached_sufficient_set_v1",
+          "planned": 1,
+          "assessed": 1,
+          "complete": 1,
+          "incomplete": 0,
+          "missed": 0,
+          "complete_over_correct": 1.0,
+          "complete_over_planned": 1.0,
+          "targets": [
+            {
+              "edge": [
+                "Rhea Marden",
+                "beneficiary_of",
+                "Flint Orchard Settlement"
+              ],
+              "status": "complete",
+              "missing_by_alternative": []
+            }
+          ]
+        }
+      },
+      "legacy_source_attribution": null,
+      "runtime_seconds": 0.0002721669152379036,
+      "usage": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "cached_tokens": 0
+      },
+      "incremental_cost": 0.0
+    },
+    {
+      "condition": "C1",
+      "sample_id": "benchmark_v3_c1",
+      "condition_sha256": "6a7f96b70b7cef00166c0c3e79a53ce880b575bf5d8021cd298dcc7e67c778f9",
+      "ordered_sources_sha256": "4c965cca6f918cda1fd7dc7867071df397c8d041509985bbc95595c661bc8a95",
+      "annotation_sha256": {
+        "truth": "93d3b20290ceba595c48707ba079b47fed4fd8f582acfbc2fc6a28d45264ac4c",
+        "source_approval": "2b01448c569684174cb65a2051be8cb9d0cfc10d9f3923732dfafebc8bb5800c",
+        "sufficient_evidence": "baf1719a5460ced2f9dc51f840642949bbf3b821f37dd7367b778088189f1f61"
+      },
+      "planned": 1,
+      "attempted": 1,
+      "scored": 1,
+      "exact_graph": true,
+      "graph": {
+        "tp": 11,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "true_positive_edges": [
+          [
+            "Cora Teague",
+            "settlor_of",
+            "Flint Orchard Settlement"
+          ],
+          [
+            "Ellis Harnett",
+            "settlor_of",
+            "Alder Quay Settlement"
+          ],
+          [
+            "Emmett Vann",
+            "beneficiary_of",
+            "Alder Quay Settlement"
+          ],
+          [
+            "Ione Berrick",
+            "beneficiary_of",
+            "Alder Quay Settlement"
+          ],
+          [
+            "Ione Berrick",
+            "beneficiary_of",
+            "Flint Orchard Settlement"
+          ],
+          [
+            "Nell Carvane",
+            "trustee_of",
+            "Alder Quay Settlement"
+          ],
+          [
+            "Nell Carvane",
+            "trustee_of",
+            "Flint Orchard Settlement"
+          ],
+          [
+            "Orla Penrick",
+            "beneficiary_of",
+            "Flint Orchard Settlement"
+          ],
+          [
+            "Rhea Marden",
+            "beneficiary_of",
+            "Alder Quay Settlement"
+          ],
+          [
+            "Tobin Rell",
+            "trustee_of",
+            "Alder Quay Settlement"
+          ],
+          [
+            "Tobin Rell",
+            "trustee_of",
+            "Flint Orchard Settlement"
+          ]
+        ],
+        "false_positive_edges": [],
+        "false_negative_edges": [],
+        "provenance_passed": 10,
+        "provenance_failed": 1,
+        "provenance_accuracy": 0.9090909090909091,
+        "provenance_passes": [
+          [
+            "Cora Teague",
+            "settlor_of",
+            "Flint Orchard Settlement"
+          ],
+          [
+            "Ellis Harnett",
+            "settlor_of",
+            "Alder Quay Settlement"
+          ],
+          [
+            "Emmett Vann",
+            "beneficiary_of",
+            "Alder Quay Settlement"
+          ],
+          [
+            "Ione Berrick",
+            "beneficiary_of",
+            "Alder Quay Settlement"
+          ],
+          [
+            "Ione Berrick",
+            "beneficiary_of",
+            "Flint Orchard Settlement"
+          ],
+          [
+            "Nell Carvane",
+            "trustee_of",
+            "Alder Quay Settlement"
+          ],
+          [
+            "Nell Carvane",
+            "trustee_of",
+            "Flint Orchard Settlement"
+          ],
+          [
+            "Orla Penrick",
+            "beneficiary_of",
+            "Flint Orchard Settlement"
+          ],
+          [
+            "Tobin Rell",
+            "trustee_of",
+            "Alder Quay Settlement"
+          ],
+          [
+            "Tobin Rell",
+            "trustee_of",
+            "Flint Orchard Settlement"
+          ]
+        ],
+        "provenance_failures": [
+          [
+            "Rhea Marden",
+            "beneficiary_of",
+            "Alder Quay Settlement"
+          ]
+        ]
+      },
+      "decisions": {
+        "required": [
+          [
+            "Rhea Marden",
+            "beneficiary_of",
+            "Alder Quay Settlement"
+          ]
+        ],
+        "forbidden": [
+          [
+            "Rhea Marden",
+            "beneficiary_of",
+            "Flint Orchard Settlement"
+          ]
+        ],
+        "unaffected": [
+          [
+            "Cora Teague",
+            "settlor_of",
+            "Flint Orchard Settlement"
+          ],
+          [
+            "Ellis Harnett",
+            "settlor_of",
+            "Alder Quay Settlement"
+          ],
+          [
+            "Emmett Vann",
+            "beneficiary_of",
+            "Alder Quay Settlement"
+          ],
+          [
+            "Ione Berrick",
+            "beneficiary_of",
+            "Alder Quay Settlement"
+          ],
+          [
+            "Ione Berrick",
+            "beneficiary_of",
+            "Flint Orchard Settlement"
+          ],
+          [
+            "Nell Carvane",
+            "trustee_of",
+            "Alder Quay Settlement"
+          ],
+          [
+            "Nell Carvane",
+            "trustee_of",
+            "Flint Orchard Settlement"
+          ],
+          [
+            "Orla Penrick",
+            "beneficiary_of",
+            "Flint Orchard Settlement"
+          ],
+          [
+            "Tobin Rell",
+            "trustee_of",
+            "Alder Quay Settlement"
+          ],
+          [
+            "Tobin Rell",
+            "trustee_of",
+            "Flint Orchard Settlement"
+          ]
+        ],
+        "required_present": [
+          [
+            "Rhea Marden",
+            "beneficiary_of",
+            "Alder Quay Settlement"
+          ]
+        ],
+        "forbidden_present": [],
+        "unaffected_present": [
+          [
+            "Cora Teague",
+            "settlor_of",
+            "Flint Orchard Settlement"
+          ],
+          [
+            "Ellis Harnett",
+            "settlor_of",
+            "Alder Quay Settlement"
+          ],
+          [
+            "Emmett Vann",
+            "beneficiary_of",
+            "Alder Quay Settlement"
+          ],
+          [
+            "Ione Berrick",
+            "beneficiary_of",
+            "Alder Quay Settlement"
+          ],
+          [
+            "Ione Berrick",
+            "beneficiary_of",
+            "Flint Orchard Settlement"
+          ],
+          [
+            "Nell Carvane",
+            "trustee_of",
+            "Alder Quay Settlement"
+          ],
+          [
+            "Nell Carvane",
+            "trustee_of",
+            "Flint Orchard Settlement"
+          ],
+          [
+            "Orla Penrick",
+            "beneficiary_of",
+            "Flint Orchard Settlement"
+          ],
+          [
+            "Tobin Rell",
+            "trustee_of",
+            "Alder Quay Settlement"
+          ],
+          [
+            "Tobin Rell",
+            "trustee_of",
+            "Flint Orchard Settlement"
+          ]
+        ]
+      },
+      "ordinary_evidence": {
+        "version": "benchmark_v2_evidence_v1",
+        "not_applicable": [
+          [
+            "Rhea Marden",
+            "beneficiary_of",
+            "Alder Quay Settlement"
+          ]
+        ],
+        "quotation": {
+          "assessed": 10,
+          "passed": 10,
+          "failed": 0,
+          "accuracy": 1.0,
+          "passes": [
+            [
+              "Cora Teague",
+              "settlor_of",
+              "Flint Orchard Settlement"
+            ],
+            [
+              "Ellis Harnett",
+              "settlor_of",
+              "Alder Quay Settlement"
+            ],
+            [
+              "Emmett Vann",
+              "beneficiary_of",
+              "Alder Quay Settlement"
+            ],
+            [
+              "Ione Berrick",
+              "beneficiary_of",
+              "Alder Quay Settlement"
+            ],
+            [
+              "Ione Berrick",
+              "beneficiary_of",
+              "Flint Orchard Settlement"
+            ],
+            [
+              "Nell Carvane",
+              "trustee_of",
+              "Alder Quay Settlement"
+            ],
+            [
+              "Nell Carvane",
+              "trustee_of",
+              "Flint Orchard Settlement"
+            ],
+            [
+              "Orla Penrick",
+              "beneficiary_of",
+              "Flint Orchard Settlement"
+            ],
+            [
+              "Tobin Rell",
+              "trustee_of",
+              "Alder Quay Settlement"
+            ],
+            [
+              "Tobin Rell",
+              "trustee_of",
+              "Flint Orchard Settlement"
+            ]
+          ],
+          "failures": []
+        },
+        "source_attribution": {
+          "version": "source_attribution_v1",
+          "assessed": 10,
+          "passed": 10,
+          "failed": 0,
+          "accuracy": 1.0,
+          "failures": []
+        },
+        "sufficiency": {
+          "version": "attached_sufficient_set_v1",
+          "planned": 1,
+          "assessed": 1,
+          "complete": 1,
+          "incomplete": 0,
+          "missed": 0,
+          "complete_over_correct": 1.0,
+          "complete_over_planned": 1.0,
+          "targets": [
+            {
+              "edge": [
+                "Rhea Marden",
+                "beneficiary_of",
+                "Alder Quay Settlement"
+              ],
+              "status": "complete",
+              "missing_by_alternative": []
+            }
+          ]
+        }
+      },
+      "legacy_source_attribution": null,
+      "runtime_seconds": 0.0002325829118490219,
+      "usage": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "cached_tokens": 0
+      },
+      "incremental_cost": 0.0
+    },
+    {
+      "condition": "C2",
+      "sample_id": "benchmark_v3_c2",
+      "condition_sha256": "432cb0dfff049fd6fba1f936a16180d9b9eb932d9935f6878f60afb50c12fb39",
+      "ordered_sources_sha256": "b63c713b695910d4fcb87ccdbe96b8093cf6144118b95251c03a6746352c1da1",
+      "annotation_sha256": {
+        "truth": "23061ec8263463b34536992f9516ad924f8be257ee1da08c4aee8be94774ec21",
+        "source_approval": "2b01448c569684174cb65a2051be8cb9d0cfc10d9f3923732dfafebc8bb5800c",
+        "sufficient_evidence": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "planned": 1,
+      "attempted": 1,
+      "scored": 1,
+      "exact_graph": true,
+      "graph": {
+        "tp": 10,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "true_positive_edges": [
+          [
+            "Cora Teague",
+            "settlor_of",
+            "Flint Orchard Settlement"
+          ],
+          [
+            "Ellis Harnett",
+            "settlor_of",
+            "Alder Quay Settlement"
+          ],
+          [
+            "Emmett Vann",
+            "beneficiary_of",
+            "Alder Quay Settlement"
+          ],
+          [
+            "Ione Berrick",
+            "beneficiary_of",
+            "Alder Quay Settlement"
+          ],
+          [
+            "Ione Berrick",
+            "beneficiary_of",
+            "Flint Orchard Settlement"
+          ],
+          [
+            "Nell Carvane",
+            "trustee_of",
+            "Alder Quay Settlement"
+          ],
+          [
+            "Nell Carvane",
+            "trustee_of",
+            "Flint Orchard Settlement"
+          ],
+          [
+            "Orla Penrick",
+            "beneficiary_of",
+            "Flint Orchard Settlement"
+          ],
+          [
+            "Tobin Rell",
+            "trustee_of",
+            "Alder Quay Settlement"
+          ],
+          [
+            "Tobin Rell",
+            "trustee_of",
+            "Flint Orchard Settlement"
+          ]
+        ],
+        "false_positive_edges": [],
+        "false_negative_edges": [],
+        "provenance_passed": 10,
+        "provenance_failed": 0,
+        "provenance_accuracy": 1.0,
+        "provenance_passes": [
+          [
+            "Cora Teague",
+            "settlor_of",
+            "Flint Orchard Settlement"
+          ],
+          [
+            "Ellis Harnett",
+            "settlor_of",
+            "Alder Quay Settlement"
+          ],
+          [
+            "Emmett Vann",
+            "beneficiary_of",
+            "Alder Quay Settlement"
+          ],
+          [
+            "Ione Berrick",
+            "beneficiary_of",
+            "Alder Quay Settlement"
+          ],
+          [
+            "Ione Berrick",
+            "beneficiary_of",
+            "Flint Orchard Settlement"
+          ],
+          [
+            "Nell Carvane",
+            "trustee_of",
+            "Alder Quay Settlement"
+          ],
+          [
+            "Nell Carvane",
+            "trustee_of",
+            "Flint Orchard Settlement"
+          ],
+          [
+            "Orla Penrick",
+            "beneficiary_of",
+            "Flint Orchard Settlement"
+          ],
+          [
+            "Tobin Rell",
+            "trustee_of",
+            "Alder Quay Settlement"
+          ],
+          [
+            "Tobin Rell",
+            "trustee_of",
+            "Flint Orchard Settlement"
+          ]
+        ],
+        "provenance_failures": []
+      },
+      "decisions": {
+        "required": [],
+        "forbidden": [
+          [
+            "Rhea Marden",
+            "beneficiary_of",
+            "Alder Quay Settlement"
+          ],
+          [
+            "Rhea Marden",
+            "beneficiary_of",
+            "Flint Orchard Settlement"
+          ]
+        ],
+        "unaffected": [
+          [
+            "Cora Teague",
+            "settlor_of",
+            "Flint Orchard Settlement"
+          ],
+          [
+            "Ellis Harnett",
+            "settlor_of",
+            "Alder Quay Settlement"
+          ],
+          [
+            "Emmett Vann",
+            "beneficiary_of",
+            "Alder Quay Settlement"
+          ],
+          [
+            "Ione Berrick",
+            "beneficiary_of",
+            "Alder Quay Settlement"
+          ],
+          [
+            "Ione Berrick",
+            "beneficiary_of",
+            "Flint Orchard Settlement"
+          ],
+          [
+            "Nell Carvane",
+            "trustee_of",
+            "Alder Quay Settlement"
+          ],
+          [
+            "Nell Carvane",
+            "trustee_of",
+            "Flint Orchard Settlement"
+          ],
+          [
+            "Orla Penrick",
+            "beneficiary_of",
+            "Flint Orchard Settlement"
+          ],
+          [
+            "Tobin Rell",
+            "trustee_of",
+            "Alder Quay Settlement"
+          ],
+          [
+            "Tobin Rell",
+            "trustee_of",
+            "Flint Orchard Settlement"
+          ]
+        ],
+        "required_present": [],
+        "forbidden_present": [],
+        "unaffected_present": [
+          [
+            "Cora Teague",
+            "settlor_of",
+            "Flint Orchard Settlement"
+          ],
+          [
+            "Ellis Harnett",
+            "settlor_of",
+            "Alder Quay Settlement"
+          ],
+          [
+            "Emmett Vann",
+            "beneficiary_of",
+            "Alder Quay Settlement"
+          ],
+          [
+            "Ione Berrick",
+            "beneficiary_of",
+            "Alder Quay Settlement"
+          ],
+          [
+            "Ione Berrick",
+            "beneficiary_of",
+            "Flint Orchard Settlement"
+          ],
+          [
+            "Nell Carvane",
+            "trustee_of",
+            "Alder Quay Settlement"
+          ],
+          [
+            "Nell Carvane",
+            "trustee_of",
+            "Flint Orchard Settlement"
+          ],
+          [
+            "Orla Penrick",
+            "beneficiary_of",
+            "Flint Orchard Settlement"
+          ],
+          [
+            "Tobin Rell",
+            "trustee_of",
+            "Alder Quay Settlement"
+          ],
+          [
+            "Tobin Rell",
+            "trustee_of",
+            "Flint Orchard Settlement"
+          ]
+        ]
+      },
+      "ordinary_evidence": {
+        "version": "benchmark_v2_evidence_v1",
+        "not_applicable": [],
+        "quotation": {
+          "assessed": 10,
+          "passed": 10,
+          "failed": 0,
+          "accuracy": 1.0,
+          "passes": [
+            [
+              "Cora Teague",
+              "settlor_of",
+              "Flint Orchard Settlement"
+            ],
+            [
+              "Ellis Harnett",
+              "settlor_of",
+              "Alder Quay Settlement"
+            ],
+            [
+              "Emmett Vann",
+              "beneficiary_of",
+              "Alder Quay Settlement"
+            ],
+            [
+              "Ione Berrick",
+              "beneficiary_of",
+              "Alder Quay Settlement"
+            ],
+            [
+              "Ione Berrick",
+              "beneficiary_of",
+              "Flint Orchard Settlement"
+            ],
+            [
+              "Nell Carvane",
+              "trustee_of",
+              "Alder Quay Settlement"
+            ],
+            [
+              "Nell Carvane",
+              "trustee_of",
+              "Flint Orchard Settlement"
+            ],
+            [
+              "Orla Penrick",
+              "beneficiary_of",
+              "Flint Orchard Settlement"
+            ],
+            [
+              "Tobin Rell",
+              "trustee_of",
+              "Alder Quay Settlement"
+            ],
+            [
+              "Tobin Rell",
+              "trustee_of",
+              "Flint Orchard Settlement"
+            ]
+          ],
+          "failures": []
+        },
+        "source_attribution": {
+          "version": "source_attribution_v1",
+          "assessed": 10,
+          "passed": 10,
+          "failed": 0,
+          "accuracy": 1.0,
+          "failures": []
+        },
+        "sufficiency": {
+          "version": "attached_sufficient_set_v1",
+          "planned": 0,
+          "assessed": 0,
+          "complete": 0,
+          "incomplete": 0,
+          "missed": 0,
+          "complete_over_correct": null,
+          "complete_over_planned": null,
+          "targets": []
+        }
+      },
+      "legacy_source_attribution": {
+        "version": "source_attribution_v1",
+        "assessed": 10,
+        "passed": 10,
+        "failed": 0,
+        "accuracy": 1.0,
+        "failures": []
+      },
+      "runtime_seconds": 0.00024250010028481483,
+      "usage": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "cached_tokens": 0
+      },
+      "incremental_cost": 0.0
+    }
+  ],
+  "matches": {
+    "C1": {
+      "pair": [
+        "C0",
+        "C1"
+      ],
+      "passed": true,
+      "removed": [
+        [
+          "Rhea Marden",
+          "beneficiary_of",
+          "Flint Orchard Settlement"
+        ]
+      ],
+      "added": [
+        [
+          "Rhea Marden",
+          "beneficiary_of",
+          "Alder Quay Settlement"
+        ]
+      ],
+      "unaffected": [
+        [
+          "Cora Teague",
+          "settlor_of",
+          "Flint Orchard Settlement"
+        ],
+        [
+          "Ellis Harnett",
+          "settlor_of",
+          "Alder Quay Settlement"
+        ],
+        [
+          "Emmett Vann",
+          "beneficiary_of",
+          "Alder Quay Settlement"
+        ],
+        [
+          "Ione Berrick",
+          "beneficiary_of",
+          "Alder Quay Settlement"
+        ],
+        [
+          "Ione Berrick",
+          "beneficiary_of",
+          "Flint Orchard Settlement"
+        ],
+        [
+          "Nell Carvane",
+          "trustee_of",
+          "Alder Quay Settlement"
+        ],
+        [
+          "Nell Carvane",
+          "trustee_of",
+          "Flint Orchard Settlement"
+        ],
+        [
+          "Orla Penrick",
+          "beneficiary_of",
+          "Flint Orchard Settlement"
+        ],
+        [
+          "Tobin Rell",
+          "trustee_of",
+          "Alder Quay Settlement"
+        ],
+        [
+          "Tobin Rell",
+          "trustee_of",
+          "Flint Orchard Settlement"
+        ]
+      ],
+      "changed_source_id": "r5n8"
+    },
+    "C2": {
+      "pair": [
+        "C0",
+        "C2"
+      ],
+      "passed": true,
+      "removed": [
+        [
+          "Rhea Marden",
+          "beneficiary_of",
+          "Flint Orchard Settlement"
+        ]
+      ],
+      "added": [],
+      "unaffected": [
+        [
+          "Cora Teague",
+          "settlor_of",
+          "Flint Orchard Settlement"
+        ],
+        [
+          "Ellis Harnett",
+          "settlor_of",
+          "Alder Quay Settlement"
+        ],
+        [
+          "Emmett Vann",
+          "beneficiary_of",
+          "Alder Quay Settlement"
+        ],
+        [
+          "Ione Berrick",
+          "beneficiary_of",
+          "Alder Quay Settlement"
+        ],
+        [
+          "Ione Berrick",
+          "beneficiary_of",
+          "Flint Orchard Settlement"
+        ],
+        [
+          "Nell Carvane",
+          "trustee_of",
+          "Alder Quay Settlement"
+        ],
+        [
+          "Nell Carvane",
+          "trustee_of",
+          "Flint Orchard Settlement"
+        ],
+        [
+          "Orla Penrick",
+          "beneficiary_of",
+          "Flint Orchard Settlement"
+        ],
+        [
+          "Tobin Rell",
+          "trustee_of",
+          "Alder Quay Settlement"
+        ],
+        [
+          "Tobin Rell",
+          "trustee_of",
+          "Flint Orchard Settlement"
+        ]
+      ],
+      "changed_source_id": "r5n8"
+    }
+  }
+}
