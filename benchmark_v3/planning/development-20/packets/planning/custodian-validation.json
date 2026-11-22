@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "disposition": "validated-custodian-recovery-from-rejected-packet",
+  "packet_status": "rejected",
+  "session": "9b0a254b-490b-41b2-966f-56d4ffdaf6fb",
+  "handoff_sha256": "0f55376e3ed96afdff4d1fad18c8bc963ff89f07bde47fcc3f5a239ff9325d6a",
+  "runner_receipt_sha256": "f56a6503d2829501ab678f5ce2c8ae2799907edd7ce4ba3bd54673b6dcb5c1e4",
+  "original_model_output_sha256": "af14e9b1ef29e7119b8941c42fe4658d5b6d0f6763a467d05ef14ae1ba2685b5",
+  "corrected_model_output_sha256": "fdd2e422b831bae0dcc21c486a591e12ddc9e35285c47874f5d763c3727bc2fc",
+  "normalized_planning_record_sha256": "e94fa5ef4aec7c34474a1fb03b57d7023fc9004aaf2ab3fc9fa1813dc694fd2a",
+  "correction": {
+    "family_id": "L",
+    "json_pointer": "/proposals/2/grounding/references/0/url",
+    "before": "https://www.gov.uk/government/publications/how-to-order-and-pay-for-certificates/how-to-order-and-pay-for-civil-certificates/how-to-order-and-pay-for-certificates-accessible",
+    "after": "https://www.gov.uk/government/publications/how-to-order-and-pay-for-certificates/how-to-order-and-pay-for-civil-registration-records-accessible",
+    "occurrences": 1
+  },
+  "validator": "benchmark_v3.commissioning.validate_architect_result with original handoff allowlist"
+}
