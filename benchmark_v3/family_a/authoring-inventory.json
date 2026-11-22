@@ -1,0 +1,25 @@
+{
+  "status": "partial_authoring",
+  "admission": "pending",
+  "meeting": "The 14:30 BST meeting on 17 September 2026 is to review the Wrenhollow Settlement’s bank mandate records and agree what, if anything, to send to Lintmere Bank. The cut-off for the position under review is 14:20 BST on 17 September 2026.",
+  "records": [
+    {
+      "id": "QF8M",
+      "title": "Original account mandate record",
+      "author": "Evin Rooke, Lintmere Bank",
+      "parent_sources": [],
+      "transmission": "Lintmere Bank retained the operative record on 12 May 2023 and supplied Iona a copy. Iona supplied a copy to Jules on 15 September 2026; both hold copies, not the bank record.",
+      "body_sha256": "638057d12d9c197e86e9cb722e1adb1910d78217c85f81d672812d50343a2bfe",
+      "session": "01a202d4-f555-7cd1-9f57-9d0d29b3576f"
+    },
+    {
+      "id": "VJ3K",
+      "title": "Certified extract from the settlement office book",
+      "author": "Maren Voss, appointor and bookkeeper",
+      "parent_sources": [],
+      "transmission": "Maren retained the office book and founding acceptances. She transmitted only her certified extract to Jules on 16 September at 09:25 BST; he has the extract, not the underlying records.",
+      "body_sha256": "733dac36de08db15ede483205796c325dacea9ceb3d8a44664f77d61cc32e2ec",
+      "session": "01a202d4-f555-7183-a825-1b1bac6e1c9d"
+    }
+  ]
+}

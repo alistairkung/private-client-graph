@@ -1,0 +1,25 @@
+Lintmere Bank  
+Account-opening mandate record
+
+Account name: Wrenhollow Settlement  
+Date: 12 May 2023  
+Archive reference: WM-683  
+Recorded by: Evin Rooke
+
+**Payment instructions**
+
+Iona Brell and Darren Brell are the two named signatories for the settlement account. The payment mandate is joint: both signatories must authorise a payment instruction before the bank acts on it. An instruction from either signatory alone is not sufficient authority to make a payment.
+
+**Correspondence details at opening**
+
+Iona Brell  
+Correspondence address: 18 Alder Mews
+
+Darren Brell  
+Correspondence address: 18 Alder Mews
+
+Use the address in each block for correspondence addressed to that signatory. The address is shared at opening, but the correspondence details are recorded separately under each name. The shared address does not alter the requirement for both signatories to authorise payment instructions.
+
+**Basis of record**
+
+The signatory names, joint payment mandate and correspondence details above are taken from the signed opening instructions. Refer to those instructions under archive reference WM-683 when checking the particulars recorded at opening. This entry records the bank’s servicing and correspondence arrangements for the account; it is not based on an examination of trust title.
