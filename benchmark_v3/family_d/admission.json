@@ -1,9 +1,19 @@
 {
   "family": "D",
   "split": "development",
-  "status": "pending_human_admission",
-  "owner_decision": null,
-  "signature": null,
+  "status": "admitted",
+  "owner_decision": "accept",
+  "signature": {
+    "source": "Alistair Kung’s explicit owner decision in Codex for PR #196",
+    "verbatim_reply": "| D — Scoped Trust Amendment | **ACCEPT** | D0, D1 |",
+    "reviewer": "Alistair Kung",
+    "role": "project owner",
+    "decision_date": "2026-11-22",
+    "recorded_at": "2026-11-22T13:54:37+00:00",
+    "reviewed_pr": 196,
+    "reviewed_commit": "a8297959199b4d701546e7177bc0afef7121b60e",
+    "reviewed_admission_sha256": "b946d914fe9db5ff803ec3650152ca1c930132249b149daf8a38f97f26d345f5"
+  },
   "dispatched": false,
   "technical_disposition": "accept",
   "hypothesis": {
@@ -58,5 +68,17 @@
       "source_approval": "148cf5a669886a022d7179c245532ffd6256ec226d946fe7427f694159fa14ab",
       "sufficient_evidence": "3e76d6cd76320005a239e00a00c22de969f2bedf2a520a0d34cf7561218d2cf9"
     }
+  },
+  "approved_conditions": [
+    "D0",
+    "D1"
+  ],
+  "reason": {
+    "summary": "Accepted for the bounded scoped-amendment comparison. The operative provision locator changes which earlier beneficiary relationship survives, while the replacement beneficiary and unaffected relationships remain supported. The final keys attach joint scope evidence to current beneficiary relationships.",
+    "limitations": [
+      "Grouped proof was independently verified. Individual fact-level deletion coverage remains incomplete.",
+      "A locator-based shortcut may reproduce the graph without demonstrating the full intended reasoning.",
+      "Preservation of unrelated kinship remains untested in this family."
+    ]
   }
 }

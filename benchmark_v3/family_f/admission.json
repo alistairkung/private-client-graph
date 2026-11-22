@@ -1,9 +1,19 @@
 {
   "family": "F",
   "split": "development",
-  "status": "pending_human_admission",
-  "owner_decision": null,
-  "signature": null,
+  "status": "admitted",
+  "owner_decision": "accept",
+  "signature": {
+    "source": "Alistair Kung’s explicit owner decision in Codex for PR #196",
+    "verbatim_reply": "| F — Complete-Record Identity Collision | **ACCEPT** | F0, F1 |",
+    "reviewer": "Alistair Kung",
+    "role": "project owner",
+    "decision_date": "2026-11-22",
+    "recorded_at": "2026-11-22T13:54:37+00:00",
+    "reviewed_pr": 196,
+    "reviewed_commit": "a8297959199b4d701546e7177bc0afef7121b60e",
+    "reviewed_admission_sha256": "0aa07ce7be5a76fc1d42cff97fb6b511b052f23a466b353d85f1f1ad5ba421a7"
+  },
   "dispatched": false,
   "technical_disposition": "accept",
   "hypothesis": {
@@ -59,5 +69,17 @@
       "source_approval": "845c071f613ee6bd727350caa1f1e6ee00f80a59e9cc27f9c9c9e9004f902ed7",
       "sufficient_evidence": "b0d44edc669a26b25a92b22edbbc978689b179020e6074b85edc4230ed793c9a"
     }
+  },
+  "approved_conditions": [
+    "F0",
+    "F1"
+  ],
+  "reason": {
+    "summary": "Accepted for this bounded complete-record identity-collision comparison. The two distinguishable full identities retain their separate supporting evidence under the administrative display-label collision. Both conditions preserve the expected complete graph and attached evidence.",
+    "limitations": [
+      "Positional pairing remains a possible shortcut.",
+      "One isolated excerpt reader entered an incorrect structured surname despite identifying the intended person in its explanation. A fresh reading on the identical packet recovered the correct surname. Both results remain in the audit record.",
+      "The result supports identity preservation under this particular collision. General identity-resolution reliability remains outside the comparison."
+    ]
   }
 }

@@ -286,6 +286,80 @@
         "Expense reconciliation"
       ],
       "overlap": "Shares joint proof and restraint with A/B. Graph completeness and distraction are present without separate matched interventions."
+    },
+    {
+      "family_id": "D",
+      "title": "Scoped trust amendment",
+      "name": "Alder Fold Trust",
+      "protocol": "architect_v1",
+      "admission_sha256": "d84a3a09182a3311d53ff04f56fd5800731196a09237ff949f716f3b902e376e",
+      "hypothesis": {
+        "hypothesis_id": "scoped-trust-amendment",
+        "revision": 1,
+        "hypothesis_sha256": "20288d9f35aa29585353393c40d6f6e317fc9fee302b7e35a989b8306224fcb8"
+      },
+      "primary_axis": "versions-and-amendments",
+      "secondary_axes": [
+        "documentary-authority",
+        "evidence-sufficiency",
+        "graph-completeness"
+      ],
+      "intended_difficulty": "Changing only the amendment's provision locator switches which earlier beneficiary assertion survives without changing the replacement beneficiary, trust or unaffected relationships. Reject the design if either branch is ambiguous, has a wider effect, or supports the replacement without the planned cross-Source link.",
+      "verified_findings": [],
+      "incidental_challenges": [
+        "The principal instrument supplies separate office and beneficiary provisions. The signed variation has its own effective date."
+      ],
+      "matched_controls": [
+        "D0 and D1 change only the operative provision locator. The earlier survivor changes, the replacement and unaffected relationships persist, and the saved keys attach joint scope proof to each current beneficiary.",
+        "Grouped proof was independently verified in the closing audit."
+      ],
+      "known_shortcuts_and_limits": [
+        "Individual fact-level deletions remain incomplete. Reading the locator alone can reproduce the graph without demonstrating the full intended reasoning.",
+        "The invariant edges cover trust relationships. Unrelated kinship remains outside this comparison."
+      ],
+      "documentary_genres": [
+        "Principal instrument extract",
+        "Signed variation",
+        "Advice meeting brief"
+      ],
+      "overlap": "A tests whether an instrument took effect. D fixes effectiveness and varies the reach of the operative provision."
+    },
+    {
+      "family_id": "F",
+      "title": "Complete-record identity collision",
+      "name": "Park will planning",
+      "protocol": "architect_v1",
+      "admission_sha256": "e76ee677d3cb6bb980e9324c70277f3d3c4c5df84ea1a862b353efc2516d369d",
+      "hypothesis": {
+        "hypothesis_id": "complete-record-label-collision",
+        "revision": 1,
+        "hypothesis_sha256": "86c152a0d7816d83f3de38c16d265f7619ce7ccf08223d22e116b04bb98ea09c"
+      },
+      "primary_axis": "entity-identity",
+      "secondary_axes": [
+        "evidence-sufficiency",
+        "graph-completeness"
+      ],
+      "intended_difficulty": "Creating a collision in one populated display field leaves the complete named graph and valid evidence routes invariant when stable references and explicit identity links remain fixed. Reject the design if the field has authority to alter the mapping, the alternative label is not credible, or the proposed identity link is dispensable.",
+      "verified_findings": [],
+      "incidental_challenges": [
+        "The working index uses ancillary display forms for distinct people. The authoritative reconciliation gives complete identities and stable references."
+      ],
+      "matched_controls": [
+        "F0 and F1 change only one populated display label. Both complete named graphs and their separately attached proof sets remain invariant.",
+        "Withholding an exact identity entry defeated its dependent edge in the masked review."
+      ],
+      "known_shortcuts_and_limits": [
+        "Positional pairing can reproduce the graph.",
+        "The original isolated excerpt reader entered a different structured surname despite identifying the correct person in the explanation. The independent identical-packet repeat returned the correct surname.",
+        "The result is bounded to this display-label collision."
+      ],
+      "documentary_genres": [
+        "Signed relationship confirmations",
+        "Identity reconciliation note",
+        "Working index"
+      ],
+      "overlap": "B tests incomplete attribution. F retains complete, distinguishing records and varies an ancillary label."
     }
   ],
   "gaps": [
@@ -294,21 +368,21 @@
         "contradictory-assertions",
         "origin-and-copies"
       ],
-      "finding": "Independent same-scope reports can disagree. B tests one report and its forward, and A tests stale administrative material against operative evidence."
+      "finding": "E reproduced its concordance-to-withholding contrast and was returned at the documentary-realism gate. Retainer relevance and witness reference provenance remain open. E0 and E1 are diagnostic only. B covers a single origin and its forward. [Returned candidate and owner decisions](admission_d_f/OWNER-DECISIONS.md)"
     },
     {
       "axes": [
         "versions-and-amendments",
         "documentary-authority"
       ],
-      "finding": "No primary matched test covers a partial amendment or correction that leaves unrelated prior clauses intact."
+      "finding": "D covers one express scoped amendment. Other amendment mechanisms and full individual fact-level deletion coverage remain open."
     },
     {
       "axes": [
         "entity-identity",
         "incomplete-information"
       ],
-      "finding": "B tests an unlabeled speaker among two distinct names. Distinguishable near-name identities and collisions across complete records remain open."
+      "finding": "B covers incomplete speaker attribution and F covers a populated display-label collision with complete identity records. F permits a positional shortcut. Broader identity collisions and interacting information gaps remain open."
     },
     {
       "axes": [

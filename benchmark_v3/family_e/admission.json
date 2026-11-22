@@ -1,9 +1,19 @@
 {
   "family": "E",
   "split": "development",
-  "status": "pending_human_admission",
-  "owner_decision": null,
-  "signature": null,
+  "status": "returned",
+  "owner_decision": "return",
+  "signature": {
+    "source": "Alistair Kung’s explicit owner decision in Codex for PR #196",
+    "verbatim_reply": "| E — Independent Parentage Disagreement | **RETURN** | E0, E1 |",
+    "reviewer": "Alistair Kung",
+    "role": "project owner",
+    "decision_date": "2026-11-22",
+    "recorded_at": "2026-11-22T13:54:37+00:00",
+    "reviewed_pr": 196,
+    "reviewed_commit": "a8297959199b4d701546e7177bc0afef7121b60e",
+    "reviewed_admission_sha256": "17a01d05ef3d93cf6e8e921280c5955cf6234820e2e384211e601463a90ba460"
+  },
   "dispatched": false,
   "technical_disposition": "return",
   "hypothesis": {
@@ -61,5 +71,18 @@
       "source_approval": "6961bb6f4280a875034bdc3d66ed35a256cb924c619304d5f91d47125413301c",
       "sufficient_evidence": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
     }
+  },
+  "reviewed_conditions": [
+    "E0",
+    "E1"
+  ],
+  "reason": {
+    "summary": "Returned at the documentary-realism gate. The controlled graph contrast and evidence tests are technically coherent and remain diagnostic. E0 and E1 are excluded from the executable development benchmark.",
+    "unresolved": [
+      "The file does not adequately explain why the parentage inquiry is relevant to this will-planning retainer.",
+      "The record does not adequately establish how Robin received and understood the coded references.",
+      "The provenance and scope of the comparable independent accounts require stronger documentary justification."
+    ],
+    "future_revision": "Repair requires separate owner authorisation, a new scientific revision and appropriate repeated reviews."
   }
 }

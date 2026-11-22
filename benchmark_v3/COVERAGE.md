@@ -11,6 +11,8 @@ Keep this register outside the blind packets.
 | [A · Wrenhollow](family_a/DOSSIER.md) | temporal effectiveness | documentary authority, evidence sufficiency, presentation order | Reconstruct one effective transfer at a bank-meeting cut-off despite signed papers and a later administrative message. |
 | [B · Estate administration](family_b/DOSSIER.md) | entity identity | incomplete information, origin and copies, evidence sufficiency | Resolve the speaker of a parentage report with an independently maintained attendance field. Withhold the named edge when attribution is open. |
 | [C · Two trusts](family_c/DOSSIER.md) | cross source reasoning | evidence sufficiency, incomplete information, entity identity | Identify which of two trusts an operative designation applies to from a separately maintained custody reference. |
+| [D · Alder Fold Trust](family_d/DOSSIER.md) | versions and amendments | documentary authority, evidence sufficiency, graph completeness | Changing only the amendment's provision locator switches which earlier beneficiary assertion survives without changing the replacement beneficiary, trust or unaffected relationships. Reject the design if either branch is ambiguous, has a wider effect, or supports the replacement without the planned cross-Source link. |
+| [F · Park will planning](family_f/DOSSIER.md) | entity identity | evidence sufficiency, graph completeness | Creating a collision in one populated display field leaves the complete named graph and valid evidence routes invariant when stable references and explicit identity links remain fixed. Reject the design if the field has authority to alter the mapping, the alternative label is not credible, or the proposed identity link is dispensable. |
 
 ### A · Trustee handover
 
@@ -62,6 +64,34 @@ Keep this register outside the blind packets.
 - **Genres.** Certified deed extracts, Signed designation transcript, Custody register, Meeting note, Wish letter, Expense reconciliation.
 - **Overlap.** Shares joint proof and restraint with A/B. Graph completeness and distraction are present without separate matched interventions.
 
+### D · Scoped trust amendment
+
+[Human admission](family_d/admission.json) under approved hypothesis `scoped-trust-amendment@1` (`20288d9f35aa29585353393c40d6f6e317fc9fee302b7e35a989b8306224fcb8`).
+
+**Independently verified findings**
+
+No verified findings recorded.
+
+- **Incidental challenges.** The principal instrument supplies separate office and beneficiary provisions. The signed variation has its own effective date.
+- **Matched controls.** D0 and D1 change only the operative provision locator. The earlier survivor changes, the replacement and unaffected relationships persist, and the saved keys attach joint scope proof to each current beneficiary. Grouped proof was independently verified in the closing audit.
+- **Shortcuts and limits.** Individual fact-level deletions remain incomplete. Reading the locator alone can reproduce the graph without demonstrating the full intended reasoning. The invariant edges cover trust relationships. Unrelated kinship remains outside this comparison.
+- **Genres.** Principal instrument extract, Signed variation, Advice meeting brief.
+- **Overlap.** A tests whether an instrument took effect. D fixes effectiveness and varies the reach of the operative provision.
+
+### F · Complete-record identity collision
+
+[Human admission](family_f/admission.json) under approved hypothesis `complete-record-label-collision@1` (`86c152a0d7816d83f3de38c16d265f7619ce7ccf08223d22e116b04bb98ea09c`).
+
+**Independently verified findings**
+
+No verified findings recorded.
+
+- **Incidental challenges.** The working index uses ancillary display forms for distinct people. The authoritative reconciliation gives complete identities and stable references.
+- **Matched controls.** F0 and F1 change only one populated display label. Both complete named graphs and their separately attached proof sets remain invariant. Withholding an exact identity entry defeated its dependent edge in the masked review.
+- **Shortcuts and limits.** Positional pairing can reproduce the graph. The original isolated excerpt reader entered a different structured surname despite identifying the correct person in the explanation. The independent identical-packet repeat returned the correct surname. The result is bounded to this display-label collision.
+- **Genres.** Signed relationship confirmations, Identity reconciliation note, Working index.
+- **Overlap.** B tests incomplete attribution. F retains complete, distinguishing records and varies an ancillary label.
+
 ## Difficulty taxonomy
 
 | Axis | Category | Scope | Meaning |
@@ -85,9 +115,9 @@ Keep this register outside the blind packets.
 
 ## Remaining research gaps
 
-- **contradictory assertions, origin and copies.** Independent same-scope reports can disagree. B tests one report and its forward, and A tests stale administrative material against operative evidence.
-- **versions and amendments, documentary authority.** No primary matched test covers a partial amendment or correction that leaves unrelated prior clauses intact.
-- **entity identity, incomplete information.** B tests an unlabeled speaker among two distinct names. Distinguishable near-name identities and collisions across complete records remain open.
+- **contradictory assertions, origin and copies.** E reproduced its concordance-to-withholding contrast and was returned at the documentary-realism gate. Retainer relevance and witness reference provenance remain open. E0 and E1 are diagnostic only. B covers a single origin and its forward. [Returned candidate and owner decisions](admission_d_f/OWNER-DECISIONS.md)
+- **versions and amendments, documentary authority.** D covers one express scoped amendment. Other amendment mechanisms and full individual fact-level deletion coverage remain open.
+- **entity identity, incomplete information.** B covers incomplete speaker attribution and F covers a populated display-label collision with complete identity records. F permits a positional shortcut. Broader identity collisions and interacting information gaps remain open.
 - **graph completeness, administrative context.** C verifies a rich invariant graph under target intervention. An incidental assertion buried in plausible business correspondence has no dedicated control.
 - **axis interactions, custody and absence.** Withholding on insufficient evidence is covered locally in B and C. A missing original or interacting authority paths need a separately interpretable contrast.
 - **source discovery, physical document quality.** Record these workload needs outside the supplied-text graph benchmark.
