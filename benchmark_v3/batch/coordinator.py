@@ -7,9 +7,9 @@ from pathlib import Path
 from typing import Any
 
 from benchmark_v3 import commissioning
-from benchmark_v3.batch import adjudication_contract, annotation_recovery, artifacts, authorisation, continuation, design_recovery, design_review, exception_review
+from benchmark_v3.batch import adjudication_contract, adjudication_recovery, annotation_recovery, artifacts, authorisation, continuation, design_recovery, design_review, exception_review
 from benchmark_v3.batch.contracts import (
-    AnnotationRecovery, BatchDecision, BatchManifest, BudgetAmendment, ChildDesignMerits, Code,
+    AdjudicationQuoteRecovery, AnnotationRecovery, BatchDecision, BatchManifest, BudgetAmendment, ChildDesignMerits, Code,
     DeferredExceptionReview, DesignReview, ExceptionRecord, FamilyContinuation, FreshAdjudication,
     OwnerFamilyReview, RepairExecution, RepairScopeReview, SourceCutoffRecovery,
 )
@@ -319,6 +319,28 @@ def recover_annotation(ledger: Ledger, decision: AnnotationRecovery) -> str:
         digest = artifacts.write_bytes(annotation_recovery.derivative_path(runner, decision.reader_job), corrected)
         ledger.event(decision.batch_id, decision.family_id, revision, "reconcile",
                      annotation_recovery.ANNOTATION_RECOVERY, "blind", "blind", record)
+        return digest
+
+
+def recover_adjudication_quote(ledger: Ledger, decision: AdjudicationQuoteRecovery) -> str:
+    with ledger.coordinator_lock():
+        commission, slot, review = _owner_family_review(ledger, decision)
+        revision, state, blocking = family_status(ledger, decision.batch_id, decision.family_id)
+        runner = commission.session_runner(ledger, decision.family_id, revision)
+        existing = adjudication_recovery.recorded(runner)
+        if existing is not None:
+            if existing["decision"] != decision.model_dump(mode="json"):
+                raise ValueError("Only one immutable adjudication quote correction is permitted per revision.")
+            adjudication_recovery.reopen(runner, existing)
+            return str(existing["derivative_sha256"])
+        if (not review.accepts(slot.family_id) or state != "adjudicate" or not blocking
+                or blocking["code"] != "scientific_review"
+                or blocking["evidence"] != adjudication_recovery.QUOTE_SEMANTICS_ERROR):
+            raise ValueError("Quote recovery requires the exact retained adjudication quote mismatch.")
+        record, corrected, _, _ = adjudication_recovery.derive(runner, decision)
+        digest = artifacts.write_bytes(adjudication_recovery.derivative_path(runner), corrected)
+        ledger.event(decision.batch_id, decision.family_id, revision, "reconcile",
+                     adjudication_recovery.ADJUDICATION_QUOTE_RECOVERY, "adjudicate", "adjudicate", record)
         return digest
 
 

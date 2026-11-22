@@ -1,6 +1,7 @@
 """Exercise the coordinator with the real packet projection and a deterministic transport."""
 
 import json
+import re
 import threading
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import nullcontext
@@ -12,9 +13,9 @@ from uuid import uuid4
 import pytest
 
 from benchmark_v3 import commissioning, packet
-from benchmark_v3.batch import adjudication_contract, admission, artifacts, authorisation, coordinator, custody, science
+from benchmark_v3.batch import adjudication_contract, adjudication_recovery, admission, artifacts, authorisation, coordinator, custody, science
 from benchmark_v3.batch.contracts import (
-    AdmissionDecisions, AnnotationRecovery, AuthoredSource, BatchDecision, BatchManifest, BudgetAmendment,
+    AdjudicationQuoteRecovery, AdmissionDecisions, AnnotationRecovery, AuthoredSource, BatchDecision, BatchManifest, BudgetAmendment,
     DeferredExceptionReview, DesignOutput, DesignReview, FamilyContinuation, PilotDecision, SourceCutoffRecovery,
 )
 from benchmark_v3.batch.ledger import BudgetExhausted, TaskHalted
@@ -833,7 +834,14 @@ def annotation_exception(design_gated, transport, request):
         }
 
     first_quote = f"Synthetic record:\n{exact}" if getattr(request, "param", False) == "disagreed" else exact
-    behavior["G", "reading-000-a-full"] = lambda inputs: annotation(inputs, first_quote)
+    def first_reading(inputs):
+        result = annotation(inputs, first_quote)
+        if first_quote != exact:
+            candidates = result["candidates"]["relationships"]
+            candidates.append(candidates[0] | {"supporting_text": exact})
+        return result
+
+    behavior["G", "reading-000-a-full"] = first_reading
     behavior["G", "reading-000-b-full"] = lambda inputs: annotation(inputs, submitted)
     behavior["G", "adjudicate-000"] = lambda inputs: json.loads(json.dumps(
         _output("adjudication", "G", "fixture", inputs),
@@ -1069,7 +1077,7 @@ def test_budget_amendment_is_append_only_and_no_transfer(approved, transport):
 
 
 @pytest.mark.parametrize("annotation_exception", ["disagreed"], indirect=True)
-@pytest.mark.parametrize("fresh_valid", [True, False, "evidence", "evidence_invalid"])
+@pytest.mark.parametrize("fresh_valid", [True, False, "evidence", "evidence_invalid", "evidence_quote"])
 def test_fresh_adjudication_uses_only_actual_disputes_and_is_single_attempt(annotation_exception, transport, fresh_valid):
     ledger, batch, runner, calls, draft, _, _ = annotation_exception
     _, behavior, _ = transport
@@ -1158,10 +1166,15 @@ def test_fresh_adjudication_uses_only_actual_disputes_and_is_single_attempt(anno
         coordinator.continue_family(ledger, authorised)
         coordinator.continue_family(ledger, release)
         passed = fresh_valid == "evidence"
-        behavior["G", "adjudicate-000-evidence"] = lambda inputs: (
-            fixture_reply(inputs) | {"disagreement_resolutions": {disputed: "Resolve the proof."}}
-            if passed else fresh_reply(inputs)
-        )
+        def evidence_reply(inputs):
+            if not passed and fresh_valid != "evidence_quote":
+                return fresh_reply(inputs)
+            result = fixture_reply(inputs) | {"disagreement_resolutions": {disputed: "Resolve the proof."}}
+            if fresh_valid == "evidence_quote":
+                result["key"]["truth"]["relationships"][0]["approved_evidence"] = ["src1"]
+            return result
+
+        behavior["G", "adjudicate-000-evidence"] = evidence_reply
         cursor = len(calls)
         other_attempts = [ledger.attempts(family) for family in ("H", "I")]
         coordinator.run_batch(ledger, batch, family_id="G")
@@ -1178,6 +1191,51 @@ def test_fresh_adjudication_uses_only_actual_disputes_and_is_single_attempt(anno
         assert adjudication_contract.COMPLETE_EVIDENCE_INSTRUCTIONS in final_request["prompt"]
         contract = json.loads(final_request["prompt"].split("Output schema: ", 1)[1])
         assert contract["$defs"]["SourceEvidenceRelationship"]["properties"]["approved_evidence"]["minItems"] == 1
+        if fresh_valid == "evidence_quote":
+            _test_quote_derivative(ledger, batch, runner, commission, calls)
+
+
+def _test_quote_derivative(ledger, batch, runner, commission, calls):
+    assert coordinator.family_status(ledger, batch, "G")[2]["evidence"] == adjudication_recovery.QUOTE_SEMANTICS_ERROR
+    job = "adjudicate-000-evidence"
+    raw, receipt, _ = runner.committed_packet("adjudicate", job, "adjudication")
+    value = commissioning._read_json(raw)
+    source = (runner.directory / "family" / "sources" / "G000.json").read_bytes()
+    donor = value["key"]["source_approval"]["relationships"][0]["approved_evidence"][0]
+    quote = donor["supporting_text"].encode()
+    submitted = next(row["text"].encode() for row in json.loads(source) if row["id"] == "src1")
+    offset = submitted.index(quote)
+    match = re.search(rb'"approved_evidence"\s*:\s*\[("src1")\]', raw)
+    start, stop = match.span(1)
+    derivative = raw[:start] + commissioning.json_text(quote.decode()).encode() + raw[stop:]
+    decision = AdjudicationQuoteRecovery.model_validate(_exception_owner(commission, "G") | {
+        "output_sha256": receipt["output_sha256"], "receipt_sha256": receipt["receipt_sha256"],
+        "bundle_sha256": commissioning.digest(source), "derivative_sha256": commissioning.digest(derivative),
+        "source_id": "src1", "truth_relationship_index": 0, "quote_sha256": commissioning.digest(quote),
+        "source_quote_interval": [offset, offset + len(quote)], "output_token_interval": [start, stop],
+    })
+    for field, wrong, error in (
+        ("owner", "Wrong", "commissioning owner"),
+        ("bundle_sha256", "0" * 64, "exact frozen Source bundle"),
+        ("receipt_sha256", "0" * 64, "exact adjudication output and receipt"),
+        ("truth_relationship_index", 1, "relationship index is absent"),
+        ("quote_sha256", "0" * 64, "unique frozen byte span"),
+        ("derivative_sha256", "0" * 64, "authorised derivative"),
+        ("output_token_interval", (0, 1), "erroneous JSON string"),
+    ):
+        with pytest.raises(ValueError, match=error):
+            coordinator.recover_adjudication_quote(ledger, decision.model_copy(update={field: wrong}))
+    assert not adjudication_recovery.derivative_path(runner).exists()
+    cursor = len(calls)
+    coordinator.recover_adjudication_quote(ledger, decision)
+    coordinator.recover_adjudication_quote(ledger, decision)
+    assert len(calls) == cursor
+    assert adjudication_recovery.derivative_path(runner).read_bytes() == derivative
+    coordinator.run_batch(ledger, batch, family_id="G")
+    assert [entry[2] for entry in calls[cursor:]] == ["audit", "mask-000"]
+    assert coordinator.family_status(ledger, batch, "G")[1] == "admission_ready"
+    assert runner.committed_packet("adjudicate", job, "adjudication")[:2] == (raw, receipt)
+    coordinator.recover_adjudication_quote(ledger, decision)
 
 
 def test_three_disagreement_ids_are_order_stable_and_duplicate_json_is_rejected():

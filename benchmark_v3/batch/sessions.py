@@ -7,7 +7,7 @@ from typing import Any, TypeVar
 from pydantic import BaseModel
 
 from benchmark_v3 import commissioning, packet
-from benchmark_v3.batch import adjudication_contract, annotation_recovery, artifacts, authorisation, continuation, design_review
+from benchmark_v3.batch import adjudication_contract, adjudication_recovery, annotation_recovery, artifacts, authorisation, continuation, design_review
 from benchmark_v3.batch.contracts import BatchManifest, Code, Role, Stage
 from benchmark_v3.batch.ledger import Ledger, TaskHalted
 
@@ -70,6 +70,8 @@ class SessionRunner:
         )
         path = self.directory / "packets" / job
         release = continuation.recorded(self)
+        if role == "adjudication" and adjudication_recovery.recorded(self) is not None:
+            raise ValueError("Reuse the owner-authorised adjudication derivative without a new session.")
         released_job = adjudication_contract.RELEASE_JOBS.get(release["decision"]["release"]["action"]) if release else None
         if released_job and role == "adjudication" and job != released_job:
             raise ValueError("Only one fresh adjudication job is authorised.")

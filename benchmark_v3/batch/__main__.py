@@ -6,7 +6,7 @@ from pathlib import Path
 
 from benchmark_v3.batch import admission, artifacts, authorisation, coordinator, freeze
 from benchmark_v3.batch.contracts import (
-    AdmissionDecisions, AnnotationRecovery, BatchDecision, BatchManifest, BudgetAmendment, DeferredExceptionReview,
+    AdjudicationQuoteRecovery, AdmissionDecisions, AnnotationRecovery, BatchDecision, BatchManifest, BudgetAmendment, DeferredExceptionReview,
     DesignReview, FamilyContinuation,
     PilotDecision, SourceCutoffRecovery,
 )
@@ -20,7 +20,7 @@ def main() -> None:
     commands.add_parser("schema").add_argument(
         "contract", choices=(
             "portfolio", "manifest", "approval", "design-review", "source-cutoff-recovery",
-            "annotation-recovery", "deferred-exception-review", "budget-amendment", "family-continuation", "pilot", "admissions", "freeze",
+            "annotation-recovery", "adjudication-quote-recovery", "deferred-exception-review", "budget-amendment", "family-continuation", "pilot", "admissions", "freeze",
         ),
     )
     commands.add_parser("coverage")
@@ -40,7 +40,7 @@ def main() -> None:
         if name in {"reconcile", "quarantine"}:
             command.add_argument("family")
             command.add_argument("reference")
-    for name in ("recover-source-cutoffs", "recover-annotation", "record-deferred-review",
+    for name in ("recover-source-cutoffs", "recover-annotation", "recover-adjudication-quote", "record-deferred-review",
                  "review-designs", "amend-budget", "continue-family", "pilot-review", "admit", "freeze"):
         command = commands.add_parser(name)
         command.add_argument("custody", type=Path)
@@ -56,6 +56,7 @@ def _execute(args: argparse.Namespace) -> None:
     contracts: dict[str, type[Contract]] = {
         "portfolio": Portfolio, "manifest": BatchManifest, "approval": BatchDecision,
         "design-review": DesignReview, "source-cutoff-recovery": SourceCutoffRecovery,
+        "adjudication-quote-recovery": AdjudicationQuoteRecovery,
         "annotation-recovery": AnnotationRecovery, "deferred-exception-review": DeferredExceptionReview,
         "budget-amendment": BudgetAmendment, "family-continuation": FamilyContinuation,
         "pilot": PilotDecision, "admissions": AdmissionDecisions, "freeze": freeze.FreezeDecision,
@@ -89,6 +90,9 @@ def _execute(args: argparse.Namespace) -> None:
         case "recover-annotation":
             annotation = artifacts.read_contract(args.decisions.absolute(), AnnotationRecovery)
             print(coordinator.recover_annotation(ledger, annotation))
+        case "recover-adjudication-quote":
+            quote = artifacts.read_contract(args.decisions.absolute(), AdjudicationQuoteRecovery)
+            print(coordinator.recover_adjudication_quote(ledger, quote))
         case "record-deferred-review":
             deferred = artifacts.read_contract(args.decisions.absolute(), DeferredExceptionReview)
             coordinator.record_deferred_review(ledger, deferred)

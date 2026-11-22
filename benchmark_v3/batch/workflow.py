@@ -9,7 +9,7 @@ from typing import Any, TypeVar
 from pydantic import BaseModel
 
 from benchmark_v3 import commissioning, packet, replay
-from benchmark_v3.batch import adjudication_contract, annotation_recovery, artifacts, continuation, design_recovery, science
+from benchmark_v3.batch import adjudication_contract, adjudication_recovery, annotation_recovery, artifacts, continuation, design_recovery, science
 from benchmark_v3.batch.contracts import (
     Adjudication, AuditReview, AuthoredSource, Code, DesignOutput, Reading, RealismReview,
     Role, Stage,
@@ -273,6 +273,18 @@ class FamilyWorkflow:
         self, index: int, design: DesignOutput, sources: list[Source], first: Reading, second: Reading,
         agreement: dict[str, Any],
     ) -> Adjudication:
+        recovery = adjudication_recovery.recorded(self.runner)
+        if recovery is not None:
+            if index != 0:
+                raise ValueError("The mechanical adjudication recovery is limited to condition zero.")
+            try:
+                review, receipt = adjudication_recovery.reopen(self.runner, recovery)
+            except packet.PacketIsolationError as error:
+                raise Blocked(self.stage, "isolation", str(error)) from error
+            except (ValueError, OSError, KeyError, TypeError) as error:
+                raise Blocked(self.stage, "input_integrity", str(error)) from error
+            self.sessions.append(receipt)
+            return review
         inputs = _reading_inputs(design, sources) | {
             "annotation_a": first.model_dump_json(), "annotation_b": second.model_dump_json(),
         }

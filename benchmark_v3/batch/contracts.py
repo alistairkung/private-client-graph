@@ -161,6 +161,18 @@ class AnnotationRecovery(OwnerFamilyReview):
     byte_interval: tuple[Annotated[int, Field(strict=True, ge=0)], Annotated[int, Field(strict=True, gt=0)]]
 
 
+class AdjudicationQuoteRecovery(OwnerFamilyReview):
+    output_sha256: Digest
+    receipt_sha256: Digest
+    bundle_sha256: Digest
+    derivative_sha256: Digest
+    source_id: SourceId
+    truth_relationship_index: Annotated[int, Field(strict=True, ge=0)]
+    quote_sha256: Digest
+    source_quote_interval: tuple[Annotated[int, Field(strict=True, ge=0)], Annotated[int, Field(strict=True, gt=0)]]
+    output_token_interval: tuple[Annotated[int, Field(strict=True, ge=0)], Annotated[int, Field(strict=True, gt=0)]]
+
+
 class RepairScopeReview(Contract):
     status: Literal["repair_scope_approved_pending_execution"]
     design_sha256: Digest

@@ -153,6 +153,14 @@ reading and writes an immutable derivative with its validation record. A
 verified resume reuses earlier sessions and sends the existing readings to
 adjudication. Repeating the same decision verifies the recorded derivative.
 
+Use `recover-adjudication-quote CUSTODY DECISION` only after an explicit
+owner decision binds the exact output, receipt, frozen Sources, one token
+interval and derivative digest. This path reuses the single exact quote
+already selected in both blind readings and the retained adjudication. It
+requires full adjudication validation before committing the derivative.
+The original packet remains intact. The scoped run reopens the derivative
+and can proceed to independent audit without another adjudication session.
+
 Use `schema deferred-exception-review` and
 `record-deferred-review CUSTODY DECISION` to record approval of a documentary
 repair scope or the merits of a proposed child design. Both decisions hold
