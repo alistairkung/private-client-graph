@@ -11,6 +11,7 @@ from private_client_graph.models.source import Source
 from private_client_graph.research.case_metadata import CaseMetadata
 from private_client_graph.research.results import ResearchResult
 from private_client_graph.research.run_plan import RunPlan
+from private_client_graph.research.tracing import trace_id
 from .artifacts import artifact_digest, _verify_execution_binding
 from .contracts import RelationshipOutcome
 from .evidence import relationship_outcomes
@@ -32,6 +33,7 @@ class RunObservation(BaseModel):
     source: str | None = None
     sources: list[Source] | None = None
     result: ResearchResult | None = None
+    langfuse_trace_ids: list[str] = Field(default_factory=list)
     relationships: list[RelationshipOutcome] = Field(default_factory=list)
 
 
@@ -98,11 +100,13 @@ def _observations(bundle: Bundle, evaluation: RunEvaluation) -> list[RunObservat
         template = inputs.get(template_id)
         source = sample.source if sample else template.source if template else None
         outcome = coverage.get(slot.observation_id)
+        correlation_keys = (slot.observation_id, slot.extraction_attempt_id)
+        trace_ids = [identity for key in correlation_keys if key and (identity := trace_id(bundle, key))]
         observations.append(RunObservation(id=slot.observation_id, sample_id=slot.sample_id,
             case_id=slot.case_id, configuration=slot.configuration, repetition=slot.repetition,
             status=outcome.status if outcome else row.status if row else 'not_attempted',
             reason=outcome.reason if outcome else 'Evaluation unavailable for this planned observation',
-            metadata=metadata, source=source, result=row,
+            metadata=metadata, source=source, result=row, langfuse_trace_ids=trace_ids,
             sources=row.state.sources if row and row.state is not None else None,
             relationships=relationship_outcomes(sample, row) if sample and row else []))
     return observations

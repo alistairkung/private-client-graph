@@ -64,6 +64,40 @@ For the authoritative v2 API sequence, idempotency, recovery, budget handling,
 legacy history and migration requirements, see
 [Persistent Research Experiments and Runs](../docs/workflows/persistent-research-workspaces.md).
 
+## Optional Langfuse tracing
+
+For local synthetic Workbench Runs, set `LANGFUSE_PUBLIC_KEY`,
+`LANGFUSE_SECRET_KEY`, and `LANGFUSE_BASE_URL` in your ignored `.env` or process
+environment. Set `PCG_RESEARCH_LANGFUSE_ENABLED=1` and recreate the Compose
+`research` service. This setting is independent of paid execution authority.
+
+The worker checks each frozen input against the repository's authored
+synthetic fixtures. By default, traces contain execution metadata, counters
+and timings. Set `PCG_RESEARCH_LANGFUSE_DETAILS=1` to also send the rendered
+model messages and the provider's sanitized response for eligible inputs.
+Saved-extraction replay has no model generation. Imported or retained inputs
+outside the authored fixture catalog are excluded.
+
+Read `langfuse_trace_ids` from this Workbench endpoint.
+
+```text
+GET /api/research/v2/experiments/{experiment}/runs/{run}/observations/{observation}
+```
+
+Use an ID in the configured Langfuse project's tracing view. The same ID is retained in
+`<run-directory>/langfuse/<observation-id>.json`. When resolver observations
+share a fresh extraction, its trace is linked from each affected observation
+and stored under the extraction attempt ID in the same directory. The frozen
+input ID can be joined to an external benchmark's condition manifest.
+
+Set `PCG_RESEARCH_LANGFUSE_ENABLED=0` and recreate the service to disable
+tracing. Export is best effort. During an outage, a recorded ID may have no
+corresponding Langfuse trace. The Workbench manifests, attempts, results and
+task ledgers remain authoritative for reproducibility, evaluation and
+provider-call accounting. See the
+[Langfuse Python SDK documentation](https://langfuse.com/docs/observability/sdk/overview)
+for the trace viewer and API.
+
 ## Historical alias-resolution pilot
 
 The original [#91](https://github.com/alistairkung/private-client-graph/issues/91)

@@ -9,6 +9,7 @@ from private_client_graph.research.demo import recorded_response
 from private_client_graph.research.runner import execute
 from .planning import open_executable, require_live
 from .supervisor import command_lock, event
+from .tracing import workbench_tracing
 
 
 def run(root: Path, identity: str, invocation: str, parent: int) -> None:
@@ -24,8 +25,9 @@ def run(root: Path, identity: str, invocation: str, parent: int) -> None:
             bundle.authorization_id = invocation
             from private_client_graph.research.provider import invoke_deepseek
             provider = partial(invoke_deepseek, api_key=os.getenv('DEEPSEEK_API_KEY', ''))
-        session = execute(bundle, provider=provider, live=live,
-            max_new_attempts=plan.preview.invocation_cap, should_stop=should_stop)
+        with workbench_tracing(bundle) as tracing:
+            session = execute(bundle, provider=provider, live=live, tracing=tracing,
+                max_new_attempts=plan.preview.invocation_cap, should_stop=should_stop)
         state = 'complete' if session['stop_reason'] == 'matrix_complete' else 'stopped'
         message = 'Execution complete; inspect retained outcomes.' if state == 'complete' else session['stop_reason']
     except Exception as error:

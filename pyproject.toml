@@ -23,6 +23,8 @@ dependencies = [
   "joserfc>=1.7,<2",
   "pypdf>=6,<7",
   "python-multipart>=0.0.20,<1",
+  "langfuse>=5,<6",
+  "opentelemetry-sdk>=1,<2",
 ]
 
 [dependency-groups]
