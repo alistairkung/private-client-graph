@@ -19,9 +19,15 @@ from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
+from pydantic import ValidationError
+
+from benchmark_v3 import commissioning
+from benchmark_v3.research_contracts import PlanningResult, ReconciliationResult
+
 
 _INPUTS = {
-    "designer": {"capability_question", "meeting_setting", "genre_references"},
+    "research_architect": commissioning.PLANNING_LABELS | commissioning.RECONCILIATION_LABELS,
+    "designer": {"hypothesis_revision"},
     "author": {"author_brief", "genre_references", "received_correspondence", "revision_ticket"},
     "realism": {"sources", "neutral_brief", "cutoff", "possession_ledger", "genre_references"},
     "annotation": {"sources", "neutral_brief", "ontology", "annotation_rules"},
@@ -71,7 +77,8 @@ def run_packet(directory: Path) -> None:
     request = _read_request(directory)
     message = _json_text({"inputs": request["inputs"], "prompt": request["prompt"]})
     handoff = _handoff(request, message)
-    _write_new(directory / "handoff.json", _json_text(handoff) + "\n")
+    handoff_text = _json_text(handoff) + "\n"
+    _write_new(directory / "handoff.json", handoff_text)
 
     receipt: dict[str, Any] = {
         "session": handoff["session"],
@@ -79,6 +86,8 @@ def run_packet(directory: Path) -> None:
         "model_requested": request["model"],
         "effort_requested": request["effort"],
     }
+    if request.get("research", {}).get("profile") == "reconciliation":
+        receipt["handoff_sha256"] = _fingerprint(handoff_text)["sha256"]
     try:
         with _create_runtime() as temporary:
             runtime = Path(temporary)
@@ -93,11 +102,17 @@ def run_packet(directory: Path) -> None:
             private_paths = {directory.resolve(), runtime.resolve()}
             if any(str(path) in output for path in private_paths):
                 raise PacketError("Output exposed an unstaged runtime path.")
+            if request["role"] == "research_architect":
+                commissioning.validate_architect_result(output, request["research"])
         receipt.update(result)
         receipt["output"] = _fingerprint(output)
         _write_new(directory / "output.txt", output)
     except (PacketError, OSError, ValueError, TypeError, KeyError) as error:
-        reason = str(error) if isinstance(error, PacketError) else type(error).__name__
+        reason = (
+            _validation_reason(error) if isinstance(error, ValidationError)
+            else str(error) if isinstance(error, (PacketError, ValueError))
+            else type(error).__name__
+        )
         receipt.update(status="rejected", reason=reason, completed_at=_timestamp())
         _write_new(directory / "receipt.json", _json_text(receipt) + "\n")
         raise PacketError(reason) from None
@@ -135,7 +150,43 @@ def _read_request(directory: Path) -> dict[str, Any]:
         raise PacketError("The role or its input labels are outside the packet allowlist.")
     if any(not isinstance(value, str) for value in inputs.values()):
         raise PacketError("Every input must be supplied as text.")
+    try:
+        _prepare_research_handoff(request)
+    except ValidationError as error:
+        raise PacketError(_validation_reason(error)) from None
+    except ValueError as error:
+        raise PacketError(str(error)) from None
     return request
+
+
+def _prepare_research_handoff(request: dict[str, Any]) -> None:
+    if request["role"] == "research_architect":
+        if request["prompt"] != "research-architect-v1":
+            raise ValueError("Select the versioned research-architect-v1 prompt.")
+        inputs, context = commissioning.prepare_architect(request["inputs"])
+        schema = PlanningResult if context["profile"] == "planning" else ReconciliationResult
+        instructions = commissioning.trusted_bytes(commissioning.ARCHITECT_PROMPT).decode("utf-8")
+        request["prompt"] = (
+            f"{instructions}\nActive profile: {context['profile']}\n"
+            f"Output schema: {_json_text(schema.model_json_schema())}"
+        )
+        request["inputs"] = inputs
+        request["research"] = context
+    if request["role"] == "designer":
+        if request["prompt"] != "commissioned-designer-v1" or request["inputs"].keys() != {
+            "hypothesis_revision",
+        }:
+            raise ValueError("Design requires a human-approved hypothesis revision and the versioned prompt.")
+        brief = commissioning.designer_brief(request["inputs"]["hypothesis_revision"])
+        request["inputs"] = {"capability_brief": _json_text(brief)}
+        request["prompt"] = commissioning.trusted_bytes(commissioning.DESIGNER_PROMPT).decode("utf-8")
+
+
+def _validation_reason(error: ValidationError) -> str:
+    return "; ".join(
+        f"{'.'.join(map(str, issue['loc'])) or 'packet'}: {issue['msg']}"
+        for issue in error.errors(include_input=False, include_url=False)
+    )
 
 
 def _unique_members(members: list[tuple[str, Any]]) -> dict[str, Any]:
@@ -159,6 +210,7 @@ def _handoff(request: dict[str, Any], message: str) -> dict[str, Any]:
         "prompt": _fingerprint(request["prompt"]),
         "base_instructions": _fingerprint(_BASE_INSTRUCTIONS),
         "developer_instructions": _fingerprint(_DEVELOPER_INSTRUCTIONS),
+        **({"research": request["research"]} if request["role"] == "research_architect" else {}),
     }
 
 

@@ -22,7 +22,7 @@ aggregate session evidence and the approved portions of the disposition dossier.
 }
 ```
 
-Run `python -m benchmark_v3.packet PACKET_DIR` from the repository root with
+Run `uv run python -m benchmark_v3.packet PACKET_DIR` from the repository root with
 Codex CLI available and signed in. The runner sends only the prompt and the
 named text inputs. Record the custodian's model and effort decision in
 `rationale` and the prior revision identifier in `parent` when applicable.
@@ -32,7 +32,8 @@ Use a fresh directory and session for each handoff.
 
 | Role | Allowed input labels | Handoff |
 | --- | --- | --- |
-| `designer` | `capability_question`, `meeting_setting`, `genre_references` | One context per family. Deliver a private dated history, custody, role-specific fact briefs and a separately logged intervention. Exclude graph answers, other families, model outputs and sealed material. |
+| `research_architect` | Planning: `research_specification`, `development_findings`, `practice_references`. Reconciliation: `hypothesis_revision`, `admission_dossier`, `technical_findings`. | Work across admitted development families. Return ranked proposed hypotheses or an achieved-versus-intended assessment. See the exact profiles below. |
+| `designer` | `hypothesis_revision` | The runner resolves the revision and sends only the approved capability brief. Use one context per family. Deliver a private dated history, custody, role-specific fact briefs and a separately logged intervention. |
 | `author` | `author_brief`, `genre_references`, `received_correspondence`, `revision_ticket` | One dated perspective at a time. Release recurring-author packets chronologically. Provide only facts the participant could know and exact earlier correspondence they received. Exclude target labels, answers, other perspectives and extraction outputs. |
 | `realism` | `sources`, `neutral_brief`, `cutoff`, `possession_ledger`, `genre_references` | Review candidate Sources for purpose, possession, chronology, form, density and cues. Limit the ledger to transmission. Review every sibling as a separate file in its own documentary situation. Return per-Source revision tickets. Exclude hidden history, semantic targets, keys and extraction outputs. |
 | `annotation` | `sources`, `neutral_brief`, `ontology`, `annotation_rules` | Review exactly one locked, ordered bundle. Return the complete graph, exact evidence and minimum sufficient alternatives, contradictions, open questions and dangerous guesses. Exclude variant names, siblings, intended answers, peer labels and extraction outputs. |
@@ -41,8 +42,134 @@ Use a fresh directory and session for each handoff.
 | `masked` | `sources`, `neutral_brief`, `ontology`, `annotation_rules` | Give a fresh reader only the masked or subset bundle and the neutral annotation instructions. Exclude unmasked facts, target labels and the intended effect. |
 | `probe` | `probe` | Use harmless synthetic test text to verify the runtime. |
 
-The runner checks labels. The custodian supplies the appropriate fields for
-each role and verifies that the text stays within its allowed scope.
+The runner checks labels. The custodian verifies the scope of the text supplied
+under each label. Stage inline text only. The runner never opens paths mentioned
+in input text. Keep raw packets and unapproved evidence in the private archive.
+
+## Research Architect commissioning
+
+The Research Architect owns portfolio hypotheses and coverage assessment. The
+Matter Designer owns independent construction. The owner makes two separate
+decisions, first on the proposed hypothesis and later on admission.
+
+```text
+Research Architect → owner hypothesis approval → Matter Designer
+→ Document Authors → Realism Reviewer → Blind Annotators
+→ Adjudicator → Adversarial Auditor → owner admission → Research Architect
+```
+
+### Plan a development round
+
+Use `role: research_architect` and `prompt: research-architect-v1` in the
+same request envelope as other roles. The inputs must be exactly these three
+text fields.
+
+| Input | Custodian preparation |
+| --- | --- |
+| `research_specification` | Provide the current [portfolio research scope](../../benchmark_v3/planning/RESEARCH-SCOPE.md) and any approved development planning constraints. |
+| `development_findings` | Provide reviewed excerpts from owner-admitted development dossiers and independent technical audits. Exclude raw model runs, sealed material, in-progress or unreleased blind work and private histories. |
+| `practice_references` | Paste a JSON array of publicly checked references with `title`, `url` and `relevance`. Use an empty array if public grounding is unavailable. |
+
+The runner adds the development register and its taxonomy, ontology and
+previous proposals and decisions. It selects the versioned
+[architect prompt](../../benchmark_v3/instructions/research-architect-v1.md)
+and appends the output schema. Research is offline within the isolated turn.
+The custodian verifies public sources and stages them before dispatch. This
+profile excludes v3 extractor outputs. Any later post-baseline diagnostic use
+requires a separately authorised profile.
+
+```bash
+uv run python -m benchmark_v3.packet PACKET_DIR
+uv run python -m benchmark_v3.architect proposals PACKET_DIR
+```
+
+The second command prints a validated record from the completed packet and
+receipt. The custodian archives the original request, handoff, response and
+receipt, then commits the reviewed printed record to
+`benchmark_v3/planning/rounds/<round>.json`. An empty ranked array is valid.
+The [v1 contracts](../../benchmark_v3/research_contracts.py) specify required
+grounding, contrasts, controls, feasibility and version lineage. The
+[initial round](../../benchmark_v3/planning/INITIAL-ROUND.md) links complete
+proposal examples and runtime evidence. Assessments are qualitative and
+compare one independent Matter history at a time.
+
+### Record the owner's decision and commission one Matter
+
+The archived proposal always retains its original `proposed` status and
+session provenance. The owner reviews the full proposal against its revision
+digest in the coverage register and provides their explicit disposition. The custodian records it at
+`benchmark_v3/planning/decisions/<hypothesis_id>@<revision>.json` for the
+exact revision.
+
+```json
+{
+  "schema_version": 1,
+  "hypothesis_id": "example-hypothesis",
+  "revision": 1,
+  "hypothesis_sha256": "<64 lowercase hex characters from the register>",
+  "status": "approved",
+  "owner": "<human benchmark owner>",
+  "decided_on": "2026-11-22",
+  "decision_reference": "<auditable reference to the owner's explicit decision>"
+}
+```
+
+The other owner dispositions are `returned` and `rejected`. Preserve the
+original record when revising. Submit a child revision with the same IDs,
+incremented revision and the exact previous revision digest. The revision
+digest is SHA-256 of compact UTF-8 JSON with sorted keys, containing the
+validated hypothesis and the architect session provenance. The owner record
+is a custodial attestation. Keep writes to the trusted repository records
+under human review. The packet runner consumes those records and has no
+command to create approval.
+
+To run a designer, set the prompt selector to `commissioned-designer-v1` and
+supply only `"inputs": {"hypothesis_revision": "example-hypothesis@1"}`.
+The runner resolves the revision under its trusted factory directory, checks
+the owner disposition and digest before opening a session, then constructs
+the approved capability brief. A request containing its own approval,
+unapproved brief or arbitrary designer prompt is rejected. Families A–C retain
+their historical admissions and original digests. Their family IDs are reserved.
+
+Give each author only the participant knowledge and legitimate received
+correspondence. Give each blind reader only the locked file and uniform
+annotation contract. Release the intended experimental objective to the
+adversarial auditor after both blind readings and the provisionally adjudicated
+key are committed. The architect transcript and portfolio stay with the custodian.
+
+### Reconcile after owner admission
+
+For a commissioned development family, record the approved hypothesis
+reference (`hypothesis_id`, `revision`, `hypothesis_sha256`) in the existing
+admission record under `hypothesis`, along with `split: development`. The
+runner requires a dated human acceptance and the existing manifest digest.
+Set the same architect role and prompt selector. Supply exactly
+`hypothesis_revision`, `admission_dossier` and `technical_findings`.
+Stage the reviewed dossier excerpt, matching and mask outcomes, shortcut
+findings and limitations. The runner adds the approved revision, current
+development coverage and a receipt commitment to the exact admission.
+
+```bash
+uv run python -m benchmark_v3.packet PACKET_DIR
+uv run python -m benchmark_v3.architect reconcile PACKET_DIR
+```
+
+Commit the reviewed printed assessment separately under
+`benchmark_v3/planning/reconciliations/<FAMILY>.json`. The output measures
+how the original hypothesis was operationalised. It records evidence for
+verified axes, redundancy, remaining gaps and the recommendation. The
+commands leave protected keys, approval records and scores untouched.
+
+Update the admitted family row and any residual gaps in the canonical
+[coverage data](../../benchmark_v3/coverage.json). Verified findings for
+commissioned families come from their separate reconciliation. Pending and
+rejected hypotheses remain visible through the archived proposals and owner
+decisions. Regenerate the [Markdown register](../../benchmark_v3/COVERAGE.md)
+with the read-only renderer and review the diff.
+
+```bash
+uv run python -m benchmark_v3.architect coverage > benchmark_v3/COVERAGE.md
+```
 
 ## Lock, annotate and revise
 
@@ -110,4 +237,5 @@ raises an error if any ideal fails. Test inputs are defined in
 The owner reviews the complete file and dossier and records accept, return or
 quarantine against a dated package and annotation digest and evidence policy.
 A pending dossier stays outside execution. A failed or incomplete comparison
-keeps its planned and scored coverage visible. This workflow ends at admission.
+keeps its planned and scored coverage visible. A commissioned development
+family then returns to the Research Architect for coverage reconciliation.

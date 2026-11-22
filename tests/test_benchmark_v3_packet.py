@@ -9,7 +9,8 @@ from pathlib import Path
 
 import pytest
 
-from benchmark_v3 import packet
+from benchmark_v3 import commissioning, packet
+from benchmark_v3.architect import read_architect_packet
 
 
 _FAKE_CODEX = r"""
@@ -93,6 +94,8 @@ for line in sys.stdin:
     if mode == "foreign_turn":
         scope["turnId"] = "foreign"
     text = str(Path.cwd()) if mode == "exposure" else "答え\nline 2"
+    if mode == "architect":
+        text = (Path(capture_path).parent / "response.json").read_text(encoding="utf-8")
     answer = {"type": "agentMessage", "phase": "final_answer", "text": text}
     if mode != "no_final":
         notify("item/completed", item=answer, **scope)
@@ -246,7 +249,6 @@ def test_rejects_exposure_and_nonfinal_results(monkeypatch, packet_directory, mo
 @pytest.mark.parametrize(
     ("role", "labels"),
     [
-        ("designer", "capability_question meeting_setting genre_references"),
         ("author", "author_brief genre_references received_correspondence revision_ticket"),
         ("realism", "sources neutral_brief cutoff possession_ledger genre_references"),
         ("annotation", "sources neutral_brief ontology annotation_rules"),
@@ -310,3 +312,132 @@ def test_requires_the_request_to_be_a_regular_file(packet_directory):
 
     with pytest.raises(packet.PacketError, match="regular file"):
         packet.run_packet(packet_directory)
+
+
+def test_architect_turn_sends_only_staged_prebaseline_material(monkeypatch, packet_directory):
+    capture = _fake_codex(monkeypatch, packet_directory, "architect")
+    restricted = packet_directory.parent / "sealed-sentinel.json"
+    restricted.write_text("private test sentinel that must not enter a turn", encoding="utf-8")
+    inputs = {
+        "research_specification": "Use the benchmark rules.",
+        "development_findings": "Summaries of admitted family reviews.",
+        "practice_references": "[]",
+    }
+    request = _read_json(packet_directory, "request.json") | {
+        "role": "research_architect", "prompt": "research-architect-v1", "inputs": inputs,
+    }
+    _write_request(packet_directory, request)
+    response = {
+        "schema_version": 1,
+        "portfolio_summary": "No new diagnostic need established.",
+        "family_assessments": [
+            {"family_id": family, "assessment": "Admitted development review.", "overlap": "Joint proof."}
+            for family in (row.family_id for row in commissioning.coverage_register().families)
+        ],
+        "gaps": [],
+        "proposals": [],
+        "stopping_criteria": ["Stop when no distinctive feasible contrast remains."],
+    }
+    (packet_directory.parent / "response.json").write_text(json.dumps(response), encoding="utf-8")
+
+    packet.run_packet(packet_directory)
+
+    thread, turn = json.loads(capture.read_bytes())[1::2]
+    message = turn["params"]["input"][0]["text"]
+    payload = json.loads(message)
+    assert payload["inputs"].keys() == inputs.keys() | {
+        "coverage_register", "ontology", "previous_decisions",
+    }
+    assert restricted.read_text() not in message
+    assert str(restricted) not in message
+    assert "Output schema" in payload["prompt"]
+    assert thread["params"]["environments"] == thread["params"]["runtimeWorkspaceRoots"] == []
+    record = read_architect_packet(packet_directory, "planning")
+    assert record.result.proposals == []
+    assert record.provenance.session == _read_json(packet_directory, "receipt.json")["session"]
+
+    (packet_directory / "output.txt").chmod(0o600)
+    (packet_directory / "output.txt").write_text("changed response", encoding="utf-8")
+    with pytest.raises(ValueError, match="matching completed receipt"):
+        read_architect_packet(packet_directory, "planning")
+
+
+@pytest.mark.parametrize(
+    "extra_label",
+    ["held_out_sources", "answer_key", "annotation_a", "extractor_results", "private_history", "sources"],
+)
+def test_architect_rejects_restricted_labels_before_launch(monkeypatch, packet_directory, extra_label):
+    capture = _fake_codex(monkeypatch, packet_directory, "normal")
+    request = _read_json(packet_directory, "request.json")
+    request.update(role="research_architect", prompt="research-architect-v1", inputs={
+        "research_specification": "Specification.",
+        "development_findings": "Admitted findings.",
+        "practice_references": "[]",
+        extra_label: "private content",
+    })
+    _write_request(packet_directory, request)
+
+    with pytest.raises(packet.PacketError, match="allowlist"):
+        packet.run_packet(packet_directory)
+
+    assert not capture.exists()
+    assert not (packet_directory / "handoff.json").exists()
+
+
+def test_packet_profile_excludes_shared_storage_and_user_paths(tmp_path):
+    config = packet._macos_filesystem(tmp_path)
+    permissions = config.split("=", 1)[1]
+    grants = json.loads(permissions.replace("=", ":"))
+    assert grants == {
+        ":minimal": "read",
+        "/private/tmp": "deny",
+        "/private/var/folders": "deny",
+        "/Users": "deny",
+        str(tmp_path.resolve()): "read",
+    }
+
+
+def test_architect_reconciliation_receipt_binds_admission_context(monkeypatch, packet_directory):
+    _fake_codex(monkeypatch, packet_directory, "architect")
+    context = {
+        "family_id": "D",
+        "hypothesis": {
+            "hypothesis_id": "amendment-scope", "revision": 1, "hypothesis_sha256": "1" * 64,
+        },
+        "admission_sha256": "2" * 64,
+    }
+    metadata = {"profile": "reconciliation", "axes": [], "admission": context}
+    monkeypatch.setattr(
+        packet.commissioning, "prepare_architect",
+        lambda _: ({"approved_hypothesis": "Owner-reviewed proposal."}, metadata),
+    )
+    request = _read_json(packet_directory, "request.json") | {
+        "role": "research_architect", "prompt": "research-architect-v1",
+        "inputs": {
+            "hypothesis_revision": "amendment-scope@1",
+            "admission_dossier": "Admitted dossier excerpt.",
+            "technical_findings": "No independently verified new axis.",
+        },
+    }
+    _write_request(packet_directory, request)
+    response = {
+        "schema_version": 1, "operationalisation": "unassessable",
+        "achieved_vs_intended": "The technical findings do not report the required mask.",
+        "verified_findings": [], "additional_coverage": "Unknown.", "redundancy": "Unknown.",
+        "remaining_gaps": [], "recommendation": "refine_future_designs",
+        "rationale": "Retain the hypothesis and record incomplete evidence.",
+    }
+    (packet_directory.parent / "response.json").write_text(json.dumps(response), encoding="utf-8")
+
+    packet.run_packet(packet_directory)
+
+    record = read_architect_packet(packet_directory, "reconciliation")
+    assert record.context.model_dump() == context
+    assert record.result.operationalisation == "unassessable"
+    handoff = _read_json(packet_directory, "handoff.json")
+    handoff["research"]["admission"]["admission_sha256"] = "3" * 64
+    path = packet_directory / "handoff.json"
+    path.chmod(0o600)
+    path.write_text(json.dumps(handoff), encoding="utf-8")
+    with pytest.raises(ValueError, match="handoff digest"):
+        read_architect_packet(packet_directory, "reconciliation")
