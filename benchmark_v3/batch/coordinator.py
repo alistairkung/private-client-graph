@@ -392,11 +392,15 @@ def apply_budget_amendment(ledger: Ledger, decision: BudgetAmendment) -> str:
                 or decision.original_approval_sha256 != authorisation.commitment(commission.decision)):
             raise ValueError("The amendment requires the original pilot, commissioning owner and exact commitments.")
         _verify_resume(ledger, commission)
-        prior = continuation.recorded_budget(ledger.events(decision.batch_id))
+        commitment = authorisation.commitment(decision)
+        events = ledger.events(decision.batch_id)
+        prior = continuation.recorded_budget(events, expected_sha256=commitment)
         if prior is None:
+            if decision.schema_version == 1 and continuation.recorded_budget(events) is not None:
+                raise ValueError("The recorded budget amendment is immutable.")
             _verify_completed_charges(ledger, commission, decision.completed_charges)
         ledger.amend_budget(decision)
-        return authorisation.commitment(decision)
+        return commitment
 
 
 def _verify_completed_charges(ledger: Ledger, commission: Commission, expected: dict[str, int]) -> None:
@@ -413,9 +417,6 @@ def _verify_completed_charges(ledger: Ledger, commission: Commission, expected: 
 def continue_family(ledger: Ledger, decision: FamilyContinuation) -> None:
     with ledger.coordinator_lock():
         commission, slot, review = _owner_family_review(ledger, decision)
-        budget = continuation.recorded_budget(ledger.events(decision.batch_id))
-        if budget is None or authorisation.commitment(budget) != decision.budget_amendment_sha256:
-            raise ValueError("The family release must bind the recorded budget amendment.")
         events = ledger.events(decision.batch_id, decision.family_id)
         existing = continuation.family_release(events)
         payload = decision.model_dump(mode="json")
@@ -425,6 +426,9 @@ def continue_family(ledger: Ledger, decision: FamilyContinuation) -> None:
             if prior["decision"] != payload:
                 raise ValueError("The family continuation is immutable.")
             return
+        budget = continuation.recorded_budget(ledger.events(decision.batch_id))
+        if budget is None or authorisation.commitment(budget) != decision.budget_amendment_sha256:
+            raise ValueError("The family release must bind the recorded budget amendment.")
         complete = decision.release.action == "complete_evidence_adjudication"
         if complete:
             if not existing or existing["decision"]["release"]["action"] != "fresh_adjudication":

@@ -169,9 +169,12 @@ budget amendments require separate authority and a tested release path.
 
 Use `amend-budget CUSTODY DECISION` for an explicit pilot ceiling increase.
 It binds the original owner approval, manifest, portfolio and completed
-charges. The reservation transaction reads the additive amendment before
-spending. Original allocations and historical charges stay in the ledger.
-Family allocations cannot decrease or transfer under this operation.
+charges. A follow-up amendment uses schema 2 and also binds the latest
+amendment in `previous_amendment_sha256` and the current effective ceilings.
+All amendments, release commitments, original allocations and historical
+charges stay in the ledger. The reservation transaction reads the latest
+amendment before spending. Family allocations cannot decrease or transfer
+under this operation. Scientific execution still requires owner authority.
 
 Use `continue-family CUSTODY DECISION` to release an exact scientific
 exception against the recorded budget amendment. A repair release binds the

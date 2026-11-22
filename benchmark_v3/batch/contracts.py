@@ -196,11 +196,12 @@ class BudgetAllocation(Contract):
 
 
 class BudgetAmendment(Contract):
-    schema_version: Literal[1]
+    schema_version: Literal[1, 2]
     batch_id: Slug
     manifest_sha256: Digest
     portfolio_sha256: Digest
     original_approval_sha256: Digest
+    previous_amendment_sha256: Digest | None = Field(default=None, exclude_if=lambda value: value is None)
     owner: Text
     decided_on: date
     decision_reference: Text
@@ -208,6 +209,12 @@ class BudgetAmendment(Contract):
     previous: BudgetAllocation
     allocation: BudgetAllocation
     completed_charges: dict[FamilyId, Annotated[int, Field(strict=True, ge=0)]]
+
+    @model_validator(mode="after")
+    def verify_amendment_parent(self) -> Self:
+        if (self.previous_amendment_sha256 is not None) != (self.schema_version == 2):
+            raise ValueError("Only a chained budget amendment requires a previous amendment digest.")
+        return self
 
 
 class FreshAdjudication(Contract):

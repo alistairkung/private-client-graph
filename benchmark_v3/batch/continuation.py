@@ -24,18 +24,25 @@ def recorded(runner: "SessionRunner") -> dict[str, Any] | None:
     return family_release(runner.ledger.events(runner.manifest.batch_id, runner.family), runner.revision)
 
 
-def recorded_budget(events: list[dict[str, Any]]) -> BudgetAmendment | None:
-    return next((BudgetAmendment.model_validate(row["details"]) for row in events
-                 if row["kind"] == "budget_amendment"), None)
+def recorded_budget(events: list[dict[str, Any]], *, expected_sha256: str | None = None) -> BudgetAmendment | None:
+    for row in reversed(events):
+        if row["kind"] != "budget_amendment":
+            continue
+        amendment = BudgetAmendment.model_validate(row["details"])
+        if expected_sha256 is None or authorisation.commitment(amendment) == expected_sha256:
+            return amendment
+    return None
 
 
 def verify_authority(runner: "SessionRunner", release: dict[str, Any]) -> None:
     decision = FamilyContinuation.model_validate(release["decision"])
-    budget = recorded_budget(runner.ledger.events(runner.manifest.batch_id))
+    budget = recorded_budget(
+        runner.ledger.events(runner.manifest.batch_id), expected_sha256=decision.budget_amendment_sha256,
+    )
     if (decision.owner != runner.owner or decision.family_id != runner.family
             or decision.batch_id != runner.manifest.batch_id
             or decision.manifest_sha256 != authorisation.commitment(runner.manifest)
-            or budget is None or decision.budget_amendment_sha256 != authorisation.commitment(budget)):
+            or budget is None):
         raise ValueError("The family release does not bind its commissioning owner, manifest and budget.")
     path = runner.ledger.root / "boundary" / f"{runner.manifest.scope.os_boundary_evidence_sha256}.json"
     try:

@@ -13,9 +13,13 @@ from uuid import uuid4
 import pytest
 
 from benchmark_v3 import commissioning, packet
-from benchmark_v3.batch import adjudication_contract, adjudication_recovery, admission, artifacts, authorisation, coordinator, custody, science
+from benchmark_v3.batch import (
+    adjudication_contract, adjudication_recovery, admission, artifacts, audit_contract, authorisation, continuation,
+    coordinator, custody, science,
+)
 from benchmark_v3.batch.contracts import (
-    AdjudicationQuoteRecovery, AdmissionDecisions, AnnotationRecovery, AuthoredSource, BatchDecision, BatchManifest, BudgetAmendment,
+    AdjudicationQuoteRecovery, AdmissionDecisions, AnnotationRecovery, AuditReview, AuthoredSource, BatchDecision,
+    BatchManifest, BudgetAmendment,
     DeferredExceptionReview, DesignOutput, DesignReview, FamilyContinuation, PilotDecision, SourceCutoffRecovery,
 )
 from benchmark_v3.batch.ledger import BudgetExhausted, TaskHalted
@@ -769,6 +773,48 @@ def test_v4_admission_is_compatible_with_architect_and_detects_changed_review_by
         commissioning.admitted_family_ids()
 
 
+def test_scoped_audit_separates_critical_edges_from_whole_graph(approved, transport):
+    ledger, batch = _run(approved)
+    assert _status(ledger, batch)["G"] == "admission_ready"
+    request = json.loads(next(row["request"] for row in ledger.attempts("G") if row["job"] == "audit"))
+    instructions, schema_document = request["prompt"].split("Output schema: ")
+    assert audit_contract.SCOPED_INSTRUCTIONS in instructions
+    critical = commissioning.json_text(EDGE)
+    schema = json.loads(schema_document)["properties"]
+    for key, expected in (("sufficiency", [critical]), ("completeness", ["src1", "src2"])):
+        assert schema[key]["required"] == ["G000"]
+        assert not schema[key]["additionalProperties"]
+        condition = schema[key]["properties"]["G000"]
+        assert condition["required"] == expected
+        assert not condition["additionalProperties"]
+
+    observed = _output("audit", "G", "audit", {})
+    observed["completeness"]["G000"]["src2"] = "An ordinary edge has an independent route."
+    freeze = BatchSourceFreeze(natural="G000", variants={}, candidates=[], required={"G000": [EDGE]},
+                               order={}, sources_sha256={}, source_commitments={})
+    sources = [Source.model_validate(row) for row in json.loads(request["inputs"]["paired_bundles"])["G000"]]
+    science.verify_audit(AuditReview.model_validate(observed), {"G000": sources}, freeze, set(), {})
+    ordinary = commissioning.json_text(["Ordinary Parent", "parent_of", "Ordinary Child"])
+    observed["sufficiency"]["G000"][ordinary] = "Wrong scope."
+    with pytest.raises(ValueError, match="each critical edge"):
+        science.verify_audit(AuditReview.model_validate(observed), {"G000": sources}, freeze, set(), {})
+
+
+def test_audit_contract_keeps_reserved_legacy_request(approved, transport, monkeypatch):
+    from benchmark_v3.batch.workflow import FamilyWorkflow
+
+    with monkeypatch.context() as patch:
+        patch.setattr(FamilyWorkflow, "_uses_scoped_audit", lambda _: False)
+        ledger, batch = _run(approved)
+    _, commission = approved
+    runner = commission.session_runner(ledger, "G", 1)
+    slot = next(slot for slot in commission.portfolio.slots if slot.family_id == "G")
+    workflow = FamilyWorkflow(runner, slot, [])
+    assert _status(ledger, batch)["G"] == "admission_ready"
+    assert not workflow._uses_scoped_audit()
+    assert FamilyWorkflow(commission.session_runner(ledger, "G", 2), slot, [])._uses_scoped_audit()
+
+
 def test_audit_requires_fresh_masks_for_joint_proof():
     from benchmark_v3.batch.contracts import Adjudication, AuditReview, MaskAssignment
 
@@ -987,6 +1033,7 @@ def test_deferred_owner_reviews_do_not_release_either_family(design_gated, trans
 
     amended = _amendment(ledger, commission)
     budget_digest = coordinator.apply_budget_amendment(ledger, amended)
+    releases = []
     for family, draft, release in (
         ("H", scope, {"action": "repair_execution", "direct_sources": ["src1"],
                       "scope_review_sha256": authorisation.commitment(DeferredExceptionReview.model_validate(scope))}),
@@ -999,6 +1046,10 @@ def test_deferred_owner_reviews_do_not_release_either_family(design_gated, trans
         with pytest.raises(ValueError, match="bind the recorded budget"):
             coordinator.continue_family(ledger, decision.model_copy(update={"budget_amendment_sha256": "0" * 64}))
         coordinator.continue_family(ledger, decision)
+        releases.append(decision)
+    next_budget = _chained_amendment(amended)
+    coordinator.apply_budget_amendment(ledger, next_budget)
+    for decision in releases:
         coordinator.continue_family(ledger, decision)
     behavior.pop(("H", "realism-000"))
     coordinator.run_batch(ledger, batch)
@@ -1045,6 +1096,47 @@ def _amendment(ledger, commission):
         "allocation": {"shared": 39, "families": {"G": 12, "H": 13, "I": 14}},
         "completed_charges": {family: len(ledger.attempts(family)) for family in "GHI"},
     })
+
+
+def _chained_amendment(first: BudgetAmendment) -> BudgetAmendment:
+    return BudgetAmendment.model_validate(first.model_dump(mode="json") | {
+        "schema_version": 2,
+        "previous_amendment_sha256": authorisation.commitment(first),
+        "previous": first.allocation,
+        "allocation": {"shared": 41, "families": {"G": 14, "H": 13, "I": 14}},
+    })
+
+
+def test_followup_budget_amendment_requires_latest_commitment(approved, transport):
+    ledger, commission = approved
+    coordinator.commission_batch(ledger, commission, BOUNDARY)
+    batch = commission.manifest.batch_id
+    first = _amendment(ledger, commission)
+    second = _chained_amendment(first)
+    with pytest.raises(ValueError, match="latest budget amendment"):
+        coordinator.apply_budget_amendment(ledger, second)
+    first_digest = coordinator.apply_budget_amendment(ledger, first)
+    assert "previous_amendment_sha256" not in first.model_dump(mode="json")
+    baseline = ledger.events(batch)
+    with pytest.raises(ValueError, match="previous amendment digest"):
+        BudgetAmendment.model_validate(second.model_dump(mode="json") | {"previous_amendment_sha256": None})
+    with pytest.raises(ValueError, match="latest budget amendment"):
+        coordinator.apply_budget_amendment(ledger, second.model_copy(update={"previous_amendment_sha256": "0" * 64}))
+    with pytest.raises(ValueError, match="exact current ceilings"):
+        coordinator.apply_budget_amendment(ledger, second.model_copy(update={"previous": first.previous}))
+    with pytest.raises(ValueError, match="without moving"):
+        lower = second.allocation.model_copy(update={"families": {"G": 15, "H": 12, "I": 14}})
+        coordinator.apply_budget_amendment(ledger, second.model_copy(update={"allocation": lower}))
+    second_digest = coordinator.apply_budget_amendment(ledger, second)
+    assert coordinator.apply_budget_amendment(ledger, first) == first_digest
+    assert coordinator.apply_budget_amendment(ledger, second) == second_digest
+    events = ledger.events(batch)
+    assert events[:-1] == baseline
+    assert events[-1]["details"] == second.model_dump(mode="json")
+    assert continuation.recorded_budget(events) == second
+    assert continuation.recorded_budget(events, expected_sha256=first_digest) == first
+    assert ledger.effective_budget() == second.allocation
+    assert not any(ledger.attempts(family) for family in "GHI")
 
 
 def test_budget_amendment_is_append_only_and_no_transfer(approved, transport):

@@ -163,24 +163,31 @@ class Ledger:
     def amend_budget(self, amendment: BudgetAmendment) -> None:
         with self.transaction() as connection:
             self.check_halt(connection)
-            prior = connection.execute("SELECT details FROM events WHERE kind = 'budget_amendment'").fetchone()
+            history = connection.execute(
+                "SELECT details FROM events WHERE kind = 'budget_amendment' ORDER BY sequence",
+            ).fetchall()
             details = amendment.model_dump(mode="json")
-            if prior is not None:
-                if json.loads(prior["details"]) != details:
-                    raise ValueError("The recorded budget amendment is immutable.")
+            if any(json.loads(row["details"]) == details for row in history):
                 return
+            parent = amendment.previous_amendment_sha256
+            if history and parent is None:
+                raise ValueError("The recorded budget amendment is immutable.")
+            latest = digest(history[-1]["details"].encode()) if history else None
+            if parent != latest:
+                raise ValueError("The amendment must bind the exact latest budget amendment.")
             previous = self._effective_budget(connection)
             allocation = amendment.allocation
             charged = dict.fromkeys(previous.families, 0)
             charged.update(dict(connection.execute("SELECT family, COUNT(*) FROM attempts GROUP BY family")))
             if previous != amendment.previous or charged != amendment.completed_charges:
-                raise ValueError("The amendment must bind the exact original ceilings and charged state.")
+                raise ValueError("The amendment must bind the exact current ceilings and charged state.")
             if (allocation.families.keys() != previous.families.keys()
                     or sum(allocation.families.values()) != allocation.shared
                     or allocation.shared <= previous.shared
                     or any(allocation.families[key] < value for key, value in previous.families.items())):
                 raise ValueError("An amendment must increase the shared ceiling without moving any family allocation.")
-            self._append(connection, amendment.batch_id, None, 0, "budget_amendment", "owner", None, None, details)
+            name = "owner" if parent is None else f"owner-{digest(json_text(details).encode())}"
+            self._append(connection, amendment.batch_id, None, 0, "budget_amendment", name, None, None, details)
 
     def reserve(
         self, family: str, revision: int, job: str, stage: Stage, request: dict[str, Any], request_sha256: str,

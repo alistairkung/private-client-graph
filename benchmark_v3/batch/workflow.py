@@ -9,7 +9,10 @@ from typing import Any, TypeVar
 from pydantic import BaseModel
 
 from benchmark_v3 import commissioning, packet, replay
-from benchmark_v3.batch import adjudication_contract, adjudication_recovery, annotation_recovery, artifacts, continuation, design_recovery, science
+from benchmark_v3.batch import (
+    adjudication_contract, adjudication_recovery, annotation_recovery, artifacts, audit_contract, continuation,
+    design_recovery, science,
+)
 from benchmark_v3.batch.contracts import (
     Adjudication, AuditReview, AuthoredSource, Code, DesignOutput, Reading, RealismReview,
     Role, Stage,
@@ -321,6 +324,20 @@ class FamilyWorkflow:
         reviews: dict[str, Adjudication], agreements: dict[str, dict[str, Any]],
     ) -> AuditReview:
         required = science.audit_risks(self.slot, reviews, agreements)
+        prompt = (
+            "Audit each Source for ground-truth completeness and each critical edge for evidence "
+            "necessity and sufficiency. Key sufficiency by compact JSON edge array. Check negative "
+            "controls, material differences and shortcuts for every condition, including the natural file. "
+            "Classify all applicable risks. For each triggered risk, precommit masked independent "
+            "questions with a rationale, Source subset or exact deletions, and expected present/absent edges. "
+            "Cover joint proofs with sufficient-subset and proper-deletion readings. State limitations. "
+            "Apply the supplied admission and stopping criteria. Recommend accept only if all scientific "
+            "objections are resolved."
+        )
+        schema = None
+        if self._uses_scoped_audit():
+            prompt += audit_contract.SCOPED_INSTRUCTIONS
+            schema = audit_contract.output_schema(bundles, freeze)
         result = self.job(
             "audit", "audit", {
                 "paired_bundles": _json({condition: _source_array(sources) for condition, sources in bundles.items()}),
@@ -335,20 +352,20 @@ class FamilyWorkflow:
                     "batch_stop_conditions": self.runner.manifest.stop_conditions,
                 }),
             },
-            "Audit each Source for ground-truth completeness and each critical edge for evidence "
-            "necessity and sufficiency. Key sufficiency by compact JSON edge array. Check negative "
-            "controls, material differences and shortcuts for every condition, including the natural file. "
-            "Classify all applicable risks. For each triggered risk, precommit masked independent "
-            "questions with a rationale, Source subset or exact deletions, and expected present/absent edges. "
-            "Cover joint proofs with sufficient-subset and proper-deletion readings. State limitations. "
-            "Apply the supplied admission and stopping criteria. Recommend accept only if all scientific "
-            "objections are resolved.", AuditReview,
+            prompt, AuditReview, output_schema=schema,
         )
         science.verify_audit(result, bundles, freeze, required, reviews)
         if result.verdict != "accept":
             self.reject("scientific_review", result.model_dump_json(), quarantine=result.verdict == "quarantine")
         self.advance("masks", {"audit": result.model_dump(mode="json")}, gate="independent scientific audit and risk plan")
         return result
+
+    def _uses_scoped_audit(self) -> bool:
+        for row in self.runner.ledger.attempts(self.runner.family):
+            if row["revision"] == self.runner.revision and row["job"] == "audit":
+                # Reopening a reserved packet must reconstruct its original input commitment.
+                return audit_contract.SCOPED_INSTRUCTIONS in commissioning._read_json(row["request"])["prompt"]
+        return True
 
     def masks(
         self, design: DesignOutput, bundles: dict[str, list[Source]], audit: AuditReview,
