@@ -1,0 +1,667 @@
+{
+  "working-index-omitted": {
+    "source_ids": [
+      "r8h3",
+      "j5x7",
+      "b2n6",
+      "c7v4"
+    ],
+    "source_body_sha256": {
+      "r8h3": "0ecf177a59aaa16fd543b2c9fb00fb1608c2c35471004710038a6c073a3dd1b4",
+      "j5x7": "78b3a88ee0e892002d9205b869ac90eb6741618fade600f635550af9c825fac5",
+      "b2n6": "bae75a8a554f4fe06fb8b9a0af4471f07a25f80e51d3a4eba7263c8a8246559c",
+      "c7v4": "457edca9573644e6719cd5ad0cc83ae7bb0bcc7edec89bb4799d724e13b0b399"
+    },
+    "packet_sha256": "e0536e23c6003d49b922f57eb8a3750dffb35da7335fb63ed8cb11d6b14c39f1",
+    "output_sha256": "08e874071847ff36a70b30aa121ce1165725454d8552efa64926c9a8132b7ec7",
+    "edges": [
+      [
+        "Leona Bell",
+        "parent_of",
+        "Alexandra Inez Rivera"
+      ],
+      [
+        "Alexander Tomas Rivera",
+        "sibling_of",
+        "Jamie Iqbal"
+      ],
+      [
+        "Fiona Mora",
+        "parent_of",
+        "Nina Beatrice Mercer"
+      ]
+    ],
+    "decisions": [
+      {
+        "proposition": "Leona Bell — parent_of — Alexandra Inez Rivera",
+        "status": "supported",
+        "reason": "Leona Bell is the firsthand origin and signed reporter of the parentage confirmation dated 16 September 2026. Mira Desai assigned Q7-41 at the 15 September intake and recorded the exact-name match after checking original identification on 17 September. Both records were in the supplied cut-off file; exact receipt times are not stated. There is no competing passage. Ordinary quotation and attribution (benchmark_v2_evidence_v1): N/A; neither source independently establishes the named edge. The sole identified minimum sufficient alternative is attached to this edge (attached_sufficient_set_v1): {(r8h3, \"I confirm from firsthand knowledge that I am the parent of the person you assigned reference Q7-41 at the intake on 15 September 2026. We were both present when you assigned the reference.\n\nSigned: Leona Bell\"), (c7v4, \"### Q7-41 — Alexandra Inez Rivera\n\nI matched the person to reference Q7-41, which I assigned during a separate intake conversation on 15 September 2026. On 17 September 2026, I confirmed the exact full name from the original identification she showed me and returned the original to her.\")}.",
+        "source_ids": [
+          "r8h3",
+          "c7v4"
+        ]
+      },
+      {
+        "proposition": "Alexander Tomas Rivera — sibling_of — Jamie Iqbal",
+        "status": "supported",
+        "reason": "Jamie Iqbal is the origin and signed reporter of the direct sibling confirmation dated 16 September 2026. Mira Desai assigned M2-86 at the 15 September intake and recorded the exact-name match after checking original identification on 17 September. Both records were in the supplied cut-off file; exact receipt times are not stated. There is no competing passage. Ordinary quotation and attribution (benchmark_v2_evidence_v1): N/A; neither source independently establishes the named edge. The sole identified minimum sufficient alternative is attached to this edge (attached_sufficient_set_v1): {(j5x7, \"I confirm that the person you gave the reference M2-86 at yesterday’s intake is my sibling. We were both present when you gave them that reference.\n\nSigned: Jamie Iqbal\"), (c7v4, \"### M2-86 — Alexander Tomas Rivera\n\nI matched the person to reference M2-86, which I assigned during a separate intake conversation on 15 September 2026. On 17 September 2026, I confirmed the exact full name from the original identification he showed me and returned the original to him.\")}.",
+        "source_ids": [
+          "j5x7",
+          "c7v4"
+        ]
+      },
+      {
+        "proposition": "Fiona Mora — parent_of — Nina Beatrice Mercer",
+        "status": "supported",
+        "reason": "Fiona Mora is the firsthand origin and signed reporter of the parentage confirmation dated 16 September 2026. Mira Desai assigned T9-53 at the 15 September intake and recorded the exact-name match after checking original identification on 17 September. Both records were in the supplied cut-off file; exact receipt times are not stated. There is no competing passage. Ordinary quotation and attribution (benchmark_v2_evidence_v1): N/A; neither source independently establishes the named edge. The sole identified minimum sufficient alternative is attached to this edge (attached_sufficient_set_v1): {(b2n6, \"As requested, I confirm from my own knowledge that I am the parent of the person you assigned the file reference T9-53.\n\nSigned: Fiona Mora\"), (c7v4, \"### T9-53 — Nina Beatrice Mercer\n\nI matched the person to reference T9-53, which I assigned during a separate intake conversation on 15 September 2026. On 17 September 2026, I confirmed the exact full name from the original identification she showed me and returned the original to her.\")}.",
+        "source_ids": [
+          "b2n6",
+          "c7v4"
+        ]
+      },
+      {
+        "proposition": "Outside the ontology: Evelyn Park retained Mira Desai for will-planning advice and agreed to family-information checks before settled drafting instructions.",
+        "status": "supported",
+        "reason": "Mira Desai reports her own engagement and Evelyn Park’s agreement in the 17 September reconciliation note, which was in the supplied file as of 16:00 on 18 September 2026. The note gives no exact retainer date and identifies the separate follow-ups as part of the agreed check. There is no competing passage. The note does not establish settled drafting instructions or authority for any contributor to give them.",
+        "source_ids": [
+          "c7v4"
+        ]
+      },
+      {
+        "proposition": "How Evelyn Park is related to the people named in the confirmations.",
+        "status": "unresolved",
+        "reason": "Mira Desai’s note explains why she checked information from different parts of the family, but neither the note nor the signed confirmations specifies an ontology relationship between Evelyn Park and any named person. Ask Evelyn Park which of these people are related to her and how before relying on those connections in drafting.",
+        "source_ids": [
+          "r8h3",
+          "j5x7",
+          "b2n6",
+          "c7v4"
+        ]
+      }
+    ],
+    "unavailable_basis": [
+      "No source alone supports any of the three named edges, and no independent statement, duplicate, or other proof route is supplied. The identity checks establish exact names, not kinship; the signed confirmations establish kinship to local references, not the full names behind them.",
+      "No actual conflict is established. Alexandra Inez Rivera and Alexander Tomas Rivera have separate, explicitly reconciled references. Their similar names and shared surname do not justify merging them, transferring a relationship from one to the other, or inferring that they are siblings.",
+      "The file does not establish any spouse relationship, trust, trust role, or other office or administrative authority. Silence does not establish that none exists. If relevant to Evelyn Park’s instructions, ask whom she identifies as a spouse and whether any trusts or appointments need to be verified.",
+      "The supplied snapshot does not give individual receipt timestamps, and it supplies no basis for determining changes after 16:00 on 18 September 2026."
+    ]
+  },
+  "first-identity-entry-withheld": {
+    "source_ids": [
+      "r8h3",
+      "j5x7",
+      "b2n6",
+      "c7v4",
+      "k9t2"
+    ],
+    "source_body_sha256": {
+      "r8h3": "0ecf177a59aaa16fd543b2c9fb00fb1608c2c35471004710038a6c073a3dd1b4",
+      "j5x7": "78b3a88ee0e892002d9205b869ac90eb6741618fade600f635550af9c825fac5",
+      "b2n6": "bae75a8a554f4fe06fb8b9a0af4471f07a25f80e51d3a4eba7263c8a8246559c",
+      "c7v4": "6efb6863d9c8f1eb8bc96b62e7c01b2090b4169d837f1f601ce4623e7a410361",
+      "k9t2": "522094dbe2a692336e8a2003136db8d80f8918c8e6d92357c1828812c0a9b490"
+    },
+    "packet_sha256": "5400ccbff15da53678cae6b61a95715649acee7b0ac270c20f4ff21f55cf5054",
+    "output_sha256": "51fa10c981a882fae6703283bffbd3af4706b6b35b4c60bf0fe96b81a25693a1",
+    "edges": [
+      [
+        "Alexander Tomas Rivera",
+        "sibling_of",
+        "Jamie Iqbal"
+      ],
+      [
+        "Fiona Mora",
+        "parent_of",
+        "Nina Beatrice Mercer"
+      ]
+    ],
+    "decisions": [
+      {
+        "proposition": "Alexander Tomas Rivera and Jamie Iqbal were siblings at the cut-off.",
+        "status": "supported",
+        "reason": "Jamie Iqbal is the origin and signed reporter of the 16 September confirmation, which refers to the 15 September intake. Mira Desai assigned M2-86 and recorded the exact name on 17 September after checking original identification. Both records are in the cut-off file; separate receipt times are not stated. The 18 September index uses the display name “Alex Rivera”; that does not contradict the verified name or independently establish it. The sole identified minimum sufficient set is {(j5x7, \"I confirm that the person you gave the reference M2-86 at yesterday’s intake is my sibling. We were both present when you gave them that reference.\n\nSigned: Jamie Iqbal\"), (c7v4, \"### M2-86 — Alexander Tomas Rivera\n\nI matched the person to reference M2-86, which I assigned during a separate intake conversation on 15 September 2026. On 17 September 2026, I confirmed the exact full name from the original identification he showed me and returned the original to him.\")}. Ordinary quotation and attribution: N/A; neither source independently proves the named edge. Attached sufficient set: the two passages above.",
+        "source_ids": [
+          "j5x7",
+          "c7v4",
+          "k9t2"
+        ]
+      },
+      {
+        "proposition": "Fiona Mora was the parent of Nina Beatrice Mercer at the cut-off.",
+        "status": "supported",
+        "reason": "Fiona Mora is the firsthand origin and signed reporter of the 16 September confirmation concerning T9-53, assigned at the 15 September intake. Mira Desai assigned the reference and recorded the exact name on 17 September after checking original identification. Both records are in the cut-off file; separate receipt times are not stated. The 18 September index uses the display name “Nina Mercer”; that does not contradict the verified name or independently establish it. The sole identified minimum sufficient set is {(b2n6, \"As requested, I confirm from my own knowledge that I am the parent of the person you assigned the file reference T9-53.\n\nSigned: Fiona Mora\"), (c7v4, \"### T9-53 — Nina Beatrice Mercer\n\nI matched the person to reference T9-53, which I assigned during a separate intake conversation on 15 September 2026. On 17 September 2026, I confirmed the exact full name from the original identification she showed me and returned the original to her.\")}. Ordinary quotation and attribution: N/A; neither source independently proves the named edge. Attached sufficient set: the two passages above.",
+        "source_ids": [
+          "b2n6",
+          "c7v4",
+          "k9t2"
+        ]
+      },
+      {
+        "proposition": "Leona Bell was the parent of the person assigned Q7-41 at the cut-off, regardless of that person's exact name.",
+        "status": "supported",
+        "reason": "Leona Bell is the firsthand origin and signed reporter of the 16 September confirmation: “I confirm from firsthand knowledge that I am the parent of the person you assigned reference Q7-41 at the intake on 15 September 2026. We were both present when you assigned the reference.” The confirmation is in the cut-off file, but its separate receipt time is not stated. No supplied passage contradicts the relationship. It is not a scored edge because the exact name of the child is unresolved.",
+        "source_ids": [
+          "r8h3"
+        ]
+      },
+      {
+        "proposition": "Alexandra Rivera is the exact name of the person assigned Q7-41.",
+        "status": "unresolved",
+        "reason": "Rowan Field's working index, saved at 14:40 BST on 18 September and present by the cut-off, lists “Alexandra Rivera” under “Display name.” It does not state the origin or verification of that name. Leona Bell's confirmation names only the reference, and the visible reconciliation text supplies no exact-name match for Q7-41. The index establishes the display label, not the exact identity required for a named edge. The withheld text is not a contradiction and cannot supply the missing match.",
+        "source_ids": [
+          "r8h3",
+          "c7v4",
+          "k9t2"
+        ]
+      },
+      {
+        "proposition": "Evelyn Park retained Mira Desai for will-planning advice and agreed to family-information checks before settled drafting instructions.",
+        "status": "supported",
+        "reason": "Mira Desai reports her own engagement and Evelyn Park's agreement in the 17 September reconciliation record, which is in the cut-off file. The date of the agreement is not separately stated. This is advice-file context, not an ontology relationship. No supplied passage contradicts it.",
+        "source_ids": [
+          "c7v4"
+        ]
+      }
+    ],
+    "unavailable_basis": [
+      "No visible exact-name verification for Q7-41 is supplied. Before taking drafting instructions, ask Mira Desai to verify the exact name and its link to Q7-41 rather than treating the working index as verification.",
+      "No actual contradiction is established. Do not conflate Q7-41 with M2-86 or infer kinship from similar Rivera display names, and do not reconstruct the withheld text.",
+      "The supplied material does not establish how Evelyn Park is related to any of the named family members. Ask which of these people are relevant to her intended instructions without assuming a relationship."
+    ]
+  },
+  "second-identity-entry-withheld": {
+    "source_ids": [
+      "r8h3",
+      "j5x7",
+      "b2n6",
+      "c7v4",
+      "k9t2"
+    ],
+    "source_body_sha256": {
+      "r8h3": "0ecf177a59aaa16fd543b2c9fb00fb1608c2c35471004710038a6c073a3dd1b4",
+      "j5x7": "78b3a88ee0e892002d9205b869ac90eb6741618fade600f635550af9c825fac5",
+      "b2n6": "bae75a8a554f4fe06fb8b9a0af4471f07a25f80e51d3a4eba7263c8a8246559c",
+      "c7v4": "047a043318b33ebd76e2e9fe005ceef0a5c704a74815e596427d607c5828f25e",
+      "k9t2": "522094dbe2a692336e8a2003136db8d80f8918c8e6d92357c1828812c0a9b490"
+    },
+    "packet_sha256": "afeba74513f01b1ea1ab94b731bffff28592d47274a560a8efbee02cfcffc573",
+    "output_sha256": "07bce59fec9e62e5861017ada5930bdbe95871325c4229963101804b15e8d91c",
+    "edges": [
+      [
+        "Leona Bell",
+        "parent_of",
+        "Alexandra Inez Rivera"
+      ],
+      [
+        "Fiona Mora",
+        "parent_of",
+        "Nina Beatrice Mercer"
+      ]
+    ],
+    "decisions": [
+      {
+        "proposition": "Leona Bell parent_of Alexandra Inez Rivera",
+        "status": "supported",
+        "reason": "Leona Bell originated and signed the firsthand parentage confirmation on 16 September 2026, referring to Q7-41 as assigned on 15 September. Mira Desai, who assigned the reference, reported verifying the exact name from original identification on 17 September. Both records were in the supplied cut-off file; separate receipt timestamps are not stated. The working index gives the shorter display name Alexandra Rivera, which does not contradict the verified name or independently establish the exact endpoint. This edge requires multiple sources: ordinary quotation and attribution under benchmark_v2_evidence_v1 are N/A. The sole identified minimum sufficient alternative, attached to this edge under attached_sufficient_set_v1, is the following pair of passages taken together: (r8h3, «I confirm from firsthand knowledge that I am the parent of the person you assigned reference Q7-41 at the intake on 15 September 2026. We were both present when you assigned the reference.\n\nSigned: Leona Bell») and (c7v4, «### Q7-41 — Alexandra Inez Rivera\n\nI matched the person to reference Q7-41, which I assigned during a separate intake conversation on 15 September 2026. On 17 September 2026, I confirmed the exact full name from the original identification she showed me and returned the original to her.»).",
+        "source_ids": [
+          "r8h3",
+          "c7v4",
+          "k9t2"
+        ]
+      },
+      {
+        "proposition": "Fiona Mora parent_of Nina Beatrice Mercer",
+        "status": "supported",
+        "reason": "Fiona Mora originated and signed the parentage confirmation from her own knowledge on 16 September 2026, referring to T9-53 as assigned on 15 September. Mira Desai, who assigned the reference, reported verifying the exact name from original identification on 17 September. Both records were in the supplied cut-off file; separate receipt timestamps are not stated. The working index gives the shorter display name Nina Mercer, which does not contradict the verified name or independently establish the exact endpoint. This edge requires multiple sources: ordinary quotation and attribution under benchmark_v2_evidence_v1 are N/A. The sole identified minimum sufficient alternative, attached to this edge under attached_sufficient_set_v1, is the following pair of passages taken together: (b2n6, «As requested, I confirm from my own knowledge that I am the parent of the person you assigned the file reference T9-53.\n\nSigned: Fiona Mora») and (c7v4, «### T9-53 — Nina Beatrice Mercer\n\nI matched the person to reference T9-53, which I assigned during a separate intake conversation on 15 September 2026. On 17 September 2026, I confirmed the exact full name from the original identification she showed me and returned the original to her.»).",
+        "source_ids": [
+          "b2n6",
+          "c7v4",
+          "k9t2"
+        ]
+      },
+      {
+        "proposition": "Jamie Iqbal is the sibling of the person assigned M2-86.",
+        "status": "supported",
+        "reason": "Jamie Iqbal originated and signed the confirmation on 16 September 2026, stating that both people were present when the reference was assigned at the previous day's intake. The confirmation is in the supplied cut-off file with no separate receipt timestamp and no competing relationship statement. It establishes the relationship to the referenced person, but not a graph edge with two exact names.",
+        "source_ids": [
+          "j5x7"
+        ]
+      },
+      {
+        "proposition": "The exact full name of the person assigned M2-86 is Alex Rivera.",
+        "status": "unresolved",
+        "reason": "Jamie Iqbal used only the intake reference. The working index identifies Rowan Field as Records Assistant and lists Alex Rivera only as a display name in the export saved at 14:40 BST on 18 September 2026. That export is in the supplied cut-off file, but the basis for the display name is not stated. The visible reconciliation passages verify other references, not M2-86. Neither the similar Rivera display names nor the separate references establish that M2-86 and Q7-41 refer to the same person or to different people. The adviser should verify the exact full name against the M2-86 intake reference before relying on a named sibling relationship.",
+        "source_ids": [
+          "j5x7",
+          "c7v4",
+          "k9t2"
+        ]
+      },
+      {
+        "proposition": "Evelyn Park retained Mira Desai for will-planning advice and agreed to family-information checks before settled drafting instructions.",
+        "status": "supported",
+        "reason": "Mira Desai, the adviser who took part in the arrangement, recorded it on 17 September 2026 and identified the separate follow-ups as part of the agreed check. The arrangement's exact date is not stated. The note was in the supplied cut-off file, and no supplied passage contests it. The engagement is outside the graph ontology and does not establish a family relationship involving Evelyn Park.",
+        "source_ids": [
+          "c7v4"
+        ]
+      }
+    ],
+    "unavailable_basis": [
+      "The withheld text is not evidence. No visible passage verifies an exact full name for M2-86 or links it to another reference. The omission does not contradict Jamie Iqbal's signed confirmation.",
+      "The original identification documents are not supplied. The exact-name findings for Q7-41 and T9-53 rest on Mira Desai's recorded checks; the working index is not a substitute for those checks.",
+      "No supplied passage explicitly contradicts a material proposition. The file does not establish any marriage, trust relationship, or family relationship involving Evelyn Park. Ask how the confirmed family relationships bear on Evelyn's instructions rather than assuming that connection."
+    ]
+  },
+  "source-order-reversed": {
+    "source_ids": [
+      "k9t2",
+      "c7v4",
+      "b2n6",
+      "j5x7",
+      "r8h3"
+    ],
+    "source_body_sha256": {
+      "k9t2": "f8155089dcbb556d0d081772516784524df2fe8831466954e2f33f0b9e44a7bd",
+      "c7v4": "457edca9573644e6719cd5ad0cc83ae7bb0bcc7edec89bb4799d724e13b0b399",
+      "b2n6": "bae75a8a554f4fe06fb8b9a0af4471f07a25f80e51d3a4eba7263c8a8246559c",
+      "j5x7": "78b3a88ee0e892002d9205b869ac90eb6741618fade600f635550af9c825fac5",
+      "r8h3": "0ecf177a59aaa16fd543b2c9fb00fb1608c2c35471004710038a6c073a3dd1b4"
+    },
+    "packet_sha256": "d21de05841fbe0176ee8bb5dcbc9ba65da3f27d1396136043b5b94dd83236a84",
+    "output_sha256": "216bf72f8afcd3882f684f614e1a89988d1864fade2c6f43fc849b614780f559",
+    "edges": [
+      [
+        "Alexander Tomas Rivera",
+        "sibling_of",
+        "Jamie Iqbal"
+      ],
+      [
+        "Fiona Mora",
+        "parent_of",
+        "Nina Beatrice Mercer"
+      ],
+      [
+        "Leona Bell",
+        "parent_of",
+        "Alexandra Inez Rivera"
+      ]
+    ],
+    "decisions": [
+      {
+        "proposition": "Alexander Tomas Rivera and Jamie Iqbal are siblings at the cut-off.",
+        "status": "supported",
+        "reason": "Jamie Iqbal reported the relationship in a signed follow-up dated 16 September 2026 and said both were present when Mira Desai assigned M2-86 at the 15 September intake. Desai confirmed the exact name from original identification on 17 September. Both records are in the cut-off file; separate receipt times are not stated. The working index's display name does not distinguish the two Rivera entries and is not competing relationship evidence. This edge requires both Sources. benchmark_v2_evidence_v1 ordinary quotation and attribution: N/A. attached_sufficient_set_v1 — only identified minimum sufficient alternative: (j5x7, «I confirm that the person you gave the reference M2-86 at yesterday’s intake is my sibling. We were both present when you gave them that reference.\n\nSigned: Jamie Iqbal»); (c7v4, «### M2-86 — Alexander Tomas Rivera»).",
+        "source_ids": [
+          "j5x7",
+          "c7v4"
+        ]
+      },
+      {
+        "proposition": "Fiona Mora is the parent of Nina Beatrice Mercer at the cut-off.",
+        "status": "supported",
+        "reason": "Fiona Mora reported the relationship from her own knowledge in a signed follow-up dated 16 September 2026, referring to T9-53 from the 15 September intake. Mira Desai confirmed the exact name from original identification on 17 September. Both records are in the cut-off file; separate receipt times are not stated. The working index's shorter display name is not a competing claim. This edge requires both Sources. benchmark_v2_evidence_v1 ordinary quotation and attribution: N/A. attached_sufficient_set_v1 — only identified minimum sufficient alternative: (b2n6, «As requested, I confirm from my own knowledge that I am the parent of the person you assigned the file reference T9-53.\n\nSigned: Fiona Mora»); (c7v4, «### T9-53 — Nina Beatrice Mercer»).",
+        "source_ids": [
+          "b2n6",
+          "c7v4"
+        ]
+      },
+      {
+        "proposition": "Leona Bell is the parent of Alexandra Inez Rivera at the cut-off.",
+        "status": "supported",
+        "reason": "Leona Bell reported the relationship from firsthand knowledge in a signed follow-up dated 16 September 2026 and said both were present when Mira Desai assigned Q7-41 at the 15 September intake. Desai confirmed the exact name from original identification on 17 September. Both records are in the cut-off file; separate receipt times are not stated. The working index's display name does not distinguish the two Rivera entries and is not competing relationship evidence. This edge requires both Sources. benchmark_v2_evidence_v1 ordinary quotation and attribution: N/A. attached_sufficient_set_v1 — only identified minimum sufficient alternative: (r8h3, «I confirm from firsthand knowledge that I am the parent of the person you assigned reference Q7-41 at the intake on 15 September 2026. We were both present when you assigned the reference.\n\nSigned: Leona Bell»); (c7v4, «### Q7-41 — Alexandra Inez Rivera»).",
+        "source_ids": [
+          "r8h3",
+          "c7v4"
+        ]
+      },
+      {
+        "proposition": "The two Rivera references identify distinct people; the shared display name is not an identity or relationship conflict.",
+        "status": "supported",
+        "reason": "Rowan Field's working index, saved before the cut-off at 14:40 BST on 18 September 2026, lists Q7-41 and M2-86 on separate rows with the same display name, Alex Rivera. Mira Desai's 17 September reconciliation links the references to separate 15 September intakes and exact names verified from original identification: Q7-41 is Alexandra Inez Rivera and M2-86 is Alexander Tomas Rivera. The index does not assert that they are the same person. Merging them would misattribute the signed confirmations. No actual conflict is established.",
+        "source_ids": [
+          "k9t2",
+          "c7v4"
+        ]
+      },
+      {
+        "proposition": "Evelyn Park retained Mira Desai for will-planning advice and agreed to the family-information check before settled drafting instructions.",
+        "status": "supported",
+        "reason": "Desai records the retainer and agreement in her 17 September 2026 reconciliation note in the cut-off file. The note does not give the date of the agreement. This is an adviser-client fact outside the graph ontology.",
+        "source_ids": [
+          "c7v4"
+        ]
+      },
+      {
+        "proposition": "How the people in the signed follow-ups are related to Evelyn Park or are to be treated in her will.",
+        "status": "unresolved",
+        "reason": "The file records why Desai sought the follow-ups, but the contributors establish only the three stated relationships. Before taking drafting instructions, ask Evelyn how each person is connected to her and whom she intends to provide for or appoint. Participation in the check does not establish kinship, entitlement, or an appointment.",
+        "source_ids": [
+          "c7v4",
+          "b2n6",
+          "j5x7",
+          "r8h3"
+        ]
+      }
+    ],
+    "unavailable_basis": [
+      "No single supplied Source establishes both exact endpoints and the relationship for any of the three edges. The working index supplies neither exact names for the referenced people nor relationship evidence.",
+      "The supplied file establishes no additional kinship, marriage, trust relationship, office, or administrative authority within the family. A shared surname or display name does not establish kinship, and silence does not contradict an unreported relationship.",
+      "The supplied records support the position at 16:00 on 18 September 2026. They do not establish whether anything changed before the 21 September review."
+    ]
+  },
+  "named-proof-1": {
+    "source_ids": [
+      "r8h3",
+      "c7v4"
+    ],
+    "source_body_sha256": {
+      "r8h3": "0ecf177a59aaa16fd543b2c9fb00fb1608c2c35471004710038a6c073a3dd1b4",
+      "c7v4": "cf135d2c828dfc968d11e9c09dfdcbbcc6494e35d1754958873259c5e8531592"
+    },
+    "packet_sha256": "6cdf602e5fa9b4916cc839540ea7880d84b5739da91b2f45f479da17adf8135e",
+    "output_sha256": "b36b7c6ab4e2dc0f75df9e77ca80354488aca71f2fd77823190937898f157a32",
+    "edges": [
+      [
+        "Leona Bell",
+        "parent_of",
+        "Alexandra Inez Rivera"
+      ]
+    ],
+    "decisions": [
+      {
+        "proposition": "Leona Bell is the parent of the person assigned reference Q7-41 at the 15 September 2026 intake.",
+        "status": "supported",
+        "reason": "Leona Bell reports this from firsthand knowledge in her signed confirmation dated 16 September 2026 and addressed to Mira Desai. She says both she and the person were present when the reference was assigned. The other excerpt calls the intake conversation separate but does not say Leona was absent, so it does not contradict her account.",
+        "source_ids": [
+          "r8h3"
+        ]
+      },
+      {
+        "proposition": "Q7-41 identifies Alexandra Inez Rivera.",
+        "status": "supported",
+        "reason": "The unnamed first-person recorder says they assigned Q7-41 at the 15 September 2026 intake and confirmed the exact full name from the original identification on 17 September 2026. The heading gives the full name. No competing identification appears in the supplied excerpts.",
+        "source_ids": [
+          "c7v4"
+        ]
+      },
+      {
+        "proposition": "Leona Bell is the parent of Alexandra Inez Rivera as of the 18 September 2026, 16:00 cut-off.",
+        "status": "supported",
+        "reason": "The two excerpts establish the edge together through Q7-41. Neither source independently establishes both named endpoints and the relationship. Ordinary quotation and attribution (benchmark_v2_evidence_v1): N/A. Attached sufficient set (attached_sufficient_set_v1), the only minimum source combination identified: (r8h3, \"I confirm from firsthand knowledge that I am the parent of the person you assigned reference Q7-41 at the intake on 15 September 2026. We were both present when you assigned the reference.\n\nSigned: Leona Bell\"); (c7v4, \"### Q7-41 — Alexandra Inez Rivera\n\nI matched the person to reference Q7-41, which I assigned during a separate intake conversation on 15 September 2026. On 17 September 2026, I confirmed the exact full name from the original identification she showed me and returned the original to her.\").",
+        "source_ids": [
+          "r8h3",
+          "c7v4"
+        ]
+      },
+      {
+        "proposition": "The adviser received both records by 16:00 on 18 September 2026.",
+        "status": "unresolved",
+        "reason": "Both excerpts are supplied as part of the cut-off file, and the events they report predate the cut-off. Neither excerpt independently documents when the adviser received it.",
+        "source_ids": [
+          "r8h3",
+          "c7v4"
+        ]
+      },
+      {
+        "proposition": "Evelyn Park is related to Leona Bell or Alexandra Inez Rivera.",
+        "status": "unresolved",
+        "reason": "The review is for Evelyn Park, but neither excerpt links her to either person. The adviser should clarify why the Q7-41 information is in Evelyn's file and whether either person is relevant to her will instructions.",
+        "source_ids": [
+          "r8h3",
+          "c7v4"
+        ]
+      }
+    ],
+    "unavailable_basis": [
+      "No single-source basis for the scored edge and no evidence of the type of parentage beyond Leona Bell's statement that she is the parent.",
+      "No supplied basis for additional graph edges, trust offices, or administrative authority. Their absence from the excerpts does not contradict their existence."
+    ]
+  },
+  "named-proof-2": {
+    "source_ids": [
+      "j5x7",
+      "c7v4"
+    ],
+    "source_body_sha256": {
+      "j5x7": "78b3a88ee0e892002d9205b869ac90eb6741618fade600f635550af9c825fac5",
+      "c7v4": "5bfa04f9aa926d6fb425762568ea367629f1a7896043204091688c48ee7e14b4"
+    },
+    "packet_sha256": "7a6809e6973ab4d0fe983e47046d1d3ce1cf30e6bfc6d20b983260b748cad72c",
+    "output_sha256": "6a4155f9aeac8df149acfcd28cc6569ea53b5a734f9ba64d2e3c6681e497dd46",
+    "edges": [
+      [
+        "Alexander Tomas Reid",
+        "sibling_of",
+        "Jamie Iqbal"
+      ]
+    ],
+    "decisions": [
+      {
+        "proposition": "Alexander Tomas Rivera and Jamie Iqbal are siblings as of 16:00 on 18 September 2026.",
+        "status": "supported",
+        "reason": "Jamie Iqbal directly confirms the sibling relationship on 16 September and identifies the sibling by the reference assigned on 15 September. The unnamed writer of c7v4 reports assigning that same reference on 15 September and checking the person's exact full name against original identification on 17 September. Both excerpts are in the supplied cut-off file; separate receipt times are not stated. The phrase “separate intake conversation” does not say Jamie was absent and does not contradict Jamie's account. Neither source independently establishes the named edge, so ordinary quotation and attribution are N/A. The only identified minimum sufficient alternative is the following two-source set, attached here in full: [(j5x7, \"16 September 2026\n\nDear Mira Desai,\n\nI confirm that the person you gave the reference M2-86 at yesterday’s intake is my sibling. We were both present when you gave them that reference.\n\nSigned: Jamie Iqbal\"), (c7v4, \"### M2-86 — Alexander Tomas Rivera\n\nI matched the person to reference M2-86, which I assigned during a separate intake conversation on 15 September 2026. On 17 September 2026, I confirmed the exact full name from the original identification he showed me and returned the original to him.\")]",
+        "source_ids": [
+          "j5x7",
+          "c7v4"
+        ]
+      },
+      {
+        "proposition": "Either named sibling has a family or trust relationship relevant to Evelyn Park's will.",
+        "status": "unresolved",
+        "reason": "Neither excerpt connects either sibling to Evelyn Park or to a trust. Ask the adviser how each person relates to Evelyn and whether either is relevant to her drafting instructions.",
+        "source_ids": [
+          "j5x7",
+          "c7v4"
+        ]
+      }
+    ],
+    "unavailable_basis": [
+      "Neither excerpt independently supports the named sibling edge. Ordinary quotation and attribution are N/A; the attached two-source set is required.",
+      "The original identification is not supplied. The identification check is reported in c7v4, whose writer is not named in the excerpt; the file does not establish that the writer was Mira Desai.",
+      "The excerpts give no basis to infer common parentage, marriage, other family ties, or any trust role."
+    ]
+  },
+  "named-proof-3": {
+    "source_ids": [
+      "b2n6",
+      "c7v4"
+    ],
+    "source_body_sha256": {
+      "b2n6": "bae75a8a554f4fe06fb8b9a0af4471f07a25f80e51d3a4eba7263c8a8246559c",
+      "c7v4": "1d298c5171b7f1ab5029dd2744fe89d332cd2a42ec008ccf9bbc28f8ecd9e3e7"
+    },
+    "packet_sha256": "6f2a53ec85de7ca619e351edfd76ed14f327241bb959ad628737430d84f44715",
+    "output_sha256": "d3088a66b314c553b7de83362b970d4a8917c41cd9c7dc0a4b72261befd1f982",
+    "edges": [
+      [
+        "Fiona Mora",
+        "parent_of",
+        "Nina Beatrice Mercer"
+      ]
+    ],
+    "decisions": [
+      {
+        "proposition": "Fiona Mora is the parent of Nina Beatrice Mercer at the 16:00 cut-off on 18 September 2026.",
+        "status": "supported",
+        "reason": "Fiona Mora reports from her own knowledge in her signed 16 September follow-up that she is the parent of the person assigned T9-53. The intake note identifies T9-53 as Nina Beatrice Mercer and reports verifying her exact name on 17 September. Both excerpts are in the supplied cut-off file; neither gives a receipt timestamp. Nothing in either excerpt contradicts the parentage. Neither source alone establishes the named edge. benchmark_v2_evidence_v1 ordinary quotation: N/A; ordinary attribution: N/A. attached_sufficient_set_v1 — the sole identified minimum sufficient source combination, attached to this edge: [[\"b2n6\", \"As requested, I confirm from my own knowledge that I am the parent of the person you assigned the file reference T9-53.\\n\\nSigned: Fiona Mora\"], [\"c7v4\", \"### T9-53 — Nina Beatrice Mercer\\n\\nI matched the person to reference T9-53, which I assigned during a separate intake conversation on 15 September 2026. On 17 September 2026, I confirmed the exact full name from the original identification she showed me and returned the original to her.\"]].",
+        "source_ids": [
+          "b2n6",
+          "c7v4"
+        ]
+      },
+      {
+        "proposition": "The intake note identifies the person assigned T9-53 as Nina Beatrice Mercer.",
+        "status": "supported",
+        "reason": "The unnamed first-person reporter says they assigned the reference on 15 September and verified the exact full name from original identification on 17 September before returning it. The note is in the cut-off file. The reported identification check establishes the name, not the parentage.",
+        "source_ids": [
+          "c7v4"
+        ]
+      },
+      {
+        "proposition": "The two excerpts describe the same 15 September intake conversation.",
+        "status": "unresolved",
+        "reason": "Fiona's follow-up, addressed to Mira Desai, says Fiona and the referenced person were both present when Mira assigned T9-53. The intake note refers to a 'separate intake conversation' without specifying what it was separate from or who attended. It does not deny Fiona's attendance or identify a different holder of T9-53. The wording leaves the event details unresolved but does not establish a conflict over the identity linked to that reference.",
+        "source_ids": [
+          "b2n6",
+          "c7v4"
+        ]
+      }
+    ],
+    "unavailable_basis": [
+      "The excerpts do not establish how Fiona Mora or Nina Beatrice Mercer relates to Evelyn Park or why the information was included in her advice file. The adviser should clarify both points before taking drafting instructions.",
+      "The original identification is not supplied, and the intake note does not name its author. If the intake history matters, the adviser should confirm who wrote the note and what 'separate' refers to.",
+      "The file does not establish the legal basis of Fiona Mora's parentage, any additional graph relationship, or any office or authority. Do not infer those facts from the intake reference or name verification."
+    ]
+  },
+  "confirmations-only": {
+    "source_ids": [
+      "r8h3",
+      "j5x7",
+      "b2n6"
+    ],
+    "source_body_sha256": {
+      "r8h3": "0ecf177a59aaa16fd543b2c9fb00fb1608c2c35471004710038a6c073a3dd1b4",
+      "j5x7": "78b3a88ee0e892002d9205b869ac90eb6741618fade600f635550af9c825fac5",
+      "b2n6": "bae75a8a554f4fe06fb8b9a0af4471f07a25f80e51d3a4eba7263c8a8246559c"
+    },
+    "packet_sha256": "3d535434a1c3e236bc2da4f658ce1f275e50417ef696d0ec76c2e665d767b73d",
+    "output_sha256": "5057d05aaf99df239638b3821e279c290c2032ac50da3a560b09e375d56e71ec",
+    "edges": [],
+    "decisions": [
+      {
+        "proposition": "Leona Bell is the parent of the person assigned intake reference Q7-41.",
+        "status": "supported",
+        "reason": "In her signed confirmation dated 16 September 2026, Leona Bell reports firsthand knowledge of the relationship and says both people were present when Mira Desai assigned the reference on 15 September. The excerpt is in the supplied cut-off file; no separate receipt timestamp or competing passage is supplied.",
+        "source_ids": [
+          "r8h3"
+        ]
+      },
+      {
+        "proposition": "Jamie Iqbal is the sibling of the person assigned intake reference M2-86.",
+        "status": "supported",
+        "reason": "In a signed confirmation dated 16 September 2026, Jamie Iqbal directly states the sibling relationship and says both people were present when Mira Desai assigned the reference at the previous day's intake. The excerpt is in the supplied cut-off file; no separate receipt timestamp or competing passage is supplied.",
+        "source_ids": [
+          "j5x7"
+        ]
+      },
+      {
+        "proposition": "Fiona Mora is the parent of the person assigned intake reference T9-53.",
+        "status": "supported",
+        "reason": "In her signed confirmation dated 16 September 2026, Fiona Mora reports the relationship from her own knowledge and says both people were present when Mira Desai assigned the reference on 15 September. The excerpt is in the supplied cut-off file; no separate receipt timestamp or competing passage is supplied.",
+        "source_ids": [
+          "b2n6"
+        ]
+      },
+      {
+        "proposition": "The exact names of the people assigned Q7-41, M2-86 and T9-53 are established at the cut-off.",
+        "status": "unresolved",
+        "reason": "None of the excerpts names any reference holder or supplies an explicit identity link to another record. The relationship confirmations therefore cannot establish named graph edges, whether read alone or together.",
+        "source_ids": [
+          "r8h3",
+          "j5x7",
+          "b2n6"
+        ]
+      }
+    ],
+    "unavailable_basis": [
+      "Ask the adviser for the intake record or another explicit reference-to-name link that was available by 16:00 on 18 September 2026 for each of Q7-41, M2-86 and T9-53.",
+      "The excerpts do not link any reference holder to Evelyn Park or establish whether the references identify the same person or different people. Do not infer an identity from the review subject, a signer's name or the reference codes.",
+      "No competing relationship claim, spouse relationship or trust role is stated. Missing evidence is not a contradiction.",
+      "There are no supported named edges to attribute or attach a sufficient evidence set to."
+    ]
+  },
+  "identity-entries-only": {
+    "source_ids": [
+      "c7v4"
+    ],
+    "source_body_sha256": {
+      "c7v4": "34f67c293dd66bd19c6b46972bcd6acf631c8352acfe02b8f971a691b36faf6f"
+    },
+    "packet_sha256": "fb10d22c81dd0032a049df1752c79b682af0b304c5dc82660bde90f77e1ed12a",
+    "output_sha256": "0ca506b0efe19c902ab3f878a79299cf77d9f862b92fe17b18e1cd886aaca3ac",
+    "edges": [],
+    "decisions": [
+      {
+        "proposition": "Q7-41 identifies Alexandra Inez Rivera.",
+        "status": "supported",
+        "reason": "The unnamed reporter says they assigned Q7-41 during a separate intake conversation on 15 September 2026 and confirmed Alexandra Inez Rivera's exact full name from original identification she showed on 17 September 2026. No competing identification appears in the excerpt.",
+        "source_ids": [
+          "c7v4"
+        ]
+      },
+      {
+        "proposition": "M2-86 identifies Alexander Tomas Rivera.",
+        "status": "supported",
+        "reason": "The unnamed reporter says they assigned M2-86 during a separate intake conversation on 15 September 2026 and confirmed Alexander Tomas Rivera's exact full name from original identification he showed on 17 September 2026. No competing identification appears in the excerpt.",
+        "source_ids": [
+          "c7v4"
+        ]
+      },
+      {
+        "proposition": "T9-53 identifies Nina Beatrice Mercer.",
+        "status": "supported",
+        "reason": "The unnamed reporter says they assigned T9-53 during a separate intake conversation on 15 September 2026 and confirmed Nina Beatrice Mercer's exact full name from original identification she showed on 17 September 2026. No competing identification appears in the excerpt.",
+        "source_ids": [
+          "c7v4"
+        ]
+      },
+      {
+        "proposition": "A relationship in the ontology involving Alexandra Inez Rivera, Alexander Tomas Rivera, Nina Beatrice Mercer, or Evelyn Park was current at the cut-off.",
+        "status": "unresolved",
+        "reason": "The excerpt links references to names but makes no family or trust relationship claim and names no trust. The shared Rivera surname does not establish kinship or marriage. No competing relationship claims appear, and silence does not establish that any relationship was absent.",
+        "source_ids": [
+          "c7v4"
+        ]
+      }
+    ],
+    "unavailable_basis": [
+      "The original identification documents are not supplied; c7v4 reports that they were shown and returned. The excerpt dates the intake and identity checks but gives no separate timestamp showing when the note entered the advice file.",
+      "No relationship statement, trust instrument, or record of another office or administrative authority is supplied. With no supported edge, there is no ordinary quotation or attribution and no sufficient evidence set to attach.",
+      "Before taking drafting instructions, ask which of the three identified people, if any, are connected to Evelyn Park, how they are connected, and what records establish those relationships or any trust roles as of 16:00 on 18 September 2026."
+    ]
+  },
+  "named-proof-2-repeat": {
+    "source_ids": [
+      "j5x7",
+      "c7v4"
+    ],
+    "source_body_sha256": {
+      "j5x7": "78b3a88ee0e892002d9205b869ac90eb6741618fade600f635550af9c825fac5",
+      "c7v4": "5bfa04f9aa926d6fb425762568ea367629f1a7896043204091688c48ee7e14b4"
+    },
+    "packet_sha256": "7a6809e6973ab4d0fe983e47046d1d3ce1cf30e6bfc6d20b983260b748cad72c",
+    "output_sha256": "ab470ab30223347c88eff6669ee5a84ca9ac022c4203f68bc6087925dd6a7a52",
+    "edges": [
+      [
+        "Alexander Tomas Rivera",
+        "sibling_of",
+        "Jamie Iqbal"
+      ]
+    ],
+    "decisions": [
+      {
+        "proposition": "Alexander Tomas Rivera and Jamie Iqbal were siblings as of 16:00 on 18 September 2026.",
+        "status": "supported",
+        "reason": "Jamie Iqbal’s signed confirmation dated 16 September identifies the person assigned M2-86 as Jamie’s sibling. The unnamed intake reporter in c7v4 links M2-86 to Alexander Tomas Rivera and reports verifying his exact full name on 17 September. Both excerpts are in the supplied cut-off file; neither gives an exact receipt time. No passage contradicts the sibling relationship or the name-to-reference link. The only minimum sufficient source set uses both excerpts: j5x7 lacks the sibling’s full name, and c7v4 does not state the relationship. Ordinary quotation and attribution under benchmark_v2_evidence_v1: N/A for the complete edge. Attached sufficient set under attached_sufficient_set_v1: [[\"j5x7\",\"I confirm that the person you gave the reference M2-86 at yesterday’s intake is my sibling. We were both present when you gave them that reference.\\n\\nSigned: Jamie Iqbal\"],[\"c7v4\",\"### M2-86 — Alexander Tomas Rivera\\n\\nI matched the person to reference M2-86, which I assigned during a separate intake conversation on 15 September 2026. On 17 September 2026, I confirmed the exact full name from the original identification he showed me and returned the original to him.\"]].",
+        "source_ids": [
+          "j5x7",
+          "c7v4"
+        ]
+      },
+      {
+        "proposition": "The intake reporter in c7v4 was Mira Desai, and both excerpts describe the same intake conversation.",
+        "status": "unresolved",
+        "reason": "In the letter dated 16 September, Jamie tells Mira Desai that both siblings were present when she gave M2-86 at the previous day’s intake. In c7v4, the unnamed first-person reporter says they assigned M2-86 during a separate intake conversation on 15 September. Both accounts were in the cut-off file, but c7v4 does not identify its reporter or say Jamie was absent. The wording does not establish a contradiction. If the intake history matters, ask who wrote c7v4 and what ‘separate’ refers to.",
+        "source_ids": [
+          "j5x7",
+          "c7v4"
+        ]
+      }
+    ],
+    "unavailable_basis": [
+      "Neither excerpt independently supplies both exact names and the sibling relationship.",
+      "The original identification and exact receipt times are not supplied. The file records the intake reporter’s verification and return of the original, not direct inspection of it.",
+      "No supplied passage establishes any other relationship in the ontology. The sibling relationship does not identify a shared parent or establish any trust role."
+    ]
+  }
+}

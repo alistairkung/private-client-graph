@@ -1,0 +1,146 @@
+{
+  "revision": "r1",
+  "intervention": {
+    "source_id": "k9t2",
+    "before": "Alexandra Rivera",
+    "after": "Alex Rivera"
+  },
+  "candidates": [
+    [
+      "Alexander Tomas Rivera",
+      "sibling_of",
+      "Jamie Iqbal"
+    ],
+    [
+      "Alexandra Inez Rivera",
+      "sibling_of",
+      "Jamie Iqbal"
+    ],
+    [
+      "Leona Bell",
+      "parent_of",
+      "Alexander Tomas Rivera"
+    ],
+    [
+      "Leona Bell",
+      "parent_of",
+      "Alexandra Inez Rivera"
+    ]
+  ],
+  "required": {
+    "F0": [
+      [
+        "Alexander Tomas Rivera",
+        "sibling_of",
+        "Jamie Iqbal"
+      ],
+      [
+        "Leona Bell",
+        "parent_of",
+        "Alexandra Inez Rivera"
+      ]
+    ],
+    "F1": [
+      [
+        "Alexander Tomas Rivera",
+        "sibling_of",
+        "Jamie Iqbal"
+      ],
+      [
+        "Leona Bell",
+        "parent_of",
+        "Alexandra Inez Rivera"
+      ]
+    ]
+  },
+  "sources_sha256": {
+    "F0": "5b6ec2485aeeac73ba2da6f738656034d528dccac592cced9545961945d4719f",
+    "F1": "742bf579ed23d79760c505fbb8167a7d50b656984fa2694e59f4aae20e712019"
+  },
+  "order": {
+    "F0": [
+      "r8h3",
+      "j5x7",
+      "b2n6",
+      "c7v4",
+      "k9t2"
+    ],
+    "F1": [
+      "r8h3",
+      "j5x7",
+      "b2n6",
+      "c7v4",
+      "k9t2"
+    ]
+  },
+  "source_commitments": {
+    "F0": {
+      "r8h3": {
+        "id_sha256": "c9193fba856752046ee43738d26a5af63225b16d6f757b33bb8841c1f1edbbd9",
+        "title_sha256": "a40f54ec7fb74915cdd9ecd0918146c65ccc1e463055926f52f70b057dc01eec",
+        "body_sha256": "0ecf177a59aaa16fd543b2c9fb00fb1608c2c35471004710038a6c073a3dd1b4",
+        "serialized_source_sha256": "52e5d7efda217e2f9c2ff61945b9f24e69cbb4f64b10e87272e430ad494df7c7"
+      },
+      "j5x7": {
+        "id_sha256": "85c655018b625eef475f1aaf0704d2aeb962f9bba8925a8e1b241d8de3fac855",
+        "title_sha256": "2a6c0c98567683e3b02eb3bb5d5351be24f9b0a41593ca7e4b295cc2e6dea47f",
+        "body_sha256": "78b3a88ee0e892002d9205b869ac90eb6741618fade600f635550af9c825fac5",
+        "serialized_source_sha256": "bd8e608c09119c10fdeccb080be0b03c749a96f55f61ec48adb7773ba14fceb6"
+      },
+      "b2n6": {
+        "id_sha256": "2bf3e99ba182e208ae022ef75de89fb0cd2b33045dbd04b6d415a9e2096cb761",
+        "title_sha256": "35e71fd93e1e3d741c60c7a76e9587519ed4f9440b203c2d6934e24883443343",
+        "body_sha256": "bae75a8a554f4fe06fb8b9a0af4471f07a25f80e51d3a4eba7263c8a8246559c",
+        "serialized_source_sha256": "6f126ea25dd001e01f2808906a988afa7c7aeff35b544edac12be4e659456e4b"
+      },
+      "c7v4": {
+        "id_sha256": "9c7290293a8d0df3a8837805f526228960566961a542bcb60cb56e961129a32d",
+        "title_sha256": "b543328fe334b9b2ef1c27db86b40843ac629a18c75aa255450dcd623bc17347",
+        "body_sha256": "457edca9573644e6719cd5ad0cc83ae7bb0bcc7edec89bb4799d724e13b0b399",
+        "serialized_source_sha256": "fceae577e77d28bc0c537d03db419f8b3f48f84f641ebb9601f2106b4ef45ff2"
+      },
+      "k9t2": {
+        "id_sha256": "5f708d30510b70fcfa7865b2e9fde79e5b4d8da4130ba3e98a8161f91ff4d625",
+        "title_sha256": "55463e56e1a5e07cd2e192a5607fb99f8c7933d6e201e0ec298aea28279c7a59",
+        "body_sha256": "522094dbe2a692336e8a2003136db8d80f8918c8e6d92357c1828812c0a9b490",
+        "serialized_source_sha256": "93ce2d2cc906824002938bb4c856ba324dffc774bf09633c57a67b31a143c280"
+      }
+    },
+    "F1": {
+      "r8h3": {
+        "id_sha256": "c9193fba856752046ee43738d26a5af63225b16d6f757b33bb8841c1f1edbbd9",
+        "title_sha256": "a40f54ec7fb74915cdd9ecd0918146c65ccc1e463055926f52f70b057dc01eec",
+        "body_sha256": "0ecf177a59aaa16fd543b2c9fb00fb1608c2c35471004710038a6c073a3dd1b4",
+        "serialized_source_sha256": "52e5d7efda217e2f9c2ff61945b9f24e69cbb4f64b10e87272e430ad494df7c7"
+      },
+      "j5x7": {
+        "id_sha256": "85c655018b625eef475f1aaf0704d2aeb962f9bba8925a8e1b241d8de3fac855",
+        "title_sha256": "2a6c0c98567683e3b02eb3bb5d5351be24f9b0a41593ca7e4b295cc2e6dea47f",
+        "body_sha256": "78b3a88ee0e892002d9205b869ac90eb6741618fade600f635550af9c825fac5",
+        "serialized_source_sha256": "bd8e608c09119c10fdeccb080be0b03c749a96f55f61ec48adb7773ba14fceb6"
+      },
+      "b2n6": {
+        "id_sha256": "2bf3e99ba182e208ae022ef75de89fb0cd2b33045dbd04b6d415a9e2096cb761",
+        "title_sha256": "35e71fd93e1e3d741c60c7a76e9587519ed4f9440b203c2d6934e24883443343",
+        "body_sha256": "bae75a8a554f4fe06fb8b9a0af4471f07a25f80e51d3a4eba7263c8a8246559c",
+        "serialized_source_sha256": "6f126ea25dd001e01f2808906a988afa7c7aeff35b544edac12be4e659456e4b"
+      },
+      "c7v4": {
+        "id_sha256": "9c7290293a8d0df3a8837805f526228960566961a542bcb60cb56e961129a32d",
+        "title_sha256": "b543328fe334b9b2ef1c27db86b40843ac629a18c75aa255450dcd623bc17347",
+        "body_sha256": "457edca9573644e6719cd5ad0cc83ae7bb0bcc7edec89bb4799d724e13b0b399",
+        "serialized_source_sha256": "fceae577e77d28bc0c537d03db419f8b3f48f84f641ebb9601f2106b4ef45ff2"
+      },
+      "k9t2": {
+        "id_sha256": "5f708d30510b70fcfa7865b2e9fde79e5b4d8da4130ba3e98a8161f91ff4d625",
+        "title_sha256": "55463e56e1a5e07cd2e192a5607fb99f8c7933d6e201e0ec298aea28279c7a59",
+        "body_sha256": "f8155089dcbb556d0d081772516784524df2fe8831466954e2f33f0b9e44a7bd",
+        "serialized_source_sha256": "c3c139e549becb12d893e3baefeaa7e95612db4e63b5454dfb27a498c6f13b2e"
+      }
+    }
+  },
+  "realism_output_sha256": {
+    "F0": "2f60a9ef3473caed51cd8e29d606ba19cff1ba126c4e563aa871745c049fc394",
+    "F1": "ae83ff72e58b8507adc5364072f01b5c0636dcc7bde92ccb50be179f7a9b344c"
+  }
+}

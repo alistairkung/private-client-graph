@@ -1,0 +1,65 @@
+{
+  "condition": "E1",
+  "truth": {
+    "entities": [
+      {
+        "id": "e01",
+        "type": "person",
+        "name": "Dana Vale"
+      },
+      {
+        "id": "e02",
+        "type": "person",
+        "name": "Ellis Rook"
+      },
+      {
+        "id": "e03",
+        "type": "person",
+        "name": "Mara Fen"
+      },
+      {
+        "id": "e04",
+        "type": "person",
+        "name": "Theo Baird"
+      }
+    ],
+    "relationships": [
+      {
+        "source": "e03",
+        "type": "sibling_of",
+        "target": "e04",
+        "approved_evidence": [
+          "Theo Baird is my brother, and I can confirm that from my own personal knowledge.\n\nThanks,  \nMara Fen"
+        ]
+      }
+    ]
+  },
+  "source_approval": {
+    "schema_version": 1,
+    "relationships": [
+      {
+        "source": "e03",
+        "type": "sibling_of",
+        "target": "e04",
+        "approved_evidence": [
+          {
+            "source_id": "f5r7",
+            "supporting_text": "Theo Baird is my brother, and I can confirm that from my own personal knowledge.\n\nThanks,  \nMara Fen"
+          }
+        ]
+      }
+    ]
+  },
+  "ideal": {
+    "relationships": [
+      {
+        "source_name": "Mara Fen",
+        "relationship_type": "sibling_of",
+        "target_name": "Theo Baird",
+        "source_id": "f5r7",
+        "supporting_text": "Theo Baird is my brother, and I can confirm that from my own personal knowledge.\n\nThanks,  \nMara Fen"
+      }
+    ]
+  },
+  "sufficient_evidence": []
+}

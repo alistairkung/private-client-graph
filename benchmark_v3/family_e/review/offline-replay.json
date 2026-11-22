@@ -1,0 +1,371 @@
+{
+  "schema_version": 1,
+  "family": "E",
+  "mode": "saved_ideal_replay",
+  "manifest_sha256": "a28c400c3aee6e1acf04564bcf370c689b44c173e281a5cc587956f6446bc972",
+  "freeze_sha256": "31a8bfc1e9a677c6eb51cbf178af2f5580b06ca62244dc963f9ee1f8eef99df8",
+  "preview": {
+    "input_mode": "saved",
+    "execution_mode": "replay",
+    "resolver": "none",
+    "maximum_paid_slots": 0,
+    "planned_observations": 2,
+    "sourced_prompt_sha256": "d67afaeb19c26448a6779d9576800cc50ca399c634ad81a1a02b847be0a9dfae",
+    "inputs": [
+      {
+        "id": "benchmark_v3_e0",
+        "source_count": 7,
+        "ordered_sources_sha256": "c49a69b1d1e6e23e43dc124f2e46d059b189ff474f8cf0161eb0ed689d23eaff",
+        "source_body_sha256": {
+          "v2j5": "e55a50805d0267e16ca38417580cb3e5e5e66c14dd0934ca9ac6b9b676bba569",
+          "p8n4": "d2dab9b63bb664e2a41eb66dcea4bf5e497ef83e9ddc50205cd47c02030bd5dd",
+          "q4b9": "02defa885d1d0ec78fa3285bc2b47fcd0321fb0d725b0422dff2554675788952",
+          "t9c3": "ec32c00c15c44122416c3e341fd5fa0d3a56f27921788b1aa15214ced93eded7",
+          "m6w2": "e4952cdec722c1b80835b0d6be4cff241ee185e80bd2775062a575e99a4a2b66",
+          "f5r7": "c17e964d44b618439716e7ef087f1ac5c0cac84f7ff2860796c3933e020aea34",
+          "d3k6": "da745d010e04a6b66cb4af3d293ab03601da361500fe04912ccc5895c39869af"
+        },
+        "messages_sha256": "e1c9101ebd8078856bfb2dd54ae1ed4ca1e439f2b27b5cc922119844a3114f79",
+        "message_bytes": 6313,
+        "estimated_message_tokens": 1579
+      },
+      {
+        "id": "benchmark_v3_e1",
+        "source_count": 7,
+        "ordered_sources_sha256": "3760fe152d8f90f32e04102be9438ff9ca7f0f6802301c4c3eb318f9833564e9",
+        "source_body_sha256": {
+          "v2j5": "e55a50805d0267e16ca38417580cb3e5e5e66c14dd0934ca9ac6b9b676bba569",
+          "p8n4": "d2dab9b63bb664e2a41eb66dcea4bf5e497ef83e9ddc50205cd47c02030bd5dd",
+          "q4b9": "02defa885d1d0ec78fa3285bc2b47fcd0321fb0d725b0422dff2554675788952",
+          "t9c3": "275027e21e0d651e4932d8cb3c61e0c988a9f96c0ffa45d41fabf958d24ed98b",
+          "m6w2": "e4952cdec722c1b80835b0d6be4cff241ee185e80bd2775062a575e99a4a2b66",
+          "f5r7": "c17e964d44b618439716e7ef087f1ac5c0cac84f7ff2860796c3933e020aea34",
+          "d3k6": "da745d010e04a6b66cb4af3d293ab03601da361500fe04912ccc5895c39869af"
+        },
+        "messages_sha256": "1bb10b7ca2d0bda6cd1a459d0b39ecbd43a3dd271d0120af71580edcdf8c18a6",
+        "message_bytes": 6317,
+        "estimated_message_tokens": 1580
+      }
+    ],
+    "token_estimate": "Ceiling of UTF-8 message bytes divided by four, excluding schema and framing."
+  },
+  "paid_attempts": 0,
+  "run_path": "run",
+  "run_artifact_digest": "3ebea825839c987fb7508d9c804c8d152b4aeb410eea1a4443d2620a0e777778",
+  "aggregate": {
+    "coverage": {
+      "planned": 2,
+      "scored": 2,
+      "pending": 0,
+      "failed": 0,
+      "uncertain": 0,
+      "unavailable": 0
+    },
+    "tp": 3,
+    "fp": 0,
+    "fn": 0,
+    "micro_precision": 1.0,
+    "micro_recall": 1.0,
+    "micro_f1": 1.0
+  },
+  "conditions": [
+    {
+      "condition": "E0",
+      "sample_id": "benchmark_v3_e0",
+      "condition_sha256": "847987a23fb6f1b52970d2113a5dc7c3cc12e26a8ddc11b0a483fab2b4726223",
+      "ordered_sources_sha256": "c49a69b1d1e6e23e43dc124f2e46d059b189ff474f8cf0161eb0ed689d23eaff",
+      "annotation_sha256": {
+        "truth": "8ea2cbf5c4a60cb04aee17c6f859cc8778ba1a2167d8a512870bea337fc804ee",
+        "source_approval": "6961bb6f4280a875034bdc3d66ed35a256cb924c619304d5f91d47125413301c",
+        "sufficient_evidence": "90fea17d3eba4b2c9be1211d3c0e12026e9afe3c218c8d7a0f9cac9104c42a5e"
+      },
+      "planned": 1,
+      "attempted": 1,
+      "scored": 1,
+      "exact_graph": true,
+      "graph": {
+        "tp": 2,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "true_positive_edges": [
+          [
+            "Dana Vale",
+            "parent_of",
+            "Ellis Rook"
+          ],
+          [
+            "Mara Fen",
+            "sibling_of",
+            "Theo Baird"
+          ]
+        ],
+        "false_positive_edges": [],
+        "false_negative_edges": [],
+        "provenance_passed": 1,
+        "provenance_failed": 1,
+        "provenance_accuracy": 0.5,
+        "provenance_passes": [
+          [
+            "Mara Fen",
+            "sibling_of",
+            "Theo Baird"
+          ]
+        ],
+        "provenance_failures": [
+          [
+            "Dana Vale",
+            "parent_of",
+            "Ellis Rook"
+          ]
+        ]
+      },
+      "decisions": {
+        "required": [
+          [
+            "Dana Vale",
+            "parent_of",
+            "Ellis Rook"
+          ]
+        ],
+        "forbidden": [],
+        "unaffected": [
+          [
+            "Mara Fen",
+            "sibling_of",
+            "Theo Baird"
+          ]
+        ],
+        "required_present": [
+          [
+            "Dana Vale",
+            "parent_of",
+            "Ellis Rook"
+          ]
+        ],
+        "forbidden_present": [],
+        "unaffected_present": [
+          [
+            "Mara Fen",
+            "sibling_of",
+            "Theo Baird"
+          ]
+        ]
+      },
+      "ordinary_evidence": {
+        "version": "benchmark_v2_evidence_v1",
+        "not_applicable": [
+          [
+            "Dana Vale",
+            "parent_of",
+            "Ellis Rook"
+          ]
+        ],
+        "quotation": {
+          "assessed": 1,
+          "passed": 1,
+          "failed": 0,
+          "accuracy": 1.0,
+          "passes": [
+            [
+              "Mara Fen",
+              "sibling_of",
+              "Theo Baird"
+            ]
+          ],
+          "failures": []
+        },
+        "source_attribution": {
+          "version": "source_attribution_v1",
+          "assessed": 1,
+          "passed": 1,
+          "failed": 0,
+          "accuracy": 1.0,
+          "failures": []
+        },
+        "sufficiency": {
+          "version": "attached_sufficient_set_v1",
+          "planned": 1,
+          "assessed": 1,
+          "complete": 1,
+          "incomplete": 0,
+          "missed": 0,
+          "complete_over_correct": 1.0,
+          "complete_over_planned": 1.0,
+          "targets": [
+            {
+              "edge": [
+                "Dana Vale",
+                "parent_of",
+                "Ellis Rook"
+              ],
+              "status": "complete",
+              "missing_by_alternative": []
+            }
+          ]
+        }
+      },
+      "legacy_source_attribution": null,
+      "runtime_seconds": 0.00011741672642529011,
+      "usage": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "cached_tokens": 0
+      },
+      "incremental_cost": 0.0
+    },
+    {
+      "condition": "E1",
+      "sample_id": "benchmark_v3_e1",
+      "condition_sha256": "89b4739e5bd01d4d65eb7bcec3243e935d9744c09a6fce5a4decf28c34975610",
+      "ordered_sources_sha256": "3760fe152d8f90f32e04102be9438ff9ca7f0f6802301c4c3eb318f9833564e9",
+      "annotation_sha256": {
+        "truth": "66f415c92c1d2f154c1089485e92dbdb57249020f765c9253be2ef53f9ce8fe9",
+        "source_approval": "6961bb6f4280a875034bdc3d66ed35a256cb924c619304d5f91d47125413301c",
+        "sufficient_evidence": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "planned": 1,
+      "attempted": 1,
+      "scored": 1,
+      "exact_graph": true,
+      "graph": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "true_positive_edges": [
+          [
+            "Mara Fen",
+            "sibling_of",
+            "Theo Baird"
+          ]
+        ],
+        "false_positive_edges": [],
+        "false_negative_edges": [],
+        "provenance_passed": 1,
+        "provenance_failed": 0,
+        "provenance_accuracy": 1.0,
+        "provenance_passes": [
+          [
+            "Mara Fen",
+            "sibling_of",
+            "Theo Baird"
+          ]
+        ],
+        "provenance_failures": []
+      },
+      "decisions": {
+        "required": [],
+        "forbidden": [
+          [
+            "Dana Vale",
+            "parent_of",
+            "Ellis Rook"
+          ]
+        ],
+        "unaffected": [
+          [
+            "Mara Fen",
+            "sibling_of",
+            "Theo Baird"
+          ]
+        ],
+        "required_present": [],
+        "forbidden_present": [],
+        "unaffected_present": [
+          [
+            "Mara Fen",
+            "sibling_of",
+            "Theo Baird"
+          ]
+        ]
+      },
+      "ordinary_evidence": {
+        "version": "benchmark_v2_evidence_v1",
+        "not_applicable": [],
+        "quotation": {
+          "assessed": 1,
+          "passed": 1,
+          "failed": 0,
+          "accuracy": 1.0,
+          "passes": [
+            [
+              "Mara Fen",
+              "sibling_of",
+              "Theo Baird"
+            ]
+          ],
+          "failures": []
+        },
+        "source_attribution": {
+          "version": "source_attribution_v1",
+          "assessed": 1,
+          "passed": 1,
+          "failed": 0,
+          "accuracy": 1.0,
+          "failures": []
+        },
+        "sufficiency": {
+          "version": "attached_sufficient_set_v1",
+          "planned": 0,
+          "assessed": 0,
+          "complete": 0,
+          "incomplete": 0,
+          "missed": 0,
+          "complete_over_correct": null,
+          "complete_over_planned": null,
+          "targets": []
+        }
+      },
+      "legacy_source_attribution": {
+        "version": "source_attribution_v1",
+        "assessed": 1,
+        "passed": 1,
+        "failed": 0,
+        "accuracy": 1.0,
+        "failures": []
+      },
+      "runtime_seconds": 8.587515912950039e-05,
+      "usage": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "cached_tokens": 0
+      },
+      "incremental_cost": 0.0
+    }
+  ],
+  "matches": {
+    "E1": {
+      "pair": [
+        "E0",
+        "E1"
+      ],
+      "passed": true,
+      "removed": [
+        [
+          "Dana Vale",
+          "parent_of",
+          "Ellis Rook"
+        ]
+      ],
+      "added": [],
+      "unaffected": [
+        [
+          "Mara Fen",
+          "sibling_of",
+          "Theo Baird"
+        ]
+      ],
+      "changed_source_id": "t9c3"
+    }
+  },
+  "repeat": {
+    "deterministic_decisions_and_scores": true,
+    "paid_attempts": 0,
+    "run_artifact_digest": "a4903e7e3ea5895638a84c5f10b606abf9df4ed7fb6547758cb9ef8974c13425"
+  }
+}

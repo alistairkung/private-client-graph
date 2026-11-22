@@ -1,0 +1,10 @@
+{
+  "hypothesis_id": "complete-record-label-collision",
+  "revision": 1,
+  "hypothesis_sha256": "86c152a0d7816d83f3de38c16d265f7619ce7ccf08223d22e116b04bb98ea09c",
+  "schema_version": 1,
+  "status": "approved",
+  "owner": "Alistair Kung",
+  "decided_on": "2026-11-22",
+  "decision_reference": "Explicit project-owner decision in the 22 November 2026 Codex handoff, section 2. Authorises construction of the development fixture."
+}

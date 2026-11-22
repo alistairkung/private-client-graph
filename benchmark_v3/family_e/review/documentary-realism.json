@@ -1,0 +1,163 @@
+{
+  "r0": {
+    "E0": {
+      "verdict": "revise",
+      "sources": [
+        {
+          "source_id": "v2j5",
+          "purpose": "Internal note to frame the will-planning meeting and identify what remains open at the file cut-off.",
+          "findings": [
+            "Rowan saved the note at the cut-off and appropriately says that Rowan did not witness the delivery. But the note largely restates the meeting brief: it does not say why Rowan sought evidence about Dana Vale and Ellis Rook or whether either person has a known connection to Mara. The supplied correspondence does not fill that gap.",
+            "The inbox and portal details are plausible administrative notes. 'Paper copies are unnecessary' is a weaker summary than Mara's express instruction not to send the paper pack to her workplace. The underlying secure message remains on file."
+          ],
+          "revision_ticket": "State why Rowan sought the birth information for this meeting if the file can establish that. Otherwise, flag the relevance of Dana and Ellis to Mara's will planning as an open question rather than implying that the birth establishes a relationship to Mara."
+        },
+        {
+          "source_id": "p8n4",
+          "purpose": "Internal lookup linking T17 to Dana Vale and T42 to Ellis Rook.",
+          "findings": [
+            "The dated sheet plausibly records an intake identity check before the replies of 12 October. It is the only retained name-to-reference lookup. The underlying identity details are expressly unretained, not a missing enclosure that can be presumed to be on file. They contained no relationship fields.",
+            "The sheet says Rowan supplied the references orally but does not say to whom or in what context. Casey's reply acknowledges receiving them from Rowan; Robin's does not. Neither the reason for using codes nor Robin's route to the same mapping is apparent from the record."
+          ],
+          "revision_ticket": "Record the reason for using the references and how Rowan conveyed the mapping to each respondent, where known. If Robin's mapping cannot be confirmed from the file, mark it as unconfirmed rather than supplying a conversation retrospectively."
+        },
+        {
+          "source_id": "q4b9",
+          "purpose": "Native inbox reply giving Casey Lin's firsthand account of who carried and gave birth to the child.",
+          "findings": [
+            "Casey identifies the question and the oral references, explains being present throughout the 28 September delivery, and gives a basis for recognising both people. The direct reply was retained; it does not rely on a record or suggest a missing attachment.",
+            "The greeting and reply framing are natural. The coded declaration and detailed exclusions sound more scripted, particularly beside Robin's reply, but Casey's own message provides a basis for linking the codes to Rowan's inquiry. The account is limited to who carried and gave birth."
+          ],
+          "revision_ticket": null
+        },
+        {
+          "source_id": "t9c3",
+          "purpose": "Native inbox message giving Robin Moss's separate firsthand account of the delivery.",
+          "findings": [
+            "Robin describes personal observation as a support person and prior familiarity with T17. The direct inbox custody supports treating this as Robin's own message, not as a copy of Casey's. It does not establish how Robin learned which people the codes designated.",
+            "The two replies have different openings and paragraph order, but the same displayed minute, identical coded conclusion and closely matched exclusions make them read like responses to a common prompt. That is not evidence of copying; the file simply does not show what Robin was asked."
+          ],
+          "revision_ticket": "Retain or describe the actual inquiry to Robin, including the references used, if available. Otherwise, flag the need to confirm what Robin meant by T17 and T42 before treating the message as corroboration about the named people."
+        },
+        {
+          "source_id": "m6w2",
+          "purpose": "Inline forwarding copy of Casey's original reply for the meeting correspondence thread.",
+          "findings": [
+            "Imani's short filing cover and the reproduced message are consistent with an inline forward. The ledger accounts for both the native inbox copy and the thread copy. The cover gives the time of the forwarding request, not a separate send time for the forward.",
+            "Imani adds filing context, not firsthand evidence. The quoted reply is the same account as q4b9 and should not be counted again."
+          ],
+          "revision_ticket": null
+        },
+        {
+          "source_id": "f5r7",
+          "purpose": "Client's direct confirmation of her brother's name ahead of the meeting.",
+          "findings": [
+            "The brief, conversational secure message is proportionate to a name check. Mara expressly speaks from personal knowledge, so Theo Baird can be recorded as Mara's brother on her report. The retained message does not require an enclosure to make sense.",
+            "It neither connects Theo to Dana or Ellis nor gives instructions about who should benefit under the will."
+          ],
+          "revision_ticket": null
+        },
+        {
+          "source_id": "d3k6",
+          "purpose": "Client's instruction on where not to send the meeting pack and how to provide it instead.",
+          "findings": [
+            "The retained direct message clearly withholds permission to send the paper pack to Mara's workplace and requests upload to the secure portal. Its emphatic wording fits a direct delivery instruction.",
+            "The pack is the subject of the instruction, not an enclosure needed to interpret it. The message does not establish that an upload occurred and supplies no family evidence."
+          ],
+          "revision_ticket": null
+        }
+      ],
+      "limitations": [
+        "At 10:00 BST on 16 October 2026, the file supports recording Theo Baird as Mara's brother on her own report and recording, with attribution to Casey and the retained lookup, that Dana Vale carried and gave birth to Ellis Rook on 28 September 2026. Robin gives a separate firsthand account in the same codes, but the link from Robin's codes to the names needs clarification.",
+        "The delivery accounts do not establish genetic, legal, adoptive or caregiving status. The file does not establish how Dana or Ellis relates to Mara, whether those details matter to her intended dispositions, or what those dispositions are. These are meeting questions, not facts to infer before settling instructions.",
+        "The cited SRA guidance grounds taking account of the client's personal circumstances in will preparation. It does not prescribe identity-only intake, non-retention of intake details, oral codes, witness replies, inline filing or portal use. Those are features of the fictional file; the portal instruction is grounded in Mara's own message."
+      ],
+      "blocking_findings": [
+        "The meeting note does not explain why the adviser sought the birth information or identify its relevance to Mara as unresolved. The birth account cannot be treated as establishing part of Mara's family circumstances without that clarification.",
+        "The retained lookup and Robin's message do not show how Robin understood the oral references. As filed, the message cannot be treated as fully traceable corroboration about Dana and Ellis, even though it is a separately retained firsthand account."
+      ]
+    },
+    "E1": {
+      "verdict": "revise",
+      "sources": [
+        {
+          "source_id": "v2j5",
+          "purpose": "Internal note setting the scope of Mara Fen’s will-planning meeting and recording how the pack is to be handled.",
+          "findings": [
+            "Rowan’s authorship and retention at the cut-off are accounted for. It is natural for a pre-meeting note to distinguish the adviser’s knowledge from witness accounts, but calling the replies ‘confirmations’ obscures that they conflict.",
+            "The note states the meeting’s task without recording why the Dana Vale–Ellis Rook question matters to Mara’s will planning. Rowan had enough context to ask about a particular birth date and circulate references, but the file does not show where that context came from or what Rowan understood its relevance to be.",
+            "The portal instruction reflects Mara’s requested route, but ‘paper copies are unnecessary’ does not capture her express refusal of permission to send the pack to her workplace. Neither document establishes that an upload took place."
+          ],
+          "revision_ticket": "Add a short account of how the birth question arose and why it matters to Mara’s instructions, or mark that relevance as not yet established. Describe the replies as conflicting and carry forward the express instruction not to send the pack to her workplace."
+        },
+        {
+          "source_id": "p8n4",
+          "purpose": "Internal lookup mapping the witness references to names sighted at intake.",
+          "findings": [
+            "The dated sheet supplies T17 as Dana Vale and T42 as Ellis Rook. It records Rowan’s identity-only check on 9 October, before the 12 October replies. It does not establish any relationship between the two people or to Mara.",
+            "The intake details are expressly unretained, not an omitted enclosure. The sheet preserves Rowan’s account of the check but not what was sighted beyond its identity-only scope. It also does not say who got the oral references or how each witness was to match them to the people they knew.",
+            "The bare codes, identity-only intake and oral handoff make the exchange unusually dependent on information that Rowan would ordinarily be able to describe. The codes could serve a confidentiality purpose, but the file gives no reason for using them or for this particular handoff."
+          ],
+          "revision_ticket": "Record, as far as Rowan can attest, why references were used, what the identity check covered and how each witness received and understood the person-to-reference mapping. Identify any gaps without reconstructing unretained material as an enclosure."
+        },
+        {
+          "source_id": "q4b9",
+          "purpose": "Casey Lin’s direct response about who carried and gave birth to the child on 28 September 2026.",
+          "findings": [
+            "The ledger accounts for the native inbox message. Casey reports attending throughout as an invited support person and gives an affirmative answer from claimed firsthand observation. Prior familiarity with T17 and later recognition of T42 are relevant, but the message is not independent proof that the labels were correctly applied.",
+            "The subject and opening refer to a question Rowan asked, but its wording is absent; the message does not claim that a written question or attachment existed.",
+            "A concise solicited reply is plausible. Its detailed exclusions and sequence of knowledge claims, however, closely match Robin’s reply. The two 14:00 timestamps alone do not establish coordination, and the file does not show whether Rowan supplied a common prompt."
+          ],
+          "revision_ticket": "Document the question actually put to Casey, including any requested limits on the answer, in Rowan’s file note if it was oral. Preserve Casey’s native reply as received."
+        },
+        {
+          "source_id": "t9c3",
+          "purpose": "Robin Moss’s direct response disputing that T17 carried and gave birth to T42.",
+          "findings": [
+            "The ledger accounts for a separate native inbox message, also dated 12 October at 14:00. Robin claims firsthand attendance throughout and describes prior familiarity with T17 and later sight of T42. The denial addresses the same narrow question as Casey’s reply; it does not identify who did give birth.",
+            "Robin uses the codes without saying how they were supplied or understood. The file gives no basis to prefer either witness or to assume the two were referring to different people or events.",
+            "Different greetings and placement of the conclusion give the messages some individual form, but their sequence of observations and near-matching disclaimers are unusually close for separate replies without a documented common prompt."
+          ],
+          "revision_ticket": "Record what Rowan asked Robin and clarify whether the two witnesses understood the codes, child and delivery to be the same. If that cannot be established by the cut-off, leave it as a meeting follow-up rather than resolving the contradiction in the note."
+        },
+        {
+          "source_id": "m6w2",
+          "purpose": "Administrative forward placing Casey’s original answer into the meeting correspondence thread.",
+          "findings": [
+            "A short filing cover followed by the copied message is a plausible change in form and tone. The ledger identifies the native inbox message and the retained thread copy.",
+            "The cover dates the filing request at 14:20 on 12 October, after Casey’s 14:00 reply. It does not separately date the forward itself, although the ledger places it in the cut-off file. No attachment is claimed or needed to read the inline copy.",
+            "This is the same Casey account in a second location. Imani adds no knowledge of the birth, and the forward adds no corroboration."
+          ],
+          "revision_ticket": null
+        },
+        {
+          "source_id": "f5r7",
+          "purpose": "Client-supplied family information before the meeting.",
+          "findings": [
+            "Mara’s direct secure message of 8 October was retained in the inbox and predates the intake lookup. It supports recording Theo Baird as Mara’s brother, attributed to Mara’s own account.",
+            "The short name-check message is plausible, although ‘from my own personal knowledge’ reads more formally than the surrounding prose. No enclosure is mentioned. The message does not specify the type of sibling relationship or imply any drafting instruction."
+          ],
+          "revision_ticket": null
+        },
+        {
+          "source_id": "d3k6",
+          "purpose": "Client instruction about where and how to deliver the meeting pack.",
+          "findings": [
+            "Mara’s retained 14 October secure message is a direct and practical instruction before the cut-off. It refuses workplace delivery of the paper pack and requests an upload to the secure portal.",
+            "The refusal is specific to workplace delivery; it is not a general ban on paper. The pack is the subject of the instruction, not an enclosure the message claims to contain. The message does not show that the requested upload was completed."
+          ],
+          "revision_ticket": null
+        }
+      ],
+      "limitations": [
+        "At 10:00 BST on 16 October 2026, the file supports recording Theo Baird as Mara’s brother on her account. It also supports recording Rowan’s name mapping and two conflicting firsthand claims about who carried and gave birth to Ellis Rook on 28 September. It does not support recording Dana Vale as either established or ruled out as the person who gave birth.",
+        "Neither witness addresses genetic, legal, adoptive or caregiving status. The file does not establish whether or how Dana or Ellis is connected to Mara or relevant to the will. Clarifying that relevance, and which kind of relationship matters to the intended instructions, is a meeting task, not a fact to infer from the witness replies.",
+        "As described in the packet, the SRA guidance grounds taking account of the client’s personal circumstances. It does not prescribe identity-only intake, oral references, witness correspondence, inbox filing or portal delivery. Those are practices assumed for this fictional file, not validated by the citation."
+      ],
+      "blocking_findings": [
+        "v2j5 does not preserve the adviser’s reason for investigating the birth or distinguish the disputed accounts from established family information. Without that context, the file cannot explain why the dispute matters before drafting instructions are settled.",
+        "p8n4, q4b9 and t9c3 leave the reference handoff and witness prompts insufficiently documented. The close parallelism and missing context make it hard to assess whether the witnesses understood the same question about the same people and event. The disagreement itself is not a documentary defect and need not be resolved for the meeting to proceed."
+      ]
+    }
+  }
+}

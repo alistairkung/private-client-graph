@@ -1,0 +1,126 @@
+{
+  "condition": "E0",
+  "truth": {
+    "entities": [
+      {
+        "id": "e01",
+        "type": "person",
+        "name": "Dana Vale"
+      },
+      {
+        "id": "e02",
+        "type": "person",
+        "name": "Ellis Rook"
+      },
+      {
+        "id": "e03",
+        "type": "person",
+        "name": "Mara Fen"
+      },
+      {
+        "id": "e04",
+        "type": "person",
+        "name": "Theo Baird"
+      }
+    ],
+    "relationships": [
+      {
+        "source": "e01",
+        "type": "parent_of",
+        "target": "e02",
+        "approved_evidence": []
+      },
+      {
+        "source": "e03",
+        "type": "sibling_of",
+        "target": "e04",
+        "approved_evidence": [
+          "Theo Baird is my brother, and I can confirm that from my own personal knowledge.\n\nThanks,  \nMara Fen"
+        ]
+      }
+    ]
+  },
+  "source_approval": {
+    "schema_version": 1,
+    "relationships": [
+      {
+        "source": "e03",
+        "type": "sibling_of",
+        "target": "e04",
+        "approved_evidence": [
+          {
+            "source_id": "f5r7",
+            "supporting_text": "Theo Baird is my brother, and I can confirm that from my own personal knowledge.\n\nThanks,  \nMara Fen"
+          }
+        ]
+      }
+    ]
+  },
+  "ideal": {
+    "relationships": [
+      {
+        "source_name": "Dana Vale",
+        "relationship_type": "parent_of",
+        "target_name": "Ellis Rook",
+        "source_id": "m6w2",
+        "supporting_text": "Rowan,\n\nAs requested on 12 October 2026 at 14:20, I’m copying Casey Lin’s original case-inbox response into the meeting correspondence thread for filing.\n\nImani Cole\n\n-----\nFrom: Casey Lin\nTo: Rowan Bell\nDate: 12 October 2026 at 14:00\nSubject: Your question about the birth on 28 September 2026\n\nDear Rowan,\n\nI’m replying directly to the question you asked me, using the references you gave me orally. My answer is limited to who carried and gave birth to the child.\n\nT17 is the birth parent of T42.\n\nI was there throughout the delivery on 28 September 2026 as an invited support person and witnessed it firsthand. I already knew T17, and I recognise T42 from seeing the child in person since then. My answer is based on what I saw, not on anyone else’s account or on a record.\n\nI’m not giving an opinion on genetics, legal parentage, adoption or caregiving.\n\nBest,\nCasey Lin"
+      },
+      {
+        "source_name": "Dana Vale",
+        "relationship_type": "parent_of",
+        "target_name": "Ellis Rook",
+        "source_id": "p8n4",
+        "supporting_text": "T17 — Dana Vale  \nT42 — Ellis Rook"
+      },
+      {
+        "source_name": "Mara Fen",
+        "relationship_type": "sibling_of",
+        "target_name": "Theo Baird",
+        "source_id": "f5r7",
+        "supporting_text": "Theo Baird is my brother, and I can confirm that from my own personal knowledge.\n\nThanks,  \nMara Fen"
+      }
+    ]
+  },
+  "sufficient_evidence": [
+    {
+      "edge": [
+        "Dana Vale",
+        "parent_of",
+        "Ellis Rook"
+      ],
+      "joint_only": true,
+      "alternatives": [
+        [
+          {
+            "source_id": "m6w2",
+            "supporting_text": "Rowan,\n\nAs requested on 12 October 2026 at 14:20, I’m copying Casey Lin’s original case-inbox response into the meeting correspondence thread for filing.\n\nImani Cole\n\n-----\nFrom: Casey Lin\nTo: Rowan Bell\nDate: 12 October 2026 at 14:00\nSubject: Your question about the birth on 28 September 2026\n\nDear Rowan,\n\nI’m replying directly to the question you asked me, using the references you gave me orally. My answer is limited to who carried and gave birth to the child.\n\nT17 is the birth parent of T42.\n\nI was there throughout the delivery on 28 September 2026 as an invited support person and witnessed it firsthand. I already knew T17, and I recognise T42 from seeing the child in person since then. My answer is based on what I saw, not on anyone else’s account or on a record.\n\nI’m not giving an opinion on genetics, legal parentage, adoption or caregiving.\n\nBest,\nCasey Lin"
+          },
+          {
+            "source_id": "p8n4",
+            "supporting_text": "T17 — Dana Vale  \nT42 — Ellis Rook"
+          }
+        ],
+        [
+          {
+            "source_id": "p8n4",
+            "supporting_text": "T17 — Dana Vale  \nT42 — Ellis Rook"
+          },
+          {
+            "source_id": "q4b9",
+            "supporting_text": "From: Casey Lin\nTo: Rowan Bell\nDate: 12 October 2026 at 14:00\nSubject: Your question about the birth on 28 September 2026\n\nDear Rowan,\n\nI’m replying directly to the question you asked me, using the references you gave me orally. My answer is limited to who carried and gave birth to the child.\n\nT17 is the birth parent of T42.\n\nI was there throughout the delivery on 28 September 2026 as an invited support person and witnessed it firsthand. I already knew T17, and I recognise T42 from seeing the child in person since then. My answer is based on what I saw, not on anyone else’s account or on a record.\n\nI’m not giving an opinion on genetics, legal parentage, adoption or caregiving.\n\nBest,\nCasey Lin"
+          }
+        ],
+        [
+          {
+            "source_id": "p8n4",
+            "supporting_text": "T17 — Dana Vale  \nT42 — Ellis Rook"
+          },
+          {
+            "source_id": "t9c3",
+            "supporting_text": "To: Rowan Bell  \nFrom: Robin Moss  \nDate: 12 October 2026, 14:00  \nSubject: Delivery on 28 September 2026\n\nDear Rowan,\n\nI was invited to attend as a support person and was present throughout the delivery on 28 September 2026. I already knew T17 and have since seen T42 in person. My answer is based on what I saw myself, not on anyone else’s account or on any record.\n\nI’m answering only about who carried and gave birth to the child, not about genetic, legal, adoptive or caregiving status.\n\nT17 is the birth parent of T42.\n\nBest wishes,  \nRobin Moss"
+          }
+        ]
+      ]
+    }
+  ]
+}

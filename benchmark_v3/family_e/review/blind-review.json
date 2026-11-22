@@ -1,0 +1,444 @@
+{
+  "E0": {
+    "readers": {
+      "a": {
+        "output_sha256": "a0ff45346e57f241c485eb1a124908ad06a0b35bd2021fb45777549f71896ee6",
+        "edges": [
+          [
+            "Dana Vale",
+            "parent_of",
+            "Ellis Rook"
+          ],
+          [
+            "Mara Fen",
+            "sibling_of",
+            "Theo Baird"
+          ]
+        ],
+        "ordinary_source_ids": [
+          {
+            "edge": [
+              "Dana Vale",
+              "parent_of",
+              "Ellis Rook"
+            ],
+            "ids": []
+          },
+          {
+            "edge": [
+              "Mara Fen",
+              "sibling_of",
+              "Theo Baird"
+            ],
+            "ids": [
+              "f5r7"
+            ]
+          }
+        ],
+        "proof_source_routes": [
+          {
+            "edge": [
+              "Dana Vale",
+              "parent_of",
+              "Ellis Rook"
+            ],
+            "routes": [
+              [
+                "m6w2",
+                "p8n4"
+              ],
+              [
+                "p8n4",
+                "q4b9"
+              ],
+              [
+                "p8n4",
+                "t9c3"
+              ]
+            ]
+          },
+          {
+            "edge": [
+              "Mara Fen",
+              "sibling_of",
+              "Theo Baird"
+            ],
+            "routes": [
+              [
+                "f5r7"
+              ]
+            ]
+          }
+        ]
+      },
+      "b": {
+        "output_sha256": "9d71f718b18a3be90e4721f1dd60df71b4954927f5eb8f18ac82278ac279e9ca",
+        "edges": [
+          [
+            "Dana Vale",
+            "parent_of",
+            "Ellis Rook"
+          ],
+          [
+            "Mara Fen",
+            "sibling_of",
+            "Theo Baird"
+          ]
+        ],
+        "ordinary_source_ids": [
+          {
+            "edge": [
+              "Dana Vale",
+              "parent_of",
+              "Ellis Rook"
+            ],
+            "ids": []
+          },
+          {
+            "edge": [
+              "Mara Fen",
+              "sibling_of",
+              "Theo Baird"
+            ],
+            "ids": [
+              "f5r7"
+            ]
+          }
+        ],
+        "proof_source_routes": [
+          {
+            "edge": [
+              "Dana Vale",
+              "parent_of",
+              "Ellis Rook"
+            ],
+            "routes": [
+              [
+                "m6w2",
+                "p8n4"
+              ],
+              [
+                "p8n4",
+                "q4b9"
+              ],
+              [
+                "p8n4",
+                "t9c3"
+              ]
+            ]
+          },
+          {
+            "edge": [
+              "Mara Fen",
+              "sibling_of",
+              "Theo Baird"
+            ],
+            "routes": [
+              [
+                "f5r7"
+              ]
+            ]
+          }
+        ]
+      }
+    },
+    "disagreements": {
+      "shared_edges": [
+        [
+          "Dana Vale",
+          "parent_of",
+          "Ellis Rook"
+        ],
+        [
+          "Mara Fen",
+          "sibling_of",
+          "Theo Baird"
+        ]
+      ],
+      "reader_a_only": [],
+      "reader_b_only": [],
+      "passage_disagreements": [
+        "The readers agree that the parent edge records birth parentage only, has no ordinary quotation or attribution, and has three alternative two-Source proof routes. They also agree on the exact name-key quotation. Reader A retains the birth assertion and the dated firsthand account in q4b9, t9c3 and m6w2; Reader B quotes only the assertion in each. The adjudicated spans retain the observation and recognition evidence rather than leaving that basis in the rationale alone.",
+        "In t9c3, the scope limitation falls between the firsthand account and the birth assertion, so it remains in the contiguous span. In m6w2, both readers quote from the embedded Casey Lin reply. The forwarding note establishes provenance, not a separate eyewitness account. Reader B makes that provenance a separate claim; Reader A records it within the birth claim and rationale.",
+        "The readers agree on the exact f5r7 passage for both ordinary evidence and the one-Source proof set. Neither reader omitted a supported edge or a materially distinct proof route. Neither separately adjudicated actual workplace dispatch as a proposition distinct from permission; both flagged that distinction elsewhere."
+      ]
+    },
+    "complete_edges": [
+      [
+        "Dana Vale",
+        "parent_of",
+        "Ellis Rook"
+      ],
+      [
+        "Mara Fen",
+        "sibling_of",
+        "Theo Baird"
+      ]
+    ],
+    "rulings": [
+      "Forward audit in supplied order: v2j5 establishes the cut-off, Bell’s non-witness status and the portal plan; p8n4 supplies identities only; q4b9 and t9c3 supply separate firsthand coded birth accounts; m6w2 preserves q4b9’s account; f5r7 independently establishes siblinghood; d3k6 records a workplace refusal and a portal instruction, not a family edge or completed delivery.",
+      "Reverse audit in supplied order reversed: d3k6 adds no relationship; f5r7 alone proves siblinghood; m6w2, t9c3 and q4b9 each need p8n4 to prove the named parent edge; p8n4 cannot prove parentage alone; v2j5 supplies neither family testimony nor an additional identity link. No other minimum proof route is supported.",
+      "The graph contains only the birth-parent edge and the sibling edge. Do not infer marriage from shared children, siblinghood from common parentage, a sibling subtype from Mara’s wording, or a connection to Mara from filing context.",
+      "The file supplies no named trust or supported trust office, entitlement or relationship. It also supplies no intended will benefit from either recorded family fact. These limits do not prove that no trust or intended benefit exists.",
+      "Do not count Imani Cole as a third witness or Rowan Bell as a delivery witness. Do not infer consent, dispatch, upload or receipt from the stated delivery plan."
+    ],
+    "claims": [
+      {
+        "proposition": "T17 denotes Dana Vale and T42 denotes Ellis Rook in the delivery confirmations.",
+        "origin": "Rowan Bell’s 9 October 2026 name-reference sheet, p8n4, records the mappings, the identity check that day and the oral supply of the references. The sheet was in the file by 10:00 on 16 October 2026.",
+        "competing": null,
+        "disposition": "supported",
+        "reason": "The sheet explicitly maps both references. The underlying intake details were not retained and contained no relationship fields. That limits what the check establishes; it does not contradict the mappings."
+      },
+      {
+        "proposition": "Dana Vale carried and gave birth to Ellis Rook on 28 September 2026.",
+        "origin": "Casey Lin in q4b9 and Robin Moss in t9c3 report firsthand observations in separate replies dated 12 October 2026 at 14:00. Both replies, the copy in m6w2 and the identity key in p8n4 were in the file by the cut-off.",
+        "competing": "The replies limit their scope to who carried and gave birth. In v2j5, Rowan Bell says Bell did not witness the delivery. Neither passage disputes the witnesses’ account.",
+        "disposition": "supported",
+        "reason": "Either original reply establishes the coded birth relationship from firsthand observation, and p8n4 resolves both names. Casey’s copied reply can supply the same relationship evidence but adds no independent corroboration."
+      },
+      {
+        "proposition": "Imani Cole’s forward reproduces Casey Lin’s original reply rather than adding independent delivery testimony.",
+        "origin": "In m6w2, Cole says the copy was requested on 12 October 2026 at 14:20 and reproduces Casey’s reply dated that day at 14:00. The forward was in the cut-off file, but its send time is not stated.",
+        "competing": null,
+        "disposition": "supported",
+        "reason": "The forwarding note identifies the original reply and the embedded text reproduces it. The request time is not the forward’s send time."
+      },
+      {
+        "proposition": "Dana Vale has a genetic, legal, adoptive or caregiving relationship to Ellis Rook beyond the recorded birth relationship.",
+        "origin": "No Source in the cut-off file establishes any of these statuses or an effective date for one.",
+        "competing": "Casey Lin and Robin Moss expressly exclude these statuses from their 12 October replies. The intake details described in p8n4 contained no relationship fields.",
+        "disposition": "unresolved",
+        "reason": "The witnesses’ limits neither affirm nor deny these statuses. The finding is confined to who carried and gave birth."
+      },
+      {
+        "proposition": "Mara Fen and Theo Baird are siblings.",
+        "origin": "Mara Fen’s signed secure message of 8 October 2026, f5r7, reports the relationship from personal knowledge and was in the file by the cut-off.",
+        "competing": null,
+        "disposition": "supported",
+        "reason": "Mara directly calls Theo her brother. The file does not specify full or half sibling status or identify a common parent."
+      },
+      {
+        "proposition": "Dana Vale or Ellis Rook has a family relationship to Mara Fen.",
+        "origin": "The birth correspondence and Rowan Bell’s client-labeled reference sheet were in Mara Fen’s file by the cut-off, but no reporter states such a relationship or gives an effective date for one.",
+        "competing": null,
+        "disposition": "unresolved",
+        "reason": "Placement in the same file does not establish a family connection or an intended role in Mara’s will."
+      },
+      {
+        "proposition": "Mara Fen gave permission to send the paper meeting pack to her workplace.",
+        "origin": "Mara Fen directly addressed permission in her secure message of 14 October 2026, d3k6, which was in the file by the cut-off.",
+        "competing": "d3k6: “I don’t give permission for it to be sent there.”",
+        "disposition": "explicitly contradicted",
+        "reason": "Mara expressly withheld permission for this pack to be sent to her workplace. The refusal is not a blanket ban on paper correspondence."
+      },
+      {
+        "proposition": "Mara Fen requested that the meeting pack be uploaded to the secure portal.",
+        "origin": "Mara Fen gave the instruction in d3k6 on 14 October 2026. Rowan Bell’s meeting note, v2j5, records the portal plan. Both were in the cut-off file.",
+        "competing": null,
+        "disposition": "supported",
+        "reason": "Mara explicitly requested portal upload instead of workplace delivery, and Bell recorded that paper copies were unnecessary."
+      },
+      {
+        "proposition": "The meeting pack had been uploaded to the secure portal by the cut-off.",
+        "origin": "No completion report was in the file by 10:00 on 16 October 2026. Mara Fen’s 14 October message gives the instruction; Rowan Bell’s meeting note records the plan.",
+        "competing": null,
+        "disposition": "unresolved",
+        "reason": "Neither the instruction nor the plan confirms that the upload took place or that Mara could access the pack."
+      },
+      {
+        "proposition": "A paper copy of the meeting pack had been sent to Mara Fen’s workplace by the cut-off.",
+        "origin": "No dispatch or receipt report was in the file by 10:00 on 16 October 2026.",
+        "competing": "Mara Fen’s 14 October message forbids workplace delivery, and Rowan Bell’s meeting note says paper copies are unnecessary.",
+        "disposition": "unresolved",
+        "reason": "The refusal establishes lack of permission, not what actually happened. The intended delivery method does not prove that no paper copy was sent."
+      }
+    ],
+    "residual_doubts": [
+      "The file does not establish genetic, legal, adoptive or caregiving status, a sibling subtype, or any family connection between Mara Fen and either person in the birth confirmations.",
+      "The forward’s exact send time is unknown; its presence in the cut-off file is established.",
+      "Portal upload, Mara Fen’s access and any actual workplace dispatch or receipt remain unconfirmed."
+    ]
+  },
+  "E1": {
+    "readers": {
+      "a": {
+        "output_sha256": "fc21ba0c24189fe3dbdfc138ae41fc6dc98cf42dddc0e2baffb60bb3ec67c597",
+        "edges": [
+          [
+            "Mara Fen",
+            "sibling_of",
+            "Theo Baird"
+          ]
+        ],
+        "ordinary_source_ids": [
+          {
+            "edge": [
+              "Mara Fen",
+              "sibling_of",
+              "Theo Baird"
+            ],
+            "ids": [
+              "f5r7"
+            ]
+          }
+        ],
+        "proof_source_routes": [
+          {
+            "edge": [
+              "Mara Fen",
+              "sibling_of",
+              "Theo Baird"
+            ],
+            "routes": [
+              [
+                "f5r7"
+              ]
+            ]
+          }
+        ]
+      },
+      "b": {
+        "output_sha256": "f8a7db59c20486e9418b7f06922b09b4bf12f333841a2427234ee8deaf4d6c4f",
+        "edges": [
+          [
+            "Mara Fen",
+            "sibling_of",
+            "Theo Baird"
+          ]
+        ],
+        "ordinary_source_ids": [
+          {
+            "edge": [
+              "Mara Fen",
+              "sibling_of",
+              "Theo Baird"
+            ],
+            "ids": [
+              "f5r7"
+            ]
+          }
+        ],
+        "proof_source_routes": [
+          {
+            "edge": [
+              "Mara Fen",
+              "sibling_of",
+              "Theo Baird"
+            ],
+            "routes": [
+              [
+                "f5r7"
+              ]
+            ]
+          }
+        ]
+      }
+    },
+    "disagreements": {
+      "shared_edges": [
+        [
+          "Mara Fen",
+          "sibling_of",
+          "Theo Baird"
+        ]
+      ],
+      "reader_a_only": [],
+      "reader_b_only": [],
+      "passage_disagreements": []
+    },
+    "complete_edges": [
+      [
+        "Mara Fen",
+        "sibling_of",
+        "Theo Baird"
+      ]
+    ],
+    "rulings": [
+      "Both readers return the same sole edge, approve the same exact f5r7 passage for ordinary evidence, and identify the same singleton minimum proof set. There is no passage-boundary or minimum-proof disagreement and no shared omission of a supported edge or proof route.",
+      "The readers agree on the disputed birth claim and the roles of the original reply, the copied reply, the denial and the identity sheet. Reader A records Bell's lack of firsthand knowledge as a separate claim; Reader B includes it within the birth analysis. It warrants a separate register entry but does not affect the graph.",
+      "Reader B lists the witnesses' limits as competing evidence on genetic, legal, adoptive or caregiving status; Reader A lists no competing passage. The limits define the scope of the accounts and are not contrary assertions about those statuses. The adjudicated claim is unresolved with no competing assertion.",
+      "Both readers note that the portal instruction does not prove completion, but neither gives actual upload or workplace dispatch its own disposition. Reader A also asks whether a planned mailing was stopped. The adjudicated register separates permission, requested method and actual delivery.",
+      "Forward audit: v2j5 sets the cut-off, disclaims firsthand knowledge and records the portal plan; p8n4 resolves the names; q4b9 and t9c3 directly conflict; m6w2 copies q4b9; f5r7 establishes the sibling edge; d3k6 denies workplace permission and requests portal upload.",
+      "Reverse audit: d3k6 gives no evidence of completed delivery; f5r7 independently proves the sibling edge; m6w2 traces back to q4b9 and adds no witness; t9c3 and q4b9 remain in conflict after applying p8n4; p8n4 supplies identities only; v2j5 supplies neither delivery testimony nor another family relationship.",
+      "Do not resolve the birth dispute by file order, document count or the time of the forwarding request. Do not infer other forms of parentage from a birth account, shared parentage or inheritance rights from the sibling statement, or any family tie, gift or appointment merely from a person's appearance in the file."
+    ],
+    "claims": [
+      {
+        "proposition": "Mara Fen and Theo Baird are siblings.",
+        "origin": "Mara Fen's signed secure message of 8 October 2026 (f5r7), in the file by the cut-off.",
+        "competing": null,
+        "disposition": "supported",
+        "reason": "Mara identifies Theo as her brother in the present tense from personal knowledge. The file contains no qualification or contrary statement."
+      },
+      {
+        "proposition": "T17 refers to Dana Vale and T42 refers to Ellis Rook.",
+        "origin": "Rowan Bell's 9 October 2026 name-reference sheet (p8n4), in the file by the cut-off. Bell reports checking both names against intake details that day and supplying the references orally.",
+        "competing": null,
+        "disposition": "supported",
+        "reason": "The sheet explicitly maps both references to full names. The underlying intake details were not retained and contained no relationship fields; the sheet establishes identity, not parentage."
+      },
+      {
+        "proposition": "Dana Vale carried and gave birth to Ellis Rook on 28 September 2026.",
+        "origin": "Casey Lin's firsthand account, dated 12 October 2026 at 14:00 (q4b9), states, “T17 is the birth parent of T42.” Imani Cole reproduces that account in m6w2. Both records were in the file by the cut-off. Rowan Bell's p8n4 supplies the names.",
+        "competing": "Robin Moss's independent firsthand account, also dated 12 October 2026 at 14:00 and in the file by the cut-off (t9c3), states, “T17 is not the birth parent of T42.”",
+        "disposition": "unresolved",
+        "reason": "With the references resolved through p8n4, the accounts directly conflict about the same delivery. Both witnesses report being present throughout, knowing T17 beforehand, and seeing T42 in person afterward. The file gives no basis to prefer either account. The forward adds no independent witness, so no parent_of edge is established."
+      },
+      {
+        "proposition": "Imani Cole's forward is a copy of Casey Lin's original reply, not independent corroboration.",
+        "origin": "Imani Cole's filing forward (m6w2), in the file by the cut-off, reproduces Casey Lin's original 12 October 2026 reply (q4b9).",
+        "competing": null,
+        "disposition": "supported",
+        "reason": "Cole expressly says the reply is being copied for filing. The 14:20 time on 12 October belongs to the request to copy it, not to the forward itself. Nothing in the forward corrects or supersedes Casey's account."
+      },
+      {
+        "proposition": "Rowan Bell did not witness the delivery discussed in the confirmations.",
+        "origin": "Rowan Bell's meeting note (v2j5) for the 16 October 2026 meeting, which specifies the 10:00 file cut-off.",
+        "competing": null,
+        "disposition": "supported",
+        "reason": "Bell explicitly says, “I did not witness the delivery referred to in the confirmations.” Bell's identity check is not another account of the delivery."
+      },
+      {
+        "proposition": "Dana Vale has a genetic, legal, adoptive or caregiving relationship to Ellis Rook.",
+        "origin": "The relevant reports are Casey Lin's and Robin Moss's accounts of the 28 September 2026 delivery, both dated 12 October 2026 and in the file by the cut-off (q4b9 and t9c3; q4b9 is copied in m6w2).",
+        "competing": null,
+        "disposition": "unresolved",
+        "reason": "Both witnesses expressly limit their answers to who carried and gave birth to the child. Neither affirms or denies any of the other statuses, and no other supplied record resolves them."
+      },
+      {
+        "proposition": "Mara Fen gave permission to send the paper meeting pack to her workplace.",
+        "origin": "The file addresses permission in Mara Fen's 14 October 2026 secure message (d3k6), received by the cut-off. No source reports affirmative permission.",
+        "competing": "In d3k6 Mara says, “Please don’t send the paper pack for my will-planning meeting to my workplace. I don’t give permission for it to be sent there.”",
+        "disposition": "explicitly contradicted",
+        "reason": "Mara expressly withheld permission. This is not an inference from silence or merely a preference for another delivery method."
+      },
+      {
+        "proposition": "Mara Fen requested that the meeting pack be uploaded to the secure portal instead.",
+        "origin": "Mara Fen's 14 October 2026 secure message (d3k6), in the file by the cut-off. Rowan Bell's meeting note (v2j5) records that the portal is to be used.",
+        "competing": null,
+        "disposition": "supported",
+        "reason": "Mara gives a direct instruction to use the portal. Bell's note is consistent with that instruction."
+      },
+      {
+        "proposition": "The meeting pack had been uploaded to the secure portal by the cut-off.",
+        "origin": "The 14 October 2026 instruction (d3k6) and the meeting note (v2j5) specify the delivery method; neither reports a completed upload.",
+        "competing": null,
+        "disposition": "unresolved",
+        "reason": "A request and a plan do not establish that the upload occurred."
+      },
+      {
+        "proposition": "A paper pack had been sent to Mara Fen's workplace by the cut-off.",
+        "origin": "Mara Fen's 14 October 2026 message (d3k6) prohibits workplace mailing, and Bell's meeting note (v2j5) says paper copies are unnecessary. Neither reports whether anything was sent.",
+        "competing": null,
+        "disposition": "unresolved",
+        "reason": "The lack of permission establishes what must not be done, not what actually happened."
+      }
+    ],
+    "residual_doubts": [
+      "Who carried and gave birth to Ellis Rook on 28 September 2026 remains unresolved; the file gives no basis to prefer Casey Lin's account over Robin Moss's or vice versa.",
+      "No genetic, legal, adoptive or caregiving status between Dana Vale and Ellis Rook is determined. Their relevance to Mara Fen's will instructions is not established.",
+      "The file does not establish whether the portal upload occurred or whether a workplace mailing was arranged, stopped or sent."
+    ]
+  }
+}

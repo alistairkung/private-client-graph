@@ -1,0 +1,59 @@
+{
+  "recommendation": "accept",
+  "operationalisation": "Accept the matched graph intervention, not the birth material as established information about Mara Fen’s family. At 10:00 on 16 October 2026, the edit removes exactly one supported edge: Dana Vale parent_of Ellis Rook, in the limited sense of carrying and giving birth. It does not establish the opposite finding. Mara Fen sibling_of Theo Baird survives unchanged. Apply the same threshold to Robin Moss in both files: the native reply is sufficiently linked to the coded pair and event to count as evidence, but the oral handoff is not sufficiently documented to verify that both witnesses understood the references identically.",
+  "source_diff": "The only file-text change is in t9c3: “T17 is the birth parent of T42.” becomes “T17 is not the birth parent of T42.” The IDs, titles, headings, Source order, codes, timestamps, reported witness basis and all other Sources are unchanged. The intended E0 parent/E1 empty result is correct for the nominated candidate only; it is not the complete graph in either condition.",
+  "shortcut_findings": [
+    {
+      "heuristic": "Emit only a directly named, signed family assertion, or abstain on every edge needing a joined proof.",
+      "result": "Returns only Mara Fen sibling_of Theo Baird in both files: an incidental exact full-graph match in E1, but misses the supported E0 parent edge. The sibling match itself has valid singleton proof in both."
+    },
+    {
+      "heuristic": "Emit only the nominated candidate, following the intended edit or Robin’s single sentence.",
+      "result": "Gets the candidate delta right: parent in E0, no positive parent edge in E1. Fails the complete graph in both by omitting siblinghood. Reading Robin alone also supplies neither full endpoint names nor the reason the E1 result is unresolved rather than settled negatively."
+    },
+    {
+      "heuristic": "Preserve the sibling edge and let the last native witness win, or veto any positive edge when a negative sentence appears.",
+      "result": "Matches both full positive edge lists on this pair, but only incidentally as a method of adjudication. The native replies have the same stated time; neither has priority. The file contains an unresolved conflict, not a controlling denial. The rule also does not recover the E0 alternative proofs."
+    },
+    {
+      "heuristic": "Accept any affirmative parent sentence, count documents as votes, or let the last birth document in file order win.",
+      "result": "Keeps the parent edge in both files: correct for E0 and wrong for E1. The birth documents contain three affirmatives in E0 and two affirmatives plus one denial in E1, but E1 has one affirmative origin and one denying origin, not a two-to-one majority. The last birth document in file order is Casey’s copy in both."
+    },
+    {
+      "heuristic": "Give chronological priority to the 14:20 forward, or discard Robin because only Casey explicitly acknowledges the oral prompt.",
+      "result": "Either shortcut would keep Casey’s positive parent edge in E1 as well as E0. The 14:20 time is a request, not a later independent observation or correction. Casey’s acknowledgment is a traceability advantage, not proof of a uniquely correct identification. Excluding Robin only when the reply is affirmative would also apply different thresholds to the two files."
+    },
+    {
+      "heuristic": "Treat matching codes as proof that the witnesses received and understood exactly the same instructions, or treat parallel wording as proof that one copied the other.",
+      "result": "Neither inference is established in either file. Matching codes, date and scope justify comparing the replies. The native messages claim separate firsthand bases; only m6w2 demonstrably shares an origin with q4b9."
+    },
+    {
+      "heuristic": "Infer the answer from IDs, titles, headings, filing order or pack administration.",
+      "result": "None of these fields varies by condition. The word “confirmations” does not turn the denial into an affirmation. The request to use the portal is not a family fact, evidence of consent to workplace mailing, or evidence of completed delivery. The fixed edit location does permit a single-sentence shortcut if the intervention metadata is exposed."
+    }
+  ],
+  "necessary_masks": [
+    "For a blind evaluation, withhold the intended edit, expected graph delta, candidate list, condition-keyed documentary commentary, provisional rulings, and saved keys. Present bundles under neutral labels not correlated with E0/E1 or polarity.",
+    "No file-internal ID, title, heading or administrative text requires masking to eliminate a condition difference: those fields are identical. Preserve the code mappings, witness wording and forwarding provenance. To test generalisation beyond this pair, counterbalance which native witness affirms or denies in separately constructed items rather than erasing material from the cut-off record."
+  ],
+  "limitations": [
+    "The retained file supports a comparison of the witness reports, not verification of the exact oral prompts, receipt of identical references, or either witness’s actual understanding. There is no independent delivery record. The stated message times are not exact inbox receipt times; inclusion establishes availability by cut-off.",
+    "Ask first why Dana Vale or Ellis Rook matters to Mara’s instructions and document the answer. If the information is necessary and there is appropriate authority to obtain it, clarify the referents and delivery separately with each witness and seek only the evidence needed for the relevant status. A birth observation is not proof of genetic, legal, adoptive or caregiving status. If the birth issue is immaterial, do not pursue it or let it delay the meeting.",
+    "Ask whether Mara wants to benefit or appoint Theo or anyone else named. Do not infer a common parent or sibling subtype from the sibling report, a sibling edge from common parentage, or marriage from a shared child. There is no named trust, trust office, executed instrument, or supported gift or appointment in either file; silence does not establish nonexistence.",
+    "Use the portal as instructed, confirm upload and access, and check whether a workplace mailing was arranged or already dispatched. Do not send the paper pack to Mara’s workplace."
+  ],
+  "blocking_findings": [
+    "No blocker to the matched graph intervention under the stated evidence threshold. The saved keys are sound at the edge and minimum Source-set levels; align the longer saved witness spans with the canonical spans if literal attachment matching is required.",
+    "The file does not justify treating the birth material as part of Mara’s family circumstances or seeking more sensitive birth information without first documenting its relevance and the authority for the inquiry. That limits drafting reliance, not the supported E0 graph edge or the ability to hold the meeting."
+  ],
+  "conditions": {
+    "E0": {
+      "graph": "Dana Vale — parent_of → Ellis Rook (birth only); Mara Fen — sibling_of — Theo Baird (symmetric, one edge). These are the only supported edges. Dana and Ellis are named in the file, but neither is established as part of Mara’s family.",
+      "ordinary_proof": "Under benchmark_v2_evidence_v1, quotation and attribution for the parent edge are N/A: no Source alone supplies both full names and the relationship. This does not remove the edge from graph scoring. The sibling edge has one eligible ordinary quotation and attribution: Mara Fen in f5r7, \"Theo Baird is my brother, and I can confirm that from my own personal knowledge.\n\nThanks,  \nMara Fen\"."
+    },
+    "E1": {
+      "graph": "Mara Fen — sibling_of — Theo Baird (symmetric, one edge) is the sole supported edge. Dana Vale — parent_of → Ellis Rook is unresolved and is not scored. Robin explicitly denies the coded birth proposition; the file as a whole does not establish either the affirmative or its negation.",
+      "ordinary_proof": "The sole eligible ordinary quotation and attribution is unchanged: Mara Fen in f5r7, \"Theo Baird is my brother, and I can confirm that from my own personal knowledge.\n\nThanks,  \nMara Fen\". No parent edge is returned. q4b9 and the embedded reply in m6w2 still quote Casey’s affirmative claim directly; neither independently names both endpoints, and neither settles the disputed edge."
+    }
+  }
+}

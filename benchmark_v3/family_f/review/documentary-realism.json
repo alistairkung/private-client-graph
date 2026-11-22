@@ -1,0 +1,239 @@
+{
+  "r0": {
+    "F0": {
+      "verdict": "revise",
+      "sources": [
+        {
+          "source_id": "r8h3",
+          "purpose": "Record Leona Bell’s signed confirmation that she is the parent of the person assigned Q7-41.",
+          "findings": [
+            "Bell states a firsthand basis for the relationship and says she and the person were present when Desai assigned the reference on 15 September. The ledger records signed hand delivery to Desai on 16 September. No enclosure is mentioned.",
+            "The title, addressee, reference line and signature suit a short formal confirmation. The repeated explanation that Bell knows she is the parent because she is the parent sounds scripted. Using only a code for her own child is plausible if Desai requested that convention, but the file does not explain it."
+          ],
+          "revision_ticket": null
+        },
+        {
+          "source_id": "j5x7",
+          "purpose": "Record Jamie Iqbal’s signed confirmation that the person assigned M2-86 is Iqbal’s sibling.",
+          "findings": [
+            "The brief letter is the most conversational of the three. Iqbal asserts the sibling relationship directly and separately says both people were present when the reference was assigned. That supports Iqbal’s use of the reference; it is not independent proof of the relationship.",
+            "‘Yesterday’s intake’ is consistent with the letter’s 16 September date and the ledger’s account of signed hand delivery that day. No enclosure is mentioned. The code-only identification depends on the same unexplained convention as Bell’s letter."
+          ],
+          "revision_ticket": null
+        },
+        {
+          "source_id": "b2n6",
+          "purpose": "Record Fiona Mora’s signed confirmation that she is the parent of the person assigned T9-53.",
+          "findings": [
+            "Mora distinguishes witnessing the assignment of the reference at the 15 September intake from knowing the relationship herself. The ledger records signed hand delivery on 16 September, and the letter does not refer to an enclosure.",
+            "The follow-up heading and salutation are plausible. ‘T9-53 was also present’ is less natural: it uses an office identifier as if it were the person’s name. Despite some variation in form, the three letters all give unusually precise accounts of code assignment while omitting ordinary names and the reason for writing after a conversation Desai attended."
+          ],
+          "revision_ticket": null
+        },
+        {
+          "source_id": "c7v4",
+          "purpose": "Record Desai’s reconciliation of the intake references with exact full names observed on original identification.",
+          "findings": [
+            "Desai is the stated source for both the original reference assignments and the later name checks. The note and ledger agree that the check was recorded on 17 September after the originals were sighted and returned. No retained copy is claimed, so none is missing as an enclosure. The note records identity checks, not verification of the family relationships.",
+            "A compact, structured note is plausible for indexing, particularly where display names are similar. Its repeated entries are more natural in an internal record than in personal correspondence. But it supplies a complete reference-to-name cross-check without recording what Desai already knew from the intakes, why written confirmations were needed, or how those conversations relate to Evelyn Park’s review."
+          ],
+          "revision_ticket": "Add or cross-reference a brief matter-specific intake entry recording why these people were consulted for Park’s review, what Desai already knew at intake versus what was checked later, and why the written confirmations used references only. Record what is known rather than inferring any relationship to Park."
+        },
+        {
+          "source_id": "k9t2",
+          "purpose": "Provide a working correspondence lookup by local reference and display name.",
+          "findings": [
+            "The dated table and records-assistant attribution fit an administrative export. The abbreviated display names are not contradictions of the exact names in the reconciliation note. In particular, ‘Alex Rivera’ is not a safe identifier on its own; the local reference is what distinguishes the entries.",
+            "The ledger records that Field exported the index for Desai’s file on 18 September. Neither record gives a time, so the packet supplies the index as part of the review snapshot but does not independently establish that it was exported before 16:00 BST. The export is not an independent identity check and claims no supporting enclosure."
+          ],
+          "revision_ticket": null
+        }
+      ],
+      "limitations": [
+        "The cited SRA guidance, as described in the packet, grounds checking relevant circumstances within a wills retainer. It does not establish the fictional reference scheme, working index, identity cross-check or form of family confirmation as required or customary practice.",
+        "On their own terms, the signed statements and Desai’s note let a reader determine whom each statement refers to. They record the signers’ assertions and Desai’s identity checks; they do not independently prove the asserted relationships, establish any relationship to Park, or supply drafting instructions."
+      ],
+      "blocking_findings": [
+        "The file resolves which person each confirmation concerns, but does not show why those confirmations belong in Evelyn Park’s will-planning review. It leaves off-page both the matter context Desai would naturally have from attending the intakes and the reason all three follow-ups use opaque references. Without that context, the documents work as a lookup exercise but not yet as a self-contained advice-file record for the stated meeting."
+      ]
+    },
+    "F1": {
+      "verdict": "revise",
+      "sources": [
+        {
+          "source_id": "r8h3",
+          "purpose": "Record Leona Bell’s firsthand confirmation that she is the parent of the person assigned Q7-41.",
+          "findings": [
+            "A short signed confirmation addressed to the adviser is plausible. Bell distinguishes how she recognises the reference—she was present when it was assigned—from how she knows the relationship.",
+            "The date follows the intake by one day, and the ledger records signed hand delivery to Desai that day. No enclosure is mentioned or needed for the confirmation’s stated purpose.",
+            "The formal heading and reference line fit the genre. Using the reference instead of any ordinary name is clear when read with the reconciliation note, but the letter does not explain why it was written that way."
+          ],
+          "revision_ticket": null
+        },
+        {
+          "source_id": "j5x7",
+          "purpose": "Record Jamie Iqbal’s confirmation that the person assigned M2-86 is Jamie’s sibling.",
+          "findings": [
+            "The salutation and compact wording read like an ordinary follow-up. Iqbal says both people were present when Desai assigned the reference and directly asserts the sibling relationship, without claiming to have supplied proof of it.",
+            "‘Yesterday’s intake’ resolves to 15 September from the letter date. The ledger records signed hand delivery on 16 September. No enclosure is promised.",
+            "The wording is less formal than Bell’s, although the same pattern of reference-only identification and express recollection of its assignment suggests a common prompt that is not recorded."
+          ],
+          "revision_ticket": null
+        },
+        {
+          "source_id": "b2n6",
+          "purpose": "Record Fiona Mora’s firsthand confirmation that she is the parent of the person assigned T9-53.",
+          "findings": [
+            "The subject line and two short paragraphs suit an intake follow-up. Mora separately establishes that she saw the reference assigned and that she knows the relationship from personal knowledge.",
+            "‘T9-53 was also present’ reads like office shorthand rather than natural correspondence from a parent. It is conspicuous but not ambiguous in context.",
+            "The date and recorded signed hand delivery fit the chronology. No enclosure is mentioned."
+          ],
+          "revision_ticket": null
+        },
+        {
+          "source_id": "c7v4",
+          "purpose": "Record Desai’s reconciliation of each intake reference with the exact full name she checked on original identification.",
+          "findings": [
+            "Desai records her own assignment of the references at three separate conversations and her own sighting of the identification on 17 September. The note therefore gives an on-page basis for the matches rather than asking a reader to rely on her unrecorded memory.",
+            "The repeated headings and compact entries suit an internal reconciliation record. The originals were returned, consistently with the ledger. No copies are claimed or expected as enclosures; the file contains a record of sighting, not identification a later reader can inspect.",
+            "The note resolves whom the confirmations refer to, but its stated indexing purpose does not explain why these three confirmations were gathered for Park’s review. Nor does it explain how the reference-only format came to be used across all three letters."
+          ],
+          "revision_ticket": "Add a brief matter-context entry to the reconciliation record, attributed and dated as appropriate, stating the recorded reason these confirmations were obtained for Park’s review. If reference-only replies were requested, record that instruction if supported. If either point is unknown, mark it as unrecorded rather than reconstructing it."
+        },
+        {
+          "source_id": "k9t2",
+          "purpose": "Provide a working correspondence index for retrieval by local reference, not an authoritative record of full names.",
+          "findings": [
+            "The sparse table, display-name heading and records-assistant attribution fit a clerical export. The ledger records export for Desai’s file on 18 September; neither record supplies a time that establishes availability by 16:00 BST.",
+            "The two ‘Alex Rivera’ entries are unsafe to distinguish by display name alone but remain distinct by reference. The separate reconciliation note resolves both without relying on the export.",
+            "The duplicate display names make the cross-check unusually conspicuous as a narrative device, but they are not an internal contradiction. No enclosure is indicated."
+          ],
+          "revision_ticket": null
+        }
+      ],
+      "limitations": [
+        "As described in the packet, the SRA guidance supports checking circumstances relevant to the retainer. It does not establish that coded references, reference-only confirmations, a working index or this identity cross-check are prescribed or ordinary practices. Those remain fictional office conventions.",
+        "The confirmations and the reconciliation note are sufficient for the narrow identity task: determining whom each statement is about. Identification sighting supports exact names, not kinship. The relationship claims remain the signatories’ statements, and none establishes a relationship to Evelyn Park.",
+        "The export’s availability at the exact cutoff is unverified, but the earlier confirmations and reconciliation note can support the identity finding without it."
+      ],
+      "blocking_findings": [
+        "The packet assigns the documents to Park’s review, but the records themselves do not explain why these three confirmations were obtained for that matter. This is a gap in the file’s documentary context, not a failure of the identity matches or a requirement to prove kinship to Park."
+      ]
+    }
+  },
+  "r1": {
+    "F0": {
+      "verdict": "pass",
+      "sources": [
+        {
+          "source_id": "r8h3",
+          "purpose": "Record Leona Bell’s firsthand statement that she is the parent of the person assigned Q7-41.",
+          "findings": [
+            "The dated, addressed and signed confirmation is plausible as a short follow-up requested by the adviser. Bell says she and the person were present when the reference was assigned, so her use of it does not depend on a later explanation.",
+            "The possession ledger records direct handover on 16 September. No enclosure is mentioned or needed to file the statement. It records Bell’s account of parentage, not independent proof of it."
+          ],
+          "revision_ticket": null
+        },
+        {
+          "source_id": "j5x7",
+          "purpose": "Record Jamie Iqbal’s statement that the person assigned M2-86 is their sibling.",
+          "findings": [
+            "The letter is less formal than Bell’s confirmation. Its date makes ‘yesterday’s intake’ unambiguous, and Iqbal says both people heard the reference being assigned.",
+            "The ledger records direct handover on 16 September. No enclosure is cited. The statement does not specify the type of sibling relationship or independently verify it, neither of which is necessary for the stated identity check."
+          ],
+          "revision_ticket": null
+        },
+        {
+          "source_id": "b2n6",
+          "purpose": "Record Fiona Mora’s firsthand statement that she is the parent of the person assigned T9-53.",
+          "findings": [
+            "The subject line, salutation and narrative opening distinguish this from Bell’s more form-like confirmation. The opening is slightly wordy, but the operative statement identifies the person by the same reference and explains how Mora knew it.",
+            "The ledger records direct handover on 16 September. There is no reference to a missing enclosure."
+          ],
+          "revision_ticket": null
+        },
+        {
+          "source_id": "c7v4",
+          "purpose": "Record Desai’s match between each intake reference and the exact full name she checked against original identification.",
+          "findings": [
+            "This is the substantive identity record. Desai says she assigned the references herself and later sighted and returned the originals; the ledger records that she saved the note on 17 September. The absence of ID copies is consistent with that account, though the check cannot be independently repeated from the packet.",
+            "The repeated headings and nearly identical entries are unusually tidy but plausible for an internal reconciliation note. The note also gives a reason for the conspicuous reference-only confirmations: they were requested for filing separately from the exact-name checks. That makes the device intelligible without showing it to be standard practice.",
+            "Desai records Evelyn Park’s agreement to the family-information check in her own note. The packet does not include separate retainer or intake records, but it does not require an unseen record to make the reference-to-name matches."
+          ],
+          "revision_ticket": null
+        },
+        {
+          "source_id": "k9t2",
+          "purpose": "Provide a working correspondence lookup by local reference and display name.",
+          "findings": [
+            "The records-assistant attribution and 14:40 BST export timestamp fit the ledger and place the export before the 16:00 cutoff. Its sparse table is appropriate for a lookup, not an identity determination.",
+            "The abbreviated display names, especially ‘Alex Rivera’ alongside ‘Alexandra Rivera,’ could mislead a reader matching by name alone. The column is explicitly labelled ‘Display name,’ and the distinct references let the adviser resolve the ambiguity using the reconciliation note."
+          ],
+          "revision_ticket": null
+        }
+      ],
+      "limitations": [
+        "The intake on 15 September, signed follow-ups on 16 September, reconciliation on 17 September and export on 18 September form a coherent sequence. The file supports identifying the people described in the confirmations for the 21 September review. It does not independently establish the asserted relationships, explain how each person is connected to Evelyn Park, or settle any drafting instructions.",
+        "As described in the packet, the cited SRA guidance supports checking relevant circumstances within the retainer. It does not establish reference-only confirmations, separate identity reconciliation or the working index as prescribed or customary procedures. Those remain fictional office conventions, and this review does not validate the retainer or the adequacy of the identity checks in practice."
+      ],
+      "blocking_findings": []
+    },
+    "F1": {
+      "verdict": "pass",
+      "sources": [
+        {
+          "source_id": "r8h3",
+          "purpose": "Record Leona Bell’s firsthand confirmation that she is the parent of the person assigned Q7-41.",
+          "findings": [
+            "The dated, addressed and signed confirmation is plausible as a short response to a specific request. Bell explains how she recognizes the reference: she was present when Desai assigned it.",
+            "The ledger records that Bell signed and handed the confirmation to Desai on 16 September, the day after intake. No enclosure is cited. The confirmation supports the relationship as Bell’s account; it does not independently establish the subject’s exact name or legal parentage."
+          ],
+          "revision_ticket": null
+        },
+        {
+          "source_id": "j5x7",
+          "purpose": "Record Jamie Iqbal’s confirmation that the person assigned M2-86 is Jamie’s sibling.",
+          "findings": [
+            "The salutation and use of “yesterday’s intake” read more like ordinary correspondence than Bell’s formal declaration. The date fixes that relative wording to 15 September.",
+            "Iqbal reports a relationship within their own family and explains their knowledge of the reference through presence at intake. The ledger records signed hand delivery on 16 September. No enclosure is cited, and the confirmation makes no exact-name claim."
+          ],
+          "revision_ticket": null
+        },
+        {
+          "source_id": "b2n6",
+          "purpose": "Record Fiona Mora’s firsthand confirmation that she is the parent of the person assigned T9-53.",
+          "findings": [
+            "The subject line and “As requested” suit an intake follow-up. Mora explains the assignment before confirming the relationship, a plausible difference in form from Bell’s confirmation.",
+            "The repeated wording about both people being present feels arranged across the three confirmations, but it serves a practical purpose in a reference-only exchange. The ledger records signed hand delivery on 16 September, and no enclosure is cited."
+          ],
+          "revision_ticket": null
+        },
+        {
+          "source_id": "c7v4",
+          "purpose": "Record Desai’s reconciliation of the intake references with the exact names on the original identification she sighted.",
+          "findings": [
+            "This is the substantive identity record. Desai says she assigned the references herself at separate intake conversations and later checked exact names against originals shown by the people concerned. The matches therefore do not depend on reconstructing the intake from the working index or on assuming an unrecorded lookup.",
+            "The ledger records that Desai saved the note on 17 September after sighting and returning the originals. The originals are not available for independent review, but the note does not suggest that they were retained or enclosed.",
+            "The near-identical entries and deliberate separation of relationship statements from exact names are the most visibly constructed features. The note gives a filing rationale for the separation, though it does not show why the office needed that convention. Its terse, repetitive form is plausible for a reconciliation note, not a full intake record."
+          ],
+          "revision_ticket": null
+        },
+        {
+          "source_id": "k9t2",
+          "purpose": "Provide a working correspondence index keyed by local reference, with short display names.",
+          "findings": [
+            "The export identifies the records assistant and gives a timestamp of 14:40 BST on 18 September, before the 16:00 cutoff. The ledger records that Field exported it for Desai’s file. It is an administrative record, not a firsthand identity check.",
+            "The two “Alex Rivera” entries are a foreseeable ambiguity in a display-name field; their distinct references and Desai’s reconciliation resolve it for this review. The collision is a conspicuous fictional device, but the file does not rely on the index to distinguish the people. The source of the display-name choices is not recorded, and no supporting enclosure is cited."
+          ],
+          "revision_ticket": null
+        }
+      ],
+      "limitations": [
+        "The file as held at the cutoff supports the narrow purpose of the 21 September meeting: identifying the subjects of the signed family statements before taking drafting instructions. It does not establish how those people are related to Evelyn Park, why each relationship matters to her will, or whether the reported relationships have been independently verified.",
+        "Desai would ordinarily have more context from the intake than this packet preserves. No separate attendance record or underlying identification is supplied. Neither is needed to recover the stated reference-to-name matches from Desai’s own note, but neither can be assumed to corroborate it.",
+        "As characterized in the packet, the cited SRA guidance supports checking relevant circumstances within the retainer. It does not establish the reference-only confirmations, separate identity note or display-name index as public practice. Those are fictional office conventions, and this documentary review does not validate the retainer or the office’s procedures."
+      ],
+      "blocking_findings": []
+    }
+  }
+}

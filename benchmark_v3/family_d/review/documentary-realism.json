@@ -1,0 +1,84 @@
+{
+  "r0": {
+    "D0": {
+      "verdict": "pass",
+      "sources": [
+        {
+          "source_id": "h7m4",
+          "purpose": "Record the scope of the adviser's review and the file cut-off for the trustee's meeting.",
+          "findings": [
+            "Priya Sen's 20 October note follows Jonah Reed's supply of the two documents on 19 October. It sets a 09:00 cut-off for the 10:00 meeting on 23 October. The chronology is coherent, and both documents mentioned in the note are present in the packet.",
+            "The short agenda-style note is appropriately less formal and less dense than the instruments. Priya records receipt and identifies the questions without claiming firsthand knowledge of execution or delivery.",
+            "The two closing disclaimers are redundant and read more like instructions not to take the brief as evidence than ordinary meeting-file prose. That is a stylistic weakness, not an obstacle to the review. The note does not record a fresh check for later instruments."
+          ],
+          "revision_ticket": null
+        },
+        {
+          "source_id": "w3k8",
+          "purpose": "Record the original trust terms, role appointments, beneficiary designations and procedure for replacing a beneficiary provision.",
+          "findings": [
+            "The dated, numbered extract records execution by Livia Keane as settlor and Jonah Reed as trustee, designates Tess Calder as Variation Officer, and originally names Elin Voss, Milo Hart and Ada Wynn in clauses 4.1 to 4.3. The possession ledger identifies Jonah as custodian of the executed instrument and supplier of the extract.",
+            "Clause 5 is unusually exact about the instrument reference and the numbered provision. That precision is conspicuous in so short an extract, but it serves a discernible purpose: identifying the instrument and confining each amendment to one provision. The clause also states when an advance-signed amendment takes effect and preserves the other provisions.",
+            "The extract contains the terms needed for the comparison and does not invoke a missing schedule or consent. It is not evidence of what any unproduced part of the principal instrument says."
+          ],
+          "revision_ticket": null
+        },
+        {
+          "source_id": "n5q2",
+          "purpose": "Replace clause 4.1 in full with a designation of Nia Bell and record the effective date.",
+          "findings": [
+            "The short, field-led form suits a single-clause amendment. Tess Calder signs as Variation Officer on 8 October 2026, uses the exact reference PI-67Q4, identifies clause 4.1, states that it is replaced in full, designates Nia Bell and gives 12 October 2026 as the effective date. On the file's stated terms, this meets clause 5 and took effect on 12 October.",
+            "The instrument identifies Jonah as the recipient for retention, and the possession ledger records delivery by Tess and onward supply of a copy by Jonah on 19 October. It does not separately establish the delivery date. That gap does not affect the stated test, which does not make delivery a condition of effectiveness.",
+            "The wording 'expressly named as a beneficiary under this provision' echoes the meeting question more closely than the principal instrument's designation language, but it makes the replacement unambiguous. At 09:00 BST on 23 October 2026, the supplied file supports Nia Bell under replacement clause 4.1, Milo Hart under clause 4.2 and Ada Wynn under clause 4.3. Elin Voss's original designation in clause 4.1 no longer operates. Clauses 1 to 3 and 5 remain unchanged."
+          ],
+          "revision_ticket": null
+        }
+      ],
+      "limitations": [
+        "As described in the packet, the cited HMRC guidance supports retaining the principal instrument and role information. It does not establish the fictional Variation Officer's power, the amendment formalities or their legal effect; those come from the supplied terms.",
+        "The conclusion is confined to the file as supplied. It assumes the extract and copy faithfully reproduce the relevant signed records and does not establish that there was no other relevant term or later amendment outside the file. The adviser could confirm completeness with Jonah and inspect the retained records before making any broader statement."
+      ],
+      "blocking_findings": []
+    },
+    "D1": {
+      "verdict": "pass",
+      "sources": [
+        {
+          "source_id": "h7m4",
+          "purpose": "An internal meeting brief that sets the scope of Priya Sen’s review and fixes the advice-file cut-off.",
+          "findings": [
+            "The chronology is coherent: Jonah Reed supplied the papers on 19 October, Priya recorded the brief on 20 October, and the 09:00 BST cut-off precedes the 10:00 meeting on 23 October 2026.",
+            "Priya already had both papers when she wrote the brief. It is plausible that she had not yet reached a conclusion, but the closing disclaimer sounds written for a reviewer rather than for a routine file note. It does not imply that she lacked access to the names or provisions.",
+            "The two papers mentioned in the brief are present in the packet. Calling the second paper a signed amendment does not conflict with the ledger’s more precise account that Jonah supplied a copy."
+          ],
+          "revision_ticket": null
+        },
+        {
+          "source_id": "w3k8",
+          "purpose": "An extract from the retained principal instrument recording the trust roles, original beneficiary designations and mechanism for replacing one beneficiary provision.",
+          "findings": [
+            "The formal, numbered drafting is distinct from the adviser’s brief and identifies Livia Keane as settlor, Jonah Reed as trustee and Tess Calder as Variation Officer. The execution entry and the ledger are consistent with Jonah retaining the instrument and supplying an extract.",
+            "Clause 5 is unusually explicit about the exact reference and single provision number. That precision makes the packet look constructed around a document-matching exercise, but it also serves a credible administrative purpose: identifying exactly what is changed and preserving everything else.",
+            "On the supplied record, clauses 1–3, 4.1, 4.3 and 5 remain unchanged. Clause 4.2 remains the relevant numbered provision, but its original designation of Milo Hart is no longer in force."
+          ],
+          "revision_ticket": null
+        },
+        {
+          "source_id": "n5q2",
+          "purpose": "A signed, single-provision amendment for retention alongside the principal instrument.",
+          "findings": [
+            "The copy records Tess Calder signing as Variation Officer on 8 October 2026. It gives the exact reference PI-67Q4, identifies clause 4.2, replaces it in full with a designation of Nia Bell, and states an effective date of 12 October 2026. On the face of the papers, it meets clause 5 and took effect before the cut-off.",
+            "The delivery line is consistent with the ledger’s account that Tess delivered the instrument to Jonah and that Jonah later supplied a copy. The precise delivery date is not recorded, but clause 5 does not make delivery or acknowledgment a condition of effectiveness.",
+            "The short operative text fits a one-clause amendment. The label ‘Provision locator’ and the wording ‘expressly named’ sound tailored to the review question, but neither creates ambiguity. At the cut-off, the file supports Elin Voss under 4.1, Nia Bell under the replacement 4.2, and Ada Wynn under 4.3 as the expressly named beneficiaries."
+          ],
+          "revision_ticket": null
+        }
+      ],
+      "limitations": [
+        "The cited HMRC record-keeping guidance supports retaining the principal instrument and role information. It does not establish the validity or effectiveness of this amendment; the replacement procedure and its timing come from the fictional clause 5.",
+        "The review relies on the supplied extract, amendment copy and custody account. It does not authenticate signatures, verify the unexcerpted instrument, or establish that no other amendment or relevant record exists. The conclusion is what the file supports at the stated cut-off, not independent practitioner validation."
+      ],
+      "blocking_findings": []
+    }
+  }
+}

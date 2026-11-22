@@ -1,0 +1,9 @@
+{
+  "schema_version": 3,
+  "family": "D",
+  "freeze_sha256": "b9295043726610f0f9483be6bf4498d1801ab0871e89472323592c0aecc94bee",
+  "conditions": {
+    "D0": "643282c618d23293394b0922bb4633c03909643cff0840f16566130da058d29d",
+    "D1": "fcf18fe01cd321691dbb486921a060b861738fd722c57d2fcb8557746c043b0a"
+  }
+}

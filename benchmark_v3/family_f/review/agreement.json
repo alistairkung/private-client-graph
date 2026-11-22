@@ -1,0 +1,78 @@
+{
+  "F0": {
+    "shared": [
+      [
+        "Alexander Tomas Rivera",
+        "sibling_of",
+        "Jamie Iqbal"
+      ],
+      [
+        "Fiona Mora",
+        "parent_of",
+        "Nina Beatrice Mercer"
+      ],
+      [
+        "Leona Bell",
+        "parent_of",
+        "Alexandra Inez Rivera"
+      ]
+    ],
+    "only_a": [],
+    "only_b": [],
+    "different_passages": [
+      [
+        "Alexander Tomas Rivera",
+        "sibling_of",
+        "Jamie Iqbal"
+      ],
+      [
+        "Fiona Mora",
+        "parent_of",
+        "Nina Beatrice Mercer"
+      ],
+      [
+        "Leona Bell",
+        "parent_of",
+        "Alexandra Inez Rivera"
+      ]
+    ]
+  },
+  "F1": {
+    "shared": [
+      [
+        "Alexander Tomas Rivera",
+        "sibling_of",
+        "Jamie Iqbal"
+      ],
+      [
+        "Fiona Mora",
+        "parent_of",
+        "Nina Beatrice Mercer"
+      ],
+      [
+        "Leona Bell",
+        "parent_of",
+        "Alexandra Inez Rivera"
+      ]
+    ],
+    "only_a": [],
+    "only_b": [],
+    "different_passages": [
+      [
+        "Alexander Tomas Rivera",
+        "sibling_of",
+        "Jamie Iqbal"
+      ],
+      [
+        "Fiona Mora",
+        "parent_of",
+        "Nina Beatrice Mercer"
+      ],
+      [
+        "Leona Bell",
+        "parent_of",
+        "Alexandra Inez Rivera"
+      ]
+    ]
+  }
+}

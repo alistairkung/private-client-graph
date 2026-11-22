@@ -1,0 +1,122 @@
+{
+  "allowed_scientific_sessions": 90,
+  "scopes": {
+    "D": {
+      "sessions": 25,
+      "logged_roles": {
+        "designer": 1,
+        "author": 3,
+        "realism": 2,
+        "annotation": 4,
+        "adjudication": 2,
+        "audit": 1,
+        "masked": 12
+      },
+      "logged_efforts": {
+        "high": 10,
+        "medium": 15
+      },
+      "reported_tokens": {
+        "inputTokens": 168605,
+        "cachedInputTokens": 92800,
+        "outputTokens": 88219,
+        "reasoningOutputTokens": 34790,
+        "totalTokens": 256824
+      }
+    },
+    "E": {
+      "sessions": 31,
+      "logged_roles": {
+        "designer": 1,
+        "author": 9,
+        "realism": 2,
+        "annotation": 4,
+        "adjudication": 2,
+        "audit": 1,
+        "masked": 12
+      },
+      "logged_efforts": {
+        "high": 9,
+        "medium": 22
+      },
+      "reported_tokens": {
+        "inputTokens": 192774,
+        "cachedInputTokens": 111360,
+        "outputTokens": 50430,
+        "reasoningOutputTokens": 18938,
+        "totalTokens": 243204
+      }
+    },
+    "F": {
+      "sessions": 31,
+      "logged_roles": {
+        "designer": 1,
+        "author": 9,
+        "realism": 4,
+        "annotation": 4,
+        "adjudication": 2,
+        "audit": 1,
+        "masked": 10
+      },
+      "logged_efforts": {
+        "high": 8,
+        "medium": 23
+      },
+      "reported_tokens": {
+        "inputTokens": 193032,
+        "cachedInputTokens": 107648,
+        "outputTokens": 56062,
+        "reasoningOutputTokens": 18518,
+        "totalTokens": 249094
+      }
+    },
+    "shared": {
+      "sessions": 3,
+      "logged_roles": {
+        "custodian": 1,
+        "research_architect": 1,
+        "audit": 1
+      },
+      "logged_efforts": {
+        "high": 2
+      },
+      "reported_tokens": {
+        "inputTokens": 58973,
+        "cachedInputTokens": 7424,
+        "outputTokens": 6061,
+        "reasoningOutputTokens": 2192,
+        "totalTokens": 65034
+      }
+    },
+    "total": {
+      "sessions": 90,
+      "logged_roles": {
+        "custodian": 1,
+        "research_architect": 1,
+        "designer": 3,
+        "author": 21,
+        "realism": 8,
+        "annotation": 12,
+        "adjudication": 6,
+        "audit": 4,
+        "masked": 34
+      },
+      "logged_efforts": {
+        "high": 29,
+        "medium": 60
+      },
+      "reported_tokens": {
+        "inputTokens": 613384,
+        "cachedInputTokens": 319232,
+        "outputTokens": 200772,
+        "reasoningOutputTokens": 74438,
+        "totalTokens": 814156
+      }
+    }
+  },
+  "runtime_model": "gpt-6.2-sol",
+  "completed_isolated_packets": 89,
+  "reported_cost": null,
+  "paid_pcg_extraction_attempts": 0,
+  "cost_note": "Codex runtime receipts report token usage, not billed charges. The custodian's metered usage is unavailable."
+}

@@ -227,7 +227,12 @@ Use the opt-in replay from the repository root once a family has all its frozen
 Source arrays, a committed declaration, complete adjudicated keys and saved
 ideals. Family A uses a version 1 manifest. Families B and C use version 2,
 with the preblind freeze declaring each literal edit, both candidate edges,
-and the required edge set for each condition. Run `uv run python -m benchmark_v3.replay --manifest PATH/manifest.json --artifacts EMPTY_DIRECTORY`.
+and the required edge set for each condition. Families D, E and F use version 3.
+Each freeze declares one literal edit, the candidate edges and the required
+edge sets for both conditions. The replay checks the scoped switch, unresolved
+parentage and identity invariance respectively, including their joint proofs.
+
+Run `uv run python -m benchmark_v3.replay --manifest PATH/manifest.json --artifacts EMPTY_DIRECTORY`.
 The preview sets the maximum provider attempts to zero. Reopen the saved Run
 and inspect its coverage, complete graph scores, eligible Source associations,
 same-edge proof, and the exact paired decisions in `preflight.json`. The replay

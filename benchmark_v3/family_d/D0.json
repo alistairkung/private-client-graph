@@ -1,0 +1,336 @@
+{
+  "condition": "D0",
+  "truth": {
+    "entities": [
+      {
+        "id": "e01",
+        "type": "person",
+        "name": "Ada Wynn"
+      },
+      {
+        "id": "e02",
+        "type": "trust",
+        "name": "Alder Fold Trust"
+      },
+      {
+        "id": "e03",
+        "type": "person",
+        "name": "Elin Voss"
+      },
+      {
+        "id": "e04",
+        "type": "person",
+        "name": "Jonah Reed"
+      },
+      {
+        "id": "e05",
+        "type": "person",
+        "name": "Livia Keane"
+      },
+      {
+        "id": "e06",
+        "type": "person",
+        "name": "Milo Hart"
+      },
+      {
+        "id": "e07",
+        "type": "person",
+        "name": "Nia Bell"
+      }
+    ],
+    "relationships": [
+      {
+        "source": "e01",
+        "type": "beneficiary_of",
+        "target": "e02",
+        "approved_evidence": []
+      },
+      {
+        "source": "e04",
+        "type": "trustee_of",
+        "target": "e02",
+        "approved_evidence": [
+          "4.3 Ada Wynn is designated a beneficiary of the Alder Fold Trust.\n\n5. Replacement of a beneficiary provision\n\nThe Variation Officer may replace one current beneficiary provision in its entirety by signing an amendment in that capacity. The signed amendment must identify this instrument by its exact principal-instrument reference, PI-67Q4, specify by number the one current beneficiary provision it replaces, and state the replacement beneficiary designation and the effective date.\n\nAn amendment signed before its stated effective date takes effect on that date if it meets the requirements of this clause. All other provisions remain unchanged.\n\nExecution\n\nExecuted on 12 February 2024 by:\n\nLivia Keane, as Settlor  \nJonah Reed, as Trustee",
+          "Jonah Reed is appointed Trustee of the Alder Fold Trust."
+        ]
+      },
+      {
+        "source": "e05",
+        "type": "settlor_of",
+        "target": "e02",
+        "approved_evidence": [
+          "4.3 Ada Wynn is designated a beneficiary of the Alder Fold Trust.\n\n5. Replacement of a beneficiary provision\n\nThe Variation Officer may replace one current beneficiary provision in its entirety by signing an amendment in that capacity. The signed amendment must identify this instrument by its exact principal-instrument reference, PI-67Q4, specify by number the one current beneficiary provision it replaces, and state the replacement beneficiary designation and the effective date.\n\nAn amendment signed before its stated effective date takes effect on that date if it meets the requirements of this clause. All other provisions remain unchanged.\n\nExecution\n\nExecuted on 12 February 2024 by:\n\nLivia Keane, as Settlor",
+          "Livia Keane settles the Alder Fold Trust on the terms of this instrument."
+        ]
+      },
+      {
+        "source": "e06",
+        "type": "beneficiary_of",
+        "target": "e02",
+        "approved_evidence": []
+      },
+      {
+        "source": "e07",
+        "type": "beneficiary_of",
+        "target": "e02",
+        "approved_evidence": []
+      }
+    ]
+  },
+  "source_approval": {
+    "schema_version": 1,
+    "relationships": [
+      {
+        "source": "e04",
+        "type": "trustee_of",
+        "target": "e02",
+        "approved_evidence": [
+          {
+            "source_id": "w3k8",
+            "supporting_text": "4.3 Ada Wynn is designated a beneficiary of the Alder Fold Trust.\n\n5. Replacement of a beneficiary provision\n\nThe Variation Officer may replace one current beneficiary provision in its entirety by signing an amendment in that capacity. The signed amendment must identify this instrument by its exact principal-instrument reference, PI-67Q4, specify by number the one current beneficiary provision it replaces, and state the replacement beneficiary designation and the effective date.\n\nAn amendment signed before its stated effective date takes effect on that date if it meets the requirements of this clause. All other provisions remain unchanged.\n\nExecution\n\nExecuted on 12 February 2024 by:\n\nLivia Keane, as Settlor  \nJonah Reed, as Trustee"
+          },
+          {
+            "source_id": "w3k8",
+            "supporting_text": "Jonah Reed is appointed Trustee of the Alder Fold Trust."
+          }
+        ]
+      },
+      {
+        "source": "e05",
+        "type": "settlor_of",
+        "target": "e02",
+        "approved_evidence": [
+          {
+            "source_id": "w3k8",
+            "supporting_text": "4.3 Ada Wynn is designated a beneficiary of the Alder Fold Trust.\n\n5. Replacement of a beneficiary provision\n\nThe Variation Officer may replace one current beneficiary provision in its entirety by signing an amendment in that capacity. The signed amendment must identify this instrument by its exact principal-instrument reference, PI-67Q4, specify by number the one current beneficiary provision it replaces, and state the replacement beneficiary designation and the effective date.\n\nAn amendment signed before its stated effective date takes effect on that date if it meets the requirements of this clause. All other provisions remain unchanged.\n\nExecution\n\nExecuted on 12 February 2024 by:\n\nLivia Keane, as Settlor"
+          },
+          {
+            "source_id": "w3k8",
+            "supporting_text": "Livia Keane settles the Alder Fold Trust on the terms of this instrument."
+          }
+        ]
+      }
+    ]
+  },
+  "ideal": {
+    "relationships": [
+      {
+        "source_name": "Ada Wynn",
+        "relationship_type": "beneficiary_of",
+        "target_name": "Alder Fold Trust",
+        "source_id": "n5q2",
+        "supporting_text": "Principal instrument: PI-67Q4  \nProvision locator: 4.1"
+      },
+      {
+        "source_name": "Ada Wynn",
+        "relationship_type": "beneficiary_of",
+        "target_name": "Alder Fold Trust",
+        "source_id": "n5q2",
+        "supporting_text": "With effect from the effective date, I replace the provision identified above in full with the following:"
+      },
+      {
+        "source_name": "Ada Wynn",
+        "relationship_type": "beneficiary_of",
+        "target_name": "Alder Fold Trust",
+        "source_id": "w3k8",
+        "supporting_text": "4.3 Ada Wynn is designated a beneficiary of the Alder Fold Trust."
+      },
+      {
+        "source_name": "Ada Wynn",
+        "relationship_type": "beneficiary_of",
+        "target_name": "Alder Fold Trust",
+        "source_id": "w3k8",
+        "supporting_text": "All other provisions remain unchanged."
+      },
+      {
+        "source_name": "Ada Wynn",
+        "relationship_type": "beneficiary_of",
+        "target_name": "Alder Fold Trust",
+        "source_id": "w3k8",
+        "supporting_text": "Principal-instrument reference: PI-67Q4"
+      },
+      {
+        "source_name": "Jonah Reed",
+        "relationship_type": "trustee_of",
+        "target_name": "Alder Fold Trust",
+        "source_id": "w3k8",
+        "supporting_text": "Jonah Reed is appointed Trustee of the Alder Fold Trust."
+      },
+      {
+        "source_name": "Livia Keane",
+        "relationship_type": "settlor_of",
+        "target_name": "Alder Fold Trust",
+        "source_id": "w3k8",
+        "supporting_text": "Livia Keane settles the Alder Fold Trust on the terms of this instrument."
+      },
+      {
+        "source_name": "Milo Hart",
+        "relationship_type": "beneficiary_of",
+        "target_name": "Alder Fold Trust",
+        "source_id": "n5q2",
+        "supporting_text": "Principal instrument: PI-67Q4  \nProvision locator: 4.1"
+      },
+      {
+        "source_name": "Milo Hart",
+        "relationship_type": "beneficiary_of",
+        "target_name": "Alder Fold Trust",
+        "source_id": "n5q2",
+        "supporting_text": "With effect from the effective date, I replace the provision identified above in full with the following:"
+      },
+      {
+        "source_name": "Milo Hart",
+        "relationship_type": "beneficiary_of",
+        "target_name": "Alder Fold Trust",
+        "source_id": "w3k8",
+        "supporting_text": "4.2 Milo Hart is designated a beneficiary of the Alder Fold Trust."
+      },
+      {
+        "source_name": "Milo Hart",
+        "relationship_type": "beneficiary_of",
+        "target_name": "Alder Fold Trust",
+        "source_id": "w3k8",
+        "supporting_text": "All other provisions remain unchanged."
+      },
+      {
+        "source_name": "Milo Hart",
+        "relationship_type": "beneficiary_of",
+        "target_name": "Alder Fold Trust",
+        "source_id": "w3k8",
+        "supporting_text": "Principal-instrument reference: PI-67Q4"
+      },
+      {
+        "source_name": "Nia Bell",
+        "relationship_type": "beneficiary_of",
+        "target_name": "Alder Fold Trust",
+        "source_id": "n5q2",
+        "supporting_text": "Principal instrument: PI-67Q4  \nProvision locator: 4.1  \nEffective date: 12 October 2026"
+      },
+      {
+        "source_name": "Nia Bell",
+        "relationship_type": "beneficiary_of",
+        "target_name": "Alder Fold Trust",
+        "source_id": "n5q2",
+        "supporting_text": "With effect from the effective date, I replace the provision identified above in full with the following:\n\nNia Bell is expressly named as a beneficiary under this provision.\n\nSigned: Tess Calder  \nCapacity: Variation Officer  \nDate of signature: 8 October 2026"
+      },
+      {
+        "source_name": "Nia Bell",
+        "relationship_type": "beneficiary_of",
+        "target_name": "Alder Fold Trust",
+        "source_id": "w3k8",
+        "supporting_text": "4.1 Elin Voss is designated a beneficiary of the Alder Fold Trust."
+      },
+      {
+        "source_name": "Nia Bell",
+        "relationship_type": "beneficiary_of",
+        "target_name": "Alder Fold Trust",
+        "source_id": "w3k8",
+        "supporting_text": "Tess Calder is designated Variation Officer of the Alder Fold Trust."
+      },
+      {
+        "source_name": "Nia Bell",
+        "relationship_type": "beneficiary_of",
+        "target_name": "Alder Fold Trust",
+        "source_id": "w3k8",
+        "supporting_text": "The Variation Officer may replace one current beneficiary provision in its entirety by signing an amendment in that capacity. The signed amendment must identify this instrument by its exact principal-instrument reference, PI-67Q4, specify by number the one current beneficiary provision it replaces, and state the replacement beneficiary designation and the effective date.\n\nAn amendment signed before its stated effective date takes effect on that date if it meets the requirements of this clause."
+      }
+    ]
+  },
+  "sufficient_evidence": [
+    {
+      "edge": [
+        "Ada Wynn",
+        "beneficiary_of",
+        "Alder Fold Trust"
+      ],
+      "joint_only": true,
+      "alternatives": [
+        [
+          {
+            "source_id": "n5q2",
+            "supporting_text": "Principal instrument: PI-67Q4  \nProvision locator: 4.1"
+          },
+          {
+            "source_id": "n5q2",
+            "supporting_text": "With effect from the effective date, I replace the provision identified above in full with the following:"
+          },
+          {
+            "source_id": "w3k8",
+            "supporting_text": "4.3 Ada Wynn is designated a beneficiary of the Alder Fold Trust."
+          },
+          {
+            "source_id": "w3k8",
+            "supporting_text": "All other provisions remain unchanged."
+          },
+          {
+            "source_id": "w3k8",
+            "supporting_text": "Principal-instrument reference: PI-67Q4"
+          }
+        ]
+      ]
+    },
+    {
+      "edge": [
+        "Milo Hart",
+        "beneficiary_of",
+        "Alder Fold Trust"
+      ],
+      "joint_only": true,
+      "alternatives": [
+        [
+          {
+            "source_id": "n5q2",
+            "supporting_text": "Principal instrument: PI-67Q4  \nProvision locator: 4.1"
+          },
+          {
+            "source_id": "n5q2",
+            "supporting_text": "With effect from the effective date, I replace the provision identified above in full with the following:"
+          },
+          {
+            "source_id": "w3k8",
+            "supporting_text": "4.2 Milo Hart is designated a beneficiary of the Alder Fold Trust."
+          },
+          {
+            "source_id": "w3k8",
+            "supporting_text": "All other provisions remain unchanged."
+          },
+          {
+            "source_id": "w3k8",
+            "supporting_text": "Principal-instrument reference: PI-67Q4"
+          }
+        ]
+      ]
+    },
+    {
+      "edge": [
+        "Nia Bell",
+        "beneficiary_of",
+        "Alder Fold Trust"
+      ],
+      "joint_only": true,
+      "alternatives": [
+        [
+          {
+            "source_id": "n5q2",
+            "supporting_text": "Principal instrument: PI-67Q4  \nProvision locator: 4.1  \nEffective date: 12 October 2026"
+          },
+          {
+            "source_id": "n5q2",
+            "supporting_text": "With effect from the effective date, I replace the provision identified above in full with the following:\n\nNia Bell is expressly named as a beneficiary under this provision.\n\nSigned: Tess Calder  \nCapacity: Variation Officer  \nDate of signature: 8 October 2026"
+          },
+          {
+            "source_id": "w3k8",
+            "supporting_text": "4.1 Elin Voss is designated a beneficiary of the Alder Fold Trust."
+          },
+          {
+            "source_id": "w3k8",
+            "supporting_text": "Tess Calder is designated Variation Officer of the Alder Fold Trust."
+          },
+          {
+            "source_id": "w3k8",
+            "supporting_text": "The Variation Officer may replace one current beneficiary provision in its entirety by signing an amendment in that capacity. The signed amendment must identify this instrument by its exact principal-instrument reference, PI-67Q4, specify by number the one current beneficiary provision it replaces, and state the replacement beneficiary designation and the effective date.\n\nAn amendment signed before its stated effective date takes effect on that date if it meets the requirements of this clause."
+          }
+        ]
+      ]
+    }
+  ]
+}

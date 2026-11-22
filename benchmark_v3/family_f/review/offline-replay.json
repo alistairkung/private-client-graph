@@ -1,0 +1,491 @@
+{
+  "schema_version": 1,
+  "family": "F",
+  "mode": "saved_ideal_replay",
+  "manifest_sha256": "9539cf4957b5a2f5f9fd93d511c7ff0fa1a158cfe999b7b6b9748875c6636ee2",
+  "freeze_sha256": "6336e4473730c39a0524ae71990ca45276cb05785d66a958d63663bded0ee8a9",
+  "preview": {
+    "input_mode": "saved",
+    "execution_mode": "replay",
+    "resolver": "none",
+    "maximum_paid_slots": 0,
+    "planned_observations": 2,
+    "sourced_prompt_sha256": "d67afaeb19c26448a6779d9576800cc50ca399c634ad81a1a02b847be0a9dfae",
+    "inputs": [
+      {
+        "id": "benchmark_v3_f0",
+        "source_count": 5,
+        "ordered_sources_sha256": "5b6ec2485aeeac73ba2da6f738656034d528dccac592cced9545961945d4719f",
+        "source_body_sha256": {
+          "r8h3": "0ecf177a59aaa16fd543b2c9fb00fb1608c2c35471004710038a6c073a3dd1b4",
+          "j5x7": "78b3a88ee0e892002d9205b869ac90eb6741618fade600f635550af9c825fac5",
+          "b2n6": "bae75a8a554f4fe06fb8b9a0af4471f07a25f80e51d3a4eba7263c8a8246559c",
+          "c7v4": "457edca9573644e6719cd5ad0cc83ae7bb0bcc7edec89bb4799d724e13b0b399",
+          "k9t2": "522094dbe2a692336e8a2003136db8d80f8918c8e6d92357c1828812c0a9b490"
+        },
+        "messages_sha256": "4147b7b1e285dfb2f632bbf1059c5ff959ab728593a98c251fb70c9297622dd9",
+        "message_bytes": 5269,
+        "estimated_message_tokens": 1318
+      },
+      {
+        "id": "benchmark_v3_f1",
+        "source_count": 5,
+        "ordered_sources_sha256": "742bf579ed23d79760c505fbb8167a7d50b656984fa2694e59f4aae20e712019",
+        "source_body_sha256": {
+          "r8h3": "0ecf177a59aaa16fd543b2c9fb00fb1608c2c35471004710038a6c073a3dd1b4",
+          "j5x7": "78b3a88ee0e892002d9205b869ac90eb6741618fade600f635550af9c825fac5",
+          "b2n6": "bae75a8a554f4fe06fb8b9a0af4471f07a25f80e51d3a4eba7263c8a8246559c",
+          "c7v4": "457edca9573644e6719cd5ad0cc83ae7bb0bcc7edec89bb4799d724e13b0b399",
+          "k9t2": "f8155089dcbb556d0d081772516784524df2fe8831466954e2f33f0b9e44a7bd"
+        },
+        "messages_sha256": "cb479cbcc48645558d26479fe8b31b5a702226d5970a0e36a2c06f56ca2866d5",
+        "message_bytes": 5264,
+        "estimated_message_tokens": 1316
+      }
+    ],
+    "token_estimate": "Ceiling of UTF-8 message bytes divided by four, excluding schema and framing."
+  },
+  "paid_attempts": 0,
+  "run_path": "run",
+  "run_artifact_digest": "f851f93e1e8f5fa2f976e8156c9fbe72a97d37605b08120b447e77dc09860ed9",
+  "aggregate": {
+    "coverage": {
+      "planned": 2,
+      "scored": 2,
+      "pending": 0,
+      "failed": 0,
+      "uncertain": 0,
+      "unavailable": 0
+    },
+    "tp": 6,
+    "fp": 0,
+    "fn": 0,
+    "micro_precision": 1.0,
+    "micro_recall": 1.0,
+    "micro_f1": 1.0
+  },
+  "conditions": [
+    {
+      "condition": "F0",
+      "sample_id": "benchmark_v3_f0",
+      "condition_sha256": "aae211b304b0b240670f8c429b8d54ca912d98c21f845bb81c0c70b7e3128942",
+      "ordered_sources_sha256": "5b6ec2485aeeac73ba2da6f738656034d528dccac592cced9545961945d4719f",
+      "annotation_sha256": {
+        "truth": "9dc036cd9f8559568d8c2a07988489b5543b6869801fe976385c1a1e8dca00f6",
+        "source_approval": "845c071f613ee6bd727350caa1f1e6ee00f80a59e9cc27f9c9c9e9004f902ed7",
+        "sufficient_evidence": "b0d44edc669a26b25a92b22edbbc978689b179020e6074b85edc4230ed793c9a"
+      },
+      "planned": 1,
+      "attempted": 1,
+      "scored": 1,
+      "exact_graph": true,
+      "graph": {
+        "tp": 3,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "true_positive_edges": [
+          [
+            "Alexander Tomas Rivera",
+            "sibling_of",
+            "Jamie Iqbal"
+          ],
+          [
+            "Fiona Mora",
+            "parent_of",
+            "Nina Beatrice Mercer"
+          ],
+          [
+            "Leona Bell",
+            "parent_of",
+            "Alexandra Inez Rivera"
+          ]
+        ],
+        "false_positive_edges": [],
+        "false_negative_edges": [],
+        "provenance_passed": 0,
+        "provenance_failed": 3,
+        "provenance_accuracy": 0.0,
+        "provenance_passes": [],
+        "provenance_failures": [
+          [
+            "Alexander Tomas Rivera",
+            "sibling_of",
+            "Jamie Iqbal"
+          ],
+          [
+            "Fiona Mora",
+            "parent_of",
+            "Nina Beatrice Mercer"
+          ],
+          [
+            "Leona Bell",
+            "parent_of",
+            "Alexandra Inez Rivera"
+          ]
+        ]
+      },
+      "decisions": {
+        "required": [
+          [
+            "Alexander Tomas Rivera",
+            "sibling_of",
+            "Jamie Iqbal"
+          ],
+          [
+            "Leona Bell",
+            "parent_of",
+            "Alexandra Inez Rivera"
+          ]
+        ],
+        "forbidden": [
+          [
+            "Alexandra Inez Rivera",
+            "sibling_of",
+            "Jamie Iqbal"
+          ],
+          [
+            "Leona Bell",
+            "parent_of",
+            "Alexander Tomas Rivera"
+          ]
+        ],
+        "unaffected": [
+          [
+            "Fiona Mora",
+            "parent_of",
+            "Nina Beatrice Mercer"
+          ]
+        ],
+        "required_present": [
+          [
+            "Alexander Tomas Rivera",
+            "sibling_of",
+            "Jamie Iqbal"
+          ],
+          [
+            "Leona Bell",
+            "parent_of",
+            "Alexandra Inez Rivera"
+          ]
+        ],
+        "forbidden_present": [],
+        "unaffected_present": [
+          [
+            "Fiona Mora",
+            "parent_of",
+            "Nina Beatrice Mercer"
+          ]
+        ]
+      },
+      "ordinary_evidence": {
+        "version": "benchmark_v2_evidence_v1",
+        "not_applicable": [
+          [
+            "Alexander Tomas Rivera",
+            "sibling_of",
+            "Jamie Iqbal"
+          ],
+          [
+            "Fiona Mora",
+            "parent_of",
+            "Nina Beatrice Mercer"
+          ],
+          [
+            "Leona Bell",
+            "parent_of",
+            "Alexandra Inez Rivera"
+          ]
+        ],
+        "quotation": {
+          "assessed": 0,
+          "passed": 0,
+          "failed": 0,
+          "accuracy": null,
+          "passes": [],
+          "failures": []
+        },
+        "source_attribution": {
+          "version": "source_attribution_v1",
+          "assessed": 0,
+          "passed": 0,
+          "failed": 0,
+          "accuracy": null,
+          "failures": []
+        },
+        "sufficiency": {
+          "version": "attached_sufficient_set_v1",
+          "planned": 3,
+          "assessed": 3,
+          "complete": 3,
+          "incomplete": 0,
+          "missed": 0,
+          "complete_over_correct": 1.0,
+          "complete_over_planned": 1.0,
+          "targets": [
+            {
+              "edge": [
+                "Alexander Tomas Rivera",
+                "sibling_of",
+                "Jamie Iqbal"
+              ],
+              "status": "complete",
+              "missing_by_alternative": []
+            },
+            {
+              "edge": [
+                "Fiona Mora",
+                "parent_of",
+                "Nina Beatrice Mercer"
+              ],
+              "status": "complete",
+              "missing_by_alternative": []
+            },
+            {
+              "edge": [
+                "Leona Bell",
+                "parent_of",
+                "Alexandra Inez Rivera"
+              ],
+              "status": "complete",
+              "missing_by_alternative": []
+            }
+          ]
+        }
+      },
+      "legacy_source_attribution": null,
+      "runtime_seconds": 0.00013191718608140945,
+      "usage": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "cached_tokens": 0
+      },
+      "incremental_cost": 0.0
+    },
+    {
+      "condition": "F1",
+      "sample_id": "benchmark_v3_f1",
+      "condition_sha256": "84e6a9ef0116b04f22961d6fc4a9066ec34fc4b43334030db9f7ff7d4e423e1d",
+      "ordered_sources_sha256": "742bf579ed23d79760c505fbb8167a7d50b656984fa2694e59f4aae20e712019",
+      "annotation_sha256": {
+        "truth": "9dc036cd9f8559568d8c2a07988489b5543b6869801fe976385c1a1e8dca00f6",
+        "source_approval": "845c071f613ee6bd727350caa1f1e6ee00f80a59e9cc27f9c9c9e9004f902ed7",
+        "sufficient_evidence": "b0d44edc669a26b25a92b22edbbc978689b179020e6074b85edc4230ed793c9a"
+      },
+      "planned": 1,
+      "attempted": 1,
+      "scored": 1,
+      "exact_graph": true,
+      "graph": {
+        "tp": 3,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "true_positive_edges": [
+          [
+            "Alexander Tomas Rivera",
+            "sibling_of",
+            "Jamie Iqbal"
+          ],
+          [
+            "Fiona Mora",
+            "parent_of",
+            "Nina Beatrice Mercer"
+          ],
+          [
+            "Leona Bell",
+            "parent_of",
+            "Alexandra Inez Rivera"
+          ]
+        ],
+        "false_positive_edges": [],
+        "false_negative_edges": [],
+        "provenance_passed": 0,
+        "provenance_failed": 3,
+        "provenance_accuracy": 0.0,
+        "provenance_passes": [],
+        "provenance_failures": [
+          [
+            "Alexander Tomas Rivera",
+            "sibling_of",
+            "Jamie Iqbal"
+          ],
+          [
+            "Fiona Mora",
+            "parent_of",
+            "Nina Beatrice Mercer"
+          ],
+          [
+            "Leona Bell",
+            "parent_of",
+            "Alexandra Inez Rivera"
+          ]
+        ]
+      },
+      "decisions": {
+        "required": [
+          [
+            "Alexander Tomas Rivera",
+            "sibling_of",
+            "Jamie Iqbal"
+          ],
+          [
+            "Leona Bell",
+            "parent_of",
+            "Alexandra Inez Rivera"
+          ]
+        ],
+        "forbidden": [
+          [
+            "Alexandra Inez Rivera",
+            "sibling_of",
+            "Jamie Iqbal"
+          ],
+          [
+            "Leona Bell",
+            "parent_of",
+            "Alexander Tomas Rivera"
+          ]
+        ],
+        "unaffected": [
+          [
+            "Fiona Mora",
+            "parent_of",
+            "Nina Beatrice Mercer"
+          ]
+        ],
+        "required_present": [
+          [
+            "Alexander Tomas Rivera",
+            "sibling_of",
+            "Jamie Iqbal"
+          ],
+          [
+            "Leona Bell",
+            "parent_of",
+            "Alexandra Inez Rivera"
+          ]
+        ],
+        "forbidden_present": [],
+        "unaffected_present": [
+          [
+            "Fiona Mora",
+            "parent_of",
+            "Nina Beatrice Mercer"
+          ]
+        ]
+      },
+      "ordinary_evidence": {
+        "version": "benchmark_v2_evidence_v1",
+        "not_applicable": [
+          [
+            "Alexander Tomas Rivera",
+            "sibling_of",
+            "Jamie Iqbal"
+          ],
+          [
+            "Fiona Mora",
+            "parent_of",
+            "Nina Beatrice Mercer"
+          ],
+          [
+            "Leona Bell",
+            "parent_of",
+            "Alexandra Inez Rivera"
+          ]
+        ],
+        "quotation": {
+          "assessed": 0,
+          "passed": 0,
+          "failed": 0,
+          "accuracy": null,
+          "passes": [],
+          "failures": []
+        },
+        "source_attribution": {
+          "version": "source_attribution_v1",
+          "assessed": 0,
+          "passed": 0,
+          "failed": 0,
+          "accuracy": null,
+          "failures": []
+        },
+        "sufficiency": {
+          "version": "attached_sufficient_set_v1",
+          "planned": 3,
+          "assessed": 3,
+          "complete": 3,
+          "incomplete": 0,
+          "missed": 0,
+          "complete_over_correct": 1.0,
+          "complete_over_planned": 1.0,
+          "targets": [
+            {
+              "edge": [
+                "Alexander Tomas Rivera",
+                "sibling_of",
+                "Jamie Iqbal"
+              ],
+              "status": "complete",
+              "missing_by_alternative": []
+            },
+            {
+              "edge": [
+                "Fiona Mora",
+                "parent_of",
+                "Nina Beatrice Mercer"
+              ],
+              "status": "complete",
+              "missing_by_alternative": []
+            },
+            {
+              "edge": [
+                "Leona Bell",
+                "parent_of",
+                "Alexandra Inez Rivera"
+              ],
+              "status": "complete",
+              "missing_by_alternative": []
+            }
+          ]
+        }
+      },
+      "legacy_source_attribution": null,
+      "runtime_seconds": 8.624885231256485e-05,
+      "usage": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "cached_tokens": 0
+      },
+      "incremental_cost": 0.0
+    }
+  ],
+  "matches": {
+    "F1": {
+      "pair": [
+        "F0",
+        "F1"
+      ],
+      "passed": true,
+      "removed": [],
+      "added": [],
+      "unaffected": [
+        [
+          "Fiona Mora",
+          "parent_of",
+          "Nina Beatrice Mercer"
+        ]
+      ],
+      "changed_source_id": "k9t2"
+    }
+  },
+  "repeat": {
+    "deterministic_decisions_and_scores": true,
+    "paid_attempts": 0,
+    "run_artifact_digest": "8bd22d73035f807ec277385ce99914b58b7c376f76d967d8cad21add6d3a7e60"
+  }
+}

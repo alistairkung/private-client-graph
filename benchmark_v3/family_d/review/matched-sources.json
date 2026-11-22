@@ -1,0 +1,33 @@
+{
+  "edit": {
+    "source_id": "n5q2",
+    "before": "4.1",
+    "after": "4.2"
+  },
+  "identical_ids_titles_order": true,
+  "only_literal_body_edit": true,
+  "source_count": 3,
+  "by_source": {
+    "h7m4": {
+      "identical": true,
+      "baseline_body_sha256": "b8ae061c5a1846139015883eebb452c2aeb60222d5166f8b6317de1fa495741b",
+      "variant_body_sha256": "b8ae061c5a1846139015883eebb452c2aeb60222d5166f8b6317de1fa495741b",
+      "baseline_words": 92,
+      "variant_words": 92
+    },
+    "w3k8": {
+      "identical": true,
+      "baseline_body_sha256": "e4da90cc55694d797d112ebb018dc913efc54e2aac319720a76ed3486937a5bd",
+      "variant_body_sha256": "e4da90cc55694d797d112ebb018dc913efc54e2aac319720a76ed3486937a5bd",
+      "baseline_words": 189,
+      "variant_words": 189
+    },
+    "n5q2": {
+      "identical": false,
+      "baseline_body_sha256": "6c0211fc74badff6fe0214fed847ca0b6880d0a0e3a2589a753d6dd79b64455b",
+      "variant_body_sha256": "548a59a20311fc9004da4f98cd685cf4c4fc4d454d39b01b8428e19901d6cfcb",
+      "baseline_words": 63,
+      "variant_words": 63
+    }
+  }
+}

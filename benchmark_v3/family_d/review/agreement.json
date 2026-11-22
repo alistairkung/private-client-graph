@@ -1,0 +1,88 @@
+{
+  "D0": {
+    "shared": [
+      [
+        "Ada Wynn",
+        "beneficiary_of",
+        "Alder Fold Trust"
+      ],
+      [
+        "Jonah Reed",
+        "trustee_of",
+        "Alder Fold Trust"
+      ],
+      [
+        "Livia Keane",
+        "settlor_of",
+        "Alder Fold Trust"
+      ],
+      [
+        "Milo Hart",
+        "beneficiary_of",
+        "Alder Fold Trust"
+      ],
+      [
+        "Nia Bell",
+        "beneficiary_of",
+        "Alder Fold Trust"
+      ]
+    ],
+    "only_a": [],
+    "only_b": [],
+    "different_passages": [
+      [
+        "Jonah Reed",
+        "trustee_of",
+        "Alder Fold Trust"
+      ],
+      [
+        "Livia Keane",
+        "settlor_of",
+        "Alder Fold Trust"
+      ],
+      [
+        "Nia Bell",
+        "beneficiary_of",
+        "Alder Fold Trust"
+      ]
+    ]
+  },
+  "D1": {
+    "shared": [
+      [
+        "Ada Wynn",
+        "beneficiary_of",
+        "Alder Fold Trust"
+      ],
+      [
+        "Elin Voss",
+        "beneficiary_of",
+        "Alder Fold Trust"
+      ],
+      [
+        "Jonah Reed",
+        "trustee_of",
+        "Alder Fold Trust"
+      ],
+      [
+        "Livia Keane",
+        "settlor_of",
+        "Alder Fold Trust"
+      ],
+      [
+        "Nia Bell",
+        "beneficiary_of",
+        "Alder Fold Trust"
+      ]
+    ],
+    "only_a": [],
+    "only_b": [],
+    "different_passages": [
+      [
+        "Nia Bell",
+        "beneficiary_of",
+        "Alder Fold Trust"
+      ]
+    ]
+  }
+}

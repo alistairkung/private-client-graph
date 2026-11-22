@@ -1,0 +1,38 @@
+{
+  "F0": {
+    "packet_sha256": "ae107692adc54baeaabd22afb9d6acceb9d4db005669cc622856f789597e6e2d",
+    "ordered_sources_sha256": "5b6ec2485aeeac73ba2da6f738656034d528dccac592cced9545961945d4719f",
+    "receipts": [
+      {
+        "session": "e32fa75d-5430-457d-bb8d-6b2498ef3ca7",
+        "submitted_at": "2026-11-22T13:26:14.094879+00:00",
+        "completed_at": "2026-11-22T13:27:20.481934+00:00",
+        "output_sha256": "069d304afaf7a1d459dd0098b91bad3834d34e98612fcf67af91c6aa8fcee065"
+      },
+      {
+        "session": "80b45b5e-0e9f-4aae-b989-de5bbcefbfea",
+        "submitted_at": "2026-11-22T13:26:14.076386+00:00",
+        "completed_at": "2026-11-22T13:27:04.866208+00:00",
+        "output_sha256": "4ecfc254af3cf5b41bc0a273af07b30cdae188ff6adc23945e4f0c8fab9577c0"
+      }
+    ]
+  },
+  "F1": {
+    "packet_sha256": "7ba3af6ba2b8cb0fd27335d53dd3401cef77bbe6ba84718f30ca07b0299326ff",
+    "ordered_sources_sha256": "742bf579ed23d79760c505fbb8167a7d50b656984fa2694e59f4aae20e712019",
+    "receipts": [
+      {
+        "session": "d166e96d-5fd0-47d5-9a02-1da81a1f72f6",
+        "submitted_at": "2026-11-22T13:26:14.095487+00:00",
+        "completed_at": "2026-11-22T13:27:06.580585+00:00",
+        "output_sha256": "de36c32ab0c9414c5cb7bda3476a5804ddaef403d2ea57e35464a243c3b1c5a7"
+      },
+      {
+        "session": "106291d0-788e-4587-9ad8-4ed364b30283",
+        "submitted_at": "2026-11-22T13:26:14.094689+00:00",
+        "completed_at": "2026-11-22T13:27:08.716118+00:00",
+        "output_sha256": "9be9966b6d10aa3d4445a7220bdbe75fe528eb572a5081a32180a52e83c9bf22"
+      }
+    ]
+  }
+}

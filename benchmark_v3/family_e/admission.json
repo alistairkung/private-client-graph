@@ -1,0 +1,65 @@
+{
+  "family": "E",
+  "split": "development",
+  "status": "pending_human_admission",
+  "owner_decision": null,
+  "signature": null,
+  "dispatched": false,
+  "technical_disposition": "return",
+  "hypothesis": {
+    "hypothesis_id": "independent-parentage-disagreement",
+    "revision": 1,
+    "hypothesis_sha256": "1c6fbc49c9be191bc6dab14845e0db2afe94675f10f6634c54d897bacede2cae"
+  },
+  "validated_base": "3641948e8f8510b15799b96d1b748825d0048645",
+  "paid_pcg_extraction_attempts": 0,
+  "protocol_sha256": "16ceeab21036a70df0159f226b3011848768eb210e535f2d787d22838e70270a",
+  "evidence_policy": "benchmark_v2_evidence_v1",
+  "proof_policy": "attached_sufficient_set_v1",
+  "manifest_sha256": "a28c400c3aee6e1acf04564bcf370c689b44c173e281a5cc587956f6446bc972",
+  "freeze_sha256": "31a8bfc1e9a677c6eb51cbf178af2f5580b06ca62244dc963f9ee1f8eef99df8",
+  "ledger_sha256": "97b5180604c02b359cdc06f7aa56d16d4d20b816bf2bc90e45f6ceba869cde29",
+  "closing_audit_sha256": "1186bb57259b808c97c8f6e578cf2f0616c3602e7952d6184a4207904db1c012",
+  "review_files": {
+    "DOSSIER.md": "ad40751bb05b928511da228a20c70f6fa9b8de540e86deaa77bf52d823427755",
+    "E0.json": "847987a23fb6f1b52970d2113a5dc7c3cc12e26a8ddc11b0a483fab2b4726223",
+    "E1.json": "89b4739e5bd01d4d65eb7bcec3243e935d9744c09a6fce5a4decf28c34975610",
+    "custody.json": "5a0010dd2aa310a75c3aa62e39182a3489ae1e04fb8d7a8eeb8db780e97531a2",
+    "freeze.json": "31a8bfc1e9a677c6eb51cbf178af2f5580b06ca62244dc963f9ee1f8eef99df8",
+    "manifest.json": "a28c400c3aee6e1acf04564bcf370c689b44c173e281a5cc587956f6446bc972",
+    "originals/d3k6.txt": "da745d010e04a6b66cb4af3d293ab03601da361500fe04912ccc5895c39869af",
+    "originals/f5r7.txt": "c17e964d44b618439716e7ef087f1ac5c0cac84f7ff2860796c3933e020aea34",
+    "originals/m6w2.txt": "e4952cdec722c1b80835b0d6be4cff241ee185e80bd2775062a575e99a4a2b66",
+    "originals/p8n4.txt": "d2dab9b63bb664e2a41eb66dcea4bf5e497ef83e9ddc50205cd47c02030bd5dd",
+    "originals/q4b9.txt": "02defa885d1d0ec78fa3285bc2b47fcd0321fb0d725b0422dff2554675788952",
+    "originals/t9c3.txt": "ec32c00c15c44122416c3e341fd5fa0d3a56f27921788b1aa15214ced93eded7",
+    "originals/v2j5.txt": "e55a50805d0267e16ca38417580cb3e5e5e66c14dd0934ca9ac6b9b676bba569",
+    "review/agreement.json": "3b9a8d41531c07aa1a1ab9d017a4d7aef952c5a5152efb472144cb89e4cb5298",
+    "review/blind-lock.json": "a05427be793b4b076128b398d860c2470f8b556eb2216cd6c95e0b8187a0a1d0",
+    "review/blind-review.json": "7aba62e6bd78e0bd829470571f5e0e6d683f88e61337db031bb160d6230c5c11",
+    "review/comparison.json": "225f9e65c2c8002b597979720e679f2ae9442620b5e61cd534b4aa082fdf5b69",
+    "review/documentary-realism.json": "cfe9d3294d2250d995130db983a87c58eac7301b142ec0eb7f000ab64d6bf7a6",
+    "review/masks.json": "f5078eb655439e83b4980bdc7c21c1bf181272ac416417fd234a70843940e9a3",
+    "review/matched-sources.json": "60c4616ca7fc793c6d704fc3a4843bb11fa75596b93e583dc68fe2a9fa455389",
+    "review/offline-replay.json": "14a5049da57aec37325287d56bf953a7ec34740058d7f10a72e977f3501ff34f",
+    "review/provisional-lock.json": "8022c38ae5f377ca26dc0ed49e74ab7da94590ffc5c371f7812b318d87edcf42",
+    "sources/E0.json": "11e1524cfb3e8e7cf5549cfdbd8e3fbede9fd6de27e78dc7e3c44e717a738557",
+    "sources/E1.json": "8cf464ae422d3315d71a5f8ccebc2f2fb88bba016f61872ca10ba06175902d80"
+  },
+  "ordered_sources": {
+    "E0": "c49a69b1d1e6e23e43dc124f2e46d059b189ff474f8cf0161eb0ed689d23eaff",
+    "E1": "3760fe152d8f90f32e04102be9438ff9ca7f0f6802301c4c3eb318f9833564e9"
+  },
+  "keys": {
+    "E0": {
+      "truth": "8ea2cbf5c4a60cb04aee17c6f859cc8778ba1a2167d8a512870bea337fc804ee",
+      "source_approval": "6961bb6f4280a875034bdc3d66ed35a256cb924c619304d5f91d47125413301c",
+      "sufficient_evidence": "90fea17d3eba4b2c9be1211d3c0e12026e9afe3c218c8d7a0f9cac9104c42a5e"
+    },
+    "E1": {
+      "truth": "66f415c92c1d2f154c1089485e92dbdb57249020f765c9253be2ef53f9ce8fe9",
+      "source_approval": "6961bb6f4280a875034bdc3d66ed35a256cb924c619304d5f91d47125413301c",
+      "sufficient_evidence": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    }
+  }
+}

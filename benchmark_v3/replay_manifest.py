@@ -1,4 +1,4 @@
-"""Verify frozen inputs and matched controls for the Benchmark v3 pilot."""
+"""Verify frozen inputs and matched controls for Benchmark v3."""
 
 import json
 from dataclasses import dataclass
@@ -20,9 +20,11 @@ from private_client_graph.research.source_attribution import (
 )
 
 
-FamilyId = Literal['A', 'B', 'C']
+CommissionedFamilyId = Literal['D', 'E', 'F']
+FamilyId = Literal['A', 'B', 'C', 'D', 'E', 'F']
 CONDITIONS: dict[FamilyId, tuple[str, ...]] = {
     'A': ('A0', 'A1', 'A2'), 'B': ('B0', 'B1'), 'C': ('C0', 'C1', 'C2'),
+    'D': ('D0', 'D1'), 'E': ('E0', 'E1'), 'F': ('F0', 'F1'),
 }
 Sha256 = Annotated[str, Field(pattern=r'^[a-f0-9]{64}$')]
 _SOURCES = TypeAdapter(list[Source])
@@ -67,6 +69,14 @@ class MatchedFamilyManifest(BaseModel):
     conditions: dict[str, Sha256]
 
 
+class CommissionedFamilyManifest(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    schema_version: Literal[3]
+    family: CommissionedFamilyId
+    freeze_sha256: Sha256
+    conditions: dict[str, Sha256]
+
+
 class SourceCommitments(BaseModel):
     # The custodian's freeze also records provenance outside the replay contract.
     order: dict[str, list[str]]
@@ -83,6 +93,12 @@ class SourceFreeze(SourceCommitments):
 class MatchedSourceFreeze(SourceCommitments):
     interventions: dict[str, LiteralEdit]
     candidates: list[SemanticEdge] = Field(min_length=2, max_length=2)
+    required: dict[str, list[SemanticEdge]]
+
+
+class CommissionedSourceFreeze(SourceCommitments):
+    intervention: LiteralEdit
+    candidates: list[SemanticEdge] = Field(min_length=1)
     required: dict[str, list[SemanticEdge]]
 
 
@@ -134,6 +150,9 @@ def load_family(manifest_path: Path) -> VerifiedFamily:
     if isinstance(raw, dict) and raw.get('schema_version') == 2:
         manifest = MatchedFamilyManifest.model_validate(raw)
         return _load_matched_family(manifest_path.parent, manifest, checksum(manifest_bytes))
+    if isinstance(raw, dict) and raw.get('schema_version') == 3:
+        commissioned = CommissionedFamilyManifest.model_validate(raw)
+        return _load_commissioned_family(manifest_path.parent, commissioned, checksum(manifest_bytes))
     family_a = FamilyManifest.model_validate(raw)
     return _load_family_a(manifest_path.parent, family_a, checksum(manifest_bytes))
 
@@ -207,7 +226,73 @@ def _verify_targets(family: Literal['B', 'C'], freeze: MatchedSourceFreeze,
         raise ValueError('Variants must have distinct field values')
 
 
-def _load_conditions(root: Path, manifest: FamilyManifest | MatchedFamilyManifest,
+def _load_commissioned_family(root: Path, manifest: CommissionedFamilyManifest,
+                              digest: str) -> VerifiedFamily:
+    freeze = CommissionedSourceFreeze.model_validate(
+        _read_json(_verified_bytes(root / 'freeze.json', manifest.freeze_sha256)))
+    conditions = _load_conditions(root, manifest, freeze)
+    base, variant = conditions
+    natural, edited = conditions[base], conditions[variant]
+    _verify_edit(base, variant, natural.sources, edited.sources, freeze.intervention)
+
+    if freeze.required.keys() != conditions.keys():
+        raise ValueError('Every commissioned condition requires a preblind target declaration')
+    candidates = _declared_edges(freeze.candidates)
+    required = {identity: _declared_edges(edges) for identity, edges in freeze.required.items()}
+    joint_targets = _commissioned_joint_targets(manifest.family, candidates, required[base], required[variant])
+    unaffected = truth_edges(natural.saved.truth).keys() - candidates
+    if not unaffected:
+        raise ValueError(f'Family {manifest.family} requires at least one unaffected edge')
+    if manifest.family == 'D':
+        trust = next(iter(joint_targets))[2]
+        joint_targets = joint_targets | {edge for edge in unaffected if edge[1:] == ('beneficiary_of', trust)}
+
+    for identity, condition in conditions.items():
+        saved = condition.saved
+        edges = truth_edges(saved.truth).keys()
+        if edges != unaffected | required[identity]:
+            raise ValueError(f'{identity} truth differs from the predeclared targets and unaffected edges')
+        joint = {_edge(*item.edge) for item in saved.sufficient_evidence if item.joint_only}
+        if not (edges & joint_targets) <= joint:
+            raise ValueError(f'{identity} lacks a critical joint-only proof annotation')
+
+    if {entity.id: entity for entity in natural.saved.truth.entities} != {
+        entity.id: entity for entity in edited.saved.truth.entities
+    }:
+        raise ValueError(f'{variant} changed the matched entity roster')
+    stable_approvals = unaffected | required[base] if manifest.family == 'F' else unaffected
+    scope_edit = freeze.intervention if manifest.family == 'D' else None
+    _verify_shared_annotations(natural.saved, edited.saved, stable_approvals, scope_edit=scope_edit)
+    return VerifiedFamily(manifest.family, digest, manifest.freeze_sha256, conditions,
+                          {variant: freeze.intervention},
+                          {identity: sorted(edges) for identity, edges in required.items()},
+                          candidates, unaffected)
+
+
+def _declared_edges(edges: list[SemanticEdge]) -> set[SemanticEdge]:
+    distinct = set(edges)
+    if len(distinct) != len(edges) or any(edge != _edge(*edge) for edge in distinct):
+        raise ValueError('Preblind targets must be distinct, normalized semantic edges')
+    return distinct
+
+
+def _commissioned_joint_targets(family: CommissionedFamilyId, candidates: set[SemanticEdge],
+                                base: set[SemanticEdge], variant: set[SemanticEdge]) -> set[SemanticEdge]:
+    if family == 'D':
+        common = base & variant
+        if (len(base) == len(variant) == 2 and len(common) == 1 and base | variant == candidates
+                and {edge[1] for edge in candidates} == {'beneficiary_of'}
+                and len({edge[2] for edge in candidates}) == 1):
+            return candidates
+    elif family == 'E':
+        if base == candidates and len(base) == 1 and not variant and next(iter(base))[1] == 'parent_of':
+            return base
+    elif base == variant and len(base) >= 2 and base < candidates:
+        return base
+    raise ValueError(f'Family {family} critical decisions differ from its commissioned contrast')
+
+
+def _load_conditions(root: Path, manifest: FamilyManifest | MatchedFamilyManifest | CommissionedFamilyManifest,
                      freeze: SourceCommitments) -> dict[str, VerifiedCondition]:
     identities = CONDITIONS[manifest.family]
     entries = (manifest.conditions, freeze.order, freeze.sources_sha256, freeze.source_commitments)
@@ -338,11 +423,12 @@ def _verify_annotations(conditions: dict[str, VerifiedCondition],
     return unaffected
 
 
-def _verify_shared_annotations(natural: SavedIdeal, variant: SavedIdeal, unaffected: set[SemanticEdge]) -> None:
+def _verify_shared_annotations(natural: SavedIdeal, variant: SavedIdeal, unaffected: set[SemanticEdge],
+                               *, scope_edit: LiteralEdit | None = None) -> None:
     base_edges, variant_edges = truth_edges(natural.truth), truth_edges(variant.truth)
     if any(base_edges[edge] != variant_edges[edge] for edge in unaffected):
         raise ValueError(f'{variant.condition} changed unaffected ground-truth approvals')
-    _verify_unaffected_evidence(natural, variant, unaffected)
+    _verify_unaffected_evidence(natural, variant, unaffected, scope_edit=scope_edit)
 
 
 def _verify_switched_trustees(natural: GroundTruth, held: GroundTruth,
@@ -356,7 +442,8 @@ def _verify_switched_trustees(natural: GroundTruth, held: GroundTruth,
 
 
 def _verify_unaffected_evidence(natural: SavedIdeal, variant: SavedIdeal,
-                                unaffected: set[SemanticEdge]) -> None:
+                                unaffected: set[SemanticEdge],
+                                *, scope_edit: LiteralEdit | None = None) -> None:
     def approvals(saved: SavedIdeal) -> list[SourceEvidenceRelationship]:
         names = {entity.id: entity.name for entity in saved.truth.entities}
         return [rel for rel in saved.source_approval.relationships
@@ -366,5 +453,20 @@ def _verify_unaffected_evidence(natural: SavedIdeal, variant: SavedIdeal,
         raise ValueError(f'{variant.condition} changed unaffected Source approvals')
     base_sets = [item for item in natural.sufficient_evidence if _edge(*item.edge) in unaffected]
     variant_sets = [item for item in variant.sufficient_evidence if _edge(*item.edge) in unaffected]
+    if scope_edit is not None:
+        # An unaffected beneficiary still needs the operative locator to prove
+        # survival. The exact committed Source edit is also allowed in its proof.
+        base_sets = [_proof_after_edit(item, scope_edit) for item in base_sets]
     if base_sets != variant_sets:
         raise ValueError(f'{variant.condition} changed unaffected sufficient evidence sets')
+
+
+def _proof_after_edit(item: SufficientEvidence, edit: LiteralEdit) -> SufficientEvidence:
+    def replace_locator(pair: ApprovedSourceEvidence) -> ApprovedSourceEvidence:
+        if pair.source_id != edit.source_id:
+            return pair
+        text = pair.supporting_text.replace(edit.before, edit.after, 1)
+        return pair.model_copy(update={'supporting_text': text})
+
+    alternatives = [[replace_locator(pair) for pair in group] for group in item.alternatives]
+    return item.model_copy(update={'alternatives': alternatives})

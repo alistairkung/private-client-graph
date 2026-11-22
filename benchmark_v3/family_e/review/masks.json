@@ -1,0 +1,768 @@
+{
+  "relay-omitted": {
+    "source_ids": [
+      "v2j5",
+      "p8n4",
+      "q4b9",
+      "t9c3",
+      "f5r7",
+      "d3k6"
+    ],
+    "source_body_sha256": {
+      "v2j5": "e55a50805d0267e16ca38417580cb3e5e5e66c14dd0934ca9ac6b9b676bba569",
+      "p8n4": "d2dab9b63bb664e2a41eb66dcea4bf5e497ef83e9ddc50205cd47c02030bd5dd",
+      "q4b9": "02defa885d1d0ec78fa3285bc2b47fcd0321fb0d725b0422dff2554675788952",
+      "t9c3": "275027e21e0d651e4932d8cb3c61e0c988a9f96c0ffa45d41fabf958d24ed98b",
+      "f5r7": "c17e964d44b618439716e7ef087f1ac5c0cac84f7ff2860796c3933e020aea34",
+      "d3k6": "da745d010e04a6b66cb4af3d293ab03601da361500fe04912ccc5895c39869af"
+    },
+    "packet_sha256": "d1fd825ff7a5646a56953bdbf9293d7a79ae7f45bbc6843ae994556a24d8cedb",
+    "output_sha256": "9fcc7bd66a41533f2ed63d976857391045881e4804ac0f013e17a8b2dc199827",
+    "edges": [
+      [
+        "Mara Fen",
+        "sibling_of",
+        "Theo Baird"
+      ]
+    ],
+    "decisions": [
+      {
+        "proposition": "Mara Fen and Theo Baird are siblings.",
+        "status": "supported",
+        "reason": "Mara Fen is both the origin and reporter of the 8 October 2026 secure message. She states the relationship as current and confirms it from personal knowledge. The message was in the cut-off file, and no passage contests it. The sole minimum sufficient alternative is the one-pair set (f5r7, \"Theo Baird is my brother, and I can confirm that from my own personal knowledge.\n\nThanks,  \nMara Fen\"). Under benchmark_v2_evidence_v1, this passage independently supports the edge and is attributed to f5r7. Under attached_sufficient_set_v1, that same complete one-pair set is attached to this edge. No supported edge requires multiple sources.",
+        "source_ids": [
+          "f5r7"
+        ]
+      },
+      {
+        "proposition": "T17 identifies Dana Vale and T42 identifies Ellis Rook in the delivery correspondence.",
+        "status": "supported",
+        "reason": "Rowan Bell originated and recorded the mappings on 9 October 2026 after checking identity-only intake details. Bell supplied the references orally; both replies use those references. The sheet and replies were in the cut-off file, and no passage disputes the mappings. The intake details contained no relationship fields and were not retained. The mappings establish identity, not parentage.",
+        "source_ids": [
+          "p8n4",
+          "q4b9",
+          "t9c3"
+        ]
+      },
+      {
+        "proposition": "Dana Vale carried and gave birth to Ellis Rook on 28 September 2026.",
+        "status": "unresolved",
+        "reason": "Casey Lin reports firsthand observation and states, \"T17 is the birth parent of T42.\" Robin Moss independently reports firsthand observation and states, \"T17 is not the birth parent of T42.\" Both were dated 12 October 2026 at 14:00 and were in the cut-off file. Each says they were present throughout the same delivery, already knew T17, and later saw T42 in person. The name sheet is needed to resolve both endpoints in either reply, but it cannot resolve the conflict. Rowan Bell says in the meeting note that Bell did not witness the delivery. Neither eyewitness account has a demonstrated advantage on this record, so no parent_of edge is recorded. Both accounts are limited to who carried and gave birth; they do not establish or negate genetic, legal, adoptive, or caregiving status.",
+        "source_ids": [
+          "p8n4",
+          "q4b9",
+          "t9c3",
+          "v2j5"
+        ]
+      },
+      {
+        "proposition": "Mara Fen authorized sending the paper meeting pack to her workplace.",
+        "status": "explicitly contradicted",
+        "reason": "In her 14 October 2026 secure message, in the cut-off file, Mara Fen directly withheld permission to send the paper pack to her workplace and requested upload to the secure portal instead. Rowan Bell's meeting note is consistent with that instruction: paper copies are unnecessary and the portal is to be used. Neither passage establishes that the pack was sent or uploaded. This is a delivery instruction outside the graph ontology.",
+        "source_ids": [
+          "d3k6",
+          "v2j5"
+        ]
+      }
+    ],
+    "unavailable_basis": [
+      "The supplied file contains no independent delivery evidence that resolves the eyewitness conflict. Before relying on the disputed birth relationship in drafting, ask whether it matters to Mara Fen's will instructions and, if so, what reliable evidence can clarify it. Ask separately what legal parentage or intended beneficiary designation matters to the drafting.",
+      "The file does not establish a relationship between Mara Fen and either Dana Vale or Ellis Rook, or any spouse or trust relationship. Their appearance in the same file is not evidence of a connection, and silence does not contradict one.",
+      "The packet identifies material available by 10:00 on 16 October 2026 but does not provide separate receipt timestamps. Message dates are not treated as receipt timestamps."
+    ]
+  },
+  "second-origin-omitted": {
+    "source_ids": [
+      "v2j5",
+      "p8n4",
+      "q4b9",
+      "m6w2",
+      "f5r7",
+      "d3k6"
+    ],
+    "source_body_sha256": {
+      "v2j5": "e55a50805d0267e16ca38417580cb3e5e5e66c14dd0934ca9ac6b9b676bba569",
+      "p8n4": "d2dab9b63bb664e2a41eb66dcea4bf5e497ef83e9ddc50205cd47c02030bd5dd",
+      "q4b9": "02defa885d1d0ec78fa3285bc2b47fcd0321fb0d725b0422dff2554675788952",
+      "m6w2": "e4952cdec722c1b80835b0d6be4cff241ee185e80bd2775062a575e99a4a2b66",
+      "f5r7": "c17e964d44b618439716e7ef087f1ac5c0cac84f7ff2860796c3933e020aea34",
+      "d3k6": "da745d010e04a6b66cb4af3d293ab03601da361500fe04912ccc5895c39869af"
+    },
+    "packet_sha256": "91709dd8b578cb47f52b93770b55924d5232ea47cca1822688e616e542190663",
+    "output_sha256": "b31c2f94d85569e3bd1267f300751e09ad458d3699edf701a3880c266624dbaf",
+    "edges": [
+      [
+        "Dana Vale",
+        "parent_of",
+        "Ellis Rook"
+      ],
+      [
+        "Mara Fen",
+        "sibling_of",
+        "Theo Baird"
+      ]
+    ],
+    "decisions": [
+      {
+        "proposition": "Dana Vale is the birth parent of Ellis Rook.",
+        "status": "supported",
+        "reason": "Casey Lin personally witnessed the delivery on 28 September 2026 and reported the relationship in a case-inbox reply dated 12 October 2026 at 14:00. Rowan Bell's 9 October reference sheet supplies the full names for the identifiers Rowan gave Casey orally. The sheet records an identity check, not a relationship check. Imani Cole's forward reproduces Casey's reply; it is a second documentary route, not a second eyewitness account. Both routes were in the file by the cut-off. Rowan's statement that Rowan did not witness the delivery does not contradict Casey. Minimum sufficient alternatives (each bracketed pair is [Source ID, exact quotation]): (1, attached) [[\"p8n4\", \"T17 — Dana Vale  \nT42 — Ellis Rook\"], [\"q4b9\", \"T17 is the birth parent of T42.\"]]; (2) [[\"p8n4\", \"T17 — Dana Vale  \nT42 — Ellis Rook\"], [\"m6w2\", \"T17 is the birth parent of T42.\"]]. Every sufficient set needs multiple Sources. Under benchmark_v2_evidence_v1, ordinary quotation and attribution are N/A; the edge remains graph-scored.",
+        "source_ids": [
+          "p8n4",
+          "q4b9",
+          "m6w2",
+          "v2j5"
+        ]
+      },
+      {
+        "proposition": "Mara Fen and Theo Baird are siblings.",
+        "status": "supported",
+        "reason": "Mara Fen directly confirmed from personal knowledge in her 8 October 2026 secure message that Theo Baird is her brother. The message was in the file by the cut-off, and no passage competes with it. The sole minimum sufficient set, also the attached set, is [[\"f5r7\", \"Theo Baird is my brother, and I can confirm that from my own personal knowledge.\n\nThanks,  \nMara Fen\"]]. The passage independently supports the edge; ordinary attribution is to Mara Fen.",
+        "source_ids": [
+          "f5r7"
+        ]
+      },
+      {
+        "proposition": "Mara Fen gave permission to send the paper meeting pack to her workplace.",
+        "status": "explicitly contradicted",
+        "reason": "In her 14 October 2026 secure message, received by the cut-off, Mara expressly says, \"I don’t give permission for it to be sent there.\" She instructs Rowan Bell to upload the pack to the secure portal instead. Rowan's meeting note is consistent with that instruction. Neither passage establishes that the pack was actually uploaded or sent.",
+        "source_ids": [
+          "d3k6",
+          "v2j5"
+        ]
+      },
+      {
+        "proposition": "Dana Vale's genetic or legal parentage of Ellis Rook, or any adoptive or caregiving relationship between them, is established.",
+        "status": "unresolved",
+        "reason": "Casey Lin expressly limits the account to who carried and gave birth and disclaims an opinion on genetics, legal parentage, adoption or caregiving. The forward repeats that limitation, and the identity-only reference sheet cannot resolve any of these questions. The file neither establishes nor contradicts those relationships.",
+        "source_ids": [
+          "q4b9",
+          "m6w2",
+          "p8n4"
+        ]
+      }
+    ],
+    "unavailable_basis": [
+      "Cut-off: 10:00 on 16 October 2026. The meeting note sets the cut-off, but the packet does not provide exact receipt times for each item. The forward's 12 October 2026 at 14:20 reference dates the request to copy the reply, not necessarily the forward's dispatch or receipt.",
+      "No supplied passage links Mara Fen or Theo Baird to Dana Vale or Ellis Rook by a scored relationship. Inclusion in the same file is not evidence of kinship. No spouse relationship or named trust relationship is established; absence from this packet is not evidence that none exists.",
+      "Before drafting, ask Mara which family members and intended beneficiaries should be reflected in the will, whether Dana Vale or Ellis Rook is relevant to her instructions, and whether any legal parentage, adoption, dependency or trust arrangements need verification. Use the secure portal for the meeting pack and verify upload separately if needed."
+    ]
+  },
+  "first-origin-and-copy-omitted": {
+    "source_ids": [
+      "v2j5",
+      "p8n4",
+      "t9c3",
+      "f5r7",
+      "d3k6"
+    ],
+    "source_body_sha256": {
+      "v2j5": "e55a50805d0267e16ca38417580cb3e5e5e66c14dd0934ca9ac6b9b676bba569",
+      "p8n4": "d2dab9b63bb664e2a41eb66dcea4bf5e497ef83e9ddc50205cd47c02030bd5dd",
+      "t9c3": "275027e21e0d651e4932d8cb3c61e0c988a9f96c0ffa45d41fabf958d24ed98b",
+      "f5r7": "c17e964d44b618439716e7ef087f1ac5c0cac84f7ff2860796c3933e020aea34",
+      "d3k6": "da745d010e04a6b66cb4af3d293ab03601da361500fe04912ccc5895c39869af"
+    },
+    "packet_sha256": "01e396595fa3bb4ddd192d1dc72e91110b3452eea4f6bc295eb71a31873b7221",
+    "output_sha256": "c3f3c3c7766f291778ea5f508c04fd4ec76d6b953775fe6ae5ad100aaf0f3ab2",
+    "edges": [
+      [
+        "Mara Fen",
+        "sibling_of",
+        "Theo Baird"
+      ]
+    ],
+    "decisions": [
+      {
+        "proposition": "Mara Fen and Theo Baird are siblings.",
+        "status": "supported",
+        "reason": "Mara Fen reported this directly from personal knowledge in her 8 October 2026 message, which is in the cut-off file. No supplied passage competes with it. The sole identified minimum sufficient alternative is the singleton exact pair (f5r7, «Theo Baird is my brother, and I can confirm that from my own personal knowledge.\n\nThanks,  \nMara Fen»). The signature resolves “my” to Mara Fen. Under benchmark_v2_evidence_v1, this passage independently supports the edge and is attributed to Mara Fen in f5r7. Under attached_sufficient_set_v1, that same singleton is the complete set for this edge. No scored edge requires multiple sources.",
+        "source_ids": [
+          "f5r7"
+        ]
+      },
+      {
+        "proposition": "Dana Vale carried and gave birth to Ellis Rook in the 28 September 2026 delivery.",
+        "status": "explicitly contradicted",
+        "reason": "Robin Moss, who says they were present throughout the delivery and relied on their own observation, reported on 12 October 2026 at 14:00: «T17 is not the birth parent of T42.» Robin expressly limited the answer to who carried and gave birth. Rowan Bell's 9 October identity-only check supplies the separate name key: «T17 — Dana Vale  \nT42 — Ellis Rook». Both records are in the cut-off file. The name key supplies identities, not relationship evidence. Rowan says they did not witness the delivery, and no supplied passage asserts the opposite or provides a second independent confirmation.",
+        "source_ids": [
+          "t9c3",
+          "p8n4",
+          "v2j5"
+        ]
+      },
+      {
+        "proposition": "Dana Vale is a parent of Ellis Rook on a basis other than carrying and giving birth.",
+        "status": "unresolved",
+        "reason": "Robin Moss expressly excluded genetic, legal, adoptive and caregiving status from the 12 October report. The 9 October identity check had no relationship fields. The narrow birth finding neither establishes nor rules out another parental relationship, and caregiving alone would not establish parentage. If this relationship matters to the will, ask what status is claimed and what evidence supports it.",
+        "source_ids": [
+          "t9c3",
+          "p8n4"
+        ]
+      },
+      {
+        "proposition": "Companion register — Rowan Bell is identified as Mara Fen's will-planning adviser.",
+        "status": "supported",
+        "reason": "Rowan identifies themself as the will-planning adviser on the 9 October name-reference sheet naming Mara Fen as the client and prepared the cut-off meeting note. This is an adviser role, not a family or trust relationship. No supplied passage competes with it.",
+        "source_ids": [
+          "p8n4",
+          "v2j5"
+        ]
+      },
+      {
+        "proposition": "Companion register — Mara Fen instructed Rowan Bell not to send the paper meeting pack to her workplace and to upload it to the secure portal instead.",
+        "status": "supported",
+        "reason": "Mara gave this instruction directly in her 14 October 2026 secure message, which is in the cut-off file. Rowan's meeting note is consistent with portal use. The refusal concerns paper delivery to the workplace; it is not a blanket refusal of paper delivery to every address.",
+        "source_ids": [
+          "d3k6",
+          "v2j5"
+        ]
+      },
+      {
+        "proposition": "Companion register — The meeting pack was uploaded to the secure portal by 10:00 on 16 October 2026.",
+        "status": "unresolved",
+        "reason": "Mara's instruction and Rowan's note establish the intended delivery method, not that the upload occurred. Confirm completion before relying on portal delivery.",
+        "source_ids": [
+          "d3k6",
+          "v2j5"
+        ]
+      }
+    ],
+    "unavailable_basis": [
+      "The supplied record ends at 10:00 on 16 October 2026. The messages and records cited above are in that file, but separate receipt timestamps are not supplied.",
+      "The intake identity details were not retained and contained no relationship fields. No additional delivery confirmation can be inferred from the meeting note's plural reference to confirmations, and the file does not identify who carried and gave birth to Ellis Rook.",
+      "No other scored relationship is established. In particular, there is no basis to record a spouse, another parent or sibling relationship, or a trust relationship. Before settling drafting instructions, ask Mara which other family members or trusts are relevant and obtain evidence for any relationship or trust role on which the drafting will rely."
+    ]
+  },
+  "first-name-link-withheld": {
+    "source_ids": [
+      "v2j5",
+      "p8n4",
+      "q4b9",
+      "t9c3",
+      "m6w2",
+      "f5r7",
+      "d3k6"
+    ],
+    "source_body_sha256": {
+      "v2j5": "e55a50805d0267e16ca38417580cb3e5e5e66c14dd0934ca9ac6b9b676bba569",
+      "p8n4": "a4f86a2e3b72ead5cfea41194f4fd6ab5fbd1ccb56cd01956eb90bbd64fad1af",
+      "q4b9": "02defa885d1d0ec78fa3285bc2b47fcd0321fb0d725b0422dff2554675788952",
+      "t9c3": "ec32c00c15c44122416c3e341fd5fa0d3a56f27921788b1aa15214ced93eded7",
+      "m6w2": "e4952cdec722c1b80835b0d6be4cff241ee185e80bd2775062a575e99a4a2b66",
+      "f5r7": "c17e964d44b618439716e7ef087f1ac5c0cac84f7ff2860796c3933e020aea34",
+      "d3k6": "da745d010e04a6b66cb4af3d293ab03601da361500fe04912ccc5895c39869af"
+    },
+    "packet_sha256": "ca7fa7598177f8758354a076cabb73bf82c578b21b36d93ce6014c77410d9be4",
+    "output_sha256": "10ca9952eaed45bd0b322d8b7440800a7424a1d010c4b98f31b2bc4eab9ccd14",
+    "edges": [
+      [
+        "Mara Fen",
+        "sibling_of",
+        "Theo Baird"
+      ]
+    ],
+    "decisions": [
+      {
+        "proposition": "Mara Fen and Theo Baird are siblings at the 16 October 2026 meeting cut-off.",
+        "status": "supported",
+        "reason": "Mara Fen is the originator and reporter. In her 8 October 2026 secure message, received by the cut-off, she identifies Theo Baird as her brother from personal knowledge. No passage competes with that statement. The only identified minimum sufficient set is [(f5r7, \"Theo Baird is my brother, and I can confirm that from my own personal knowledge.\n\nThanks,  \nMara Fen\")]. This passage supports the edge on its own for benchmark_v2_evidence_v1 and is the complete set attached to this edge for attached_sufficient_set_v1. No scored edge requires multiple sources.",
+        "source_ids": [
+          "f5r7"
+        ]
+      },
+      {
+        "proposition": "T42 is Ellis Rook.",
+        "status": "supported",
+        "reason": "Rowan Bell's 9 October 2026 name-reference sheet, in the file by the cut-off, states \"T42 — Ellis Rook\". Bell reports checking the names against identity-only intake details and supplying the references orally. No passage gives a competing identification. The sheet supplies identity, not kinship.",
+        "source_ids": [
+          "p8n4"
+        ]
+      },
+      {
+        "proposition": "The person referred to as T17 carried and gave birth to Ellis Rook on 28 September 2026.",
+        "status": "supported",
+        "reason": "Casey Lin and Robin Moss independently report firsthand observations of the delivery in separate 12 October 2026 replies in the file by the cut-off. Each expressly states \"T17 is the birth parent of T42.\" Rowan Bell's sheet identifies T42 as Ellis Rook. Imani Cole's filing forward preserves Casey Lin's original reply; it is another copy of the same account, not a third witness. Bell's meeting note expressly says Bell did not witness the delivery. No supplied passage disputes who gave birth. This supports the birth fact with T17 still unnamed, not a scored edge between two named people.",
+        "source_ids": [
+          "p8n4",
+          "q4b9",
+          "t9c3",
+          "m6w2",
+          "v2j5"
+        ]
+      },
+      {
+        "proposition": "The full name of T17, including whether T17 is Mara Fen, can be established from the supplied file.",
+        "status": "unresolved",
+        "reason": "The 9 October reference sheet in the cut-off file names Mara Fen as the client, but it does not visibly link her or any other named person to T17. The withheld text cannot be reconstructed from Bell's reference to having checked both names. Neither firsthand reply nor the forwarded copy supplies the missing link. Joining the name sheet to Casey's original, Robin's independent reply, or Casey's forwarded reply resolves only T42; none is a sufficient set for a named parent_of edge. This is missing evidence, not a conflict.",
+        "source_ids": [
+          "p8n4",
+          "q4b9",
+          "t9c3",
+          "m6w2"
+        ]
+      },
+      {
+        "proposition": "Ellis Rook's genetic, legal, adoptive or caregiving relationships are established by the delivery confirmations.",
+        "status": "unresolved",
+        "reason": "The two firsthand reports dated 12 October 2026 and present by the cut-off expressly limit their accounts to who carried and gave birth on 28 September. The forward repeats Casey Lin's limitation. No supplied source establishes or disputes those other statuses. The adviser should clarify legal parentage and any adoption or caregiving arrangements relevant to drafting rather than infer them from the delivery.",
+        "source_ids": [
+          "q4b9",
+          "t9c3",
+          "m6w2"
+        ]
+      },
+      {
+        "proposition": "Mara Fen gave permission to send the paper meeting pack to her workplace.",
+        "status": "explicitly contradicted",
+        "reason": "Mara Fen directly withheld permission in her 14 October 2026 secure message, received by the cut-off, and requested upload to the secure portal instead. Rowan Bell's meeting note agrees that the secure portal is to be used. No competing authorization or evidence of actual dispatch appears in the file. This is a handling instruction, not a graph relationship.",
+        "source_ids": [
+          "d3k6",
+          "v2j5"
+        ]
+      }
+    ],
+    "unavailable_basis": [
+      "The visible reference sheet contains withheld text and says the identity-only intake details were not retained. Ask the adviser to verify and record an explicit full-name link for T17 before recording a named birth-parent relationship.",
+      "No supplied passage supports another named parent, sibling or spouse edge, or any trust relationship or office. These omissions are not denials: common parentage alone would not establish siblinghood, and shared children would not establish marriage.",
+      "The file records the secure-portal instruction but does not establish that the pack was uploaded or that a paper copy was sent."
+    ]
+  },
+  "second-name-link-withheld": {
+    "source_ids": [
+      "v2j5",
+      "p8n4",
+      "q4b9",
+      "t9c3",
+      "m6w2",
+      "f5r7",
+      "d3k6"
+    ],
+    "source_body_sha256": {
+      "v2j5": "e55a50805d0267e16ca38417580cb3e5e5e66c14dd0934ca9ac6b9b676bba569",
+      "p8n4": "a678c7001cd3ee932271471a155aacd397b39422f7546adb60faa7c923a3061c",
+      "q4b9": "02defa885d1d0ec78fa3285bc2b47fcd0321fb0d725b0422dff2554675788952",
+      "t9c3": "ec32c00c15c44122416c3e341fd5fa0d3a56f27921788b1aa15214ced93eded7",
+      "m6w2": "e4952cdec722c1b80835b0d6be4cff241ee185e80bd2775062a575e99a4a2b66",
+      "f5r7": "c17e964d44b618439716e7ef087f1ac5c0cac84f7ff2860796c3933e020aea34",
+      "d3k6": "da745d010e04a6b66cb4af3d293ab03601da361500fe04912ccc5895c39869af"
+    },
+    "packet_sha256": "8a5af85bb26924cddbf9beef3b68ea47638767831a8eb2f5579fcfaa86015b2c",
+    "output_sha256": "04699a14023c965007c403f84d8a14b981477473d7a594233ab3a9b68b4e00c7",
+    "edges": [
+      [
+        "Mara Fen",
+        "sibling_of",
+        "Theo Baird"
+      ]
+    ],
+    "decisions": [
+      {
+        "proposition": "Mara Fen and Theo Baird are siblings.",
+        "status": "supported",
+        "reason": "Mara Fen states this from personal knowledge in her 8 October 2026 secure message, which was in the file by the cut-off. No passage competes with her statement. The only identified minimum sufficient set is the single pair (f5r7, \"Theo Baird is my brother, and I can confirm that from my own personal knowledge.\n\nThanks,  \nMara Fen\"). This passage independently supports both named endpoints and the relationship for ordinary quotation and attribution, and is the complete attached sufficient set for this edge.",
+        "source_ids": [
+          "f5r7"
+        ]
+      },
+      {
+        "proposition": "T17 refers to Dana Vale.",
+        "status": "supported",
+        "reason": "Rowan Bell’s 9 October 2026 name-reference sheet, in the cut-off file, states \"T17 — Dana Vale\". Bell reports checking the references against identity-only intake details and supplying the references orally. The intake details contained no relationship fields and were not retained. No competing identification is supplied.",
+        "source_ids": [
+          "p8n4"
+        ]
+      },
+      {
+        "proposition": "The person referred to as T17 carried and gave birth to the child referred to as T42 on 28 September 2026.",
+        "status": "supported",
+        "reason": "Casey Lin and Robin Moss independently report witnessing the delivery firsthand. Each original inbox message is dated 12 October 2026 at 14:00, was in the cut-off file, and states \"T17 is the birth parent of T42.\" Imani Cole’s filing forward, also in the cut-off file, reproduces Casey Lin’s response; it is another copy of Casey’s account, not a third independent account. Rowan Bell did not witness the delivery. The two eyewitness accounts agree, and no supplied passage contradicts them.",
+        "source_ids": [
+          "q4b9",
+          "t9c3",
+          "m6w2",
+          "v2j5"
+        ]
+      },
+      {
+        "proposition": "Dana Vale’s birth-parent relationship to the child can be recorded as an edge with two exact named endpoints.",
+        "status": "unresolved",
+        "reason": "The name-reference sheet resolves T17 but supplies no visible mapping for T42. Neither eyewitness message nor the forwarded copy names the child. Combining the sheet with any of those reports still leaves one endpoint unnamed; no sufficient set exists for a named parent_of edge. The missing name does not contradict the delivery evidence. Ask the adviser to verify the child’s exact name and its link to T42 before recording the edge.",
+        "source_ids": [
+          "p8n4",
+          "q4b9",
+          "t9c3",
+          "m6w2"
+        ]
+      },
+      {
+        "proposition": "Dana Vale’s genetic, legal, adoptive or caregiving status in relation to T42 is established by the delivery evidence.",
+        "status": "unresolved",
+        "reason": "Both witnesses expressly limit their reports to who carried and gave birth to the child. The forwarded copy preserves Casey Lin’s limitation. These passages neither establish nor deny any of the other statuses. If one of those statuses matters to the will, verify it separately rather than inferring it from the birth.",
+        "source_ids": [
+          "q4b9",
+          "t9c3",
+          "m6w2"
+        ]
+      },
+      {
+        "proposition": "Mara Fen gave permission to send the paper meeting pack to her workplace.",
+        "status": "explicitly contradicted",
+        "reason": "In her 14 October 2026 secure message, received by the cut-off, Mara Fen states \"I don’t give permission for it to be sent there.\" She instructs Rowan Bell to upload the pack to the secure portal instead. Bell’s meeting note is consistent with that instruction. Neither record establishes that the pack was actually uploaded.",
+        "source_ids": [
+          "d3k6",
+          "v2j5"
+        ]
+      }
+    ],
+    "unavailable_basis": [
+      "The exact name and explicit identity link for T42 are not visible in the supplied file. Do not reconstruct the withheld text or infer the child’s identity.",
+      "No supplied passage establishes genetic, legal, adoptive or caregiving status from the witnessed birth.",
+      "No other named relationship is established at the cut-off. In particular, neither sibling status nor childbirth establishes marriage, and there is no supplied basis for a trust relationship."
+    ]
+  },
+  "source-order-reversed": {
+    "source_ids": [
+      "d3k6",
+      "f5r7",
+      "m6w2",
+      "t9c3",
+      "q4b9",
+      "p8n4",
+      "v2j5"
+    ],
+    "source_body_sha256": {
+      "d3k6": "da745d010e04a6b66cb4af3d293ab03601da361500fe04912ccc5895c39869af",
+      "f5r7": "c17e964d44b618439716e7ef087f1ac5c0cac84f7ff2860796c3933e020aea34",
+      "m6w2": "e4952cdec722c1b80835b0d6be4cff241ee185e80bd2775062a575e99a4a2b66",
+      "t9c3": "275027e21e0d651e4932d8cb3c61e0c988a9f96c0ffa45d41fabf958d24ed98b",
+      "q4b9": "02defa885d1d0ec78fa3285bc2b47fcd0321fb0d725b0422dff2554675788952",
+      "p8n4": "d2dab9b63bb664e2a41eb66dcea4bf5e497ef83e9ddc50205cd47c02030bd5dd",
+      "v2j5": "e55a50805d0267e16ca38417580cb3e5e5e66c14dd0934ca9ac6b9b676bba569"
+    },
+    "packet_sha256": "d77400a98df60be574fd307106d868df06eae1d0211d3d8d390ea788486e3c30",
+    "output_sha256": "e925609ad04c1ef1e7a2d94e1839dab9f90aed9adf6d08b907bfdca6580ed6fe",
+    "edges": [
+      [
+        "Mara Fen",
+        "sibling_of",
+        "Theo Baird"
+      ]
+    ],
+    "decisions": [
+      {
+        "proposition": "Mara Fen and Theo Baird are siblings.",
+        "status": "supported",
+        "reason": "Mara Fen is both the origin and the reporter of this firsthand confirmation, dated 8 October 2026 and in the file by the cut-off. No passage competes with it. The only identified minimum sufficient alternative is the singleton set (f5r7, \"Theo Baird is my brother, and I can confirm that from my own personal knowledge.\n\nThanks,  \nMara Fen\"). This passage independently establishes the edge for quotation and attribution under benchmark_v2_evidence_v1, and the same complete set is attached here to this edge under attached_sufficient_set_v1. No supported edge requires multiple sources.",
+        "source_ids": [
+          "f5r7"
+        ]
+      },
+      {
+        "proposition": "T17 identifies Dana Vale and T42 identifies Ellis Rook.",
+        "status": "supported",
+        "reason": "Rowan Bell prepared the internal reference sheet and reports checking both names against identity-only intake details on 9 October 2026 and supplying the references orally. The sheet was in the file by the cut-off and provides the unopposed mapping: \"T17 — Dana Vale  \nT42 — Ellis Rook\". The intake details had no relationship fields and were not retained. The mapping resolves the endpoints of the witness claims but does not support either account of the birth.",
+        "source_ids": [
+          "p8n4"
+        ]
+      },
+      {
+        "proposition": "Dana Vale carried and gave birth to Ellis Rook on 28 September 2026.",
+        "status": "unresolved",
+        "reason": "The two original inbox replies are both dated 12 October 2026 at 14:00 and were in the file by the cut-off. Casey Lin says in q4b9, \"T17 is the birth parent of T42.\" Robin Moss says in t9c3, \"T17 is not the birth parent of T42.\" Each is the origin and reporter of a competing account, claims to have been present throughout the delivery, and reports firsthand knowledge rather than reliance on another account or record. The name sheet identifies the people in both replies but does not resolve the conflict. In m6w2, Imani Cole copies Casey's original reply into the meeting thread for filing, citing a request made at 14:20 on 12 October; the copy was in the file by the cut-off but is not independent corroboration. Rowan Bell's meeting note says Rowan did not witness the delivery. Nothing in the file gives a basis to prefer either witness, so no parent_of edge is recorded. Ask the adviser to reconcile the accounts and obtain independent evidence of who gave birth before relying on either account.",
+        "source_ids": [
+          "m6w2",
+          "t9c3",
+          "q4b9",
+          "p8n4",
+          "v2j5"
+        ]
+      },
+      {
+        "proposition": "Mara Fen gave permission to send the paper meeting pack to her workplace.",
+        "status": "explicitly contradicted",
+        "reason": "In her own secure message dated 14 October 2026, in the file by the cut-off, Mara Fen expressly states, \"I don’t give permission for it to be sent there.\" No passage grants contrary permission.",
+        "source_ids": [
+          "d3k6"
+        ]
+      },
+      {
+        "proposition": "The meeting pack is to be uploaded to the secure portal instead of sent to Mara Fen's workplace.",
+        "status": "supported",
+        "reason": "Mara Fen gives the instruction directly in her 14 October 2026 secure message: \"Please upload it to the secure portal instead.\" Rowan Bell's meeting note at the 16 October cut-off says paper copies are unnecessary because the secure portal is to be used. This confirms the handling instruction, not that the upload occurred.",
+        "source_ids": [
+          "d3k6",
+          "v2j5"
+        ]
+      }
+    ],
+    "unavailable_basis": [
+      "The cut-off is 10:00 on 16 October 2026. Inclusion in the supplied file establishes availability by then; message and request timestamps are not separate proof of exact receipt times.",
+      "Neither birth witness addresses genetic, legal, adoptive, or caregiving status. Do not infer any of those statuses from either account, even if the birth question is later resolved. Ask the adviser which status matters for the intended drafting and what evidence is needed to establish it.",
+      "The packet does not establish any other scored relationship. Silence is not evidence that another relationship does not exist."
+    ]
+  },
+  "concordant-proof-q4b9": {
+    "source_ids": [
+      "q4b9",
+      "p8n4"
+    ],
+    "source_body_sha256": {
+      "q4b9": "02defa885d1d0ec78fa3285bc2b47fcd0321fb0d725b0422dff2554675788952",
+      "p8n4": "0d7b39414c7129c173a789c6aa395690229e54f2b96125ab03b1f8b7d4ae6415"
+    },
+    "packet_sha256": "43a5a2b2993ea8afb0de9f67ae24bdad55bf851f9a40bb7beed2cfe0d6ad89db",
+    "output_sha256": "8ba0151bedb4d24915149fbffe6570e9ab3a6f2897dfd3407aa6123f2539e499",
+    "edges": [
+      [
+        "Dana Vale",
+        "parent_of",
+        "Ellis Rook"
+      ]
+    ],
+    "decisions": [
+      {
+        "proposition": "Dana Vale is the birth parent of Ellis Rook as of the 16 October 2026, 10:00 meeting cut-off.",
+        "status": "supported",
+        "reason": "The birth occurred on 28 September 2026. Casey Lin is both the origin and the reporter of the firsthand account, sent to Rowan Bell on 12 October 2026 at 14:00. The separate identity key resolves T17 to Dana Vale and T42 to Ellis Rook; its author and date are not stated. Both excerpts are supplied as part of the cut-off file, but neither has a separate receipt timestamp. No passage conflicts with the birth-parent account or the identity key. The only identified minimum sufficient set, attached to [Dana Vale, parent_of, Ellis Rook], is { (q4b9, \"T17 is the birth parent of T42.\"), (p8n4, \"T17 — Dana Vale  \nT42 — Ellis Rook\") }. q4b9 establishes the relationship between the coded references but does not name either endpoint; p8n4 names both endpoints but does not establish the relationship. Ordinary quotation and attribution under benchmark_v2_evidence_v1: N/A for this edge because neither source independently supports the named edge.",
+        "source_ids": [
+          "q4b9",
+          "p8n4"
+        ]
+      },
+      {
+        "proposition": "Dana Vale is Ellis Rook’s genetic parent, legal parent, adoptive parent, or caregiver.",
+        "status": "unresolved",
+        "reason": "None of these roles is established or contradicted. Casey Lin expressly limits the firsthand report to who carried and gave birth and gives no opinion on genetics, legal parentage, adoption or caregiving. The identity key adds no evidence on these matters. If drafting depends on parentage or caregiving status, ask what status is relevant and what records establish it.",
+        "source_ids": [
+          "q4b9",
+          "p8n4"
+        ]
+      },
+      {
+        "proposition": "Mara Fen has a family or trust relationship relevant to the will involving Dana Vale or Ellis Rook.",
+        "status": "unresolved",
+        "reason": "Neither excerpt mentions Mara Fen or a trust. This does not contradict any such relationship. Ask how, if at all, Dana Vale and Ellis Rook are connected to Mara Fen and whether Mara intends either person to be provided for.",
+        "source_ids": [
+          "q4b9",
+          "p8n4"
+        ]
+      }
+    ],
+    "unavailable_basis": [
+      "No independent named account establishes the birth-parent edge without the identity key.",
+      "No supplied passage supports a second parent, a spouse or sibling relationship, or a settlor, trustee or beneficiary relationship. Missing evidence is not a contradiction.",
+      "The identity key’s provenance and the individual receipt timestamps are not documented in the supplied excerpts."
+    ]
+  },
+  "concordant-proof-t9c3": {
+    "source_ids": [
+      "t9c3",
+      "p8n4"
+    ],
+    "source_body_sha256": {
+      "t9c3": "ec32c00c15c44122416c3e341fd5fa0d3a56f27921788b1aa15214ced93eded7",
+      "p8n4": "0d7b39414c7129c173a789c6aa395690229e54f2b96125ab03b1f8b7d4ae6415"
+    },
+    "packet_sha256": "e2bc0613026a1ffc0d143ea4a7e724d2d5b9e4985def01419aeb721a719caaa3",
+    "output_sha256": "6aeedf3e442d94583218ae066e534b0897feb4a3752a456c00e2f36b3f340c0c",
+    "edges": [
+      [
+        "Dana Vale",
+        "parent_of",
+        "Ellis Rook"
+      ]
+    ],
+    "decisions": [
+      {
+        "proposition": "Dana Vale parent_of Ellis Rook (birth parent only)",
+        "status": "supported",
+        "reason": "The sole minimum sufficient set for this edge is {(t9c3, “T17 is the birth parent of T42.”), (p8n4, “T17 — Dana Vale  \nT42 — Ellis Rook”)}. Robin Moss, the firsthand witness and reporter, wrote to Rowan Bell on 12 October 2026 about the delivery on 28 September 2026. The identity key names both people but makes no parentage claim; Moss's account establishes birth parentage but names neither person. Both excerpts are in the supplied cut-off file, though no separate receipt timestamps are shown and the identity key has no stated author or date. There is no competing passage. Ordinary quotation and attribution are N/A because neither source independently establishes the named edge.",
+        "source_ids": [
+          "t9c3",
+          "p8n4"
+        ]
+      },
+      {
+        "proposition": "Dana Vale has genetic, legal, adoptive or caregiving parent status with respect to Ellis Rook",
+        "status": "unresolved",
+        "reason": "Moss expressly limits the firsthand account to who carried and gave birth. That limitation neither establishes nor contradicts any of these other statuses, and the identity key does not address them.",
+        "source_ids": [
+          "t9c3",
+          "p8n4"
+        ]
+      },
+      {
+        "proposition": "Dana Vale or Ellis Rook has a relationship to Mara Fen relevant to her will",
+        "status": "unresolved",
+        "reason": "Neither excerpt connects either person to Mara Fen. The adviser should ask how, if at all, they are connected to Mara and confirm any legal parentage relevant to the proposed drafting.",
+        "source_ids": [
+          "t9c3",
+          "p8n4"
+        ]
+      }
+    ],
+    "unavailable_basis": [
+      "No supplied passage establishes a sibling, spouse or trust relationship.",
+      "The identity key's provenance and the excerpts' exact receipt times are not supplied."
+    ]
+  },
+  "concordant-proof-m6w2": {
+    "source_ids": [
+      "m6w2",
+      "p8n4"
+    ],
+    "source_body_sha256": {
+      "m6w2": "e4952cdec722c1b80835b0d6be4cff241ee185e80bd2775062a575e99a4a2b66",
+      "p8n4": "0d7b39414c7129c173a789c6aa395690229e54f2b96125ab03b1f8b7d4ae6415"
+    },
+    "packet_sha256": "9aafff732c79527e6a1a21f0b642bfceda6d14de0deed508dc640aa8a3c14aa9",
+    "output_sha256": "f4631629141bc9e39b4351356b5517a01bc270621325a28ecb38b70e1a0c353a",
+    "edges": [
+      [
+        "Dana Vale",
+        "parent_of",
+        "Ellis Rook"
+      ]
+    ],
+    "decisions": [
+      {
+        "proposition": "Dana Vale is the birth parent of Ellis Rook as of the 16 October 2026, 10:00 cut-off.",
+        "status": "supported",
+        "reason": "Casey Lin originated and reported the claim in a 12 October 2026 reply at 14:00, based on personally witnessing the delivery on 28 September 2026. Imani Cole copied that reply into the meeting thread; the copy is not independent corroboration. p8n4 identifies both people but does not state the relationship. Its author and date are not stated. Both excerpts are in the supplied cut-off file, but their exact receipt times are not shown. No passage competes with the birth-parent claim. benchmark_v2_evidence_v1: ordinary quotation N/A; ordinary attribution N/A, because neither Source independently establishes the named edge. attached_sufficient_set_v1: the sole identified minimum sufficient set attached to [Dana Vale, parent_of, Ellis Rook] is [(m6w2, \"T17 is the birth parent of T42.\"), (p8n4, \"T17 — Dana Vale  \nT42 — Ellis Rook\")].",
+        "source_ids": [
+          "m6w2",
+          "p8n4"
+        ]
+      },
+      {
+        "proposition": "Dana Vale is Ellis Rook’s genetic or legal parent, has an adoptive relationship to Ellis Rook, or provides care for Ellis Rook.",
+        "status": "unresolved",
+        "reason": "Casey Lin expressly limits the account to who carried and gave birth. That limitation neither establishes nor contradicts genetic parentage, legal parentage, adoption, or caregiving. The adviser should confirm legal parentage and any adoption or caregiving arrangements separately if they affect drafting.",
+        "source_ids": [
+          "m6w2",
+          "p8n4"
+        ]
+      }
+    ],
+    "unavailable_basis": [
+      "The original case-inbox reply is quoted in m6w2 but is not separately supplied, so it is not a second proof route.",
+      "Neither excerpt connects Mara Fen to Dana Vale or Ellis Rook or establishes any other scored relationship. The adviser should ask how, if at all, Dana Vale and Ellis Rook relate to Mara Fen’s drafting instructions."
+    ]
+  },
+  "identity-excerpt-only": {
+    "source_ids": [
+      "p8n4"
+    ],
+    "source_body_sha256": {
+      "p8n4": "0d7b39414c7129c173a789c6aa395690229e54f2b96125ab03b1f8b7d4ae6415"
+    },
+    "packet_sha256": "3d1fdf2c4bae488bd9620e7bd40409d00c957667835399e84635e2fa2b19526d",
+    "output_sha256": "5264a43f22f9107b597154fff5cd629b5cbf92ef5dfbb07f8f13ea4bc2b6286b",
+    "edges": [],
+    "decisions": [
+      {
+        "proposition": "The excerpt lists T17 alongside Dana Vale.",
+        "status": "supported",
+        "reason": "The excerpt states “T17 — Dana Vale”. It does not identify what T17 denotes or state any relationship.",
+        "source_ids": [
+          "p8n4"
+        ]
+      },
+      {
+        "proposition": "The excerpt lists T42 alongside Ellis Rook.",
+        "status": "supported",
+        "reason": "The excerpt states “T42 — Ellis Rook”. It does not identify what T42 denotes or state any relationship.",
+        "source_ids": [
+          "p8n4"
+        ]
+      },
+      {
+        "proposition": "Either listing establishes a current ontology relationship at the meeting cut-off.",
+        "status": "unresolved",
+        "reason": "Neither listing states a predicate or identifies a second named endpoint. Neither names Mara Fen. The excerpt contains no competing statement and establishes no conflict. The lack of evidence does not show that no relationship exists.",
+        "source_ids": [
+          "p8n4"
+        ]
+      }
+    ],
+    "unavailable_basis": [
+      "The origin, reporter, effective date, and receipt time are not stated. Receipt by 10:00 on 16 October 2026 cannot be verified from the excerpt.",
+      "No sufficient evidence set is available for any graph edge.",
+      "Before settling drafting instructions, clarify what T17 and T42 denote, how Dana Vale and Ellis Rook relate to Mara Fen, if at all, and what dated records establish any relevant relationships or roles."
+    ]
+  },
+  "forward-excerpt-only": {
+    "source_ids": [
+      "m6w2"
+    ],
+    "source_body_sha256": {
+      "m6w2": "e4952cdec722c1b80835b0d6be4cff241ee185e80bd2775062a575e99a4a2b66"
+    },
+    "packet_sha256": "32090d7b10ff799fb4e2fadb8a84c7b8d0909f7a06202cf4c4e49a92d273de63",
+    "output_sha256": "908f8a0485866255d83319c43aeb31981f3828cac1935f650ed31acccfd34060",
+    "edges": [],
+    "decisions": [
+      {
+        "proposition": "T17 carried and gave birth to T42 on 28 September 2026.",
+        "status": "supported",
+        "reason": "Casey Lin wrote, “T17 is the birth parent of T42.” Casey reports witnessing the delivery firsthand on 28 September 2026, already knowing T17, and subsequently seeing T42 in person. Casey's case-inbox reply is dated 12 October 2026 at 14:00. Imani Cole copied that reply into the meeting correspondence thread after a request dated 12 October 2026 at 14:20. The supplied file places the copy in the material received by the 16 October 2026 10:00 cut-off, but gives no exact receipt time for the copy. Imani's copy is not independent corroboration. No competing account appears in the excerpt.",
+        "source_ids": [
+          "m6w2"
+        ]
+      },
+      {
+        "proposition": "The full names of T17 and T42, and their relationship, if any, to Mara Fen, can be established from the supplied file.",
+        "status": "unresolved",
+        "reason": "Casey used references Rowan Bell supplied orally. The excerpt neither links either reference to a full name nor connects either person to Mara Fen. The birth account therefore does not establish a graph edge between named endpoints. There is no competing identity claim.",
+        "source_ids": [
+          "m6w2"
+        ]
+      },
+      {
+        "proposition": "T17's genetic or legal parentage of T42, or any adoptive or caregiving relationship between them, is established.",
+        "status": "unresolved",
+        "reason": "Casey expressly limits the firsthand account to who carried and gave birth and offers no opinion on genetics, legal parentage, adoption or caregiving. The excerpt neither establishes nor contradicts those separate propositions.",
+        "source_ids": [
+          "m6w2"
+        ]
+      }
+    ],
+    "unavailable_basis": [
+      "No sufficient evidence set identifies both birth-account endpoints by full name. There is no named edge to which quotation, attribution or an attached sufficient set can be assigned.",
+      "Before settling drafting instructions, confirm the full names corresponding to T17 and T42, whether either is connected to Mara Fen, and what evidence establishes any legal parentage or adoption relevant to the will. Do not infer those facts from the delivery account."
+    ]
+  },
+  "conflicting-excerpts": {
+    "source_ids": [
+      "q4b9",
+      "t9c3",
+      "p8n4"
+    ],
+    "source_body_sha256": {
+      "q4b9": "02defa885d1d0ec78fa3285bc2b47fcd0321fb0d725b0422dff2554675788952",
+      "t9c3": "275027e21e0d651e4932d8cb3c61e0c988a9f96c0ffa45d41fabf958d24ed98b",
+      "p8n4": "0d7b39414c7129c173a789c6aa395690229e54f2b96125ab03b1f8b7d4ae6415"
+    },
+    "packet_sha256": "60e03573612f44339b94d72639fc256fce47f5d0226c6804554c3e8df889d0f6",
+    "output_sha256": "0510b0d92c232b85cc560b617b278a53bd7c1dfd2be047cf9a537f566cf89e54",
+    "edges": [],
+    "decisions": [
+      {
+        "proposition": "Dana Vale carried and gave birth to Ellis Rook on 28 September 2026.",
+        "status": "unresolved",
+        "reason": "p8n4 identifies T17 as Dana Vale and T42 as Ellis Rook. In separate messages to Rowan Bell dated 12 October 2026 at 14:00, Casey Lin states, “T17 is the birth parent of T42.” Robin Moss states, “T17 is not the birth parent of T42.” Both report being present throughout the 28 September delivery and relying on firsthand observation rather than another account or record. Both messages are in the supplied cut-off file. The reports directly contradict each other, and the file gives no basis to prefer either one. No parent_of edge is supported.",
+        "source_ids": [
+          "q4b9",
+          "t9c3",
+          "p8n4"
+        ]
+      }
+    ],
+    "unavailable_basis": [
+      "The file does not state who prepared the identity key, when it was prepared, or when any excerpt was received.",
+      "The witness accounts address only who carried and gave birth. They do not establish genetic, legal, adoptive or caregiving status. The file does not establish how either named person relates to Mara Fen.",
+      "Before settling drafting instructions, ask what evidence, if any, can resolve the conflicting birth accounts and what parentage facts are relevant to Mara Fen’s instructions."
+    ]
+  }
+}

@@ -1,0 +1,169 @@
+{
+  "condition": "F0",
+  "truth": {
+    "entities": [
+      {
+        "id": "e01",
+        "type": "person",
+        "name": "Alexander Tomas Rivera"
+      },
+      {
+        "id": "e02",
+        "type": "person",
+        "name": "Alexandra Inez Rivera"
+      },
+      {
+        "id": "e03",
+        "type": "person",
+        "name": "Fiona Mora"
+      },
+      {
+        "id": "e04",
+        "type": "person",
+        "name": "Jamie Iqbal"
+      },
+      {
+        "id": "e05",
+        "type": "person",
+        "name": "Leona Bell"
+      },
+      {
+        "id": "e06",
+        "type": "person",
+        "name": "Nina Beatrice Mercer"
+      }
+    ],
+    "relationships": [
+      {
+        "source": "e01",
+        "type": "sibling_of",
+        "target": "e04",
+        "approved_evidence": []
+      },
+      {
+        "source": "e03",
+        "type": "parent_of",
+        "target": "e06",
+        "approved_evidence": []
+      },
+      {
+        "source": "e05",
+        "type": "parent_of",
+        "target": "e02",
+        "approved_evidence": []
+      }
+    ]
+  },
+  "source_approval": {
+    "schema_version": 1,
+    "relationships": []
+  },
+  "ideal": {
+    "relationships": [
+      {
+        "source_name": "Alexander Tomas Rivera",
+        "relationship_type": "sibling_of",
+        "target_name": "Jamie Iqbal",
+        "source_id": "c7v4",
+        "supporting_text": "### M2-86 — Alexander Tomas Rivera\n\nI matched the person to reference M2-86, which I assigned during a separate intake conversation on 15 September 2026. On 17 September 2026, I confirmed the exact full name from the original identification he showed me and returned the original to him."
+      },
+      {
+        "source_name": "Alexander Tomas Rivera",
+        "relationship_type": "sibling_of",
+        "target_name": "Jamie Iqbal",
+        "source_id": "j5x7",
+        "supporting_text": "Family information confirmation  \n16 September 2026\n\nDear Mira Desai,\n\nI confirm that the person you gave the reference M2-86 at yesterday’s intake is my sibling. We were both present when you gave them that reference.\n\nSigned: Jamie Iqbal"
+      },
+      {
+        "source_name": "Fiona Mora",
+        "relationship_type": "parent_of",
+        "target_name": "Nina Beatrice Mercer",
+        "source_id": "b2n6",
+        "supporting_text": "Intake follow-up: T9-53\n16 September 2026\n\nDear Mira Desai,\n\nAt the intake conversation on 15 September 2026, the person we discussed and I were both present when you assigned them the file reference T9-53.\n\nAs requested, I confirm from my own knowledge that I am the parent of the person you assigned the file reference T9-53.\n\nSigned: Fiona Mora"
+      },
+      {
+        "source_name": "Fiona Mora",
+        "relationship_type": "parent_of",
+        "target_name": "Nina Beatrice Mercer",
+        "source_id": "c7v4",
+        "supporting_text": "### T9-53 — Nina Beatrice Mercer\n\nI matched the person to reference T9-53, which I assigned during a separate intake conversation on 15 September 2026. On 17 September 2026, I confirmed the exact full name from the original identification she showed me and returned the original to her."
+      },
+      {
+        "source_name": "Leona Bell",
+        "relationship_type": "parent_of",
+        "target_name": "Alexandra Inez Rivera",
+        "source_id": "c7v4",
+        "supporting_text": "### Q7-41 — Alexandra Inez Rivera\n\nI matched the person to reference Q7-41, which I assigned during a separate intake conversation on 15 September 2026. On 17 September 2026, I confirmed the exact full name from the original identification she showed me and returned the original to her."
+      },
+      {
+        "source_name": "Leona Bell",
+        "relationship_type": "parent_of",
+        "target_name": "Alexandra Inez Rivera",
+        "source_id": "r8h3",
+        "supporting_text": "Relationship Confirmation\n\n16 September 2026  \nTo: Mira Desai, Will-Planning Adviser  \nReference: Q7-41\n\nI confirm from firsthand knowledge that I am the parent of the person you assigned reference Q7-41 at the intake on 15 September 2026. We were both present when you assigned the reference.\n\nSigned: Leona Bell"
+      }
+    ]
+  },
+  "sufficient_evidence": [
+    {
+      "edge": [
+        "Alexander Tomas Rivera",
+        "sibling_of",
+        "Jamie Iqbal"
+      ],
+      "joint_only": true,
+      "alternatives": [
+        [
+          {
+            "source_id": "c7v4",
+            "supporting_text": "### M2-86 — Alexander Tomas Rivera\n\nI matched the person to reference M2-86, which I assigned during a separate intake conversation on 15 September 2026. On 17 September 2026, I confirmed the exact full name from the original identification he showed me and returned the original to him."
+          },
+          {
+            "source_id": "j5x7",
+            "supporting_text": "Family information confirmation  \n16 September 2026\n\nDear Mira Desai,\n\nI confirm that the person you gave the reference M2-86 at yesterday’s intake is my sibling. We were both present when you gave them that reference.\n\nSigned: Jamie Iqbal"
+          }
+        ]
+      ]
+    },
+    {
+      "edge": [
+        "Fiona Mora",
+        "parent_of",
+        "Nina Beatrice Mercer"
+      ],
+      "joint_only": true,
+      "alternatives": [
+        [
+          {
+            "source_id": "b2n6",
+            "supporting_text": "Intake follow-up: T9-53\n16 September 2026\n\nDear Mira Desai,\n\nAt the intake conversation on 15 September 2026, the person we discussed and I were both present when you assigned them the file reference T9-53.\n\nAs requested, I confirm from my own knowledge that I am the parent of the person you assigned the file reference T9-53.\n\nSigned: Fiona Mora"
+          },
+          {
+            "source_id": "c7v4",
+            "supporting_text": "### T9-53 — Nina Beatrice Mercer\n\nI matched the person to reference T9-53, which I assigned during a separate intake conversation on 15 September 2026. On 17 September 2026, I confirmed the exact full name from the original identification she showed me and returned the original to her."
+          }
+        ]
+      ]
+    },
+    {
+      "edge": [
+        "Leona Bell",
+        "parent_of",
+        "Alexandra Inez Rivera"
+      ],
+      "joint_only": true,
+      "alternatives": [
+        [
+          {
+            "source_id": "c7v4",
+            "supporting_text": "### Q7-41 — Alexandra Inez Rivera\n\nI matched the person to reference Q7-41, which I assigned during a separate intake conversation on 15 September 2026. On 17 September 2026, I confirmed the exact full name from the original identification she showed me and returned the original to her."
+          },
+          {
+            "source_id": "r8h3",
+            "supporting_text": "Relationship Confirmation\n\n16 September 2026  \nTo: Mira Desai, Will-Planning Adviser  \nReference: Q7-41\n\nI confirm from firsthand knowledge that I am the parent of the person you assigned reference Q7-41 at the intake on 15 September 2026. We were both present when you assigned the reference.\n\nSigned: Leona Bell"
+          }
+        ]
+      ]
+    }
+  ]
+}

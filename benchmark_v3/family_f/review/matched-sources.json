@@ -1,0 +1,47 @@
+{
+  "edit": {
+    "source_id": "k9t2",
+    "before": "Alexandra Rivera",
+    "after": "Alex Rivera"
+  },
+  "identical_ids_titles_order": true,
+  "only_literal_body_edit": true,
+  "source_count": 5,
+  "by_source": {
+    "r8h3": {
+      "identical": true,
+      "baseline_body_sha256": "0ecf177a59aaa16fd543b2c9fb00fb1608c2c35471004710038a6c073a3dd1b4",
+      "variant_body_sha256": "0ecf177a59aaa16fd543b2c9fb00fb1608c2c35471004710038a6c073a3dd1b4",
+      "baseline_words": 48,
+      "variant_words": 48
+    },
+    "j5x7": {
+      "identical": true,
+      "baseline_body_sha256": "78b3a88ee0e892002d9205b869ac90eb6741618fade600f635550af9c825fac5",
+      "variant_body_sha256": "78b3a88ee0e892002d9205b869ac90eb6741618fade600f635550af9c825fac5",
+      "baseline_words": 38,
+      "variant_words": 38
+    },
+    "b2n6": {
+      "identical": true,
+      "baseline_body_sha256": "bae75a8a554f4fe06fb8b9a0af4471f07a25f80e51d3a4eba7263c8a8246559c",
+      "variant_body_sha256": "bae75a8a554f4fe06fb8b9a0af4471f07a25f80e51d3a4eba7263c8a8246559c",
+      "baseline_words": 59,
+      "variant_words": 59
+    },
+    "c7v4": {
+      "identical": true,
+      "baseline_body_sha256": "457edca9573644e6719cd5ad0cc83ae7bb0bcc7edec89bb4799d724e13b0b399",
+      "variant_body_sha256": "457edca9573644e6719cd5ad0cc83ae7bb0bcc7edec89bb4799d724e13b0b399",
+      "baseline_words": 242,
+      "variant_words": 242
+    },
+    "k9t2": {
+      "identical": false,
+      "baseline_body_sha256": "522094dbe2a692336e8a2003136db8d80f8918c8e6d92357c1828812c0a9b490",
+      "variant_body_sha256": "f8155089dcbb556d0d081772516784524df2fe8831466954e2f33f0b9e44a7bd",
+      "baseline_words": 45,
+      "variant_words": 45
+    }
+  }
+}

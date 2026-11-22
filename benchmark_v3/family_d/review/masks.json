@@ -1,0 +1,1116 @@
+{
+  "principal-omitted": {
+    "source_ids": [
+      "h7m4",
+      "n5q2"
+    ],
+    "source_body_sha256": {
+      "h7m4": "b8ae061c5a1846139015883eebb452c2aeb60222d5166f8b6317de1fa495741b",
+      "n5q2": "6c0211fc74badff6fe0214fed847ca0b6880d0a0e3a2589a753d6dd79b64455b"
+    },
+    "packet_sha256": "0ebca89fcc9b599846fd1177cdbff21f9829a066f59fa6d3cb9661c974f485a0",
+    "output_sha256": "835aa06639fb9c92c834b5fe1e61b98c561d4d26fc67b41509f76f3ba845349e",
+    "edges": [],
+    "decisions": [
+      {
+        "proposition": "The advice-file cut-off was 09:00 on 23 October 2026, one hour before the trustee meeting.",
+        "status": "supported",
+        "reason": "Priya Sen's brief, dated 20 October 2026, states both times.",
+        "source_ids": [
+          "h7m4"
+        ]
+      },
+      {
+        "proposition": "The trustee supplied a retained instrument extract and a signed amendment on 19 October 2026.",
+        "status": "supported",
+        "reason": "Priya Sen reports that both items were supplied before the cut-off. The supplied packet contains the signed variation but not the retained extract, and the brief does not name the trustee who supplied them.",
+        "source_ids": [
+          "h7m4",
+          "n5q2"
+        ]
+      },
+      {
+        "proposition": "The signed variation replaces provision 4.1 of principal instrument PI-67Q4 in full with effect from 12 October 2026.",
+        "status": "supported",
+        "reason": "The instrument, signed by Tess Calder on 8 October 2026, identifies PI-67Q4 and provision 4.1 and says, “With effect from the effective date, I replace the provision identified above in full with the following:”. No supplied passage conflicts with that instruction. The brief's lack of conclusions does not contradict it.",
+        "source_ids": [
+          "n5q2",
+          "h7m4"
+        ]
+      },
+      {
+        "proposition": "Nia Bell is expressly named as a beneficiary in the replacement text of provision 4.1.",
+        "status": "supported",
+        "reason": "The signed variation states, “Nia Bell is expressly named as a beneficiary under this provision.” The wording establishes the designation under provision 4.1, but PI-67Q4 is an instrument identifier, not an expressly stated trust name.",
+        "source_ids": [
+          "n5q2"
+        ]
+      },
+      {
+        "proposition": "Jonah Reed was the trustee of the trust governed by PI-67Q4 at the cut-off.",
+        "status": "unresolved",
+        "reason": "The variation names Jonah Reed as the recipient for retention, and Priya Sen identifies herself as his adviser. Neither passage identifies him as the unnamed trustee mentioned in the brief.",
+        "source_ids": [
+          "n5q2",
+          "h7m4"
+        ]
+      },
+      {
+        "proposition": "Tess Calder signed in the stated capacity of Variation Officer.",
+        "status": "supported",
+        "reason": "The variation records “Signed: Tess Calder” and “Capacity: Variation Officer”. The stated capacity is not a trusteeship or proof of the scope of her authority.",
+        "source_ids": [
+          "n5q2"
+        ]
+      },
+      {
+        "proposition": "Tess Calder had authority under the principal instrument to make the variation, and any required formalities were satisfied.",
+        "status": "unresolved",
+        "reason": "The signed variation states her capacity and its effective date, but the supplied packet does not include the governing power or establish its requirements. Nothing supplied contradicts her authority.",
+        "source_ids": [
+          "n5q2",
+          "h7m4"
+        ]
+      }
+    ],
+    "unavailable_basis": [
+      "No exact trust name or explicit link from PI-67Q4 to a named trust is supplied. Nia Bell's designation therefore cannot be scored as a beneficiary_of edge. There are no positive edges requiring ordinary quotation, attribution or an attached sufficient set.",
+      "The retained instrument extract is referred to but not reproduced. The old wording of provision 4.1, any other expressly named beneficiaries, and the complete set of provisions in force cannot be established. Replacing provision 4.1 in full does not show that Nia Bell is the trust's only beneficiary or that other provisions were displaced.",
+      "For the adviser: obtain the retained extract and confirm the exact trust name, trustee appointment, variation power and formalities, and whether any other instruments received by the cut-off affect provision 4.1 or other beneficiary provisions."
+    ]
+  },
+  "amendment-omitted": {
+    "source_ids": [
+      "h7m4",
+      "w3k8"
+    ],
+    "source_body_sha256": {
+      "h7m4": "b8ae061c5a1846139015883eebb452c2aeb60222d5166f8b6317de1fa495741b",
+      "w3k8": "e4da90cc55694d797d112ebb018dc913efc54e2aac319720a76ed3486937a5bd"
+    },
+    "packet_sha256": "1c44b583fc67f00f57de8672d0404023db77a3106d4592be1c12c16d6da02cce",
+    "output_sha256": "fd617df0943ba5d1e40adc4f19824534c70707e0a6d2dedb03a7d7735fb892c4",
+    "edges": [
+      [
+        "Livia Keane",
+        "settlor_of",
+        "Alder Fold Trust"
+      ],
+      [
+        "Jonah Reed",
+        "trustee_of",
+        "Alder Fold Trust"
+      ],
+      [
+        "Elin Voss",
+        "beneficiary_of",
+        "Alder Fold Trust"
+      ],
+      [
+        "Milo Hart",
+        "beneficiary_of",
+        "Alder Fold Trust"
+      ],
+      [
+        "Ada Wynn",
+        "beneficiary_of",
+        "Alder Fold Trust"
+      ]
+    ],
+    "decisions": [
+      {
+        "proposition": "Livia Keane is settlor of the Alder Fold Trust.",
+        "status": "supported",
+        "reason": "The principal instrument, executed on 12 February 2024 and reported by Priya Sen as supplied on 19 October 2026, independently establishes the edge in clause 1: “Livia Keane settles the Alder Fold Trust on the terms of this instrument.” A separate proof route in the same source pairs the heading “ALDER FOLD TRUST” with the execution entry “Livia Keane, as Settlor”. Clause 5 does not authorize a change to the settlement provision, and no competing passage is supplied.",
+        "source_ids": [
+          "w3k8",
+          "h7m4"
+        ]
+      },
+      {
+        "proposition": "Jonah Reed is trustee of the Alder Fold Trust.",
+        "status": "supported",
+        "reason": "The principal instrument, executed on 12 February 2024 and reported by Priya Sen as supplied on 19 October 2026, independently establishes the edge in clause 2: “Jonah Reed is appointed Trustee of the Alder Fold Trust.” A separate proof route in the same source pairs the heading “ALDER FOLD TRUST” with the execution entry “Jonah Reed, as Trustee”. Clause 5 does not authorize a change to the trustee provision, and no competing passage is supplied.",
+        "source_ids": [
+          "w3k8",
+          "h7m4"
+        ]
+      },
+      {
+        "proposition": "Elin Voss is an expressly named beneficiary of the Alder Fold Trust on the supplied record.",
+        "status": "supported",
+        "reason": "Clause 4.1 of the principal instrument executed on 12 February 2024 independently states: “4.1 Elin Voss is designated a beneficiary of the Alder Fold Trust.” Priya Sen reports receipt of the extract and a signed amendment on 19 October 2026, but the brief does not say that the amendment replaces clause 4.1. No supplied passage establishes that this designation ceased to operate by the cut-off.",
+        "source_ids": [
+          "w3k8",
+          "h7m4"
+        ]
+      },
+      {
+        "proposition": "Milo Hart is an expressly named beneficiary of the Alder Fold Trust on the supplied record.",
+        "status": "supported",
+        "reason": "Clause 4.2 of the principal instrument executed on 12 February 2024 independently states: “4.2 Milo Hart is designated a beneficiary of the Alder Fold Trust.” Priya Sen reports receipt of the extract and a signed amendment on 19 October 2026, but the brief does not say that the amendment replaces clause 4.2. No supplied passage establishes that this designation ceased to operate by the cut-off.",
+        "source_ids": [
+          "w3k8",
+          "h7m4"
+        ]
+      },
+      {
+        "proposition": "Ada Wynn is an expressly named beneficiary of the Alder Fold Trust on the supplied record.",
+        "status": "supported",
+        "reason": "Clause 4.3 of the principal instrument executed on 12 February 2024 independently states: “4.3 Ada Wynn is designated a beneficiary of the Alder Fold Trust.” Priya Sen reports receipt of the extract and a signed amendment on 19 October 2026, but the brief does not say that the amendment replaces clause 4.3. No supplied passage establishes that this designation ceased to operate by the cut-off.",
+        "source_ids": [
+          "w3k8",
+          "h7m4"
+        ]
+      },
+      {
+        "proposition": "Tess Calder is the Variation Officer of the Alder Fold Trust.",
+        "status": "supported",
+        "reason": "Clause 3 of the principal instrument executed on 12 February 2024 states: “Tess Calder is designated Variation Officer of the Alder Fold Trust.” Priya Sen reports that the extract was supplied on 19 October 2026. No competing passage is supplied. Variation Officer is not a graph predicate and does not establish trusteeship.",
+        "source_ids": [
+          "w3k8",
+          "h7m4"
+        ]
+      },
+      {
+        "proposition": "Clause 5 permits replacement of one current beneficiary provision by a qualifying amendment and leaves all other provisions unchanged.",
+        "status": "supported",
+        "reason": "Clause 5 of the principal instrument requires the Variation Officer to sign in that capacity and requires the amendment to identify the exact reference PI-67Q4, specify by number the one current beneficiary provision replaced in its entirety, and state the replacement designation and effective date. A compliant amendment signed before its stated effective date takes effect on that date. Priya Sen reports that the extract was supplied on 19 October 2026. No competing terms are supplied.",
+        "source_ids": [
+          "w3k8",
+          "h7m4"
+        ]
+      },
+      {
+        "proposition": "A signed amendment was supplied to the advice file before the cut-off.",
+        "status": "supported",
+        "reason": "In her 20 October 2026 brief, Priya Sen reports: “The trustee supplied the retained instrument extract and signed amendment on 19 October 2026.” This supports receipt, not the amendment's contents, compliance, or effective date. The brief expressly confirms no beneficiary names or operative provisions.",
+        "source_ids": [
+          "h7m4"
+        ]
+      },
+      {
+        "proposition": "The reported amendment validly replaced a particular beneficiary provision by 09:00 on 23 October 2026.",
+        "status": "unresolved",
+        "reason": "The amendment itself is not in the supplied excerpts. The report that it was signed and supplied neither contradicts a particular original designation nor establishes that every original designation was still operative. No replaced clause, replacement beneficiary, signing capacity, exact instrument reference, or effective date can be verified.",
+        "source_ids": [
+          "h7m4",
+          "w3k8"
+        ]
+      }
+    ],
+    "unavailable_basis": [
+      "Each graph edge has independently sufficient ordinary quotation and attribution in w3k8; no edge requires a multi-source evidence set. The brief reports receipt but is not independent proof of any graph edge.",
+      "The original designations are supported, but a definitive post-amendment beneficiary list cannot be verified from these excerpts. Ask the adviser for the signed amendment reported received on 19 October 2026 and check its signature, signing capacity, exact reference PI-67Q4, numbered provision, replacement designation, and effective date against clause 5 and the cut-off.",
+      "Do not treat receipt or signature alone as proof of effectiveness, infer which beneficiary might have been replaced, or infer a replacement beneficiary. No supplied passage explicitly contradicts an original designation."
+    ]
+  },
+  "principal-reference-withheld": {
+    "source_ids": [
+      "h7m4",
+      "w3k8",
+      "n5q2"
+    ],
+    "source_body_sha256": {
+      "h7m4": "b8ae061c5a1846139015883eebb452c2aeb60222d5166f8b6317de1fa495741b",
+      "w3k8": "e782990fb1c6393b1a8d8aa1aafbf822958d39bda87d263c5f4676ab100b6693",
+      "n5q2": "6c0211fc74badff6fe0214fed847ca0b6880d0a0e3a2589a753d6dd79b64455b"
+    },
+    "packet_sha256": "0166c3489b26fd54fa4c2e3b97de4e37c8c12bf438b47a685e70bd70361f0cd4",
+    "output_sha256": "b39c44eaa9159178585cfc0a9b6d1d2114479cef2509fc0b05b50e65ef7759cb",
+    "edges": [
+      [
+        "Livia Keane",
+        "settlor_of",
+        "Alder Fold Trust"
+      ],
+      [
+        "Jonah Reed",
+        "trustee_of",
+        "Alder Fold Trust"
+      ],
+      [
+        "Milo Hart",
+        "beneficiary_of",
+        "Alder Fold Trust"
+      ],
+      [
+        "Ada Wynn",
+        "beneficiary_of",
+        "Alder Fold Trust"
+      ]
+    ],
+    "decisions": [
+      {
+        "proposition": "Livia Keane — settlor_of — Alder Fold Trust",
+        "status": "supported",
+        "reason": "The principal instrument was executed on 12 February 2024; Priya Sen reports that the trustee supplied the retained extract on 19 October 2026, before the cut-off. The signed variation addresses only provision 4.1 and does not compete with the settlement clause. Ordinary quotation and attribution, and the attached sufficient set: {(w3k8, \"Livia Keane settles the Alder Fold Trust on the terms of this instrument.\")}. An independent proof route within the same source is the trust heading and the execution-capacity entry: {(w3k8, \"ALDER FOLD TRUST\"), (w3k8, \"Livia Keane, as Settlor\")}. These are two passages of one instrument, not two independent origins.",
+        "source_ids": [
+          "w3k8",
+          "h7m4",
+          "n5q2"
+        ]
+      },
+      {
+        "proposition": "Jonah Reed — trustee_of — Alder Fold Trust",
+        "status": "supported",
+        "reason": "The principal instrument appoints Jonah Reed on 12 February 2024; Priya Sen reports receipt of the retained extract from the trustee on 19 October 2026. No passage competes with the appointment. Ordinary quotation and attribution, and the attached sufficient set: {(w3k8, \"Jonah Reed is appointed Trustee of the Alder Fold Trust.\")}. An independent proof route within the same source is the trust heading and the execution-capacity entry: {(w3k8, \"ALDER FOLD TRUST\"), (w3k8, \"Jonah Reed, as Trustee\")}. The meeting brief's reference to the trustee and the variation's delivery line are not independent proof of the office.",
+        "source_ids": [
+          "w3k8",
+          "h7m4",
+          "n5q2"
+        ]
+      },
+      {
+        "proposition": "Milo Hart — beneficiary_of — Alder Fold Trust",
+        "status": "supported",
+        "reason": "Clause 4.2 of the principal instrument executed on 12 February 2024 expressly designates Milo Hart. Priya Sen reports that the extract and signed variation were supplied on 19 October 2026. The variation identifies only 4.1; clause 5 leaves all other provisions unchanged, so uncertainty about 4.1 does not affect 4.2. Ordinary quotation and attribution, and the sole identified sufficient set, attached to this edge: {(w3k8, \"4.2 Milo Hart is designated a beneficiary of the Alder Fold Trust.\")}.",
+        "source_ids": [
+          "w3k8",
+          "h7m4",
+          "n5q2"
+        ]
+      },
+      {
+        "proposition": "Ada Wynn — beneficiary_of — Alder Fold Trust",
+        "status": "supported",
+        "reason": "Clause 4.3 of the principal instrument executed on 12 February 2024 expressly designates Ada Wynn. Priya Sen reports that the extract and signed variation were supplied on 19 October 2026. The variation identifies only 4.1; clause 5 leaves all other provisions unchanged, so uncertainty about 4.1 does not affect 4.3. Ordinary quotation and attribution, and the sole identified sufficient set, attached to this edge: {(w3k8, \"4.3 Ada Wynn is designated a beneficiary of the Alder Fold Trust.\")}.",
+        "source_ids": [
+          "w3k8",
+          "h7m4",
+          "n5q2"
+        ]
+      },
+      {
+        "proposition": "Tess Calder is the Alder Fold Trust's Variation Officer, an office outside the graph ontology.",
+        "status": "supported",
+        "reason": "The principal instrument executed on 12 February 2024 states, \"Tess Calder is designated Variation Officer of the Alder Fold Trust.\" The extract was supplied on 19 October 2026 according to Priya Sen. Tess Calder also signed the variation in that capacity on 8 October 2026. That signature is consistent with the office, but its capacity line does not identify the Alder Fold Trust or establish that the variation applies to it. No supplied passage competes with clause 3.",
+        "source_ids": [
+          "w3k8",
+          "n5q2",
+          "h7m4"
+        ]
+      },
+      {
+        "proposition": "The signed variation specifies replacement of all beneficiary provisions or of either clause 4.2 or 4.3.",
+        "status": "explicitly contradicted",
+        "reason": "Tess Calder's signed instrument says \"Provision locator: 4.1\" and \"With effect from the effective date, I replace the provision identified above in full with the following:\". The stated date is 12 October 2026, and Priya Sen reports that the signed instrument was supplied on 19 October 2026. Clause 5 authorizes replacement of one current beneficiary provision and says, \"All other provisions remain unchanged.\" This establishes the stated scope, not the variation's validity for Alder Fold Trust.",
+        "source_ids": [
+          "n5q2",
+          "w3k8",
+          "h7m4"
+        ]
+      },
+      {
+        "proposition": "The signed variation validly replaced Alder Fold Trust clause 4.1 on 12 October 2026.",
+        "status": "unresolved",
+        "reason": "Clause 5 of the executed principal instrument requires the exact principal-instrument reference, the number of the one provision being replaced, the replacement designation, the effective date and signature in the Variation Officer capacity. Tess Calder signed as Variation Officer on 8 October 2026; her instrument identifies PI-67Q4 and clause 4.1, names Nia Bell, and states 12 October 2026 as its effective date. Signing before that date is permitted if clause 5 is satisfied. Priya Sen reports both documents were supplied on 19 October 2026; the variation lists Jonah Reed as its delivery recipient but gives no separate delivery date. The extract withholds the exact reference, so the required match cannot be verified or disproved. Matching personnel, the clause number and joint retention do not prove the reference match.",
+        "source_ids": [
+          "w3k8",
+          "n5q2",
+          "h7m4"
+        ]
+      },
+      {
+        "proposition": "Elin Voss was expressly designated in the original Alder Fold Trust clause 4.1.",
+        "status": "supported",
+        "reason": "The principal instrument executed on 12 February 2024 says, \"4.1 Elin Voss is designated a beneficiary of the Alder Fold Trust.\" Priya Sen reports that the retained extract was supplied on 19 October 2026. The later signed variation raises a question about continued force, not about what the original clause said.",
+        "source_ids": [
+          "w3k8",
+          "h7m4",
+          "n5q2"
+        ]
+      },
+      {
+        "proposition": "Elin Voss remained a beneficiary of the Alder Fold Trust at 09:00 on 23 October 2026.",
+        "status": "unresolved",
+        "reason": "The original clause 4.1 names Elin Voss, but the signed variation in the file proposes a full replacement of clause 4.1 effective 12 October 2026. Both were supplied by 19 October 2026 according to Priya Sen. If the variation validly applies to Alder Fold Trust, it replaces Elin Voss's designation; if it does not, this variation leaves the original designation intact. The withheld reference prevents a choice between those outcomes. The file does not establish that Elin Voss was removed.",
+        "source_ids": [
+          "w3k8",
+          "n5q2",
+          "h7m4"
+        ]
+      },
+      {
+        "proposition": "Nia Bell was a beneficiary of the Alder Fold Trust at 09:00 on 23 October 2026.",
+        "status": "unresolved",
+        "reason": "The variation Tess Calder signed on 8 October 2026 states, \"Nia Bell is expressly named as a beneficiary under this provision.\" It states an effective date of 12 October 2026 and was supplied by 19 October according to Priya Sen. The designation is express, but the variation identifies its principal instrument only as PI-67Q4. The Alder Fold Trust extract does not establish that identity. If the variation validly applies, Nia Bell replaces Elin Voss under 4.1 rather than being added alongside her.",
+        "source_ids": [
+          "n5q2",
+          "w3k8",
+          "h7m4"
+        ]
+      }
+    ],
+    "unavailable_basis": [
+      "For the 10:00 meeting on 23 October 2026, the confirmed beneficiaries at the 09:00 file cut-off are Milo Hart and Ada Wynn. Clauses 1, 2, 3, 4.2, 4.3 and 5 are unaffected by the supplied variation; the operative text of clause 4.1 is unresolved.",
+      "Ask the adviser to check the exact principal-instrument reference on the retained original or an unredacted copy against PI-67Q4, and confirm that 4.1 was the current provision when the variation was made. A withheld reference is neither evidence of a match nor evidence of a mismatch. The packet does not establish that PI-67Q4 identifies another instrument.",
+      "Priya Sen's 20 October brief reports receipt and frames the meeting question; it expressly reaches no conclusions. Receipt or retention of the signed variation is not proof of its operative effect. The delivery line is an administrative direction, not a grant of office or authority.",
+      "No supported graph edge requires a multi-source sufficient set. Combining the supplied sources does not produce a sufficient set for either disputed current beneficiary edge under clause 4.1. No kinship or marriage relationship is expressly supported."
+    ]
+  },
+  "amendment-reference-withheld": {
+    "source_ids": [
+      "h7m4",
+      "w3k8",
+      "n5q2"
+    ],
+    "source_body_sha256": {
+      "h7m4": "b8ae061c5a1846139015883eebb452c2aeb60222d5166f8b6317de1fa495741b",
+      "w3k8": "e4da90cc55694d797d112ebb018dc913efc54e2aac319720a76ed3486937a5bd",
+      "n5q2": "8fb7ebad0e7d9d7e118f4ede935cf70bef04ec209c10b55ca6b0cb429180f7a1"
+    },
+    "packet_sha256": "ee3751097eef20f245c28f9f0035af7cb413c16950a6292695c1df5b8d5c4701",
+    "output_sha256": "0f9da63774897189fda32e7c185321430f28515c36dfdac44c3188d78f107328",
+    "edges": [
+      [
+        "Ada Wynn",
+        "beneficiary_of",
+        "Alder Fold Trust"
+      ],
+      [
+        "Jonah Reed",
+        "trustee_of",
+        "Alder Fold Trust"
+      ],
+      [
+        "Livia Keane",
+        "settlor_of",
+        "Alder Fold Trust"
+      ],
+      [
+        "Milo Hart",
+        "beneficiary_of",
+        "Alder Fold Trust"
+      ]
+    ],
+    "decisions": [
+      {
+        "proposition": "Livia Keane is the settlor of the Alder Fold Trust at the cut-off.",
+        "status": "supported",
+        "reason": "The executed principal instrument records the settlement on 12 February 2024. Priya Sen's brief reports that the trustee supplied the retained extract on 19 October 2026, before the cut-off. Alternative 1 (ordinary quotation and attribution; complete attached set): {(w3k8, \"Livia Keane settles the Alder Fold Trust on the terms of this instrument.\")}. Alternative 2 (same instrument, not a second origin): {(w3k8, \"ALDER FOLD TRUST  \\nPrincipal Instrument\"), (w3k8, \"Livia Keane, as Settlor\")}. The signed variation addresses only provision 4.1.",
+        "source_ids": [
+          "w3k8",
+          "h7m4",
+          "n5q2"
+        ]
+      },
+      {
+        "proposition": "Jonah Reed is the trustee of the Alder Fold Trust at the cut-off.",
+        "status": "supported",
+        "reason": "The executed principal instrument appoints Jonah Reed on 12 February 2024. Priya Sen reports receipt of the retained extract on 19 October 2026. Alternative 1 (ordinary quotation and attribution; complete attached set): {(w3k8, \"Jonah Reed is appointed Trustee of the Alder Fold Trust.\")}. Alternative 2 (same instrument, not a second origin): {(w3k8, \"ALDER FOLD TRUST  \\nPrincipal Instrument\"), (w3k8, \"Jonah Reed, as Trustee\")}. The variation's delivery line identifies Jonah Reed as the retention recipient, not as the source of his appointment, and the variation does not address provision 2.",
+        "source_ids": [
+          "w3k8",
+          "h7m4",
+          "n5q2"
+        ]
+      },
+      {
+        "proposition": "Ada Wynn is a beneficiary of the Alder Fold Trust at the cut-off.",
+        "status": "supported",
+        "reason": "Provision 4.3 of the instrument executed on 12 February 2024 expressly names Ada Wynn. Priya Sen reports that the trustee supplied the extract on 19 October 2026. The variation identifies only 4.1, and clause 5 leaves all other provisions unchanged even if that variation is effective. Ordinary quotation and attribution; complete attached set: {(w3k8, \"4.3 Ada Wynn is designated a beneficiary of the Alder Fold Trust.\")}.",
+        "source_ids": [
+          "w3k8",
+          "h7m4",
+          "n5q2"
+        ]
+      },
+      {
+        "proposition": "Milo Hart is a beneficiary of the Alder Fold Trust at the cut-off.",
+        "status": "supported",
+        "reason": "Provision 4.2 of the instrument executed on 12 February 2024 expressly names Milo Hart. Priya Sen reports that the trustee supplied the extract on 19 October 2026. The variation identifies only 4.1, and clause 5 leaves all other provisions unchanged even if that variation is effective. Ordinary quotation and attribution; complete attached set: {(w3k8, \"4.2 Milo Hart is designated a beneficiary of the Alder Fold Trust.\")}.",
+        "source_ids": [
+          "w3k8",
+          "h7m4",
+          "n5q2"
+        ]
+      },
+      {
+        "proposition": "Tess Calder is the Alder Fold Trust's Variation Officer, and clause 5 authorizes replacement of one current beneficiary provision in full if its requirements are met.",
+        "status": "supported",
+        "reason": "Provisions 3 and 5 of the principal instrument executed on 12 February 2024 establish the office and its limited authority. The trustee supplied the extract on 19 October 2026 according to Priya Sen. The amendment must be signed in that capacity, identify the principal instrument by the exact reference PI-67Q4, specify the provision number, and state the replacement designation and effective date. If a qualifying amendment is signed before its stated effective date, it takes effect on that date. Tess Calder's capacity line in the signed variation is consistent with the designation, but does not prove that this particular variation meets every requirement. Variation Officer is not a graph predicate and does not establish trusteeship.",
+        "source_ids": [
+          "w3k8",
+          "n5q2",
+          "h7m4"
+        ]
+      },
+      {
+        "proposition": "The original provision 4.1 of the Alder Fold Trust expressly designated Elin Voss as a beneficiary.",
+        "status": "supported",
+        "reason": "The principal instrument executed on 12 February 2024 states: \"4.1 Elin Voss is designated a beneficiary of the Alder Fold Trust.\" Priya Sen reports that the trustee supplied the retained extract on 19 October 2026. The signed variation does not dispute the original wording; it purports to replace provision 4.1.",
+        "source_ids": [
+          "w3k8",
+          "h7m4",
+          "n5q2"
+        ]
+      },
+      {
+        "proposition": "The signed variation purports to replace provision 4.1 in full with a designation of Nia Bell.",
+        "status": "supported",
+        "reason": "The signed variation identifies 4.1, expressly names Nia Bell in the replacement text, gives 12 October 2026 as its effective date, and records Tess Calder signing as Variation Officer on 8 October 2026. It lists Jonah Reed as the retention recipient but does not date that delivery. Priya Sen reports that the trustee supplied the signed amendment for the advice file on 19 October 2026, before the cut-off. The brief expressly confirms no beneficiary names or operative provisions. The variation's stated effect is not proof that it took effect.",
+        "source_ids": [
+          "n5q2",
+          "h7m4"
+        ]
+      },
+      {
+        "proposition": "The signed variation met clause 5 and replaced Alder Fold Trust provision 4.1 on 12 October 2026.",
+        "status": "unresolved",
+        "reason": "Clause 5 requires the exact reference PI-67Q4. The variation's corresponding field is shown only as \"Principal instrument: [text withheld]\". The visible provision number, capacity, designation and dates do not establish the missing reference. Withholding is not evidence that the reference was omitted or wrong. Receipt by the cut-off and retention with the principal instrument do not establish compliance. The two instruments therefore show original wording and a purported replacement, not a proven conflict between two operative designations.",
+        "source_ids": [
+          "w3k8",
+          "n5q2",
+          "h7m4"
+        ]
+      },
+      {
+        "proposition": "Elin Voss remains a beneficiary of the Alder Fold Trust under the original provision 4.1 at 09:00 on 23 October 2026.",
+        "status": "unresolved",
+        "reason": "The executed principal instrument establishes the original designation. The signed variation received before the cut-off would replace it on 12 October 2026 if it meets clause 5, but the supplied excerpt does not establish whether it does. The withheld field does not justify assuming either that the original designation survived or that it was displaced.",
+        "source_ids": [
+          "w3k8",
+          "n5q2",
+          "h7m4"
+        ]
+      },
+      {
+        "proposition": "Nia Bell is a beneficiary of the Alder Fold Trust under the replacement provision 4.1 at 09:00 on 23 October 2026.",
+        "status": "unresolved",
+        "reason": "Tess Calder's signed variation expressly names Nia Bell under the proposed replacement provision. It does not visibly establish the exact principal-instrument reference required to give that designation effect for the Alder Fold Trust. The original naming of Elin Voss is not an explicit contradiction of a later valid replacement, and receipt before the cut-off cannot substitute for the required reference.",
+        "source_ids": [
+          "n5q2",
+          "w3k8",
+          "h7m4"
+        ]
+      }
+    ],
+    "unavailable_basis": [
+      "The exact principal-instrument reference in the signed variation is unavailable. Ask the adviser to inspect the complete signed instrument and verify whether it states PI-67Q4 exactly.",
+      "The packet does not establish when the signed variation was delivered to Jonah Reed. The stated effective date, signature date and reported date of supply to the advice file are distinct.",
+      "There is no sufficient evidence set for either current beneficiary claim under provision 4.1, even when the supplied sources are combined. No supported graph edge requires evidence from multiple sources."
+    ]
+  },
+  "locator-withheld": {
+    "source_ids": [
+      "h7m4",
+      "w3k8",
+      "n5q2"
+    ],
+    "source_body_sha256": {
+      "h7m4": "b8ae061c5a1846139015883eebb452c2aeb60222d5166f8b6317de1fa495741b",
+      "w3k8": "e4da90cc55694d797d112ebb018dc913efc54e2aac319720a76ed3486937a5bd",
+      "n5q2": "48e235dd512523600cc3499f448334803cc08c30c065bab31aff8b3a46e42513"
+    },
+    "packet_sha256": "61e1b1cb8d874eaabd5838e1f3056d5847cc40ca7c0cff934ab22dbcff183a4d",
+    "output_sha256": "43343fd899c59319e68d3aad9ca6bc02609cadee32eb13c9df37f5660b751894",
+    "edges": [
+      [
+        "Jonah Reed",
+        "trustee_of",
+        "Alder Fold Trust"
+      ],
+      [
+        "Livia Keane",
+        "settlor_of",
+        "Alder Fold Trust"
+      ]
+    ],
+    "decisions": [
+      {
+        "proposition": "Jonah Reed is trustee of the Alder Fold Trust at the cut-off.",
+        "status": "supported",
+        "reason": "The executed principal instrument appoints Jonah Reed on 12 February 2024. Clause 5 permits replacement only of one beneficiary provision and leaves all other provisions unchanged, so the signed variation does not displace the appointment. Minimum sufficient alternatives (each independently attributable to w3k8): { (w3k8, \"Jonah Reed is appointed Trustee of the Alder Fold Trust.\") }; or { (w3k8, \"ALDER FOLD TRUST\"), (w3k8, \"Executed on 12 February 2024 by:\n\nLivia Keane, as Settlor  \nJonah Reed, as Trustee\") }. The first alternative is also a standalone quotation for benchmark_v2_evidence_v1 and a complete set for attached_sufficient_set_v1.",
+        "source_ids": [
+          "w3k8"
+        ]
+      },
+      {
+        "proposition": "Livia Keane is settlor of the Alder Fold Trust at the cut-off.",
+        "status": "supported",
+        "reason": "The executed principal instrument records Livia Keane's settlement on 12 February 2024. The signed variation cannot alter the settlement under clause 5. Minimum sufficient alternatives (each independently attributable to w3k8): { (w3k8, \"Livia Keane settles the Alder Fold Trust on the terms of this instrument.\") }; or { (w3k8, \"ALDER FOLD TRUST\"), (w3k8, \"Executed on 12 February 2024 by:\n\nLivia Keane, as Settlor\") }. The first alternative is also a standalone quotation for benchmark_v2_evidence_v1 and a complete set for attached_sufficient_set_v1.",
+        "source_ids": [
+          "w3k8"
+        ]
+      },
+      {
+        "proposition": "The retained principal instrument extract and signed amendment were in the advice file before 09:00 on 23 October 2026.",
+        "status": "supported",
+        "reason": "Priya Sen's 20 October brief reports that the trustee supplied both documents on 19 October. The brief gives the 09:00 cut-off but expressly confirms no beneficiary names or operative provisions. The variation's delivery line names Jonah Reed as recipient for retention; it does not give an earlier delivery date.",
+        "source_ids": [
+          "h7m4",
+          "n5q2"
+        ]
+      },
+      {
+        "proposition": "Tess Calder is the Variation Officer of the Alder Fold Trust.",
+        "status": "supported",
+        "reason": "The executed principal instrument designates Tess Calder on 12 February 2024. Tess Calder also signs the variation in that capacity on 8 October 2026. The designation comes from the principal instrument, not from the capacity label on the variation. Variation Officer is outside the graph ontology and is not a trustee appointment.",
+        "source_ids": [
+          "w3k8",
+          "n5q2"
+        ]
+      },
+      {
+        "proposition": "The principal instrument originally designated Elin Voss, Milo Hart and Ada Wynn as beneficiaries in clauses 4.1, 4.2 and 4.3, respectively.",
+        "status": "supported",
+        "reason": "The three designations are express in the principal instrument executed on 12 February 2024. The later variation does not contradict those original designations; if operative, it replaces one of them from its effective date.",
+        "source_ids": [
+          "w3k8",
+          "n5q2"
+        ]
+      },
+      {
+        "proposition": "The variation is signed by Tess Calder as Variation Officer, identifies principal instrument PI-67Q4 and states a replacement designation for Nia Bell with an effective date of 12 October 2026.",
+        "status": "supported",
+        "reason": "The signed variation records those terms and a signature date of 8 October 2026. The exact reference PI-67Q4 links it to the Alder Fold Trust instrument. Clause 5 allows signature before the effective date, so the date sequence is not a conflict. The written designation and stated date do not by themselves establish that the amendment took effect.",
+        "source_ids": [
+          "w3k8",
+          "n5q2"
+        ]
+      },
+      {
+        "proposition": "The variation satisfied clause 5 and took effect on 12 October 2026.",
+        "status": "unresolved",
+        "reason": "Clause 5 requires the signed amendment to identify by number the one current beneficiary provision being replaced. The supplied locator reads \"Provision locator: [text withheld]\". The variation's reference to the provision identified above does not show what the locator said. Withholding is neither proof of compliance nor proof that the executed instrument omitted or misstated the locator.",
+        "source_ids": [
+          "w3k8",
+          "n5q2"
+        ]
+      },
+      {
+        "proposition": "Elin Voss is a beneficiary of the Alder Fold Trust at the cut-off.",
+        "status": "unresolved",
+        "reason": "Clause 4.1 originally names Elin Voss. The signed variation could have displaced clause 4.1 before the cut-off if it validly identified that clause; the withheld locator establishes neither displacement nor retention.",
+        "source_ids": [
+          "w3k8",
+          "n5q2"
+        ]
+      },
+      {
+        "proposition": "Milo Hart is a beneficiary of the Alder Fold Trust at the cut-off.",
+        "status": "unresolved",
+        "reason": "Clause 4.2 originally names Milo Hart. The signed variation could have displaced clause 4.2 before the cut-off if it validly identified that clause; the withheld locator establishes neither displacement nor retention.",
+        "source_ids": [
+          "w3k8",
+          "n5q2"
+        ]
+      },
+      {
+        "proposition": "Ada Wynn is a beneficiary of the Alder Fold Trust at the cut-off.",
+        "status": "unresolved",
+        "reason": "Clause 4.3 originally names Ada Wynn. The signed variation could have displaced clause 4.3 before the cut-off if it validly identified that clause; the withheld locator establishes neither displacement nor retention.",
+        "source_ids": [
+          "w3k8",
+          "n5q2"
+        ]
+      },
+      {
+        "proposition": "Nia Bell is a beneficiary of the Alder Fold Trust at the cut-off.",
+        "status": "unresolved",
+        "reason": "The variation expressly names Nia Bell in its replacement text, and the principal-instrument reference resolves the trust. But even together the two sources do not establish that the replacement took effect. Nia Bell's absence from the 2024 instrument does not contradict a later effective designation.",
+        "source_ids": [
+          "w3k8",
+          "n5q2"
+        ]
+      },
+      {
+        "proposition": "The non-beneficiary provisions and at least two of the three original beneficiary provisions remain in force at the cut-off.",
+        "status": "supported",
+        "reason": "Under clause 5 the variation can replace only one current beneficiary provision in full and leaves every other provision unchanged. If the variation took effect, Nia Bell replaces exactly one original beneficiary and the other two designations remain. If it did not, all three original designations remain. The file does not establish which case applies or identify the two specific original designations that would survive a valid replacement.",
+        "source_ids": [
+          "w3k8",
+          "n5q2"
+        ]
+      }
+    ],
+    "unavailable_basis": [
+      "The exact locator in the signed variation is unavailable. The adviser should inspect the complete signed instrument and verify that the locator specified by number one beneficiary provision that was current on the stated effective date.",
+      "No supplied passage explicitly contradicts a named beneficiary's designation at the cut-off. Do not assume the variation adds a fourth beneficiary, choose a displaced beneficiary, or treat the withheld text as proof that the variation is invalid.",
+      "No supported graph edge requires multiple Sources. The proposed current Nia Bell edge is unresolved, not an edge with a complete cross-source sufficient set."
+    ]
+  },
+  "source-order-reversed": {
+    "source_ids": [
+      "n5q2",
+      "w3k8",
+      "h7m4"
+    ],
+    "source_body_sha256": {
+      "n5q2": "548a59a20311fc9004da4f98cd685cf4c4fc4d454d39b01b8428e19901d6cfcb",
+      "w3k8": "e4da90cc55694d797d112ebb018dc913efc54e2aac319720a76ed3486937a5bd",
+      "h7m4": "b8ae061c5a1846139015883eebb452c2aeb60222d5166f8b6317de1fa495741b"
+    },
+    "packet_sha256": "c2c43899102cea7244a3b1e567361b2a14e0a670f9dc06850293d8b5aaff6d18",
+    "output_sha256": "4f68eaf8a23f61b13335594f36fcb61792a0b2ebdd172b6e554d8d8c9a2f7212",
+    "edges": [
+      [
+        "Ada Wynn",
+        "beneficiary_of",
+        "Alder Fold Trust"
+      ],
+      [
+        "Elin Voss",
+        "beneficiary_of",
+        "Alder Fold Trust"
+      ],
+      [
+        "Jonah Reed",
+        "trustee_of",
+        "Alder Fold Trust"
+      ],
+      [
+        "Livia Keane",
+        "settlor_of",
+        "Alder Fold Trust"
+      ],
+      [
+        "Nia Bell",
+        "beneficiary_of",
+        "Alder Fold Trust"
+      ]
+    ],
+    "decisions": [
+      {
+        "proposition": "Ada Wynn — beneficiary_of — Alder Fold Trust",
+        "status": "supported",
+        "reason": "The principal instrument executed by Livia Keane and Jonah Reed designated Ada Wynn on 12 February 2024. Priya Sen reports that the trustee supplied the retained extract on 19 October 2026, before the cut-off. Tess Calder's amendment expressly replaces 4.2, not 4.3, and clause 5 preserves the other provisions. Ordinary quotation and attribution: w3k8. Attached minimum sufficient set: {(w3k8, \"4.3 Ada Wynn is designated a beneficiary of the Alder Fold Trust.\")}.",
+        "source_ids": [
+          "w3k8",
+          "n5q2",
+          "h7m4"
+        ]
+      },
+      {
+        "proposition": "Elin Voss — beneficiary_of — Alder Fold Trust",
+        "status": "supported",
+        "reason": "The principal instrument executed by Livia Keane and Jonah Reed designated Elin Voss on 12 February 2024. Priya Sen reports that the trustee supplied the retained extract on 19 October 2026, before the cut-off. Tess Calder's amendment expressly replaces 4.2, not 4.1, and clause 5 preserves the other provisions. Ordinary quotation and attribution: w3k8. Attached minimum sufficient set: {(w3k8, \"4.1 Elin Voss is designated a beneficiary of the Alder Fold Trust.\")}.",
+        "source_ids": [
+          "w3k8",
+          "n5q2",
+          "h7m4"
+        ]
+      },
+      {
+        "proposition": "Jonah Reed — trustee_of — Alder Fold Trust",
+        "status": "supported",
+        "reason": "The principal instrument appoints Jonah Reed and records his execution as Trustee on 12 February 2024. Priya Sen reports that the retained extract was supplied on 19 October 2026. The amendment leaves the appointment unchanged. Its delivery line names Jonah Reed as recipient, and the brief refers to the trustee, but neither independently establishes the named trustee–trust relationship. Ordinary quotation and attribution: w3k8. Attached minimum sufficient set: {(w3k8, \"Jonah Reed is appointed Trustee of the Alder Fold Trust.\")}. Alternative minimum sufficient set, from the same instrument rather than an independent origin: {(w3k8, \"ALDER FOLD TRUST\"), (w3k8, \"Execution\\n\\nExecuted on 12 February 2024 by:\\n\\nLivia Keane, as Settlor  \\nJonah Reed, as Trustee\")}.",
+        "source_ids": [
+          "w3k8",
+          "n5q2",
+          "h7m4"
+        ]
+      },
+      {
+        "proposition": "Livia Keane — settlor_of — Alder Fold Trust",
+        "status": "supported",
+        "reason": "The principal instrument records Livia Keane settling the trust and executing the instrument as Settlor on 12 February 2024. Priya Sen reports that the retained extract was supplied on 19 October 2026. The amendment leaves the settlement provision unchanged. Ordinary quotation and attribution: w3k8. Attached minimum sufficient set: {(w3k8, \"Livia Keane settles the Alder Fold Trust on the terms of this instrument.\")}. Alternative minimum sufficient set, from the same instrument rather than an independent origin: {(w3k8, \"ALDER FOLD TRUST\"), (w3k8, \"Execution\\n\\nExecuted on 12 February 2024 by:\\n\\nLivia Keane, as Settlor\")}.",
+        "source_ids": [
+          "w3k8",
+          "n5q2",
+          "h7m4"
+        ]
+      },
+      {
+        "proposition": "Nia Bell — beneficiary_of — Alder Fold Trust",
+        "status": "supported",
+        "reason": "Tess Calder signed as Variation Officer on 8 October 2026. The amendment identifies the exact principal-instrument reference PI-67Q4, targets the existing clause 4.2, replaces it in full, states Nia Bell's designation, and fixes 12 October 2026 as the effective date. The principal instrument supplies the trust identity, Tess Calder's authority and the rule giving the amendment effect on that date. Priya Sen reports that both documents were supplied to the advice file on 19 October 2026; that is a receipt date, not the effective date. The original Milo Hart designation is superseded. Ordinary quotation and attribution: N/A; every sufficient set requires both operative Sources. Attached minimum sufficient set: {(w3k8, \"Tess Calder is designated Variation Officer of the Alder Fold Trust.\\n\\n4. Beneficiaries\\n\\n4.1 Elin Voss is designated a beneficiary of the Alder Fold Trust.\\n\\n4.2 Milo Hart is designated a beneficiary of the Alder Fold Trust.\\n\\n4.3 Ada Wynn is designated a beneficiary of the Alder Fold Trust.\\n\\n5. Replacement of a beneficiary provision\\n\\nThe Variation Officer may replace one current beneficiary provision in its entirety by signing an amendment in that capacity. The signed amendment must identify this instrument by its exact principal-instrument reference, PI-67Q4, specify by number the one current beneficiary provision it replaces, and state the replacement beneficiary designation and the effective date.\\n\\nAn amendment signed before its stated effective date takes effect on that date if it meets the requirements of this clause. All other provisions remain unchanged.\"), (n5q2, \"Principal instrument: PI-67Q4  \\nProvision locator: 4.2  \\nEffective date: 12 October 2026  \\nDelivered to: Jonah Reed, for retention with the principal instrument\\n\\nWith effect from the effective date, I replace the provision identified above in full with the following:\\n\\nNia Bell is expressly named as a beneficiary under this provision.\\n\\nSigned: Tess Calder  \\nCapacity: Variation Officer  \\nDate of signature: 8 October 2026\")}. The brief establishes receipt but does not independently establish either endpoint of this relationship or the designation.",
+        "source_ids": [
+          "w3k8",
+          "n5q2",
+          "h7m4"
+        ]
+      },
+      {
+        "proposition": "The original clause 4.2 naming Milo Hart remains operative at the cut-off.",
+        "status": "explicitly contradicted",
+        "reason": "The original executed text says, \"4.2 Milo Hart is designated a beneficiary of the Alder Fold Trust.\" That was the designation under the instrument executed on 12 February 2024. Tess Calder's amendment, signed on 8 October 2026 and effective on 12 October 2026, expressly replaces that provision \"in full\" with the Nia Bell designation. Priya Sen reports both documents were supplied on 19 October 2026. This is an express replacement, not a contradiction inferred from silence. No current Milo Hart edge is supported by the supplied provisions.",
+        "source_ids": [
+          "w3k8",
+          "n5q2",
+          "h7m4"
+        ]
+      },
+      {
+        "proposition": "As of 09:00 on 23 October 2026, clauses 1–3, 4.1, 4.3 and 5 remain unchanged in the supplied text; clause 4.2 operates only as replaced.",
+        "status": "supported",
+        "reason": "Clause 5 of the executed principal instrument authorizes replacement of one numbered beneficiary provision and states, \"All other provisions remain unchanged.\" Tess Calder's signed amendment targets only 4.2 and takes effect on 12 October 2026. Priya Sen's brief records receipt on 19 October and sets the 09:00 cut-off, one hour before the meeting. It does not report a second operative change or offer a competing conclusion.",
+        "source_ids": [
+          "w3k8",
+          "n5q2",
+          "h7m4"
+        ]
+      },
+      {
+        "proposition": "Tess Calder is the designated Variation Officer of the Alder Fold Trust.",
+        "status": "supported",
+        "reason": "Clause 3 of the principal instrument executed on 12 February 2024 expressly designates Tess Calder. The amendment records that she signed in that capacity on 8 October 2026; the capacity line is not a separate appointment. The amendment does not replace clause 3. Priya Sen reports that both documents were received in the advice file on 19 October 2026. Variation Officer is outside the graph ontology; the designation does not establish trusteeship.",
+        "source_ids": [
+          "w3k8",
+          "n5q2",
+          "h7m4"
+        ]
+      },
+      {
+        "proposition": "Jonah Reed is named as the amendment's retention recipient, and Priya Sen identifies herself as his adviser.",
+        "status": "supported",
+        "reason": "The amendment signed by Tess Calder on 8 October 2026 names Jonah Reed as recipient for retention with the principal instrument but does not date delivery to him. Priya Sen signs the 20 October 2026 brief as adviser to Jonah Reed and reports the trustee supplied both items to the advice file on 19 October. Neither administrative statement creates an office or adds an effective-date condition to clause 5.",
+        "source_ids": [
+          "n5q2",
+          "h7m4",
+          "w3k8"
+        ]
+      },
+      {
+        "proposition": "The supplied extract and amendment establish that there are no other beneficiary designations or relevant instruments outside the packet.",
+        "status": "unresolved",
+        "reason": "Priya Sen describes the principal text as a retained extract and expressly reaches no conclusions in the 20 October brief. The supplied operative texts establish the three current express designations within this file, but not the contents or absence of material outside it.",
+        "source_ids": [
+          "h7m4",
+          "w3k8",
+          "n5q2"
+        ]
+      }
+    ],
+    "unavailable_basis": [
+      "No single Source proves the Nia Bell edge. The amendment names Nia Bell and identifies PI-67Q4 but does not name the trust; the principal extract identifies the trust and the replacement power but does not name Nia Bell. The brief is evidence of timely receipt, not of the designation.",
+      "No exact date of delivery to Jonah Reed appears. Do not substitute the 19 October advice-file receipt date for delivery to him or for the stated 12 October effective date.",
+      "No parent, sibling or spouse relationship is expressly supported. Shared beneficiary status, office, or correspondence is not evidence of kinship.",
+      "Ask the adviser whether the complete executed principal instrument and all later executed instruments are on file, and whether the trust's administrative records reflect the replacement of clause 4.2 without displacing clauses 4.1 or 4.3. Do not infer any additional beneficiary, entitlement, or amendment from the extract or from the brief's silence."
+    ]
+  },
+  "scoped-replacement-proof-0": {
+    "source_ids": [
+      "w3k8",
+      "n5q2"
+    ],
+    "source_body_sha256": {
+      "w3k8": "031d333ece015d9367f35c3628f9dde7539f1e150790159e7496280721e0f47d",
+      "n5q2": "88fda2aa688896b8e2450c3ad612eb8584991da0bcb4b0e01861d4ae8a46789f"
+    },
+    "packet_sha256": "b530f0cab49e8d775fdd024d107636cb16668d28a3427878658177d6bf166b2b",
+    "output_sha256": "b2d63c0251d990f6003f2112d27355c3a2a53dcf70ffebe1c00c99317757335d",
+    "edges": [
+      [
+        "Ada Wynn",
+        "beneficiary_of",
+        "Alder Fold Trust"
+      ],
+      [
+        "Milo Hart",
+        "beneficiary_of",
+        "Alder Fold Trust"
+      ],
+      [
+        "Nia Bell",
+        "beneficiary_of",
+        "Alder Fold Trust"
+      ]
+    ],
+    "decisions": [
+      {
+        "proposition": "Ada Wynn is a beneficiary of the Alder Fold Trust at 09:00 on 23 October 2026.",
+        "status": "supported",
+        "reason": "The principal-instrument excerpt directly designates Ada Wynn in 4.3. The signed amendment received in the cut-off file replaces only 4.1, effective 12 October 2026; it does not compete with 4.3. Ordinary quotation and attribution, and the sole identified minimum sufficient set attached to this edge: {(w3k8, \"4.3 Ada Wynn is designated a beneficiary of the Alder Fold Trust.\")}.",
+        "source_ids": [
+          "w3k8"
+        ]
+      },
+      {
+        "proposition": "Milo Hart is a beneficiary of the Alder Fold Trust at 09:00 on 23 October 2026.",
+        "status": "supported",
+        "reason": "The principal-instrument excerpt directly designates Milo Hart in 4.2. The signed amendment received in the cut-off file replaces only 4.1, effective 12 October 2026; it does not compete with 4.2. Ordinary quotation and attribution, and the sole identified minimum sufficient set attached to this edge: {(w3k8, \"4.2 Milo Hart is designated a beneficiary of the Alder Fold Trust.\")}.",
+        "source_ids": [
+          "w3k8"
+        ]
+      },
+      {
+        "proposition": "Nia Bell is a beneficiary of the Alder Fold Trust at 09:00 on 23 October 2026.",
+        "status": "supported",
+        "reason": "The principal instrument supplies the trust identity, Tess Calder's appointment, the original 4.1 and the replacement rule. Tess Calder, signing as Variation Officer on 8 October 2026, identifies PI-67Q4 and 4.1 and replaces 4.1 in full with Nia Bell's designation effective 12 October 2026. Both excerpts are in the cut-off file. The original Elin Voss wording is superseded, not a competing current designation. Neither source alone proves this edge; ordinary quotation and attribution: N/A. Sole identified minimum sufficient set attached to this edge: {(w3k8, \"Tess Calder is designated Variation Officer of the Alder Fold Trust.\"), (w3k8, \"4.1 Elin Voss is designated a beneficiary of the Alder Fold Trust.\"), (w3k8, \"The Variation Officer may replace one current beneficiary provision in its entirety by signing an amendment in that capacity. The signed amendment must identify this instrument by its exact principal-instrument reference, PI-67Q4, specify by number the one current beneficiary provision it replaces, and state the replacement beneficiary designation and the effective date.\n\nAn amendment signed before its stated effective date takes effect on that date if it meets the requirements of this clause.\"), (n5q2, \"Principal instrument: PI-67Q4  \nProvision locator: 4.1  \nEffective date: 12 October 2026\"), (n5q2, \"With effect from the effective date, I replace the provision identified above in full with the following:\n\nNia Bell is expressly named as a beneficiary under this provision.\n\nSigned: Tess Calder  \nCapacity: Variation Officer  \nDate of signature: 8 October 2026\")}.",
+        "source_ids": [
+          "w3k8",
+          "n5q2"
+        ]
+      },
+      {
+        "proposition": "Elin Voss's original designation in 4.1 remains in force at the cut-off.",
+        "status": "explicitly contradicted",
+        "reason": "The principal instrument originally designates Elin Voss in 4.1. The amendment signed by Tess Calder on 8 October 2026 and present in the cut-off file expressly replaces that provision in full from 12 October 2026. The original designation and its later replacement describe successive states, not conflicting instruments in force at the same time.",
+        "source_ids": [
+          "w3k8",
+          "n5q2"
+        ]
+      },
+      {
+        "proposition": "Tess Calder is designated Variation Officer of the Alder Fold Trust and has the limited replacement authority stated in clause 5.",
+        "status": "supported",
+        "reason": "The principal-instrument excerpt appoints Tess Calder and states the conditions for replacing one current beneficiary provision at a time. The signed amendment reports the same capacity and exercises that authority; its capacity line does not independently establish the appointment or its scope. Both sources are in the cut-off file. Variation Officer is not a scored trustee relationship.",
+        "source_ids": [
+          "w3k8",
+          "n5q2"
+        ]
+      },
+      {
+        "proposition": "The 12 October 2026 amendment leaves 4.2, 4.3 and clause 5 unchanged.",
+        "status": "supported",
+        "reason": "The principal instrument says, \"All other provisions remain unchanged.\" Tess Calder's signed amendment, present in the cut-off file, specifies only 4.1 for replacement. Neither excerpt asserts any change to the other provisions.",
+        "source_ids": [
+          "w3k8",
+          "n5q2"
+        ]
+      },
+      {
+        "proposition": "The amendment records delivery to Jonah Reed for retention with the principal instrument.",
+        "status": "supported",
+        "reason": "The signed amendment in the cut-off file says, \"Delivered to: Jonah Reed, for retention with the principal instrument\". This identifies the recorded recipient and purpose, not a trusteeship or any wider authority. It gives no delivery date or time; the signature date is not proof of the delivery date.",
+        "source_ids": [
+          "n5q2"
+        ]
+      }
+    ],
+    "unavailable_basis": [
+      "The excerpts do not identify the trustee or settlor, or expressly establish any parent, sibling or spouse relationship. These matters are unresolved, not contradicted. Do not infer trusteeship from Tess Calder's variation authority or Jonah Reed's retention role.",
+      "The principal instrument's execution date and Jonah Reed's actual receipt date and time are not stated. Clause 5 as supplied does not make delivery a condition of effectiveness.",
+      "The excerpts support the three listed beneficiaries but do not establish that the full instrument and amendment history are complete. Ask the adviser to confirm the complete executed instrument, whether any other amendments were effective by 09:00 on 23 October 2026, who held the trustee office, and whether there is a dated receipt or retention record."
+    ]
+  },
+  "scoped-replacement-proof-1": {
+    "source_ids": [
+      "w3k8",
+      "n5q2"
+    ],
+    "source_body_sha256": {
+      "w3k8": "031d333ece015d9367f35c3628f9dde7539f1e150790159e7496280721e0f47d",
+      "n5q2": "ccabed51edccd539b040d8d275c2e3ceb8800dc4c8c4b6ee354c62b7d84730c2"
+    },
+    "packet_sha256": "d2753dadeac41c1c2efe7600db7a434caccf01fbf00958abed7a6c617de64ce7",
+    "output_sha256": "c67846760a2c633370a7cfc28e8c6d3924bbb86738ff14f452bc43ae825fb958",
+    "edges": [
+      [
+        "Ada Wynn",
+        "beneficiary_of",
+        "Alder Fold Trust"
+      ],
+      [
+        "Elin Voss",
+        "beneficiary_of",
+        "Alder Fold Trust"
+      ],
+      [
+        "Nia Bell",
+        "beneficiary_of",
+        "Alder Fold Trust"
+      ]
+    ],
+    "decisions": [
+      {
+        "proposition": "Ada Wynn is a beneficiary of the Alder Fold Trust at 09:00 on 23 October 2026.",
+        "status": "supported",
+        "reason": "The principal-instrument excerpt directly designates Ada Wynn in provision 4.3. The signed amendment replaces only provision 4.2, effective 12 October 2026; provision 4.3 remains in force. Both excerpts are in the supplied cut-off file. Ordinary quotation and attribution, and the sole identified minimum sufficient set: {(w3k8, \"4.3 Ada Wynn is designated a beneficiary of the Alder Fold Trust.\")}.",
+        "source_ids": [
+          "w3k8",
+          "n5q2"
+        ]
+      },
+      {
+        "proposition": "Elin Voss is a beneficiary of the Alder Fold Trust at 09:00 on 23 October 2026.",
+        "status": "supported",
+        "reason": "The principal-instrument excerpt directly designates Elin Voss in provision 4.1. The signed amendment replaces only provision 4.2, effective 12 October 2026; provision 4.1 remains in force. Both excerpts are in the supplied cut-off file. Ordinary quotation and attribution, and the sole identified minimum sufficient set: {(w3k8, \"4.1 Elin Voss is designated a beneficiary of the Alder Fold Trust.\")}.",
+        "source_ids": [
+          "w3k8",
+          "n5q2"
+        ]
+      },
+      {
+        "proposition": "Nia Bell is a beneficiary of the Alder Fold Trust at 09:00 on 23 October 2026.",
+        "status": "supported",
+        "reason": "The principal-instrument excerpt links the Alder Fold Trust to PI-67Q4, designates Tess Calder as Variation Officer, and supplies the replacement rule. Tess Calder's amendment identifies PI-67Q4 and provision 4.2, appoints Nia Bell as beneficiary under that provision, states the effective date of 12 October 2026, and records signature in the required capacity on 8 October 2026. Both excerpts are in the supplied cut-off file. The original Milo Hart designation is superseded, not concurrent. Neither source alone establishes this current edge. Ordinary quotation and attribution: N/A. Attached sole identified minimum sufficient set: {(w3k8, \"Tess Calder is designated Variation Officer of the Alder Fold Trust.\n\n4. Beneficiaries\n\n4.1 Elin Voss is designated a beneficiary of the Alder Fold Trust.\n4.2 Milo Hart is designated a beneficiary of the Alder Fold Trust.\n4.3 Ada Wynn is designated a beneficiary of the Alder Fold Trust.\n5. Replacement of a beneficiary provision\n\nThe Variation Officer may replace one current beneficiary provision in its entirety by signing an amendment in that capacity. The signed amendment must identify this instrument by its exact principal-instrument reference, PI-67Q4, specify by number the one current beneficiary provision it replaces, and state the replacement beneficiary designation and the effective date.\n\nAn amendment signed before its stated effective date takes effect on that date if it meets the requirements of this clause. All other provisions remain unchanged.\"), (n5q2, \"Principal instrument: PI-67Q4  \nProvision locator: 4.2  \nEffective date: 12 October 2026  \nDelivered to: Jonah Reed, for retention with the principal instrument\n\nWith effect from the effective date, I replace the provision identified above in full with the following:\n\nNia Bell is expressly named as a beneficiary under this provision.\n\nSigned: Tess Calder  \nCapacity: Variation Officer  \nDate of signature: 8 October 2026\")}.",
+        "source_ids": [
+          "w3k8",
+          "n5q2"
+        ]
+      },
+      {
+        "proposition": "Milo Hart remains a beneficiary of the Alder Fold Trust under provision 4.2 at the cut-off.",
+        "status": "explicitly contradicted",
+        "reason": "The principal-instrument excerpt establishes the original designation: \"4.2 Milo Hart is designated a beneficiary of the Alder Fold Trust.\" The signed amendment in the cut-off file expressly replaces that provision in full with the Nia Bell designation, effective 12 October 2026. This is an express supersession of Milo Hart's designation under provision 4.2, not an inference from silence.",
+        "source_ids": [
+          "w3k8",
+          "n5q2"
+        ]
+      },
+      {
+        "proposition": "Tess Calder is the designated Variation Officer of the Alder Fold Trust, and clause 5 remains in force.",
+        "status": "supported",
+        "reason": "The principal-instrument excerpt establishes the office and its limited replacement power. Tess Calder's 8 October 2026 signature states the same capacity, but the signature block is not the source of her appointment. The amendment changes only provision 4.2 as of 12 October 2026; clause 5 expressly leaves other provisions unchanged. Variation Officer is not a scored office and does not establish trusteeship.",
+        "source_ids": [
+          "w3k8",
+          "n5q2"
+        ]
+      },
+      {
+        "proposition": "The signed amendment identifies Jonah Reed as the recipient for retention with the principal instrument.",
+        "status": "supported",
+        "reason": "The amendment itself states: \"Delivered to: Jonah Reed, for retention with the principal instrument\". This is a retention entry, not an appointment as trustee or a grant of amendment authority.",
+        "source_ids": [
+          "n5q2"
+        ]
+      },
+      {
+        "proposition": "Jonah Reed personally received the amendment by 09:00 on 23 October 2026.",
+        "status": "unresolved",
+        "reason": "The amendment is in the supplied cut-off file and names Jonah Reed in the delivery entry, but gives no receipt date or acknowledgement. The supplied clause 5 does not make delivery or receipt a condition of effectiveness.",
+        "source_ids": [
+          "w3k8",
+          "n5q2"
+        ]
+      }
+    ],
+    "unavailable_basis": [
+      "The excerpts do not identify a trustee or settlor or expressly establish any parent, sibling, or spouse relationship. Neither Tess Calder's office nor Jonah Reed's retention role establishes trusteeship.",
+      "The excerpts establish the three current designations shown, but do not establish whether the complete instrument or other records contain additional designations or later changes.",
+      "For the adviser: confirm that the complete principal instrument and amendment history are on file, identify the serving trustee from the appointment records, and check the retention record if Jonah Reed's date of receipt matters."
+    ]
+  },
+  "principal-excerpt-only": {
+    "source_ids": [
+      "w3k8"
+    ],
+    "source_body_sha256": {
+      "w3k8": "031d333ece015d9367f35c3628f9dde7539f1e150790159e7496280721e0f47d"
+    },
+    "packet_sha256": "be4f5db8b7094b6142dcd8ea2b72487989c67c244ea2a3a5811edeb6401f84dd",
+    "output_sha256": "82abee94d771c1586ffc8ff0037399fa2293667212223e8ce35103b305c5259d",
+    "edges": [
+      [
+        "Ada Wynn",
+        "beneficiary_of",
+        "Alder Fold Trust"
+      ],
+      [
+        "Elin Voss",
+        "beneficiary_of",
+        "Alder Fold Trust"
+      ],
+      [
+        "Milo Hart",
+        "beneficiary_of",
+        "Alder Fold Trust"
+      ]
+    ],
+    "decisions": [
+      {
+        "proposition": "Ada Wynn is a beneficiary of the Alder Fold Trust as of 09:00 on 23 October 2026 on the supplied record.",
+        "status": "supported",
+        "reason": "The sole identified minimum sufficient set, also the ordinary quotation and attribution, is (w3k8, \"4.3 Ada Wynn is designated a beneficiary of the Alder Fold Trust.\"). Clause 4.3 directly names both endpoints. No competing passage or replacement is supplied.",
+        "source_ids": [
+          "w3k8"
+        ]
+      },
+      {
+        "proposition": "Elin Voss is a beneficiary of the Alder Fold Trust as of 09:00 on 23 October 2026 on the supplied record.",
+        "status": "supported",
+        "reason": "The sole identified minimum sufficient set, also the ordinary quotation and attribution, is (w3k8, \"4.1 Elin Voss is designated a beneficiary of the Alder Fold Trust.\"). Clause 4.1 directly names both endpoints. No competing passage or replacement is supplied.",
+        "source_ids": [
+          "w3k8"
+        ]
+      },
+      {
+        "proposition": "Milo Hart is a beneficiary of the Alder Fold Trust as of 09:00 on 23 October 2026 on the supplied record.",
+        "status": "supported",
+        "reason": "The sole identified minimum sufficient set, also the ordinary quotation and attribution, is (w3k8, \"4.2 Milo Hart is designated a beneficiary of the Alder Fold Trust.\"). Clause 4.2 directly names both endpoints. No competing passage or replacement is supplied.",
+        "source_ids": [
+          "w3k8"
+        ]
+      },
+      {
+        "proposition": "Tess Calder is designated Variation Officer of the Alder Fold Trust.",
+        "status": "supported",
+        "reason": "The excerpt states directly: \"Tess Calder is designated Variation Officer of the Alder Fold Trust.\" No competing passage is supplied. Variation Officer is outside the graph ontology; the designation does not establish that Tess Calder is a trustee.",
+        "source_ids": [
+          "w3k8"
+        ]
+      },
+      {
+        "proposition": "Clause 5 allows the Variation Officer to replace one current beneficiary provision in its entirety, leaving all other provisions unchanged.",
+        "status": "supported",
+        "reason": "Clause 5 states: \"The Variation Officer may replace one current beneficiary provision in its entirety by signing an amendment in that capacity. The signed amendment must identify this instrument by its exact principal-instrument reference, PI-67Q4, specify by number the one current beneficiary provision it replaces, and state the replacement beneficiary designation and the effective date.\" It further states: \"An amendment signed before its stated effective date takes effect on that date if it meets the requirements of this clause. All other provisions remain unchanged.\" No competing passage is supplied. The power to amend is not evidence that it was exercised; advance signature alone does not make a replacement effective before its stated date.",
+        "source_ids": [
+          "w3k8"
+        ]
+      },
+      {
+        "proposition": "Any of clauses 4.1–4.3 was replaced by an amendment effective by 09:00 on 23 October 2026.",
+        "status": "unresolved",
+        "reason": "The supplied file establishes no conflict: it contains the designations and the amendment mechanism, but no amendment or competing designation. That absence does not prove that no amendment exists. Ask the adviser for the executed principal instrument and any amendments, and verify the signing capacity, exact instrument reference, numbered provision, replacement designation, effective date and receipt by the cut-off.",
+        "source_ids": [
+          "w3k8"
+        ]
+      }
+    ],
+    "unavailable_basis": [
+      "The sole source is a direct instrument excerpt, not an attributed third-party report. No separate reporter, execution date, original effective date or receipt timestamp is identified. The excerpt is included in the supplied cut-off record, but its receipt date cannot be independently verified.",
+      "The excerpt does not establish the complete set of provisions or beneficiaries in the full trust record, or identify any settlor, trustee or family relationship.",
+      "No graph edge requires multiple sources. No additional independent statement or copy is supplied."
+    ]
+  },
+  "amendment-excerpt-only": {
+    "source_ids": [
+      "n5q2"
+    ],
+    "source_body_sha256": {
+      "n5q2": "88fda2aa688896b8e2450c3ad612eb8584991da0bcb4b0e01861d4ae8a46789f"
+    },
+    "packet_sha256": "92b961ab8e3bbeaca47994a4fd11a4b63626b0b7d59bc961611ffb8fd63f81a8",
+    "output_sha256": "5b2b4dea464bb213fea58f5db39a02bafc88b6ec4571e74127e435ab370ceaf9",
+    "edges": [],
+    "decisions": [
+      {
+        "proposition": "Nia Bell is expressly named as a beneficiary under the replacement text for provision 4.1 of principal instrument PI-67Q4.",
+        "status": "supported",
+        "reason": "The excerpt identifies the instrument and provision and states: “Nia Bell is expressly named as a beneficiary under this provision.” It is signed in Tess Calder’s name with the stated capacity “Variation Officer.” The instrument reference does not identify the trust by name, so no beneficiary_of edge can be scored.",
+        "source_ids": [
+          "n5q2"
+        ]
+      },
+      {
+        "proposition": "The signed text specifies a full replacement of provision 4.1 effective 12 October 2026.",
+        "status": "supported",
+        "reason": "The excerpt states “Effective date: 12 October 2026” and “With effect from the effective date, I replace the provision identified above in full with the following:”. The stated signature date is 8 October 2026. These are the dates and effect stated in the excerpt; no competing passage is supplied.",
+        "source_ids": [
+          "n5q2"
+        ]
+      },
+      {
+        "proposition": "Jonah Reed is identified as the recipient for retention with the principal instrument.",
+        "status": "supported",
+        "reason": "The excerpt states “Delivered to: Jonah Reed, for retention with the principal instrument”. This records a delivery role, not a trusteeship or other appointment.",
+        "source_ids": [
+          "n5q2"
+        ]
+      },
+      {
+        "proposition": "Jonah Reed received the signed replacement by 09:00 on 23 October 2026.",
+        "status": "unresolved",
+        "reason": "The delivery notation is undated. Neither the signature date nor the stated effective date establishes when Jonah Reed received it.",
+        "source_ids": [
+          "n5q2"
+        ]
+      },
+      {
+        "proposition": "The replacement was validly made and remained in force at 09:00 on 23 October 2026.",
+        "status": "unresolved",
+        "reason": "The excerpt states the replacement and its intended effective date, but does not supply the variation power, establish Tess Calder’s authority to exercise it, or establish whether any later change was in force by the cut-off. Nothing supplied explicitly contradicts the replacement.",
+        "source_ids": [
+          "n5q2"
+        ]
+      }
+    ],
+    "unavailable_basis": [
+      "Obtain PI-67Q4 or an explicit cross-record link identifying the trust by its exact name; the instrument identifier is not a trust name.",
+      "Confirm the variation power, Tess Calder’s authority, any applicable formalities, and the date of receipt.",
+      "Obtain the principal instrument and any later effective amendments to establish which other provisions were in force and whether other beneficiaries were expressly named. Replacing provision 4.1 in full does not establish that Nia Bell was the trust’s sole beneficiary."
+    ]
+  }
+}

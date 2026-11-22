@@ -1,0 +1,62 @@
+{
+  "family": "D",
+  "split": "development",
+  "status": "pending_human_admission",
+  "owner_decision": null,
+  "signature": null,
+  "dispatched": false,
+  "technical_disposition": "accept",
+  "hypothesis": {
+    "hypothesis_id": "scoped-trust-amendment",
+    "revision": 1,
+    "hypothesis_sha256": "20288d9f35aa29585353393c40d6f6e317fc9fee302b7e35a989b8306224fcb8"
+  },
+  "validated_base": "3641948e8f8510b15799b96d1b748825d0048645",
+  "paid_pcg_extraction_attempts": 0,
+  "protocol_sha256": "16ceeab21036a70df0159f226b3011848768eb210e535f2d787d22838e70270a",
+  "evidence_policy": "benchmark_v2_evidence_v1",
+  "proof_policy": "attached_sufficient_set_v1",
+  "manifest_sha256": "646d877db58fb26f460fb69f3f2197467f1fb1930d4176b80c52b43a9af4e75f",
+  "freeze_sha256": "b9295043726610f0f9483be6bf4498d1801ab0871e89472323592c0aecc94bee",
+  "ledger_sha256": "97b5180604c02b359cdc06f7aa56d16d4d20b816bf2bc90e45f6ceba869cde29",
+  "closing_audit_sha256": "1186bb57259b808c97c8f6e578cf2f0616c3602e7952d6184a4207904db1c012",
+  "review_files": {
+    "D0.json": "643282c618d23293394b0922bb4633c03909643cff0840f16566130da058d29d",
+    "D1.json": "fcf18fe01cd321691dbb486921a060b861738fd722c57d2fcb8557746c043b0a",
+    "DOSSIER.md": "06488a7f07ee82b42849ca7225f7a77b1ad66eb66a1fb002e37ba03f170d094c",
+    "custody.json": "d2528c03f1c51dc7871c97317273b214f0a68bc04bd5367468981de6f25a47d8",
+    "freeze.json": "b9295043726610f0f9483be6bf4498d1801ab0871e89472323592c0aecc94bee",
+    "manifest.json": "646d877db58fb26f460fb69f3f2197467f1fb1930d4176b80c52b43a9af4e75f",
+    "originals/h7m4.txt": "b8ae061c5a1846139015883eebb452c2aeb60222d5166f8b6317de1fa495741b",
+    "originals/n5q2.txt": "6c0211fc74badff6fe0214fed847ca0b6880d0a0e3a2589a753d6dd79b64455b",
+    "originals/w3k8.txt": "e4da90cc55694d797d112ebb018dc913efc54e2aac319720a76ed3486937a5bd",
+    "review/agreement.json": "89a665ab05aee478f4a049714fedc55de4ebeda6ff2c4a20cc1aac23aac329c7",
+    "review/blind-lock.json": "3af206bea684c69c4c554dfc1f80253ce02d3891cdcbb23617da68ed4645dbcb",
+    "review/blind-review.json": "81ed66e3c4f5154f2c327c1fc352bb0b6ddd861576a21c8c1f263114db0ceb10",
+    "review/comparison.json": "ac1fbf39bb57a1798d950c2d08897a6c7d84c8aae6fe14a1a6a2d9df1bf3e243",
+    "review/documentary-realism.json": "d32f073c641142b293cee3f443b3e8eabcbd782c833c08995320141edb986dae",
+    "review/evidence-ruling.json": "e71ea9f16237e47c3d3965f4dbd66841372eaae21682fea31c0e1390186850a9",
+    "review/masks.json": "315e8c8ccce9edf18e25714da46afd1a3af525014e11f09a843c4080e7a96a69",
+    "review/matched-sources.json": "754e54d133b47db44829cb18266c621633cefab469710621127062db4c7d9597",
+    "review/offline-replay.json": "0957e72d117d039ac4ad07b596c85afa3a82ee06272747554d460eab90e017b7",
+    "review/provisional-lock.json": "d88f042d5b672db89bf59960c151fcefa6b4a759a96d1f90d9d51bda6b8c9550",
+    "sources/D0.json": "b8b5ea79123dc632b1cb4933afaa5f3a453c9f7775b7fe693ab14d16545647e9",
+    "sources/D1.json": "97948486fe33f6fa765dd090d958acfacd20ab179b6066f2db1eafe9bf7a6c17"
+  },
+  "ordered_sources": {
+    "D0": "f18b1f92c73934d6f8cedb0661c0afa41aeee5419d9f53f6923e1841b84d8e68",
+    "D1": "77d8886d6443fa1233ec32eee30f2f8636cbdea7e87a8b5d8a9f1580eaa986b4"
+  },
+  "keys": {
+    "D0": {
+      "truth": "40f07afedc159dba62ed6b227c96f3606ec52b624b5b41484f1e321e7e7e8776",
+      "source_approval": "148cf5a669886a022d7179c245532ffd6256ec226d946fe7427f694159fa14ab",
+      "sufficient_evidence": "1b62695bc3d75e8f5ce3d1fc8b75be69885085f8635049fa1abc7348ea1070c2"
+    },
+    "D1": {
+      "truth": "1ed9f40d10d4fee1a3fa470836683c90ee9308c66b414a386a0410100ebf2e62",
+      "source_approval": "148cf5a669886a022d7179c245532ffd6256ec226d946fe7427f694159fa14ab",
+      "sufficient_evidence": "3e76d6cd76320005a239e00a00c22de969f2bedf2a520a0d34cf7561218d2cf9"
+    }
+  }
+}

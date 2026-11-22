@@ -1,0 +1,37 @@
+{
+  "E0": {
+    "shared": [
+      [
+        "Dana Vale",
+        "parent_of",
+        "Ellis Rook"
+      ],
+      [
+        "Mara Fen",
+        "sibling_of",
+        "Theo Baird"
+      ]
+    ],
+    "only_a": [],
+    "only_b": [],
+    "different_passages": [
+      [
+        "Dana Vale",
+        "parent_of",
+        "Ellis Rook"
+      ]
+    ]
+  },
+  "E1": {
+    "shared": [
+      [
+        "Mara Fen",
+        "sibling_of",
+        "Theo Baird"
+      ]
+    ],
+    "only_a": [],
+    "only_b": [],
+    "different_passages": []
+  }
+}

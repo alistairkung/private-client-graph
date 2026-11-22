@@ -1,0 +1,603 @@
+{
+  "schema_version": 1,
+  "family": "D",
+  "mode": "saved_ideal_replay",
+  "manifest_sha256": "646d877db58fb26f460fb69f3f2197467f1fb1930d4176b80c52b43a9af4e75f",
+  "freeze_sha256": "b9295043726610f0f9483be6bf4498d1801ab0871e89472323592c0aecc94bee",
+  "preview": {
+    "input_mode": "saved",
+    "execution_mode": "replay",
+    "resolver": "none",
+    "maximum_paid_slots": 0,
+    "planned_observations": 2,
+    "sourced_prompt_sha256": "d67afaeb19c26448a6779d9576800cc50ca399c634ad81a1a02b847be0a9dfae",
+    "inputs": [
+      {
+        "id": "benchmark_v3_d0",
+        "source_count": 3,
+        "ordered_sources_sha256": "f18b1f92c73934d6f8cedb0661c0afa41aeee5419d9f53f6923e1841b84d8e68",
+        "source_body_sha256": {
+          "h7m4": "b8ae061c5a1846139015883eebb452c2aeb60222d5166f8b6317de1fa495741b",
+          "w3k8": "e4da90cc55694d797d112ebb018dc913efc54e2aac319720a76ed3486937a5bd",
+          "n5q2": "6c0211fc74badff6fe0214fed847ca0b6880d0a0e3a2589a753d6dd79b64455b"
+        },
+        "messages_sha256": "e9f1817c857fb00bef92245a714486e0e033bda69900cf811f68b3c9c7de34d9",
+        "message_bytes": 4684,
+        "estimated_message_tokens": 1171
+      },
+      {
+        "id": "benchmark_v3_d1",
+        "source_count": 3,
+        "ordered_sources_sha256": "77d8886d6443fa1233ec32eee30f2f8636cbdea7e87a8b5d8a9f1580eaa986b4",
+        "source_body_sha256": {
+          "h7m4": "b8ae061c5a1846139015883eebb452c2aeb60222d5166f8b6317de1fa495741b",
+          "w3k8": "e4da90cc55694d797d112ebb018dc913efc54e2aac319720a76ed3486937a5bd",
+          "n5q2": "548a59a20311fc9004da4f98cd685cf4c4fc4d454d39b01b8428e19901d6cfcb"
+        },
+        "messages_sha256": "3e0c074ff1a8a8cd2921f1e6a5e823851770a2434ca516135a5cbb31469fb2d8",
+        "message_bytes": 4684,
+        "estimated_message_tokens": 1171
+      }
+    ],
+    "token_estimate": "Ceiling of UTF-8 message bytes divided by four, excluding schema and framing."
+  },
+  "paid_attempts": 0,
+  "run_path": "run",
+  "run_artifact_digest": "9ecc26a773c4ba12bf094d3cc5db74e30d52881b14c3865ef62b948b2d85e30d",
+  "aggregate": {
+    "coverage": {
+      "planned": 2,
+      "scored": 2,
+      "pending": 0,
+      "failed": 0,
+      "uncertain": 0,
+      "unavailable": 0
+    },
+    "tp": 10,
+    "fp": 0,
+    "fn": 0,
+    "micro_precision": 1.0,
+    "micro_recall": 1.0,
+    "micro_f1": 1.0
+  },
+  "conditions": [
+    {
+      "condition": "D0",
+      "sample_id": "benchmark_v3_d0",
+      "condition_sha256": "643282c618d23293394b0922bb4633c03909643cff0840f16566130da058d29d",
+      "ordered_sources_sha256": "f18b1f92c73934d6f8cedb0661c0afa41aeee5419d9f53f6923e1841b84d8e68",
+      "annotation_sha256": {
+        "truth": "40f07afedc159dba62ed6b227c96f3606ec52b624b5b41484f1e321e7e7e8776",
+        "source_approval": "148cf5a669886a022d7179c245532ffd6256ec226d946fe7427f694159fa14ab",
+        "sufficient_evidence": "1b62695bc3d75e8f5ce3d1fc8b75be69885085f8635049fa1abc7348ea1070c2"
+      },
+      "planned": 1,
+      "attempted": 1,
+      "scored": 1,
+      "exact_graph": true,
+      "graph": {
+        "tp": 5,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "true_positive_edges": [
+          [
+            "Ada Wynn",
+            "beneficiary_of",
+            "Alder Fold Trust"
+          ],
+          [
+            "Jonah Reed",
+            "trustee_of",
+            "Alder Fold Trust"
+          ],
+          [
+            "Livia Keane",
+            "settlor_of",
+            "Alder Fold Trust"
+          ],
+          [
+            "Milo Hart",
+            "beneficiary_of",
+            "Alder Fold Trust"
+          ],
+          [
+            "Nia Bell",
+            "beneficiary_of",
+            "Alder Fold Trust"
+          ]
+        ],
+        "false_positive_edges": [],
+        "false_negative_edges": [],
+        "provenance_passed": 2,
+        "provenance_failed": 3,
+        "provenance_accuracy": 0.4,
+        "provenance_passes": [
+          [
+            "Jonah Reed",
+            "trustee_of",
+            "Alder Fold Trust"
+          ],
+          [
+            "Livia Keane",
+            "settlor_of",
+            "Alder Fold Trust"
+          ]
+        ],
+        "provenance_failures": [
+          [
+            "Ada Wynn",
+            "beneficiary_of",
+            "Alder Fold Trust"
+          ],
+          [
+            "Milo Hart",
+            "beneficiary_of",
+            "Alder Fold Trust"
+          ],
+          [
+            "Nia Bell",
+            "beneficiary_of",
+            "Alder Fold Trust"
+          ]
+        ]
+      },
+      "decisions": {
+        "required": [
+          [
+            "Milo Hart",
+            "beneficiary_of",
+            "Alder Fold Trust"
+          ],
+          [
+            "Nia Bell",
+            "beneficiary_of",
+            "Alder Fold Trust"
+          ]
+        ],
+        "forbidden": [
+          [
+            "Elin Voss",
+            "beneficiary_of",
+            "Alder Fold Trust"
+          ]
+        ],
+        "unaffected": [
+          [
+            "Ada Wynn",
+            "beneficiary_of",
+            "Alder Fold Trust"
+          ],
+          [
+            "Jonah Reed",
+            "trustee_of",
+            "Alder Fold Trust"
+          ],
+          [
+            "Livia Keane",
+            "settlor_of",
+            "Alder Fold Trust"
+          ]
+        ],
+        "required_present": [
+          [
+            "Milo Hart",
+            "beneficiary_of",
+            "Alder Fold Trust"
+          ],
+          [
+            "Nia Bell",
+            "beneficiary_of",
+            "Alder Fold Trust"
+          ]
+        ],
+        "forbidden_present": [],
+        "unaffected_present": [
+          [
+            "Ada Wynn",
+            "beneficiary_of",
+            "Alder Fold Trust"
+          ],
+          [
+            "Jonah Reed",
+            "trustee_of",
+            "Alder Fold Trust"
+          ],
+          [
+            "Livia Keane",
+            "settlor_of",
+            "Alder Fold Trust"
+          ]
+        ]
+      },
+      "ordinary_evidence": {
+        "version": "benchmark_v2_evidence_v1",
+        "not_applicable": [
+          [
+            "Ada Wynn",
+            "beneficiary_of",
+            "Alder Fold Trust"
+          ],
+          [
+            "Milo Hart",
+            "beneficiary_of",
+            "Alder Fold Trust"
+          ],
+          [
+            "Nia Bell",
+            "beneficiary_of",
+            "Alder Fold Trust"
+          ]
+        ],
+        "quotation": {
+          "assessed": 2,
+          "passed": 2,
+          "failed": 0,
+          "accuracy": 1.0,
+          "passes": [
+            [
+              "Jonah Reed",
+              "trustee_of",
+              "Alder Fold Trust"
+            ],
+            [
+              "Livia Keane",
+              "settlor_of",
+              "Alder Fold Trust"
+            ]
+          ],
+          "failures": []
+        },
+        "source_attribution": {
+          "version": "source_attribution_v1",
+          "assessed": 2,
+          "passed": 2,
+          "failed": 0,
+          "accuracy": 1.0,
+          "failures": []
+        },
+        "sufficiency": {
+          "version": "attached_sufficient_set_v1",
+          "planned": 3,
+          "assessed": 3,
+          "complete": 3,
+          "incomplete": 0,
+          "missed": 0,
+          "complete_over_correct": 1.0,
+          "complete_over_planned": 1.0,
+          "targets": [
+            {
+              "edge": [
+                "Ada Wynn",
+                "beneficiary_of",
+                "Alder Fold Trust"
+              ],
+              "status": "complete",
+              "missing_by_alternative": []
+            },
+            {
+              "edge": [
+                "Milo Hart",
+                "beneficiary_of",
+                "Alder Fold Trust"
+              ],
+              "status": "complete",
+              "missing_by_alternative": []
+            },
+            {
+              "edge": [
+                "Nia Bell",
+                "beneficiary_of",
+                "Alder Fold Trust"
+              ],
+              "status": "complete",
+              "missing_by_alternative": []
+            }
+          ]
+        }
+      },
+      "legacy_source_attribution": null,
+      "runtime_seconds": 0.00022112485021352768,
+      "usage": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "cached_tokens": 0
+      },
+      "incremental_cost": 0.0
+    },
+    {
+      "condition": "D1",
+      "sample_id": "benchmark_v3_d1",
+      "condition_sha256": "fcf18fe01cd321691dbb486921a060b861738fd722c57d2fcb8557746c043b0a",
+      "ordered_sources_sha256": "77d8886d6443fa1233ec32eee30f2f8636cbdea7e87a8b5d8a9f1580eaa986b4",
+      "annotation_sha256": {
+        "truth": "1ed9f40d10d4fee1a3fa470836683c90ee9308c66b414a386a0410100ebf2e62",
+        "source_approval": "148cf5a669886a022d7179c245532ffd6256ec226d946fe7427f694159fa14ab",
+        "sufficient_evidence": "3e76d6cd76320005a239e00a00c22de969f2bedf2a520a0d34cf7561218d2cf9"
+      },
+      "planned": 1,
+      "attempted": 1,
+      "scored": 1,
+      "exact_graph": true,
+      "graph": {
+        "tp": 5,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "true_positive_edges": [
+          [
+            "Ada Wynn",
+            "beneficiary_of",
+            "Alder Fold Trust"
+          ],
+          [
+            "Elin Voss",
+            "beneficiary_of",
+            "Alder Fold Trust"
+          ],
+          [
+            "Jonah Reed",
+            "trustee_of",
+            "Alder Fold Trust"
+          ],
+          [
+            "Livia Keane",
+            "settlor_of",
+            "Alder Fold Trust"
+          ],
+          [
+            "Nia Bell",
+            "beneficiary_of",
+            "Alder Fold Trust"
+          ]
+        ],
+        "false_positive_edges": [],
+        "false_negative_edges": [],
+        "provenance_passed": 2,
+        "provenance_failed": 3,
+        "provenance_accuracy": 0.4,
+        "provenance_passes": [
+          [
+            "Jonah Reed",
+            "trustee_of",
+            "Alder Fold Trust"
+          ],
+          [
+            "Livia Keane",
+            "settlor_of",
+            "Alder Fold Trust"
+          ]
+        ],
+        "provenance_failures": [
+          [
+            "Ada Wynn",
+            "beneficiary_of",
+            "Alder Fold Trust"
+          ],
+          [
+            "Elin Voss",
+            "beneficiary_of",
+            "Alder Fold Trust"
+          ],
+          [
+            "Nia Bell",
+            "beneficiary_of",
+            "Alder Fold Trust"
+          ]
+        ]
+      },
+      "decisions": {
+        "required": [
+          [
+            "Elin Voss",
+            "beneficiary_of",
+            "Alder Fold Trust"
+          ],
+          [
+            "Nia Bell",
+            "beneficiary_of",
+            "Alder Fold Trust"
+          ]
+        ],
+        "forbidden": [
+          [
+            "Milo Hart",
+            "beneficiary_of",
+            "Alder Fold Trust"
+          ]
+        ],
+        "unaffected": [
+          [
+            "Ada Wynn",
+            "beneficiary_of",
+            "Alder Fold Trust"
+          ],
+          [
+            "Jonah Reed",
+            "trustee_of",
+            "Alder Fold Trust"
+          ],
+          [
+            "Livia Keane",
+            "settlor_of",
+            "Alder Fold Trust"
+          ]
+        ],
+        "required_present": [
+          [
+            "Elin Voss",
+            "beneficiary_of",
+            "Alder Fold Trust"
+          ],
+          [
+            "Nia Bell",
+            "beneficiary_of",
+            "Alder Fold Trust"
+          ]
+        ],
+        "forbidden_present": [],
+        "unaffected_present": [
+          [
+            "Ada Wynn",
+            "beneficiary_of",
+            "Alder Fold Trust"
+          ],
+          [
+            "Jonah Reed",
+            "trustee_of",
+            "Alder Fold Trust"
+          ],
+          [
+            "Livia Keane",
+            "settlor_of",
+            "Alder Fold Trust"
+          ]
+        ]
+      },
+      "ordinary_evidence": {
+        "version": "benchmark_v2_evidence_v1",
+        "not_applicable": [
+          [
+            "Ada Wynn",
+            "beneficiary_of",
+            "Alder Fold Trust"
+          ],
+          [
+            "Elin Voss",
+            "beneficiary_of",
+            "Alder Fold Trust"
+          ],
+          [
+            "Nia Bell",
+            "beneficiary_of",
+            "Alder Fold Trust"
+          ]
+        ],
+        "quotation": {
+          "assessed": 2,
+          "passed": 2,
+          "failed": 0,
+          "accuracy": 1.0,
+          "passes": [
+            [
+              "Jonah Reed",
+              "trustee_of",
+              "Alder Fold Trust"
+            ],
+            [
+              "Livia Keane",
+              "settlor_of",
+              "Alder Fold Trust"
+            ]
+          ],
+          "failures": []
+        },
+        "source_attribution": {
+          "version": "source_attribution_v1",
+          "assessed": 2,
+          "passed": 2,
+          "failed": 0,
+          "accuracy": 1.0,
+          "failures": []
+        },
+        "sufficiency": {
+          "version": "attached_sufficient_set_v1",
+          "planned": 3,
+          "assessed": 3,
+          "complete": 3,
+          "incomplete": 0,
+          "missed": 0,
+          "complete_over_correct": 1.0,
+          "complete_over_planned": 1.0,
+          "targets": [
+            {
+              "edge": [
+                "Ada Wynn",
+                "beneficiary_of",
+                "Alder Fold Trust"
+              ],
+              "status": "complete",
+              "missing_by_alternative": []
+            },
+            {
+              "edge": [
+                "Elin Voss",
+                "beneficiary_of",
+                "Alder Fold Trust"
+              ],
+              "status": "complete",
+              "missing_by_alternative": []
+            },
+            {
+              "edge": [
+                "Nia Bell",
+                "beneficiary_of",
+                "Alder Fold Trust"
+              ],
+              "status": "complete",
+              "missing_by_alternative": []
+            }
+          ]
+        }
+      },
+      "legacy_source_attribution": null,
+      "runtime_seconds": 0.00013766717165708542,
+      "usage": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "cached_tokens": 0
+      },
+      "incremental_cost": 0.0
+    }
+  ],
+  "matches": {
+    "D1": {
+      "pair": [
+        "D0",
+        "D1"
+      ],
+      "passed": true,
+      "removed": [
+        [
+          "Milo Hart",
+          "beneficiary_of",
+          "Alder Fold Trust"
+        ]
+      ],
+      "added": [
+        [
+          "Elin Voss",
+          "beneficiary_of",
+          "Alder Fold Trust"
+        ]
+      ],
+      "unaffected": [
+        [
+          "Ada Wynn",
+          "beneficiary_of",
+          "Alder Fold Trust"
+        ],
+        [
+          "Jonah Reed",
+          "trustee_of",
+          "Alder Fold Trust"
+        ],
+        [
+          "Livia Keane",
+          "settlor_of",
+          "Alder Fold Trust"
+        ]
+      ],
+      "changed_source_id": "n5q2"
+    }
+  },
+  "repeat": {
+    "deterministic_decisions_and_scores": true,
+    "paid_attempts": 0,
+    "run_artifact_digest": "effdbc40b4e8ddb671c90d01c88106a6087198c1c5b44b8d3e3f14a3f9526f7c"
+  }
+}

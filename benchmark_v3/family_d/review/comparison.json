@@ -1,0 +1,69 @@
+{
+  "recommendation": "return",
+  "operationalisation": "The locator intervention is supported. Return the evidence keys for repair, not the files for a change to the graph. Evaluate D0 and D1 separately at 09:00 on 23 October 2026. The expected lists are projections onto the three intervention candidates, not complete graphs. For proof, distinguish an affirmative designation in the retained extract from a stand-alone proof that the designation survived the signed variation. Under the stated as-of-cut-off sufficiency rule, ordinary quotation and attribution are N/A where the edge necessarily depends on both instruments. Exact pairs below use [Source ID, quotation]; multiple pairs in one set are conjunctive. Different boundaries on the same evidence do not create independent documentary origins.",
+  "source_diff": "Only n5q2's provision locator changes, from 4.1 in D0 to 4.2 in D1. All IDs, titles, supplied order, other text, effective date, signer, capacity, recipient and exact PI-67Q4 reference are unchanged. The full graph delta is removal of Milo Hart's beneficiary_of edge and addition of Elin Voss's beneficiary_of edge, both to Alder Fold Trust; Livia Keane, Jonah Reed, Ada Wynn and Nia Bell have identical edges across the pair. Forward audit: h7m4 supplies timetable, receipt report and adviser identification; w3k8 supplies offices, original designations and replacement power; n5q2 supplies one operative replacement. Reverse audit: start with n5q2, resolve PI-67Q4 and the condition's locator in w3k8, verify authority and timing, then check each non-target provision and both office routes; h7m4 confirms file availability, not content. No separately supplied draft or competing administrative adjudication appears. The retention recital is not a second instrument or an independent witness to the appointment. Versions of the same file and quotations copied into keys are not independent origins.",
+  "shortcut_findings": [
+    {
+      "heuristic": "Read only the original or first instrument.",
+      "result": "Fails in both: keeps Elin Voss and Milo Hart together, misses Nia Bell, and falsely retains one displaced designation. It does recover the two offices and Ada Wynn."
+    },
+    {
+      "heuristic": "Read only the latest item.",
+      "result": "Fails in both. If latest means last in supplied order or latest operative instrument, n5q2 names Nia Bell but cannot independently identify her trust or prove authority, and omits the unchanged edges. If latest means latest document date, h7m4 contributes no graph edge."
+    },
+    {
+      "heuristic": "Union the designations from both instruments.",
+      "result": "Fails in both even after a correct trust join: it retains both historical selectable names alongside Nia Bell and Ada Wynn. The extra edge is Elin Voss in D0 and Milo Hart in D1."
+    },
+    {
+      "heuristic": "Treat the variation as superseding the principal instrument or the entire beneficiary section.",
+      "result": "Fails in both. Whole-instrument supersession drops both offices and both surviving original beneficiary edges; whole-beneficiary-section supersession also drops both surviving original beneficiary edges, even if the offices are retained. Clause 5 and the signed operative wording limit the change to one provision."
+    },
+    {
+      "heuristic": "Always replace the first beneficiary provision and preserve the rest.",
+      "result": "Incidental exact full-graph match in D0, assuming the other edges and trust join are recovered correctly. Fails in D1: it drops Elin Voss and wrongly retains Milo Hart. Always replacing the second gives the converse incidental match and failure. Neither fixed choice tracks the locator."
+    },
+    {
+      "heuristic": "Apply the locator correctly but discard unaffected relationships, or output only the intervention candidates.",
+      "result": "Fails the full graph in both. The candidate projection is exactly as hypothesised, but it omits Livia Keane, Jonah Reed and Ada Wynn. Keeping only changed clauses also loses a surviving selectable designation or the invariant offices, depending on the implementation."
+    },
+    {
+      "heuristic": "Guess the only named trust, join by the common officer or retention recipient, or treat the title as a trust name.",
+      "result": "With correct scope reasoning, a one-trust or name-overlap guess can happen to output the correct Nia Bell edge in both files, but it fails as a proof and as a stand-alone quotation. n5q2 never names Alder Fold Trust; w3k8 never names Nia Bell. Officer or recipient overlap does not satisfy the exact-reference condition. The PI-67Q4 link works through clause 5 without the separate reference header, but not without both instruments."
+    },
+    {
+      "heuristic": "Read the exact locator and reference, validate the signed replacement under clause 5, and preserve other provisions.",
+      "result": "Succeeds on the full graph in both. Reading the locator with the original clause table alone is enough to predict the contrast in this controlled pair, but not to establish the signatures, authority, effective date or attached proof."
+    },
+    {
+      "heuristic": "Use IDs, titles, headings, order or administrative dates as answer labels.",
+      "result": "Fails to distinguish conditions because that material is fixed. The principal heading legitimately identifies the trust for execution-based proof; titles and ordering can flag record roles, not the replacement target. Signature on 8 October, advice-file supply on 19 October and meeting or cut-off on 23 October are not the operative date of 12 October."
+    }
+  ],
+  "necessary_masks": [
+    "Keep the intended intervention, expected edges, provisional rulings, saved keys, audit answers, condition labels and the paired counterpart out of any independent single-file evaluation input. Those materials disclose the answer or the contrast; they are not evidence at the cut-off.",
+    "Retain opaque source IDs for attribution, with no condition-coded renaming. No condition-bearing leakage is present in the supplied titles, headings or order. Preserve the real cut-off and chronology.",
+    "Do not mask PI-67Q4, the locator, original provision numbers, instrument heading, powers, operative designation, signature, capacity or dates. These are substantive evidence, not answer leakage."
+  ],
+  "limitations": [
+    "The audit establishes express designations and offices on the supplied file, not exhaustive beneficiary classes, shares, vested or accrued rights, distribution entitlements, or validity under requirements outside the supplied extract. The fate of any pre-12 October entitlement of Elin Voss in D0 or Milo Hart in D1 is unresolved, not contradicted by silence.",
+    "No passage establishes parentage, siblings, spouses, an additional trustee or another graph relationship. Do not infer family ties or a trusteeship from a designation, signature, advisory role or retention entry. With no affirmative contrary proposition, these are unsupported rather than explicitly contradicted.",
+    "Ask the adviser to verify retention of the complete executed instruments and any amendment or appointment register, check for other cut-off material, obtain dated delivery evidence if useful, update the working copy without overwriting the historical clause, and review any pre-effective-date distributions, entitlements or notices separately.",
+    "Ada Wynn's invariance is a finding about the two supplied locators, not a general limit on the replacement power. The advice brief and supplied packet do not establish the absence of amendments outside the file or after the cut-off."
+  ],
+  "blocking_findings": [
+    "No graph or causal blocker: the documents sustain the intended candidate contrast, and the full invariant edges must remain.",
+    "Evidence-key repair is needed: the saved keys omit execution alternatives and use direct designation quotations as if they were complete cutoff survival proofs. Preserve the direct designation citations, but attach the condition-specific scope sets and distinguish them from stand-alone ordinary evidence.",
+    "Replace the sufficient but overinclusive saved Nia Bell attachments with the exact minimum segmented counterparts. Do not approve the reported D0 collapsed-whitespace quotation or accept an attachment filed on another edge or copied across conditions without the locator and target changes."
+  ],
+  "conditions": {
+    "D0": {
+      "graph": "Exactly five current edges: (Livia Keane, settlor_of, Alder Fold Trust); (Jonah Reed, trustee_of, Alder Fold Trust); (Milo Hart, beneficiary_of, Alder Fold Trust); (Ada Wynn, beneficiary_of, Alder Fold Trust); (Nia Bell, beneficiary_of, Alder Fold Trust). Original clauses 1, 2, 3, 4.2, 4.3 and 5 remain in force; substituted clause 4.1 names Nia Bell. Elin Voss's current designation under original clause 4.1 is explicitly contradicted by its full replacement from 12 October 2026. Her original designation is supported as history. No family edge is supported.",
+      "ordinary_proof": "w3k8 independently supports each office by the direct operative sentence or by a continuous quotation linking trust identity to the relevant execution capacity. Both routes work in both conditions. Original clauses 4.2 and 4.3 are exact, direct naming passages for Milo Hart and Ada Wynn, respectively. They are appropriate affirmative citations on a graph already reconciled against n5q2, but neither independently proves non-displacement at the cut-off. Ordinary quotation and attribution under the strict stand-alone cutoff test are N/A for those current beneficiary edges and for Nia Bell. Ada Wynn is invariant across the actual pair; clause 4.3 is not expressly exempt from clause 5."
+    },
+    "D1": {
+      "graph": "Exactly five current edges: (Livia Keane, settlor_of, Alder Fold Trust); (Jonah Reed, trustee_of, Alder Fold Trust); (Elin Voss, beneficiary_of, Alder Fold Trust); (Ada Wynn, beneficiary_of, Alder Fold Trust); (Nia Bell, beneficiary_of, Alder Fold Trust). Original clauses 1, 2, 3, 4.1, 4.3 and 5 remain in force; substituted clause 4.2 names Nia Bell. Milo Hart's current designation under original clause 4.2 is explicitly contradicted by its full replacement from 12 October 2026. His original designation is supported as history. No family edge is supported.",
+      "ordinary_proof": "The same w3k8 direct and execution-based office passages qualify as in D0. Original clauses 4.1 and 4.3 directly name Elin Voss and Ada Wynn, respectively; those citations are verbatim affirmative designation evidence, not standalone proof of survival. Ordinary quotation and attribution under the strict independent cutoff test are N/A for those current beneficiary edges and for Nia Bell. The D1 body anchor at clause 4.3 does not independently attest either office without the execution entry."
+    }
+  }
+}

@@ -1,0 +1,117 @@
+{
+  "source_revision": "r0",
+  "changed_sources": [],
+  "changed_edges": [],
+  "ruling": "Use joint scope evidence for each live beneficiary at the cut-off. Distinguish original designation from survival after an operative limited variation.",
+  "earlier_readers": "The blind and revised-excerpt readers approved the surviving designation as ordinary evidence from the principal instrument. Their reasoning still consulted the amendment. The comparison audit treated the scope proof as necessary for each named current beneficiary.",
+  "reason": "A locator-withheld masked reader preserved the offices but could not establish any named beneficiary at the same cut-off. Omitting the amendment altogether yields the three original designations in a different evidentiary file. Both observations support retaining the operative scope on each current beneficiary edge.",
+  "minimum_checks": "The new excerpt readings recovered all approved beneficiary edges. They support source-level necessity for Nia and reproduce the graph. Whole-file masks tested both reference fields and the locator. Individual segmented proof-member omissions were not exhaustively read in fresh contexts.",
+  "revised_excerpt_review": {
+    "D0": {
+      "packet_sha256": "6b8fc6a9408fc45b64a2b7df9193b950c0e6e93357e32e549a14a8b4f6565b76",
+      "output_sha256": "3a41123baf69e174c142b1e6bbb12aa744f8bbd9da1daef6b6afcdba6cff1229",
+      "findings": [
+        {
+          "edge": [
+            "Ada Wynn",
+            "beneficiary_of",
+            "Alder Fold Trust"
+          ],
+          "rationale": "Provision 4.3 directly names Ada Wynn. The amendment replaces only provision 4.1 and does not affect her designation.",
+          "ordinary_source_ids": [
+            "w3k8"
+          ],
+          "proof_source_sets": [
+            [
+              "w3k8"
+            ]
+          ]
+        },
+        {
+          "edge": [
+            "Milo Hart",
+            "beneficiary_of",
+            "Alder Fold Trust"
+          ],
+          "rationale": "Provision 4.2 directly names Milo Hart. The amendment replaces only provision 4.1 and does not affect his designation.",
+          "ordinary_source_ids": [
+            "w3k8"
+          ],
+          "proof_source_sets": [
+            [
+              "w3k8"
+            ]
+          ]
+        },
+        {
+          "edge": [
+            "Nia Bell",
+            "beneficiary_of",
+            "Alder Fold Trust"
+          ],
+          "rationale": "The principal instrument establishes the trust, the existing provision, Tess Calder's appointment and the conditions for replacement. The amendment meets those conditions and names Nia Bell in replacement provision 4.1 from 12 October 2026, before the meeting cut-off. Only the two sources together establish the current edge; ordinary quotation and attribution are not applicable.",
+          "ordinary_source_ids": [],
+          "proof_source_sets": [
+            [
+              "n5q2",
+              "w3k8"
+            ]
+          ]
+        }
+      ]
+    },
+    "D1": {
+      "packet_sha256": "202f3b286b1d22f7d1029d89f612361541eab5e53f66329c7e42c59a46271d3e",
+      "output_sha256": "0fe757b9d204845124eca1b26cc78153ab684ab27b1b61786f6139250490f97d",
+      "findings": [
+        {
+          "edge": [
+            "Ada Wynn",
+            "beneficiary_of",
+            "Alder Fold Trust"
+          ],
+          "rationale": "Provision 4.3 directly names Ada Wynn. The effective amendment replaces only 4.2, leaving 4.3 in force at the cut-off.",
+          "ordinary_source_ids": [
+            "w3k8"
+          ],
+          "proof_source_sets": [
+            [
+              "w3k8"
+            ]
+          ]
+        },
+        {
+          "edge": [
+            "Elin Voss",
+            "beneficiary_of",
+            "Alder Fold Trust"
+          ],
+          "rationale": "Provision 4.1 directly names Elin Voss. The effective amendment replaces only 4.2, leaving 4.1 in force at the cut-off.",
+          "ordinary_source_ids": [
+            "w3k8"
+          ],
+          "proof_source_sets": [
+            [
+              "w3k8"
+            ]
+          ]
+        },
+        {
+          "edge": [
+            "Nia Bell",
+            "beneficiary_of",
+            "Alder Fold Trust"
+          ],
+          "rationale": "Neither source independently establishes this edge. The principal instrument identifies the trust, Tess Calder's authority and the original provision. The amendment matches the exact instrument reference and provision number, is signed in the required capacity, and substitutes Nia Bell with effect from 12 October 2026, before the cut-off.",
+          "ordinary_source_ids": [],
+          "proof_source_sets": [
+            [
+              "n5q2",
+              "w3k8"
+            ]
+          ]
+        }
+      ]
+    }
+  }
+}

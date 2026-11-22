@@ -96,7 +96,7 @@ Keep this register outside the blind packets.
 
 | Hypothesis | Family | Status | Revision digest |
 | --- | --- | --- | --- |
-| `scoped-trust-amendment@1` · Scoped replacement within one trust instrument | D | proposed | `20288d9f35aa29585353393c40d6f6e317fc9fee302b7e35a989b8306224fcb8` |
-| `independent-parentage-disagreement@1` · Independent reports about the same relationship | E | proposed | `1c6fbc49c9be191bc6dab14845e0db2afe94675f10f6634c54d897bacede2cae` |
-| `complete-record-label-collision@1` · A shared display label across complete records | F | proposed | `86c152a0d7816d83f3de38c16d265f7619ce7ccf08223d22e116b04bb98ea09c` |
+| `scoped-trust-amendment@1` · Scoped replacement within one trust instrument | D | approved | `20288d9f35aa29585353393c40d6f6e317fc9fee302b7e35a989b8306224fcb8` |
+| `independent-parentage-disagreement@1` · Independent reports about the same relationship | E | approved | `1c6fbc49c9be191bc6dab14845e0db2afe94675f10f6634c54d897bacede2cae` |
+| `complete-record-label-collision@1` · A shared display label across complete records | F | approved | `86c152a0d7816d83f3de38c16d265f7619ce7ccf08223d22e116b04bb98ea09c` |
 | `incidental-kinship-in-correspondence@1` · Ordinary kinship in routine correspondence | G | proposed | `18ac2949770a2beb57602a12d705c08ae482c443c7f2991c225e2158c644cd01` |

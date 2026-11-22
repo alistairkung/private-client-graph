@@ -1,0 +1,931 @@
+{
+  "D0": {
+    "readers": {
+      "a": {
+        "output_sha256": "77217596f539f1303d6ed80e50a14a1f700858b7281a44613b7d90376b3c04fe",
+        "edges": [
+          [
+            "Livia Keane",
+            "settlor_of",
+            "Alder Fold Trust"
+          ],
+          [
+            "Jonah Reed",
+            "trustee_of",
+            "Alder Fold Trust"
+          ],
+          [
+            "Ada Wynn",
+            "beneficiary_of",
+            "Alder Fold Trust"
+          ],
+          [
+            "Milo Hart",
+            "beneficiary_of",
+            "Alder Fold Trust"
+          ],
+          [
+            "Nia Bell",
+            "beneficiary_of",
+            "Alder Fold Trust"
+          ]
+        ],
+        "ordinary_source_ids": [
+          {
+            "edge": [
+              "Livia Keane",
+              "settlor_of",
+              "Alder Fold Trust"
+            ],
+            "ids": [
+              "w3k8"
+            ]
+          },
+          {
+            "edge": [
+              "Jonah Reed",
+              "trustee_of",
+              "Alder Fold Trust"
+            ],
+            "ids": [
+              "w3k8"
+            ]
+          },
+          {
+            "edge": [
+              "Ada Wynn",
+              "beneficiary_of",
+              "Alder Fold Trust"
+            ],
+            "ids": [
+              "w3k8"
+            ]
+          },
+          {
+            "edge": [
+              "Milo Hart",
+              "beneficiary_of",
+              "Alder Fold Trust"
+            ],
+            "ids": [
+              "w3k8"
+            ]
+          },
+          {
+            "edge": [
+              "Nia Bell",
+              "beneficiary_of",
+              "Alder Fold Trust"
+            ],
+            "ids": []
+          }
+        ],
+        "proof_source_routes": [
+          {
+            "edge": [
+              "Livia Keane",
+              "settlor_of",
+              "Alder Fold Trust"
+            ],
+            "routes": [
+              [
+                "w3k8"
+              ]
+            ]
+          },
+          {
+            "edge": [
+              "Jonah Reed",
+              "trustee_of",
+              "Alder Fold Trust"
+            ],
+            "routes": [
+              [
+                "w3k8"
+              ]
+            ]
+          },
+          {
+            "edge": [
+              "Ada Wynn",
+              "beneficiary_of",
+              "Alder Fold Trust"
+            ],
+            "routes": [
+              [
+                "w3k8"
+              ]
+            ]
+          },
+          {
+            "edge": [
+              "Milo Hart",
+              "beneficiary_of",
+              "Alder Fold Trust"
+            ],
+            "routes": [
+              [
+                "w3k8"
+              ]
+            ]
+          },
+          {
+            "edge": [
+              "Nia Bell",
+              "beneficiary_of",
+              "Alder Fold Trust"
+            ],
+            "routes": [
+              [
+                "n5q2",
+                "w3k8"
+              ]
+            ]
+          }
+        ]
+      },
+      "b": {
+        "output_sha256": "7e6e330ec66a92d53eb310eb5947c325f4243b6f29508027eeb786e26cf4de36",
+        "edges": [
+          [
+            "Livia Keane",
+            "settlor_of",
+            "Alder Fold Trust"
+          ],
+          [
+            "Jonah Reed",
+            "trustee_of",
+            "Alder Fold Trust"
+          ],
+          [
+            "Milo Hart",
+            "beneficiary_of",
+            "Alder Fold Trust"
+          ],
+          [
+            "Ada Wynn",
+            "beneficiary_of",
+            "Alder Fold Trust"
+          ],
+          [
+            "Nia Bell",
+            "beneficiary_of",
+            "Alder Fold Trust"
+          ]
+        ],
+        "ordinary_source_ids": [
+          {
+            "edge": [
+              "Livia Keane",
+              "settlor_of",
+              "Alder Fold Trust"
+            ],
+            "ids": [
+              "w3k8"
+            ]
+          },
+          {
+            "edge": [
+              "Jonah Reed",
+              "trustee_of",
+              "Alder Fold Trust"
+            ],
+            "ids": [
+              "w3k8"
+            ]
+          },
+          {
+            "edge": [
+              "Milo Hart",
+              "beneficiary_of",
+              "Alder Fold Trust"
+            ],
+            "ids": [
+              "w3k8"
+            ]
+          },
+          {
+            "edge": [
+              "Ada Wynn",
+              "beneficiary_of",
+              "Alder Fold Trust"
+            ],
+            "ids": [
+              "w3k8"
+            ]
+          },
+          {
+            "edge": [
+              "Nia Bell",
+              "beneficiary_of",
+              "Alder Fold Trust"
+            ],
+            "ids": []
+          }
+        ],
+        "proof_source_routes": [
+          {
+            "edge": [
+              "Livia Keane",
+              "settlor_of",
+              "Alder Fold Trust"
+            ],
+            "routes": [
+              [
+                "w3k8"
+              ]
+            ]
+          },
+          {
+            "edge": [
+              "Jonah Reed",
+              "trustee_of",
+              "Alder Fold Trust"
+            ],
+            "routes": [
+              [
+                "w3k8"
+              ]
+            ]
+          },
+          {
+            "edge": [
+              "Milo Hart",
+              "beneficiary_of",
+              "Alder Fold Trust"
+            ],
+            "routes": [
+              [
+                "w3k8"
+              ]
+            ]
+          },
+          {
+            "edge": [
+              "Ada Wynn",
+              "beneficiary_of",
+              "Alder Fold Trust"
+            ],
+            "routes": [
+              [
+                "w3k8"
+              ]
+            ]
+          },
+          {
+            "edge": [
+              "Nia Bell",
+              "beneficiary_of",
+              "Alder Fold Trust"
+            ],
+            "routes": [
+              [
+                "n5q2",
+                "w3k8"
+              ]
+            ]
+          }
+        ]
+      }
+    },
+    "disagreements": {
+      "shared_edges": [
+        [
+          "Livia Keane",
+          "settlor_of",
+          "Alder Fold Trust"
+        ],
+        [
+          "Jonah Reed",
+          "trustee_of",
+          "Alder Fold Trust"
+        ],
+        [
+          "Milo Hart",
+          "beneficiary_of",
+          "Alder Fold Trust"
+        ],
+        [
+          "Ada Wynn",
+          "beneficiary_of",
+          "Alder Fold Trust"
+        ],
+        [
+          "Nia Bell",
+          "beneficiary_of",
+          "Alder Fold Trust"
+        ]
+      ],
+      "reader_a_only": [],
+      "reader_b_only": [],
+      "passage_disagreements": [
+        "Both readers identify the same direct and execution-based routes for Livia Keane and Jonah Reed. B starts the execution excerpts at the heading 'Execution'; A starts at the dated recital. Both boundaries are verbatim and sufficient when paired with the instrument heading. Neither isolates the role lines, which suffice with the heading; the date and Livia Keane's line are not needed to prove Jonah Reed's office.",
+        "Both readers agree that Nia Bell's edge requires two sources. A quotes the designation of Tess Calder, the original clause 4.1, the controlling part of clause 5, and the operative parts of the signed variation as separate verbatim spans. B's proposed principal-instrument span is not verbatim: it omits the blank lines between clauses 4.1, 4.2 and 4.3. B's variation span is verbatim, but its retention line is unnecessary. A's set is approved; B's set is not approved as submitted, despite the correct edge and interpretation.",
+        "There is no shared omission of a current graph edge or a materially distinct proof route. Both readers report Priya Sen's advisory role in their provenance but do not separately register it as an out-of-ontology relationship. The adjudicated register records it separately."
+      ]
+    },
+    "complete_edges": [
+      [
+        "Livia Keane",
+        "settlor_of",
+        "Alder Fold Trust"
+      ],
+      [
+        "Jonah Reed",
+        "trustee_of",
+        "Alder Fold Trust"
+      ],
+      [
+        "Milo Hart",
+        "beneficiary_of",
+        "Alder Fold Trust"
+      ],
+      [
+        "Ada Wynn",
+        "beneficiary_of",
+        "Alder Fold Trust"
+      ],
+      [
+        "Nia Bell",
+        "beneficiary_of",
+        "Alder Fold Trust"
+      ]
+    ],
+    "rulings": [
+      "Forward audit: h7m4 establishes the timetable, reports file supply and identifies Priya Sen as adviser; it supplies no graph edge. w3k8 establishes the settlement, trusteeship, separate Variation Officer designation and power, and the original beneficiary clauses. n5q2 changes only clause 4.1 and needs w3k8 to establish the trust endpoint and the authority for that change.",
+      "Reverse audit: n5q2 leads through PI-67Q4 and locator 4.1 back to the named trust, original provision and replacement power in w3k8. That check displaces Elin Voss's original designation, preserves Milo Hart and Ada Wynn, and leaves the settlor and trustee proofs intact. h7m4 confirms both instruments were available at the cut-off but adds no operative wording.",
+      "Do not substitute 8 October (signature), 19 October (advice-file supply), or 23 October (meeting and cut-off) for the stated effective date of 12 October. Do not treat the change as either an addition alongside Elin Voss or a replacement of the entire beneficiary section.",
+      "Do not infer trusteeship or broader amendment powers from a signing capacity, retention entry or advisory role. No passage establishes a parent, sibling or spouse relationship, beneficial shares, vested rights, or distribution entitlements."
+    ],
+    "claims": [
+      {
+        "proposition": "The advice-file cut-off was 09:00 on 23 October 2026, before the 10:00 trustee meeting that day. Both instruments had been supplied to the advice file on 19 October 2026.",
+        "origin": "Priya Sen recorded the timetable and reported the trustee's supply of the retained extract and signed amendment in her 20 October 2026 brief (h7m4).",
+        "competing": null,
+        "disposition": "supported",
+        "reason": "The brief establishes the timetable and reports supply before the cut-off. It expressly confirms no beneficiary names or operative provisions."
+      },
+      {
+        "proposition": "Priya Sen is identified as adviser to Jonah Reed.",
+        "origin": "Priya Sen identifies herself in that capacity in her 20 October 2026 brief (h7m4), included in the cut-off file.",
+        "competing": null,
+        "disposition": "supported",
+        "reason": "The signature block expressly records the advisory relationship. It is outside the graph ontology and is not evidence of Jonah Reed's appointment."
+      },
+      {
+        "proposition": "Livia Keane settled the Alder Fold Trust under principal instrument PI-67Q4, executed on 12 February 2024.",
+        "origin": "Clause 1 and the execution block of w3k8, executed by Livia Keane and Jonah Reed. Priya Sen reports supply of the extract on 19 October 2026.",
+        "competing": "n5q2 replaces clause 4.1 only; it does not vary clause 1.",
+        "disposition": "supported",
+        "reason": "The settlement clause and Livia Keane's stated execution capacity independently support the role."
+      },
+      {
+        "proposition": "Jonah Reed is Trustee of the Alder Fold Trust at the cut-off.",
+        "origin": "Clause 2 and the execution block of w3k8, executed on 12 February 2024. Priya Sen reports supply of the extract on 19 October 2026.",
+        "competing": "n5q2 names Jonah Reed as the retention recipient but neither appoints him nor varies clause 2.",
+        "disposition": "supported",
+        "reason": "The principal instrument appoints him and records his execution as Trustee. That appointment remains unchanged."
+      },
+      {
+        "proposition": "Tess Calder is the designated Variation Officer of the Alder Fold Trust at the cut-off.",
+        "origin": "Clause 3 of w3k8, executed on 12 February 2024, designates Tess Calder. She signed n5q2 in that capacity on 8 October 2026. Priya Sen reports supply of both instruments on 19 October 2026.",
+        "competing": "The capacity line in n5q2 is consistent with clause 3 but does not itself appoint Tess Calder or name the trust.",
+        "disposition": "supported",
+        "reason": "The designation comes from unchanged clause 3. Variation Officer is an office outside the graph ontology, not a trusteeship."
+      },
+      {
+        "proposition": "Clause 5 authorizes replacement of one current beneficiary provision in full, not a general rewrite of the trust.",
+        "origin": "Clause 5 of w3k8, executed on 12 February 2024 and supplied on 19 October 2026 as reported by Priya Sen.",
+        "competing": null,
+        "disposition": "supported",
+        "reason": "The amendment must be signed in the designated capacity and state the exact principal-instrument reference, the number of the current provision, the replacement designation and the effective date. A compliant amendment signed before its stated effective date takes effect on that date. All other provisions remain unchanged. Clause 5 states no delivery condition."
+      },
+      {
+        "proposition": "Elin Voss was expressly designated a beneficiary in the original clause 4.1.",
+        "origin": "Original clause 4.1 of w3k8, executed on 12 February 2024. Priya Sen reports supply of the extract on 19 October 2026.",
+        "competing": "n5q2 replaces that designation with effect from 12 October 2026.",
+        "disposition": "supported",
+        "reason": "The original text proves the historical designation. The prospective replacement does not negate it."
+      },
+      {
+        "proposition": "The signed variation complied with clause 5 and replaced clause 4.1 in full, designating Nia Bell from 12 October 2026.",
+        "origin": "Tess Calder signed n5q2 as Variation Officer on 8 October 2026, stating 12 October 2026 as its effective date. Her authority is in w3k8. Priya Sen reports supply of both instruments on 19 October 2026.",
+        "competing": "The retained extract w3k8 displays the original clause 4.1 naming Elin Voss; the signed variation expressly supersedes that wording on the stated date.",
+        "disposition": "supported",
+        "reason": "n5q2 uses the exact reference PI-67Q4, identifies the then-current beneficiary provision by number, and states the full replacement and its effective date. Tess Calder signed before that date in the capacity required by clause 5."
+      },
+      {
+        "proposition": "Elin Voss remains expressly designated by clause 4.1 at the cut-off.",
+        "origin": "The apparent basis is original clause 4.1 of w3k8, executed on 12 February 2024. Tess Calder signed n5q2 on 8 October 2026, effective 12 October 2026. Priya Sen reports supply of both records on 19 October 2026.",
+        "competing": "n5q2 expressly replaces clause 4.1 in full with the designation of Nia Bell.",
+        "disposition": "explicitly contradicted",
+        "reason": "The full replacement displaced Elin Voss's express designation under clause 4.1. This is not an inference from silence and does not resolve any separate or accrued entitlement."
+      },
+      {
+        "proposition": "Milo Hart remains expressly designated a beneficiary under clause 4.2 at the cut-off.",
+        "origin": "Clause 4.2 of w3k8, executed on 12 February 2024 and supplied on 19 October 2026 as reported by Priya Sen.",
+        "competing": "n5q2, effective 12 October 2026, identifies clause 4.1, not clause 4.2.",
+        "disposition": "supported",
+        "reason": "Clause 4.2 names Milo Hart, and clause 5 preserves every provision other than the one replaced."
+      },
+      {
+        "proposition": "Ada Wynn remains expressly designated a beneficiary under clause 4.3 at the cut-off.",
+        "origin": "Clause 4.3 of w3k8, executed on 12 February 2024 and supplied on 19 October 2026 as reported by Priya Sen.",
+        "competing": "n5q2, effective 12 October 2026, identifies clause 4.1, not clause 4.3.",
+        "disposition": "supported",
+        "reason": "Clause 4.3 names Ada Wynn, and clause 5 preserves every provision other than the one replaced."
+      },
+      {
+        "proposition": "At the cut-off, the operative provisions shown in the file are clauses 1, 2, 3, 4.2, 4.3 and 5 as originally written and clause 4.1 as replaced. The expressly named beneficiaries shown are Nia Bell, Milo Hart and Ada Wynn.",
+        "origin": "The preservation rule is in w3k8, executed on 12 February 2024. The sole replacement is in n5q2, signed by Tess Calder on 8 October 2026 and effective 12 October. Priya Sen reports supply of both on 19 October 2026.",
+        "competing": "The retained extract still displays original clause 4.1, but n5q2 supplies its operative replacement.",
+        "disposition": "supported",
+        "reason": "The signed variation targets one provision and clause 5 preserves all others. This finding is limited to what the supplied file shows."
+      },
+      {
+        "proposition": "The date on which Jonah Reed first received the signed variation for retention is established by the file.",
+        "origin": "n5q2 names Jonah Reed for retention but does not date delivery. Priya Sen's 20 October brief (h7m4) reports onward supply to the advice file on 19 October 2026.",
+        "competing": null,
+        "disposition": "unresolved",
+        "reason": "The signature date, stated effective date and advice-file supply date do not establish first receipt by Jonah Reed. That uncertainty does not affect effectiveness under the supplied clause 5."
+      }
+    ],
+    "residual_doubts": [
+      "The supplied file does not establish the first delivery date to Jonah Reed.",
+      "The supplied extract does not establish whether other operative instruments or provisions exist, whether the named beneficiaries exhaust the beneficiary class, or how any accrued entitlements should be treated."
+    ]
+  },
+  "D1": {
+    "readers": {
+      "a": {
+        "output_sha256": "e66c92bd4d75376a135cac9408a1418fd09b853a421ee4a2a9860a320f13abcc",
+        "edges": [
+          [
+            "Livia Keane",
+            "settlor_of",
+            "Alder Fold Trust"
+          ],
+          [
+            "Jonah Reed",
+            "trustee_of",
+            "Alder Fold Trust"
+          ],
+          [
+            "Elin Voss",
+            "beneficiary_of",
+            "Alder Fold Trust"
+          ],
+          [
+            "Ada Wynn",
+            "beneficiary_of",
+            "Alder Fold Trust"
+          ],
+          [
+            "Nia Bell",
+            "beneficiary_of",
+            "Alder Fold Trust"
+          ]
+        ],
+        "ordinary_source_ids": [
+          {
+            "edge": [
+              "Livia Keane",
+              "settlor_of",
+              "Alder Fold Trust"
+            ],
+            "ids": [
+              "w3k8"
+            ]
+          },
+          {
+            "edge": [
+              "Jonah Reed",
+              "trustee_of",
+              "Alder Fold Trust"
+            ],
+            "ids": [
+              "w3k8"
+            ]
+          },
+          {
+            "edge": [
+              "Elin Voss",
+              "beneficiary_of",
+              "Alder Fold Trust"
+            ],
+            "ids": [
+              "w3k8"
+            ]
+          },
+          {
+            "edge": [
+              "Ada Wynn",
+              "beneficiary_of",
+              "Alder Fold Trust"
+            ],
+            "ids": [
+              "w3k8"
+            ]
+          },
+          {
+            "edge": [
+              "Nia Bell",
+              "beneficiary_of",
+              "Alder Fold Trust"
+            ],
+            "ids": []
+          }
+        ],
+        "proof_source_routes": [
+          {
+            "edge": [
+              "Livia Keane",
+              "settlor_of",
+              "Alder Fold Trust"
+            ],
+            "routes": [
+              [
+                "w3k8"
+              ]
+            ]
+          },
+          {
+            "edge": [
+              "Jonah Reed",
+              "trustee_of",
+              "Alder Fold Trust"
+            ],
+            "routes": [
+              [
+                "w3k8"
+              ]
+            ]
+          },
+          {
+            "edge": [
+              "Elin Voss",
+              "beneficiary_of",
+              "Alder Fold Trust"
+            ],
+            "routes": [
+              [
+                "w3k8"
+              ]
+            ]
+          },
+          {
+            "edge": [
+              "Ada Wynn",
+              "beneficiary_of",
+              "Alder Fold Trust"
+            ],
+            "routes": [
+              [
+                "w3k8"
+              ]
+            ]
+          },
+          {
+            "edge": [
+              "Nia Bell",
+              "beneficiary_of",
+              "Alder Fold Trust"
+            ],
+            "routes": [
+              [
+                "n5q2",
+                "w3k8"
+              ]
+            ]
+          }
+        ]
+      },
+      "b": {
+        "output_sha256": "5e9a9cca987b97e1a68b7fefc926d2101f3ae9b8672420ba58539d6781b7add3",
+        "edges": [
+          [
+            "Livia Keane",
+            "settlor_of",
+            "Alder Fold Trust"
+          ],
+          [
+            "Jonah Reed",
+            "trustee_of",
+            "Alder Fold Trust"
+          ],
+          [
+            "Elin Voss",
+            "beneficiary_of",
+            "Alder Fold Trust"
+          ],
+          [
+            "Ada Wynn",
+            "beneficiary_of",
+            "Alder Fold Trust"
+          ],
+          [
+            "Nia Bell",
+            "beneficiary_of",
+            "Alder Fold Trust"
+          ]
+        ],
+        "ordinary_source_ids": [
+          {
+            "edge": [
+              "Livia Keane",
+              "settlor_of",
+              "Alder Fold Trust"
+            ],
+            "ids": [
+              "w3k8"
+            ]
+          },
+          {
+            "edge": [
+              "Jonah Reed",
+              "trustee_of",
+              "Alder Fold Trust"
+            ],
+            "ids": [
+              "w3k8"
+            ]
+          },
+          {
+            "edge": [
+              "Elin Voss",
+              "beneficiary_of",
+              "Alder Fold Trust"
+            ],
+            "ids": [
+              "w3k8"
+            ]
+          },
+          {
+            "edge": [
+              "Ada Wynn",
+              "beneficiary_of",
+              "Alder Fold Trust"
+            ],
+            "ids": [
+              "w3k8"
+            ]
+          },
+          {
+            "edge": [
+              "Nia Bell",
+              "beneficiary_of",
+              "Alder Fold Trust"
+            ],
+            "ids": []
+          }
+        ],
+        "proof_source_routes": [
+          {
+            "edge": [
+              "Livia Keane",
+              "settlor_of",
+              "Alder Fold Trust"
+            ],
+            "routes": [
+              [
+                "w3k8"
+              ]
+            ]
+          },
+          {
+            "edge": [
+              "Jonah Reed",
+              "trustee_of",
+              "Alder Fold Trust"
+            ],
+            "routes": [
+              [
+                "w3k8"
+              ]
+            ]
+          },
+          {
+            "edge": [
+              "Elin Voss",
+              "beneficiary_of",
+              "Alder Fold Trust"
+            ],
+            "routes": [
+              [
+                "w3k8"
+              ]
+            ]
+          },
+          {
+            "edge": [
+              "Ada Wynn",
+              "beneficiary_of",
+              "Alder Fold Trust"
+            ],
+            "routes": [
+              [
+                "w3k8"
+              ]
+            ]
+          },
+          {
+            "edge": [
+              "Nia Bell",
+              "beneficiary_of",
+              "Alder Fold Trust"
+            ],
+            "routes": [
+              [
+                "n5q2",
+                "w3k8"
+              ]
+            ]
+          }
+        ]
+      }
+    },
+    "disagreements": {
+      "shared_edges": [
+        [
+          "Livia Keane",
+          "settlor_of",
+          "Alder Fold Trust"
+        ],
+        [
+          "Jonah Reed",
+          "trustee_of",
+          "Alder Fold Trust"
+        ],
+        [
+          "Elin Voss",
+          "beneficiary_of",
+          "Alder Fold Trust"
+        ],
+        [
+          "Ada Wynn",
+          "beneficiary_of",
+          "Alder Fold Trust"
+        ],
+        [
+          "Nia Bell",
+          "beneficiary_of",
+          "Alder Fold Trust"
+        ]
+      ],
+      "reader_a_only": [],
+      "reader_b_only": [],
+      "passage_disagreements": [
+        "For Livia Keane and Jonah Reed, both readers cite the direct operative sentence and identify the heading-plus-execution proof. Only A also submits a continuous ordinary quotation from clause 4.3 through the relevant execution entry. A's longer passages are approved: clause 4.3 names the trust, and the execution entries state the capacities in which the parties executed that same instrument. Clause 4.3 alone does not establish either office.",
+        "Neither reader separately lists the body-text anchor for the execution proof in its proof sets, although A's ordinary passages contain it. The answer key records that anchor using clause 4.3 and the relevant execution entry. The heading and body-text anchors support the same execution route; they are not separate appointments or independent records.",
+        "For Nia Bell, A begins its principal-instrument quotation at the Variation Officer designation; B also includes the header, reference line and unrelated clauses. Both establish the same cross-source route. Clause 5 itself supplies PI-67Q4, so the separate header reference is not required. The amendment's delivery line is not required either. Neither quotation boundary changes the result.",
+        "The readers agree on the effect of the variation and on all five current edges. A expressly classifies the unknown delivery date as unresolved; B notes that the date is unstated and separately classifies accrued entitlements as unresolved. B also makes the named recipient and adviser identification separate supported claims. These are differences in register coverage, not conflicting readings."
+      ]
+    },
+    "complete_edges": [
+      [
+        "Livia Keane",
+        "settlor_of",
+        "Alder Fold Trust"
+      ],
+      [
+        "Jonah Reed",
+        "trustee_of",
+        "Alder Fold Trust"
+      ],
+      [
+        "Elin Voss",
+        "beneficiary_of",
+        "Alder Fold Trust"
+      ],
+      [
+        "Ada Wynn",
+        "beneficiary_of",
+        "Alder Fold Trust"
+      ],
+      [
+        "Nia Bell",
+        "beneficiary_of",
+        "Alder Fold Trust"
+      ]
+    ],
+    "rulings": [
+      "At 09:00 on 23 October 2026 the expressly named beneficiaries on this file were Elin Voss under clause 4.1, Nia Bell under substituted clause 4.2, and Ada Wynn under clause 4.3. The retained extract is not a consolidated statement of current terms.",
+      "Source-to-edge audit: h7m4 proves the timetable, reported supply and adviser identification, not a graph edge. w3k8 independently supports the settlor, trustee and unchanged beneficiary edges; it also records Milo Hart's historical designation and supplies the authority and trust identity for the replacement. n5q2 proves the terms and signature of the replacement and identifies its retention recipient, but requires w3k8 to establish Nia Bell's edge.",
+      "Edge-to-source audit: the four direct edges each have a sufficient passage in w3k8. Its execution block supplies the alternate office proof when paired with a trust-identifying passage from the same instrument. Nia Bell requires the complete cross-source set attached to her edge; h7m4 is not a third required source. No other graph edge is supported.",
+      "Do not treat Nia Bell as an addition alongside Milo Hart, use the signature or advice-file supply date as the effective date, or extend the amendment to another clause or office.",
+      "Do not infer kinship, fixed distribution rights, loss of accrued rights, or a graph relationship from service as Variation Officer or adviser, or from receipt of an instrument."
+    ],
+    "claims": [
+      {
+        "proposition": "The advice-file cut-off was 09:00 on 23 October 2026, and the trustee meeting was scheduled for 10:00 that day.",
+        "origin": "Priya Sen's file brief dated 20 October 2026 (h7m4), included in the cut-off file.",
+        "competing": null,
+        "disposition": "supported",
+        "reason": "The brief expressly distinguishes the cut-off from the meeting time and expressly leaves the substantive questions open."
+      },
+      {
+        "proposition": "The trustee supplied the retained principal instrument extract and signed amendment to the advice file on 19 October 2026.",
+        "origin": "Priya Sen reports the supply in her 20 October 2026 brief (h7m4).",
+        "competing": "The delivery line in n5q2 names Jonah Reed as recipient for retention but does not date delivery to him.",
+        "disposition": "supported",
+        "reason": "The report places both records in the advice file before the cut-off. It does not date the separate delivery to Jonah Reed."
+      },
+      {
+        "proposition": "Livia Keane settled the Alder Fold Trust under PI-67Q4 on 12 February 2024.",
+        "origin": "Clause 1 and Livia Keane's execution as Settlor on 12 February 2024 (w3k8); Priya Sen reports supply of the extract on 19 October 2026 (h7m4).",
+        "competing": null,
+        "disposition": "supported",
+        "reason": "The settlement clause and execution capacity agree. The later variation does not alter clause 1."
+      },
+      {
+        "proposition": "Jonah Reed was appointed Trustee of the Alder Fold Trust and held that office at the cut-off on this file.",
+        "origin": "Clause 2 and Jonah Reed's execution as Trustee on 12 February 2024 (w3k8); Priya Sen reports supply of the extract on 19 October 2026 (h7m4).",
+        "competing": null,
+        "disposition": "supported",
+        "reason": "The instrument expressly appoints him. The variation does not alter clause 2, and neither the delivery line nor the adviser identification constitutes an appointment."
+      },
+      {
+        "proposition": "Tess Calder was designated Variation Officer and could replace one current beneficiary provision in full by a signed amendment meeting clause 5.",
+        "origin": "Clauses 3 and 5 of PI-67Q4, executed on 12 February 2024 (w3k8); Priya Sen reports supply of the extract on 19 October 2026 (h7m4).",
+        "competing": "The 8 October 2026 signature in n5q2 records the capacity in which Tess Calder acted, not the source of her designation or power.",
+        "disposition": "supported",
+        "reason": "Clauses 3 and 5 establish the office and its limited authority. Neither clause was changed. The office is outside the graph ontology."
+      },
+      {
+        "proposition": "The signed variation took effect on 12 October 2026 and replaced only clause 4.2 in full. Clauses 1, 2, 3, 4.1, 4.3 and 5 remained in force unchanged at the cut-off.",
+        "origin": "Clause 5 of PI-67Q4 (w3k8), executed on 12 February 2024, and Tess Calder's amendment (n5q2), signed as Variation Officer on 8 October 2026; Priya Sen reports supply of both records on 19 October 2026 (h7m4).",
+        "competing": "The retained extract still shows original clause 4.2. The dates of signature and advice-file supply differ from the stated effective date.",
+        "disposition": "supported",
+        "reason": "The amendment identifies the exact instrument and one numbered current provision, states the replacement designation and effective date, and was signed beforehand by the designated officer in that capacity. Clause 5 gives effect on the stated date and preserves all other provisions."
+      },
+      {
+        "proposition": "Elin Voss remained an expressly designated beneficiary under clause 4.1 at the cut-off.",
+        "origin": "Clause 4.1 of PI-67Q4, executed on 12 February 2024 (w3k8); Priya Sen reports supply of the extract on 19 October 2026 (h7m4).",
+        "competing": "The variation in n5q2 identifies clause 4.2, not clause 4.1.",
+        "disposition": "supported",
+        "reason": "Clause 4.1 expressly names Elin Voss and was not replaced."
+      },
+      {
+        "proposition": "Ada Wynn remained an expressly designated beneficiary under clause 4.3 at the cut-off.",
+        "origin": "Clause 4.3 of PI-67Q4, executed on 12 February 2024 (w3k8); Priya Sen reports supply of the extract on 19 October 2026 (h7m4).",
+        "competing": "The variation in n5q2 identifies clause 4.2, not clause 4.3.",
+        "disposition": "supported",
+        "reason": "Clause 4.3 expressly names Ada Wynn and was not replaced."
+      },
+      {
+        "proposition": "Milo Hart was expressly designated a beneficiary under original clause 4.2 before its replacement.",
+        "origin": "Original clause 4.2 of PI-67Q4, executed on 12 February 2024 (w3k8); Priya Sen reports supply of the extract on 19 October 2026 (h7m4).",
+        "competing": "The replacement in n5q2 takes effect from 12 October 2026 and does not deny the earlier designation.",
+        "disposition": "supported",
+        "reason": "The executed principal instrument establishes the historical designation."
+      },
+      {
+        "proposition": "Milo Hart was still an expressly designated beneficiary at the cut-off.",
+        "origin": "The only designation of Milo Hart is original clause 4.2 (w3k8), executed on 12 February 2024; Priya Sen reports supply of the extract and amendment on 19 October 2026 (h7m4).",
+        "competing": "Tess Calder signed n5q2 on 8 October 2026, expressly replacing all of clause 4.2 with Nia Bell's designation from 12 October 2026.",
+        "disposition": "explicitly contradicted",
+        "reason": "The qualifying amendment expressly displaces the entire provision that named Milo Hart. The contradiction rests on replacement, not on silence."
+      },
+      {
+        "proposition": "Nia Bell was an expressly named beneficiary under substituted clause 4.2 from 12 October 2026 and at the cut-off.",
+        "origin": "Tess Calder's signed amendment of 8 October 2026 (n5q2), read with PI-67Q4 (w3k8); Priya Sen reports supply of both on 19 October 2026 (h7m4).",
+        "competing": "Original clause 4.2 identifies Milo Hart; that wording governs the earlier period, not the cut-off.",
+        "disposition": "supported",
+        "reason": "The exact reference and provision number link the qualifying amendment to the Alder Fold Trust, and the stated effective date precedes the cut-off."
+      },
+      {
+        "proposition": "Jonah Reed was named as the recipient of the variation for retention with the principal instrument.",
+        "origin": "The delivery line in n5q2, signed by Tess Calder on 8 October 2026; Priya Sen reports supply of the signed amendment to the advice file on 19 October 2026 (h7m4).",
+        "competing": null,
+        "disposition": "supported",
+        "reason": "The line identifies the recipient and purpose. It does not date delivery, appoint him to an office or add an effectiveness condition to clause 5."
+      },
+      {
+        "proposition": "The date of delivery of the signed variation to Jonah Reed for retention is established.",
+        "origin": "The delivery line in n5q2 and Priya Sen's report in h7m4, both in the cut-off file.",
+        "competing": null,
+        "disposition": "unresolved",
+        "reason": "The signature date, stated effective date and advice-file supply date do not establish the date of delivery to Jonah Reed. Clause 5 does not state a delivery condition."
+      },
+      {
+        "proposition": "Priya Sen is identified as adviser to Jonah Reed.",
+        "origin": "Priya Sen's sign-off in the 20 October 2026 brief (h7m4), included in the cut-off file.",
+        "competing": null,
+        "disposition": "supported",
+        "reason": "The advisory role is express but outside the graph ontology. It does not independently identify Jonah Reed as trustee or establish a beneficiary designation."
+      },
+      {
+        "proposition": "The replacement extinguished any rights or entitlements Milo Hart may have accrued before 12 October 2026.",
+        "origin": "No supplied record asserts this. The potentially relevant instruments are w3k8 and n5q2, reported supplied on 19 October 2026 in h7m4.",
+        "competing": "The variation replaces clause 4.2 from 12 October 2026 but does not address accrued entitlements.",
+        "disposition": "unresolved",
+        "reason": "The file determines the current express designation, not whether an earlier entitlement existed or what happened to it."
+      }
+    ],
+    "residual_doubts": [
+      "The date of delivery to Jonah Reed for retention is not established and does not affect the clause 5 determination on this file.",
+      "The extract and variation do not resolve rights, entitlements or obligations that may have arisen before the replacement took effect.",
+      "The answer is confined to the supplied cut-off file; it does not establish the absence of other records or later changes."
+    ]
+  }
+}
