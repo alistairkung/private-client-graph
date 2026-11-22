@@ -4,6 +4,7 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from .plan import FiniteExperimentPlan
+from .benchmark_admission import pending_semantic_review
 from .case_metadata import CaseMetadata
 from .retained_inputs import RetainedInputLineage, input_digests
 
@@ -71,7 +72,7 @@ class RunPlan(FiniteExperimentPlan):
         live = self.execution_mode == 'live'
         if live != (self.kind == 'live_experiment'):
             raise ValueError('Live execution requires an explicit live plan')
-        if live and any('pending_semantic_review.md' in sample.origin_hashes for sample in self.inputs):
+        if live and any(pending_semantic_review(sample) for sample in self.inputs):
             raise ValueError('Live execution requires completed semantic review for every selected case')
         if live and (not self.maximum_attempts or not self.task_call_cap):
             raise ValueError('Live execution requires a paid matrix and explicit task cap')

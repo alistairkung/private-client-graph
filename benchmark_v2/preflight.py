@@ -7,15 +7,14 @@ from pathlib import Path
 
 from pydantic import BaseModel, ConfigDict, TypeAdapter
 
+from benchmark_v2.execution_environment import TRACED_LOCK_SHA256, baseline_configuration
 from benchmark_v2.evidence_policy import VERSION, ordinary_evidence
 from private_client_graph.extraction import sourced_extraction_messages
-from private_client_graph.models import ExtractionResult, GroundTruth, SourcedExtractionResult
-from private_client_graph.models.source import Source
-from private_client_graph.research.artifacts import Bundle, dependency_versions, write_json_once
+from private_client_graph.research.artifacts import Bundle, write_json_once
+from private_client_graph.research.benchmark_admission import package_hashes, pending_semantic_review
 from private_client_graph.research.benchmark_decisions import DecisionTargets, diagnose
 from private_client_graph.research.fixtures import ROOT
 from private_client_graph.research.inputs import ResearchInput
-from private_client_graph.research.provider import ModelSettings
 from private_client_graph.research.results import ResearchResult
 from private_client_graph.research.retained_inputs import input_digests, value_digest
 from private_client_graph.research.run_plan import RunPlan
@@ -37,58 +36,23 @@ class Condition(BaseModel):
     targets: DecisionTargets
 
 
-def baseline_configuration() -> dict:
-    pin = json.loads((STUDY / 'baseline.json').read_bytes())
-    for path, expected in pin['files'].items():
-        if hashlib.sha256((ROOT / path).read_bytes()).hexdigest() != expected:
-            raise ValueError(f'Baseline implementation drift in {path}')
-    if dependency_versions() != pin['dependencies']:
-        raise ValueError('Installed baseline dependencies differ from the original Run')
-    settings = ModelSettings(timeout_seconds=90.0)
-    prompt = sourced_extraction_messages([])[0][1]
-    if hashlib.sha256(prompt.encode()).hexdigest() != pin['prompt'] or value_digest(settings.model_dump()) != pin['settings']:
-        raise ValueError('Baseline prompt or settings drift')
-    return pin
-
-
-def quarantined_input() -> ResearchInput:
-    """Load D13 for offline graph replay. Ordinary eligible-edge approvals are frozen with the v2 targets."""
-    directory = STUDY / 'candidates/D13'
-    def read(name: str):
-        return json.loads((directory / name).read_bytes())
-
-    metadata = read('metadata.json')
-    sources = [Source(id=s['id'], title=s['title'], text=(directory / s['path']).read_bytes().decode())
-               for s in read('sources.json')]
-    return ResearchInput(sample_id=metadata['id'] + '_fixture', case_id=metadata['id'], cohort='authored',
-                         source=(directory / 'source.txt').read_bytes().decode(), sources=sources,
-                         truth=GroundTruth.model_validate(read('ground_truth.json')),
-                         extraction=ExtractionResult.model_validate(read('expected_extraction.json')),
-                         sourced_extraction=SourcedExtractionResult.model_validate(read('expected_source_extraction.json')),
-                         origin_hashes={str(p.relative_to(directory)): hashlib.sha256(p.read_bytes()).hexdigest()
-                                        for p in sorted(directory.rglob('*')) if p.is_file()})
-
-
 def package_commitment(directory: Path) -> str:
-    files = {p.relative_to(directory).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest()
-             for p in directory.rglob('*') if p.is_file()}
-    return value_digest(files)
+    return value_digest(package_hashes(directory))
 
 
 def verify_development_lock(rows: Sequence[Condition], catalog: dict[str, ResearchInput]) -> dict[str, str]:
     """Bind the declared cases to exact annotation, protocol and fixture bytes before replay."""
-    metadata = frozen_case_metadata([catalog[r.input_id] for r in rows if r.condition != 'D13'])
+    metadata = frozen_case_metadata([catalog[r.input_id] for r in rows])
     families = {}
     packages = {}
     for row in rows:
+        info = metadata[row.input_id]
+        family = info.matter_family
         if row.condition == 'D13':
             directory = STUDY / 'candidates/D13'
-            family = json.loads((directory / 'metadata.json').read_bytes())['matter_family']
         else:
-            info = metadata[row.input_id]
             ordinal = info.case_id.rsplit('_', 1)[1]
             directory = ROOT / 'benchmark_v1' / str(info.axis) / 'dev' / f'case_{ordinal}'
-            family = info.matter_family
         if not family:
             raise ValueError(f'Unknown matter family for {row.condition}')
         families[row.condition] = family
@@ -124,17 +88,6 @@ def replay_catalog(root: Path, ids: list[str]) -> tuple[list[ResearchResult], Ru
     return [o.result for o in detail.observations if o.result is not None], bundle.plan
 
 
-def replay_candidate(root: Path, sample: ResearchInput) -> ResearchResult:
-    plan = RunPlan(task_id='v2-offline-candidate', inputs=[sample], input_mode='saved', execution_mode='replay')
-    path = root / 'candidate-D13'
-    bundle = Bundle.create(path, plan)
-    execute(bundle, provider=offline_only)
-    reopened = Bundle.open(path)
-    if reopened.attempt_count or len(reopened.results()) != 1:
-        raise ValueError('Incomplete quarantined replay')
-    return ResearchResult.model_validate(reopened.results()[0])
-
-
 def inspect_ideal(row: Condition, sample: ResearchInput, result: ResearchResult) -> dict:
     score = result.evaluation
     if score is None or result.state is None or not sample.sources:
@@ -167,12 +120,9 @@ def preflight(root: Path) -> dict:
     rows = TypeAdapter(list[Condition]).validate_json((STUDY / 'development.json').read_bytes())
     if [r.condition for r in rows] != [f'D{i}' for i in range(1, 15)] or len({r.input_id for r in rows}) != 14:
         raise ValueError('Invalid development selection')
-    ids = [row.input_id for row in rows if row.condition != 'D13']
-    catalog = {s.sample_id: s for s in repository_inputs()}
+    ids = [row.input_id for row in rows]
+    catalog = {s.sample_id: s for s in repository_inputs(input_ids=ids)}
     families = verify_development_lock(rows, catalog)
-    candidate = quarantined_input()
-    if candidate.sample_id in catalog or candidate.sample_id != rows[12].input_id:
-        raise ValueError('Invalid quarantine boundary')
     if root.exists() and any(root.iterdir()):
         raise ValueError('Select an empty artifact directory to retain this replay')
     root.mkdir(parents=True, exist_ok=True)
@@ -180,8 +130,8 @@ def preflight(root: Path) -> dict:
     results, plan = replay_catalog(root, ids)
     if any(input_digests(sample) != input_digests(catalog[sample.sample_id]) for sample in plan.inputs):
         raise ValueError('Workbench inputs changed between validation and freeze')
-    samples = {s.sample_id: s for s in [*plan.inputs, candidate]}
-    scored = {r.sample_id: r for r in [*results, replay_candidate(root, candidate)]}
+    samples = {s.sample_id: s for s in plan.inputs}
+    scored = {r.sample_id: r for r in results}
     conditions = [inspect_ideal(row, samples[row.input_id], scored[row.input_id]) for row in rows]
     for item in conditions:
         item['matter_family'] = families[item['condition']]
@@ -191,12 +141,18 @@ def preflight(root: Path) -> dict:
                                  resolver='none', invocation_cap=len(group), task_call_cap=len(schedule),
                                  model='deepseek-flash', timeout_seconds=90.0).model_dump(mode='json')
                 for group in groups]
-    report = dict(evidence_policy_version=VERSION, conditions=conditions, baseline_schedule=schedule, proposed_run_configurations=proposed,
+    pending = [row.condition for row in rows
+               if pending_semantic_review(catalog[row.input_id])]
+    provenance = Bundle.open(root / str(plan.run_id)).manifest['provenance']
+    report = dict(execution_revision=provenance['git_sha'], execution_dirty=provenance['dirty'],
+                  sourced_prompt_sha256=pin['prompt'], model_settings_sha256=pin['settings'],
+                  pending_live_admission=pending, execution_lock_sha256=TRACED_LOCK_SHA256,
+                  evidence_policy_version=VERSION, conditions=conditions, baseline_schedule=schedule, proposed_run_configurations=proposed,
                   workbench_run=plan.run_id,
                   protocol_sha256=hashlib.sha256((STUDY / 'README.md').read_bytes()).hexdigest(),
                   development_lock_sha256=hashlib.sha256((STUDY / 'development.lock.json').read_bytes()).hexdigest(),
                   paid_attempts=0, development_attempts_proposed=len(schedule), final_attempts_reserved=8,
-                  baseline_reference=pin['revision'], corpus_status='pending independent human semantic review, including joint evidence',
+                  baseline_reference=pin['revision'], corpus_status='pending independent human semantic review' if pending else 'development roster admitted',
                   estimate_method='ceil(UTF-8 bytes of sourced system and user message contents / 4); excludes schema and chat framing')
     write_json_once(root / 'preflight.json', report)
     return report

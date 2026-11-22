@@ -344,13 +344,12 @@ def test_live_final_report_rejects_inconsistent_approved_task_caps(tmp_path, mon
     assert report['baseline']['coverage']['unavailable'] == report['final']['coverage']['unavailable'] == 1
 
 
-def test_joint_only_target_is_scored_in_sufficiency_and_excluded_from_ordinary_denominators(tmp_path, monkeypatch):
-    from benchmark_v2.preflight import STUDY, quarantined_input
+def test_joint_only_target_is_scored_in_sufficiency_and_excluded_from_ordinary_denominators(tmp_path):
+    from benchmark_v2.preflight import STUDY
     from benchmark_v2.report import final_report
     from private_client_graph.research.provider import ModelResponse
 
-    sample = quarantined_input()
-    monkeypatch.setattr('private_client_graph.workbench.run_planning.repository_inputs', lambda: [sample])
+    sample, = repository_inputs(input_ids=['benchmark_v1_cross_source_dev_3_fixture'])
     labels = next(row for row in json.loads((STUDY / 'development.json').read_bytes()) if row['condition'] == 'D13')
     manifest = _report_manifest(sample, labels, mode='recorded')
     left = _freeze(tmp_path, sample, run_key='partial', input_mode='fresh', execution_mode='recorded',
@@ -407,3 +406,14 @@ def test_development_cli_rejects_preflight_for_a_different_lock(tmp_path, monkey
     monkeypatch.setattr(sys, 'argv', ['report', 'development', '--commitments', str(commitments)])
     with pytest.raises(ValueError, match='frozen development lock'):
         main()
+
+
+def test_saved_run_rejects_lock_drift_before_dispatch(tmp_path, monkeypatch):
+    from private_client_graph.research.runner import validate_environment
+
+    bundle = _freeze(tmp_path, _sample())
+    assert bundle.manifest['provenance']['dependency_lock_sha256']
+    monkeypatch.setattr('private_client_graph.research.runner.dependency_lock_digest', lambda: '0' * 64)
+    with pytest.raises(ValueError, match='Dependency lock changed'):
+        validate_environment(bundle)
+    assert bundle.attempt_count == 0

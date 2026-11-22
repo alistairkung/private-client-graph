@@ -4,7 +4,8 @@ import json
 import pytest
 
 from benchmark_v2.evidence_policy import ordinary_evidence
-from benchmark_v2.preflight import STUDY, quarantined_input
+from benchmark_v2.preflight import STUDY
+from private_client_graph.workbench.case_catalog import repository_inputs
 from private_client_graph.pipeline import Pipeline, PipelineConfig
 from private_client_graph.research.benchmark_decisions import DecisionTargets
 from private_client_graph.research.source_attribution import SourceEvidenceApproval
@@ -12,7 +13,7 @@ from private_client_graph.research.source_attribution import SourceEvidenceAppro
 
 @pytest.fixture
 def linked():
-    sample = quarantined_input()
+    sample, = repository_inputs(input_ids=['benchmark_v1_cross_source_dev_3_fixture'])
     row = next(r for r in json.loads((STUDY / 'development.json').read_bytes()) if r['condition'] == 'D13')
     labels = DecisionTargets.model_validate(row['targets'])
     state = Pipeline(PipelineConfig()).run_from_sourced_extraction(sample.sources, sample.sourced_extraction).state

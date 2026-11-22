@@ -20,6 +20,7 @@ from private_client_graph.research.run_plan import RunPlan
 from private_client_graph.workbench.run_evaluation import retained_attempts
 from private_client_graph.workbench.run_inspection import read_run
 
+from benchmark_v2.execution_environment import TRACED_LOCK_SHA256
 from benchmark_v2.evidence_policy import VERSION as EVIDENCE_POLICY_VERSION, verify_evidence_policy
 
 
@@ -147,6 +148,7 @@ def open_run(path: Path) -> RunRecord:
             'effective_model': plan.effective_model or plan.settings.model,
             'settings': plan.settings.model_dump(mode='json'),
             'pricing': detail.pricing,
+            'dependency_lock_sha256': detail.provenance.get('dependency_lock_sha256'),
             'code': {key: detail.provenance[key] for key in ('git_sha', 'dirty', 'code_digest',
                                                             'dependencies', 'prompt_hashes')},
         },
@@ -239,6 +241,8 @@ def _protocol_mismatch(run: RunRecord, manifest: ReportManifest, arm: Literal['b
     if (value_digest(plan.settings.model_dump()) != pin['settings']
             or run.provenance['code']['prompt_hashes']['sourced_extraction'] != pin['prompt']):
         return 'Run settings or sourced prompt differ from the live baseline pin.'
+    if run.provenance.get('dependency_lock_sha256') != TRACED_LOCK_SHA256:
+        return 'Recorded lockfile differs from the verified tracing environment.'
     if run.provenance['code']['dependencies'] != pin['dependencies']:
         return 'Recorded dependencies differ from the baseline Run.'
     if any(run.code_hashes.get(path) != expected for path, expected in pin['files'].items() if path != 'uv.lock'):

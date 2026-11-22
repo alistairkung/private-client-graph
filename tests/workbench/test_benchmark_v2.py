@@ -41,12 +41,14 @@ def test_evidence_sufficiency_requires_one_complete_set_attached_to_the_target()
     assert diagnose(result.state, sample.truth, labels)['sufficiency']['complete'] == [target]
 
 
-def test_preflight_replays_all_conditions_without_admitting_the_quarantined_target(tmp_path):
+def test_preflight_replays_all_fourteen_conditions_through_the_workbench(tmp_path):
     report = subprocess.run([sys.executable, '-m', 'benchmark_v2.preflight', '--artifacts', str(tmp_path)],
                             cwd=ROOT, check=True, capture_output=True, text=True)
     data = json.loads(report.stdout)
     assert data['evidence_policy_version'] == 'benchmark_v2_evidence_v1'
     assert len(data['conditions']) == 14
+    assert data['pending_live_admission'] == []
+    assert not (tmp_path / 'candidate-D13').exists()
     assert len(data['baseline_schedule']) == 18
     assert data['baseline_schedule'][7:13] == ['D8', 'D9'] * 3
     assert data['paid_attempts'] == 0
@@ -141,6 +143,10 @@ def test_linked_condition_hides_only_the_named_trust_and_preserves_both_endpoint
 def test_pending_v2_fixtures_can_replay_but_cannot_enter_a_paid_workbench_plan():
     from private_client_graph.research.run_plan import RunPlan
     sample = next(s for s in repository_inputs() if s.case_id == 'benchmark_v1_composite_dev_1')
+    assert 'pending_semantic_review.md' in sample.origin_hashes
+    assert 'human_review' in sample.origin_hashes
+    # A historical snapshot lacking the signed disposition remains pending.
+    sample.origin_hashes.pop('human_review')
     with pytest.raises(ValueError, match='semantic review'):
         RunPlan(inputs=[sample], input_mode='fresh', execution_mode='live', kind='live_experiment',
                 fresh_extractions=1, task_call_cap=18, max_calls=1, invocation_cap=1)
@@ -152,3 +158,120 @@ def test_decision_diagnostic_rejects_duplicate_truth_ids_before_resolving_edges(
     truth = sample.truth.model_copy(update={'entities': [*sample.truth.entities, sample.truth.entities[0]]})
     with pytest.raises(ValueError, match='Duplicate ground-truth entity ID'):
         diagnose(result.state, truth, DecisionTargets())
+
+
+def test_d13_is_selectable_for_live_planning_without_loading_other_diagnostic_packages(monkeypatch):
+    from private_client_graph.research.run_plan import RunPlan
+    from private_client_graph.workbench import case_catalog
+
+    def unrelated_package(directory):
+        pytest.fail(f'Accessed an unselected diagnostic package: {directory.name}')
+
+    monkeypatch.setattr(case_catalog, '_diagnostic_package', unrelated_package)
+    sample, = repository_inputs(input_ids=['benchmark_v1_cross_source_dev_3_fixture'])
+    labels = case_catalog.frozen_case_metadata([sample])
+    plan = RunPlan(inputs=[sample], case_metadata=labels, execution_mode='live', kind='live_experiment',
+                   input_mode='fresh', fresh_extractions=1, resolver='none', max_calls=1, invocation_cap=1,
+                   task_call_cap=18)
+    assert len(plan.planned_slots) == 1
+    assert labels[sample.sample_id].split == 'dev'
+    assert sample.source_evidence is None
+    assert 'human_review' in sample.origin_hashes
+
+
+@pytest.mark.parametrize('changed', ['candidates/D13/source.txt', 'development.json', 'reviews/D13.md'])
+def test_d13_admission_is_bound_to_reviewed_bytes(tmp_path, changed):
+    import shutil
+    from private_client_graph.research.benchmark_admission import D13_CASE, reviewed_snapshot
+
+    study = ROOT / 'benchmark_v2'
+    shutil.copytree(study / 'candidates/D13', tmp_path / 'candidates/D13')
+    (tmp_path / 'reviews').mkdir()
+    for name in ('development.json', 'reviews/D13.md'):
+        shutil.copyfile(study / name, tmp_path / name)
+    path = tmp_path / changed
+    if changed == 'development.json':
+        rows = json.loads(path.read_bytes())
+        next(r for r in rows if r['condition'] == 'D13')['targets']['sufficiency'][0]['joint_only'] = False
+        path.write_text(json.dumps(rows))
+    else:
+        path.write_bytes(path.read_bytes() + b' changed')
+    with pytest.raises(ValueError, match='D13'):
+        reviewed_snapshot(tmp_path, tmp_path / 'candidates/D13', D13_CASE)
+
+
+def test_traced_environment_preserves_historical_sourced_request_bytes():
+    import httpx
+    from private_client_graph.research.provider import ModelRequest, ModelSettings, invoke_deepseek
+
+    # Golden HTTP body from this same offline probe at benchmark revision 7d714ecd.
+    bodies = []
+
+    def respond(request):
+        bodies.append(hashlib.sha256(request.content).hexdigest())
+        assert request.extensions['timeout']['read'] == 90
+        body = json.loads(request.content)
+        tool = body['tools'][0]['function']['name']
+        message = {'role': 'assistant', 'content': '', 'tool_calls': [
+            {'id': 'mock', 'type': 'function', 'function': {'name': tool, 'arguments': '{"relationships":[]}'}}]}
+        return httpx.Response(200, json={'id': 'mock', 'object': 'chat.completion', 'created': 0,
+            'model': 'deepseek-flash', 'choices': [{'index': 0, 'message': message, 'finish_reason': 'tool_calls'}]})
+
+    sources = [Source(id='source_b', title='Second', text='Synthetic probe B.'),
+               Source(id='source_a', title='First', text='Synthetic probe A.')]
+    request = ModelRequest(stage='extraction', source='', sources=sources, settings=ModelSettings(timeout_seconds=90))
+    with httpx.Client(transport=httpx.MockTransport(respond)) as client:
+        result = invoke_deepseek(request, api_key='offline-test', http_client=client)
+    assert bodies == ['20c4833ed423c7a8634872e3d0326f1722230866c34f9bae0f2aad5c31a3c6d7']
+    assert result.payload == {'relationships': []}
+
+
+def test_d13_model_facing_sources_come_from_the_verified_snapshot(monkeypatch):
+    from pathlib import Path
+
+    read_bytes = Path.read_bytes
+    target = ROOT / 'benchmark_v2/candidates/D13/sources/letter.txt'
+    reads = 0
+
+    def read_once(path):
+        nonlocal reads
+        data = read_bytes(path)
+        if path == target:
+            reads += 1
+            if reads > 1:
+                return data + b' changed after review'
+        return data
+
+    monkeypatch.setattr(Path, 'read_bytes', read_once)
+    sample, = repository_inputs(input_ids=['benchmark_v1_cross_source_dev_3_fixture'])
+    letter, = [source for source in sample.sources if source.id == 'letter']
+    assert reads == 1
+    assert hashlib.sha256(letter.text.encode()).hexdigest() == sample.origin_hashes['sources/letter.txt']
+
+
+def test_development_signature_does_not_transfer_to_revised_package_or_unrelated_case(tmp_path):
+    import shutil
+    from private_client_graph.research.benchmark_admission import pending_semantic_review, reviewed_snapshot
+
+    case_id = 'benchmark_v1_composite_dev_1'
+    selected, = repository_inputs(input_ids=[case_id + '_fixture'])
+    assert 'pending_semantic_review.md' in selected.origin_hashes
+    assert not pending_semantic_review(selected)
+    assert pending_semantic_review(selected.model_copy(update={'case_id': 'unreviewed'}))
+    package = tmp_path / 'package'
+    shutil.copytree(ROOT / 'benchmark_v1/composite/dev/case_1', package)
+    (package / 'source.txt').write_text('Different file after review')
+    with pytest.raises(ValueError, match='D14 package differs'):
+        reviewed_snapshot(ROOT / 'benchmark_v2', package, case_id)
+
+
+def test_reviewed_lineage_is_bound_to_loaded_input_when_freezing_labels(monkeypatch):
+    from pathlib import Path
+    from private_client_graph.workbench.case_catalog import frozen_case_metadata
+
+    sample, = repository_inputs(input_ids=['benchmark_v1_cross_source_dev_3_fixture'])
+    metadata = ROOT / 'benchmark_v2/candidates/D13/metadata.json'
+    read_bytes = Path.read_bytes
+    monkeypatch.setattr(Path, 'read_bytes', lambda path: b'{}' if path == metadata else read_bytes(path))
+    with pytest.raises(ValueError, match='metadata differs'):
+        frozen_case_metadata([sample])
