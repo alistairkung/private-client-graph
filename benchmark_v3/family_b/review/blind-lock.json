@@ -1,0 +1,38 @@
+{
+  "B0": [
+    {
+      "slot": "read-01",
+      "session": "849e1aa8-a303-4e50-8d00-46bd7ebdb9b6",
+      "thread": "01a2031e-9d88-7b93-ab87-ff7afb457e89",
+      "model": "gpt-6.2-sol",
+      "packet_sha256": "c5c548185a3ace0a0a29b192527b59596902689e736a22a7bdf4807202cb0aa8",
+      "output_sha256": "f2c8b44e0307f21d21ea11831279f22ec3ab6b450416467b30780845c4392bcf"
+    },
+    {
+      "slot": "read-02",
+      "session": "d88a6caa-e1ec-4c08-a8cc-7209fba13a15",
+      "thread": "01a2031f-d1f1-7e61-83ca-67f41e823717",
+      "model": "gpt-6.2-astra",
+      "packet_sha256": "c5c548185a3ace0a0a29b192527b59596902689e736a22a7bdf4807202cb0aa8",
+      "output_sha256": "8d8c71b636fae81980a084d08a73c68ad69dbd2aa97f71b6443f252f6b4cafb8"
+    }
+  ],
+  "B1": [
+    {
+      "slot": "read-03",
+      "session": "f37c6bad-3f31-4f52-b275-db87b9093516",
+      "thread": "01a20320-3c1b-7823-afef-dfa0b93329c0",
+      "model": "gpt-6.2-sol",
+      "packet_sha256": "867bf92204e5c335d4a6c6ff6f3d41f42f93e8e2e4ba0066ce5993f3addabaa8",
+      "output_sha256": "7dd1ff54dff5c6ac12c20a6846bd96d7271d4cf465bbc94b8351c879f2c0d257"
+    },
+    {
+      "slot": "read-04",
+      "session": "a44b7d6f-7cf8-484e-a818-2059b7b32173",
+      "thread": "01a20320-d1af-7601-a774-bfbfd5933244",
+      "model": "gpt-6.2-astra",
+      "packet_sha256": "867bf92204e5c335d4a6c6ff6f3d41f42f93e8e2e4ba0066ce5993f3addabaa8",
+      "output_sha256": "d38cad1128eb852c140e393308fb164eee656a1e2391433ab711bf0b646f14f4"
+    }
+  ]
+}
