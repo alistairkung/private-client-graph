@@ -12,10 +12,10 @@ from uuid import uuid4
 import pytest
 
 from benchmark_v3 import commissioning, packet
-from benchmark_v3.batch import admission, authorisation, coordinator, custody, science
+from benchmark_v3.batch import admission, artifacts, authorisation, coordinator, custody, science
 from benchmark_v3.batch.contracts import (
-    AdmissionDecisions, AuthoredSource, BatchDecision, BatchManifest, DesignOutput, DesignReview,
-    PilotDecision, SourceCutoffRecovery,
+    AdmissionDecisions, AnnotationRecovery, AuthoredSource, BatchDecision, BatchManifest, DeferredExceptionReview,
+    DesignOutput, DesignReview, PilotDecision, SourceCutoffRecovery,
 )
 from benchmark_v3.batch.ledger import BudgetExhausted, TaskHalted
 from benchmark_v3.batch.sessions import Blocked
@@ -144,7 +144,9 @@ def transport(monkeypatch, tmp_path):
         calls.append((family, request["parent"], local.job, inputs))
         if mode == "failed":
             raise packet.PacketError("Fixture provider did not complete.")
-        if mode == "return" or mode == "repair" and request["parent"].endswith("@1"):
+        if callable(mode):
+            result = mode(inputs)
+        elif mode == "return" or mode == "repair" and request["parent"].endswith("@1"):
             result = {
                 "verdict": mode, "summary": "Fixture documentary objection.",
                 "source_findings": {"src1": "Needs provenance.", "src2": "Plausible."},
@@ -805,3 +807,187 @@ def test_audit_requires_fresh_masks_for_joint_proof():
     with pytest.raises(ValueError, match="one deletion per Source"):
         verify(masks[:-1])
     verify(masks)
+
+
+@pytest.fixture
+def annotation_exception(design_gated, transport, request):
+    ledger, commission = design_gated
+    batch = commission.manifest.batch_id
+    calls, behavior, _ = transport
+    coordinator.run_batch(ledger, batch)
+    review = _design_approval(ledger, commission).model_dump(mode="json")
+    for item in review["designs"][1:]:
+        item.update(disposition="return", reason="Hold other families at design review.")
+    coordinator.record_design_review(ledger, DesignReview.model_validate(review | {"schema_version": 2}))
+
+    exact = QUOTE.replace(" is ", "\n\nis ")
+    submitted = exact.replace("\n\n", "\n")
+    text = f"Synthetic record:\n{exact}" + (f"\n\n{exact}" if getattr(request, "param", False) else "")
+    behavior["G", "author-src1"] = lambda _: {"title": "Test record", "text": text}
+
+    def annotation(inputs, quote):
+        return {
+            "candidates": {"relationships": [{"source_name": EDGE[0], "target_name": EDGE[2],
+                "relationship_type": EDGE[1], "source_id": "src1", "supporting_text": quote}]},
+            "reviewed_sources": [item["id"] for item in json.loads(inputs["sources"])], "open_questions": [],
+        }
+
+    behavior["G", "reading-000-a-full"] = lambda inputs: annotation(inputs, exact)
+    behavior["G", "reading-000-b-full"] = lambda inputs: annotation(inputs, submitted)
+    behavior["G", "adjudicate-000"] = lambda inputs: json.loads(json.dumps(
+        _output("adjudication", "G", "fixture", inputs),
+    ).replace(QUOTE, json.dumps(exact)[1:-1]))
+    coordinator.run_batch(ledger, batch)
+    assert coordinator.family_status(ledger, batch, "G")[2]["code"] == "scientific_review"
+    runner = commission.session_runner(ledger, "G", 1)
+    reader = runner.directory / "packets" / "reading-000-b-full"
+    bundle = runner.directory / "family" / "sources" / "G000.json"
+    decision = _exception_owner(commission, "G") | {
+        "reader_job": reader.name, "output_sha256": commissioning.digest((reader / "output.txt").read_bytes()),
+        "receipt_sha256": commissioning.digest((reader / "receipt.json").read_bytes()),
+        "bundle_sha256": commissioning.digest(bundle.read_bytes()), "source_id": "src1",
+        "candidate_path": "candidates.relationships[0].supporting_text",
+        "byte_interval": [text.encode().index(exact.encode()), text.encode().index(exact.encode()) + len(exact.encode())],
+    }
+    return ledger, batch, runner, calls, decision, exact, [reader / "output.txt", reader / "receipt.json", bundle]
+
+
+def _exception_owner(commission, family):
+    return {"schema_version": 1, "batch_id": commission.manifest.batch_id,
+            "manifest_sha256": authorisation.commitment(commission.manifest), "family_id": family,
+            "owner": OWNER, "decided_on": TODAY.isoformat(), "decision_reference": "Fixture owner exception decision."}
+
+
+def test_exact_annotation_recovery_is_immutable_and_resumes_at_adjudication(annotation_exception):
+    ledger, batch, runner, calls, draft, exact, originals = annotation_exception
+    original_bytes = [file.read_bytes() for file in originals]
+    decision = AnnotationRecovery.model_validate(draft)
+    cursor = len(calls)
+    digest = coordinator.recover_annotation(ledger, decision)
+    assert coordinator.recover_annotation(ledger, decision) == digest
+    assert len(calls) == cursor
+    assert coordinator.family_status(ledger, batch, "G") == (1, "blind", None)
+    derivative = (runner.directory / "recoveries" / decision.reader_job / "output.json").read_bytes()
+    assert commissioning.digest(derivative) == digest
+    assert derivative == original_bytes[0].replace(b"Parent\\nis", b"Parent\\n\\nis")
+    with pytest.raises(ValueError, match="one immutable"):
+        coordinator.recover_annotation(ledger, AnnotationRecovery.model_validate(draft | {
+            "decision_reference": "A second owner decision cannot overwrite the first.",
+        }))
+    with pytest.raises(ValueError, match="cannot reserve an earlier"):
+        runner.run("author", "late-author", "author", {}, "Fixture author.", AuthoredSource)
+    coordinator.run_batch(ledger, batch)
+    assert coordinator.family_status(ledger, batch, "G") == (1, "admission_ready", None)
+    assert [job for _, _, job, _ in calls[cursor:]] == ["adjudicate-000", "audit"]
+    adjudication = calls[cursor][3]
+    assert json.loads(adjudication["annotation_b"])["candidates"]["relationships"][0]["supporting_text"] == exact
+    assert [file.read_bytes() for file in originals] == original_bytes
+    assert coordinator.recover_annotation(ledger, decision) == digest
+
+
+@pytest.mark.parametrize(("change", "error"), [
+    ({"owner": "Another owner"}, "commissioning owner"),
+    ({"owner": None}, "owner"),
+    ({"manifest_sha256": "0" * 64}, "exact manifest"),
+    ({"output_sha256": "0" * 64}, "exact original output and receipt"),
+    ({"receipt_sha256": "0" * 64}, "exact original output and receipt"),
+    ({"bundle_sha256": "0" * 64}, "exact committed frozen bundle"),
+    ({"source_id": "src2"}, "candidate path"),
+    ({"candidate_path": "candidates.relationships[1].supporting_text"}, "candidate path"),
+    ({"candidate_path": "candidates.relationships[0].target_name"}, "candidate_path"),
+    ({"byte_interval": [0, 2]}, "unique frozen match"),
+    ({"byte_interval": [2, 1]}, "byte interval"),
+    ({"relationship_type": "child_of"}, "relationship_type"),
+])
+def test_annotation_recovery_fails_closed(annotation_exception, change, error):
+    ledger, batch, runner, calls, draft, _, originals = annotation_exception
+    original_bytes = [file.read_bytes() for file in originals]
+    cursor = len(calls)
+    with pytest.raises(ValueError, match=error):
+        coordinator.recover_annotation(ledger, AnnotationRecovery.model_validate(draft | change))
+    assert not (runner.directory / "recoveries").exists()
+    assert coordinator.family_status(ledger, batch, "G")[2]["code"] == "scientific_review"
+    assert len(calls) == cursor and [file.read_bytes() for file in originals] == original_bytes
+
+
+@pytest.mark.parametrize("annotation_exception", [True], indirect=True)
+def test_annotation_recovery_rejects_nonunique_source_span(annotation_exception):
+    ledger, _, _, _, decision, _, _ = annotation_exception
+    with pytest.raises(ValueError, match="unique frozen match"):
+        coordinator.recover_annotation(ledger, AnnotationRecovery.model_validate(decision))
+
+
+def test_deferred_owner_reviews_do_not_release_either_family(design_gated, transport):
+    ledger, commission = design_gated
+    batch = commission.manifest.batch_id
+    calls, behavior, _ = transport
+    coordinator.run_batch(ledger, batch)
+    payload = _design_approval(ledger, commission).model_dump(mode="json") | {"schema_version": 2}
+    payload["designs"][2].update(disposition="return", reason="Check the chain.")
+    coordinator.record_design_review(ledger, DesignReview.model_validate(payload))
+    behavior["H", "realism-000"] = "return"
+    coordinator.run_batch(ledger, batch)
+    original_status = _status(ledger, batch)
+    assert original_status == {"G": "admission_ready", "H": "returned", "I": "pending_design_review"}
+    h = commission.session_runner(ledger, "H", 1)
+    realism = h.directory / "packets" / "realism-000" / "output.txt"
+    scope = _exception_owner(commission, "H") | {"disposition": {
+        "status": "repair_scope_approved_pending_execution", "design_sha256": payload["designs"][1]["design_sha256"],
+        "realism_output_sha256": {"H000": commissioning.digest(realism.read_bytes())}, "scope": ["Fixture clarification."],
+    }}
+    i = commission.session_runner(ledger, "I", 1)
+    parent = payload["designs"][2]["design_sha256"]
+    design = artifacts.read_contract(i.directory / "design.json", DesignOutput).model_copy(update={
+        "private_history": "Clarified fixture chain.",
+    })
+    child = authorisation.commitment(design)
+    directory = i.directory.with_name("2")
+    proposal = {"parent_revision": 1, "child_revision": 2, "status": "pending_design_review",
+                "parent_design_sha256": parent, "design_sha256": child,
+                "manifest_sha256": authorisation.commitment(commission.manifest),
+                "hypothesis_sha256": commission.manifest.families[2].hypothesis.hypothesis_sha256}
+    artifacts.write_json(directory / "design.json", design.model_dump(mode="json"))
+    artifacts.write_json(directory / "design-proposal.json", proposal)
+    ledger.event(batch, "I", 1, "design_clarification", "child-2", "pending_design_review", "pending_design_review", proposal)
+    merits = _exception_owner(commission, "I") | {"disposition": {
+        "status": "design_merits_accepted_pending_activation", "parent_design_sha256": parent,
+        "child_design_sha256": child,
+    }}
+    with pytest.raises(ValueError, match="exact recorded proposal"):
+        coordinator.record_deferred_review(ledger, DeferredExceptionReview.model_validate(merits | {
+            "disposition": merits["disposition"] | {"child_design_sha256": "0" * 64},
+        }))
+    for draft in (scope, merits):
+        decision = DeferredExceptionReview.model_validate(draft)
+        coordinator.record_deferred_review(ledger, decision)
+        coordinator.record_deferred_review(ledger, decision)
+    cursor = len(calls)
+    attempts = [ledger.attempts(family) for family in "HI"]
+    for family in "HI":
+        with pytest.raises(Blocked, match="defers this family"):
+            commission.session_runner(ledger, family, 2).run(
+                "author", "author-new", "author", {}, "Fixture author.", AuthoredSource,
+            )
+    coordinator.run_batch(ledger, batch)
+    assert _status(ledger, batch) == original_status
+    assert len(calls) == cursor and [ledger.attempts(family) for family in "HI"] == attempts
+    assert [event["details"] for family in "HI" for event in ledger.events(batch, family)
+            if event["kind"] == "deferred_review"] == [scope, merits]
+
+
+def test_recovery_stops_before_a_mask_plan_exceeds_remaining_slots(annotation_exception, transport):
+    ledger, batch, _, calls, draft, _, _ = annotation_exception
+    _, behavior, _ = transport
+    mask = {"risk": "shortcut", "condition": "G000", "included": ["src2"], "present": [], "absent": [EDGE],
+            "reason": "Check whether the administrative note leaks the assertion.", "question": "What holds?"}
+    behavior["G", "audit"] = lambda inputs: _output("audit", "G", "audit", inputs) | {
+        "risks": ["shortcut"], "masks": [mask] * 3,
+    }
+    cursor = len(calls)
+    coordinator.recover_annotation(ledger, AnnotationRecovery.model_validate(draft))
+    coordinator.run_batch(ledger, batch)
+    _, stage, error = coordinator.family_status(ledger, batch, "G")
+    assert stage == "masks" and error["code"] == "budget"
+    assert "3 new sessions with 2 available" in error["evidence"]
+    assert [job for _, _, job, _ in calls[cursor:]] == ["adjudicate-000", "audit"]
+    assert len(ledger.attempts("G")) == 8

@@ -141,6 +141,43 @@ class SourceCutoffRecovery(Contract):
     responses: Annotated[dict[FamilyId, Digest], Field(min_length=1, max_length=20)]
 
 
+class OwnerFamilyReview(Contract):
+    schema_version: Literal[1]
+    batch_id: Slug
+    manifest_sha256: Digest
+    family_id: FamilyId
+    owner: Text
+    decided_on: date
+    decision_reference: Text
+
+
+class AnnotationRecovery(OwnerFamilyReview):
+    reader_job: Annotated[str, Field(pattern=r"^reading-[0-9]{3}-[ab]-full$")]
+    output_sha256: Digest
+    receipt_sha256: Digest
+    bundle_sha256: Digest
+    source_id: SourceId
+    candidate_path: Annotated[str, Field(pattern=r"^candidates\.relationships\[(0|[1-9][0-9]{0,5})\]\.supporting_text$")]
+    byte_interval: tuple[Annotated[int, Field(strict=True, ge=0)], Annotated[int, Field(strict=True, gt=0)]]
+
+
+class RepairScopeReview(Contract):
+    status: Literal["repair_scope_approved_pending_execution"]
+    design_sha256: Digest
+    realism_output_sha256: Annotated[dict[Text, Digest], Field(min_length=1)]
+    scope: NonemptyNotes
+
+
+class ChildDesignMerits(Contract):
+    status: Literal["design_merits_accepted_pending_activation"]
+    parent_design_sha256: Digest
+    child_design_sha256: Digest
+
+
+class DeferredExceptionReview(OwnerFamilyReview):
+    disposition: Annotated[RepairScopeReview | ChildDesignMerits, Field(discriminator="status")]
+
+
 class PilotDecision(Contract):
     schema_version: Literal[1]
     pilot_batch_id: Slug

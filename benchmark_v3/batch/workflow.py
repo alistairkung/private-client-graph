@@ -8,8 +8,8 @@ from typing import Any, TypeVar
 
 from pydantic import BaseModel
 
-from benchmark_v3 import commissioning, replay
-from benchmark_v3.batch import artifacts, design_recovery, science
+from benchmark_v3 import commissioning, packet, replay
+from benchmark_v3.batch import annotation_recovery, artifacts, design_recovery, science
 from benchmark_v3.batch.contracts import (
     Adjudication, AuditReview, AuthoredSource, Code, DesignOutput, Reading, RealismReview,
     Role, Stage,
@@ -227,6 +227,16 @@ class FamilyWorkflow:
         self, key: str, role: Role, design: DesignOutput, sources: list[Source],
         extra: dict[str, str] | None = None,
     ) -> Reading:
+        recovery = annotation_recovery.recorded(self.runner) if role == "annotation" else None
+        if recovery and recovery["decision"]["reader_job"] == key:
+            try:
+                reading, receipt = annotation_recovery.reopen(self.runner, recovery)
+            except packet.PacketIsolationError as error:
+                raise Blocked(self.stage, "isolation", str(error), job=key) from error
+            except (ValueError, OSError, KeyError, TypeError) as error:
+                raise Blocked(self.stage, "input_integrity", str(error), job=key) from error
+            self.sessions.append(receipt)
+            return reading
         result = self.job(
             key, role, _reading_inputs(design, sources) | (extra or {}),
             "Read only the supplied file. Record exact sourced candidates, unresolved questions, and "
@@ -300,10 +310,13 @@ class FamilyWorkflow:
     def masks(
         self, design: DesignOutput, bundles: dict[str, list[Source]], audit: AuditReview,
     ) -> list[dict[str, Any]]:
+        jobs = {f"mask-{index:03}": mask for index, mask in enumerate(audit.masks)}
+        if annotation_recovery.recorded(self.runner) is not None:
+            self.runner.ledger.require_capacity(self.runner.family, self.runner.revision, set(jobs))
         results = []
-        for index, mask in enumerate(audit.masks):
+        for index, (job, mask) in enumerate(jobs.items()):
             sources = science.mask_sources(mask, bundles[mask.condition])
-            reading = self.read(f"mask-{index:03}", "masked", design, sources)
+            reading = self.read(job, "masked", design, sources)
             edges = science.check_reading(reading, sources).keys()
             if not set(mask.present) <= edges or set(mask.absent) & edges:
                 self.reject("scientific_review", f"Independent mask {index} failed its exact precommitment.",

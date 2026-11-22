@@ -144,6 +144,21 @@ in custody. A shared isolation incident requires a custodian investigation
 and fresh approval before further scientific work. The task's ledger remains
 closed to submissions after a shared halt.
 
+For a completed blind reading blocked on an exact quotation, use
+`schema annotation-recovery` and `recover-annotation CUSTODY DECISION`.
+The commissioning owner binds the original output, receipt, frozen bundle,
+cited Source, candidate path and UTF-8 byte interval. The command accepts one
+missing line feed at a unique Source span, preserves the original failed
+reading and writes an immutable derivative with its validation record. A
+verified resume reuses earlier sessions and sends the existing readings to
+adjudication. Repeating the same decision verifies the recorded derivative.
+
+Use `schema deferred-exception-review` and
+`record-deferred-review CUSTODY DECISION` to record approval of a documentary
+repair scope or the merits of a proposed child design. Both decisions hold
+the family at its existing gate. Repair execution, child activation and
+budget amendments require separate authority and a tested release path.
+
 The default allows one new scientific revision for participant-safe natural
 documentary repairs. Reuse unaffected author results and regenerate the
 affected recipients' records in chronology. Repeat all subsequent reviews.

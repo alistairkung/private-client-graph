@@ -7,7 +7,7 @@ from typing import Any, TypeVar
 from pydantic import BaseModel
 
 from benchmark_v3 import commissioning, packet
-from benchmark_v3.batch import artifacts, authorisation, design_review
+from benchmark_v3.batch import annotation_recovery, artifacts, authorisation, design_review
 from benchmark_v3.batch.contracts import BatchManifest, Code, Role, Stage
 from benchmark_v3.batch.ledger import Ledger, TaskHalted
 
@@ -33,6 +33,9 @@ class SessionRunner:
 
     def _require_authority(self, role: Role) -> None:
         self.ledger.require_running()
+        if any(row["kind"] == "deferred_review"
+               for row in self.ledger.events(self.manifest.batch_id, self.family)):
+            raise ValueError("The owner decision defers this family pending separate execution approval.")
         allocation = next(row for row in self.manifest.families if row.family_id == self.family)
         authorisation.verify_hypothesis(self.family, allocation.hypothesis, self.owner)
         if role != "designer" and self.manifest.requires_design_review:
@@ -63,6 +66,8 @@ class SessionRunner:
         fresh = self.ledger.reserve(
             self.family, self.revision, job, stage, request,
             commissioning.digest(commissioning.json_text(request).encode()),
+            reuse_only=role in {"designer", "author", "realism", "annotation"}
+            and annotation_recovery.recorded(self) is not None,
         )
         if fresh:
             try:
@@ -115,3 +120,23 @@ class SessionRunner:
         except (ValueError, KeyError, OSError, TypeError) as error:
             raise Blocked(stage, "input_integrity", str(error), job=job) from error
         return result, evidence | {"status": "completed"}
+
+    def committed_packet(
+        self, stage: Stage, job: str, role: Role,
+    ) -> tuple[bytes, dict[str, Any], dict[str, Any]]:
+        attempt = next((row for row in self.ledger.attempts(self.family)
+                        if (row["revision"], row["job"], row["stage"]) == (self.revision, job, stage)), None)
+        session = next((row["details"] for row in self.ledger.events(self.manifest.batch_id, self.family)
+                        if (row["revision"], row["kind"], row["name"]) == (self.revision, "session", job)), None)
+        if attempt is None or session is None or session.get("status") != "completed":
+            raise ValueError("Owner review requires an original charged and completed scientific packet.")
+        request = commissioning._read_json(attempt["request"])
+        if request["role"] != role or commissioning.digest(attempt["request"].encode()) != attempt["request_sha256"]:
+            raise ValueError("The completed scientific reservation differs from its recorded commitment.")
+        directory = self.directory / "packets" / job
+        if commissioning._read_json(artifacts.read_bytes(directory / "request.json")) != request:
+            raise ValueError("The completed scientific request differs from its reservation.")
+        output, evidence = artifacts.completed_packet(directory, request)
+        if evidence | {"status": "completed"} != session:
+            raise ValueError("The completed receipt differs from its ledger commitment.")
+        return output, session, request

@@ -7,9 +7,10 @@ from pathlib import Path
 from typing import Any
 
 from benchmark_v3 import commissioning
-from benchmark_v3.batch import artifacts, authorisation, design_recovery, design_review
+from benchmark_v3.batch import annotation_recovery, artifacts, authorisation, design_recovery, design_review, exception_review
 from benchmark_v3.batch.contracts import (
-    BatchDecision, BatchManifest, Code, DesignReview, ExceptionRecord, SourceCutoffRecovery,
+    AnnotationRecovery, BatchDecision, BatchManifest, Code, DeferredExceptionReview, DesignReview,
+    ExceptionRecord, OwnerFamilyReview, RepairScopeReview, SourceCutoffRecovery,
 )
 from benchmark_v3.batch.custody import namespace_directory
 from benchmark_v3.batch.ledger import BudgetExhausted, Ledger, TaskHalted
@@ -291,3 +292,62 @@ def quarantine(ledger: Ledger, batch_id: str, family: str, reference: str) -> No
             raise ValueError("Quarantine requires an unresolved exception before admission.")
         ledger.event(batch_id, family, revision, "operator_close", "quarantine", state, "quarantined",
                      {"reference": reference, "exception": blocking, "role": "custodian"})
+
+
+def recover_annotation(ledger: Ledger, decision: AnnotationRecovery) -> str:
+    with ledger.coordinator_lock():
+        commission, slot, review = _owner_family_review(ledger, decision)
+        revision, state, blocking = family_status(ledger, decision.batch_id, decision.family_id)
+        runner = commission.session_runner(ledger, decision.family_id, revision)
+        existing = annotation_recovery.recorded(runner)
+        if existing is not None:
+            if existing["decision"] != decision.model_dump(mode="json"):
+                raise ValueError("Only one immutable mechanical blind correction is permitted per revision.")
+            annotation_recovery.reopen(runner, existing)
+            return str(existing["derivative_sha256"])
+        if not review.accepts(slot.family_id) or state != "blind" or not blocking or (
+            blocking["code"] != "scientific_review" or blocking["repair_permitted"]
+        ):
+            raise ValueError("Annotation recovery requires an accepted design halted at blind exact validation.")
+        record, corrected, _, _ = annotation_recovery.derive(runner, decision)
+        digest = artifacts.write_bytes(annotation_recovery.derivative_path(runner, decision.reader_job), corrected)
+        ledger.event(decision.batch_id, decision.family_id, revision, "reconcile",
+                     annotation_recovery.ANNOTATION_RECOVERY, "blind", "blind", record)
+        return digest
+
+
+def record_deferred_review(ledger: Ledger, decision: DeferredExceptionReview) -> None:
+    with ledger.coordinator_lock():
+        commission, slot, review = _owner_family_review(ledger, decision)
+        revision, state, blocking = family_status(ledger, decision.batch_id, decision.family_id)
+        runner = commission.session_runner(ledger, decision.family_id, revision)
+        disposition = decision.disposition
+        if isinstance(disposition, RepairScopeReview):
+            if state != "returned" or not review.accepts(slot.family_id):
+                raise ValueError("Scope-only approval requires an accepted design returned at realism.")
+            exception_review.verify_repair_scope(runner, slot, disposition, blocking)
+        else:
+            if state != "pending_design_review" or review.accepts(slot.family_id):
+                raise ValueError("Child merits require a returned design still held at design review.")
+            exception_review.verify_child_merits(runner, slot, disposition)
+        ledger.event(decision.batch_id, decision.family_id, revision, "deferred_review", disposition.status,
+                     state, state, decision.model_dump(mode="json"))
+
+
+def _owner_family_review(
+    ledger: Ledger, decision: OwnerFamilyReview,
+) -> tuple[Commission, FamilySlot, DesignReview]:
+    ledger.require_running()
+    commission = load_commission(ledger, decision.batch_id)
+    manifest = commission.manifest
+    if decision.owner != commission.decision.owner or decision.manifest_sha256 != authorisation.commitment(manifest):
+        raise ValueError("Scientific exception review requires the commissioning owner and exact manifest.")
+    if decision.family_id not in {row.family_id for row in manifest.families}:
+        raise ValueError("Review only families in the commissioned batch.")
+    _verify_resume(ledger, commission)
+    review = design_review.recorded_review(ledger, manifest, decision.owner)
+    if review is None:
+        raise ValueError("Scientific exception review requires a recorded design review.")
+    slot = next(row for row in commission.portfolio.slots if row.family_id == decision.family_id)
+    authorisation.verify_hypothesis(slot.family_id, slot.hypothesis, decision.owner)
+    return commission, slot, review

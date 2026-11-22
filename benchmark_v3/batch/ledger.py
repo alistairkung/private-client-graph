@@ -146,6 +146,7 @@ class Ledger:
 
     def reserve(
         self, family: str, revision: int, job: str, stage: Stage, request: dict[str, Any], request_sha256: str,
+        *, reuse_only: bool = False,
     ) -> bool:
         with self.transaction() as connection:
             self.check_halt(connection)
@@ -157,6 +158,8 @@ class Ledger:
                 if prior["request_sha256"] != request_sha256 or prior["request"] != json_text(request):
                     raise ValueError("A reserved scientific input changed.")
                 return False
+            if reuse_only:
+                raise ValueError("Annotation recovery cannot reserve an earlier scientific job.")
             if connection.execute("SELECT COUNT(*) FROM attempts").fetchone()[0] >= connection.execute(
                 "SELECT ceiling FROM task",
             ).fetchone()[0]:
@@ -170,6 +173,22 @@ class Ledger:
                 (*key, stage, json_text(request), request_sha256, timestamp()),
             )
             return True
+
+    def require_capacity(self, family: str, revision: int, jobs: set[str]) -> None:
+        with self.transaction() as connection:
+            self.check_halt(connection)
+            attempts = connection.execute(
+                "SELECT revision, job FROM attempts WHERE family = ?", (family,),
+            ).fetchall()
+            remaining_jobs = jobs - {row["job"] for row in attempts if row["revision"] == revision}
+            allowance = connection.execute("SELECT allowance FROM families WHERE id = ?", (family,)).fetchone()[0]
+            ceiling = connection.execute("SELECT ceiling FROM task").fetchone()[0]
+            used = connection.execute("SELECT COUNT(*) FROM attempts").fetchone()[0]
+            remaining = min(allowance - len(attempts), ceiling - used)
+            if len(remaining_jobs) > remaining:
+                raise BudgetExhausted(
+                    f"Precommitted mask plan needs {len(remaining_jobs)} new sessions with {remaining} available.",
+                )
 
     def attempts(self, family: str) -> list[dict[str, Any]]:
         with closing(self.connect()) as connection:
