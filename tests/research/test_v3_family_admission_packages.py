@@ -5,12 +5,18 @@ from pathlib import Path
 import pytest
 
 from benchmark_v3.replay import preflight
+from benchmark_v3.replay_evidence import EVIDENCE_POLICY_VERSION, SUFFICIENCY_VERSION
 from benchmark_v3.replay_manifest import load_family
 from private_client_graph.research.artifacts import checksum
 
 
 ROOT = Path(__file__).resolve().parents[2] / 'benchmark_v3'
 PROTOCOL_SHA256 = '7b8fa95a3ddb87a96b2dec1977f330f7822ac522342a2f381e55081175e59ead'
+REVIEWED_COMMIT = '54699499f2727a4e30bfba77ce66e91d2235b214'
+REVIEWED_ADMISSION_SHA256 = {
+    'b': '5c5ccaa53a18bbee985dee5d4065dd96c8775e823b8abf3818e4551f91730ef7',
+    'c': '86c7b9929204798fb61a58a85a0bbc29fc2787bb72d7f1d7901e9a54733cb16e',
+}
 
 
 def _json(path):
@@ -28,9 +34,19 @@ def test_admission_commitments_and_zero_call_replay(family, planned, positives, 
     admission = _json(root / 'admission.json')
     verified = load_family(manifest)
 
-    assert admission['status'] == 'pending_human_admission'
-    assert admission['owner_decision'] is admission['signature'] is None
+    assert admission['family'] == family.upper()
+    assert admission['status'] == 'admitted' and admission['owner_decision'] == 'accept'
+    signature = admission['signature']
+    assert signature['verbatim_reply'] == 'I accept Family B and, separately, I accept Family C.'
+    assert signature['reviewed_commit'] == REVIEWED_COMMIT
+    reviewed_admission = dict(admission, status='pending_human_admission', owner_decision=None, signature=None)
+    reviewed_bytes = (json.dumps(reviewed_admission, indent=2, ensure_ascii=False) + '\n').encode('utf-8')
+    assert signature['reviewed_admission_sha256'] == REVIEWED_ADMISSION_SHA256[family] == checksum(reviewed_bytes)
+
     assert admission['dispatched'] is False
+    assert admission['paid_pcg_extraction_attempts'] == 0
+    assert admission['evidence_policy'] == EVIDENCE_POLICY_VERSION
+    assert admission['proof_policy'] == SUFFICIENCY_VERSION
     assert admission['protocol_sha256'] == PROTOCOL_SHA256
     assert admission['manifest_sha256'] == verified.manifest_sha256
     assert admission['freeze_sha256'] == verified.freeze_sha256

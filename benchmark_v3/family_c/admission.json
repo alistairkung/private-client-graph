@@ -1,8 +1,14 @@
 {
   "family": "C",
-  "status": "pending_human_admission",
-  "owner_decision": null,
-  "signature": null,
+  "status": "admitted",
+  "owner_decision": "accept",
+  "signature": {
+    "source": "Owner’s reply in Codex to the PR #194 admission handoff",
+    "verbatim_reply": "I accept Family B and, separately, I accept Family C.",
+    "recorded_at": "2026-11-22T12:41:07+00:00",
+    "reviewed_commit": "54699499f2727a4e30bfba77ce66e91d2235b214",
+    "reviewed_admission_sha256": "86c7b9929204798fb61a58a85a0bbc29fc2787bb72d7f1d7901e9a54733cb16e"
+  },
   "dispatched": false,
   "technical_disposition": "ready_for_owner_review",
   "paid_pcg_extraction_attempts": 0,

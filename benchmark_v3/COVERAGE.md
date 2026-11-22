@@ -10,4 +10,4 @@ The research custodian maintains this register. The unit of construction is the 
 
 The family files cover one unresolved speaker, one unresolved instrument allocation and one controlled timing decision. They leave larger identity collisions, conflicts between independently originated assertions, and more than two viable instrument or authority paths open for future coverage work.
 
-Family A is [admitted](family_a/admission.json). The [estate](family_b/admission.json) and [Two Trusts](family_c/admission.json) decisions are separate and pending human admission.
+Family A is [admitted](family_a/admission.json). The owner also separately admitted the [estate](family_b/admission.json) and [Two Trusts](family_c/admission.json) families. The dated records contain the current disposition.
