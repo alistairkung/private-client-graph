@@ -80,6 +80,9 @@ def _package(root, family, mutation=None):
     elif mutation == 'unsafe_assertion':
         unresolved = f'{family}{0 if family == "B" else 2}'
         cases[unresolved]['ideal']['relationships'].append(_candidate(second, _pair('statement', first_quote)))
+    elif mutation == 'entity_drift':
+        unused = second[2] if family == 'B' else first[2]
+        cases[identity]['truth']['entities'] = [entity for entity in entities if entity['name'] != unused]
     elif mutation == 'wrong_target':
         required[identity] = [] if family == 'B' else [first]
 
@@ -122,6 +125,7 @@ def test_exact_contrasts_and_unresolved_withholding(tmp_path, family, unresolved
     ('partial_proof', 'incomplete same-edge sufficient evidence'),
     ('unsafe_assertion', 'retained a forbidden edge'),
     ('wrong_target', 'critical decisions differ from the protocol'),
+    ('entity_drift', 'changed the matched entity roster'),
 ])
 def test_matched_controls_reject_mutations_with_recomputed_digests(tmp_path, family, mutation, message):
     with pytest.raises(ValueError, match=message):

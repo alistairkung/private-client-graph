@@ -165,6 +165,7 @@ def _load_matched_family(root: Path, manifest: MatchedFamilyManifest, digest: st
     _verify_targets(manifest.family, freeze, set(conditions), set(variants))
     natural = conditions[base]
     base_edges = truth_edges(natural.saved.truth)
+    base_entities = {entity.name: entity for entity in natural.saved.truth.entities}
     candidates = set(freeze.candidates)
     unaffected = base_edges.keys() - candidates
     if not unaffected:
@@ -181,8 +182,9 @@ def _load_matched_family(root: Path, manifest: MatchedFamilyManifest, digest: st
         if identity == base:
             continue
         _verify_edit(base, identity, natural.sources, condition.sources, freeze.interventions[identity])
-        _verify_shared_annotations(natural.saved, condition.saved, unaffected,
-                                   base_edges.keys() - edges.keys(), edges.keys() - base_edges.keys())
+        if {entity.name: entity for entity in condition.saved.truth.entities} != base_entities:
+            raise ValueError(f'{identity} changed the matched entity roster')
+        _verify_shared_annotations(natural.saved, condition.saved, unaffected)
 
     return VerifiedFamily(manifest.family, digest, manifest.freeze_sha256, conditions,
                           freeze.interventions, freeze.required, candidates, unaffected)
@@ -328,38 +330,29 @@ def _verify_annotations(conditions: dict[str, VerifiedCondition],
     unaffected = base_edges.keys() & held_edges.keys()
     if not unaffected:
         raise ValueError('Family A requires at least one unaffected edge')
-    _verify_shared_annotations(natural, held, unaffected, removed, added)
+    _verify_shared_annotations(natural, held, unaffected)
+    _verify_switched_trustees(natural.truth, held.truth, removed, added)
     for saved, critical in ((natural, removed), (permuted, removed), (held, added)):
         if not critical <= {_edge(*item.edge) for item in saved.sufficient_evidence}:
             raise ValueError(f'{saved.condition} lacks the critical trustee proof annotation')
     return unaffected
 
 
-def _verify_shared_annotations(natural: SavedIdeal, variant: SavedIdeal, unaffected: set[SemanticEdge],
-                               removed: set[SemanticEdge], added: set[SemanticEdge]) -> None:
+def _verify_shared_annotations(natural: SavedIdeal, variant: SavedIdeal, unaffected: set[SemanticEdge]) -> None:
     base_edges, variant_edges = truth_edges(natural.truth), truth_edges(variant.truth)
     if any(base_edges[edge] != variant_edges[edge] for edge in unaffected):
         raise ValueError(f'{variant.condition} changed unaffected ground-truth approvals')
-    _verify_entities(natural.truth, variant.truth, removed, added, variant.condition)
     _verify_unaffected_evidence(natural, variant, unaffected)
 
 
-def _verify_entities(natural: GroundTruth, held: GroundTruth,
-                     removed: set[SemanticEdge], added: set[SemanticEdge], variant: str) -> None:
+def _verify_switched_trustees(natural: GroundTruth, held: GroundTruth,
+                              removed: set[SemanticEdge], added: set[SemanticEdge]) -> None:
     base_entities = {entity.name: entity for entity in natural.entities}
     held_entities = {entity.name: entity for entity in held.entities}
-    allowed_removed = _changed_endpoint_names(removed, variant)
-    allowed_added = _changed_endpoint_names(added, variant)
     if (any(base_entities[name] != held_entities[name] for name in base_entities.keys() & held_entities.keys())
-            or base_entities.keys() - held_entities.keys() - allowed_removed
-            or held_entities.keys() - base_entities.keys() - allowed_added):
-        raise ValueError(f'{variant} changed an entity outside the predeclared edge change')
-
-
-def _changed_endpoint_names(edges: set[SemanticEdge], variant: str) -> set[str]:
-    if variant == 'A2':
-        return {source for source, _, _ in edges}
-    return {name for source, _, target in edges for name in (source, target)}
+            or base_entities.keys() - held_entities.keys() - {edge[0] for edge in removed}
+            or held_entities.keys() - base_entities.keys() - {edge[0] for edge in added}):
+        raise ValueError('A2 changed an entity outside the predeclared trustee switch')
 
 
 def _verify_unaffected_evidence(natural: SavedIdeal, variant: SavedIdeal,

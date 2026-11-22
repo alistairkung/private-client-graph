@@ -34,7 +34,7 @@ Use a fresh directory and session for each handoff.
 | --- | --- | --- |
 | `designer` | `capability_question`, `meeting_setting`, `genre_references` | One context per family. Deliver a private dated history, custody, role-specific fact briefs and a separately logged intervention. Exclude graph answers, other families, model outputs and sealed material. |
 | `author` | `author_brief`, `genre_references`, `received_correspondence`, `revision_ticket` | One dated perspective at a time. Release recurring-author packets chronologically. Provide only facts the participant could know and exact earlier correspondence they received. Exclude target labels, answers, other perspectives and extraction outputs. |
-| `realism` | `sources`, `neutral_brief`, `cutoff`, `possession_ledger`, `genre_references` | Review candidate Sources for purpose, possession, chronology, form, density and cues. Limit the ledger to transmission. Return per-Source revision tickets. Exclude hidden history, semantic targets, keys and extraction outputs. |
+| `realism` | `sources`, `neutral_brief`, `cutoff`, `possession_ledger`, `genre_references` | Review candidate Sources for purpose, possession, chronology, form, density and cues. Limit the ledger to transmission. Review every sibling as a separate file in its own documentary situation. Return per-Source revision tickets. Exclude hidden history, semantic targets, keys and extraction outputs. |
 | `annotation` | `sources`, `neutral_brief`, `ontology`, `annotation_rules` | Review exactly one locked, ordered bundle. Return the complete graph, exact evidence and minimum sufficient alternatives, contradictions, open questions and dangerous guesses. Exclude variant names, siblings, intended answers, peer labels and extraction outputs. |
 | `adjudication` | `sources`, `annotation_a`, `annotation_b`, `neutral_brief`, `ontology`, `annotation_rules` | Reconstruct disagreements against the locked Sources and commit a provisional key. Exclude hidden history, paired conditions and interventions until this key is committed. |
 | `audit` | `paired_bundles`, `intended_intervention`, `provisional_keys`, `neutral_brief`, `ontology`, `audit_rules` | After provisional adjudication, compare the actual matched bundles and key differences. Audit evidence sufficiency, masking and shortcuts. |
@@ -63,9 +63,10 @@ each role and verifies that the text stays within its allowed scope.
    masks produce identical Source arrays and neutral briefs, verify and record
    the byte equality before reusing a fresh masked result. For exact proof
    sets, a surviving one-member deletion can be checked by literal containment
-   in a whole-file masked packet that already failed to prove the edge. The
-   full set and each semantically distinct masked packet still need an
-   independent reading.
+   in a whole-file masked packet that already failed to prove the edge.
+   Verify that the enclosing packet withheld the edge because a needed fact
+   was missing. The full set and each semantically distinct masked packet
+   still need an independent reading.
 4. If a Source changes, retain the prior revision and link the child to it.
    Send the responsible author only the relevant revision ticket and their
    perspective packet. Repeat affected realism review, both blind passes,
