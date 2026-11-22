@@ -1,0 +1,84 @@
+{
+  "per_source": [
+    {
+      "source_id": "QF8M",
+      "finding": "Plausible account-opening record by Evin Rooke for bank servicing staff. Lintmere retains the operative record; Iona received a copy and supplied Jules with one on 15 September 2026. WM-683, the two named signatories, the joint payment rule and the separate correspondence blocks are independently useful. The repeated explanation that a shared address does not change payment authority is slightly over-cued but not inconsistent.",
+      "limits": "The signed opening instructions cited under WM-683 are not supplied. The record establishes the opening arrangements, not trust title, current addresses, identity or entitlement to archived statements. The packet shows no later mandate change."
+    },
+    {
+      "source_id": "VJ3K",
+      "finding": "A credible limited certification from Maren, both office-book keeper and appointor, to Jules for the standing-records request. The 09:10 extract was sent at 09:25 on 16 September; Maren retained the office book and founding acceptances. The seat names, written acceptance date, source of the appointment power and time limit each do work. The power-versus-entry explanation is slightly didactic but useful.",
+      "limits": "The extract reports the founding records and Maren's own acts; it is not independent corroboration by another custodian. The underlying grant and acceptances are not in Jules's hands. The certification stops at 09:10 and does not conflict with the later execution of LX6R."
+    },
+    {
+      "source_id": "LX6R",
+      "finding": "A compact operative instrument with distinct roles for Maren as appointor, Darren as retiring trustee, Tamsin as accepting trustee and Perrin as custodian. The signatories saw it at execution; Perrin took the sole executed original at 11:45 and Jules received a copy at 12:05 on 16 September. The simultaneous handover, unaffected First Seat and sole release mechanism are substantive. The repeated negatives are emphatic but mostly justified by the express postponement of delivery.",
+      "limits": "The 11:30 extract says Perrin already 'holds' the original, whereas the ledger places receipt at 11:45. That is a custody-timing tension, not evidence of delivery. Jules has no original or original attestations to inspect. Read together, the clauses make the present-tense 'appoints' conditional on delivery; they do not support immediate appointment on signature."
+    },
+    {
+      "source_id": "HC9W",
+      "finding": "Credible internal preparation note by Jules, kept in the matter file on 16 September and not circulated. It usefully fixes the 14:20 cutoff, the 14:30 meeting, the papers then held and the outstanding register request. The prior telephone request explains the entry without implying that Jules already held the extract. The provisional Tamsin entry is realistic working shorthand, not an approved mandate instruction.",
+      "limits": "The later arrival of MP2Z does not make the diary note inaccurate when made. The covering slip is described but not separately supplied, so only its recorded provisional status can be assessed."
+    },
+    {
+      "source_id": "BD4T",
+      "finding": "Credible decision paper from Nella to Jules, filed without enclosures for the meeting. The property, observed water ingress, interim protection, £18,600 total, £4,650 booking payment and unbooked 28 September slot give the recipients something concrete to decide. The voice is practical; the repeated approval caveats are somewhat emphatic but clarify that neither booking nor payment has occurred.",
+      "limits": "The moisture survey was requested but neither Nella nor Jules had it by the meeting. Its absence is disclosed and does not undercut Nella's firsthand observation, but the file cannot establish the survey findings. The price and slot were reported by telephone, and the £10,000 threshold is asserted rather than independently documented. The ledger gives no exact receipt time for the proposal."
+    },
+    {
+      "source_id": "MP2Z",
+      "finding": "Plausible custody report from Perrin to Jules in response to the telephone request. Sent and received at 14:02 on 17 September, it reports the register as of 14:00; it did not go to the bank or family before Iona's email. OC-517, the identification of the sole original, the committed HOLD, the named operator and the 15:00 lock supply useful evidence. The distinction between report and release is emphatic but warranted.",
+      "limits": "It is not a 14:20 snapshot, a release entry or a trustee opinion. The authenticated-operator and lock controls are stated features of the fictional register, not independently audited facts. On those stated controls, the lock bridges the 20-minute gap for the question of permitted delivery."
+    },
+    {
+      "source_id": "SY7G",
+      "finding": "Plausible 14:12 archive-service request from Iona to Lintmere, copied to Jules, who therefore has the email for the meeting. Iona could quote the blocks from her retained copy; no mandate or deed papers were attached. The archive reference, two names and requested period labels help locate and distinguish the packs. The shared-post explanation is credible, though its express disclaimer about identity and authority is slightly over-signposted.",
+      "limits": "The email requests copies, not payment, an address change or a mandate change. The sibling relationship and historical shared address do not establish disclosure authority. The file contains no bank verification, response or release, and does not independently confirm the reported duplicate indexing."
+    }
+  ],
+  "version_assessment": {
+    "cutoff_finding": "The supplied packet supports Iona in the First Seat and Darren in the Second Seat at 14:20 BST on 17 September 2026. LX6R had been executed but not delivered: MP2Z records HOLD at 14:00 and a lock preventing the only permitted delivery act before 15:00. Neither circulation of the copy nor continued custody of the original is a competing reading of delivery. Even at 15:00, delivery would still require Perrin to commit RELEASED against the sole original. The bank record shown remains the joint Iona–Darren payment mandate; trustee office and bank signatory status are separate questions.",
+    "scope_and_ambiguity": "There is no material competing reading of whether OC-517 effected the handover by the cutoff. The 11:30/11:45 custody wording calls for clarification but does not change that result. The file does not provide an exhaustive 14:20 certification of all possible appointor acts after VJ3K's 09:10 limit, or independent verification of the underlying grant and execution formalities. Those are evidential limits, not positive evidence of a rival appointment or concrete invalidity.",
+    "meeting_questions": [
+      "Do not use the provisional Tamsin slip as a current mandate instruction. For any later change, first obtain evidence of an actual permitted release and separately establish what Lintmere requires to amend its mandate.",
+      "Keep approval of the full roof expenditure separate from joint authorization of a bank payment. No approval, booking or payment instruction is evidenced. Whether to seek the survey or written confirmation of price and availability before deciding is an open meeting question.",
+      "Leave the archived-copy request separate from the mandate review. What the bank needs to locate, verify and disclose the packs remains open; no particular bank procedure can be inferred."
+    ]
+  },
+  "references": [
+    {
+      "reference": "HM Land Registry Practice Guide 8 §2.1.3",
+      "url": "https://www.gov.uk/government/publications/execution-of-deeds/practice-guide-8-execution-of-deeds",
+      "use": "Documentary analogy from conveyancing: distinguish signature from delivery and look for evidence of delivery when express terms postpone it. It does not validate this trust instrument or prescribe its release mechanism."
+    },
+    {
+      "reference": "HMRC, Records to keep for trusts",
+      "url": "https://www.gov.uk/guidance/trust-record-keeping-for-tax-purposes",
+      "use": "Supports retaining deeds of appointment and minutes as records of important trustee decisions. It does not give an office-book entry or a diary note operative effect."
+    },
+    {
+      "reference": "Fictional packet assumptions",
+      "use": "The seats, office and replacement power, office-book entries, escrow terms, custody and transmission arrangements, operator and time-lock controls, Lintmere servicing arrangements and capital approval threshold are packet-specific inventions or assertions. No real institutional practice is inferred for them or for any unprovided bank verification or amendment procedure."
+    }
+  ],
+  "revision_tickets": [
+    {
+      "source_id": "LX6R",
+      "severity": "optional_polish",
+      "concrete_issue": "The present-tense custody recital in the 11:30 extract appears to predate Perrin's recorded receipt.",
+      "smallest_repair": "Distinguish designation of Perrin as custodian from the 11:45 acknowledgment of receipt."
+    },
+    {
+      "source_id": "SY7G",
+      "severity": "optional_polish",
+      "concrete_issue": "The personal recollection and express identity-and-authority disclaimer draw more attention than the archive lookup requires.",
+      "smallest_repair": "Keep the shared-address explanation as lookup context and retain the request for secure verification instructions."
+    },
+    {
+      "source_id": "HC9W",
+      "severity": "blocker_to_dispatch_not_documentary_defect",
+      "concrete_issue": "Dispatching the provisional slip would present Tamsin as second signatory without evidence of delivery or a bank mandate change.",
+      "smallest_repair": "Keep the historical note intact, mark the slip not for dispatch and revisit it only on evidence of release and confirmation of the bank's amendment requirements."
+    }
+  ]
+}

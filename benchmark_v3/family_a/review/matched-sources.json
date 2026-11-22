@@ -1,0 +1,115 @@
+{
+  "freeze_sha256": "1d0e11cec8cb6227eada03543f95c3f73aad8e2093f84d296e4bb76e2e928489",
+  "orders": {
+    "A0": [
+      "QF8M",
+      "VJ3K",
+      "LX6R",
+      "HC9W",
+      "BD4T",
+      "MP2Z",
+      "SY7G"
+    ],
+    "A1": [
+      "SY7G",
+      "MP2Z",
+      "BD4T",
+      "HC9W",
+      "VJ3K",
+      "QF8M",
+      "LX6R"
+    ],
+    "A2": [
+      "QF8M",
+      "VJ3K",
+      "LX6R",
+      "HC9W",
+      "BD4T",
+      "MP2Z",
+      "SY7G"
+    ]
+  },
+  "serialized_sha256": {
+    "A0": "b913d728e62023cf6430f17b9e46a09e2017c98e4aa27c1298002747e25fdeac",
+    "A1": "537ca992e2a24787fd8a151be811af9766bd58635b88244aa481181bf0f7909e",
+    "A2": "1b52ad474b357afcbc593d46489178cd400d68e1b8e077c8d53b2a5f30dd30c1"
+  },
+  "counts": {
+    "A0": {
+      "sources": 7,
+      "body_words": 1540,
+      "utf8_array_bytes": 10637
+    },
+    "A1": {
+      "sources": 7,
+      "body_words": 1540,
+      "utf8_array_bytes": 10637
+    },
+    "A2": {
+      "sources": 7,
+      "body_words": 1547,
+      "utf8_array_bytes": 10684
+    }
+  },
+  "A0_A1": {
+    "changed_source_objects": [],
+    "byte_identical_sources_by_id": [
+      "BD4T",
+      "HC9W",
+      "LX6R",
+      "MP2Z",
+      "QF8M",
+      "SY7G",
+      "VJ3K"
+    ],
+    "position_changes": {
+      "QF8M": [
+        1,
+        6
+      ],
+      "VJ3K": [
+        2,
+        5
+      ],
+      "LX6R": [
+        3,
+        7
+      ],
+      "HC9W": [
+        4,
+        4
+      ],
+      "BD4T": [
+        5,
+        3
+      ],
+      "MP2Z": [
+        6,
+        2
+      ],
+      "SY7G": [
+        7,
+        1
+      ]
+    }
+  },
+  "A0_A2": {
+    "changed_source_ids": [
+      "MP2Z"
+    ],
+    "field": "text / Disposition",
+    "other_fields_equal": true,
+    "unchanged_source_ids": [
+      "QF8M",
+      "VJ3K",
+      "LX6R",
+      "HC9W",
+      "BD4T",
+      "SY7G"
+    ],
+    "edit_at_body_utf8_byte": 623,
+    "source_id": "MP2Z",
+    "before": "RELEASED — 12:20 BST on 17 September 2026",
+    "after": "HOLD — release locked until 15:00 BST on 17 September 2026; no earlier release permitted"
+  }
+}

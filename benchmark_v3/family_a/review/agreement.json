@@ -1,0 +1,164 @@
+[
+  {
+    "condition": "A0",
+    "intersection": [
+      [
+        "Darren Brell",
+        "sibling_of",
+        "Iona Brell"
+      ],
+      [
+        "Iona Brell",
+        "trustee_of",
+        "Wrenhollow Settlement"
+      ],
+      [
+        "Tamsin Kell",
+        "trustee_of",
+        "Wrenhollow Settlement"
+      ]
+    ],
+    "only_p": [],
+    "only_q": [],
+    "proof_alternatives": [
+      {
+        "edge": [
+          "Darren Brell",
+          "sibling_of",
+          "Iona Brell"
+        ],
+        "p": 1,
+        "q": 1,
+        "exact_set_overlap": 0
+      },
+      {
+        "edge": [
+          "Iona Brell",
+          "trustee_of",
+          "Wrenhollow Settlement"
+        ],
+        "p": 2,
+        "q": 2,
+        "exact_set_overlap": 2
+      },
+      {
+        "edge": [
+          "Tamsin Kell",
+          "trustee_of",
+          "Wrenhollow Settlement"
+        ],
+        "p": 1,
+        "q": 1,
+        "exact_set_overlap": 0
+      }
+    ]
+  },
+  {
+    "condition": "A1",
+    "intersection": [
+      [
+        "Darren Brell",
+        "sibling_of",
+        "Iona Brell"
+      ],
+      [
+        "Iona Brell",
+        "trustee_of",
+        "Wrenhollow Settlement"
+      ],
+      [
+        "Tamsin Kell",
+        "trustee_of",
+        "Wrenhollow Settlement"
+      ]
+    ],
+    "only_p": [],
+    "only_q": [],
+    "proof_alternatives": [
+      {
+        "edge": [
+          "Darren Brell",
+          "sibling_of",
+          "Iona Brell"
+        ],
+        "p": 1,
+        "q": 1,
+        "exact_set_overlap": 0
+      },
+      {
+        "edge": [
+          "Iona Brell",
+          "trustee_of",
+          "Wrenhollow Settlement"
+        ],
+        "p": 2,
+        "q": 2,
+        "exact_set_overlap": 1
+      },
+      {
+        "edge": [
+          "Tamsin Kell",
+          "trustee_of",
+          "Wrenhollow Settlement"
+        ],
+        "p": 1,
+        "q": 1,
+        "exact_set_overlap": 0
+      }
+    ]
+  },
+  {
+    "condition": "A2",
+    "intersection": [
+      [
+        "Darren Brell",
+        "sibling_of",
+        "Iona Brell"
+      ],
+      [
+        "Darren Brell",
+        "trustee_of",
+        "Wrenhollow Settlement"
+      ],
+      [
+        "Iona Brell",
+        "trustee_of",
+        "Wrenhollow Settlement"
+      ]
+    ],
+    "only_p": [],
+    "only_q": [],
+    "proof_alternatives": [
+      {
+        "edge": [
+          "Darren Brell",
+          "sibling_of",
+          "Iona Brell"
+        ],
+        "p": 1,
+        "q": 1,
+        "exact_set_overlap": 1
+      },
+      {
+        "edge": [
+          "Darren Brell",
+          "trustee_of",
+          "Wrenhollow Settlement"
+        ],
+        "p": 1,
+        "q": 1,
+        "exact_set_overlap": 0
+      },
+      {
+        "edge": [
+          "Iona Brell",
+          "trustee_of",
+          "Wrenhollow Settlement"
+        ],
+        "p": 1,
+        "q": 1,
+        "exact_set_overlap": 1
+      }
+    ]
+  }
+]

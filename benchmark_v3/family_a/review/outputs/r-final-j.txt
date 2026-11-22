@@ -1,0 +1,85 @@
+{
+  "per_source": {
+    "QF8M": {
+      "purpose_and_possession": "Evin Rooke’s account-opening record tells Lintmere Bank how to handle payments and correspondence. The bank retained the operative record on 12 May 2023; Iona retained a copy and gave Jules a copy on 15 September 2026.",
+      "form_and_useful_detail": "A plausible servicing record: WM-683 gives staff a retrieval key, and separate named correspondence blocks remain useful even though the address is identical. The joint-payment instruction is clear.",
+      "limits_and_cueing": "The final disclaimer about trust title is slightly pointed but clarifies the record’s scope. The signed opening instructions are referenced, not supplied; they are not a missing attachment. This is evidence of the opening arrangement and the last mandate in the packet, not confirmation that the bank’s live record is unchanged."
+    },
+    "VJ3K": {
+      "purpose_and_possession": "Maren issued a standing-records extract to Jules as keeper of the office book and the person who says she holds the replacement power. She certified it at 09:10 BST on 16 September and sent it at 09:25. Jules has the extract, not the book or founding acceptances.",
+      "form_and_useful_detail": "The named seats, written acceptance dates and precise certification limit make this useful independently of the later instrument. The extract’s formal voice is credible, although the distinction between the source of power and entries recording its exercise is unusually explicit.",
+      "limits_and_cueing": "The negative certification ends at 09:10; it does not conflict with later execution. Maren’s statement identifies the settlement as the source of her power, but the grant itself is not supplied for independent verification."
+    },
+    "LX6R": {
+      "purpose_and_possession": "The instrument provides for Darren’s retirement and Tamsin’s appointment to take effect together on delivery, without affecting Iona’s seat. The signatories saw it at execution. Perrin took the sole executed original at 11:45 BST on 16 September; Jules received an executed copy at 12:05.",
+      "form_and_useful_detail": "The operative clauses and signature capacities suit an executed instrument. The detail distinguishing signature, time eligibility, register release and physical custody is dense but mostly functional: each excludes a different mistaken delivery date.",
+      "limits_and_cueing": "The 11:30 extract heading and present-tense statement that Perrin holds the original can read as a custody assertion 15 minutes before intake. That is a dating ambiguity, not evidence of another transfer or delivery. The extract refers to signatures and attestations on file without identifying the file; Jules does not hold the original."
+    },
+    "HC9W": {
+      "purpose_and_possession": "Jules entered this internal preparation note at 15:30 BST on 16 September after requesting the register extract by telephone. He had the three listed papers but not the requested extract. The note stayed on the matter file.",
+      "form_and_useful_detail": "A short diary note with a received list, outstanding item and draft instruction is credible. Pencilling in Tamsin is a provisional working assumption, not a bank instruction or a decision already taken.",
+      "limits_and_cueing": "The later receipt of MP2Z does not make the earlier outstanding entry inconsistent. The note calls for a cut-off extract, but the extract received is only as of 14:00. The covering slip is described, not separately supplied or shown as sent."
+    },
+    "BD4T": {
+      "purpose_and_possession": "Nella sent Jules a capital-repair proposal on 17 September for consideration. He filed the proposal alone. No booking, commitment or payment instruction is recorded.",
+      "form_and_useful_detail": "The observed water ingress, temporary protection, telephone quote, offered 28 September slot, £18,600 total and £4,650 booking payment make this a usable decision paper. Repeating the approval condition is mildly emphatic but makes clear that the approval sought is for the full spend, not only the deposit.",
+      "limits_and_cueing": "The moisture survey was requested but not transmitted to Nella or Jules by the meeting. Nella expressly relies on her own observation instead. The survey, current price and slot availability are ordinary follow-up questions. The £10,000 threshold and joint-approval requirement are stated in the proposal; the packet does not independently establish the rule or specify its decision-makers."
+    },
+    "MP2Z": {
+      "purpose_and_possession": "Perrin responded to Jules’s request with a report from the particular register used by clause 2. Issued and received at 14:02 BST on 17 September, it covers the register through 14:00. Jules had it before the review cut-off; it had not been circulated to the bank or family before Iona’s email.",
+      "form_and_useful_detail": "The original-specific reference, committed operator, disposition timestamp and separate reporting times are useful audit details. The report records Perrin’s RELEASED entry at 12:20 and explains why it could not commit under an active time lock. Continued custody is consistent with delivery under clause 2.",
+      "limits_and_cueing": "The scope and no-opinion language are emphatic but keep the report distinct from the release itself. It does not state the earliest permitted time or separately attest that no independent HOLD restriction applied. Neither omission supplies evidence that a restriction was in force. It is not a register snapshot through 14:20."
+    },
+    "SY7G": {
+      "purpose_and_possession": "Iona sent an archive retrieval request to the bank at 14:12 BST on 17 September and copied Jules. She used her retained copy to quote the two opening correspondence blocks; she attached neither that copy nor any deed papers.",
+      "form_and_useful_detail": "WM-683 and the requested name-and-period labels serve a concrete reconciliation purpose. The shared post explains the reported indexing problem but does not verify identity or authority. Asking the bank for a secure verification route is plausible.",
+      "limits_and_cueing": "The authority disclaimer is a little conspicuous for a routine request, but the distinction matters: this is neither a payment instruction nor a change to the mandate or address. The file does not show bank verification, retrieval or disclosure in response."
+    }
+  },
+  "version_assessment": {
+    "overall": "The file is coherent as a set of meeting papers, not as a completed bank instruction. It keeps the bank’s record, the office book, the sole executed original and the solicitor’s copies or extracts in distinct hands. No meeting decision or submission of a revised mandate is evidenced.",
+    "trustee_position_at_cutoff": "The supported reading is that Iona remained in the First Seat and Tamsin replaced Darren in the Second Seat at 12:20 BST on 17 September. MP2Z identifies Perrin’s committed RELEASED entry against the correct original; under clause 2 that entry, not signing, circulation, the mere expiry of time or the later report, is the act of delivery. The clause makes the handover simultaneous and gives no later register entry or physical transfer a role in completing it.",
+    "material_limits_and_competing_reading": "The requested 14:20 snapshot is missing: MP2Z verifies the recorded release through 14:00, not all register activity through 14:20. That limits the completeness of the cut-off evidence but does not furnish a competing reading that Darren still held office; the packet shows no contrary event, and clause 2 does not make an effective handover reversible by a later custody entry. A concrete conditional issue would arise if an independent HOLD could remain operative despite a committed RELEASED row: clause 2 requires a permitted entry, while MP2Z expressly describes only the time-lock safeguard. The reported disposition supports permitted release on its face, and nothing in the file indicates a surviving HOLD. The underlying appointment grant is likewise a verification question, not evidence of contrary authority.",
+    "bank_and_meeting_position": "The last evidenced bank mandate still names Iona and Darren jointly. The trustee handover does not itself evidence a bank mandate amendment or establish what the bank would accept from either pair now. Checking the live mandate and the bank’s requirements, deciding what to send, and resolving the capital-approval and booking questions are ordinary meeting business. Iona’s archive email resolves none of those questions."
+  },
+  "references": [
+    {
+      "reference": "HM Land Registry, Practice Guide 8, §2.1.3 — https://www.gov.uk/government/publications/execution-of-deeds/practice-guide-8-execution-of-deeds",
+      "use_and_limit": "A conveyancing reference for distinguishing signature from delivery and looking for evidence where delivery is expressly postponed. It does not validate this instrument, the fictional register or the release mechanism."
+    },
+    {
+      "reference": "HMRC, Records to keep for trusts — https://www.gov.uk/guidance/trust-record-keeping-for-tax-purposes",
+      "use_and_limit": "Supports keeping deeds of appointment and minutes as records of important trustee decisions. It does not establish the powers, approval requirements or effects asserted in this packet."
+    },
+    {
+      "reference": "Fictional packet assumptions",
+      "use_and_limit": "The settlement seats, Maren’s offices and power, the office book, the instrument’s escrow terms, Perrin’s operator controls, the RELEASED entry, the possession and copy arrangements, the bank’s servicing and archive arrangements, and the repair approval threshold are invented particulars, not practices established by the references. Any further bank verification or mandate-change process remains unspecified."
+    }
+  ],
+  "revision_tickets": [
+    {
+      "source_id": "MP2Z",
+      "severity": "blocker for claiming complete register coverage through the cut-off",
+      "concrete_issue": "The requested cut-off is 14:20, but the supplied extract ends at 14:00; issue at 14:02 does not extend its coverage.",
+      "smallest_repair": "If full coverage is needed, obtain a short custodian supplement covering the register through 14:20. Otherwise retain the express 14:00 limit. This gap does not block the supported reading of the 12:20 release."
+    },
+    {
+      "source_id": "MP2Z",
+      "severity": "optional clarification",
+      "concrete_issue": "The controls explanation establishes time-lock enforcement but does not say whether a separate HOLD could coexist with the committed release.",
+      "smallest_repair": "If affirmative proof of permission is needed, have Perrin confirm whether any HOLD applied at commit or whether the register prevents a commit under HOLD."
+    },
+    {
+      "source_id": "LX6R",
+      "severity": "optional polish",
+      "concrete_issue": "The 11:30 heading can be read as dating the custody recital, although Perrin’s intake was at 11:45; 'on file' also leaves the signature location imprecise.",
+      "smallest_repair": "Distinguish the execution time from the custody intake and identify where the original signatures and attestations are held."
+    },
+    {
+      "source_id": "SY7G",
+      "severity": "optional polish",
+      "concrete_issue": "The identity-and-authority disclaimer is more explicit than the routine retrieval request needs.",
+      "smallest_repair": "Keep the indexing explanation and secure-verification request; omit the extra evidentiary disclaimer."
+    }
+  ]
+}
