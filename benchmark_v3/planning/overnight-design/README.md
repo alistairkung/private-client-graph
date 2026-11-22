@@ -31,3 +31,17 @@ integrity problem prevents new submissions. The owner-only review package
 contains the design content, original responses, validations and cost
 forecasts. Git contains the proposed planning record and candidate
 validation only.
+
+## Offline inventory review
+
+Use `inventory_recovery.preview_inventory_recovery(directory, scope)` to
+inspect a failed candidate. The scope pins the family, hypothesis revision,
+original output digest and receipt digest. The directory contains the
+original packet, response and validation finding.
+
+The preview reproduces the original failure, requires one unique order by
+creation date and received dependencies, and moves the verbatim JSON entries
+in memory. It reruns the existing candidate validator and reports any
+remaining failure. The receipt and all existing artifacts stay in custody.
+Any scientific limitation outside the array order still requires human
+review. The preview has no commit or dispatch operation.
