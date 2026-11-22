@@ -323,7 +323,7 @@ def test_stock_run_pauses_for_all_designs_and_reuses_them_after_review(design_ga
     coordinator.run_batch(ledger, batch)
     assert len(calls) == 3
     runner = commission.session_runner(ledger, "G", 1)
-    with pytest.raises(Blocked, match="accept every committed design"):
+    with pytest.raises(Blocked, match="accept this exact design"):
         runner.run("author", "author-src1", "author", {}, "Fixture author.", AuthoredSource)
     assert len(ledger.attempts("G")) == 1
 
@@ -345,6 +345,43 @@ def test_stock_run_pauses_for_all_designs_and_reuses_them_after_review(design_ga
     coordinator.run_batch(ledger, batch)
     assert sum(job == "design" for _, _, job, _ in calls) == 3
     assert _status(ledger, batch) == dict.fromkeys("GHI", "admission_ready")
+
+
+def test_mixed_design_review_releases_only_accepted_families(design_gated, transport):
+    ledger, commission = design_gated
+    batch = commission.manifest.batch_id
+    calls, _, _ = transport
+    coordinator.run_batch(ledger, batch)
+    approval = _design_approval(ledger, commission)
+    payload = approval.model_dump(mode="json")
+    payload["schema_version"] = 2
+    with pytest.raises(ValueError, match="returned design requires"):
+        DesignReview.model_validate(payload | {
+            "designs": [*payload["designs"][:2], payload["designs"][2] | {"disposition": "return"}],
+        })
+    payload["designs"][2].update(disposition="return", reason="Clarify the proof chain.")
+    with pytest.raises(ValueError, match="every disposition to be explicit"):
+        DesignReview.model_validate(payload | {
+            "designs": [{k: v for k, v in payload["designs"][0].items() if k != "disposition"},
+                        *payload["designs"][1:]],
+        })
+    review = DesignReview.model_validate(payload)
+    coordinator.record_design_review(ledger, review)
+    coordinator.record_design_review(ledger, review)
+    with pytest.raises(ValueError, match="immutable"):
+        coordinator.record_design_review(ledger, approval)
+    for revision in (1, 2):
+        runner = commission.session_runner(ledger, "I", revision)
+        with pytest.raises(Blocked, match="accept this exact design"):
+            runner.run("author", "author-src1", "author", {}, "Fixture author.", AuthoredSource)
+    coordinator.run_batch(ledger, batch)
+    assert _status(ledger, batch) == {
+        "G": "admission_ready", "H": "admission_ready", "I": "pending_design_review",
+    }
+    assert [(family, job) for family, _, job, _ in calls if family == "I"] == [("I", "design")]
+    assert len(ledger.attempts("I")) == 1
+    [returned] = [row for row in ledger.events(batch, "I") if row["kind"] == "design_return"]
+    assert returned["details"] == payload["designs"][2]
 
 
 def test_design_review_rechecks_committed_bytes_before_any_author(design_gated, transport):

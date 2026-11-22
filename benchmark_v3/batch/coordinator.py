@@ -73,7 +73,7 @@ def run_batch(ledger: Ledger, batch_id: str) -> None:
         with ThreadPoolExecutor(max_workers=manifest.max_parallel_families) as executor:
             list(executor.map(
                 lambda family: _work_family(ledger, commission, slots[family.family_id], design_only=design_only),
-                manifest.families,
+                (family for family in manifest.families if review is None or review.accepts(family.family_id)),
             ))
 
 
@@ -94,7 +94,19 @@ def record_design_review(ledger: Ledger, review: DesignReview) -> None:
         ledger.require_running()
         _verify_resume(ledger, commission)
         design_review.verify_review(ledger, commission.manifest, commission.decision.owner, review)
-        ledger.event(review.batch_id, None, 0, "design_review", "owner", None, None, review.model_dump(mode="json"))
+        existing = design_review.recorded_review(ledger, commission.manifest, commission.decision.owner)
+        if existing is not None:
+            if existing != review:
+                raise ValueError("The recorded owner design review is immutable.")
+            return
+        with ledger.transaction() as connection:
+            ledger._append(connection, review.batch_id, None, 0, "design_review", "owner", None, None,
+                           review.model_dump(mode="json"))
+            for row in review.designs:
+                if row.disposition == "return":
+                    ledger._append(connection, review.batch_id, row.family_id, 1, "design_return", "owner",
+                                   "author", "pending_design_review", row.model_dump(mode="json"))
+
 
 
 def recover_source_cutoffs(ledger: Ledger, decision: SourceCutoffRecovery) -> None:
@@ -168,7 +180,7 @@ def family_status(ledger: Ledger, batch_id: str, family: str) -> tuple[int, str,
     for record in records:
         if record["revision"] != revision:
             continue
-        if record["kind"] in {"transition", "disposition", "human_decision", "operator_close"}:
+        if record["kind"] in {"transition", "disposition", "human_decision", "operator_close", "design_return"}:
             state = record["next"] or state
         if record["kind"] in {"exception", "task_halt"}:
             blocking = record["details"]

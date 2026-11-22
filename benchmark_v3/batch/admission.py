@@ -37,7 +37,10 @@ def _batch_state(families: list[dict[str, Any]]) -> str:
         return "closed"
     if any(row["exception"] for row in families if row["state"] not in {"returned", "quarantined"}):
         return "blocked"
-    if states <= {"admission_ready", "admitted", "returned", "quarantined"}:
+    ready_states = {"admission_ready", "admitted", "returned", "quarantined"}
+    if "pending_design_review" in states and states <= ready_states | {"pending_design_review"}:
+        return "pending_design_review"
+    if states <= ready_states:
         return "awaiting_admission"
     return "running"
 

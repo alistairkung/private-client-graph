@@ -35,11 +35,10 @@ class SessionRunner:
         self.ledger.require_running()
         allocation = next(row for row in self.manifest.families if row.family_id == self.family)
         authorisation.verify_hypothesis(self.family, allocation.hypothesis, self.owner)
-        if (
-            role != "designer" and self.manifest.requires_design_review
-            and design_review.recorded_review(self.ledger, self.manifest, self.owner) is None
-        ):
-            raise ValueError("The commissioning owner must accept every committed design before authoring.")
+        if role != "designer" and self.manifest.requires_design_review:
+            review = design_review.recorded_review(self.ledger, self.manifest, self.owner)
+            if review is None or not review.accepts(self.family):
+                raise ValueError("The commissioning owner must accept this exact design before authoring.")
 
     def run(
         self, stage: Stage, job: str, role: Role, inputs: dict[str, str], instructions: str,

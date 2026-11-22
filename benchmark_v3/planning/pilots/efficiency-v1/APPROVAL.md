@@ -34,10 +34,11 @@ Medium/High allocations, and zero paid PCG extraction calls.
 3. The owner reviews the three private design files at
    `$CUSTODY/batches/$batch/<family>/1/design.json`, including retainer,
    meeting purpose, participant knowledge, origins and custody. Record
-   their explicit acceptance of all three digests in a private
+   their disposition for each of the three digests in a private
    `$DESIGN_REVIEW` file. Use `schema design-review` for the fields and
-   copy the manifest and design digests from `designs`. After acceptance
-   is recorded, resume and package for consolidated human admission.
+   copy the manifest and design digests from `designs`. Give a reason for
+   each return. Resume only the accepted families and package their
+   dossiers for human admission.
 
    ```sh
    uv run --locked python -m benchmark_v3.batch review-designs "$CUSTODY" "$DESIGN_REVIEW"

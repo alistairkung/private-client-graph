@@ -76,8 +76,10 @@ A schema 2 batch manifest requires a batch-wide human design review.
 The initial `run` advances each eligible family through design only.
 `designs CUSTODY BATCH` prints the exact manifest and design digests
 when every design has committed. The commissioning owner reviews the
-private designs and explicitly accepts the complete digest set. Record
-the dated decision with `review-designs CUSTODY DECISION`, using
+private designs and records a disposition on the complete digest set.
+Design review schema 2 requires each entry to specify `accept` or `return`, with a reason required for
+a return. A returned family stays at `pending_design_review` and cannot
+reserve downstream packets. Record the dated decision with `review-designs CUSTODY DECISION`, using
 `schema design-review` for the contract. Then resume with `run`. The
 coordinator rechecks the design files and the session runner verifies
 the decision before downstream reservations and submissions. A schema 1

@@ -34,7 +34,7 @@ def verify_review(ledger: Ledger, manifest: BatchManifest, owner: str, review: D
         raise ValueError("Design review requires the commissioning owner and exact manifest.")
     expected = {design.family_id: design.design_sha256 for design in committed_designs(ledger, manifest)}
     if {design.family_id: design.design_sha256 for design in review.designs} != expected:
-        raise ValueError("Design review must accept every exact committed design.")
+        raise ValueError("Design review must cover every exact committed design.")
 
 
 def _committed_design(ledger: Ledger, batch_id: str, family: str) -> DesignCommitment:

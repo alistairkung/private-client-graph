@@ -15,7 +15,7 @@ from private_client_graph.models.evaluation_result import SemanticEdge
 
 Stage = Literal[
     "design", "author", "realism", "freeze", "blind", "adjudicate", "audit",
-    "masks", "technical", "admission_ready", "admitted", "returned", "quarantined",
+    "masks", "technical", "admission_ready", "admitted", "returned", "quarantined", "pending_design_review",
 ]
 Code = Literal[
     "budget", "isolation", "input_integrity", "uncertain_dispatch", "failed_dispatch",
@@ -97,20 +97,38 @@ class DesignCommitment(Contract):
     design_sha256: Digest
 
 
+class DesignDisposition(DesignCommitment):
+    disposition: Literal["accept", "return"] = "accept"
+    reason: Text | None = None
+
+    @model_validator(mode="after")
+    def verify_return_reason(self) -> Self:
+        if self.disposition == "return" and self.reason is None:
+            raise ValueError("A returned design requires the owner's reason.")
+        return self
+
+
 class DesignReview(Contract):
-    schema_version: Literal[1]
+    schema_version: Literal[1, 2]
     batch_id: Slug
     manifest_sha256: Digest
     owner: Text
     decided_on: date
     decision_reference: Text
-    designs: Annotated[list[DesignCommitment], Field(min_length=1, max_length=20)]
+    designs: Annotated[list[DesignDisposition], Field(min_length=1, max_length=20)]
 
     @model_validator(mode="after")
     def verify_unique_families(self) -> Self:
         if len({design.family_id for design in self.designs}) != len(self.designs):
-            raise ValueError("Supply one design approval per family.")
+            raise ValueError("Supply one design disposition per family.")
+        if self.schema_version == 2 and any("disposition" not in design.model_fields_set for design in self.designs):
+            raise ValueError("Design review schema 2 requires every disposition to be explicit.")
+        if self.schema_version == 1 and any(design.disposition != "accept" for design in self.designs):
+            raise ValueError("Returned designs require design review schema 2.")
         return self
+
+    def accepts(self, family: str) -> bool:
+        return any(row.family_id == family and row.disposition == "accept" for row in self.designs)
 
 
 class SourceCutoffRecovery(Contract):
