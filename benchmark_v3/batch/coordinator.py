@@ -7,8 +7,10 @@ from pathlib import Path
 from typing import Any
 
 from benchmark_v3 import commissioning
-from benchmark_v3.batch import artifacts, authorisation, design_review
-from benchmark_v3.batch.contracts import BatchDecision, BatchManifest, Code, DesignReview, ExceptionRecord
+from benchmark_v3.batch import artifacts, authorisation, design_recovery, design_review
+from benchmark_v3.batch.contracts import (
+    BatchDecision, BatchManifest, Code, DesignReview, ExceptionRecord, SourceCutoffRecovery,
+)
 from benchmark_v3.batch.custody import namespace_directory
 from benchmark_v3.batch.ledger import BudgetExhausted, Ledger, TaskHalted
 from benchmark_v3.batch.sessions import Blocked, SessionRunner
@@ -93,6 +95,53 @@ def record_design_review(ledger: Ledger, review: DesignReview) -> None:
         _verify_resume(ledger, commission)
         design_review.verify_review(ledger, commission.manifest, commission.decision.owner, review)
         ledger.event(review.batch_id, None, 0, "design_review", "owner", None, None, review.model_dump(mode="json"))
+
+
+def recover_source_cutoffs(ledger: Ledger, decision: SourceCutoffRecovery) -> None:
+    with ledger.coordinator_lock():
+        commission = load_commission(ledger, decision.batch_id)
+        manifest = commission.manifest
+        ledger.require_running()
+        _verify_resume(ledger, commission)
+        if decision.owner != commission.decision.owner or decision.manifest_sha256 != authorisation.commitment(manifest):
+            raise ValueError("Source cut-off recovery requires the commissioning owner and exact manifest.")
+        if not manifest.requires_design_review or design_review.recorded_review(ledger, manifest, decision.owner):
+            raise ValueError("Recover Source cut-offs only before human design review.")
+        workflows = _plan_cutoff_recoveries(ledger, commission, decision)
+        with ledger.transaction() as connection:
+            for workflow, record in workflows:
+                ledger._append(
+                    connection, decision.batch_id, workflow.slot.family_id, 1, "reconcile",
+                    design_recovery.CUTOFF_RECOVERY, "design", "design", record,
+                )
+        for workflow, _ in workflows:
+            workflow.design(recovery_only=True)
+
+
+def _plan_cutoff_recoveries(
+    ledger: Ledger, commission: Commission, decision: SourceCutoffRecovery,
+) -> list[tuple[FamilyWorkflow, dict[str, Any]]]:
+    slots = {slot.family_id: slot for slot in commission.portfolio.slots}
+    commissioned = {family.family_id for family in commission.manifest.families}
+    if not decision.responses.keys() <= commissioned:
+        raise ValueError("Recover only families in the commissioned batch.")
+    workflows = []
+    for family, response in decision.responses.items():
+        revision, state, blocking = family_status(ledger, decision.batch_id, family)
+        runner = commission.session_runner(ledger, family, revision)
+        existing = design_recovery.recorded_cutoff_recovery(runner)
+        if existing is None:
+            eligible = state == "design" and blocking is not None and blocking["code"] == "input_integrity"
+        else:
+            eligible = state in {"design", "author"} and blocking is None
+        if revision != 1 or not eligible:
+            raise ValueError(f"Family {family} does not have a recoverable initial design.")
+        slot = slots[family]
+        authorisation.verify_hypothesis(family, slot.hypothesis, decision.owner)
+        record, _, _ = design_recovery.derive_cutoff_recovery(runner, slot, response)
+        record["decision"] = decision.model_dump(mode="json")
+        workflows.append((FamilyWorkflow(runner, slot, commission.portfolio.admission_criteria), record))
+    return workflows
 
 
 def _verify_resume(ledger: Ledger, commission: Commission) -> None:

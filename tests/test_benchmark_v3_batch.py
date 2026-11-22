@@ -4,7 +4,7 @@ import json
 import threading
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import nullcontext
-from datetime import date
+from datetime import date, timedelta
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from uuid import uuid4
@@ -14,7 +14,8 @@ import pytest
 from benchmark_v3 import commissioning, packet
 from benchmark_v3.batch import admission, authorisation, coordinator, custody, science
 from benchmark_v3.batch.contracts import (
-    AdmissionDecisions, AuthoredSource, BatchDecision, BatchManifest, DesignOutput, DesignReview, PilotDecision,
+    AdmissionDecisions, AuthoredSource, BatchDecision, BatchManifest, DesignOutput, DesignReview,
+    PilotDecision, SourceCutoffRecovery,
 )
 from benchmark_v3.batch.ledger import BudgetExhausted, TaskHalted
 from benchmark_v3.batch.sessions import Blocked
@@ -374,6 +375,76 @@ def test_design_only_resume_reopens_completed_receipts_without_authoring(design_
     coordinator.run_batch(ledger, batch)
     assert len(_design_approval(ledger, commission).designs) == 3
     assert len(calls) == 3 and all(job == "design" for _, _, job, _ in calls)
+
+
+def test_source_cutoff_recovery_preserves_packets_and_pauses_for_review(design_gated, transport, monkeypatch):
+    ledger, commission = design_gated
+    batch = commission.manifest.batch_id
+    calls, _, _ = transport
+    mock_turn = packet._run_turn
+
+    def design_with_late_sources(codex, thread, message, effort):
+        result = mock_turn(codex, thread, message, effort)
+        brief = json.loads(message)["inputs"].get("capability_brief")
+        if brief and json.loads(brief)["family_id"] in "HI":
+            design = json.loads(result["text"])
+            as_of = (TODAY - timedelta(days=1)).isoformat()
+            design.update(
+                cutoff=as_of, neutral_brief=f"Review what the file establishes as of {as_of}.",
+                scaling_snapshots=[1, len(design["inventory"])],
+            )
+            result["text"] = json.dumps(design)
+        return result
+
+    monkeypatch.setattr(packet, "_run_turn", design_with_late_sources)
+    coordinator.run_batch(ledger, batch)
+    original_design = commission.session_runner(ledger, "G", 1).directory / "design.json"
+    original_bytes = original_design.read_bytes()
+    raw_packets = {
+        path: path.read_bytes()
+        for family in "GHI"
+        for path in (commission.session_runner(ledger, family, 1).directory / "packets" / "design").iterdir()
+    }
+    responses = {
+        family: commissioning.digest(raw_packets[
+            commission.session_runner(ledger, family, 1).directory / "packets" / "design" / "output.txt"
+        ])
+        for family in "HI"
+    }
+    decision = SourceCutoffRecovery(
+        schema_version=1, batch_id=batch, manifest_sha256=authorisation.commitment(commission.manifest),
+        owner=OWNER, decided_on=TODAY, decision_reference="Fixture owner authorized cut-off recovery only.",
+        responses=responses,
+    )
+    with pytest.raises(ValueError, match="exact completed designer response"):
+        coordinator.recover_source_cutoffs(ledger, decision.model_copy(update={
+            "responses": responses | {"I": "0" * 64},
+        }))
+    assert all(coordinator.family_status(ledger, batch, family)[2] for family in "HI")
+
+    def no_dispatch(*_args, **_kwargs):
+        pytest.fail("Offline recovery cannot dispatch a session.")
+
+    with monkeypatch.context() as recovery:
+        recovery.setattr(packet, "run_packet", no_dispatch)
+        coordinator.recover_source_cutoffs(ledger, decision)
+        coordinator.recover_source_cutoffs(ledger, decision)
+        coordinator.run_batch(ledger, batch)
+    assert len(calls) == 3
+    assert all(len(ledger.attempts(family)) == 1 for family in "GHI")
+    assert original_design.read_bytes() == original_bytes
+    assert all(path.read_bytes() == original for path, original in raw_packets.items())
+    for family in "HI":
+        directory = commission.session_runner(ledger, family, 1).directory
+        original = DesignOutput.model_validate_json(raw_packets[directory / "packets" / "design" / "output.txt"])
+        assert json.loads((directory / "design.json").read_bytes()) == (
+            original.model_dump(mode="json") | {"cutoff": TODAY.isoformat(), "scaling_snapshots": [1]}
+        )
+    assert not ledger.events(batch)
+    coordinator.record_design_review(ledger, _design_approval(ledger, commission))
+    coordinator.run_batch(ledger, batch)
+    assert sum(job == "design" for _, _, job, _ in calls) == 3
+    assert _status(ledger, batch) == dict.fromkeys("GHI", "admission_ready")
 
 
 def test_dispatch_receipt_survives_interruption_without_repeat(approved, transport):

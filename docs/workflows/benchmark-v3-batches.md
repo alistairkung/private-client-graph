@@ -83,6 +83,20 @@ coordinator rechecks the design files and the session runner verifies
 the decision before downstream reservations and submissions. A schema 1
 manifest retains its original execution behavior.
 
+If an initial design is blocked because its file cut-off predates a
+required Source, the owner can authorize recovery against the exact
+manifest and completed designer response hashes. First confirm that
+the earlier relationship as-of date or delivery deadline is already
+stated independently in the neutral brief and participant instructions.
+`recover-source-cutoffs CUSTODY DECISION` sets the file cut-off to the
+latest listed Source date and drops a redundant terminal full-file
+snapshot if present. The full-file review and any proper prefixes are
+preserved. It revalidates the full design and commits the result
+without model dispatch. Use `schema source-cutoff-recovery` for the
+decision contract. The ledger retains the original packets, charges and
+exception alongside the recovery commitment. The recovered design still
+requires the same human review before authoring.
+
 The runner projects each role's packet from the approved plan and earlier
 artifacts. An author receives only the participant brief and received
 correspondence. Each blind reader receives one condition in isolation.

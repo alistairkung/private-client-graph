@@ -9,7 +9,7 @@ from typing import Any, TypeVar
 from pydantic import BaseModel
 
 from benchmark_v3 import commissioning, replay
-from benchmark_v3.batch import artifacts, science
+from benchmark_v3.batch import artifacts, design_recovery, science
 from benchmark_v3.batch.contracts import (
     Adjudication, AuditReview, AuthoredSource, Code, DesignOutput, Reading, RealismReview,
     Role, Stage,
@@ -81,9 +81,15 @@ class FamilyWorkflow:
             kind, name, previous, next_stage, details,
         )
 
-    def design(self) -> DesignOutput:
+    def design(self, *, recovery_only: bool = False) -> DesignOutput:
+        recovery = design_recovery.recorded_cutoff_recovery(self.runner)
         ref = self.slot.hypothesis
-        if self.runner.revision == 1:
+        if recovery:
+            design, receipt = design_recovery.reopen_cutoff_recovery(self.runner, self.slot, recovery)
+            self.sessions.append(receipt)
+        elif recovery_only:
+            raise ValueError("No owner-authorized Source cut-off recovery was recorded.")
+        elif self.runner.revision == 1:
             design = self.job(
                 "design", "designer", {
                     "hypothesis_revision": f"{ref.hypothesis_id}@{ref.revision}",

@@ -113,6 +113,16 @@ class DesignReview(Contract):
         return self
 
 
+class SourceCutoffRecovery(Contract):
+    schema_version: Literal[1]
+    batch_id: Slug
+    manifest_sha256: Digest
+    owner: Text
+    decided_on: date
+    decision_reference: Text
+    responses: Annotated[dict[FamilyId, Digest], Field(min_length=1, max_length=20)]
+
+
 class PilotDecision(Contract):
     schema_version: Literal[1]
     pilot_batch_id: Slug
