@@ -11,6 +11,7 @@ os.environ.update({
     "PCG_PROPOSAL_ANALYSIS_LIMIT": "100",
     "PCG_PROPOSAL_ANALYSIS_WINDOW_SECONDS": "86400",
     "DEEPSEEK_API_KEY": "test-only",
+    "PCG_RESEARCH_LANGFUSE_ENABLED": "0",
 })
 
 import pytest

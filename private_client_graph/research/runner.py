@@ -13,6 +13,7 @@ from private_client_graph.models.sourced_extraction import SourcedRelationshipCa
 from private_client_graph.models.canonical_state import CanonicalState
 from private_client_graph.pipeline import Pipeline, PipelineConfig, PipelineInput, PipelineExecutionError
 from private_client_graph.resolution import EndpointEdits, ResolutionRequest, ResolutionProvider
+from . import tracing as trace
 from .artifacts import Bundle, BudgetExceeded, code_snapshot, dependency_versions, utc_now, write_json_once
 from .inputs import ResearchInput
 from .plan import FiniteExperimentPlan
@@ -27,7 +28,8 @@ Provider = Callable[[ModelRequest], ModelResponse]
 
 def execute(bundle: Bundle, *, provider: Provider, live: bool = False,
             max_new_attempts: int | None = None,
-            should_stop: Callable[[], bool] = lambda: False) -> dict[str, Any]:
+            should_stop: Callable[[], bool] = lambda: False,
+            tracing: trace.ResearchTracing | None = None) -> dict[str, Any]:
     """Resume recorded attempts without reissuing them, including uncertain calls."""
     validate_execution(bundle, live)
     initial_count = bundle.attempt_count
@@ -37,9 +39,9 @@ def execute(bundle: Bundle, *, provider: Provider, live: bool = False,
         try:
             for sample in _ordered_inputs(bundle):
                 _checkpoint(should_stop)
-                _run_pair(bundle, sample, provider, initial_count, max_new_attempts, should_stop)
-            for sample in _fresh_inputs(bundle, provider, initial_count, max_new_attempts, should_stop):
-                _run_pair(bundle, sample, provider, initial_count, max_new_attempts, should_stop)
+                _run_pair(bundle, sample, provider, initial_count, max_new_attempts, should_stop, tracing)
+            for sample in _fresh_inputs(bundle, provider, initial_count, max_new_attempts, should_stop, tracing):
+                _run_pair(bundle, sample, provider, initial_count, max_new_attempts, should_stop, tracing)
         except BudgetExceeded as error:
             stop_reason = str(error)
         session = {'finished_at': utc_now(), 'stop_reason': stop_reason,
@@ -90,16 +92,19 @@ def _observe(bundle: Bundle, attempt_id: str, request: ModelRequest,
         recovered = bundle.attempt(attempt_id)
         assert recovered is not None
         return recovered
-    started = time.perf_counter()
-    try:
-        response = provider(request)
-    except Exception as error:
-        provider_seconds = time.perf_counter() - started
-        # Provider exception strings may contain request headers or credentials.
-        observation: dict[str, Any] = {'status': 'provider_error', 'error_type': type(error).__name__}
-    else:
-        provider_seconds = time.perf_counter() - started
-        observation = {'status': 'completed', 'response': response.model_dump(mode='json')}
+    with trace.generation(request, attempt_id) as generation:
+        started = time.perf_counter()
+        try:
+            response = provider(request)
+        except Exception as error:
+            provider_seconds = time.perf_counter() - started
+            # Provider exception strings may contain request headers or credentials.
+            observation: dict[str, Any] = {'status': 'provider_error', 'error_type': type(error).__name__}
+            trace.generation_result(generation, None, provider_seconds, type(error).__name__)
+        else:
+            provider_seconds = time.perf_counter() - started
+            observation = {'status': 'completed', 'response': response.model_dump(mode='json')}
+            trace.generation_result(generation, response, provider_seconds, None)
     observation['provider_seconds'] = provider_seconds
     bundle.complete(attempt_id, observation)
     return {**observation, 'attempt_id': attempt_id}
@@ -107,26 +112,30 @@ def _observe(bundle: Bundle, attempt_id: str, request: ModelRequest,
 
 def _run_pair(bundle: Bundle, sample: ResearchInput, provider: Provider,
               initial_count: int, limit: int | None,
-              should_stop: Callable[[], bool]) -> None:
+              should_stop: Callable[[], bool], tracing: trace.ResearchTracing | None) -> None:
     assert sample.extraction is not None
     if not isinstance(bundle.plan, RunPlan) or bundle.plan.resolver == 'none':
-        _save_baseline_if_needed(bundle, sample)
+        _save_baseline_if_needed(bundle, sample, tracing)
     repetitions = bundle.plan.resolution_repetitions
     for repetition in range(1, repetitions + 1):
         _checkpoint(should_stop)
         _run_resolution_repetition(
-            bundle, sample, repetition, provider, initial_count, limit, should_stop
+            bundle, sample, repetition, provider, initial_count, limit, should_stop, tracing
         )
 
 
-def _save_baseline_if_needed(bundle: Bundle, sample: ResearchInput) -> None:
+def _save_baseline_if_needed(bundle: Bundle, sample: ResearchInput,
+                             tracing: trace.ResearchTracing | None) -> None:
     baseline_id = f'{sample.sample_id}-noop'
     if bundle.has_result(baseline_id):
         return
 
     assert sample.extraction is not None
-    baseline, _ = _pipeline_result(sample, PipelineConfig(), mode='replay')
-    _save_baseline(bundle, sample, baseline)
+    with trace.observation(bundle, tracing, baseline_id,
+                           sample_id=sample.sample_id, template_id=sample.sample_id):
+        baseline, _ = _pipeline_result(sample, PipelineConfig(), mode='replay')
+        _save_baseline(bundle, sample, baseline)
+        _trace_result(baseline)
 
 
 def _save_baseline(bundle: Bundle, sample: ResearchInput, baseline: ResearchResult) -> None:
@@ -149,6 +158,7 @@ def _run_resolution_repetition(
     initial_count: int,
     limit: int | None,
     should_stop: Callable[[], bool],
+    tracing: trace.ResearchTracing | None,
 ) -> None:
     attempt_id = f'{sample.sample_id}-resolve-{repetition}'
     if bundle.has_result(attempt_id):
@@ -161,13 +171,23 @@ def _run_resolution_repetition(
         nonlocal observation, observation_seconds
         operational_request = ModelRequest(stage='resolution', source=request.source,
                                            extraction=request.extraction, settings=bundle.plan.settings)
-        started = time.perf_counter()
-        observation = _observe(bundle, attempt_id, operational_request, provider, initial_count, limit, should_stop)
-        observation_seconds = time.perf_counter() - started
-        return EndpointEdits.model_validate(_observed_payload(observation))
+        with trace.span('Resolution'):
+            started = time.perf_counter()
+            observation = _observe(bundle, attempt_id, operational_request, provider, initial_count, limit, should_stop)
+            observation_seconds = time.perf_counter() - started
+            return EndpointEdits.model_validate(_observed_payload(observation))
 
-    result, _ = _pipeline_result(sample, PipelineConfig(resolver='generative'), mode='replay',
-                                 resolution_provider=resolve)
+    template_id = sample.sample_id.split('_fresh_')[0] if sample.cohort == 'fresh' else sample.sample_id
+    with trace.observation(bundle, tracing, attempt_id, sample_id=sample.sample_id, template_id=template_id):
+        result, _ = _pipeline_result(sample, PipelineConfig(resolver='generative'), mode='replay',
+                                     resolution_provider=resolve)
+        _save_resolution_result(bundle, repetition, attempt_id, result, observation, observation_seconds)
+        _trace_result(result)
+
+
+def _save_resolution_result(bundle: Bundle, repetition: int, attempt_id: str,
+                            result: ResearchResult, observation: dict[str, Any],
+                            observation_seconds: float) -> None:
     result.configuration = 'generative_full_source'
     result.repetition = repetition
     result.attempt_id = attempt_id
@@ -231,7 +251,8 @@ def _pipeline_result(
         result.resolution_seconds = time.perf_counter() - started
         graph_started = time.perf_counter()
         try:
-            return build_graph(candidates, document=document, source_text=source_text)
+            with trace.span('Deterministic Graph Construction'):
+                return build_graph(candidates, document=document, source_text=source_text)
         finally:
             result.graph_seconds = time.perf_counter() - graph_started
             result.downstream_seconds = result.graph_seconds
@@ -297,9 +318,8 @@ def _evaluate(result: ResearchResult, sample: ResearchInput) -> None:
     assert result.graph is not None and result.graph_seconds is not None
     started = time.perf_counter()
     try:
-        result.evaluation = evaluate_graph(result.graph, sample.truth)
-        if result.state is not None and sample.source_evidence is not None:
-            result.source_attribution = diagnose_source_attribution(result.state, sample.truth, sample.source_evidence)
+        with trace.span('Evaluation', as_type='evaluator'):
+            _evaluate_graph_and_sources(result, sample)
     except ValueError as error:
         result.evaluation_seconds = time.perf_counter() - started
         result.status = 'evaluation_error'
@@ -310,27 +330,62 @@ def _evaluate(result: ResearchResult, sample: ResearchInput) -> None:
     result.downstream_seconds = result.graph_seconds + result.evaluation_seconds
 
 
+def _evaluate_graph_and_sources(result: ResearchResult, sample: ResearchInput) -> None:
+    assert result.graph is not None
+    with trace.span('Graph correctness and approved provenance', as_type='evaluator'):
+        evaluation = evaluate_graph(result.graph, sample.truth)
+        result.evaluation = evaluation
+        trace.outcome(tp=evaluation.tp, fp=evaluation.fp, fn=evaluation.fn,
+                      provenance_passed=evaluation.provenance_passed,
+                      provenance_failed=evaluation.provenance_failed)
+    if result.state is not None and sample.source_evidence is not None:
+        with trace.span('Source attribution', as_type='evaluator'):
+            attribution = diagnose_source_attribution(result.state, sample.truth, sample.source_evidence)
+            result.source_attribution = attribution
+            trace.outcome(assessed=attribution.assessed, passed=attribution.passed, failed=attribution.failed)
+
+
+def _trace_result(result: ResearchResult) -> None:
+    trace.outcome(status=result.status, stage=result.stage)
+    if result.error_type is not None:
+        trace.mark_error(result.error_type)
+
+
 def _fresh_inputs(bundle: Bundle, provider: Provider, initial_count: int,
-                  limit: int | None, should_stop: Callable[[], bool]) -> Iterator[ResearchInput]:
+                  limit: int | None, should_stop: Callable[[], bool],
+                  tracing: trace.ResearchTracing | None) -> Iterator[ResearchInput]:
     if not bundle.plan.fresh_extractions:
         return
+    include_baseline = not isinstance(bundle.plan, RunPlan) or bundle.plan.resolver == 'none'
     for template, sample_id in _fresh_templates(bundle):
         _checkpoint(should_stop)
         sample = _fresh_sample(template, sample_id)
+        attempt_id = f'{sample_id}-extraction'
+        baseline_id = f'{sample_id}-noop'
+        shared_tracing = tracing if not include_baseline and (
+            tracing is not None and bundle.attempt(attempt_id) is None) else None
+
+        def payload(request: ModelRequest) -> object:
+            with trace.observation(bundle, shared_tracing, attempt_id, sample_id=sample_id,
+                                   template_id=template.sample_id, shared_extraction=True):
+                with trace.span('Semantic Extraction'):
+                    observation = _observe(bundle, attempt_id, request, provider, initial_count, limit, should_stop)
+                    return _observed_payload(observation)
 
         def extract(source: str) -> ExtractionResult:
-            request = ModelRequest(stage='extraction', source=source, settings=bundle.plan.settings)
-            observation = _observe(bundle, f'{sample_id}-extraction', request, provider, initial_count, limit, should_stop)
-            return ExtractionResult.model_validate(_observed_payload(observation))
+            return ExtractionResult.model_validate(payload(
+                ModelRequest(stage='extraction', source=source, settings=bundle.plan.settings)))
 
         def extract_sources(sources: list[Source]) -> SourcedExtractionResult:
-            request = ModelRequest(stage='extraction', source=sample.source, sources=sources,
-                                   settings=bundle.plan.settings)
-            observation = _observe(bundle, f'{sample_id}-extraction', request, provider, initial_count, limit, should_stop)
-            return SourcedExtractionResult.model_validate(_observed_payload(observation))
+            return SourcedExtractionResult.model_validate(payload(ModelRequest(stage='extraction',
+                source=sample.source, sources=sources, settings=bundle.plan.settings)))
 
-        baseline, extracted = _pipeline_result(sample, PipelineConfig(), mode='live', extractor=extract,
-                                               source_extractor=extract_sources)
+        baseline_tracing = tracing if include_baseline and not bundle.has_result(baseline_id) else None
+        with trace.observation(bundle, baseline_tracing, baseline_id, sample_id=sample_id,
+                               template_id=template.sample_id):
+            baseline, extracted = _pipeline_result(sample, PipelineConfig(), mode='live', extractor=extract,
+                                                   source_extractor=extract_sources)
+            _trace_result(baseline)
         if extracted is None:
             _save_unavailable_fresh_results(bundle, sample)
             continue
@@ -340,7 +395,6 @@ def _fresh_inputs(bundle: Bundle, provider: Provider, initial_count: int,
         else:
             sample.extraction = extracted
         _save_fresh_input_snapshot(bundle, sample)
-        include_baseline = not isinstance(bundle.plan, RunPlan) or bundle.plan.resolver == 'none'
         if include_baseline and not bundle.has_result(f'{sample_id}-noop'):
             _save_baseline(bundle, sample, baseline)
         yield sample
@@ -439,7 +493,8 @@ def _sourced_pipeline_result(sample: ResearchInput, config: PipelineConfig, *,
         graph_started = time.perf_counter()
         result.resolution_seconds = graph_started - resolution_started if config.resolver == 'generative' else 0
         try:
-            return build_canonical_state(candidates, sources=sources)
+            with trace.span('Deterministic Graph Construction'):
+                return build_canonical_state(candidates, sources=sources)
         finally:
             result.graph_seconds = time.perf_counter() - graph_started
 
