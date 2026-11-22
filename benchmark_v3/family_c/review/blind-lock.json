@@ -16,5 +16,23 @@
       "packet_sha256": "600c483639c12dacad5ed7663ead63b60290eb840d11720a204600ac524e68cb",
       "output_sha256": "31e2ee8cd33895ee46b36ecae0e788ff2808cee71f941b2db507551cf8bcde26"
     }
+  ],
+  "C1": [
+    {
+      "slot": "read-07",
+      "session": "ae799a93-d4ad-4d9e-9f41-134d1e925a6a",
+      "thread": "01a20324-8023-7b52-a1cd-df117615f238",
+      "model": "gpt-6.2-sol",
+      "packet_sha256": "0fc44dce14af7d01ec16331ae30916623ef0de5a96cfffd3f2e4ff6a1f8cea00",
+      "output_sha256": "d04d4e8881df51b9a91487a564f379a6d71dcba2b8d3525d52e51d3e085197b9"
+    },
+    {
+      "slot": "read-08",
+      "session": "1eb8de9f-0d0c-4ab2-8213-c66597a9a9bc",
+      "thread": "01a20325-05bc-7581-b91a-4ea439956ea6",
+      "model": "gpt-6.2-astra",
+      "packet_sha256": "0fc44dce14af7d01ec16331ae30916623ef0de5a96cfffd3f2e4ff6a1f8cea00",
+      "output_sha256": "1ca03a43b6a5a820efcb68f643da15e869cd4e6c405de4922acee09b791e4d3a"
+    }
   ]
 }
