@@ -274,6 +274,41 @@ omissions. Its technical dossier is
 `29dbfbbd6a981722e24595892611175bab98013a9c8a1d858c1ffa19c75f8d04`.
 Eighteen families technically qualify. DA awaits owner admission.
 
+DB revision 5 qualified on a nine-Source natural condition. It tests
+parentage direction across accounts framed from different participant
+perspectives. All ten evidence controls passed. A separate
+zero-provider replay reproduced its two supported relationships
+without false positives or omissions. The technical dossier is
+`52c42e5fb8b059e83e0d5af912e3caba475610ba39d26d8a6f93ac99326bfb49`.
+Nineteen independent development families technically qualify.
+DB and thirteen other technical families await owner admission.
+
+## Pre-giant closeout
+
+A, B, C, D and F retain their existing human admissions. The twelve
+families qualified in this extension passed 220 exact evidence-control
+assignments across 19 scored conditions. Independent zero-provider
+replays reproduced all 45 supported relationships across those
+conditions without false positives or omissions.
+
+The final large design preserved independent authoring and passed its
+initial merits and participant-scope gates. The issued file contained
+conflicting governing-office descriptions and lacked evidence of timely
+receipt needed for the intended relationship. A bounded repair could
+proceed only with authoritative originals absent from the retained
+file. It dispatched zero participant turns. The final independent
+participant-scope return is
+`6063f6eee2b2303a184df834d0a7c7548c876472fdb9c6b9f79c283debd619f8`.
+A final independent screening selected no viable large reserve. The
+consolidated large-workload assessment is
+`11a22a5441c65fedf2c9c7444a7289f0ca2f6830f9c2caa1c022ff8678f4955b`.
+
+The non-giant qualification target is complete. The 51–99 Source
+readiness gate remains open. Family V remains reserved, with zero
+sessions charged and its exact 150-Source planning artefacts retained.
+No further budget release is needed. The large-file scientific
+constraint prevents the dedicated giant commission.
+
 ## Isolated runtime recovery
 
 AB and AD received independent initial design and scope reviews. Their
