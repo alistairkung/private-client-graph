@@ -221,6 +221,8 @@ def plan_revision(
         lineage["natural_provenance_restoration"] = True
     if parent.exact_recipient_edit is not None:
         lineage["exact_recipient_edit"] = release["exact_recipient_edit"]
+        if "exact_omission_assessment" in release:
+            lineage["exact_omission_assessment"] = release["exact_omission_assessment"]
     return Revision(parent, design, plan, affected, lineage, job), receipt
 
 
@@ -351,6 +353,13 @@ def _select_plan(
             " return only a ticket for that recipient and no revised design. The validated derivative removes the"
             " conflicting original brief instruction and implements the exact record changes. Return infeasible if"
             " anything beyond these edits is materially necessary. Preserve all existing verified evidence and limits."
+        )
+    if release.get("exact_omission_assessment"):
+        prompt += (
+            " Classify the retained pre-author objections, including whether the omitted tally was required for"
+            " the recipient's ordinary task. The exact two edits are within this release's allowed scope."
+            " Independently reject a loss of necessary evidence, a change to the scientific question or an"
+            " unsupported possession claim. The record is a new authoring revision of the same inventory."
         )
     if exact := repair_authority.recorded_classification_retry(runner):
         expected, previous_inputs = classification_retry_details(runner)
@@ -550,6 +559,10 @@ def _read_return(runner: SessionRunner, slot: FamilySlot, release: dict[str, Any
         result = replace(result, incoming_particulars=particulars)
     if edit := release.get("exact_recipient_edit"):
         exact = recipient_edit.ExactRecipientEdit.model_validate(edit)
+        if "exact_omission_assessment" in release:
+            if len(preauthor_returns) != 1:
+                raise ValueError("An omission assessment must bind one exact pre-author scope return.")
+            exact.require_exact_omission_objections(preauthor_returns[0]["objections"])
         if result.incoming_particulars is None or result.incoming_particulars.source_id != exact.source_id:
             raise ValueError("The exact edit must belong to the same independently verified receiving participant.")
         own, _, request = previous.committed_result("author", f"author-{exact.source_id}", "author", author_delivery.AttestedSource)
@@ -1101,6 +1114,13 @@ def verify_revision(
             " blind reconstruction and audit for the revised natural file."
         )
     inputs["audit_rules"] = commissioning.json_text(rules)
+    if revision.lineage.get("exact_omission_assessment"):
+        prompt += (
+            " Review the omission of the aggregate and the local label correction as the two authorised edits."
+            " Compare the preserved original with the independent authored revision. Check that no required"
+            " intake fact, enclosure, evidence, possession, date, scope or scientific signal changed. A returned"
+            " earlier version remains in custody. Give an independent verdict on materiality."
+        )
     def verify_layout(result: ScopeReview) -> None:
         if result.verdict == "preserved" and result.objections:
             raise ValueError("Preserved scope requires resolved objections in the disposition.")

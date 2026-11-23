@@ -338,6 +338,14 @@ class FamilyWorkflow:
                 " candidate text as their own earlier record with the documented omissions and label correction."
                 " Reject new facts, new possession, new transmissions or cues to a scientific answer."
             )
+            if self.documentary_revision.lineage.get("exact_omission_assessment"):
+                exact_context += (
+                    " The two authorised documentary edits revise the retained intake scope. The"
+                    " original tally instruction and corresponding paragraph are deliberately omitted from this"
+                    " newly authored version. Decide independently whether the omission loses any required"
+                    " intake fact, receipt or enclosure status. Check the original sender evidence and dates"
+                    " independently for every actual attachment. Return on any remaining material objection."
+                )
         delivery_scope = (author_repair.SELECTED_DELIVERY_SCOPE if attested and
                           self._use_scoped_prompt(author_context.JOB, author_repair.SELECTED_DELIVERY_SCOPE) else "")
         origin_scope = (

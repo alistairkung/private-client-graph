@@ -26,6 +26,7 @@ from benchmark_v3.batch.pool import PooledLedger
 from benchmark_v3.batch.sessions import Blocked, InvalidRoleOutput, SessionRunner
 from benchmark_v3.batch.workflow import FamilyWorkflow, verify_dossier
 from benchmark_v3.portfolio import FamilySlot, Portfolio
+from benchmark_v3.research_contracts import Digest
 from private_client_graph.models.source import Source
 
 
@@ -1113,7 +1114,7 @@ def release_realism_with_retained_delivery_facts(
 def release_returned_pre_author_plan(
     ledger: PooledLedger, batch: str, family: str, *,
     omit_reply_for: str | None = None, omit_future_reference: autonomous_realism.FutureReferenceOmission | None = None,
-    incoming_particulars_source: str | None = None,
+    incoming_particulars_source: str | None = None, exact_omission_assessment: str | None = None,
 ) -> None:
     with ledger.coordinator_lock():
         ledger.require_running()
@@ -1130,6 +1131,15 @@ def release_returned_pre_author_plan(
         if commissioning._read_json(issue["evidence"]) != record["review"]:
             raise ValueError("The retained independent scope review differs from the current exception.")
         earlier = autonomous_realism._pre_author_returns(original)
+        if "exact_recipient_edit" in original and exact_omission_assessment is None:
+            raise ValueError("An exact recipient scope return requires an independent omission assessment.")
+        if exact_omission_assessment is not None:
+            if (earlier or "exact_recipient_edit" not in original or "exact_omission_assessment" in original
+                    or any((omit_reply_for, omit_future_reference, incoming_particulars_source))):
+                raise ValueError("One independent omission assessment may reopen only an exact recipient repair.")
+            edit = recipient_edit.ExactRecipientEdit.model_validate(original["exact_recipient_edit"])
+            edit.require_exact_omission_objections(record["objections"])
+            TypeAdapter(Digest).validate_python(exact_omission_assessment)
         omission: dict[str, Any] | None
         if omit_future_reference is not None:
             if omit_reply_for is not None or len(earlier) > 2 or "scope_ticket_omission" in original:
@@ -1143,6 +1153,7 @@ def release_returned_pre_author_plan(
             "pre_author_scope_return": record,
             **({"prior_pre_author_scope_returns": earlier} if earlier else {}),
             **({"scope_ticket_omission": omission} if omission is not None else {}),
+            **({"exact_omission_assessment": exact_omission_assessment} if exact_omission_assessment is not None else {}),
             "family_sessions_remaining": ledger.effective_budget().families[family] - len(ledger.attempts(family)),
         }
         if incoming_particulars_source is not None:

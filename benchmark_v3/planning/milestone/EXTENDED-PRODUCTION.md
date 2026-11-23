@@ -247,6 +247,17 @@ and zero omissions. The technical dossier is
 Sixteen families technically qualify. R and the ten previously qualified
 technical families await separate owner admission.
 
+CM revision 2 qualified on a ten-Source natural condition. It tests
+separate completed contributions to one continuing trust, preserving
+the distinct chronology, instruments and capacities. All 12 evidence
+controls passed, and a separate zero-provider replay reproduced five
+supported edges without false positives or omissions. The record
+supports single-Source alternatives for the trustees. Filing status
+and jointly necessary multi-Source proof remain outside its scope.
+The technical dossier is
+`646a4ea8186f1fd7635d5b41e34587fc844b078b7523bf4e69242c8f3617eb98`.
+Seventeen families technically qualify. CM awaits owner admission.
+
 ## Isolated runtime recovery
 
 AB and AD received independent initial design and scope reviews. Their
@@ -412,6 +423,17 @@ subsequent scientific gates apply to the new revision. The independent
 review is `0429165c487d712fe40a5e51e8ad6de5b2dcafe12ca78c85a61c36c3d6ff5f7d`.
 The exact release is
 `35e236ce16a65de9da04df7c58a579d2e3692ce13d1346e26d087fa38929cfe7`.
+The author-scope reviewer returned the proposed omission and requested
+restoration of the original instruction and tally. Its independent
+receipt is `65238f6409b7ca55a08cf955857b25f9cfe778aaa03c2a382d5f1cebda833bea`.
+The controller held the revision before participant authoring. A
+separate review concluded that the documented intake scope permits
+omission of the unverified tally. Its commitment is
+`9607351b1e0e83cd0456051050406ee7acdf7ee3297e3fdbe5baf023f1e611a1`.
+The fresh review must still assess all author packets and actual
+attachments independently. The new release binds the exact earlier
+objections at
+`0ff748a9953bb0c1a92ae91cb43cd927195ee8f1f1d4c60212997fc887d0cf52`.
 
 L's scope review exposed a factory-generated attachment instruction
 that implied undocumented revised correspondence. Fresh repair

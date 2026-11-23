@@ -1,5 +1,7 @@
 """Derive a strictly local documentary amendment from an earlier owned Source."""
 
+from collections.abc import Sequence
+
 from benchmark_v3.batch.contracts import DesignOutput, SourceId
 from benchmark_v3.research_contracts import Contract, Digest, Text
 from private_client_graph.models.source import Source
@@ -12,6 +14,12 @@ class ExactRecipientEdit(Contract):
     old_label: Text
     new_label: Text
     feasibility_sha256: Digest
+
+    def require_exact_omission_objections(self, objections: Sequence[str]) -> None:
+        if (len(objections) != 2 or any(self.source_id not in message for message in objections)
+                or sum(self.brief_omission in message for message in objections) != 1
+                or sum(self.omitted_paragraph in message for message in objections) != 1):
+            raise ValueError("This recheck requires the two exact objections to the local omissions.")
 
     def revise_design(self, design: DesignOutput) -> DesignOutput:
         row = next(item for item in design.inventory if item.source_id == self.source_id)
