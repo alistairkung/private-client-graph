@@ -99,3 +99,37 @@ def reopen_unused_delivery(runner: "SessionRunner") -> DesignOutput | None:
     if unused_delivery_return(previous, event["source_id"]) != event:
         raise ValueError("The exact earlier scope return or original design has changed.")
     return artifacts.read_contract(previous.directory / "design.json", DesignOutput)
+
+
+UNUSED_ATTESTATION = "author-unneeded-attestation"
+
+
+def verify_unused_attestation(runner: "SessionRunner", source_id: str, design: DesignOutput) -> dict[str, Any]:
+    from benchmark_v3.batch import author_delivery
+
+    own = next(brief for brief in design.inventory if brief.source_id == source_id)
+    if not runner.ledger.requires_delivery_attestation or any(
+        source_id in brief.received for brief in design.inventory
+    ):
+        raise ValueError("A local-only attestation cannot repair a delivery consumed by another author.")
+    job = f"author-{source_id}"
+    author, receipt, request = runner.committed_result("author", job, "author", author_delivery.AttestedSource)
+    local = commissioning._read_json(request["inputs"]["author_brief"])
+    declared = author_delivery._declared_grants(own.provenance, own.created_on)
+    supplied = {(item.recipient, item.sent_on) for item in author.deliveries}
+    if local.get("outgoing_deliveries") != [] or not supplied or len(supplied) != len(author.deliveries) or not supplied <= declared:
+        raise ValueError("The exact extra local grants are not authorised own-record facts.")
+    return {"source_id": source_id, "receipt_sha256": receipt["receipt_sha256"],
+            "author_output_sha256": receipt["output_sha256"], "design_sha256": authorisation.commitment(design),
+            "unused_outgoing_attestations": [item.model_dump(mode="json") for item in author.deliveries]}
+
+
+def unused_attestation(runner: "SessionRunner", source_id: str, design: DesignOutput) -> bool:
+    recorded = next((row["details"] for row in runner.ledger.events(runner.manifest.batch_id, runner.family)
+                     if row["revision"] == runner.revision and row["kind"] == "reconcile"
+                     and row["name"] == UNUSED_ATTESTATION and row["details"].get("source_id") == source_id), None)
+    if recorded is None:
+        return False
+    if verify_unused_attestation(runner, source_id, design) != recorded:
+        raise ValueError("The exact local-only attestation proof has changed.")
+    return True

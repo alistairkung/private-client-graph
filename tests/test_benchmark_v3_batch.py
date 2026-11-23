@@ -3151,7 +3151,10 @@ def test_empty_attachment_ticket_return_retries_scope_without_repeating_the_plan
     assert [parent for _, parent, job, _ in calls if job == "author-src2"] == ["G@1", "G@3"]
 
 
-def test_fresh_audit_retains_independent_excerpts_and_replays_the_original_key(autonomous, transport, monkeypatch):
+@pytest.mark.parametrize("whole_file_control", [False, True])
+def test_fresh_audit_retains_independent_excerpts_and_replays_the_original_key(
+    autonomous, transport, monkeypatch, whole_file_control,
+):
     from benchmark_v3.batch import audit_boundary
 
     ledger, commission = autonomous
@@ -3164,9 +3167,16 @@ def test_fresh_audit_retains_independent_excerpts_and_replays_the_original_key(a
     }
     behavior["G", "author-src1"] = lambda _: {"title": "Record", "text": f"Prefix\n{QUOTE}\nSuffix", "deliveries": []}
     behavior["G", "author-src2"] = lambda _: {"title": "Note", "text": "Ordinary note.", "deliveries": []}
-    behavior["G", "audit"] = lambda inputs: _output("audit", "G", "", inputs) | {
-        "verdict": "repair", "objections": ["Check the approved excerpt on its own."],
-    }
+    whole = {"condition": "G000", "risk": "shortcut", "reason": "Check the full view.",
+             "question": "What evidence survives in this view?", "included": ["src1", "src2"],
+             "present": [EDGE], "absent": []}
+    old_objections = [] if whole_file_control else ["Check the approved excerpt on its own."]
+    def original_audit(inputs):
+        audit = _output("audit", "G", "", inputs)
+        if whole_file_control:
+            return audit | {"risks": ["shortcut"], "masks": [whole]}
+        return audit | {"verdict": "repair", "objections": old_objections}
+    behavior["G", "audit"] = original_audit
     excerpt = audit_boundary.ExactExcerpt(
         condition="G000", risk="shortcut", reason="Exact evidence in isolation.", question="What is established?",
         included=["src1"], retained_quotes={"src1": QUOTE}, present=[EDGE], absent=[],
@@ -3175,14 +3185,18 @@ def test_fresh_audit_retains_independent_excerpts_and_replays_the_original_key(a
     def fresh(inputs):
         rules = json.loads(inputs["audit_rules"])
         assert rules["verified_prior_gates"]["blind"]["receipts"]
-        assert rules["retained_audit_objections"] == ["Check the approved excerpt on its own."]
-        return _output("audit", "G", "", inputs) | {"excerpt_controls": [excerpt.model_dump(mode="json")]}
+        assert rules["retained_audit_objections"] == old_objections
+        audit = _output("audit", "G", "", inputs) | {"excerpt_controls": [excerpt.model_dump(mode="json")]}
+        if whole_file_control:
+            assert rules["whole_file_objectives_for_targeted_controls"]
+            audit |= {"risks": ["shortcut"], "masks": [whole | {"included": ["src1"]}]}
+        return audit
 
     behavior["G", "audit-recheck"] = fresh
     batch = commission.manifest.batch_id
     coordinator.commission_batch(ledger, commission, BOUNDARY)
     coordinator.run_batch(ledger, batch)
-    assert coordinator.family_status(ledger, batch, "G")[:2] == (1, "returned")
+    assert coordinator.family_status(ledger, batch, "G")[:2] == (1, "audit" if whole_file_control else "returned")
     runner = commission.session_runner(ledger, "G", 1)
     key = runner.directory / "family/G000.json"
     before = key.read_bytes()
@@ -3190,7 +3204,7 @@ def test_fresh_audit_retains_independent_excerpts_and_replays_the_original_key(a
     coordinator.release_audit_recheck(ledger, batch, "G", receipt["receipt_sha256"], [excerpt])
     coordinator.run_batch(ledger, batch)
     assert coordinator.family_status(ledger, batch, "G") == (1, "admission_ready", None)
-    mask = next(inputs for _, _, job, inputs in calls if job.startswith("mask-"))
+    mask = next(inputs for _, _, job, inputs in calls if job == ("mask-001" if whole_file_control else "mask-000"))
     assert json.loads(mask["sources"]) == [{"id": "src1", "text": QUOTE, "title": "Evidence excerpt"}]
     assert key.read_bytes() == before
 
@@ -3267,3 +3281,39 @@ def test_unused_outgoing_delivery_rechecks_scope_without_changing_the_design(aut
     assert author_repair.SELECTED_DELIVERY_SCOPE in json.loads(
         (second / "packets/author-context/request.json").read_bytes(),
     )["prompt"]
+
+
+def test_unused_attestation_keeps_author_text_and_cannot_authorise_attachments(autonomous, transport, monkeypatch):
+    ledger, commission = autonomous
+    calls, behavior, _ = transport
+    monkeypatch.setattr(type(ledger), "requires_author_context", property(lambda _: True))
+    monkeypatch.setattr(type(ledger), "requires_delivery_attestation", property(lambda _: True))
+
+    def design(_):
+        result = _design("G")
+        result["inventory"][1]["provenance"] += f"\nDelivered {TODAY.isoformat()} to Writer 1"
+        return result
+
+    behavior["G", "design"] = design
+    behavior["G", "author-context"] = lambda inputs: {
+        "verdict": "accept", "objections": [],
+        "findings": {key: "Reviewed." for key in json.loads(inputs["audit_rules"])["participant_packets"]},
+    }
+    behavior["G", "author-src1"] = lambda _: {"title": "Record", "text": QUOTE, "deliveries": []}
+    author = {"title": "Note", "text": "Ordinary note.", "deliveries": [
+        {"recipient": "Writer 1", "sent_on": TODAY.isoformat()},
+    ]}
+    behavior["G", "author-src2"] = behavior["G", "author-src2-format-retry"] = lambda _: author
+    batch = commission.manifest.batch_id
+    coordinator.commission_batch(ledger, commission, BOUNDARY)
+    coordinator.run_batch(ledger, batch)
+    assert coordinator.family_status(ledger, batch, "G")[:2] == (1, "quarantined")
+    coordinator.recover_unused_attestation(ledger, batch, "G", "src2")
+    coordinator.run_batch(ledger, batch)
+    assert coordinator.family_status(ledger, batch, "G") == (1, "admission_ready", None)
+    assert [job for _, _, job, _ in calls if job.startswith("author-src2")] == [
+        "author-src2", "author-src2-format-retry",
+    ]
+    runner = commission.session_runner(ledger, "G", 1)
+    sources = json.loads((runner.directory / "family/sources/G000.json").read_bytes())
+    assert sources[1] == {"id": "src2", "title": author["title"], "text": author["text"]}

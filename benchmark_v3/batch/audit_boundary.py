@@ -84,7 +84,12 @@ def release(runner: "SessionRunner") -> dict[str, Any] | None:
 
 def returned_audit(runner: "SessionRunner", record: dict[str, Any]) -> MilestoneAudit:
     original, receipt, _ = runner.committed_result("audit", "audit", "audit", MilestoneAudit)
-    if (not runner.ledger.requires_delivery_attestation or original.verdict not in {"repair", "return"} or not original.objections
+    accepted_format = (original.verdict == "accept" and (
+        (not original.objections and record.get("unrenderable_control_plan") is True)
+        or (original.objections and record.get("ambiguous_acceptance") is True)
+    ))
+    returned = original.verdict in {"repair", "return"} and bool(original.objections)
+    if (not runner.ledger.requires_delivery_attestation or not (returned or accepted_format)
             or receipt["receipt_sha256"] != record["receipt_sha256"]
             or commissioning.digest(artifacts.read_bytes(runner.directory / "family" / "freeze.json"))
             != record["freeze_sha256"]):
@@ -148,4 +153,10 @@ EXACT_CONTROL_CONTEXT = (
     " The retained valid masks include all independently proposed present and absent relationships. "
     "Assess the proof independently and retain each commitment. Return if an original control is scientifically invalid. "
     "Use the commissioned workload to determine whether a matched contrast exists."
+)
+
+
+ACCEPTANCE_LAYOUT = (
+    " If verdict is accept, return an empty objections array. Put resolved issues in findings and remaining "
+    "nonblocking limitations in limitations. If any substantive scientific objection remains, return the file."
 )

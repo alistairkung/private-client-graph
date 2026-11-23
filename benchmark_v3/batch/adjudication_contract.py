@@ -13,6 +13,7 @@ RELEASE_JOBS = {
     "complete_evidence_adjudication": "adjudicate-000-evidence",
 }
 SOURCE_APPROVAL_FAILURE = "Source approvals require each ground-truth relationship exactly once"
+SOURCE_APPROVAL_QUOTE_FAILURE = "Source-aware approval must retain existing approved-quote semantics"
 COMPLETE_EVIDENCE_INSTRUCTIONS = (
     " Before submitting, check the entire key, including agreed edges. "
     "key.ideal.relationships must represent every edge in key.truth.relationships and attach exact "

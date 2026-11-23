@@ -377,7 +377,8 @@ class FamilyWorkflow:
         if self.runner.ledger.requires_delivery_attestation:
             def verify_source(source: author_delivery.AttestedSource) -> None:
                 verify_literals(source)
-                author_delivery.verify_attestation(source, inputs["author_brief"])
+                if not author_repair.unused_attestation(self.runner, identity, design):
+                    author_delivery.verify_attestation(source, inputs["author_brief"])
 
             return self.job(name, "author", inputs, author_delivery.INSTRUCTIONS, author_delivery.AttestedSource,
                             validate=verify_source)
@@ -696,11 +697,14 @@ class FamilyWorkflow:
                 or audit_contract.SCOPED_INSTRUCTIONS in reserved_prompt):
             prompt += audit_contract.SCOPED_INSTRUCTIONS
             schema = audit_contract.output_schema(bundles, freeze, result_type)
-        def verify_recheck_output(value: AuditReview) -> None:
-            if valid is not None and value.verdict == "accept":
-                science.verify_audit(value, bundles, freeze, required, reviews)
-                audit_boundary.verify_recheck(audit_boundary.RecheckedAudit.model_validate(value), valid, whole,
-                                              requested, bundles)
+        def verify_audit_output(value: AuditReview) -> None:
+            if value.verdict == "accept":
+                if value.objections:
+                    raise ValueError(audit_boundary.ACCEPTANCE_FORMAT_ERROR)
+                if valid is not None:
+                    science.verify_audit(value, bundles, freeze, required, reviews)
+                    audit_boundary.verify_recheck(audit_boundary.RecheckedAudit.model_validate(value), valid, whole,
+                                                  requested, bundles)
 
         result = self.job(
             job, "audit", {
@@ -712,7 +716,7 @@ class FamilyWorkflow:
                 "ontology": _instruction("ontology.md"), "audit_rules": _json(rules),
             },
             prompt, result_type, output_schema=schema,
-            validate=verify_recheck_output if recheck is not None else None,
+            validate=verify_audit_output if self.runner.ledger.requires_delivery_attestation else None,
         )
         science.verify_audit(result, bundles, freeze, required, reviews)
         if result.verdict != "accept":

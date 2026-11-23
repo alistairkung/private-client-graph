@@ -14,7 +14,7 @@ from benchmark_v3.batch import (
 )
 from benchmark_v3.batch.contracts import (
     Adjudication, AdjudicationQuoteRecovery, AnnotationRecovery, AuditRecovery, BatchDecision, BatchManifest, BudgetAmendment,
-    ChildDesignMerits, Code, DeferredExceptionReview, DesignReview, ExceptionRecord, FamilyContinuation, FreshAdjudication,
+    ChildDesignMerits, Code, DeferredExceptionReview, DesignOutput, DesignReview, ExceptionRecord, FamilyContinuation, FreshAdjudication,
     MilestoneEvidenceRepair, MilestoneRealismRepair, OwnerFamilyReview, Reading, RepairExecution, RepairScopeReview,
     SourceCutoffRecovery,
 )
@@ -455,7 +455,7 @@ def family_status(ledger: Ledger, batch_id: str, family: str) -> tuple[int, str,
             if record["kind"] == "reconcile" and record["name"] == repair_authority.PLAN_RECOVERY:
                 state = "design"
             if record["kind"] == "reconcile" and (
-                record["name"].startswith("construction-followup") or record["name"] in {audit_boundary.RECHECK, audit_boundary.FORMAT_RETRY}
+                record["name"].startswith("construction-followup") or record["name"] in {audit_boundary.RECHECK, audit_boundary.FORMAT_RETRY, author_repair.UNUSED_ATTESTATION}
                 or record["name"].startswith(("pooled-release", read_format_recovery.RELEASE))
             ):
                 state = record["next"] or state
@@ -639,6 +639,21 @@ def quarantine(ledger: Ledger, batch_id: str, family: str, reference: str) -> No
                      {"reference": reference, "exception": blocking, "role": "custodian"})
 
 
+def recover_unused_attestation(ledger: Ledger, batch: str, family: str, source_id: str) -> None:
+    with ledger.coordinator_lock():
+        ledger.require_running()
+        commission = load_commission(ledger, batch)
+        revision, state, issue = family_status(ledger, batch, family)
+        if (state != "quarantined" or not issue or issue["stage"] != "author"
+                or issue["evidence"] != (f"author-{source_id}-format-retry failed its output contract: "
+                                         "The sending author must attest the exact ordered same-day grants.")):
+            raise ValueError("The actual stopped author must have failed the exact attestation representation.")
+        runner = commission.session_runner(ledger, family, revision)
+        design = artifacts.read_contract(runner.directory / "design.json", DesignOutput)
+        details = author_repair.verify_unused_attestation(runner, source_id, design)
+        ledger.event(batch, family, revision, "reconcile", author_repair.UNUSED_ATTESTATION, state, "author", details)
+
+
 def release_unused_delivery_recheck(ledger: Ledger, batch: str, family: str, source_id: str) -> None:
     with ledger.coordinator_lock():
         ledger.require_running()
@@ -660,15 +675,31 @@ def release_audit_recheck(
         commission = load_commission(ledger, batch)
         revision, state, issue = family_status(ledger, batch, family)
         runner = commission.session_runner(ledger, family, revision)
-        if (state != "returned" or not issue or (issue["stage"], issue["code"]) != ("audit", "scientific_review")
+        if (not issue or (issue["stage"], issue["code"]) != ("audit", "scientific_review")
                 or audit_boundary.release(runner) is not None):
             raise ValueError("A scientific recheck requires the first retained, exact audit repair request.")
+        invalid_plan = (state == "audit" and issue["evidence"] ==
+                        "A targeted mask must remove evidence and precommit distinct edge expectations.")
+        ambiguous_acceptance = state == "audit" and issue["evidence"] == audit_boundary.ACCEPTANCE_FORMAT_ERROR
+        if state != "returned" and not invalid_plan and not ambiguous_acceptance:
+            raise ValueError("Only documentary audit returns or exact unrenderable control plans are eligible.")
         path = runner.directory / "family" / "freeze.json"
         record = {"receipt_sha256": receipt_sha256, "freeze_sha256": commissioning.digest(artifacts.read_bytes(path)),
-                  "excerpt_controls": [view.model_dump(mode="json") for view in excerpts]}
+                  "excerpt_controls": [view.model_dump(mode="json") for view in excerpts],
+                  **({"unrenderable_control_plan": True} if invalid_plan else {}),
+                  **({"ambiguous_acceptance": True} if ambiguous_acceptance else {})}
         original = audit_boundary.returned_audit(runner, record)
-        if commissioning._read_json(issue["evidence"]) != original.model_dump(mode="json"):
+        if not (invalid_plan or ambiguous_acceptance) and commissioning._read_json(issue["evidence"]) != original.model_dump(mode="json"):
             raise ValueError("The fresh audit does not bind the actual returned disposition.")
+        if invalid_plan:
+            from pydantic import TypeAdapter
+
+            by_condition = {condition: TypeAdapter(list[Source]).validate_json(
+                artifacts.read_bytes(path.parent / "sources" / f"{condition}.json"),
+            ) for condition in original.completeness}
+            _, whole = audit_boundary.original_views(original, by_condition)
+            if not whole:
+                raise ValueError("An accepted control plan can reopen only for verified unmodified whole-file views.")
         ledger.event(batch, family, revision, "reconcile", audit_boundary.RECHECK, state, "audit", record)
 
 
@@ -712,9 +743,9 @@ def recover_adjudication_approval_ids(ledger: Ledger, batch: str, family: str, i
         commission = load_commission(ledger, batch)
         revision, state, blocking = family_status(ledger, batch, family)
         if (not ledger.requires_delivery_attestation or state != "adjudicate" or not blocking
-                or (blocking["code"], blocking["evidence"]) != (
-                    "scientific_review", adjudication_contract.SOURCE_APPROVAL_FAILURE,
-                )):
+                or blocking["code"] != "scientific_review"
+                or blocking["evidence"] not in {adjudication_contract.SOURCE_APPROVAL_FAILURE,
+                                                adjudication_contract.SOURCE_APPROVAL_QUOTE_FAILURE}):
             raise ValueError("Only the retained adjudication approval representation failure can reopen.")
         slot = next(row for row in commission.portfolio.slots if row.family_id == family)
         condition = science.condition_ids(slot)[index]
