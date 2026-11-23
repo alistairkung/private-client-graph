@@ -140,6 +140,22 @@ independent scope review. The exchange binds the exact returned review
 and preserves the ceiling. If the final audit requires checks beyond the
 retained capacity, stop before masks.
 
+When the owner pools the remaining allocation across existing development
+custodies, bind the recorded cumulative starting count and maximum to a
+single shared SQLite authority. Each new job also requires a family
+revision and stage release. The member and pool reservations commit
+atomically. A resumed exact job reuses its original reservation and
+receipt. A worker checks shared stops and the technical qualification
+target before admitting any fresh reservation. Verification of a dossier
+is a prerequisite for counting it toward the pooled target.
+
+Earlier ceilings and reservations remain available as historical records.
+An ordinary ledger cannot start new work outside the pool after it is
+bound. A legacy packet implementation mismatch stops the pool until a
+successor binds the exact old bytes and stop, the reviewed implementation
+change and fresh zero-turn boundary evidence. The original stop remains
+in custody. This recovery does not resolve a live isolation failure.
+
 A SQLite transaction reserves one session before packet dispatch. Every
 reservation uses one family slot and one task slot. Failed, interrupted,
 uncertain and rejected sessions remain charged. Exact duplicate job

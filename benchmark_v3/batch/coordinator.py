@@ -452,7 +452,9 @@ def family_status(ledger: Ledger, batch_id: str, family: str) -> tuple[int, str,
             blocking = None
             if record["kind"] == "reconcile" and record["name"] == repair_authority.PLAN_RECOVERY:
                 state = "design"
-            if record["kind"] == "reconcile" and record["name"].startswith("construction-followup"):
+            if record["kind"] == "reconcile" and (
+                record["name"].startswith("construction-followup") or record["name"] == "pooled-release"
+            ):
                 state = record["next"] or state
     return revision, state, blocking
 
@@ -539,6 +541,8 @@ def _stop_documentary_repair(ledger: Ledger, commission: Commission, workflow: F
     name = repair_authority.STOP
     if _plan_reopened(ledger, workflow):
         name += "_after_recovery"
+    if ledger.pooled_revision(commission.manifest.batch_id, workflow.slot.family_id, workflow.runner.revision):
+        name += "_pooled"
     ledger.event(
         commission.manifest.batch_id, workflow.slot.family_id, workflow.runner.revision,
         "operator_close", name, workflow.stage, "quarantined", {"reference": reason},

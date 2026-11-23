@@ -4,7 +4,7 @@ import fcntl
 import json
 import sqlite3
 from collections.abc import Iterator
-from contextlib import closing, contextmanager
+from contextlib import AbstractContextManager, closing, contextmanager
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -144,7 +144,8 @@ class Ledger:
         with closing(self.connect()) as connection:
             return [row["id"] for row in connection.execute("SELECT id FROM batches ORDER BY rowid")]
 
-    def check_halt(self, connection: sqlite3.Connection) -> None:
+    @staticmethod
+    def check_halt(connection: sqlite3.Connection) -> None:
         if connection.execute("SELECT 1 FROM events WHERE kind = 'task_freeze'").fetchone():
             raise TaskHalted("This development benchmark task has been frozen.")
         if connection.execute("SELECT 1 FROM events WHERE kind = 'task_halt'").fetchone():
@@ -412,8 +413,8 @@ class Ledger:
         self, family: str, revision: int, job: str, stage: Stage, request: dict[str, Any], request_sha256: str,
         *, reuse_only: bool = False, active_only: bool = False,
     ) -> bool:
-        with self.transaction() as connection:
-            self.check_halt(connection)
+        with self.reservation_transaction() as connection:
+            self._check_reservation_halt(connection)
             key = (family, revision, job)
             prior = connection.execute(
                 "SELECT request_sha256, request FROM attempts WHERE family = ? AND revision = ? AND job = ?", key,
@@ -424,34 +425,51 @@ class Ledger:
                 return False
             if reuse_only:
                 raise ValueError("Annotation recovery cannot reserve an earlier scientific job.")
-            phase = connection.execute(
-                "SELECT batches.phase FROM batches JOIN families ON families.batch = batches.id WHERE families.id = ?",
-                (family,),
-            ).fetchone()[0]
-            if phase == "construction":
-                self._verify_construction_reservation(
-                    connection, family, revision, job, stage, request.get("role"), active_only=active_only,
-                )
-            elif phase == "milestone":
-                if not connection.execute(
-                    "SELECT 1 FROM events WHERE family = ? AND kind = 'roadmap_activation'", (family,),
-                ).fetchone():
-                    raise ValueError("This roadmap family is still in reserve.")
-                self._verify_active_stage(connection, family, revision, stage)
-            elif active_only:
-                self._verify_active_stage(connection, family, revision, stage)
-            budget = self._effective_budget(connection)
-            if connection.execute("SELECT COUNT(*) FROM attempts").fetchone()[0] >= budget.shared:
-                raise BudgetExhausted("Task-wide scientific-session ceiling reached.")
-            used = connection.execute("SELECT COUNT(*) FROM attempts WHERE family = ?", (family,)).fetchone()[0]
-            if used >= budget.families[family]:
-                raise BudgetExhausted("Family scientific-session allowance reached.")
+            self._authorize_reservation(connection, family, revision, job, stage, request, request_sha256,
+                                        active_only=active_only)
             connection.execute(
                 "INSERT INTO attempts VALUES (?, ?, ?, ?, ?, ?, ?)",
                 (*key, stage, json_text(request), request_sha256, timestamp()),
             )
             return True
 
+    def _check_reservation_halt(self, connection: sqlite3.Connection) -> None:
+        self.check_halt(connection)
+
+    def reservation_transaction(self) -> AbstractContextManager[sqlite3.Connection]:
+        return self.transaction()
+
+    def pooled_revision(self, batch: str, family: str, revision: int) -> bool:
+        return False
+
+    def _authorize_reservation(
+        self, connection: sqlite3.Connection, family: str, revision: int, job: str, stage: Stage,
+        request: dict[str, Any], request_sha256: str, *, active_only: bool,
+    ) -> None:
+        if connection.execute("SELECT 1 FROM events WHERE kind = 'pool_binding'").fetchone():
+            raise ValueError("New work in this custody requires the registered shared milestone pool.")
+        phase = connection.execute(
+            "SELECT batches.phase FROM batches JOIN families ON families.batch = batches.id WHERE families.id = ?",
+            (family,),
+        ).fetchone()[0]
+        if phase == "construction":
+            self._verify_construction_reservation(
+                connection, family, revision, job, stage, request.get("role"), active_only=active_only,
+            )
+        elif phase == "milestone":
+            if not connection.execute(
+                "SELECT 1 FROM events WHERE family = ? AND kind = 'roadmap_activation'", (family,),
+            ).fetchone():
+                raise ValueError("This roadmap family is still in reserve.")
+            self._verify_active_stage(connection, family, revision, stage)
+        elif active_only:
+            self._verify_active_stage(connection, family, revision, stage)
+        budget = self._effective_budget(connection)
+        if connection.execute("SELECT COUNT(*) FROM attempts").fetchone()[0] >= budget.shared:
+            raise BudgetExhausted("Task-wide scientific-session ceiling reached.")
+        used = connection.execute("SELECT COUNT(*) FROM attempts WHERE family = ?", (family,)).fetchone()[0]
+        if used >= budget.families[family]:
+            raise BudgetExhausted("Family scientific-session allowance reached.")
     def _verify_construction_reservation(
         self, connection: sqlite3.Connection, family: str, revision: int, job: str, stage: Stage,
         role: str | None, *, active_only: bool,
@@ -480,7 +498,7 @@ class Ledger:
 
     def verify_active_stage(self, family: str, revision: int, stage: Stage) -> None:
         with closing(self.connect()) as connection:
-            self.check_halt(connection)
+            self._check_reservation_halt(connection)
             self._verify_active_stage(connection, family, revision, stage)
 
     @staticmethod

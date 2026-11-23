@@ -53,7 +53,8 @@ class SessionRunner:
         release = continuation.family_release(events, self.revision)
         if release is not None:
             continuation.verify_authority(self, release)
-        elif any(row["kind"] in {"deferred_review", "family_release"} for row in events):
+        elif (not self.ledger.pooled_revision(self.manifest.batch_id, self.family, self.revision)
+              and any(row["kind"] in {"deferred_review", "family_release"} for row in events)):
             raise ValueError("The owner decision defers this family pending separate execution approval.")
         allocation = next(row for row in self.manifest.families if row.family_id == self.family)
         approved = allocation.approved_design
@@ -80,8 +81,9 @@ class SessionRunner:
         followup = (
             self.ledger.construction_followup(self.family) if self.manifest.phase == "construction" else None
         )
-        unwrap = recovery or followup is not None
-        fresh_retry_allowed = recovery and not (role == "designer" and self.manifest.requires_design_review)
+        pooled = self.ledger.pooled_revision(self.manifest.batch_id, self.family, self.revision)
+        unwrap = recovery or followup is not None or pooled
+        fresh_retry_allowed = (recovery or pooled) and not (role == "designer" and self.manifest.requires_design_review)
         retry = job + repair_authority.FORMAT_RETRY
         retry_instructions = instructions if role == "designer" else (
             instructions + " Return only the exact requested JSON object."
@@ -199,7 +201,8 @@ class SessionRunner:
             authorised_jobs = {f"mask-{index:03}" for index in range(len(audit_release.views))}
             if job not in authorised_jobs:
                 raise ValueError("The mask job is outside the authorised audit recovery plan.")
-        active_only = release is not None or self.manifest.phase == "milestone" or followup is not None
+        active_only = (release is not None or self.manifest.phase == "milestone" or followup is not None
+                       or self.ledger.pooled_revision(self.manifest.batch_id, self.family, self.revision))
         fresh = self.ledger.reserve(
             self.family, self.revision, job, stage, request,
             commissioning.digest(commissioning.json_text(request).encode()),

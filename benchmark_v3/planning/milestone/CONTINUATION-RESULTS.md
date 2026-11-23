@@ -1,5 +1,8 @@
 # Benchmark v3 continuation outcome
 
+The later shared continuation brought the milestone to eight qualified
+families. [Final shared continuation results](SHARED-POOL-RESULTS.md)
+
 **Five of eight development Matter families are technically qualified.**
 The five already admitted families A, B, C, D and F account for 12
 conditions. The continuation exhausted the named execution scope. Q, S,

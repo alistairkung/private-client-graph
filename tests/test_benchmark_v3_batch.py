@@ -24,6 +24,7 @@ from benchmark_v3.batch.contracts import (
     PilotDecision, SourceCutoffRecovery,
 )
 from benchmark_v3.batch.ledger import BudgetExhausted, TaskHalted
+from benchmark_v3.batch.pool import CustodyMember, MilestonePool, PoolAuthority
 from benchmark_v3.batch.sessions import Blocked
 from benchmark_v3.portfolio import Portfolio
 from benchmark_v3.replay_manifest import BatchSourceFreeze, load_family, source_commitments
@@ -1095,6 +1096,169 @@ def test_construction_repair_uses_only_unreserved_contingency_after_exact_scope_
     assert ledger.reserve("G", 2, "author-repair", "author", {"role": "author"}, "repaired-source")
     assert ledger.reserve("G", 2, "scope-recheck", "author", {"role": "audit"}, "independent-check")
     assert len(ledger.attempts("G")) == 4
+
+
+def test_shared_pool_enforces_one_cumulative_ceiling_across_independent_custodies(approved, tmp_path):
+    left, main = approved
+    coordinator.commission_batch(left, main, BOUNDARY)
+    peer_manifest = main.manifest.model_copy(update={"task_id": "other-pool-task", "batch_id": "other-pool-batch"})
+    peer = coordinator.Commission(main.portfolio, peer_manifest, _approval(main.portfolio, peer_manifest))
+    right = coordinator.open_ledger(tmp_path / "pool-peer")
+    coordinator.commission_batch(right, peer, BOUNDARY)
+    approved_scope = PoolAuthority(
+        owner=OWNER, reference="Exact test continuation.", prior_archive_sha256="c" * 64,
+        starting_charges=199, cumulative_ceiling=201, additional_target=3, members=[
+            CustodyMember(root=str(ledger.root), task_id=commission.manifest.task_id, starting_charges=0)
+            for ledger, commission in ((left, main), (right, peer))
+        ],
+    )
+    pool = MilestonePool(tmp_path / "shared-continuation", approved_scope)
+    left_pool, right_pool = pool.join(left.root), pool.join(right.root)
+    request = {"role": "designer"}
+    common = ("G", 1, "design", "design", request, "fixture-reservation-digest")
+    with pytest.raises(ValueError, match="released revision"):
+        left_pool.reserve(*common)
+    left_pool.release(main.manifest.batch_id, "G", 1, "design", parent_sha256="d" * 64, reference="Exact left scope.")
+    right_pool.release(peer_manifest.batch_id, "G", 1, "design", parent_sha256="e" * 64, reference="Exact right scope.")
+    with pytest.raises(ValueError, match="registered shared milestone pool"):
+        left.reserve(*common)
+    with pytest.raises(ValueError, match="isolated role"):
+        left_pool.reserve("G", 1, "wrong-stage-role", "design", {"role": "masked"}, "wrong-role")
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        results = list(executor.map(lambda ledger: ledger.reserve(*common), (left_pool, right_pool)))
+    assert results == [True, True]
+    assert not left_pool.reserve(*common)
+    with pytest.raises(ValueError, match="input changed"):
+        left_pool.reserve(*common[:-1], "different-request")
+    with pytest.raises(BudgetExhausted, match="shared milestone session ceiling"):
+        right_pool.reserve("G", 1, "third", "design", request, "third-request")
+    assert len(left_pool.attempts("G")) == len(right_pool.attempts("G")) == 1
+    assert pool.join(left.root).attempts("G") == left_pool.attempts("G")
+    assert pool.qualifications() == []
+
+
+def test_shared_pool_propagates_new_integrity_stops_across_custodies(approved, tmp_path):
+    left, main = approved
+    coordinator.commission_batch(left, main, BOUNDARY)
+    peer_manifest = main.manifest.model_copy(update={"task_id": "halt-peer-task", "batch_id": "halt-peer-batch"})
+    peer = coordinator.Commission(main.portfolio, peer_manifest, _approval(main.portfolio, peer_manifest))
+    right = coordinator.open_ledger(tmp_path / "halt-peer")
+    coordinator.commission_batch(right, peer, BOUNDARY)
+    pool = MilestonePool(tmp_path / "shared-halt", PoolAuthority(
+        owner=OWNER, reference="Exact test continuation.", prior_archive_sha256="c" * 64,
+        starting_charges=199, cumulative_ceiling=201, additional_target=3, members=[
+            CustodyMember(root=str(ledger.root), task_id=commission.manifest.task_id, starting_charges=0)
+            for ledger, commission in ((left, main), (right, peer))
+        ],
+    ))
+    pooled = pool.join(left.root)
+    pool.join(right.root)
+    pooled.release(main.manifest.batch_id, "G", 1, "design", parent_sha256="d" * 64, reference="Exact left scope.")
+    right.event(peer_manifest.batch_id, "G", 1, "task_halt", "fixture-isolation", "design", None,
+                {"evidence": "A sandbox guard rejected a scientific invocation."})
+    with pytest.raises(TaskHalted, match="unresolved shared integrity stop"):
+        pooled.reserve("G", 1, "design", "design", {"role": "designer"}, "fresh")
+    assert not pooled.attempts("G")
+
+
+def test_shared_pool_reconciles_only_a_pre_dispatch_runner_version_mismatch(approved, tmp_path, monkeypatch):
+    old, base = approved
+    historical = tmp_path / "original-packet.py"
+    historical.write_bytes(b"original approved packet bytes")
+    original_scope = base.manifest.scope.model_copy(update={
+        "packet_implementation_sha256": commissioning.digest(historical.read_bytes()),
+    })
+    original = base.manifest.model_copy(update={"scope": original_scope})
+    commission = coordinator.Commission(base.portfolio, original, _approval(base.portfolio, original))
+    with monkeypatch.context() as historical_code:
+        historical_code.setattr(packet, "__file__", str(historical))
+        coordinator.commission_batch(old, commission, BOUNDARY)
+    old.event(original.batch_id, "G", 1, "task_halt", "design-isolation", "design", None, {
+        "stage": "design", "code": "isolation", "evidence": "The approved packet isolation implementation has changed.",
+    })
+    pool = MilestonePool(tmp_path / "shared-scope", PoolAuthority(
+        owner=OWNER, reference="Test version reconciliation.", prior_archive_sha256="c" * 64,
+        starting_charges=199, cumulative_ceiling=202, additional_target=3,
+        members=[CustodyMember(root=str(old.root), task_id=original.task_id, starting_charges=0)],
+    ))
+    pooled = pool.join(old.root)
+    boundary = commissioning.json_text(commissioning._read_json(BOUNDARY) | {"turns": 0}).encode()
+    runtime = {effort: {
+        "effort": effort, "ephemeral": True, "empty_workspace": True, "approval_policy": "never",
+        "sandbox": {"type": "readOnly", "networkAccess": False},
+        "permission_profile": {"id": "benchmark_packet", "extends": None},
+        "instruction_sources": [], "thread_environments": [], "runtime_workspace_roots": [],
+    } for effort in ("medium", "high")}
+    with pytest.raises(TaskHalted, match="unresolved shared integrity stop"):
+        pooled.require_running()
+    with pytest.raises(ValueError, match="not a recoverable packet version mismatch"):
+        pool.reconcile_packet_boundary(pooled, original, b"wrong peer bytes", boundary, runtime, "Reviewed diff.")
+    with pytest.raises(ValueError, match="zero-turn isolated runtime"):
+        pool.reconcile_packet_boundary(pooled, original, historical.read_bytes(), boundary, {}, "Reviewed diff.")
+    proof = pool.reconcile_packet_boundary(pooled, original, historical.read_bytes(), boundary, runtime, "Reviewed diff.")
+    pooled.verify_commission_boundary(commission)
+    pooled.release(original.batch_id, "G", 2, "design", parent_sha256=proof, reference="Verified successor.")
+    assert pooled.reserve("G", 2, "design", "design", {"role": "designer"}, "new-reservation")
+    assert pool.reconcile_packet_boundary(pooled, original, historical.read_bytes(), boundary, runtime, "Reviewed diff.") == proof
+    assert any(row["kind"] == "task_halt" for row in old.events(original.batch_id, "G"))
+    old.event(original.batch_id, "G", 2, "task_halt", "runtime-isolation", "design", None, {
+        "stage": "design", "code": "isolation", "evidence": "Runtime tool isolation failed.",
+    })
+    with pytest.raises(TaskHalted, match="unresolved shared integrity stop"):
+        pooled.require_running()
+
+
+def test_shared_pool_counts_verified_dossiers_and_stops_new_reservations(approved, transport, tmp_path):
+    original, commission = approved
+    coordinator.commission_batch(original, commission, BOUNDARY)
+    batch = commission.manifest.batch_id
+    slot = commission.portfolio.slots[0]
+    pool = MilestonePool(tmp_path / "shared-readiness", PoolAuthority(
+        owner=OWNER, reference="Exact fixture readiness.", prior_archive_sha256="c" * 64,
+        starting_charges=199, cumulative_ceiling=225, additional_target=1,
+        members=[CustodyMember(root=str(original.root), task_id=commission.manifest.task_id, starting_charges=0)],
+    ))
+    ledger = pool.join(original.root)
+    ledger.release(batch, "G", 1, "design", parent_sha256="a" * 64, reference="Exact development work.")
+    with pytest.raises(ValueError, match="verified technical dossier"):
+        pool.record_qualification(ledger, batch, "G", 1, "f" * 64)
+    coordinator._work_family(ledger, commission, slot)
+    assert coordinator.family_status(ledger, batch, "G") == (1, "admission_ready", None)
+    dossier = next(row["details"]["family_sha256"] for row in ledger.events(batch, "G")
+                   if row["kind"] == "transition" and row["name"] == "dossier")
+    with pytest.raises(ValueError, match="dossier digest changed"):
+        pool.record_qualification(ledger, batch, "G", 1, "f" * 64)
+    pool.record_qualification(ledger, batch, "G", 1, dossier)
+    pool.record_qualification(ledger, batch, "G", 1, dossier)
+    assert [row["family"] for row in pool.qualifications()] == ["G"]
+    assert not any(row["kind"] == "human_decision" for row in ledger.events(batch, "G"))
+    ledger.release(batch, "H", 1, "design", parent_sha256="b" * 64, reference="An unused backup.")
+    with pytest.raises(BudgetExhausted, match="qualification target"):
+        ledger.reserve("H", 1, "design", "design", {"role": "designer"}, "no-new-reservation")
+
+
+def test_shared_pool_preserves_an_earlier_close_when_a_resumed_revision_fails(approved, tmp_path):
+    from benchmark_v3.batch.workflow import FamilyWorkflow
+
+    original, commission = approved
+    coordinator.commission_batch(original, commission, BOUNDARY)
+    batch = commission.manifest.batch_id
+    original.event(batch, "G", 1, "operator_close", "autonomous_realism_stop",
+                   "design", "quarantined", {"reference": "Previous family allocation ended."})
+    pool = MilestonePool(tmp_path / "shared-resume", PoolAuthority(
+        owner=OWNER, reference="Exact fixture continuation.", prior_archive_sha256="c" * 64,
+        starting_charges=199, cumulative_ceiling=225, additional_target=1,
+        members=[CustodyMember(root=str(original.root), task_id=commission.manifest.task_id, starting_charges=0)],
+    ))
+    ledger = pool.join(original.root)
+    ledger.release(batch, "G", 1, "author", parent_sha256="a" * 64, reference="Restart the pending scope review.")
+    slot = commission.portfolio.slots[0]
+    work = FamilyWorkflow(commission.session_runner(ledger, "G", 1), slot, commission.portfolio.admission_criteria)
+    work.stage = "author"
+    coordinator._stop_documentary_repair(ledger, commission, work, "The independent scope reviewer returned it.")
+    closures = [row for row in ledger.events(batch, "G") if row["kind"] == "operator_close"]
+    assert [row["name"] for row in closures] == ["autonomous_realism_stop", "autonomous_realism_stop_pooled"]
+    assert coordinator.family_status(ledger, batch, "G") == (1, "quarantined", None)
 
 
 @pytest.fixture
