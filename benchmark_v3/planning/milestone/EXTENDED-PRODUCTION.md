@@ -147,6 +147,13 @@ The registered round is
 The independent merits review is
 `9f83c9a0c7f2cfd8888f44b17f4368b4308050b59f38f4cd5a807f58ead29375`.
 
+The standby large-workload review retained CT as a feasibility finding.
+Its two-sale completion mechanism is distinct. The proposed 52-Source
+inventory still needs a credible reason for the adviser to receive
+the full records. Two planning sessions were charged. The candidate
+received no commission or participant turns. The independent review is
+`25d9ec9537022cddac08f4181c50e7c4ac46b0237f1ddc91bc4887f955161943`.
+
 ## Subsequent verified qualification
 
 E revision 3 qualified for the two-condition test of contradictory
@@ -214,6 +221,16 @@ dossier is
 `ce84f2b9bf4a7b7269b277e1110a3162d7c7bc600a8af1af77e273a8b58d199a`.
 Fifteen families technically qualify. X, T, N, E, W, O, L, AH, AG and AZ
 await owner admission.
+
+R revision 4 qualified for the distinction between a documented event's
+time and its later report or filing. The matched 12-Source conditions
+move the same qualifying event across the expressly stated deadline.
+All 23 evidence assignments passed. A separate zero-provider replay
+reproduced both graphs with three true positives, zero false positives
+and zero omissions. The technical dossier is
+`b13f6eb977507dbc678f25ca38d9a764ab8a36943b85891e02451f85d0300490`.
+Sixteen families technically qualify. R and the ten previously qualified
+technical families await separate owner admission.
 
 ## Isolated runtime recovery
 
@@ -359,6 +376,11 @@ It keeps the addressee conditional on what the actual counterpart
 shows. The earlier author-scope return dispatched zero participants and
 is retained at
 `26f8a7a887cced208099c4133c86a8d3e4c883a80aecc70a5d8f47bad5342bd8`.
+The next realism review confirmed the central documentary distinctions
+and returned remaining presentation and reconciliation issues. A
+separately bounded plan preserves the verified delivery facts and keeps
+unverified historical mandates, records and workings open. The release
+is `50a1ec2a084c26153965b49993fe76bc668cc534127233e5fa9ebadc2b65ed02`.
 
 L's scope review exposed a factory-generated attachment instruction
 that implied undocumented revised correspondence. Fresh repair
@@ -425,6 +447,12 @@ The replacement reached actual controls. The isolated reader recovered
 both precommitted absent relationships after removal of the deed. The
 failed assignment and observation stay quarantined at
 `ffcef39b93ad4a1d39e9fe3e25ef538059ab4b3b3c7d964063f26e97fc688e0a`.
+
+AY's recovered blind turn preserved the frozen inputs. Its later
+independent control still recovered the beneficiary from the signed
+exercise after removal of the governing extract. The failed scientific
+outcome remains at
+`fd93ae25fd7bace9bdb7e26e4b9f8a533d0c83df75d5e11a6623d2eadebe7c63`.
 
 BN's initial audit supported the matched graphs and joint age proof
 while returning an overapproved singleton for office at the cutoff.

@@ -262,6 +262,7 @@ def _plan_from_objections(
             "prior_repair": parent.previous_plan.model_dump(mode="json") if parent.previous_plan else None,
             "earlier_documentary_objections": parent.earlier_objections,
             **({"prior_scope_return": parent.prior_scope_return} if parent.prior_scope_return is not None else {}),
+            **({"keep_documentary_limits": True} if release.get("keep_documentary_limits") else {}),
             "capacity": {
                 "family_sessions_before_planning": release["family_sessions_remaining"],
                 "mandatory_at_existing_topology_before_regenerated_authors_and_masks": len(
@@ -320,6 +321,14 @@ def _select_plan(
                    " will be appended in full, in attachment order, after your local instructions. Do not embed"
                    " lists of delivery facts, quote the review, or single out a relationship proof. Preserve the exact"
                    " set of incoming attachments and every one of their original sending acts and Sources.")
+    if release.get("keep_documentary_limits"):
+        prompt += (
+            " Separate actual defects in the retained documents from substantive questions the historical"
+            " file properly leaves open. Do not invent replies, valuation workings, missing mandates,"
+            " attachments or later acts. Prefer deleting unsupported summary detail to making up a crosswalk."
+            " Repair ambiguous terminology using only documented local facts. Treat any suggested future"
+            " enquiry as practitioner follow-up, not as an author instruction to supply new evidence."
+        )
     if exact := repair_authority.recorded_classification_retry(runner):
         expected, previous_inputs = classification_retry_details(runner)
         if exact != expected or inputs != previous_inputs:
@@ -504,7 +513,8 @@ def _read_return(runner: SessionRunner, slot: FamilySlot, release: dict[str, Any
                                       rejected_revision=rejected_revision, original_revision=revision)
     if details := release.get("incoming_particulars"):
         source_revision = details.get("reviewed_source_revision", runner.revision - 1)
-        retained_natural = not authored_receipts and bool(preauthor_returns) and source_revision == revision
+        retained_natural = (not authored_receipts and source_revision == revision and not design.matched
+                            and ledger.pooled_revision(batch, family, runner.revision))
         if not (retained_natural or (authored_receipts and source_revision == runner.revision - 1)):
             raise ValueError("Delivery particulars require the exact reviewed draft revision.")
         previous_draft = replace(runner, revision=source_revision,
@@ -519,11 +529,18 @@ def _read_return(runner: SessionRunner, slot: FamilySlot, release: dict[str, Any
 
 
 def require_verified_incoming_basis(runner: SessionRunner, source_id: str) -> None:
-    release = release_event(runner) or {}
-    review, _, _ = runner.committed_result("author", repair_authority.VERIFY_JOB, "audit", ScopeReview)
-    if (not release.get("natural_provenance_restoration") or release.get("incoming_particulars", {}).get("source_id") != source_id
-            or review.verdict != "preserved" or review.objections):
-        raise ValueError("Incoming particulars can carry only the recipient's independently verified natural-file facts.")
+    while True:
+        release = release_event(runner) or {}
+        review, _, _ = runner.committed_result("author", repair_authority.VERIFY_JOB, "audit", ScopeReview)
+        details = release.get("incoming_particulars", {})
+        if details.get("source_id") != source_id or review.verdict != "preserved" or review.objections:
+            raise ValueError("Incoming particulars can carry only the recipient's independently verified natural-file facts.")
+        if release.get("natural_provenance_restoration"):
+            return
+        earlier = details.get("reviewed_source_revision", 0)
+        if not 0 < earlier < runner.revision:
+            raise ValueError("Carried delivery particulars require an authentic earlier natural-file review.")
+        runner = replace(runner, revision=earlier, directory=runner.directory.with_name(str(earlier)))
 
 
 def _retained_literal_briefs(

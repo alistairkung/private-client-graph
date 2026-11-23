@@ -2673,9 +2673,9 @@ def test_pooled_scope_return_reopens_only_the_verified_prior_realism_file(autono
     assert scope_record in [event["details"] for event in ledger.events(batch, "G") if event["kind"] == "session"]
 
 
-@pytest.mark.parametrize("second_scope_return", [False, True])
+@pytest.mark.parametrize("second_scope_return, resume_halt", [(False, False), (True, True), (True, False)])
 def test_authored_scope_repair_reuses_checked_delivery_after_preauthor_return(
-    autonomous, transport, tmp_path, monkeypatch, second_scope_return,
+    autonomous, transport, tmp_path, monkeypatch, second_scope_return, resume_halt,
 ):
     from benchmark_v3.batch import autonomous_realism, author_delivery, delivery_particulars, read_format_recovery, repair_authority
     from benchmark_v3.batch.pool import PooledLedger
@@ -2713,6 +2713,10 @@ def test_authored_scope_repair_reuses_checked_delivery_after_preauthor_return(
 
     def plan(inputs):
         rules = json.loads(inputs["audit_rules"])
+        if rules.get("keep_documentary_limits"):
+            return _repair_plan(inputs, ticket=None) | {"tickets": {
+                "src1": "Remove unsupported administrative detail.", "src2": "Retain your checked dispatch.",
+            }}
         ticket = "Document your checked direct receipt." if "prior_scope_return" in rules else (
             "Prepare a local inventory." if "pre-author:1" in rules["objections"] else "Unavailable receipt."
         )
@@ -2732,9 +2736,11 @@ def test_authored_scope_repair_reuses_checked_delivery_after_preauthor_return(
         return {"title": "Intake inventory", "text": content, "deliveries": []}
 
     def verify(inputs):
-        preserved = "Verified dispatch." in json.loads(inputs["paired_bundles"])["revised"]["G000"][1]["text"]
+        documents = json.loads(inputs["paired_bundles"])["revised"]["G000"]
+        preserved = "Verified dispatch." in documents[1]["text"]
         if second_scope_return and preserved:
-            preserved = "retained_scope_return" in json.loads(inputs["audit_rules"])
+            preserved = ("retained_scope_return" in json.loads(inputs["audit_rules"])
+                         or "Remove unsupported administrative detail." in documents[0]["text"])
         return {"verdict": "preserved" if preserved else "changed", "scope": "Reviewed.", "provenance": "Reviewed.",
                 "contrast": "Reviewed.", "objections": [] if preserved else ["src2 lacks the direct dispatch date."]}
 
@@ -2793,30 +2799,47 @@ def test_authored_scope_repair_reuses_checked_delivery_after_preauthor_return(
         with pytest.raises(ValueError, match="differs from its immutable receipts"):
             autonomous_realism._earlier_pre_author_references(successor, forged_history, 5, slot=slot)
 
-        def interrupted_replay(*args, **kwargs):
-            raise ValueError("Fixture old chronology of inherited references.")
+        if resume_halt:
+            def interrupted_replay(*args, **kwargs):
+                raise ValueError("Fixture old chronology of inherited references.")
 
-        with monkeypatch.context() as interrupted:
-            interrupted.setattr(autonomous_realism, "_earlier_pre_author_references", interrupted_replay)
-            coordinator._work_family(ledger, commission, slot)
-        with pytest.raises(TaskHalted, match="unresolved shared integrity"):
+            with monkeypatch.context() as interrupted:
+                interrupted.setattr(autonomous_realism, "_earlier_pre_author_references", interrupted_replay)
+                coordinator._work_family(ledger, commission, slot)
+            with pytest.raises(TaskHalted, match="unresolved shared integrity"):
+                pool.check_running()
+            assert not any(attempt["revision"] == 5 for attempt in ledger.attempts(family))
+            proof = {
+                "submitted_turns": 0, "packet_sha256": commissioning.digest(Path(packet.__file__).read_bytes()),
+                "author_delivery_sha256": commissioning.digest(Path(author_delivery.__file__).read_bytes()),
+                "filesystem": {"inside": {"allowed": True, "denied": False}, "outside": {"allowed": False, "denied": True},
+                               "repository": {"allowed": False, "denied": True}},
+                "runtime": {effort: {"effort": effort, "thread_id": effort, "ephemeral": True, "empty_workspace": True,
+                                     "approval_policy": "never", "sandbox": {"type": "readOnly", "networkAccess": False},
+                                     "permission_profile": {"id": "benchmark_packet", "extends": None}, "instruction_sources": [],
+                                     "thread_environments": [], "runtime_workspace_roots": []} for effort in ("medium", "high")},
+            }
+            with pytest.raises(ValueError, match="fresh independent zero-turn"):
+                pool.reconcile_documentary_lineage(ledger, family, proof | {"submitted_turns": 1})
+            pool.reconcile_documentary_lineage(ledger, family, proof)
             pool.check_running()
-        assert not any(attempt["revision"] == 5 for attempt in ledger.attempts(family))
-        proof = {
-            "submitted_turns": 0, "packet_sha256": commissioning.digest(Path(packet.__file__).read_bytes()),
-            "author_delivery_sha256": commissioning.digest(Path(author_delivery.__file__).read_bytes()),
-            "filesystem": {"inside": {"allowed": True, "denied": False}, "outside": {"allowed": False, "denied": True},
-                           "repository": {"allowed": False, "denied": True}},
-            "runtime": {effort: {"effort": effort, "thread_id": effort, "ephemeral": True, "empty_workspace": True,
-                                 "approval_policy": "never", "sandbox": {"type": "readOnly", "networkAccess": False},
-                                 "permission_profile": {"id": "benchmark_packet", "extends": None}, "instruction_sources": [],
-                                 "thread_environments": [], "runtime_workspace_roots": []} for effort in ("medium", "high")},
-        }
-        with pytest.raises(ValueError, match="fresh independent zero-turn"):
-            pool.reconcile_documentary_lineage(ledger, family, proof | {"submitted_turns": 1})
-        pool.reconcile_documentary_lineage(ledger, family, proof)
-        pool.check_running()
-        assert any(row["revision"] == 5 and row["kind"] == "task_halt" for row in ledger.events(batch, family))
+            assert any(row["revision"] == 5 and row["kind"] == "task_halt" for row in ledger.events(batch, family))
+        else:
+            original_realism = behavior[family, "realism-000"]
+
+            def documentary_limits(inputs):
+                if "Restore both original questions." in inputs["sources"]:
+                    return original_realism(inputs) | {"verdict": "repair", "objections": ["Remove unsupported intake detail."]}
+                return original_realism(inputs)
+
+            behavior[family, "realism-000"] = documentary_limits
+            coordinator._work_family(ledger, commission, slot)
+            assert coordinator.family_status(ledger, batch, family)[:2] == (5, "returned")
+            autonomous_realism.require_verified_incoming_basis(successor, "src2")
+            with pytest.raises(ValueError, match="independently verified natural-file facts"):
+                coordinator.release_realism_with_retained_delivery_facts(ledger, batch, family, "src1")
+            coordinator.release_realism_with_retained_delivery_facts(ledger, batch, family, "src2")
+            successor = commission.session_runner(ledger, family, 6)
         reader_job = "reading-000-a-full"
         transport_run = transport[2]
 
@@ -2840,7 +2863,7 @@ def test_authored_scope_repair_reuses_checked_delivery_after_preauthor_return(
         autonomous_realism.require_verified_incoming_basis(successor, "src2")
         with pytest.raises(ValueError, match="independently verified natural-file facts"):
             autonomous_realism.require_verified_incoming_basis(successor, "src1")
-        qualified_revision = 5
+        qualified_revision = successor.revision
     assert coordinator.family_status(ledger, batch, family) == (qualified_revision, "admission_ready", None)
     authored = [(revision, job, inputs) for _, revision, job, inputs in calls if job in {"author-src1", "author-src2"}]
     expected = [
@@ -2849,6 +2872,8 @@ def test_authored_scope_repair_reuses_checked_delivery_after_preauthor_return(
     ]
     if second_scope_return:
         expected += [("G@5", "author-src1"), ("G@5", "author-src2")]
+        if not resume_halt:
+            expected += [("G@6", "author-src1"), ("G@6", "author-src2")]
     assert [(revision, job) for revision, job, _ in authored] == expected
     inputs = authored[-1][2]
     ticket = inputs["revision_ticket"]

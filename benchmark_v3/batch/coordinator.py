@@ -1055,6 +1055,33 @@ def reopen_delivery_body_repair(ledger: PooledLedger, batch: str, family: str) -
         })
 
 
+def release_realism_with_retained_delivery_facts(ledger: PooledLedger, batch: str, family: str, recipient: str) -> None:
+    """Allow one local documentary repair while keeping unverified questions open."""
+    with ledger.coordinator_lock():
+        ledger.require_running()
+        commission = load_commission(ledger, batch)
+        revision, state, _ = family_status(ledger, batch, family)
+        disposition = _returned_realism(ledger, commission, family, revision, state)
+        slot = next(row for row in commission.portfolio.slots if row.family_id == family)
+        if (not ledger.requires_delivery_attestation or disposition is None or len(science.condition_ids(slot)) != 1
+                or any(row["details"].get("keep_documentary_limits") for row in ledger.events(batch, family))):
+            raise ValueError("Only one verified natural-file realism return can retain this documentary scope.")
+        parent = commission.session_runner(ledger, family, revision)
+        autonomous_realism.require_verified_incoming_basis(parent, recipient)
+        particulars = delivery_particulars.reopen(parent, recipient)
+        release = {
+            "role": "batch_coordinator", "parent_revision": revision, "disposition_sequence": disposition["sequence"],
+            "manifest_sha256": authorisation.commitment(commission.manifest),
+            "family_sessions_remaining": ledger.effective_budget().families[family] - len(ledger.attempts(family)),
+            "keep_documentary_limits": True,
+            "incoming_particulars": {"source_id": recipient, "reviewed_source_revision": revision,
+                                     "record_sha256": authorisation.commitment(particulars)},
+        }
+        successor = commission.session_runner(ledger, family, revision + 1)
+        autonomous_realism._read_return(successor, slot, release)
+        ledger.event(batch, family, revision + 1, "transition", repair_authority.REVISION, state, "design", release)
+
+
 def release_returned_pre_author_plan(
     ledger: PooledLedger, batch: str, family: str, *,
     omit_reply_for: str | None = None, omit_future_reference: autonomous_realism.FutureReferenceOmission | None = None,
