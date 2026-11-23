@@ -3486,8 +3486,9 @@ def test_word_preserving_blind_quote_recovery_uses_the_retained_reader(autonomou
         read_format_recovery.exact_whitespace_span("a  a", "a a a")
 
 
+@pytest.mark.parametrize("disposition", ["repair", "quarantine"])
 def test_frozen_evidence_review_reuses_sources_and_blind_receipts_without_cueing_the_new_key(
-    approved, transport, tmp_path, monkeypatch,
+    approved, transport, tmp_path, monkeypatch, disposition,
 ):
     from benchmark_v3.batch import frozen_rekey
     from benchmark_v3.batch.pool import PooledLedger
@@ -3514,14 +3515,35 @@ def test_frozen_evidence_review_reuses_sources_and_blind_receipts_without_cueing
     }
     behavior[family, "author-src1"] = lambda _: {"title": "Record", "text": QUOTE, "deliveries": []}
     behavior[family, "author-src2"] = lambda _: {"title": "Note", "text": "Ordinary note.", "deliveries": []}
+    objection = (
+        "The fictional unresolved dispatch may be outside the audit-workflow dispatch rule."
+        if disposition == "quarantine" else "Use a consistent exact local context policy."
+    )
     behavior[family, "audit"] = lambda inputs: _output("audit", family, "", inputs) | {
-        "verdict": "repair", "objections": ["Use a consistent exact local context policy."],
+        "verdict": disposition, "objections": [objection],
     }
     coordinator._work_family(active, commission, slot)
-    assert coordinator.family_status(active, batch, family)[:2] == (1, "returned")
+    expected_state = "quarantined" if disposition == "quarantine" else "returned"
+    assert coordinator.family_status(active, batch, family)[:2] == (1, expected_state)
     prior = commission.session_runner(active, family, 1).directory / "family"
     frozen_bytes = (prior / "freeze.json").read_bytes()
     original_saved = (prior / "G000.json").read_bytes()
+
+    if disposition == "quarantine":
+        attempted = active.attempts(family)
+        with monkeypatch.context() as guard:
+            guard.setattr(active, "attempts", lambda _: attempted + [{"revision": 1, "job": "unsettled-real-dispatch"}])
+            with pytest.raises(ValueError, match="unsettled real scientific reservation"):
+                coordinator.release_fictional_dispatch_recheck(active, batch, family)
+        coordinator.release_fictional_dispatch_recheck(active, batch, family)
+        behavior[family, "audit-recheck"] = lambda inputs: _output("audit", family, "", inputs) | {"excerpt_controls": []}
+        before = len(calls)
+        coordinator._work_family(active, commission, slot)
+        assert coordinator.family_status(active, batch, family) == (1, "admission_ready", None)
+        assert [job for _, _, job, _ in calls[before:]] == ["audit-recheck"]
+        assert (prior / "freeze.json").read_bytes() == frozen_bytes
+        assert (prior / "G000.json").read_bytes() == original_saved
+        return
 
     coordinator.release_frozen_evidence_review(active, batch, family, "Reassess exact local context.")
     behavior[family, "audit"] = lambda inputs: _output("audit", family, "", inputs) | {"excerpt_controls": []}
@@ -3608,6 +3630,122 @@ def test_new_pre_author_plan_binds_the_rejected_scope_and_precedes_authoring(aut
     details, original = autonomous_realism.pre_author_scope_return(runner)
     assert original == plan and details["scope_receipt_sha256"] == "b" * 64
     assert details["objections"] == review.objections
+    ledger.event(batch, family, 3, "transition", repair_authority.REVISION, "quarantined", "design",
+                 {"parent_revision": 1, "pre_author_scope_return": details})
+    assert autonomous_realism._earlier_pre_author_references(runner, ledger.events(batch, family), 3) == ((2, "pre-author:1"),)
     monkeypatch.setattr(type(ledger), "attempts", lambda *_: [{"revision": 2, "stage": "author", "job": "author-src1"}])
     with pytest.raises(ValueError, match="before any author dispatch"):
         autonomous_realism.pre_author_scope_return(runner)
+
+
+def test_ideal_local_id_recovery_preserves_the_already_approved_exact_pair():
+    from benchmark_v3.batch import adjudication_contract
+    from benchmark_v3.batch.contracts import Adjudication
+
+    raw = _output("adjudication", "G", "", {})
+    candidate = raw["key"]["ideal"]["relationships"][0]
+    candidate["source_name"] = "p1"
+    original = Adjudication.model_validate(raw)
+    corrected, edits = adjudication_contract.localize_key_presentation(original)
+    assert corrected.key.truth == original.key.truth
+    assert corrected.key.source_approval == original.key.source_approval
+    assert corrected.key.sufficient_evidence == original.key.sufficient_evidence
+    assert corrected.key.ideal.relationships[0].source_name == EDGE[0]
+    assert corrected.key.ideal.relationships[0].supporting_text == QUOTE
+    assert edits == [{"path": "/key/ideal/relationships/0/source_name", "before": "p1", "after": EDGE[0]}]
+    candidate["supporting_text"] = "Another quotation."
+    with pytest.raises(ValueError, match="uniquely approved exact evidence"):
+        adjudication_contract.localize_key_presentation(Adjudication.model_validate(raw))
+
+
+def test_masked_whitespace_derivative_authenticates_the_same_rendered_view(autonomous, monkeypatch):
+    from benchmark_v3.batch import read_format_recovery
+    from benchmark_v3.batch.sessions import SessionRunner
+
+    ledger, commission = autonomous
+    coordinator.commission_batch(ledger, commission, BOUNDARY)
+    batch = commission.manifest.batch_id
+    monkeypatch.setattr(type(ledger), "requires_delivery_attestation", property(lambda _: True))
+    job = "mask-007"
+    raw_inputs = {
+        "sources": json.dumps([{"id": "src1", "title": "Record", "text": QUOTE}]),
+        "neutral_brief": "Review this exact view.",
+    }
+    raw = _output("masked", "G", job, raw_inputs)
+    raw["candidates"]["relationships"][0]["supporting_text"] = QUOTE.replace(" the ", "  the ")
+
+    def retained(self, stage, name, role):
+        assert stage == "masks" and role == "masked"
+        return json.dumps(raw).encode(), {"receipt_sha256": ("a" if name == job else "b") * 64}, {"inputs": raw_inputs}
+
+    monkeypatch.setattr(SessionRunner, "committed_packet", retained)
+    for name, char in ((job, "a"), (job + "-format-retry", "b")):
+        ledger.event(batch, "G", 1, "rejected_output", name, "masks", "masks", {
+            "reason": read_format_recovery.QUOTE_ERROR, "receipt_sha256": char * 64,
+        })
+    runner = commission.session_runner(ledger, "G", 1)
+    record, reading, _, _ = read_format_recovery.whitespace_recovery(runner, job, role="masked")
+    assert reading.candidates.relationships[0].supporting_text == QUOTE
+    ledger.event(batch, "G", 1, "reconcile", read_format_recovery.MASK_WHITESPACE_RELEASE + job,
+                 "quarantined", "masks", record)
+    reopened = read_format_recovery.reopen_whitespace(runner, job, raw_inputs, role="masked")
+    assert reopened is not None and reopened[0] == reading
+    with pytest.raises(ValueError, match="original committed role and frozen input"):
+        read_format_recovery.reopen_whitespace(runner, job, raw_inputs | {"neutral_brief": "Different."},
+                                              role="masked")
+
+
+def test_joint_plan_recheck_authenticates_the_exact_incomplete_audit_retry(approved, monkeypatch):
+    from benchmark_v3.batch import audit_boundary
+    from benchmark_v3.batch.sessions import SessionRunner
+
+    ledger, commission = approved
+    runner = commission.session_runner(ledger, "G", 1)
+    monkeypatch.setattr(type(ledger), "requires_delivery_attestation", property(lambda _: True))
+    freeze = artifacts.write_json(runner.directory / "family" / "freeze.json", {"fixture": "exact freeze"})
+    report = audit_boundary.RecheckedAudit.model_validate(
+        _output("audit", "G", "audit-format-retry", {}) | {"excerpt_controls": []},
+    )
+
+    def retained(self, stage, job, role, contract):
+        assert (stage, job, role, contract) == ("audit", "audit-format-retry", "audit", audit_boundary.RecheckedAudit)
+        return report, {"receipt_sha256": "a" * 64}, {}
+
+    monkeypatch.setattr(SessionRunner, "committed_result", retained)
+    release = {"incomplete_joint_control_plan": True, "receipt_sha256": "a" * 64, "freeze_sha256": freeze}
+    assert audit_boundary.returned_audit(runner, release) == report
+    with pytest.raises(ValueError, match="same frozen conditions"):
+        audit_boundary.returned_audit(runner, release | {"freeze_sha256": "b" * 64})
+
+
+def test_realism_classifications_bind_their_original_source_inventory(approved):
+    from types import SimpleNamespace
+    from benchmark_v3.batch import autonomous_realism
+
+    _, commission = approved
+    slot = commission.portfolio.slots[0]
+    parent = SimpleNamespace(
+        earlier_objections=[{
+            "revision": 1, "reviews": {"G000": {
+                "verdict": "return", "objections": ["Historical issue."],
+                "source_findings": {"old-copy": "Historical document."},
+            }},
+        }],
+        earlier_scope_references=(), prior_scope_return={"revision": 2},
+        objections={"scope:1": "Current issue."},
+        freeze=SimpleNamespace(natural="G000", order={"G000": ["current-copy"]}),
+    )
+
+    def plan(current, historical):
+        return autonomous_realism.RepairPlan(
+            disposition="infeasible", objections={
+                "scope:1": {"cause": "provenance", "sources": [current], "diagnosis": "Current finding."},
+                "original:G000:1": {"cause": "documentary", "sources": [historical], "diagnosis": "Prior finding."},
+            }, tickets={}, progress="none", rationale="Record distinct Source lineages.",
+        )
+
+    autonomous_realism._verify_classification(slot, parent, plan("current-copy", "old-copy"))
+    with pytest.raises(ValueError, match="supplied Source identifiers"):
+        autonomous_realism._verify_classification(slot, parent, plan("old-copy", "old-copy"))
+    with pytest.raises(ValueError, match="referenced or current Source inventory"):
+        autonomous_realism._verify_classification(slot, parent, plan("current-copy", "invented-copy"))

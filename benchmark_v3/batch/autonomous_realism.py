@@ -76,6 +76,7 @@ class ReturnedFile:
     previous_plan: RepairPlan | None
     earlier_objections: list[dict[str, Any]]
     prior_scope_return: dict[str, Any] | None = None
+    earlier_scope_references: tuple[tuple[int, str], ...] = ()
 
     def inputs(self, slot: FamilySlot) -> dict[str, str]:
         key = f"{slot.hypothesis.hypothesis_id}@{slot.hypothesis.revision}"
@@ -329,7 +330,9 @@ def _read_return(runner: SessionRunner, slot: FamilySlot, release: dict[str, Any
         {"revision": row["revision"], "reviews": commissioning._read_json(row["details"]["evidence"])}
         for row in history if row["revision"] < revision and row["kind"] == "disposition" and row["name"] == "realism"
     ]
-    result = ReturnedFile(design, bundles, freeze, objections, reviews, receipts, prior, earlier)
+    scope_references = _earlier_pre_author_references(runner, history, revision)
+    result = ReturnedFile(design, bundles, freeze, objections, reviews, receipts, prior, earlier,
+                          earlier_scope_references=scope_references)
     if revision == runner.revision - 2 and "scope_return_receipt_sha256" in release:
         return _scope_repair_parent(runner, slot, result, release["scope_return_receipt_sha256"])
     if revision == runner.revision - 2 and "pre_author_scope_return" in release:
@@ -362,6 +365,26 @@ def pre_author_scope_return(runner: SessionRunner) -> tuple[dict[str, Any], Repa
         "scope_receipt_sha256": receipt["receipt_sha256"], "objections": review.objections,
         "review": review.model_dump(mode="json"),
     }, plan
+
+
+def _earlier_pre_author_references(
+    runner: SessionRunner, history: list[dict[str, Any]], parent_revision: int,
+) -> tuple[tuple[int, str], ...]:
+    exact: list[tuple[int, str]] = []
+    for row in history:
+        if row["revision"] > parent_revision or row["kind"] != "transition" or row["name"] != repair_authority.REVISION:
+            continue
+        retained = row["details"].get("pre_author_scope_return")
+        if retained is None:
+            continue
+        revision = row["revision"] - 1
+        former = replace(runner, revision=revision, directory=runner.directory.with_name(str(revision)))
+        proof, _ = pre_author_scope_return(former)
+        if retained != proof:
+            raise ValueError("The historical preauthor objection differs from its immutable receipts.")
+        exact.extend((revision, f"pre-author:{index}")
+                     for index in range(1, len(proof["objections"]) + 1))
+    return tuple(exact)
 
 
 def empty_attachment_ticket_return(runner: SessionRunner, source_id: str) -> dict[str, Any]:
@@ -444,18 +467,23 @@ def _scope_repair_parent(runner: SessionRunner, slot: FamilySlot, parent: Return
 def _verify_classification(
     slot: FamilySlot, parent: ReturnedFile, plan: RepairPlan, *, attested: bool = False,
 ) -> None:
-    earlier = {
-        (row["revision"], f"{condition}:{index}")
+    historical_sources = {
+        (row["revision"], f"{condition}:{index}"): set(review["source_findings"])
         for row in parent.earlier_objections
         for condition, review in row["reviews"].items()
         if review["verdict"] != "pass" or review["objections"]
         for index in range(1, len(review["objections"] or [review["summary"]]) + 1)
     }
+    earlier = historical_sources.keys() | set(parent.earlier_scope_references)
+    roster = set(parent.freeze.order[parent.freeze.natural])
     reference_aliases = set()
     for key in plan.objections.keys() - parent.objections.keys():
-        match = re.fullmatch(r"(?:earlier[_ -])?revision[_ -]?([1-9][0-9]*):(.+)", key)
+        match = re.fullmatch(r"(?:earlier[_ -]|historical:)?revision[_ -]?([1-9][0-9]*):(.+)", key)
         if match is not None:
             candidates = {(int(match[1]), match[2])} & earlier
+        elif parent.prior_scope_return is not None and key.startswith(("original:", "realism:")):
+            original_realism = parent.prior_scope_return["revision"] - 1
+            candidates = {(original_realism, key.split(":", 1)[1])} & earlier
         else:
             candidates = {reference for reference in earlier if reference[1] == key.removeprefix("earlier:")}
         if len(candidates) != 1:
@@ -463,10 +491,11 @@ def _verify_classification(
         reference, = candidates
         if reference in reference_aliases:
             raise ValueError("Earlier classifications must bind unique retained objections.")
+        if not set(plan.objections[key].sources) <= roster | historical_sources.get(reference, set()):
+            raise ValueError("A historical classification must use the referenced or current Source inventory.")
         reference_aliases.add(reference)
-    roster = set(parent.freeze.order[parent.freeze.natural])
     if not parent.objections.keys() <= plan.objections.keys() or any(
-        not set(finding.sources) <= roster for finding in plan.objections.values()
+        not set(plan.objections[key].sources) <= roster for key in parent.objections.keys() & plan.objections.keys()
     ):
         raise ValueError("Classify every exact supplied objection using only supplied Source identifiers.")
     if plan.disposition == "repair":

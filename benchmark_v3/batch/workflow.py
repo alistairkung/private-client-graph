@@ -552,13 +552,13 @@ class FamilyWorkflow:
         inputs = _reading_inputs(design, sources) | (extra or {})
         job = key
         if self.runner.ledger.requires_delivery_attestation:
-            if role == "annotation":
-                derived = read_format_recovery.reopen_whitespace(self.runner, key, inputs)
+            if role == "annotation" or role == "masked":
+                derived = read_format_recovery.reopen_whitespace(self.runner, key, inputs, role=role)
                 if derived is not None:
                     reading, receipt = derived
                     self.sessions.append(receipt)
                     return reading
-                job = read_format_recovery.selected_job(self.runner, key, inputs)
+                job = read_format_recovery.selected_job(self.runner, key, inputs, role=role)
             if self._use_scoped_prompt(job, read_format_recovery.INSTRUCTIONS):
                 extra_instructions += read_format_recovery.INSTRUCTIONS
 
@@ -662,7 +662,7 @@ class FamilyWorkflow:
         return review
 
     def _localize_approval_ids(self, job: str, original: Adjudication) -> Adjudication:
-        review, edits = adjudication_contract.localize_source_approval(original)
+        review, edits = adjudication_contract.localize_key_presentation(original)
         if edits:
             retained, receipt, _ = self.runner.committed_result("adjudicate", job, "adjudication", Adjudication)
             if original != retained:
@@ -734,7 +734,34 @@ class FamilyWorkflow:
                 assert self.frozen_case is not None
                 original = self.frozen_case.audit
                 prompt += " Independently audit the fresh condition-local evidence keys on the exact retained freeze."
+            if recheck is not None and recheck.get("incomplete_joint_control_plan") is True:
+                assert self.frozen_case is not None
+                previous = self.frozen_case.audit
+                combined = {authorisation.commitment(view): view for view in [*previous.masks, *original.masks]}
+                original = original.model_copy(update={"masks": list(combined.values()),
+                                                       "objections": [*previous.objections, *original.objections]})
+                rules["joint_proof_obligations"] = {
+                    condition: [proof.model_dump(mode="json") for proof in review.key.sufficient_evidence
+                                if any(len({quote.source_id for quote in alternative}) > 1
+                                       for alternative in proof.alternatives)]
+                    for condition, review in reviews.items()
+                }
+                prompt += (
+                    " Independently verify each exact retained joint proof. Precommit an isolated sufficient subset "
+                    "for each alternative, including all its exact quotations, and an independently assessed "
+                    "proper-deletion view for each necessary Source. The explicit obligation table identifies "
+                    "every committed sufficient alternative. Retain all previously valid controls and return on "
+                    "any scientific disagreement."
+                )
             valid, whole = audit_boundary.original_views(original, bundles)
+            if recheck is not None and recheck.get("fictional_dispatch_only") is True:
+                prompt += (
+                    " Separate unresolved real scientific workflow submissions from questions inside the fictional file. "
+                    "The former remain subject to integrity quarantine. The retained terminal receipts confirm there is no "
+                    "uncertain scientific dispatch. Independently assess the fictional question for realism, confidentiality "
+                    "evidence, scientific identifiability and potential effects at the cutoff. Keep all substantiated "
+                    "objections and retain ordinary uncertain practitioner follow-up in the findings."
+                )
             rules.update({
                 "retained_audit_objections": original.objections,
                 "retained_valid_controls": evidence_recovery.proposed_views(valid),

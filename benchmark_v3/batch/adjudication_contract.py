@@ -103,3 +103,55 @@ TRUTH_QUOTATIONS = (
     " In key.truth.relationships, approved_evidence contains verbatim quotation strings, not Source IDs. "
     "The same quotation strings appear verbatim in the Source-aware approval, with their named Source IDs there."
 )
+
+
+KEY_REPLAY_FAILURE = "Provisional key fails canonical replay or the existing evidence policies."
+
+
+def localize_key_presentation(review: Adjudication) -> tuple[Adjudication, list[dict[str, Any]]]:
+    """Apply exact local-ID presentation repairs without adding facts or evidence."""
+    localized, edits = localize_source_approval(review)
+    key = localized.key
+    names = {entity.id: entity.name for entity in key.truth.entities}
+    displayed = set(names.values())
+    relationships = []
+    for index, row in enumerate(key.ideal.relationships):
+        endpoints = {
+            field: names.get(value, value) if value not in displayed else value
+            for field, value in (("source_name", row.source_name), ("target_name", row.target_name))
+        }
+        changed = {field: value for field, value in endpoints.items() if value != getattr(row, field)}
+        if changed:
+            edge = _edge(endpoints["source_name"], row.relationship_type, endpoints["target_name"])
+            if (any(list(names.values()).count(name) != 1 for name in changed.values())
+                    or not _already_approved_exact_pair(localized, edge, row.source_id, row.supporting_text, names)):
+                raise ValueError("An ideal endpoint can be relabelled only against its uniquely approved exact evidence.")
+            edits.extend({
+                "path": f"/key/ideal/relationships/{index}/{field}", "before": getattr(row, field), "after": value,
+            } for field, value in changed.items())
+            row = row.model_copy(update=changed)
+        relationships.append(row)
+    if relationships == key.ideal.relationships:
+        return localized, edits
+    corrected = key.model_copy(update={"ideal": key.ideal.model_copy(update={"relationships": relationships})})
+    return localized.model_copy(update={"key": corrected}), edits
+
+
+def _already_approved_exact_pair(
+    review: Adjudication, edge: SemanticEdge, source_id: str, quote: str, names: dict[str, str],
+) -> bool:
+    from benchmark_v3.replay_manifest import truth_edges
+
+    if edge not in truth_edges(review.key.truth):
+        return False
+    ordinary = (
+        reference for row in review.key.source_approval.relationships
+        if _edge(names[row.source], row.type, names[row.target]) == edge
+        for reference in row.approved_evidence
+    )
+    sufficient = (
+        reference for row in review.key.sufficient_evidence if _edge(*row.edge) == edge
+        for alternative in row.alternatives for reference in alternative
+    )
+    return any((reference.source_id, reference.supporting_text) == (source_id, quote)
+               for reference in (*ordinary, *sufficient))

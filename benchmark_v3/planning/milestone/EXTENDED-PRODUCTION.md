@@ -48,3 +48,35 @@ graphs with five true positives and zero false positives or omissions.
 N's technical dossier is `3aab2c4c905c95fef1290fc5fbd876ec604393286b1117386be5ba89cd96a026`.
 Eight families now technically qualify. X, T and N await separate human
 admission. Further non-giant production remains active.
+
+## Independently selected reserve
+
+The first reserve review selected AB for restraint against inferring
+a sibling edge from separately supported parentage, and AD for
+independent alternative sufficient proof routes to one edge. The
+review retained documentary and coverage objections for the other
+drafts. The two selected hypotheses still require exact isolated
+Matter construction and every scientific qualification gate.
+
+The registered Architect round is
+`fb602a4f229d0dcc1380e279473d4976b16515e7403f330bf9c0935ea4fda3fa`.
+The independent merits review is
+`c05b740cab7234339f23a934805952ef001d6692ee7b349bc609c3ae00e39e83`.
+
+The second reserve review selected AG for the bounds of negative
+receipt evidence and AH for field-specific attestation in a
+mixed-origin record. The registered round is
+`0e0ef924cc95d8ec46a8a8a5a9ed42a287da6a86754294987011189ab1b8693e`.
+The independent merits review is
+`7600d2f1f655ca2e178a0f7869e3dafa11ab12b80e0f0acce7074eb7653e3a0c`.
+
+## Subsequent verified qualification
+
+E revision 3 qualified for the two-condition test of contradictory
+independent accounts. A fresh audit separated the fictional
+practitioner question about a transmission from actual workflow
+dispatch. The retained comparison passed 22 control assignments.
+A separate zero-provider replay reproduced both graphs. E's exact
+technical dossier is
+`aae4ef05a2e640ee624ebd46a574d59731fa5b5f952924ead1b6a9e8b5471ea4`.
+The owner admission decision for E remains open.

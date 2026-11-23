@@ -17,7 +17,7 @@ from benchmark_v3.batch import (
 from benchmark_v3.batch.contracts import (
     Adjudication, AdjudicationQuoteRecovery, AnnotationRecovery, AuditRecovery, BatchDecision, BatchManifest, BudgetAmendment,
     ChildDesignMerits, Code, DeferredExceptionReview, DesignOutput, DesignReview, ExceptionRecord, FamilyContinuation, FreshAdjudication,
-    MilestoneEvidenceRepair, MilestoneRealismRepair, OwnerFamilyReview, Reading, RepairExecution, RepairScopeReview,
+    MilestoneAudit, MilestoneEvidenceRepair, MilestoneRealismRepair, OwnerFamilyReview, Reading, RepairExecution, RepairScopeReview,
     SourceCutoffRecovery,
 )
 from benchmark_v3.batch.custody import namespace_directory
@@ -458,7 +458,8 @@ def family_status(ledger: Ledger, batch_id: str, family: str) -> tuple[int, str,
             if record["kind"] == "reconcile" and record["name"] == repair_authority.PLAN_RECOVERY:
                 state = "design"
             if record["kind"] == "reconcile" and (
-                record["name"].startswith(("construction-followup", "pooled-release", read_format_recovery.RELEASE))
+                record["name"].startswith(("construction-followup", "pooled-release", read_format_recovery.RELEASE,
+                                           read_format_recovery.MASK_RELEASE))
                 or record["name"] in {audit_boundary.RECHECK, audit_boundary.FORMAT_RETRY,
                                       audit_boundary.LARGE_CONFIRMATION, author_repair.UNUSED_ATTESTATION,
                                       repair_authority.SCOPE_REVIEW_RETRY}
@@ -612,6 +613,10 @@ def _block(
         and row["name"].startswith(read_format_recovery.RELEASE) for row in ledger.events(batch, family)
     ):
         qualifier = read_format_recovery.RELEASE.rstrip("-")
+    if workflow.stage == "masks":
+        qualifier = next((row["name"] for row in reversed(ledger.events(batch, family))
+                          if row["revision"] == revision and row["kind"] == "reconcile"
+                          and row["name"].startswith(read_format_recovery.MASK_RELEASE)), qualifier)
     ledger.block(batch, revision, ExceptionRecord(
         stage=workflow.stage, family_id=family, code=code, evidence=evidence, job=job,
         repair_permitted=repair,
@@ -791,6 +796,64 @@ def release_audit_recheck(
         ledger.event(batch, family, revision, "reconcile", audit_boundary.RECHECK, state, "audit", record)
 
 
+def release_joint_plan_recheck(ledger: PooledLedger, batch: str, family: str) -> None:
+    """Independently complete all required joint observations before any mask is sent."""
+    with ledger.coordinator_lock():
+        ledger.require_running()
+        commission = load_commission(ledger, batch)
+        revision, state, issue = family_status(ledger, batch, family)
+        runner = commission.session_runner(ledger, family, revision)
+        job = "audit" + repair_authority.FORMAT_RETRY
+        failure = f"{job} failed its output contract: {audit_boundary.JOINT_PLAN_FAILURE}"
+        if (not ledger.requires_delivery_attestation or state != "quarantined" or not issue
+                or issue["stage"] != "audit" or issue["evidence"] != failure or audit_boundary.release(runner) is not None
+                or frozen_rekey.recorded(runner) is None
+                or any(row["revision"] == revision and row["stage"] == "masks" for row in ledger.attempts(family))):
+            raise ValueError("Only an exact jointly incomplete audit can get a fresh scientific control plan.")
+        review, receipt, _ = runner.committed_result("audit", job, "audit", audit_boundary.RecheckedAudit)
+        if review.verdict != "accept" or review.objections or not any(
+            (row["revision"], row["kind"], row["name"]) == (revision, "rejected_output", job)
+            and row["details"] == {"reason": audit_boundary.JOINT_PLAN_FAILURE,
+                                   "receipt_sha256": receipt["receipt_sha256"]}
+            for row in ledger.events(batch, family)
+        ):
+            raise ValueError("The retained scientific acceptance must bind its exact incomplete plan rejection.")
+        digest = commissioning.digest(artifacts.read_bytes(runner.directory / "family" / "freeze.json"))
+        ledger.event(batch, family, revision, "reconcile", audit_boundary.RECHECK, state, "audit", {
+            "receipt_sha256": receipt["receipt_sha256"], "freeze_sha256": digest,
+            "excerpt_controls": [view.model_dump(mode="json") for view in review.excerpt_controls],
+            "incomplete_joint_control_plan": True,
+        })
+
+
+def release_fictional_dispatch_recheck(ledger: PooledLedger, batch: str, family: str) -> None:
+    """Require independent reassessment when an audit confused a fictional question with a custody stop."""
+    with ledger.coordinator_lock():
+        ledger.require_running()
+        commission = load_commission(ledger, batch)
+        revision, state, issue = family_status(ledger, batch, family)
+        runner = commission.session_runner(ledger, family, revision)
+        if (not ledger.requires_delivery_attestation or state != "quarantined" or not issue
+                or (issue["stage"], issue["code"]) != ("audit", "scientific_review")
+                or audit_boundary.release(runner) is not None):
+            raise ValueError("Only an exact audit disposition on fictional dispatch is eligible for independent recheck.")
+        review, receipt, _ = runner.committed_result("audit", "audit", "audit", MilestoneAudit)
+        if (review.verdict != "quarantine" or review.model_dump(mode="json") != commissioning._read_json(issue["evidence"])
+                or not any("unresolved dispatch" in reason.casefold() and "audit-workflow dispatch" in reason.casefold()
+                           for reason in review.objections)):
+            raise ValueError("The original auditor must explicitly identify the distinction and its retained objection.")
+        ledger_events = ledger.events(batch, family)
+        terminal = {(row["revision"], row["name"]) for row in ledger_events
+                    if row["kind"] == "session" and row["details"]["status"] in {"completed", "rejected"}}
+        if any((attempt["revision"], attempt["job"]) not in terminal for attempt in ledger.attempts(family)):
+            raise ValueError("An unsettled real scientific reservation prevents this scope recheck.")
+        digest = commissioning.digest(artifacts.read_bytes(runner.directory / "family" / "freeze.json"))
+        ledger.event(batch, family, revision, "reconcile", audit_boundary.RECHECK, state, "audit", {
+            "receipt_sha256": receipt["receipt_sha256"], "freeze_sha256": digest,
+            "excerpt_controls": [], "fictional_dispatch_only": True,
+        })
+
+
 def recover_large_confirmation(ledger: Ledger, batch: str, family: str) -> None:
     with ledger.coordinator_lock():
         ledger.require_running()
@@ -837,6 +900,33 @@ def recover_audit_recheck_representation(ledger: Ledger, batch: str, family: str
             raise ValueError("The existing recheck did not return the exact ambiguous acceptance representation.")
         ledger.event(batch, family, revision, "reconcile", audit_boundary.FORMAT_RETRY, state, state,
                      {"receipt_sha256": receipt["receipt_sha256"], "reference": "One fresh bounded representation check."})
+
+
+def release_returned_authored_scope_plan(ledger: PooledLedger, batch: str, family: str) -> None:
+    """Open one documentary replan from an independently rejected authored repair."""
+    with ledger.coordinator_lock():
+        ledger.require_running()
+        commission = load_commission(ledger, batch)
+        revision, state, issue = family_status(ledger, batch, family)
+        runner = commission.session_runner(ledger, family, revision)
+        earlier = autonomous_realism.release_event(runner)
+        if (not ledger.requires_delivery_attestation or earlier is None
+                or earlier.get("parent_revision") != revision - 1 or "scope_return_receipt_sha256" in earlier
+                or state != "quarantined" or not issue or (issue["stage"], issue["code"]) != ("author", "scientific_review")
+                or not ledger.pooled_revision(batch, family, revision)):
+            raise ValueError("An authored-scope replan requires an independently returned documentary revision.")
+        review, receipt, _ = runner.committed_result("author", repair_authority.VERIFY_JOB, "audit",
+                                                     autonomous_realism.ScopeReview)
+        if review.verdict != "changed" or not review.objections or issue["evidence"] != autonomous_realism.scope_failure(review):
+            raise ValueError("The exact retained scope review must establish the documentary objection.")
+        release = earlier | {
+            "scope_return_receipt_sha256": receipt["receipt_sha256"],
+            "family_sessions_remaining": ledger.effective_budget().families[family] - len(ledger.attempts(family)),
+        }
+        slot = next(row for row in commission.portfolio.slots if row.family_id == family)
+        successor = commission.session_runner(ledger, family, revision + 1)
+        autonomous_realism._read_return(successor, slot, release)
+        ledger.event(batch, family, revision + 1, "transition", repair_authority.REVISION, state, "design", release)
 
 
 def release_returned_pre_author_plan(ledger: PooledLedger, batch: str, family: str) -> None:
@@ -889,6 +979,32 @@ def recover_blind_whitespace(ledger: Ledger, batch: str, family: str, job: str) 
                      state, "blind", record)
 
 
+def recover_mask_output(ledger: Ledger, batch: str, family: str, job: str) -> None:
+    with ledger.coordinator_lock():
+        ledger.require_running()
+        commission = load_commission(ledger, batch)
+        revision, state, issue = family_status(ledger, batch, family)
+        events = ledger.events(batch, family)
+        errors = {f"{job}-format-retry failed its output contract: {error}" for error in read_format_recovery.ERRORS}
+        if (state not in {"masks", "quarantined"} or not issue or issue["stage"] != "masks"
+                or issue["code"] != "scientific_review" or issue["evidence"] not in errors
+                or any(row["revision"] == revision and row["name"] in {
+                    read_format_recovery.MASK_RELEASE + job, read_format_recovery.MASK_WHITESPACE_RELEASE + job,
+                } for row in events)):
+            raise ValueError("Only the exact retained masked output representation failure can reopen.")
+        runner = commission.session_runner(ledger, family, revision)
+        retained = read_format_recovery.release_details(runner, job, role="masked")
+        try:
+            record, _, _, _ = read_format_recovery.whitespace_recovery(runner, job, role="masked")
+        except ValueError:
+            prefix = read_format_recovery.MASK_RELEASE
+            record = retained
+            ledger.require_capacity(family, revision, {job + "-exact-format"})
+        else:
+            prefix = read_format_recovery.MASK_WHITESPACE_RELEASE
+        ledger.event(batch, family, revision, "reconcile", prefix + job, state, "masks", record)
+
+
 def recover_adjudication_approval_ids(ledger: Ledger, batch: str, family: str, index: int) -> None:
     """Resume an unlocked key after proving an exact identity representation correction."""
     with ledger.coordinator_lock():
@@ -898,7 +1014,8 @@ def recover_adjudication_approval_ids(ledger: Ledger, batch: str, family: str, i
         if (not ledger.requires_delivery_attestation or state != "adjudicate" or not blocking
                 or blocking["code"] != "scientific_review"
                 or blocking["evidence"] not in {adjudication_contract.SOURCE_APPROVAL_FAILURE,
-                                                adjudication_contract.SOURCE_APPROVAL_QUOTE_FAILURE}):
+                                                adjudication_contract.SOURCE_APPROVAL_QUOTE_FAILURE,
+                                                adjudication_contract.KEY_REPLAY_FAILURE}):
             raise ValueError("Only the retained adjudication approval representation failure can reopen.")
         slot = next(row for row in commission.portfolio.slots if row.family_id == family)
         condition = science.condition_ids(slot)[index]
@@ -907,8 +1024,10 @@ def recover_adjudication_approval_ids(ledger: Ledger, batch: str, family: str, i
         if (runner.directory / "family" / f"{condition}.json").exists():
             raise ValueError("A locked adjudication key cannot be relabelled.")
         original, receipt, request = runner.committed_result("adjudicate", job, "adjudication", Adjudication)
-        result, edits = adjudication_contract.localize_source_approval(original)
-        if not edits or original.key.condition != "local":
+        result, edits = adjudication_contract.localize_key_presentation(original)
+        ideal_edits = any(edit["path"].startswith("/key/ideal/relationships/") for edit in edits)
+        if (not edits or original.key.condition != "local"
+                or (blocking["evidence"] == adjudication_contract.KEY_REPLAY_FAILURE and not ideal_edits)):
             raise ValueError("The original response contains no unique local-ID correction.")
         inputs = request["inputs"]
         sources = [Source.model_validate(row) for row in commissioning._read_json(inputs["sources"])]

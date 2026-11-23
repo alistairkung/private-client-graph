@@ -3,7 +3,7 @@
 from typing import TYPE_CHECKING, Any
 
 from benchmark_v3 import commissioning
-from benchmark_v3.batch import artifacts, science
+from benchmark_v3.batch import artifacts, repair_authority, science
 from benchmark_v3.batch.contracts import MaskAssignment, MilestoneAudit, SourceId
 from benchmark_v3.research_contracts import Text
 from private_client_graph.evaluation import _edge
@@ -83,13 +83,18 @@ def release(runner: "SessionRunner") -> dict[str, Any] | None:
 
 
 def returned_audit(runner: "SessionRunner", record: dict[str, Any]) -> MilestoneAudit:
-    original, receipt, _ = runner.committed_result("audit", "audit", "audit", MilestoneAudit)
+    joint_plan = record.get("incomplete_joint_control_plan") is True
+    original_job = "audit" + repair_authority.FORMAT_RETRY if joint_plan else "audit"
+    output_type = RecheckedAudit if joint_plan else MilestoneAudit
+    original, receipt, _ = runner.committed_result("audit", original_job, "audit", output_type)
     accepted_format = (original.verdict == "accept" and (
-        (not original.objections and record.get("unrenderable_control_plan") is True)
+        (not original.objections and (record.get("unrenderable_control_plan") is True or joint_plan))
         or (original.objections and record.get("ambiguous_acceptance") is True)
     ))
     returned = original.verdict in {"repair", "return"} and bool(original.objections)
-    if (not runner.ledger.requires_delivery_attestation or not (returned or accepted_format)
+    fictional_dispatch = (original.verdict == "quarantine" and bool(original.objections)
+                          and record.get("fictional_dispatch_only") is True)
+    if (not runner.ledger.requires_delivery_attestation or not (returned or accepted_format or fictional_dispatch)
             or receipt["receipt_sha256"] != record["receipt_sha256"]
             or commissioning.digest(artifacts.read_bytes(runner.directory / "family" / "freeze.json"))
             != record["freeze_sha256"]):
@@ -167,6 +172,7 @@ ACCEPTANCE_LAYOUT = (
 
 LARGE_CONFIRMATION = "audit-isolated-whole-file-confirmation"
 MASK_RENDER_FAILURE = "A targeted mask must remove evidence and precommit distinct edge expectations."
+JOINT_PLAN_FAILURE = "Each joint alternative needs an independent sufficient subset and one deletion per Source."
 
 
 def large_confirmation(mask: MaskAssignment, sources: list[Source]) -> bool:

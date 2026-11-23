@@ -143,6 +143,13 @@ No verified findings recorded.
 | `named-scope-capacity@1` · Scoped adoption and concurrent roles | S | approved | `888372b762667bab8ffd03519f92405dd246118df8806798244fb69abf6e3263` |
 | `administrative-estate-load@1` · Completeness in an administrative handover | U | approved | `55e95c4e91d4a99cabbc0c03f4c9831fc0054b0df045983be5ae1af3ace18b90` |
 | `longitudinal-cross-section-reconstruction@1` · Longitudinal cross-section reconstruction | V | proposed | `925b5fdd603297092c963366da245eea3f95c8d0e4a6804cceff9ae57655156d` |
+| `bounded-negative-receipt-coverage@1` · A default provision requires complete negative receipt coverage | AG | proposed | `aa9daf7b4f40611a569bc456466e5f3ab3cc54ddd74f93e1e9803c33d58344c8` |
+| `mixed-origin-field-attestation@1` · A signed check vouches only for the fields it covers | AH | proposed | `675663a370b5acb848e500fc799f042b1ded8e0e3121c331fd9f029a814e58db` |
+| `fixed-versus-rolling-incorporation@1` · A later issue matters only under rolling incorporation | AJ | proposed | `7e65cd45da7a876ff28d23046307bc5296b44be293f28ff645a03b67b6fcda6f` |
+| `concurrent-assent-to-one-decision@1` · Separate assents must concern the same decision | AA | proposed | `4156635b4a723dd63ab71c9919f574e6cfe882ed2a8d74d463399d7663528c3b` |
+| `shared-parent-without-sibling-assertion@1` · Supported common parentage does not supply a sibling edge | AB | proposed | `9dd22215c301d0855fa3660b14caa92651730dbf325c2928eb7a9d7ff20994df` |
+| `automatic-reversion-after-temporary-substitution@1` · A suspended provision resumes without a new act | AC | proposed | `11735f0da17407c28981c349d865eaed29adc508305e3a19eef40edccd8b4d1b` |
+| `independent-alternative-sufficient-proofs@1` · One valid route is enough when a second route also exists | AD | proposed | `c5d4db92b6a4ec98f6b23c2bc76a1e8e261470e35f5870755b5367375d824324` |
 | `independent-documentary-disagreement@1` · Independent handover accounts of current trustee office | W | approved | `ac18d1c2ef9f3f72b0544a4ddf1d62e7af230be3375dab180f28306bc06352ed` |
 | `incidental-correspondence-support@1` · Firsthand relationship support in valuation-access correspondence | X | proposed | `194a1ec56fa6374aa71cfe426dcb6738915ea611b11c3cd767dfe17a1142758d` |
 | `bounded-inspection-scope-reconciliation@1` · Which received records did the verification actually cover? | T | approved | `c8c529dfe55f59bf78ae08ce5c7a901b7d8c1ccc16f1b029338dd00bc0e366d4` |

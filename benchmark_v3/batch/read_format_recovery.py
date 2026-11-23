@@ -1,7 +1,7 @@
-"""Release one fresh blind reading when both original turns failed representation."""
+"""Recover one isolated reading from its exact retained representation failures."""
 
 import re
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal
 
 from pydantic import TypeAdapter
 
@@ -14,6 +14,8 @@ if TYPE_CHECKING:
     from benchmark_v3.batch.sessions import SessionRunner
 
 RELEASE = "blind-representation-"
+MASK_RELEASE = "masked-representation-"
+ReadingRole = Literal["annotation", "masked"]
 QUOTE_ERROR = "The reading must quote the exact attributed Source."
 INVENTORY_ERROR = "The reading must account for the exact Source inventory."
 ERRORS = {QUOTE_ERROR, INVENTORY_ERROR}
@@ -26,17 +28,29 @@ INSTRUCTIONS = (
     "Use open_questions for unsupported propositions or caveats."
 )
 _JOB = re.compile(r"reading-[0-9]{3}-[ab]-(?:full|part-[0-9]{3})")
+_MASK_JOB = re.compile(r"mask-[0-9]{3}")
 
 
-def release_details(runner: "SessionRunner", job: str) -> dict[str, Any]:
-    if not runner.ledger.requires_delivery_attestation or _JOB.fullmatch(job) is None:
-        raise ValueError("A local representation recovery requires an isolated blind reading.")
+def _stage(role: ReadingRole) -> Literal["blind", "masks"]:
+    return "blind" if role == "annotation" else "masks"
+
+
+def _release(role: ReadingRole) -> str:
+    return RELEASE if role == "annotation" else MASK_RELEASE
+
+
+def release_details(
+    runner: "SessionRunner", job: str, *, role: ReadingRole = "annotation",
+) -> dict[str, Any]:
+    pattern = _JOB if role == "annotation" else _MASK_JOB
+    if not runner.ledger.requires_delivery_attestation or pattern.fullmatch(job) is None:
+        raise ValueError("A local representation recovery requires an isolated reading.")
     events = runner.ledger.events(runner.manifest.batch_id, runner.family)
     rejected = {event["name"]: event["details"] for event in events if
                 event["revision"] == runner.revision and event["kind"] == "rejected_output"}
     receipts = {}
     for attempt in (job, job + repair_authority.FORMAT_RETRY):
-        _, receipt, _ = runner.committed_packet("blind", attempt, "annotation")
+        _, receipt, _ = runner.committed_packet(_stage(role), attempt, role)
         failure = rejected.get(attempt)
         if (failure is None or failure["reason"] not in ERRORS
                 or failure["receipt_sha256"] != receipt["receipt_sha256"]):
@@ -45,22 +59,25 @@ def release_details(runner: "SessionRunner", job: str) -> dict[str, Any]:
     return {"job": job, "receipts": receipts, "manifest_sha256": authorisation.commitment(runner.manifest)}
 
 
-def selected_job(runner: "SessionRunner", job: str, inputs: dict[str, str]) -> str:
+def selected_job(
+    runner: "SessionRunner", job: str, inputs: dict[str, str], *, role: ReadingRole = "annotation",
+) -> str:
     record = next((event["details"] for event in runner.ledger.events(runner.manifest.batch_id, runner.family)
                    if event["revision"] == runner.revision and event["kind"] == "reconcile"
-                   and event["name"] == RELEASE + job), None)
+                   and event["name"] == _release(role) + job), None)
     if record is None:
         return job
-    if record != release_details(runner, job):
+    if record != release_details(runner, job, role=role):
         raise ValueError("The blind representation release differs from the retained receipts.")
     for attempt in record["receipts"]:
-        _, _, request = runner.committed_packet("blind", attempt, "annotation")
+        _, _, request = runner.committed_packet(_stage(role), attempt, role)
         if request["inputs"] != inputs:
             raise ValueError("A fresh blind reading requires the identical frozen input.")
     return job + "-exact-format"
 
 
 WHITESPACE_RELEASE = RELEASE + "whitespace-"
+MASK_WHITESPACE_RELEASE = MASK_RELEASE + "whitespace-"
 
 
 def exact_whitespace_span(quotation: str, source: str) -> str:
@@ -76,11 +93,11 @@ def exact_whitespace_span(quotation: str, source: str) -> str:
 
 
 def whitespace_recovery(
-    runner: "SessionRunner", job: str,
+    runner: "SessionRunner", job: str, *, role: ReadingRole = "annotation",
 ) -> tuple[dict[str, Any], Reading, dict[str, Any], dict[str, str]]:
-    release_details(runner, job)
+    release_details(runner, job, role=role)
     original_job = job + repair_authority.FORMAT_RETRY
-    output, receipt, request = runner.committed_packet("blind", original_job, "annotation")
+    output, receipt, request = runner.committed_packet(_stage(role), original_job, role)
     reading = Reading.model_validate_json(output)
     sources = TypeAdapter(list[Source]).validate_json(request["inputs"]["sources"])
     by_id = {source.id: source.text for source in sources}
@@ -115,14 +132,15 @@ def whitespace_recovery(
 
 
 def reopen_whitespace(
-    runner: "SessionRunner", job: str, inputs: dict[str, str],
+    runner: "SessionRunner", job: str, inputs: dict[str, str], *, role: ReadingRole = "annotation",
 ) -> tuple[Reading, dict[str, Any]] | None:
+    prefix = WHITESPACE_RELEASE if role == "annotation" else MASK_WHITESPACE_RELEASE
     record = next((row["details"] for row in runner.ledger.events(runner.manifest.batch_id, runner.family)
                    if (row["revision"], row["kind"], row["name"]) ==
-                   (runner.revision, "reconcile", WHITESPACE_RELEASE + job)), None)
+                   (runner.revision, "reconcile", prefix + job)), None)
     if record is None:
         return None
-    expected, reading, receipt, original_inputs = whitespace_recovery(runner, job)
+    expected, reading, receipt, original_inputs = whitespace_recovery(runner, job, role=role)
     if expected != record or original_inputs != inputs:
         raise ValueError("The exact-quote derivative requires its original committed role and frozen input.")
     return reading, receipt
