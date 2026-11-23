@@ -6,6 +6,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal
 
+from pydantic import TypeAdapter
+
 from benchmark_v3 import commissioning, packet
 from benchmark_v3.batch import (
     adjudication_contract, adjudication_recovery, annotation_recovery, artifacts, audit_boundary, audit_recovery, author_repair, authorisation,
@@ -455,8 +457,9 @@ def family_status(ledger: Ledger, batch_id: str, family: str) -> tuple[int, str,
             if record["kind"] == "reconcile" and record["name"] == repair_authority.PLAN_RECOVERY:
                 state = "design"
             if record["kind"] == "reconcile" and (
-                record["name"].startswith("construction-followup") or record["name"] in {audit_boundary.RECHECK, audit_boundary.FORMAT_RETRY, author_repair.UNUSED_ATTESTATION}
-                or record["name"].startswith(("pooled-release", read_format_recovery.RELEASE))
+                record["name"].startswith(("construction-followup", "pooled-release", read_format_recovery.RELEASE))
+                or record["name"] in {audit_boundary.RECHECK, audit_boundary.FORMAT_RETRY,
+                                      audit_boundary.LARGE_CONFIRMATION, author_repair.UNUSED_ATTESTATION}
             ):
                 state = record["next"] or state
     return revision, state, blocking
@@ -586,15 +589,15 @@ def _block(
         "input_integrity": "Verify exact approved artifacts and decide whether to quarantine.",
     }
     qualifier = None
-    if _plan_reopened(ledger, workflow):
+    if workflow.stage == "audit" and audit_boundary.release(workflow.runner) is not None:
+        qualifier = next((row["name"] for row in reversed(ledger.events(batch, family))
+                          if row["revision"] == revision and row["kind"] == "reconcile"
+                          and row["name"] in {audit_boundary.FORMAT_RETRY, audit_boundary.LARGE_CONFIRMATION}),
+                         audit_boundary.RECHECK)
+    elif _plan_reopened(ledger, workflow):
         qualifier = repair_authority.PLAN_RECOVERY
     elif workflow.audit_recovery is not None:
         qualifier = audit_recovery.JOB
-    elif workflow.stage == "audit" and audit_boundary.release(workflow.runner) is not None:
-        qualifier = (audit_boundary.FORMAT_RETRY if any(
-            row["revision"] == revision and row["name"] == audit_boundary.FORMAT_RETRY
-            for row in ledger.events(batch, family)
-        ) else audit_boundary.RECHECK)
     elif workflow.release_action == "complete_evidence_adjudication":
         qualifier = "complete-evidence"
     elif workflow.stage == "blind" and any(
@@ -701,6 +704,36 @@ def release_audit_recheck(
             if not whole:
                 raise ValueError("An accepted control plan can reopen only for verified unmodified whole-file views.")
         ledger.event(batch, family, revision, "reconcile", audit_boundary.RECHECK, state, "audit", record)
+
+
+def recover_large_confirmation(ledger: Ledger, batch: str, family: str) -> None:
+    with ledger.coordinator_lock():
+        ledger.require_running()
+        commission = load_commission(ledger, batch)
+        revision, state, issue = family_status(ledger, batch, family)
+        runner = commission.session_runner(ledger, family, revision)
+        if (state != "audit" or (issue is not None and not issue["evidence"].endswith(audit_boundary.MASK_RENDER_FAILURE))
+                or audit_boundary.release(runner) is None):
+            raise ValueError("A large-file confirmation requires the exact unrenderable recheck exception.")
+        job = audit_boundary.RECHECK + repair_authority.FORMAT_RETRY
+        audit, receipt, request = runner.committed_result("audit", job, "audit", audit_boundary.RecheckedAudit)
+        if not any(row["revision"] == revision and row["kind"] == "rejected_output" and row["name"] == job
+                   and row["details"] == {"reason": audit_boundary.MASK_RENDER_FAILURE,
+                                          "receipt_sha256": receipt["receipt_sha256"]}
+                   for row in ledger.events(batch, family)):
+            raise ValueError("The original independently accepted plan has no exact recorded render failure.")
+        inputs = request["inputs"]
+        by_condition = {name: TypeAdapter(list[Source]).validate_python(rows)
+                        for name, rows in commissioning._read_json(inputs["paired_bundles"]).items()}
+        targeted = audit_boundary.targeted_audit(audit, by_condition)
+        if audit.verdict != "accept" or audit.objections or len(targeted.masks) >= len(audit.masks):
+            raise ValueError("The independent auditor must have accepted a distinct large-file replication.")
+        for mask in targeted.masks:
+            science.mask_sources(mask, by_condition[mask.condition])
+        ledger.event(batch, family, revision, "reconcile", audit_boundary.LARGE_CONFIRMATION, state, state, {
+            "receipt_sha256": receipt["receipt_sha256"],
+            "reference": "Preserve every independent control. Check the unmodified full file separately from targeted masks.",
+        })
 
 
 def recover_audit_recheck_representation(ledger: Ledger, batch: str, family: str) -> None:

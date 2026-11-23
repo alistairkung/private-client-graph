@@ -160,3 +160,24 @@ ACCEPTANCE_LAYOUT = (
     " If verdict is accept, return an empty objections array. Put resolved issues in findings and remaining "
     "nonblocking limitations in limitations. If any substantive scientific objection remains, return the file."
 )
+
+
+LARGE_CONFIRMATION = "audit-isolated-whole-file-confirmation"
+MASK_RENDER_FAILURE = "A targeted mask must remove evidence and precommit distinct edge expectations."
+
+
+def large_confirmation(mask: MaskAssignment, sources: list[Source]) -> bool:
+    """Identify an additional unmodified full-file reading outside targeted-mask coverage."""
+    return (mask.risk == "large_or_complex" and len(sources) >= 21
+            and len(mask.included) == len(sources) and set(mask.included) == {row.id for row in sources}
+            and not mask.remove_quotes and bool(mask.present or mask.absent)
+            and not set(mask.present) & set(mask.absent)
+            and all(edge == _edge(*edge) for edge in [*mask.present, *mask.absent]))
+
+
+def targeted_audit(
+    audit: MilestoneAudit, bundles: dict[str, list[Source]],
+) -> MilestoneAudit:
+    return audit.model_copy(update={
+        "masks": [mask for mask in audit.masks if not large_confirmation(mask, bundles.get(mask.condition, []))],
+    })

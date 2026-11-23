@@ -92,3 +92,26 @@ def test_future_attachment_cannot_be_authorised_by_a_valid_sender_grant():
     design = _design("A personally transmitted copy.\nDelivered 2027-06-24 to Devin Stoll", day="2027-06-23")
     with pytest.raises(ValueError, match="future correspondence"):
         author_delivery.projection(design, {})
+
+
+def test_a_large_whole_file_confirmation_cannot_satisfy_targeted_mask_coverage():
+    from benchmark_v3.batch import audit_boundary, science
+
+    sources = [Source(id=f"record-{i}", title="Record", text=f"Text {i}.") for i in range(21)]
+    edge = ("Edda Kaul", "trustee_of", "Barker Trust")
+    whole = audit_boundary.MaskAssignment(
+        condition="T000", risk="large_or_complex", reason="Independent full-file view.",
+        question="What relationships does the record establish?", included=[source.id for source in sources],
+        present=[edge], absent=[],
+    )
+    targeted = whole.model_copy(update={"included": whole.included[:-1]})
+    audit = audit_boundary.MilestoneAudit(
+        verdict="accept", summary="Independent controls.", completeness={}, sufficiency={}, negative_controls={},
+        shortcuts={}, matched_controls={}, risks=["large_or_complex"], masks=[whole, targeted],
+        objections=[], limitations=[],
+    )
+    assert audit_boundary.targeted_audit(audit, {"T000": sources}).masks == [targeted]
+    assert audit_boundary.large_confirmation(whole, sources)
+    with pytest.raises(ValueError, match="must remove evidence"):
+        science.mask_sources(whole, sources)
+    assert not audit_boundary.large_confirmation(whole.model_copy(update={"risk": "shortcut"}), sources)

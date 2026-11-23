@@ -697,12 +697,18 @@ class FamilyWorkflow:
                 or audit_contract.SCOPED_INSTRUCTIONS in reserved_prompt):
             prompt += audit_contract.SCOPED_INSTRUCTIONS
             schema = audit_contract.output_schema(bundles, freeze, result_type)
+
+        def science_audit(value: AuditReview) -> AuditReview:
+            if self.runner.ledger.requires_delivery_attestation and isinstance(value, MilestoneAudit):
+                return audit_boundary.targeted_audit(value, bundles)
+            return value
+
         def verify_audit_output(value: AuditReview) -> None:
             if value.verdict == "accept":
                 if value.objections:
                     raise ValueError(audit_boundary.ACCEPTANCE_FORMAT_ERROR)
                 if valid is not None:
-                    science.verify_audit(value, bundles, freeze, required, reviews)
+                    science.verify_audit(science_audit(value), bundles, freeze, required, reviews)
                     audit_boundary.verify_recheck(audit_boundary.RecheckedAudit.model_validate(value), valid, whole,
                                                   requested, bundles)
 
@@ -718,7 +724,7 @@ class FamilyWorkflow:
             prompt, result_type, output_schema=schema,
             validate=verify_audit_output if self.runner.ledger.requires_delivery_attestation else None,
         )
-        science.verify_audit(result, bundles, freeze, required, reviews)
+        science.verify_audit(science_audit(result), bundles, freeze, required, reviews)
         if result.verdict != "accept":
             self.reject("scientific_review", result.model_dump_json(), quarantine=result.verdict == "quarantine",
                         disposition=job if recheck is not None else None)
@@ -767,9 +773,13 @@ class FamilyWorkflow:
         for index, mask in enumerate([*audit.masks, *excerpts]):
             if any(condition.casefold() in mask.question.casefold() for condition in bundles):
                 self.reject("scientific_review", "A masked reviewer question exposes a condition identifier.")
-            sources = (audit_boundary.render_excerpt(mask, bundles[mask.condition])
-                       if isinstance(mask, audit_boundary.ExactExcerpt)
-                       else science.mask_sources(mask, bundles[mask.condition]))
+            condition_sources = bundles[mask.condition]
+            if isinstance(mask, audit_boundary.ExactExcerpt):
+                sources = audit_boundary.render_excerpt(mask, condition_sources)
+            elif self.runner.ledger.requires_delivery_attestation and audit_boundary.large_confirmation(mask, condition_sources):
+                sources = condition_sources
+            else:
+                sources = science.mask_sources(mask, condition_sources)
             signature = evidence_recovery.observation_key(mask, sources)
             job = f"mask-{index:03}"
             if audit.equivalent_views_reusable:
@@ -781,8 +791,12 @@ class FamilyWorkflow:
         observations = self._observe_masked_jobs(design, assignments)
         results = [
             {"assignment": mask.model_dump(mode="json"), "observation_job": job,
-             "observed_edges": sorted(observations[job])}
-            for job, mask, _ in assignments
+             "observed_edges": sorted(observations[job]),
+             **({"observation_kind": "isolated_whole_file_confirmation"}
+                if (self.runner.ledger.requires_delivery_attestation
+                    and not isinstance(mask, audit_boundary.ExactExcerpt)
+                    and audit_boundary.large_confirmation(mask, sources)) else {})}
+            for job, mask, sources in assignments
         ]
         self.advance("technical", {"mask_results": results},
                      gate="independent masked readings satisfy every retained precommitment")

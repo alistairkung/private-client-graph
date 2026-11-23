@@ -36,10 +36,15 @@ CREATE TABLE IF NOT EXISTS boundary_successors (
     packet_sha256 TEXT NOT NULL, evidence_sha256 TEXT NOT NULL, record_sha256 TEXT NOT NULL
 );
 """
+LOCK_TIMEOUT_SECONDS = 30
 STAGE_ROLES = {
     "design": {"designer", "audit"}, "author": {"author", "audit"}, "realism": {"realism"},
     "blind": {"annotation"}, "adjudicate": {"adjudication"}, "audit": {"audit"}, "masks": {"masked"},
 }
+
+
+def _read_only(path: Path) -> sqlite3.Connection:
+    return sqlite3.connect(f"{path.as_uri()}?mode=ro", uri=True, timeout=LOCK_TIMEOUT_SECONDS)
 
 
 class CustodyMember(Contract):
@@ -91,7 +96,7 @@ class MilestonePool:
         self.digest = commissioning.digest(payload.encode())
         root.mkdir(mode=0o700, parents=True, exist_ok=True)
         artifacts.write_json(root / "authority.json", commitment)
-        with closing(sqlite3.connect(self.path, timeout=30)) as connection, connection:
+        with closing(sqlite3.connect(self.path, timeout=LOCK_TIMEOUT_SECONDS)) as connection, connection:
             connection.executescript(SCHEMA)
             if predecessor is not None:
                 connection.execute("""CREATE TABLE IF NOT EXISTS enrolments (
@@ -114,7 +119,7 @@ class MilestonePool:
                 or authority.cumulative_ceiling != previous.authority.cumulative_ceiling
                 or authority.prior_archive_sha256 == previous.authority.prior_archive_sha256):
             raise ValueError("A successor pool must preserve its predecessor owner and cumulative ceiling.")
-        with closing(sqlite3.connect(f"{previous.path.as_uri()}?mode=ro", uri=True)) as connection:
+        with closing(_read_only(previous.path)) as connection:
             remaining = previous.remaining(connection, attached=False)
             count = connection.execute("SELECT COUNT(*) FROM qualified").fetchone()[0]
             if authority.isolation_restart is not None:
@@ -143,7 +148,7 @@ class MilestonePool:
         member = Path(restart.halted_member)
         if member not in previous.members:
             raise ValueError("The reported isolation stop is outside the predecessor custody.")
-        with closing(sqlite3.connect(f"{(member / 'ledger-v1.sqlite').as_uri()}?mode=ro", uri=True)) as db:
+        with closing(_read_only(member / "ledger-v1.sqlite")) as db:
             matched = next((name for name, raw in db.execute("SELECT name, details FROM events WHERE kind = 'task_halt'")
                             if commissioning.digest(raw.encode()) == restart.halt_event_sha256
                             and commissioning._read_json(raw).get("code") == "isolation"), None)
@@ -180,7 +185,7 @@ class MilestonePool:
     def members(self) -> dict[Path, CustodyMember]:
         if self.predecessor is None:
             return self._members.copy()
-        with closing(sqlite3.connect(f"{self.path.as_uri()}?mode=ro", uri=True)) as connection:
+        with closing(_read_only(self.path)) as connection:
             rows = connection.execute("SELECT custody, task_id FROM enrolments").fetchall()
         return self._members | {Path(root): CustodyMember(root=root, task_id=task, starting_charges=0)
                                 for root, task in rows}
@@ -206,7 +211,7 @@ class MilestonePool:
         manifest_digest = authorisation.commitment(manifest)
         details = {"pool_sha256": self.digest, "root": str(ledger.root), "task_id": manifest.task_id,
                    "batch": manifest.batch_id, "manifest_sha256": manifest_digest, "reference": reference}
-        with closing(sqlite3.connect(self.path, timeout=30)) as connection, connection:
+        with closing(sqlite3.connect(self.path, timeout=LOCK_TIMEOUT_SECONDS)) as connection, connection:
             connection.execute("BEGIN IMMEDIATE")
             prior = connection.execute("SELECT * FROM enrolments WHERE custody = ?", (str(ledger.root),)).fetchone()
             if prior is None:
@@ -215,7 +220,7 @@ class MilestonePool:
                 for root, member in self.members.items():
                     if member.task_id == manifest.task_id:
                         raise ValueError("New custody requires a distinct task identity.")
-                    with closing(sqlite3.connect(f"{(root / 'ledger-v1.sqlite').as_uri()}?mode=ro", uri=True)) as existing:
+                    with closing(_read_only(root / "ledger-v1.sqlite")) as existing:
                         if families & {row[0] for row in existing.execute("SELECT id FROM families")}:
                             raise ValueError("An existing development family must retain its original custody.")
             expected = commissioning.digest((commissioning.json_text(details) + "\n").encode())
@@ -241,7 +246,7 @@ class MilestonePool:
     def _verify_enrolment(self, root: Path) -> None:
         if root in self._members:
             return
-        with closing(sqlite3.connect(f"{self.path.as_uri()}?mode=ro", uri=True)) as connection:
+        with closing(_read_only(self.path)) as connection:
             row = connection.execute("SELECT manifest_sha256, record_sha256 FROM enrolments WHERE custody = ?",
                                      (str(root),)).fetchone()
         if row is None:
@@ -253,7 +258,7 @@ class MilestonePool:
             raise TaskHalted("The custody enrolment failed its immutable authority commitment.")
 
     def _boundary_record(self, root: Path) -> tuple[Path, tuple[Any, ...]] | None:
-        with closing(sqlite3.connect(f"{self.path.as_uri()}?mode=ro", uri=True)) as database:
+        with closing(_read_only(self.path)) as database:
             record = database.execute(
                 "SELECT halt_sequence, halt_sha256, packet_sha256, evidence_sha256, record_sha256"
                 " FROM boundary_successors WHERE custody = ?", (str(root),),
@@ -272,7 +277,7 @@ class MilestonePool:
         self._verify_restart_runtime()
         for path in self.members:
             self._verify_enrolment(path)
-            with closing(sqlite3.connect(f"{(path / 'ledger-v1.sqlite').as_uri()}?mode=ro", uri=True)) as db:
+            with closing(_read_only(path / "ledger-v1.sqlite")) as db:
                 self.check_member(path, db)
 
     def check_member(self, root: Path, connection: sqlite3.Connection) -> None:
@@ -336,7 +341,7 @@ class MilestonePool:
         encoded = (commissioning.json_text(record) + "\n").encode()
         record_sha = commissioning.digest(encoded)
         artifacts.write_bytes(self.root / "boundary" / f"{record_sha}.json", encoded)
-        with closing(sqlite3.connect(self.path, timeout=30)) as connection, connection:
+        with closing(sqlite3.connect(self.path, timeout=LOCK_TIMEOUT_SECONDS)) as connection, connection:
             connection.execute("BEGIN IMMEDIATE")
             stored = (str(ledger.root), sequence, record["halt_sha256"], current_sha, evidence_sha, record_sha)
             existing = connection.execute(
@@ -360,7 +365,7 @@ class MilestonePool:
         return self.authority.cumulative_ceiling - self.authority.starting_charges - charged
 
     def qualifications(self) -> list[dict[str, Any]]:
-        with closing(sqlite3.connect(f"{self.path.as_uri()}?mode=ro", uri=True)) as connection:
+        with closing(_read_only(self.path)) as connection:
             connection.row_factory = sqlite3.Row
             return [dict(row) for row in connection.execute("SELECT * FROM qualified ORDER BY rowid")]
 
@@ -373,7 +378,7 @@ class MilestonePool:
                 or family_status(ledger, batch, family) != (revision, "admission_ready", None)):
             raise ValueError("Only a verified technical dossier in the active custody can count.")
         verify_dossier(ledger, batch, family, revision, digest)
-        with closing(sqlite3.connect(self.path, timeout=30)) as connection, connection:
+        with closing(sqlite3.connect(self.path, timeout=LOCK_TIMEOUT_SECONDS)) as connection, connection:
             connection.execute("BEGIN IMMEDIATE")
             current = connection.execute("SELECT * FROM qualified WHERE family = ?", (family,)).fetchone()
             row = (family, digest, str(ledger.root), revision)

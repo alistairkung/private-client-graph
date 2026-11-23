@@ -3,8 +3,8 @@
 import json
 import re
 import threading
-from concurrent.futures import ThreadPoolExecutor
-from contextlib import nullcontext
+from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeout
+from contextlib import closing, nullcontext
 from datetime import date, timedelta
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -1137,7 +1137,7 @@ def test_shared_pool_enforces_one_cumulative_ceiling_across_independent_custodie
     assert pool.qualifications() == []
 
 
-def test_shared_pool_propagates_new_integrity_stops_across_custodies(approved, tmp_path):
+def test_shared_pool_propagates_new_integrity_stops_across_custodies(approved, tmp_path, monkeypatch):
     left, main = approved
     coordinator.commission_batch(left, main, BOUNDARY)
     peer_manifest = main.manifest.model_copy(update={"task_id": "halt-peer-task", "batch_id": "halt-peer-batch"})
@@ -1156,8 +1156,26 @@ def test_shared_pool_propagates_new_integrity_stops_across_custodies(approved, t
     pooled.release(main.manifest.batch_id, "G", 1, "design", parent_sha256="d" * 64, reference="Exact left scope.")
     right.event(peer_manifest.batch_id, "G", 1, "task_halt", "fixture-isolation", "design", None,
                 {"evidence": "A sandbox guard rejected a scientific invocation."})
-    with pytest.raises(TaskHalted, match="unresolved shared integrity stop"):
-        pooled.reserve("G", 1, "design", "design", {"role": "designer"}, "fresh")
+    reached_peer = threading.Event()
+    check_member = pool.check_member
+
+    def observe_guard(root, connection):
+        if root == right.root:
+            reached_peer.set()
+        check_member(root, connection)
+
+    monkeypatch.setattr(pool, "check_member", observe_guard)
+    with ThreadPoolExecutor(max_workers=1) as executor, closing(right.connect()) as writer:
+        writer.execute("BEGIN EXCLUSIVE")
+        try:
+            reserve = executor.submit(pooled.reserve, "G", 1, "design", "design", {"role": "designer"}, "fresh")
+            assert reached_peer.wait(timeout=2)
+            with pytest.raises(FutureTimeout):
+                reserve.result(timeout=5.2)
+        finally:
+            writer.rollback()
+        with pytest.raises(TaskHalted, match="unresolved shared integrity stop"):
+            reserve.result(timeout=2)
     assert not pooled.attempts("G")
 
 
