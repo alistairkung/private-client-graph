@@ -306,11 +306,18 @@ The completed revision 14 inventory then omitted checked dispatch and
 delivery particulars. The independent scope review returned the file
 before realism or key generation. Revision 14 stays quarantined at
 `29a13e271e085ca2e7dc2e11b33f6e60d74aa982ef7387f42a8a9cdaa85f62c8`.
-The bounded successor preserves the 64 already-authored sending
-Sources. Only the receiving participant can see the corresponding
-sender identities and delivery dates, in the order of their actual
-earlier attachments. Fresh scope review must clear that exact packet
-and the resulting documentary file before realism and blind review.
+The bounded successor preserves all 64 established sending acts. The
+independent plan repairs the inventory and restores the date of a
+separate permissions enquiry in the original engagement letter. The
+first validator blocked that letter's body repair. It now verifies that
+the senders, dates, delivery grants and earlier dependencies stay the
+same. The affected sender reattests the revised letter before the
+receiver can see it. The exact plan reopened without a new design turn
+at `e9586ded7433a7e2b47f0805432a27a92e24518d658e30ec7eae0ca9952b63f3`.
+Only the receiving participant can see the corresponding sender
+identities and delivery dates in actual attachment order. Fresh scope
+review must clear the packet and resulting file before realism and
+blind review.
 
 L's scope review exposed a factory-generated attachment instruction
 that implied undocumented revised correspondence. Fresh repair
@@ -349,6 +356,15 @@ support that the signed designation minute retained on its own. A
 separately commissioned replacement retains the asset-transfer
 hypothesis and must independently determine any standalone proof before
 testing the distinct transfer shortcut.
+
+BV's first lineage reached its independently accepted control plan.
+Multiple masked readings quoted the operative notice reference from its
+title. The reference was absent from the notice body, so the exact
+quotations could neither validate nor be recovered by whitespace changes.
+The controller retained the observations and returned the lineage at
+`3e025be9db87bd6acb2d3d4b6fd74f8d4329d739078db1d6e7a3e47908495f79`.
+The fresh independent design retains the late-notice cure hypothesis
+and requires contemporaneous body text for operative references.
 
 BN's initial audit supported the matched graphs and joint age proof
 while returning an overapproved singleton for office at the cutoff.

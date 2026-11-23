@@ -1015,6 +1015,34 @@ def release_returned_authored_scope_plan(
         ledger.event(batch, family, revision + 1, "transition", repair_authority.REVISION, state, "design", release)
 
 
+def reopen_delivery_body_repair(ledger: PooledLedger, batch: str, family: str) -> None:
+    """Recover an exact plan stopped for revising the body of a still-authorised attachment."""
+    with ledger.coordinator_lock():
+        ledger.require_running()
+        commission = load_commission(ledger, batch)
+        revision, state, issue = family_status(ledger, batch, family)
+        runner = commission.session_runner(ledger, family, revision)
+        release = autonomous_realism.release_event(runner)
+        if (not ledger.requires_delivery_attestation or state != "design" or not issue
+                or issue["evidence"] != delivery_particulars.RETAINED_BODY_REPAIR_STOP
+                or not release or "incoming_particulars" not in release
+                or any(row["revision"] == revision and row["stage"] != "design" for row in ledger.attempts(family))):
+            raise ValueError("Only the exact stopped, un-authored delivery body repair can reopen.")
+        slot = next(row for row in commission.portfolio.slots if row.family_id == family)
+        parent = autonomous_realism._read_return(runner, slot, release)
+        plan, receipt, _ = runner.committed_result("design", repair_authority.PLAN_JOB, "audit", autonomous_realism.RepairPlan)
+        autonomous_realism._verify_classification(slot, parent, plan, attested=True)
+        _, affected = autonomous_realism._verify_plan(slot, parent, plan, attested=True)
+        particulars = parent.incoming_particulars
+        if particulars is None or not affected.intersection(particulars.source_ids()):
+            raise ValueError("The retained plan must revise at least one previously authorised attachment.")
+        ledger.event(batch, family, revision, "reconcile", "delivery_body_repair", state, state, {
+            "receipt_sha256": receipt["receipt_sha256"], "plan_sha256": authorisation.commitment(plan),
+            "particulars_sha256": authorisation.commitment(particulars), "affected_sources": sorted(affected),
+            "reference": "The same sender and transmission survive. The revised document needs a new sender attestation.",
+        })
+
+
 def release_returned_pre_author_plan(
     ledger: PooledLedger, batch: str, family: str, *,
     omit_reply_for: str | None = None, omit_future_reference: autonomous_realism.FutureReferenceOmission | None = None,

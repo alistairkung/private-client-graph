@@ -904,7 +904,7 @@ def _verify_plan(
     if not affected:
         raise RepairStopped("The repair proposes no change to any authored Source.")
     if parent.incoming_particulars is not None:
-        parent.incoming_particulars.require_unchanged_senders(design, affected)
+        parent.incoming_particulars.require_preserved_deliveries(old, design, affected)
     return design, affected
 
 

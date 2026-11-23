@@ -13,6 +13,9 @@ from benchmark_v3.research_contracts import Contract, Digest, Text
 from private_client_graph.models.source import Source
 
 
+RETAINED_BODY_REPAIR_STOP = "Receipt particulars require an affected recipient and the same unchanged prior deliveries."
+
+
 class ReceiptParticular(Contract):
     source_id: SourceId
     sender: Text
@@ -36,12 +39,19 @@ class IncomingParticulars(Contract):
                 "Each date records dispatch to you and delivery on that day. These particulars do not establish a "
                 "separate office receipt, filing, storage or register entry.\n" + rows)
 
-    def require_unchanged_senders(self, design: DesignOutput, affected: set[str]) -> None:
-        recipient = next(row for row in design.inventory if row.source_id == self.source_id)
+    def require_preserved_deliveries(self, original: DesignOutput, design: DesignOutput, affected: set[str]) -> None:
+        former = {row.source_id: row for row in original.inventory}
+        current = {row.source_id: row for row in design.inventory}
+        recipient = current[self.source_id]
         if (self.source_id not in affected or recipient.author != self.recipient_author
-                or recipient.created_on != self.recipient_on or recipient.received != self.source_ids()
-                or affected.intersection(self.source_ids())):
-            raise ValueError("Receipt particulars require an affected recipient and the same unchanged prior deliveries.")
+                or recipient.created_on != self.recipient_on or recipient.received != self.source_ids()):
+            raise ValueError("Receipt particulars must stay with the same recipient and ordered attachments.")
+        for record in self.records:
+            before = former[record.source_id]
+            after = current[record.source_id]
+            if (author_delivery._participant(before.author) != record.sender or before.created_on != record.sent_on
+                    or before.model_dump(exclude={"participant_brief"}) != after.model_dump(exclude={"participant_brief"})):
+                raise ValueError("Receipt particulars cannot survive a changed sending act or earlier dependency.")
 
 
 def reopen(runner: SessionRunner, recipient: str) -> IncomingParticulars:
