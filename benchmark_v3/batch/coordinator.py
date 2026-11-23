@@ -82,7 +82,11 @@ def run_batch(
                 raise ValueError("A milestone runs in its commissioned roadmap order.")
             if realism_amendment_reference is not None:
                 _record_realism_amendment(ledger, commission, realism_amendment_reference)
-            _run_roadmap(ledger, commission)
+            review = design_review.recorded_review(ledger, manifest, commission.decision.owner)
+            if manifest.requires_design_review and review is None:
+                _design_roadmap(ledger, commission)
+            else:
+                _run_roadmap(ledger, commission, review)
             return
         if realism_amendment_reference is not None:
             raise ValueError("The realism amendment applies only to the milestone roadmap.")
@@ -157,12 +161,24 @@ def roadmap_progress(ledger: Ledger, commission: Commission) -> RoadmapProgress:
         elif (_returned_realism(ledger, commission, family, revision, state)
               or state == "returned" and _can_repair(ledger, commission, family, revision)):
             progress.active.append(family)
-        elif blocking is None and state not in {"returned", "quarantined", "admitted"}:
+        elif blocking is None and state not in {"returned", "quarantined", "admitted", "pending_design_review"}:
             progress.active.append(family)
     return progress
 
 
-def _run_roadmap(ledger: Ledger, commission: Commission) -> None:
+def _design_roadmap(ledger: Ledger, commission: Commission) -> None:
+    manifest = commission.manifest
+    slots = {slot.family_id: slot for slot in commission.portfolio.slots}
+    families = [allocation.family_id for allocation in manifest.families]
+    _activate_roadmap_slots(ledger, commission, roadmap_progress(ledger, commission).reserve)
+    _reopen_redundant_snapshots(ledger, commission, slots)
+    with ThreadPoolExecutor(max_workers=manifest.max_parallel_families) as executor:
+        list(executor.map(
+            lambda family: _work_family(ledger, commission, slots[family], design_only=True), families,
+        ))
+
+
+def _run_roadmap(ledger: Ledger, commission: Commission, review: DesignReview | None = None) -> None:
     manifest = commission.manifest
     target = manifest.qualification_target
     assert target is not None
@@ -177,7 +193,10 @@ def _run_roadmap(ledger: Ledger, commission: Commission) -> None:
             needed = target - len(progress.qualified)
             open_workers = max(0, min(needed, manifest.max_parallel_families) - len(workers))
             in_progress = set(workers.values())
-            active = [family for family in progress.active if family not in in_progress]
+            active = [
+                family for family in progress.active
+                if family not in in_progress and (review is None or review.accepts(family))
+            ]
             new = progress.reserve[:max(0, open_workers - len(active))]
             _activate_roadmap_slots(ledger, commission, new)
             for family in (active + new)[:open_workers]:
@@ -343,7 +362,8 @@ def record_design_review(ledger: Ledger, review: DesignReview) -> None:
                 raise ValueError("The recorded owner design review is immutable.")
             return
         with ledger.transaction() as connection:
-            ledger._append(connection, review.batch_id, None, 0, "design_review", "owner", None, None,
+            ledger._append(connection, review.batch_id, None, 0, "design_review",
+                           "owner_scope" if commission.manifest.phase == "milestone" else "owner", None, None,
                            review.model_dump(mode="json"))
             for row in review.designs:
                 if row.disposition == "return":
@@ -432,6 +452,8 @@ def family_status(ledger: Ledger, batch_id: str, family: str) -> tuple[int, str,
             blocking = None
             if record["kind"] == "reconcile" and record["name"] == repair_authority.PLAN_RECOVERY:
                 state = "design"
+            if record["kind"] == "reconcile" and record["name"].startswith("construction-followup"):
+                state = record["next"] or state
     return revision, state, blocking
 
 

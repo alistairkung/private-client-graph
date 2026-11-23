@@ -1,5 +1,7 @@
 # Benchmark v3 continuation scope
 
+The owner later approved this exact release. [Execution outcome and review index](CONTINUATION-RESULTS.md).
+
 **Five of eight independent development families are admitted.** A, B, C,
 D and F account for 12 admitted conditions. The current milestone has 100
 charged sessions on its approved ceiling of 169. Each reservation has a

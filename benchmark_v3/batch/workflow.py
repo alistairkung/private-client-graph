@@ -11,7 +11,8 @@ from pydantic import BaseModel
 from benchmark_v3 import commissioning, packet, replay
 from benchmark_v3.batch import (
     adjudication_contract, adjudication_recovery, annotation_recovery, artifacts, audit_contract, audit_recovery,
-    autonomous_realism, construction, continuation, design_recovery, evidence_recovery, milestone_repair, repair_authority, science,
+    autonomous_realism, construction, continuation, design_recovery, design_review, evidence_recovery,
+    milestone_repair, repair_authority, science,
 )
 from benchmark_v3.batch.contracts import (
     Adjudication, AuditReview, AuthoredSource, Code, DesignOutput, Reading, RealismReview,
@@ -189,7 +190,21 @@ class FamilyWorkflow:
             science.verify_design(self.slot, design)
         artifacts.write_json(self.directory / "design.json", design.model_dump(mode="json"))
         self.advance("author", {"design": design.model_dump(mode="json")}, gate="approved scope and dated inventory")
+        if self.runner.manifest.phase == "milestone" and self.runner.revision == 1:
+            return self._reviewed_design(design)
         return design
+
+    def _reviewed_design(self, design: DesignOutput) -> DesignOutput:
+        review = design_review.recorded_review(self.runner.ledger, self.runner.manifest, self.runner.owner)
+        correction = next((row.name_correction for row in review.designs
+                           if row.family_id == self.slot.family_id), None) if review else None
+        if correction is None:
+            return design
+        revised = design_review.apply_name_correction(design, correction)
+        self.transition_inputs["design_review_derivative"] = artifacts.write_json(
+            self.directory / "reviewed-design.json", revised.model_dump(mode="json"),
+        )
+        return revised
 
     def _check_design_capacity(self, design: DesignOutput) -> None:
         revision = self.documentary_revision

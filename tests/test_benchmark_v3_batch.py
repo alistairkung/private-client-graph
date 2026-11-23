@@ -19,7 +19,7 @@ from benchmark_v3.batch import (
 )
 from benchmark_v3.batch.contracts import (
     AdjudicationQuoteRecovery, AdmissionDecisions, AnnotationRecovery, AuditReview, AuditRecovery, AuthoredSource, BatchDecision,
-    BatchManifest, BudgetAmendment,
+    BatchManifest, BudgetAmendment, ConstructionFollowup, ConstructionJob, ConstructionRepairSlots,
     DeferredExceptionReview, DesignOutput, DesignReview, FamilyContinuation, MilestoneEvidenceRepair, MilestoneRealismRepair,
     PilotDecision, SourceCutoffRecovery,
 )
@@ -1000,6 +1000,103 @@ def test_construction_repair_preserves_original_limits_and_charges(approved, tmp
         ledger.reserve("G", 3, "another-cycle", "author", request, digest)
 
 
+def test_construction_followup_reconciles_exact_history_and_enforces_roster(approved, tmp_path):
+    ledger, commission, _ = _approved_construction(approved, tmp_path)
+    coordinator.commission_batch(ledger, commission, BOUNDARY)
+    manifest = commission.manifest
+    batch = manifest.batch_id
+    request = {"role": "adjudication"}
+    digest = commissioning.digest(commissioning.json_text(request).encode())
+    ledger.reserve("G", 1, "prior-review", "adjudicate", request, digest)
+    ledger.event(batch, "G", 1, "session", "prior-review", "adjudicate", "adjudicate", {
+        "status": "completed", "receipt_sha256": "d" * 64,
+    })
+    ledger.event(batch, "G", 1, "operator_close", "quarantine", "adjudicate", "quarantined", {})
+    approved_design = manifest.families[0].approved_design
+    assert approved_design is not None
+    grant = ConstructionFollowup(
+        schema_version=1, batch_id=batch, manifest_sha256=authorisation.commitment(manifest),
+        design_sha256=approved_design.design_sha256, owner=OWNER, decision_reference="Exact test release.",
+        family_id="G", prior_revision=1, revision=1, resume_stage="adjudicate",
+        historical_charges=1, additional_sessions=2, parent_receipt_sha256="d" * 64, scope_sha256="e" * 64,
+        jobs={
+            "review-again": ConstructionJob(stage="adjudicate", role="adjudication"),
+            "audit": ConstructionJob(stage="audit", role="audit"),
+        },
+    )
+    with pytest.raises(ValueError, match="exact historical"):
+        ledger.record_construction_followup(manifest, grant.model_copy(update={"historical_charges": 2}))
+    ledger.record_construction_followup(manifest, grant)
+    ledger.record_construction_followup(manifest, grant)
+    with pytest.raises(ValueError, match="immutable"):
+        ledger.record_construction_followup(manifest, grant.model_copy(update={"scope_sha256": "a" * 64}))
+    assert ledger.ceilings("G") == (3, 37)
+    assert coordinator.family_status(ledger, batch, "G") == (1, "adjudicate", None)
+    assert not ledger.reserve("G", 1, "prior-review", "adjudicate", request, digest)
+    with pytest.raises(ValueError, match="exact released job"):
+        ledger.reserve("G", 1, "unapproved", "adjudicate", request, digest)
+    with pytest.raises(ValueError, match="exact released job"):
+        ledger.reserve("G", 1, "audit", "audit", request, digest)
+    with pytest.raises(ValueError, match="active revision and stage"):
+        ledger.reserve("G", 1, "audit", "audit", {"role": "audit"}, digest)
+    assert ledger.reserve("G", 1, "review-again", "adjudicate", request, digest)
+    assert [row["job"] for row in ledger.attempts("G")] == ["prior-review", "review-again"]
+
+
+def test_construction_repair_uses_only_unreserved_contingency_after_exact_scope_return(approved, tmp_path):
+    ledger, commission, _ = _approved_construction(approved, tmp_path)
+    coordinator.commission_batch(ledger, commission, BOUNDARY)
+    manifest = commission.manifest
+    batch = manifest.batch_id
+    approved_design = manifest.families[0].approved_design
+    assert approved_design is not None
+    ledger.reserve("G", 1, "prior-realism", "realism", {"role": "realism"}, "prior-request")
+    ledger.event(batch, "G", 1, "session", "prior-realism", "realism", "realism", {
+        "status": "completed", "receipt_sha256": "a" * 64,
+    })
+    ledger.event(batch, "G", 1, "operator_close", "quarantine", "realism", "quarantined", {})
+    grant = ConstructionFollowup(
+        schema_version=1, batch_id=batch, manifest_sha256=authorisation.commitment(manifest),
+        design_sha256=approved_design.design_sha256, owner=OWNER, decision_reference="Fixture documentary reserve.",
+        family_id="G", prior_revision=1, revision=2, resume_stage="design", historical_charges=1, additional_sessions=3,
+        parent_receipt_sha256="a" * 64, scope_sha256="b" * 64, jobs={
+            "scope-review": ConstructionJob(stage="author", role="audit"),
+            "mask-000": ConstructionJob(stage="masks", role="masked"),
+            "mask-001": ConstructionJob(stage="masks", role="masked"),
+        },
+    )
+    ledger.record_construction_followup(manifest, grant)
+    ledger.event(batch, "G", 2, "transition", "design", "design", "author", {})
+    assert ledger.reserve("G", 2, "scope-review", "author", {"role": "audit"}, "scope-request")
+    ledger.event(batch, "G", 2, "session", "scope-review", "author", "author", {
+        "status": "completed", "receipt_sha256": "c" * 64,
+    })
+    repair = ConstructionRepairSlots(
+        schema_version=1, family_id="G", grant_sha256=authorisation.commitment(grant), scope_sha256="d" * 64,
+        review_job="scope-review", review_receipt_sha256="c" * 64, unused_masks=["mask-000", "mask-001"],
+        repair_jobs={"author-repair": ConstructionJob(stage="author", role="author"),
+                     "scope-recheck": ConstructionJob(stage="author", role="audit")},
+    )
+    with pytest.raises(ValueError, match="exact independent scope return"):
+        ledger.reserve_construction_repair_slots(repair)
+    ledger.event(batch, "G", 2, "disposition", "author", "author", "quarantined", {})
+    with pytest.raises(ValueError, match="exact independent scope return"):
+        ledger.reserve_construction_repair_slots(repair.model_copy(update={"review_receipt_sha256": "f" * 64}))
+    with pytest.raises(ValueError, match="unreserved contingent"):
+        ledger.reserve_construction_repair_slots(repair.model_copy(update={"unused_masks": ["mask-001", "mask-002"]}))
+    ledger.reserve_construction_repair_slots(repair)
+    ledger.reserve_construction_repair_slots(repair)
+    assert coordinator.family_status(ledger, batch, "G") == (2, "author", None)
+    assert ledger.construction_followup("G") == grant
+    assert set(ledger.construction_jobs(grant)) == {"author-repair", "scope-recheck", "scope-review"}
+    assert ledger.ceilings("G") == (4, 37)
+    with pytest.raises(ValueError, match="exact released job"):
+        ledger.reserve("G", 2, "mask-001", "masks", {"role": "masked"}, "removed-contingency")
+    assert ledger.reserve("G", 2, "author-repair", "author", {"role": "author"}, "repaired-source")
+    assert ledger.reserve("G", 2, "scope-recheck", "author", {"role": "audit"}, "independent-check")
+    assert len(ledger.attempts("G")) == 4
+
+
 @pytest.fixture
 def annotation_exception(design_gated, transport, request):
     ledger, commission = design_gated
@@ -1619,6 +1716,54 @@ def test_milestone_activates_replacement_and_counts_only_verified_dossiers(miles
     with pytest.raises(ValueError, match="dossier digest changed"):
         coordinator.run_batch(ledger, batch)
     assert len(calls) == count
+
+
+def test_design_gated_milestone_contains_a_failed_design_and_uses_reviewed_author_identity(milestone, transport):
+    ledger, base = milestone
+    manifest = base.manifest.model_copy(update={"schema_version": 2})
+    commission = coordinator.Commission(base.portfolio, manifest, _approval(base.portfolio, manifest))
+    batch = manifest.batch_id
+    calls, behavior, _ = transport
+
+    def design_with_reporting_author(_):
+        original = DesignOutput.model_validate(_design("H"))
+        data = original.model_dump(mode="json")
+        data["inventory"][0]["author"] = "Clara Wilder"
+        data["private_history"] = "Clara Wilder kept the original intake note."
+        return data
+
+    behavior["G", "design"] = lambda _: _design("G") | {"sections": {"one": ["src1"], "two": ["src2"]}}
+    behavior["H", "design"] = design_with_reporting_author
+    coordinator.commission_batch(ledger, commission, BOUNDARY)
+    coordinator.run_batch(ledger, batch)
+    assert set((family, job) for family, _, job, _ in calls) == {(family, "design") for family in "GHIJ"}
+    assert coordinator.family_status(ledger, batch, "G")[2]["code"] == "budget"
+    review = _design_approval(ledger, commission)
+    assert {row.family_id for row in review.designs} == set("HIJ")
+
+    original = DesignOutput.model_validate(design_with_reporting_author(None))
+    revised = DesignOutput.model_validate_json(original.model_dump_json().replace("Clara Wilder", "Nina Lake"))
+    rows = []
+    for row in review.designs:
+        data = row.model_dump(mode="json")
+        if row.family_id == "H":
+            data |= {"reason": "Avoid cross-family reporting name collision.", "name_correction": {
+                "source_id": original.inventory[0].source_id, "before": "Clara Wilder", "after": "Nina Lake",
+                "revised_design_sha256": authorisation.commitment(revised),
+            }}
+        if row.family_id == "J":
+            data |= {"disposition": "return", "reason": "Out of design scope."}
+        rows.append(data)
+    selected = DesignReview.model_validate(review.model_dump(mode="json") | {"schema_version": 2, "designs": rows})
+    coordinator.record_design_review(ledger, selected)
+    coordinator.run_batch(ledger, batch)
+    assert coordinator.roadmap_progress(ledger, commission).qualified == ["H", "I"]
+    assert len(ledger.attempts("G")) == len(ledger.attempts("J")) == 1
+    runner = commission.session_runner(ledger, "H", 1)
+    assert artifacts.read_contract(runner.directory / "design.json", DesignOutput) == original
+    assert artifacts.read_contract(runner.directory / "reviewed-design.json", DesignOutput) == revised
+    _, _, request = runner.committed_packet("author", f"author-{original.inventory[0].source_id}", "author")
+    assert json.loads(request["inputs"]["author_brief"])["participant"] == "Nina Lake"
 
 
 def test_milestone_checks_real_section_cost_before_authoring(milestone, transport):

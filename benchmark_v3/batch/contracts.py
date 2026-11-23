@@ -60,7 +60,7 @@ class FamilyAllocation(Contract):
 
 
 class BatchManifest(Contract):
-    schema_version: Literal[1, 2] = Field(description="Schema 2 requires a batch-wide human design review.")
+    schema_version: Literal[1, 2] = Field(description="Schema 2 requires a batch-wide design review.")
     task_id: Slug
     batch_id: Slug
     namespace: Literal["development"]
@@ -91,8 +91,7 @@ class BatchManifest(Contract):
         if self.phase == "pilot" and len(families) != 3:
             raise ValueError("An efficiency pilot requires exactly three distinct families.")
         if self.phase == "milestone":
-            if (self.requires_design_review or self.qualification_target is None
-                    or self.qualification_target > len(families)):
+            if self.qualification_target is None or self.qualification_target > len(families):
                 raise ValueError("A milestone needs a qualification target within the commissioned roadmap.")
         elif self.qualification_target is not None:
             raise ValueError("Only a milestone can set a technical qualification target.")
@@ -122,14 +121,24 @@ class DesignCommitment(Contract):
     design_sha256: Digest
 
 
+class DesignNameCorrection(Contract):
+    source_id: SourceId
+    before: Text
+    after: Text
+    revised_design_sha256: Digest
+
+
 class DesignDisposition(DesignCommitment):
     disposition: Literal["accept", "return"] = "accept"
     reason: Text | None = None
+    name_correction: DesignNameCorrection | None = Field(default=None, exclude_if=lambda value: value is None)
 
     @model_validator(mode="after")
     def verify_return_reason(self) -> Self:
         if self.disposition == "return" and self.reason is None:
             raise ValueError("A returned design requires the owner's reason.")
+        if self.name_correction and (self.disposition != "accept" or not self.reason):
+            raise ValueError("Supply the documented reason for an accepted name correction.")
         return self
 
 
@@ -288,6 +297,57 @@ class MilestoneEvidenceRepair(Contract):
     audit_output_sha256: Digest
     invariant_edge: SemanticEdge
     scope_reference: Text
+
+
+class ConstructionJob(Contract):
+    stage: Stage
+    role: Role
+
+
+class ConstructionFollowup(Contract):
+    schema_version: Literal[1]
+    batch_id: Slug
+    manifest_sha256: Digest
+    design_sha256: Digest
+    owner: Text
+    decision_reference: Text
+    family_id: FamilyId
+    prior_revision: Count
+    revision: Count
+    resume_stage: Literal["adjudicate", "design"]
+    historical_charges: Count
+    additional_sessions: Count
+    parent_receipt_sha256: Digest
+    scope_sha256: Digest
+    jobs: Annotated[dict[SourceId, ConstructionJob], Field(min_length=1)]
+
+    @model_validator(mode="after")
+    def verify_scope(self) -> Self:
+        if (self.revision != self.prior_revision + (self.resume_stage == "design")
+                or len(self.jobs) != self.additional_sessions
+                or any(job.role == "designer" for job in self.jobs.values())):
+            raise ValueError("Follow-up authority requires an exact job allocation and revision.")
+        return self
+
+
+class ConstructionRepairSlots(Contract):
+    schema_version: Literal[1]
+    family_id: FamilyId
+    grant_sha256: Digest
+    scope_sha256: Digest
+    review_job: SourceId
+    review_receipt_sha256: Digest
+    unused_masks: Annotated[list[SourceId], Field(min_length=2, max_length=2)]
+    repair_jobs: Annotated[dict[SourceId, ConstructionJob], Field(min_length=2, max_length=2)]
+
+    @model_validator(mode="after")
+    def verify_slots(self) -> Self:
+        if (len(set(self.unused_masks)) != len(self.unused_masks)
+                or any(not job.startswith("mask-") for job in self.unused_masks)
+                or {job.stage for job in self.repair_jobs.values()} != {"author"}
+                or {job.role for job in self.repair_jobs.values()} != {"author", "audit"}):
+            raise ValueError("Allocate unused contingency to one dependent author and one independent verifier.")
+        return self
 
 
 class ConstructionRepairDecision(Contract):

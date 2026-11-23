@@ -77,11 +77,16 @@ class SessionRunner:
         validate: Callable[[_T], None] | None = None,
     ) -> tuple[_T, dict[str, Any]]:
         recovery = repair_authority.enabled(self.ledger, self.manifest)
+        followup = (
+            self.ledger.construction_followup(self.family) if self.manifest.phase == "construction" else None
+        )
+        unwrap = recovery or followup is not None
+        fresh_retry_allowed = recovery and not (role == "designer" and self.manifest.requires_design_review)
         retry = job + repair_authority.FORMAT_RETRY
         retry_instructions = instructions if role == "designer" else (
             instructions + " Return only the exact requested JSON object."
         )
-        choice = self._selection(job) if recovery else None
+        choice = self._selection(job) if unwrap else None
         if choice and choice["selected_job"] == retry:
             result, receipt, unwrapped = self._run_one(
                 stage, retry, role, inputs, retry_instructions, result_type, output_schema=output_schema,
@@ -92,10 +97,10 @@ class SessionRunner:
         try:
             result, receipt, unwrapped = self._run_one(
                 stage, job, role, inputs, instructions, result_type, output_schema=output_schema,
-                validate=validate, recovery=recovery,
+                validate=validate, recovery=unwrap,
             )
         except InvalidRoleOutput as error:
-            if not recovery:
+            if not fresh_retry_allowed:
                 raise
             result, receipt, unwrapped = self._run_one(
                 stage, retry, role, inputs, retry_instructions,
@@ -171,6 +176,8 @@ class SessionRunner:
         if released_job and role == "adjudication" and job != released_job:
             raise ValueError("Only one fresh adjudication job is authorised.")
         audit_release = audit_recovery.recorded(self)
+        followup = (self.ledger.construction_followup(self.family)
+                    if self.manifest.phase == "construction" else None)
         if role == "audit":
             base_job = job.removesuffix(repair_authority.FORMAT_RETRY) if recovery else job
             permitted = base_job == (audit_recovery.JOB if audit_release else "audit")
@@ -183,13 +190,16 @@ class SessionRunner:
                     and row["name"] == repair_authority.REVISION
                     for row in self.ledger.events(self.manifest.batch_id, self.family)
                 )
+            followup_job = self.ledger.construction_jobs(followup).get(job) if followup else None
+            if followup_job is not None and followup_job.stage == stage and followup_job.role == role:
+                permitted = True
             if not permitted:
                 raise ValueError("Only the authorised audit or repair job may be reserved.")
         if role == "masked" and audit_release:
             authorised_jobs = {f"mask-{index:03}" for index in range(len(audit_release.views))}
             if job not in authorised_jobs:
                 raise ValueError("The mask job is outside the authorised audit recovery plan.")
-        active_only = release is not None or self.manifest.phase == "milestone"
+        active_only = release is not None or self.manifest.phase == "milestone" or followup is not None
         fresh = self.ledger.reserve(
             self.family, self.revision, job, stage, request,
             commissioning.digest(commissioning.json_text(request).encode()),

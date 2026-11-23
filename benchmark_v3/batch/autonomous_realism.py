@@ -7,7 +7,7 @@ from typing import Any, Literal
 from pydantic import TypeAdapter
 
 from benchmark_v3 import commissioning, packet
-from benchmark_v3.batch import artifacts, authorisation, repair_authority, science
+from benchmark_v3.batch import artifacts, authorisation, design_review, repair_authority, science
 from benchmark_v3.batch.contracts import DesignOutput, MatchedCondition, RealismReview, SourceId
 from benchmark_v3.batch.ledger import BudgetExhausted
 from benchmark_v3.batch.sessions import SessionRunner
@@ -234,8 +234,11 @@ def _read_return(runner: SessionRunner, slot: FamilySlot, release: dict[str, Any
     if reviews != commissioning._read_json(disposition["details"]["evidence"]) or not objections:
         raise ValueError("The realism responses differ from the returned disposition.")
     natural = supplied[science.condition_ids(slot)[0]]
-    bundles, freeze = science.freeze_bundles(slot, design, natural)
     authored = next(row for row in events if row["kind"] == "transition" and row["name"] == "author")
+    reviewed_design = authored["details"]["inputs"].get("design_review_derivative")
+    if reviewed_design is not None:
+        design = design_review.verified_authoring_design(previous, design, reviewed_design)
+    bundles, freeze = science.freeze_bundles(slot, design, natural)
     expected = commissioning.digest(commissioning.json_text(
         [source.model_dump(mode="json") for source in natural],
     ).encode())

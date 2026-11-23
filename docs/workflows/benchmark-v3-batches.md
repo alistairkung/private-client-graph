@@ -72,17 +72,24 @@ the pilot changes hypotheses, resource assumptions or other scientific inputs.
 | Technical replay | Schema v4 manifest, protected canonical graph and scorer, quote and Source attribution checks, exact sufficient sets and zero paid provider attempts |
 | Admission package | Family dossier, retained replay and exact file commitments |
 
-A schema 2 batch manifest requires a batch-wide human design review.
-The initial `run` advances each eligible family through design only.
-`designs CUSTODY BATCH` prints the exact manifest and design digests
-when every design has committed. The commissioning owner reviews the
-private designs and records a disposition on the complete digest set.
+A schema 2 batch manifest requires a batch-wide design review.
+The initial `run` advances each commissioned family through design only.
+`designs CUSTODY BATCH` prints the exact manifest and design digests.
+A milestone can review its completed designs once each remaining design
+has a retained family-scoped failure. The commissioning owner may
+explicitly delegate provisional design dispositions to the custodian.
+Record that authority in the decision reference. Human admission remains
+a separate decision.
 Design review schema 2 requires each entry to specify `accept` or `return`, with a reason required for
 a return. A returned family stays at `pending_design_review` and cannot
 reserve downstream packets. Record the dated decision with `review-designs CUSTODY DECISION`, using
 `schema design-review` for the contract. Then resume with `run`. The
 coordinator rechecks the design files and the session runner verifies
-the decision before downstream reservations and submissions. A schema 1
+the decision before downstream reservations and submissions. A reviewed
+milestone design can include a digest-bound correction of a fictional
+author name in that Source brief and the private history. Authoring binds
+the derivative and subsequent realism repairs verify its lineage. The
+original design and receipt remain available for review. A schema 1
 manifest retains its original execution behavior.
 
 If an initial design is blocked because its file cut-off predates a
@@ -118,6 +125,20 @@ no expected answers. The existing v2 quotation, Source-attribution and
 same-edge sufficient-set policies also apply during replay.
 
 ## Cost, interruption and exceptions
+
+A separately authorised construction follow-up is recorded in the
+original construction ledger. Its grant binds the owner, exact approved
+design, prior quarantine, completed receipt, prior charge count and new
+job roster. Each new reservation must match the authorised revision,
+stage and role. The roster and incremental ceiling keep charges within
+the release. Earlier attempts remain available for exact receipt reuse.
+A same-revision continuation preserves the frozen conditions. Reopening
+a documentary return starts a new revision with fresh dependent reviews.
+Before freeze, a new immutable documentary commitment can exchange two
+unused contingent check slots for one dependent author and one fresh
+independent scope review. The exchange binds the exact returned review
+and preserves the ceiling. If the final audit requires checks beyond the
+retained capacity, stop before masks.
 
 A SQLite transaction reserves one session before packet dispatch. Every
 reservation uses one family slot and one task slot. Failed, interrupted,

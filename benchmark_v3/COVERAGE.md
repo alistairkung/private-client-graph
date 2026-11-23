@@ -139,8 +139,8 @@ No verified findings recorded.
 | `executed-version-record@1` · Execution status among retained counterparts | N | approved | `e6aa572b315905421af40e9b8cf5fd698dcc9ac41dbac955ffcb75476a37f9d3` |
 | `land-register-lag-invariance@1` · Title-application progress with trustee office fixed | O | approved | `e9a85561cbd07eaf097bf5bff337d61fa684a8728e5cb4f359a02ce17c2274fa` |
 | `typed-event-chronology@1` · Event date versus report date | R | approved | `e59adeaeafe55ecc6bf6567932e8d58e6cc11faeb18f35359803818308c2548e` |
-| `restatement-schedule-scope@1` · Carry-forward across instrument generations | Q | proposed | `b5046dc1860b9735a22a323780c982ac143cb74b5284dec4d957190d8c424888` |
-| `named-scope-capacity@1` · Scoped adoption and concurrent roles | S | proposed | `888372b762667bab8ffd03519f92405dd246118df8806798244fb69abf6e3263` |
+| `restatement-schedule-scope@1` · Carry-forward across instrument generations | Q | approved | `b5046dc1860b9735a22a323780c982ac143cb74b5284dec4d957190d8c424888` |
+| `named-scope-capacity@1` · Scoped adoption and concurrent roles | S | approved | `888372b762667bab8ffd03519f92405dd246118df8806798244fb69abf6e3263` |
 | `administrative-estate-load@1` · Completeness in an administrative handover | U | proposed | `55e95c4e91d4a99cabbc0c03f4c9831fc0054b0df045983be5ae1af3ace18b90` |
 | `longitudinal-cross-section-reconstruction@1` · Longitudinal cross-section reconstruction | V | proposed | `925b5fdd603297092c963366da245eea3f95c8d0e4a6804cceff9ae57655156d` |
 | `independent-documentary-disagreement@1` · Independent handover accounts of current trustee office | W | proposed | `ac18d1c2ef9f3f72b0544a4ddf1d62e7af230be3375dab180f28306bc06352ed` |
