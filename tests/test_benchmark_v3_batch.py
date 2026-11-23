@@ -2942,6 +2942,79 @@ def test_shared_isolation_restart_carries_closed_charges_into_fresh_custody(appr
         expanded.check_running()
 
 
+def test_giant_phase_preserves_unused_budget_and_gates_the_exact_next_workload(approved, tmp_path, monkeypatch):
+    import sqlite3
+    from types import SimpleNamespace
+
+    from benchmark_v3.batch.pool import GiantPhaseRelease
+
+    ledger, commission = approved
+    manifest = commission.manifest
+    coordinator.commission_batch(ledger, commission, BOUNDARY)
+    predecessor = MilestonePool(tmp_path / "pre-giant", PoolAuthority(
+        owner=OWNER, reference="Fixture pre-giant scope.", prior_archive_sha256="a" * 64,
+        starting_charges=300, cumulative_ceiling=1000, additional_target=1, excluded_families=("V", "Z"),
+        members=[CustodyMember(root=str(ledger.root), task_id=manifest.task_id, starting_charges=0)],
+    ))
+    dossier = {"family": "G", "revision": 1, "dossier_sha256": "1" * 64, "custody": str(ledger.root)}
+    closed = {"cumulative_charges": 300, "remaining": 700, "unresolved_reservations": [],
+              "shared_halts": [], "number_qualified": 19, "added_technical_dossiers": [dossier],
+              "qualified_coverage": [{"family_id": name} for name in "ABCDEFGHIJKLMNOPQRS"]}
+    accounting_hash = artifacts.write_json(predecessor.root / "final-accounting.json", closed)
+    budget_hash = artifacts.write_json(predecessor.root / "giant-phase-authorisation.json", {
+        "predecessor_pool_sha256": predecessor.digest, "additional_sessions": 2000, "combined_cumulative_ceiling": 3000,
+    })
+    slot = {"family_id": "V", "tier": "giant", "expected_sources": 100, "hypothesis": {"hypothesis_sha256": "d" * 64}}
+    artifacts.write_json(commissioning._ROOT / "planning/development-20/portfolio.json", {"slots": [slot]})
+    release = GiantPhaseRelease(authorisation_sha256=budget_hash, expected_sources=slot["expected_sources"],
+                                hypothesis_sha256=slot["hypothesis"]["hypothesis_sha256"])
+    authority = PoolAuthority(
+        owner=OWNER, reference="Fixture giant phase after qualified development.", prior_archive_sha256="b" * 64,
+        starting_charges=300, cumulative_ceiling=3000, additional_target=1, excluded_families=("Z",), members=[],
+        predecessor_sha256=predecessor.digest, budget_extension=BudgetExtension(
+            previous_database_sha256=commissioning.digest(predecessor.path.read_bytes()),
+            previous_accounting_sha256=accounting_hash, additional_sessions=2000, giant_phase=release,
+        ),
+    )
+    monkeypatch.setattr(type(predecessor), "isolation_guard",
+                        property(lambda _: SimpleNamespace(require_delivery_attestation=True)))
+    with pytest.raises(ValueError, match="19 distinct verified non-giant"):
+        MilestonePool(tmp_path / "invalid-count", authority, predecessor=predecessor)
+    with closing(sqlite3.connect(predecessor.path)) as database, database:
+        database.execute("INSERT INTO qualified VALUES (?, ?, ?, ?)",
+                         (dossier["family"], dossier["dossier_sha256"], dossier["custody"], dossier["revision"]))
+    budget = authority.budget_extension.model_copy(update={
+        "previous_database_sha256": commissioning.digest(predecessor.path.read_bytes()),
+    })
+    authority = authority.model_copy(update={"budget_extension": budget})
+    monkeypatch.setattr(predecessor, "_verified_workload", lambda _minimum, _maximum: False)
+    with pytest.raises(ValueError, match="verified large development dossier"):
+        MilestonePool(tmp_path / "invalid-large", authority, predecessor=predecessor)
+    with pytest.raises(ValueError, match="one reserved slot and its exact cumulative ceiling"):
+        MilestonePool(tmp_path / "invalid-unused", authority.model_copy(update={"cumulative_ceiling": 2300}),
+                      predecessor=predecessor)
+    wrong_release = release.model_copy(update={"hypothesis_sha256": "c" * 64})
+    wrong_budget = authority.budget_extension.model_copy(update={"giant_phase": wrong_release})
+    with pytest.raises(ValueError, match="existing registered V workload"):
+        MilestonePool(tmp_path / "invalid-hypothesis", authority.model_copy(update={"budget_extension": wrong_budget}),
+                      predecessor=predecessor)
+    monkeypatch.setattr(predecessor, "_verified_workload", lambda minimum, maximum: (minimum, maximum) == (51, 99))
+    entered = MilestonePool(tmp_path / "giant", authority, predecessor=predecessor)
+    with closing(sqlite3.connect(entered.path)) as database:
+        assert entered.remaining(database, attached=False) == 2700
+    assert entered.members == {} and entered.serial_scientific_dispatch()
+    assert entered.verified_dispatch_slots() == 1
+    with pytest.raises(TaskHalted, match="superseded"):
+        predecessor.check_running()
+    replacement = coordinator.open_ledger(tmp_path / "unrelated-family")
+    replacement_manifest = manifest.model_copy(update={"task_id": "unrelated-task", "batch_id": "unrelated-batch"})
+    coordinator.commission_batch(replacement, coordinator.Commission(
+        commission.portfolio, replacement_manifest, _approval(commission.portfolio, replacement_manifest),
+    ), BOUNDARY)
+    with pytest.raises(ValueError, match="Only the exact registered giant"):
+        entered.enrol(replacement, replacement_manifest, reference="Outside the dedicated phase.")
+
+
 def test_pre_author_return_repairs_only_a_committed_brief(approved, transport, monkeypatch):
     from benchmark_v3.batch import author_context, author_repair
 
@@ -3565,7 +3638,7 @@ def test_word_preserving_blind_quote_recovery_uses_the_retained_reader(autonomou
         read_format_recovery.exact_whitespace_span("a  a", "a a a")
 
 
-@pytest.mark.parametrize("disposition", ["repair", "quarantine", "followup", "returned_layout",
+@pytest.mark.parametrize("disposition", ["repair", "return", "quarantine", "followup", "returned_layout",
                                         "accepted_layout", "missing_critical"])
 def test_frozen_evidence_review_reuses_sources_and_blind_receipts_without_cueing_the_new_key(
     approved, transport, tmp_path, monkeypatch, disposition,
@@ -3615,7 +3688,7 @@ def test_frozen_evidence_review_reuses_sources_and_blind_receipts_without_cueing
 
     def original_audit(inputs):
         audit = _output("audit", family, "", inputs)
-        audit.update(verdict="quarantine" if disposition == "quarantine" else "repair", objections=[objection])
+        audit.update(verdict=disposition if disposition in {"quarantine", "return"} else "repair", objections=[objection])
         if disposition.endswith("_layout") or disposition == "missing_critical":
             audit["shortcuts"] = {"cross-condition": "Check scope."}
         if disposition == "accepted_layout":

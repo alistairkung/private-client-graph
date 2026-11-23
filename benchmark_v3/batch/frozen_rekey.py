@@ -91,7 +91,8 @@ def _reopen(prior: SessionRunner, slot: FamilySlot, record: FrozenEvidenceReview
                                   for condition, sources in bundles.items())):
         raise ValueError("Evidence review requires every exact locked condition.")
     audit, receipt, request = _read_audit(prior)
-    if (audit.verdict != "repair" or not audit.objections or receipt["receipt_sha256"] != record.audit_receipt_sha256
+    if (audit.verdict not in {"repair", "return"} or not audit.objections
+            or receipt["receipt_sha256"] != record.audit_receipt_sha256
             or commissioning._read_json(request["inputs"]["paired_bundles"]) != {
                 condition: commissioning._read_json(_source_text(sources)) for condition, sources in bundles.items()
             }):

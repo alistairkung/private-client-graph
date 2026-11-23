@@ -67,10 +67,17 @@ class IsolationRestart(Contract):
     require_delivery_attestation: bool = False
 
 
+class GiantPhaseRelease(Contract):
+    authorisation_sha256: Digest
+    hypothesis_sha256: Digest
+    expected_sources: Annotated[int, Field(strict=True, ge=100)]
+
+
 class BudgetExtension(Contract):
     previous_database_sha256: Digest
     previous_accounting_sha256: Digest
     additional_sessions: Annotated[int, Field(strict=True, gt=0)]
+    giant_phase: GiantPhaseRelease | None = None
 
 
 class PoolAuthority(Contract):
@@ -94,7 +101,7 @@ class MilestonePool:
         self.authority = authority
         self.predecessor = predecessor
         if (not authority.starting_charges < authority.cumulative_ceiling
-                or (not authority.members and authority.isolation_restart is None)
+                or (not authority.members and authority.isolation_restart is None and self.giant_phase is None)
                 or (authority.isolation_restart is not None and authority.budget_extension is not None)):
             raise ValueError("Milestone pool needs a bounded positive continuation and qualification target.")
         paths = [Path(member.root) for member in authority.members]
@@ -143,6 +150,8 @@ class MilestonePool:
                 return
             if authority.budget_extension is not None:
                 self._verify_budget_extension(previous, remaining, count)
+                if self.giant_phase is not None:
+                    return
             elif (authority.starting_charges != authority.cumulative_ceiling - remaining
                   or count != previous.authority.additional_target):
                 raise ValueError("The predecessor must be at its verified target with its exact charges retained.")
@@ -155,9 +164,6 @@ class MilestonePool:
         starting = previous.authority.cumulative_ceiling - remaining
         accounting = artifacts.read_bytes(previous.root / "final-accounting.json")
         if (remaining < 0 or authority.starting_charges != starting
-                or authority.cumulative_ceiling != starting + extension.additional_sessions
-                or authority.additional_target != previous.authority.additional_target - count
-                or authority.excluded_families != previous.authority.excluded_families
                 or commissioning.digest(accounting) != extension.previous_accounting_sha256
                 or commissioning.digest(artifacts.read_bytes(previous.path)) != extension.previous_database_sha256):
             raise ValueError("An extension must preserve the exact closeout, exclusions, charges and outstanding target.")
@@ -165,6 +171,54 @@ class MilestonePool:
         if (closed.get("cumulative_charges") != starting or closed.get("remaining") != remaining
                 or closed.get("unresolved_reservations") != [] or closed.get("shared_halts") != []):
             raise ValueError("A budget extension requires a completed scientific accounting closeout.")
+        if extension.giant_phase is not None:
+            self._verify_giant_phase(previous, closed, count, extension)
+        elif (authority.cumulative_ceiling != starting + extension.additional_sessions
+              or authority.additional_target != previous.authority.additional_target - count
+              or authority.excluded_families != previous.authority.excluded_families):
+            raise ValueError("An extension must preserve the exact closeout, exclusions, charges and outstanding target.")
+
+    @property
+    def giant_phase(self) -> GiantPhaseRelease | None:
+        extension = self.authority.budget_extension
+        return extension.giant_phase if extension is not None else None
+
+    def _verify_giant_phase(
+        self, previous: "MilestonePool", closed: dict[str, Any], count: int, extension: BudgetExtension,
+    ) -> None:
+        release = extension.giant_phase
+        assert release is not None
+        authority = self.authority
+        if (self._members or authority.additional_target != 1 or previous.giant_phase is not None
+                or authority.cumulative_ceiling != previous.authority.cumulative_ceiling + extension.additional_sessions
+                or "V" not in previous.authority.excluded_families
+                or authority.excluded_families != tuple(f for f in previous.authority.excluded_families if f != "V")):
+            raise ValueError("The giant phase requires fresh custody, one reserved slot and its exact cumulative ceiling.")
+        signed = artifacts.read_bytes(previous.root / "giant-phase-authorisation.json")
+        approved = commissioning._read_json(signed)
+        if (commissioning.digest(signed) != release.authorisation_sha256
+                or approved.get("predecessor_pool_sha256") != previous.digest
+                or approved.get("additional_sessions") != extension.additional_sessions
+                or approved.get("combined_cumulative_ceiling") != authority.cumulative_ceiling):
+            raise ValueError("The giant phase requires its exact additional owner authorisation.")
+        if previous.isolation_guard is None or not previous.isolation_guard.require_delivery_attestation:
+            raise ValueError("The giant phase must inherit the verified sender-attested author boundary.")
+        roadmap = commissioning._read_json(commissioning.trusted_bytes("planning/development-20/portfolio.json"))
+        slot = next(entry for entry in roadmap["slots"] if entry["family_id"] == "V")
+        if (slot["tier"] != "giant" or release.expected_sources != slot["expected_sources"]
+                or release.hypothesis_sha256 != slot["hypothesis"]["hypothesis_sha256"]):
+            raise ValueError("The giant release must bind the existing registered V workload and hypothesis.")
+        coverage = closed.get("qualified_coverage", [])
+        families = {row["family_id"] for row in coverage}
+        verified = {(row["family"], row["revision"], row["dossier_sha256"]) for row in previous.qualifications()}
+        archived = {(row["family"], row["revision"], row["dossier_sha256"])
+                    for row in closed.get("added_technical_dossiers", [])}
+        if (count != previous.authority.additional_target or closed.get("number_qualified") != 19
+                or len(coverage) != 19 or len(families) != 19 or "V" in families or archived != verified
+                or not {family for family, _, _ in verified} <= families):
+            raise ValueError("The giant phase requires 19 distinct verified non-giant dossiers in the exact closeout.")
+        if not previous._verified_workload(51, 99):
+            raise ValueError("The giant phase requires a verified large development dossier before commissioning.")
 
     def _verify_member_charges(self, previous: "MilestonePool", connection: sqlite3.Connection) -> None:
         members = previous.members
@@ -265,8 +319,14 @@ class MilestonePool:
             raise ValueError("Bind the immutable development commission before enrolment.")
         families = {allocation.family_id for allocation in manifest.families}
         slots = [slot for slot in committed["portfolio"]["slots"] if slot["family_id"] in families]
+        giant = self.giant_phase
+        if giant is not None:
+            if (manifest.phase != "milestone" or manifest.qualification_target != 1 or families != {"V"}
+                    or len(slots) != 1 or slots[0]["tier"] != "giant" or slots[0]["expected_sources"] != giant.expected_sources
+                    or manifest.families[0].hypothesis.hypothesis_sha256 != giant.hypothesis_sha256):
+                raise ValueError("Only the exact registered giant commission may enter the dedicated phase.")
         if (families & set(self.authority.excluded_families) or any(self._previously_qualified(f) for f in families)
-                or any(slot["tier"] == "giant" or slot["expected_sources"] >= 100 for slot in slots)):
+                or (giant is None and any(slot["tier"] == "giant" or slot["expected_sources"] >= 100 for slot in slots))):
             raise ValueError("Excluded families and the giant tier cannot enter the successor pool.")
         if any(slot["expected_sources"] >= 51 for slot in slots) and not self._verified_intermediate():
             raise ValueError("A large workload requires a verified intermediate development dossier.")
@@ -295,6 +355,9 @@ class MilestonePool:
         return record
 
     def _verified_intermediate(self) -> bool:
+        return self._verified_workload(21, 50)
+
+    def _verified_workload(self, minimum: int, maximum: int) -> bool:
         from benchmark_v3.batch.workflow import verify_dossier
 
         for row in self.qualifications():
@@ -302,10 +365,10 @@ class MilestonePool:
             with closing(ledger.connect()) as connection:
                 batch = connection.execute("SELECT batch FROM families WHERE id = ?", (row["family"],)).fetchone()[0]
             dossier = verify_dossier(ledger, batch, row["family"], row["revision"], row["dossier_sha256"])
-            if any(21 <= case["source_count"] <= 50 for case in dossier["replay"]["preview"]["inputs"]):
+            if any(minimum <= case["source_count"] <= maximum for case in dossier["replay"]["preview"]["inputs"]):
                 return True
         return (self.authority.budget_extension is not None and self.predecessor is not None
-                and self.predecessor._verified_intermediate())
+                and self.predecessor._verified_workload(minimum, maximum))
 
     def _verify_enrolment(self, root: Path) -> None:
         if root in self._members:
@@ -452,6 +515,8 @@ class MilestonePool:
         return record_sha
 
     def serial_scientific_dispatch(self) -> bool:
+        if self.giant_phase is not None:
+            return True
         with closing(_read_only(self.path)) as connection:
             return (_has_runtime_quarantine(connection)
                     and connection.execute("SELECT 1 FROM quarantined_runtime_custody LIMIT 1").fetchone() is not None)
@@ -707,7 +772,7 @@ class PooledLedger(Ledger):
 
     @property
     def parallel_scientific_jobs(self) -> int:
-        return 4 if self.pool.predecessor is not None else 1
+        return 4 if self.pool.predecessor is not None and self.pool.giant_phase is None else 1
 
     def pooled_revision(self, batch: str, family: str, revision: int) -> bool:
         return any(row["name"] == self._release_name and row["kind"] == "reconcile"

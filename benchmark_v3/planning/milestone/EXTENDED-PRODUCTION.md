@@ -35,6 +35,22 @@ new documentary and review roles.
 
 [Previous closed review](DELIVERY-RECOVERY.md) · [Architect roadmap](../development-20/ROADMAP.md)
 
+## Owner authorisation for the giant phase
+
+The owner authorised 2,000 further scientific-agent sessions and
+requested Family V after 19 non-giant technical qualifications. The
+combined ceiling is 4,984, including all earlier charges. The existing
+pre-giant pool continues under its own exact release.
+
+The dedicated phase requires the completed 19-family accounting, the
+large-file readiness evidence and the verified sender-attested boundary.
+It binds the existing 150-Source roadmap slot and its exact hypothesis.
+It carries unused authority forward and runs a single isolated turn at
+a time. Human admission remains a separate decision.
+
+The owner authorisation is committed as
+`25c0d055c441f0aa9832744cb058ee424ac1dbf0cd6946533c0c516d206eb93b`.
+
 ## First verified qualification
 
 N revision 3 preserves the exact ten-Source natural and matched
@@ -306,6 +322,12 @@ support that the signed designation minute retained on its own. A
 separately commissioned replacement retains the asset-transfer
 hypothesis and must independently determine any standalone proof before
 testing the distinct transfer shortcut.
+
+BN's initial audit supported the matched graphs and joint age proof
+while returning an overapproved singleton for office at the cutoff.
+The controller reopens the exact audit return for independent
+condition-local adjudication on the same freeze. The original
+objection and precommitted controls remain part of the next review.
 
 An immutable reserved packet can be reopened without holding the live
 dispatch slot. Reopen-only reservations cannot start a new scientific
