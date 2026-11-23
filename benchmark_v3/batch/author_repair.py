@@ -48,7 +48,7 @@ def repair(work: "FamilyWorkflow", release: dict[str, Any]) -> DesignOutput:
                     "if the repair needs a change outside the brief text.", Plan)
     expected = {row.source_id for row in original.inventory}
     if not plan.briefs or not plan.briefs.keys() <= expected:
-        raise ValueError("The scope return needs a different scientific plan or valid author IDs.")
+        raise ValueError(PLAN_OUTSIDE_BRIEF)
     revised = original.model_copy(update={"inventory": [
         row.model_copy(update={"participant_brief": plan.briefs[row.source_id]}) if row.source_id in plan.briefs else row
         for row in original.inventory
@@ -133,3 +133,58 @@ def unused_attestation(runner: "SessionRunner", source_id: str, design: DesignOu
     if verify_unused_attestation(runner, source_id, design) != recorded:
         raise ValueError("The exact local-only attestation proof has changed.")
     return True
+
+
+PROVENANCE_CLARIFICATION = "preauthor-provenance-clarification"
+PLAN_OUTSIDE_BRIEF = "The scope return needs a different scientific plan or valid author IDs."
+
+
+def cover_clarification(
+    runner: "SessionRunner", source_id: str, wrong_cover: str, correct_cover: str,
+) -> tuple[dict[str, Any], DesignOutput]:
+    """Resolve a uniquely attested custody cross-reference before any author turn."""
+    from benchmark_v3.batch import author_delivery
+
+    family, batch = runner.family, runner.manifest.batch_id
+    if not runner.ledger.requires_delivery_attestation or runner.revision < 3:
+        raise ValueError("The clarification requires a charged independent preauthor scope plan.")
+    planner = replace(runner, revision=runner.revision - 1, directory=runner.directory.with_name(str(runner.revision - 1)))
+    prior = replace(runner, revision=runner.revision - 2, directory=runner.directory.with_name(str(runner.revision - 2)))
+    review, review_receipt, _ = prior.committed_result("author", author_context.JOB, "audit", author_context.AuthorContextReview)
+    plan, plan_receipt, _ = planner.committed_result("design", JOB, "audit", Plan)
+    if (review.verdict != "return" or plan.briefs or not review.objections
+            or not any(all(token in issue for token in (source_id, wrong_cover, correct_cover)) for issue in review.objections)
+            or not all(token in plan.rationale for token in (source_id, wrong_cover, correct_cover))
+            or any(prior.revision <= row["revision"] < runner.revision and row["stage"] == "author"
+                   and row["job"] not in {author_context.JOB, author_context.JOB + "-format-retry"}
+                   for row in runner.ledger.attempts(family))):
+        raise ValueError("Both independent reports must identify the same exact unapplied cover-reference correction.")
+    design = artifacts.read_contract(prior.directory / "design.json", DesignOutput)
+    inventory = {item.source_id: item for item in design.inventory}
+    origin, wrong, correct = (inventory[item] for item in (source_id, wrong_cover, correct_cover))
+    if (wrong_cover == correct_cover or origin.provenance.count(wrong_cover) != 1
+            or correct_cover in origin.provenance or source_id not in correct.received or source_id in wrong.received
+            or sum(source_id in item.received for item in design.inventory) != 1
+            or correct.created_on < origin.created_on or source_id not in correct.provenance):
+        raise ValueError("The independently identified record must be the unique actual forwarding cover.")
+    fixed = origin.model_copy(update={"provenance": origin.provenance.replace(wrong_cover, correct_cover, 1)})
+    effect = design.model_copy(update={"inventory": [fixed if row.source_id == source_id else row for row in design.inventory]})
+    if author_delivery.projection(design, {}) != author_delivery.projection(effect, {}):
+        raise ValueError("A custody cross-reference clarification must preserve every exact participant projection.")
+    return ({
+        "batch": batch, "source_id": source_id, "wrong_cover": wrong_cover, "correct_cover": correct_cover,
+        "scope_receipt_sha256": review_receipt["receipt_sha256"], "plan_receipt_sha256": plan_receipt["receipt_sha256"],
+        "original_design_sha256": authorisation.commitment(design), "corrected_design_sha256": authorisation.commitment(effect),
+    }, effect)
+
+
+def reopen_cover_clarification(runner: "SessionRunner") -> DesignOutput | None:
+    chosen = next((row["details"] for row in runner.ledger.events(runner.manifest.batch_id, runner.family)
+                   if (row["revision"], row["kind"], row["name"]) ==
+                   (runner.revision, "transition", PROVENANCE_CLARIFICATION)), None)
+    if chosen is None:
+        return None
+    details, design = cover_clarification(runner, chosen["source_id"], chosen["wrong_cover"], chosen["correct_cover"])
+    if details != chosen:
+        raise ValueError("The exact independently verified custody clarification changed.")
+    return design

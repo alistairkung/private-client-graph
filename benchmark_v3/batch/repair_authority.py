@@ -16,6 +16,12 @@ BUDGET_PLAN_JOB = "repair-budget-plan"
 PLAN_RECOVERY = "realism_plan_reference_recovery"
 CAPACITY_SUCCESSOR = "realism_capacity_successor"
 VERIFY_JOB = "repair-verification"
+SCOPE_REVIEW_RETRY = "scope-review-representation"
+VERIFY_RETRY_INSTRUCTIONS = (
+    " Independently classify every remaining objection to preserving the scope, provenance or contrast. "
+    "Use changed when there is a material objection. With preserved, put nonblocking documentary observations "
+    "in scope, provenance or contrast, and return an empty objections array."
+)
 FORMAT_RETRY = "-format-retry"
 
 

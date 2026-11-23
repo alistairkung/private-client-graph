@@ -13,9 +13,9 @@ from pydantic import BaseModel
 from benchmark_v3 import commissioning, packet, replay
 from benchmark_v3.batch import (
     adjudication_contract, adjudication_recovery, annotation_recovery, artifacts, audit_boundary, audit_contract, audit_recovery,
-    author_context, author_delivery, author_repair, authorisation, autonomous_realism, construction, continuation,
+    author_context, author_delivery, author_repair, authorisation, autonomous_realism, clean_redesign, construction, continuation,
     design_recovery,
-    design_review, evidence_recovery, milestone_repair, read_format_recovery, repair_authority, science,
+    design_review, evidence_recovery, frozen_rekey, milestone_repair, read_format_recovery, repair_authority, science,
 )
 from benchmark_v3.batch.contracts import (
     Adjudication, AuditReview, AuthorBrief, AuthoredSource, Code, DesignOutput, MaskAssignment, Reading, RealismReview,
@@ -54,6 +54,8 @@ class FamilyWorkflow:
         self.realism_release = autonomous_realism.release_event(runner)
         self.documentary_revision: autonomous_realism.Revision | None = None
         self.audit_recovery = audit_recovery.recorded(runner)
+        self.frozen_release = frozen_rekey.recorded(runner)
+        self.frozen_case: frozen_rekey.ReopenedCase | None = None
         self.release = continuation.recorded(runner)
         self.evidence_release = next((
             row["details"] for row in runner.ledger.events(runner.manifest.batch_id, runner.family)
@@ -73,6 +75,11 @@ class FamilyWorkflow:
             recovered = self.recover_invariant_evidence(self.evidence_release)
             design, bundles, freeze = recovered.design, recovered.bundles, recovered.freeze
             realism, agreements, reviews = recovered.realism, recovered.agreements, recovered.adjudications
+        elif self.frozen_release is not None:
+            case = self.restore_frozen_case(self.frozen_release)
+            design, bundles, freeze = case.design, case.bundles, case.freeze
+            realism, agreements = case.realism, case.agreements
+            reviews = self.adjudicate(design, bundles, case.readings, agreements)
         else:
             design = self.design()
             natural = self.author(design)
@@ -93,6 +100,26 @@ class FamilyWorkflow:
             return
         report, manifest = self.technical(freeze, reviews)
         self.dossier(realism, agreements, reviews, audit, masks, report, manifest)
+
+    def restore_frozen_case(self, release: frozen_rekey.FrozenEvidenceReview) -> frozen_rekey.ReopenedCase:
+        case = frozen_rekey.reopen(self.runner, self.slot, release)
+        self.frozen_case = case
+        self.transition_inputs["frozen_evidence_lineage"] = authorisation.commitment(release)
+        artifacts.write_json(self.directory / "design.json", case.design.model_dump(mode="json"))
+        self.sessions = case.stages["design"]["sessions"]
+        self.advance("author", {"design": case.design.model_dump(mode="json")}, gate="exact retained documentary design")
+        self.sessions = case.stages["author"]["sessions"]
+        self.advance("realism", {"natural": _source_array(case.bundles[case.freeze.natural])},
+                     gate="previously reviewed sender-attested Sources")
+        self.sessions = case.stages["realism"]["sessions"]
+        self.advance("freeze", {"realism": _models(case.realism)}, gate="verified original independent realism")
+        self.freeze(case.bundles, case.freeze)
+        self.sessions = case.stages["blind"]["sessions"]
+        readings = {condition: [reply.model_dump(mode="json") for reply in pair]
+                    for condition, pair in case.readings.items()}
+        self.advance("adjudicate", {"readings": readings, "agreements": case.agreements},
+                     gate="verified original independent condition-local blind readings")
+        return case
 
     def recover_invariant_evidence(self, release: dict[str, Any]) -> evidence_recovery.RecoveredEvidence:
         self.stage = "adjudicate"
@@ -154,13 +181,17 @@ class FamilyWorkflow:
         allocation = next(row for row in self.runner.manifest.families if row.family_id == self.slot.family_id)
         brief_repair = author_repair.recorded(self.runner)
         unused_delivery = author_repair.reopen_unused_delivery(self.runner)
+        restored_cover = author_repair.reopen_cover_clarification(self.runner)
         cutoff_repair = design_recovery.isolated_cutoff_recovery(self.runner, self.slot)
+        replacement = clean_redesign.recorded(self.runner)
         if cutoff_repair is not None:
             design, receipt, digest = cutoff_repair
             self.sessions.append(receipt)
             self.transition_inputs["assembled_inventory_cutoff"] = digest
         elif unused_delivery is not None:
             design = unused_delivery
+        elif restored_cover is not None:
+            design = restored_cover
         elif brief_repair is not None:
             design = author_repair.repair(self, brief_repair)
         elif self.realism_release is not None:
@@ -187,15 +218,24 @@ class FamilyWorkflow:
         elif self.release and self.runner.revision > 1:
             design = continuation.released_design(self.runner, self.release)
             self.repair_tickets = self.release.get("repair_tickets", {})
-        elif self.runner.revision == 1:
+        elif self.runner.revision == 1 or replacement is not None:
+            slot = clean_redesign.fresh_slot(self.slot, replacement) if replacement else self.slot
+
+            def verify_design(value: DesignOutput) -> None:
+                self._verify_fresh_design(value)
+                if replacement is not None:
+                    clean_redesign.verify_distinct(self.runner, value, replacement)
+
             design = self.job(
                 "design", "designer", {
                     "hypothesis_revision": f"{ref.hypothesis_id}@{ref.revision}",
-                    "portfolio_slot": self.slot.model_dump_json(),
+                    "portfolio_slot": slot.model_dump_json(),
                 },
                 "commissioned-designer-batch-v1", DesignOutput,
-                validate=self._verify_fresh_design if self.runner.ledger.requires_author_context else None,
+                validate=verify_design if self.runner.ledger.requires_author_context else None,
             )
+            if replacement is not None:
+                self.transition_inputs["documentary_redesign"] = authorisation.commitment(replacement)
         else:
             previous = self.directory.parent / str(self.runner.revision - 1)
             design = artifacts.read_contract(previous / "design.json", DesignOutput)
@@ -213,7 +253,12 @@ class FamilyWorkflow:
             if commissioning.digest(_json(design.model_dump(mode="json")).encode()) != expected:
                 raise ValueError("Repair changed the locked design or hypothesis.")
         if self.runner.manifest.phase == "milestone":
-            design = design_recovery.verify_milestone_design(self.runner, self.slot, design)
+            if replacement is None:
+                design = design_recovery.verify_milestone_design(self.runner, self.slot, design)
+            else:
+                design = design_recovery.verify_milestone_design(
+                    self.runner, self.slot, design, fresh_replacement=True,
+                )
             self._check_design_capacity(design)
         else:
             science.verify_design(self.slot, design)
@@ -508,6 +553,11 @@ class FamilyWorkflow:
         job = key
         if self.runner.ledger.requires_delivery_attestation:
             if role == "annotation":
+                derived = read_format_recovery.reopen_whitespace(self.runner, key, inputs)
+                if derived is not None:
+                    reading, receipt = derived
+                    self.sessions.append(receipt)
+                    return reading
                 job = read_format_recovery.selected_job(self.runner, key, inputs)
             if self._use_scoped_prompt(job, read_format_recovery.INSTRUCTIONS):
                 extra_instructions += read_format_recovery.INSTRUCTIONS
@@ -543,6 +593,8 @@ class FamilyWorkflow:
                 raise ValueError("Adjudication must return a condition-local provisional key.")
             review = review.model_copy(update={"key": review.key.model_copy(update={"condition": condition})})
             science.verify_adjudication(condition, review, sources, agreements[condition])
+            if self.frozen_case is not None:
+                frozen_rekey.verify_same_semantics(review, self.frozen_case.locked[condition])
             result[condition] = review
             artifacts.write_json(self.directory / "family" / f"{condition}.json", review.key.model_dump(mode="json"))
         self.advance("audit", {"provisional": _models(result)}, gate="all condition-local keys locked before disclosure")
@@ -591,6 +643,8 @@ class FamilyWorkflow:
                     or self.release_action == "complete_evidence_adjudication")
         if complete:
             prompt += adjudication_contract.COMPLETE_EVIDENCE_INSTRUCTIONS
+        if self.frozen_case is not None:
+            prompt += frozen_rekey.POLICY
         if self._use_scoped_prompt(job, _KEY_ROSTER_CONTEXT):
             prompt += _KEY_ROSTER_CONTEXT
         if (self.runner.ledger.requires_delivery_attestation
@@ -672,10 +726,15 @@ class FamilyWorkflow:
         valid = None
         requested: list[audit_boundary.ExactExcerpt] = []
         whole: list[MaskAssignment] = []
-        if recheck is not None:
-            original = audit_boundary.returned_audit(self.runner, recheck)
+        if recheck is not None or self.frozen_case is not None:
+            if recheck is not None:
+                original = audit_boundary.returned_audit(self.runner, recheck)
+                requested = [audit_boundary.ExactExcerpt.model_validate(row) for row in recheck["excerpt_controls"]]
+            else:
+                assert self.frozen_case is not None
+                original = self.frozen_case.audit
+                prompt += " Independently audit the fresh condition-local evidence keys on the exact retained freeze."
             valid, whole = audit_boundary.original_views(original, bundles)
-            requested = [audit_boundary.ExactExcerpt.model_validate(row) for row in recheck["excerpt_controls"]]
             rules.update({
                 "retained_audit_objections": original.objections,
                 "retained_valid_controls": evidence_recovery.proposed_views(valid),
@@ -878,6 +937,8 @@ class FamilyWorkflow:
         artifacts.write_bytes(root / "DOSSIER.md", markdown.encode())
         if self.documentary_revision is not None:
             dossier["documentary_repair_lineage"] = self.documentary_revision.lineage
+        if self.frozen_release is not None:
+            dossier["frozen_evidence_lineage"] = self.frozen_release.model_dump(mode="json")
         if self.recovered_evidence is not None:
             dossier["invariant_evidence_recovery"] = self.evidence_release
             dossier["invariant_route_replay"] = self.recovered_evidence.exact_route_checks

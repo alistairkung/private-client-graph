@@ -103,6 +103,8 @@ class SessionRunner:
             retry_instructions += audit_boundary.retry_instructions(self)
         elif role == "audit" and stage == "audit" and job == "audit" and self.ledger.requires_delivery_attestation:
             retry_instructions += audit_boundary.ACCEPTANCE_LAYOUT
+        elif role == "audit" and job == repair_authority.VERIFY_JOB and self.ledger.requires_delivery_attestation:
+            retry_instructions += repair_authority.VERIFY_RETRY_INSTRUCTIONS
         choice = self._selection(job) if unwrap else None
         if choice and choice["selected_job"] == retry:
             result, receipt, unwrapped = self._run_one(

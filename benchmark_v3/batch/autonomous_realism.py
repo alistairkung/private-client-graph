@@ -550,11 +550,21 @@ def verify_revision(
     inputs["audit_rules"] = commissioning.json_text({
         "revised_design": revision.design.model_dump(mode="json"), "affected_sources": sorted(revision.affected),
     })
-    result, receipt = runner.run("author", repair_authority.VERIFY_JOB, "audit", inputs, VERIFY_PROMPT, ScopeReview)
+    def verify_layout(result: ScopeReview) -> None:
+        if result.verdict == "preserved" and result.objections:
+            raise ValueError("Preserved scope requires resolved objections in the disposition.")
+
+    result, receipt = runner.run(
+        "author", repair_authority.VERIFY_JOB, "audit", inputs, VERIFY_PROMPT, ScopeReview,
+        validate=verify_layout if runner.ledger.requires_delivery_attestation else None,
+    )
     if result.verdict != "preserved" or result.objections:
-        raise RepairStopped("Independent scope review did not confirm preservation of the comparison: "
-                            + result.model_dump_json())
+        raise RepairStopped(scope_failure(result))
     return receipt
+
+
+def scope_failure(result: ScopeReview) -> str:
+    return "Independent scope review did not confirm preservation of the comparison: " + result.model_dump_json()
 
 
 def _bundles(bundles: dict[str, list[Source]]) -> str:

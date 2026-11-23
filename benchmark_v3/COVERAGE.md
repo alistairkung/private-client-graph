@@ -141,7 +141,7 @@ No verified findings recorded.
 | `typed-event-chronology@1` · Event date versus report date | R | approved | `e59adeaeafe55ecc6bf6567932e8d58e6cc11faeb18f35359803818308c2548e` |
 | `restatement-schedule-scope@1` · Carry-forward across instrument generations | Q | approved | `b5046dc1860b9735a22a323780c982ac143cb74b5284dec4d957190d8c424888` |
 | `named-scope-capacity@1` · Scoped adoption and concurrent roles | S | approved | `888372b762667bab8ffd03519f92405dd246118df8806798244fb69abf6e3263` |
-| `administrative-estate-load@1` · Completeness in an administrative handover | U | proposed | `55e95c4e91d4a99cabbc0c03f4c9831fc0054b0df045983be5ae1af3ace18b90` |
+| `administrative-estate-load@1` · Completeness in an administrative handover | U | approved | `55e95c4e91d4a99cabbc0c03f4c9831fc0054b0df045983be5ae1af3ace18b90` |
 | `longitudinal-cross-section-reconstruction@1` · Longitudinal cross-section reconstruction | V | proposed | `925b5fdd603297092c963366da245eea3f95c8d0e4a6804cceff9ae57655156d` |
 | `independent-documentary-disagreement@1` · Independent handover accounts of current trustee office | W | approved | `ac18d1c2ef9f3f72b0544a4ddf1d62e7af230be3375dab180f28306bc06352ed` |
 | `incidental-correspondence-support@1` · Firsthand relationship support in valuation-access correspondence | X | proposed | `194a1ec56fa6374aa71cfe426dcb6738915ea611b11c3cd767dfe17a1142758d` |

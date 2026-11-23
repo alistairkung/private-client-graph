@@ -24,7 +24,7 @@ from benchmark_v3.batch.contracts import (
     PilotDecision, SourceCutoffRecovery,
 )
 from benchmark_v3.batch.ledger import BudgetExhausted, TaskHalted
-from benchmark_v3.batch.pool import CustodyMember, MilestonePool, PoolAuthority
+from benchmark_v3.batch.pool import BudgetExtension, CustodyMember, MilestonePool, PoolAuthority
 from benchmark_v3.batch.sessions import Blocked
 from benchmark_v3.portfolio import Portfolio
 from benchmark_v3.replay_manifest import BatchSourceFreeze, load_family, source_commitments
@@ -2825,9 +2825,42 @@ def test_shared_isolation_restart_carries_closed_charges_into_fresh_custody(appr
     assert after.reserve('G', 1, 'design', 'design', {'role': 'designer'}, 'fresh')
     with after.reservation_transaction() as db:
         assert fresh.remaining(db) == 703
-    after.event(new_manifest.batch_id, 'G', 1, 'task_halt', 'new-scope', 'author', None, {'code': 'isolation'})
+    closed = artifacts.write_json(root / "final-accounting.json", {
+        "cumulative_charges": 297, "remaining": 703, "unresolved_reservations": [], "shared_halts": [],
+    })
+    member = fresh.members[clean.root].model_copy(update={"starting_charges": 1})
+    extended_scope = PoolAuthority(
+        owner=OWNER, reference="Independent incremental owner authority.", prior_archive_sha256="f" * 64,
+        starting_charges=297, cumulative_ceiling=299, additional_target=13, members=[member],
+        predecessor_sha256=fresh.digest, budget_extension=BudgetExtension(
+            previous_database_sha256=commissioning.digest(fresh.path.read_bytes()),
+            previous_accounting_sha256=closed, additional_sessions=2,
+        ),
+    )
+    for change in ({"cumulative_ceiling": 1002}, {"additional_target": 12}, {"excluded_families": ("V",)}):
+        with pytest.raises(ValueError, match="exact closeout, exclusions, charges and outstanding target"):
+            MilestonePool(tmp_path / "invalid-extension", extended_scope.model_copy(update=change), predecessor=fresh)
+    wrong_member = member.model_copy(update={"starting_charges": 0})
+    with pytest.raises(ValueError, match="retain every earlier charge"):
+        MilestonePool(tmp_path / "dropped-charge", extended_scope.model_copy(update={"members": [wrong_member]}),
+                      predecessor=fresh)
+    expanded = MilestonePool(tmp_path / "expanded", extended_scope, predecessor=fresh)
+    with pytest.raises(TaskHalted, match="superseded"):
+        after.require_running()
+    active = expanded.join(clean.root)
+    assert active.requires_author_context
+    assert active.requires_delivery_attestation == attachment_stop
+    assert active.attempts("G") == after.attempts("G")
+    active.release(new_manifest.batch_id, "G", 1, "design", parent_sha256=closed, reference="Exact budget extension.")
+    with active.reservation_transaction() as db:
+        assert expanded.remaining(db) == 2
+    assert active.reserve("G", 1, "additional-design", "design", {"role": "designer"}, "continued")
+    assert active.reserve("G", 1, "scoped-other-design", "design", {"role": "designer"}, "continued-two")
+    with pytest.raises(BudgetExhausted, match="shared milestone session ceiling"):
+        active.reserve("G", 1, "over-ceiling", "design", {"role": "designer"}, "denied")
+    active.event(new_manifest.batch_id, 'G', 1, 'task_halt', 'new-scope', 'author', None, {'code': 'isolation'})
     with pytest.raises(TaskHalted, match='unresolved shared integrity stop'):
-        fresh.check_running()
+        expanded.check_running()
 
 
 def test_pre_author_return_repairs_only_a_committed_brief(approved, transport, monkeypatch):
@@ -2946,7 +2979,10 @@ def test_attested_author_workflow_never_dispatches_an_unverified_recipient(appro
         assert not recipients and not any(row["job"] == "author-src2" for row in ledger.attempts("G"))
 
 
-def test_delivery_repair_regenerates_a_sender_when_an_incoming_route_changes(autonomous, transport, monkeypatch):
+@pytest.mark.parametrize("ambiguous_scope", [False, True])
+def test_delivery_repair_regenerates_a_sender_when_an_incoming_route_changes(
+    autonomous, transport, monkeypatch, ambiguous_scope,
+):
     ledger, commission = autonomous
     calls, behavior, _ = transport
     monkeypatch.setattr(type(ledger), "requires_author_context", property(lambda _: True))
@@ -2982,9 +3018,13 @@ def test_delivery_repair_regenerates_a_sender_when_an_incoming_route_changes(aut
         "findings": {key: "Reviewed." for key in json.loads(inputs["audit_rules"])["participant_packets"]},
     }
     behavior["G", "realism-000"] = realism
-    behavior["G", "repair-verification"] = lambda _: {
+    accepted_scope = {
         "verdict": "preserved", "scope": "Same.", "provenance": "Supported.", "contrast": "Same.", "objections": [],
     }
+    behavior["G", "repair-verification"] = lambda _: accepted_scope | {
+        "objections": ["Documentary wording only."] if ambiguous_scope else [],
+    }
+    behavior["G", "repair-verification-format-retry"] = lambda _: accepted_scope
     for job in ("author-src1", "author-src2"):
         behavior["G", job] = author
     batch = commission.manifest.batch_id
@@ -2995,6 +3035,10 @@ def test_delivery_repair_regenerates_a_sender_when_an_incoming_route_changes(aut
                      for _, _, job, inputs in calls if job == "author-src1"]
     assert first == []
     assert second == [{"recipient": "Writer 2", "sent_on": TODAY.isoformat()}]
+
+    verifications = [inputs for _, _, job, inputs in calls if job.startswith("repair-verification")]
+    assert len(verifications) == (2 if ambiguous_scope else 1)
+    assert all(inputs == verifications[0] for inputs in verifications)
 
 
 def test_blind_representation_recovery_reopens_the_identical_frozen_inputs(autonomous, transport, monkeypatch):
@@ -3335,3 +3379,199 @@ def test_unused_attestation_keeps_author_text_and_cannot_authorise_attachments(a
     runner = commission.session_runner(ledger, "G", 1)
     sources = json.loads((runner.directory / "family/sources/G000.json").read_bytes())
     assert sources[1] == {"id": "src2", "title": author["title"], "text": author["text"]}
+
+
+def test_clean_redesign_retains_a_failed_lineage_and_rejects_relabelled_design(approved, transport, tmp_path, monkeypatch):
+    from benchmark_v3.batch.contracts import ExceptionRecord
+    from benchmark_v3.batch.pool import PooledLedger
+
+    original, fixture = approved
+    portfolio = fixture.portfolio
+    manifest = fixture.manifest.model_copy(update={"phase": "milestone", "qualification_target": 1})
+    commission = coordinator.Commission(portfolio, manifest, _approval(portfolio, manifest))
+    coordinator.commission_batch(original, commission, BOUNDARY)
+    pool = MilestonePool(tmp_path / "fresh-documentary-redesign", PoolAuthority(
+        owner=OWNER, reference="Fixture extension.", prior_archive_sha256="d" * 64,
+        starting_charges=2, cumulative_ceiling=90, additional_target=2,
+        members=[CustodyMember(root=str(original.root), task_id=manifest.task_id, starting_charges=0)],
+    ))
+    monkeypatch.setattr(PooledLedger, "requires_author_context", property(lambda _: True))
+    monkeypatch.setattr(PooledLedger, "requires_delivery_attestation", property(lambda _: True))
+    active = pool.join(original.root)
+    batch, family, slot = manifest.batch_id, "G", portfolio.slots[0]
+    active.release(batch, family, 1, "design", parent_sha256="a" * 64, reference="Original design.")
+    coordinator._work_family(active, commission, slot, design_only=True)
+    prior = commission.session_runner(active, family, 1).directory / "design.json"
+    prior_bytes = prior.read_bytes()
+    with pytest.raises(ValueError, match="retained scientific failure"):
+        coordinator.release_clean_redesign(active, batch, family, "Unsupported request.")
+    active.block(batch, 1, ExceptionRecord(
+        stage="author", family_id=family, code="scientific_review", evidence="Fixture scope return.",
+        repair_permitted=False, human_action="Review the scoped objection.", remaining_work="family_halted",
+    ))
+    active.event(batch, family, 1, "operator_close", "fixture-science", "author", "quarantined", {})
+    coordinator.release_clean_redesign(active, batch, family, "Keep the formal comparison and replace the dated history.")
+
+    calls, behavior, _ = transport
+    replacement_day = TODAY + timedelta(days=30)
+    new_edge = ["Later Parent", "parent_of", "Later Child"]
+
+    def fresh_result(inputs):
+        brief = json.loads(inputs["capability_brief"])
+        assert brief["commission"] == slot.hypothesis.model_dump()
+        assert "Fixture scope return." not in str(inputs)
+        assert any("replace the dated history" in note for note in brief["approved_workload"]["independent_authoring"])
+        design = _design(family)
+        design.update(neutral_brief="Read the independently re-dated files.", cutoff=replacement_day.isoformat(),
+                      candidates=[new_edge], required={f"{family}000": [new_edge]})
+        for row in design["inventory"]:
+            row["created_on"] = replacement_day.isoformat()
+        return design
+
+    behavior[family, "design-format-retry"] = fresh_result
+    coordinator._work_family(active, commission, slot, design_only=True)
+    assert coordinator.family_status(active, batch, family) == (2, "author", None)
+    assert prior.read_bytes() == prior_bytes
+    assert [(parent, job) for _, parent, job, _ in calls] == [
+        ("G@1", "design"), ("G@2", "design"), ("G@2", "design-format-retry"),
+    ]
+    assert any(row["revision"] == 2 and row["kind"] == "rejected_output"
+               and "distinct documentary history" in row["details"]["reason"] for row in active.events(batch, family))
+
+
+def test_word_preserving_blind_quote_recovery_uses_the_retained_reader(autonomous, transport, monkeypatch):
+    from benchmark_v3.batch import read_format_recovery
+
+    ledger, commission = autonomous
+    calls, behavior, _ = transport
+    monkeypatch.setattr(type(ledger), "requires_author_context", property(lambda _: True))
+    monkeypatch.setattr(type(ledger), "requires_delivery_attestation", property(lambda _: True))
+    behavior["G", "author-context"] = lambda inputs: {
+        "verdict": "accept", "objections": [],
+        "findings": {key: "Reviewed." for key in json.loads(inputs["audit_rules"])["participant_packets"]},
+    }
+    behavior["G", "author-src1"] = lambda _: {"title": "Record", "text": QUOTE, "deliveries": []}
+    behavior["G", "author-src2"] = lambda _: {"title": "Note", "text": "Ordinary note.", "deliveries": []}
+
+    def response(quote):
+        def reading(inputs):
+            result = _output("annotation", "G", "", inputs)
+            result["candidates"]["relationships"][0]["supporting_text"] = quote
+            return result
+        return reading
+
+    job = "reading-000-a-full"
+    material_change = QUOTE.replace("parent", "guardian")
+    behavior["G", job] = response(material_change)
+    behavior["G", f"{job}-format-retry"] = response(QUOTE.replace(" is ", "  is "))
+    behavior["G", f"{job}-exact-format"] = response(material_change)
+    batch = commission.manifest.batch_id
+    coordinator.commission_batch(ledger, commission, BOUNDARY)
+    coordinator.run_batch(ledger, batch)
+    with pytest.raises(ValueError, match="exact retained blind quotation failure"):
+        coordinator.recover_blind_whitespace(ledger, batch, "G", job)
+    coordinator.recover_blind_representation(ledger, batch, "G", job)
+    coordinator.run_batch(ledger, batch)
+    assert coordinator.family_status(ledger, batch, "G")[2]["evidence"].endswith(read_format_recovery.QUOTE_ERROR)
+    coordinator.recover_blind_whitespace(ledger, batch, "G", job)
+    coordinator.run_batch(ledger, batch)
+    assert coordinator.family_status(ledger, batch, "G") == (1, "admission_ready", None)
+    assert [name for _, _, name, _ in calls if name.startswith(job)] == [
+        job, f"{job}-format-retry", f"{job}-exact-format",
+    ]
+    records = [row for row in ledger.events(batch, "G") if row["name"] == read_format_recovery.WHITESPACE_RELEASE + job]
+    assert records[0]["details"]["original_job"] == f"{job}-format-retry"
+    assert len(records[0]["details"]["repairs"]) == 1
+    with pytest.raises(ValueError, match="one exact span"):
+        read_format_recovery.exact_whitespace_span("a  a", "a a a")
+
+
+def test_frozen_evidence_review_reuses_sources_and_blind_receipts_without_cueing_the_new_key(
+    approved, transport, tmp_path, monkeypatch,
+):
+    from benchmark_v3.batch import frozen_rekey
+    from benchmark_v3.batch.pool import PooledLedger
+
+    original, fixture = approved
+    portfolio = fixture.portfolio
+    manifest = fixture.manifest.model_copy(update={"phase": "milestone", "qualification_target": 1})
+    commission = coordinator.Commission(portfolio, manifest, _approval(portfolio, manifest))
+    coordinator.commission_batch(original, commission, BOUNDARY)
+    pool = MilestonePool(tmp_path / "frozen-evidence-review", PoolAuthority(
+        owner=OWNER, reference="Fixture continuation.", prior_archive_sha256="d" * 64,
+        starting_charges=2, cumulative_ceiling=90, additional_target=2,
+        members=[CustodyMember(root=str(original.root), task_id=manifest.task_id, starting_charges=0)],
+    ))
+    monkeypatch.setattr(PooledLedger, "requires_author_context", property(lambda _: True))
+    monkeypatch.setattr(PooledLedger, "requires_delivery_attestation", property(lambda _: True))
+    active = pool.join(original.root)
+    batch, family, slot = manifest.batch_id, "G", portfolio.slots[0]
+    active.release(batch, family, 1, "design", parent_sha256="a" * 64, reference="Original design.")
+    calls, behavior, _ = transport
+    behavior[family, "author-context"] = lambda inputs: {
+        "verdict": "accept", "objections": [],
+        "findings": {key: "Reviewed." for key in json.loads(inputs["audit_rules"])["participant_packets"]},
+    }
+    behavior[family, "author-src1"] = lambda _: {"title": "Record", "text": QUOTE, "deliveries": []}
+    behavior[family, "author-src2"] = lambda _: {"title": "Note", "text": "Ordinary note.", "deliveries": []}
+    behavior[family, "audit"] = lambda inputs: _output("audit", family, "", inputs) | {
+        "verdict": "repair", "objections": ["Use a consistent exact local context policy."],
+    }
+    coordinator._work_family(active, commission, slot)
+    assert coordinator.family_status(active, batch, family)[:2] == (1, "returned")
+    prior = commission.session_runner(active, family, 1).directory / "family"
+    frozen_bytes = (prior / "freeze.json").read_bytes()
+    original_saved = (prior / "G000.json").read_bytes()
+
+    coordinator.release_frozen_evidence_review(active, batch, family, "Reassess exact local context.")
+    behavior[family, "audit"] = lambda inputs: _output("audit", family, "", inputs) | {"excerpt_controls": []}
+    coordinator._work_family(active, commission, slot)
+    assert coordinator.family_status(active, batch, family) == (2, "admission_ready", None)
+    work = commission.session_runner(active, family, 2).directory / "family"
+    assert (work / "freeze.json").read_bytes() == frozen_bytes == (prior / "freeze.json").read_bytes()
+    assert (prior / "G000.json").read_bytes() == original_saved
+    new_calls = [(job, inputs) for _, parent, job, inputs in calls if parent == "G@2"]
+    assert [job for job, _ in new_calls] == ["adjudicate-000", "audit"]
+    assert "provisional_keys" not in new_calls[0][1] and "intended_intervention" not in new_calls[0][1]
+    result = json.loads((work / "dossier.json").read_bytes())
+    assert result["frozen_evidence_lineage"]["parent_revision"] == 1 and result["replay"]["paid_attempts"] == 0
+
+    old_record = frozen_rekey.recorded(commission.session_runner(active, family, 2))
+    assert old_record is not None and old_record.freeze_sha256 == commissioning.digest(frozen_bytes)
+
+
+def test_pre_author_cover_clarification_preserves_the_participant_projection(approved, monkeypatch):
+    from benchmark_v3.batch import author_context, author_delivery, author_repair
+    from benchmark_v3.batch.sessions import SessionRunner
+
+    ledger, commission = approved
+    runner = commission.session_runner(ledger, "G", 3)
+    day = TODAY.isoformat()
+    design = _design("G", count=3)
+    design["inventory"][0].update(author="Jess Vale", provenance=(
+        f"Forward this record under src2.\nDelivered {day} to Lee March"
+    ))
+    design["inventory"][2].update(author="Lee March", received=["src1"], provenance="Lee forwards exact src1.")
+    original = DesignOutput.model_validate(design)
+    path = runner.directory.with_name("1") / "design.json"
+    artifacts.write_json(path, original.model_dump(mode="json"))
+    monkeypatch.setattr(type(ledger), "requires_delivery_attestation", property(lambda _: True))
+    objection = "The custody route for src1 names src2 but the actual forwarding cover is src3."
+    review = author_context.AuthorContextReview(verdict="return", findings={"src1": "Exact delivery."},
+                                                objections=[objection])
+    plan = author_repair.Plan(briefs={}, rationale=objection)
+
+    def retained(self, stage, job, role, contract):
+        if self.revision == 1 and job == author_context.JOB:
+            return review, {"receipt_sha256": "a" * 64}, {}
+        assert self.revision == 2 and job == author_repair.JOB
+        return plan, {"receipt_sha256": "b" * 64}, {}
+
+    monkeypatch.setattr(SessionRunner, "committed_result", retained)
+    record, corrected = author_repair.cover_clarification(runner, "src1", "src2", "src3")
+    assert record["scope_receipt_sha256"] == "a" * 64 and record["plan_receipt_sha256"] == "b" * 64
+    assert corrected.inventory[0].provenance == f"Forward this record under src3.\nDelivered {day} to Lee March"
+    assert corrected.inventory[1:] == original.inventory[1:]
+    assert author_delivery.projection(corrected, {}) == author_delivery.projection(original, {})
+    with pytest.raises(ValueError, match="unique actual forwarding cover"):
+        author_repair.cover_clarification(runner, "src1", "src3", "src2")

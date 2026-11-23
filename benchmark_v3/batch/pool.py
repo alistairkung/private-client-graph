@@ -62,6 +62,12 @@ class IsolationRestart(Contract):
     require_delivery_attestation: bool = False
 
 
+class BudgetExtension(Contract):
+    previous_database_sha256: Digest
+    previous_accounting_sha256: Digest
+    additional_sessions: Annotated[int, Field(strict=True, gt=0)]
+
+
 class PoolAuthority(Contract):
     owner: Text
     reference: Text
@@ -73,6 +79,7 @@ class PoolAuthority(Contract):
     predecessor_sha256: Digest | None = None
     excluded_families: tuple[FamilyId, ...] = ()
     isolation_restart: IsolationRestart | None = None
+    budget_extension: BudgetExtension | None = None
 
 
 class MilestonePool:
@@ -82,7 +89,8 @@ class MilestonePool:
         self.authority = authority
         self.predecessor = predecessor
         if (not authority.starting_charges < authority.cumulative_ceiling
-                or (not authority.members and authority.isolation_restart is None)):
+                or (not authority.members and authority.isolation_restart is None)
+                or (authority.isolation_restart is not None and authority.budget_extension is not None)):
             raise ValueError("Milestone pool needs a bounded positive continuation and qualification target.")
         paths = [Path(member.root) for member in authority.members]
         task_ids = {member.task_id for member in authority.members}
@@ -107,17 +115,20 @@ class MilestonePool:
             row = connection.execute("SELECT digest, detail FROM authority WHERE singleton = 1").fetchone()
             if row != (self.digest, payload):
                 raise ValueError("The shared milestone budget is immutable.")
+        if authority.budget_extension is not None:
+            self._retire_predecessor()
 
     def _verify_predecessor(self) -> None:
         previous = self.predecessor
+        authority = self.authority
         if previous is None:
-            if self.authority.predecessor_sha256 is not None or self.authority.isolation_restart is not None:
+            if any((authority.predecessor_sha256, authority.isolation_restart, authority.budget_extension)):
                 raise ValueError("The exact predecessor pool is required to resume the shared ceiling.")
             return
-        authority = self.authority
         if (authority.predecessor_sha256 != previous.digest or authority.owner != previous.authority.owner
-                or authority.cumulative_ceiling != previous.authority.cumulative_ceiling
                 or authority.prior_archive_sha256 == previous.authority.prior_archive_sha256):
+            raise ValueError("A successor pool must preserve its predecessor owner and archive lineage.")
+        if authority.budget_extension is None and authority.cumulative_ceiling != previous.authority.cumulative_ceiling:
             raise ValueError("A successor pool must preserve its predecessor owner and cumulative ceiling.")
         with closing(_read_only(previous.path)) as connection:
             remaining = previous.remaining(connection, attached=False)
@@ -125,19 +136,58 @@ class MilestonePool:
             if authority.isolation_restart is not None:
                 self._verify_isolation_restart(previous, remaining)
                 return
-            if (authority.starting_charges != authority.cumulative_ceiling - remaining
-                    or count != previous.authority.additional_target or not previous.members.keys() <= self._members.keys()):
+            if authority.budget_extension is not None:
+                self._verify_budget_extension(previous, remaining, count)
+            elif (authority.starting_charges != authority.cumulative_ceiling - remaining
+                  or count != previous.authority.additional_target):
                 raise ValueError("The predecessor must be at its verified target with its exact charges retained.")
-            for root, member in self._members.items():
-                prior = previous.members.get(root)
-                additional = connection.execute(
-                    "SELECT COUNT(*) FROM reservations WHERE custody = ?", (str(root),),
-                ).fetchone()[0]
-                if prior is not None and (member.task_id != prior.task_id
-                                          or member.starting_charges != prior.starting_charges + additional):
-                    raise ValueError("A successor custody member must retain every earlier charge.")
-                if prior is None and member.starting_charges:
-                    raise ValueError("New custody must join the successor before any scientific session.")
+            self._verify_member_charges(previous, connection)
+
+    def _verify_budget_extension(self, previous: "MilestonePool", remaining: int, count: int) -> None:
+        authority = self.authority
+        extension = authority.budget_extension
+        assert extension is not None
+        starting = previous.authority.cumulative_ceiling - remaining
+        accounting = artifacts.read_bytes(previous.root / "final-accounting.json")
+        if (remaining < 0 or authority.starting_charges != starting
+                or authority.cumulative_ceiling != starting + extension.additional_sessions
+                or authority.additional_target != previous.authority.additional_target - count
+                or authority.excluded_families != previous.authority.excluded_families
+                or commissioning.digest(accounting) != extension.previous_accounting_sha256
+                or commissioning.digest(artifacts.read_bytes(previous.path)) != extension.previous_database_sha256):
+            raise ValueError("An extension must preserve the exact closeout, exclusions, charges and outstanding target.")
+        closed = commissioning._read_json(accounting)
+        if (closed.get("cumulative_charges") != starting or closed.get("remaining") != remaining
+                or closed.get("unresolved_reservations") != [] or closed.get("shared_halts") != []):
+            raise ValueError("A budget extension requires a completed scientific accounting closeout.")
+
+    def _verify_member_charges(self, previous: "MilestonePool", connection: sqlite3.Connection) -> None:
+        members = previous.members
+        if not members.keys() <= self._members.keys():
+            raise ValueError("A successor must preserve every predecessor custody member.")
+        for root, member in self._members.items():
+            prior = members.get(root)
+            additional = connection.execute(
+                "SELECT COUNT(*) FROM reservations WHERE custody = ?", (str(root),),
+            ).fetchone()[0]
+            if prior is not None and (member.task_id != prior.task_id
+                                      or member.starting_charges != prior.starting_charges + additional):
+                raise ValueError("A successor custody member must retain every earlier charge.")
+            if prior is None and member.starting_charges:
+                raise ValueError("New custody must join the successor before any scientific session.")
+
+    def _retire_predecessor(self) -> None:
+        previous = self.predecessor
+        extension = self.authority.budget_extension
+        assert previous is not None and extension is not None
+        with closing(sqlite3.connect(previous.path, timeout=LOCK_TIMEOUT_SECONDS)) as connection, connection:
+            connection.execute("BEGIN IMMEDIATE")
+            if commissioning.digest(artifacts.read_bytes(previous.path)) != extension.previous_database_sha256:
+                raise ValueError("Predecessor reservations changed during budget extension.")
+            artifacts.write_json(previous.root / "budget-successor.json", {
+                "predecessor_sha256": previous.digest, "successor_sha256": self.digest,
+                "accounting_sha256": extension.previous_accounting_sha256,
+            })
 
     def _verify_isolation_restart(self, previous: "MilestonePool", remaining: int) -> None:
         restart = self.authority.isolation_restart
@@ -154,16 +204,24 @@ class MilestonePool:
                             and commissioning._read_json(raw).get("code") == "isolation"), None)
         if matched is None:
             raise ValueError("The original shared isolation stop must remain in custody.")
-        prior_restart = previous.authority.isolation_restart
+        prior_restart = previous.isolation_guard
         if (not restart.require_delivery_attestation
                 and (matched == "author-attachment-provenance-exposure"
                      or (prior_restart is not None and prior_restart.require_delivery_attestation))):
             raise ValueError("A successor cannot release an attachment provenance stop without delivery attestation.")
         self._verify_restart_runtime()
 
+    @property
+    def isolation_guard(self) -> IsolationRestart | None:
+        if self.authority.isolation_restart is not None:
+            return self.authority.isolation_restart
+        return self.predecessor.isolation_guard if self.predecessor is not None else None
+
     def _verify_restart_runtime(self) -> None:
         restart = self.authority.isolation_restart
         if restart is None:
+            if self.predecessor is not None:
+                self.predecessor._verify_restart_runtime()
             return
         raw = artifacts.read_bytes(self.root / "verified-author-boundary.json")
         details = commissioning._read_json(raw)
@@ -195,7 +253,7 @@ class MilestonePool:
         if (self.predecessor is None or not reference.strip() or ledger.root in self._members
                 or ledger.root != ledger.root.resolve() or manifest.namespace != "development"):
             raise ValueError("New custody requires an exact development commission in a successor pool.")
-        if self.authority.isolation_restart is not None and ledger.root in self._historical_members():
+        if self.isolation_guard is not None and ledger.root in self._historical_members():
             raise ValueError("An isolation restart cannot enrol historical author custody.")
         committed = ledger.batch(manifest.batch_id)
         if committed is None or committed["manifest"] != manifest.model_dump(mode="json"):
@@ -241,7 +299,8 @@ class MilestonePool:
             dossier = verify_dossier(ledger, batch, row["family"], row["revision"], row["dossier_sha256"])
             if any(21 <= case["source_count"] <= 50 for case in dossier["replay"]["preview"]["inputs"]):
                 return True
-        return False
+        return (self.authority.budget_extension is not None and self.predecessor is not None
+                and self.predecessor._verified_intermediate())
 
     def _verify_enrolment(self, root: Path) -> None:
         if root in self._members:
@@ -274,6 +333,8 @@ class MilestonePool:
         return PooledLedger(namespace_directory(root, "development"), self)
 
     def check_running(self) -> None:
+        if (self.root / "budget-successor.json").exists():
+            raise TaskHalted("This milestone budget has been superseded by a verified extension.")
         self._verify_restart_runtime()
         for path in self.members:
             self._verify_enrolment(path)
@@ -465,6 +526,7 @@ class PooledLedger(Ledger):
 
     def release(
         self, batch: str, family: str, revision: int, stage: Stage, *, parent_sha256: str, reference: str,
+        documentary_redesign: dict[str, Any] | None = None, frozen_evidence_review: dict[str, Any] | None = None,
     ) -> None:
         from benchmark_v3.batch.coordinator import family_status
 
@@ -477,7 +539,13 @@ class PooledLedger(Ledger):
             raise ValueError("Release requires an exact scientific stage and lineage reference.")
         events = self.events(batch, family)
         previous = next((row for row in events if row["name"] == self._release_name and row["revision"] == revision), None)
-        details = {"pool_sha256": self.pool.digest, "parent_sha256": parent_sha256, "reference": reference}
+        details: dict[str, Any] = {
+            "pool_sha256": self.pool.digest, "parent_sha256": parent_sha256, "reference": reference,
+        }
+        if documentary_redesign is not None:
+            details["documentary_redesign"] = documentary_redesign
+        if frozen_evidence_review is not None:
+            details["frozen_evidence_review"] = frozen_evidence_review
         if previous is not None:
             if previous["details"] != details or previous["next"] != stage:
                 raise ValueError("Pooled family release is immutable.")
@@ -485,15 +553,24 @@ class PooledLedger(Ledger):
         prior_revision, current, _ = family_status(self, batch, family)
         if current in {"admission_ready", "admitted"} or revision not in {prior_revision, prior_revision + 1}:
             raise ValueError("A pooled release must extend a pending family without changing an existing dossier.")
+        if documentary_redesign is not None and (
+            not self.requires_delivery_attestation or stage != "design" or revision != prior_revision + 1
+        ):
+            raise ValueError("A clean redesign must advance to a new isolated design revision.")
+        if frozen_evidence_review is not None and (
+            documentary_redesign is not None or not self.requires_delivery_attestation
+            or stage != "adjudicate" or revision != prior_revision + 1
+        ):
+            raise ValueError("A frozen evidence review must start a new isolated adjudication revision.")
         self.event(batch, family, revision, "reconcile", self._release_name, current, stage, details)
 
     @property
     def requires_author_context(self) -> bool:
-        return self.pool.authority.isolation_restart is not None
+        return self.pool.isolation_guard is not None
 
     @property
     def requires_delivery_attestation(self) -> bool:
-        restart = self.pool.authority.isolation_restart
+        restart = self.pool.isolation_guard
         return restart is not None and restart.require_delivery_attestation
 
     @property
@@ -562,7 +639,8 @@ class PooledLedger(Ledger):
             guard.require_prompt(job, request["prompt"])
             guard.require_projection(runner, job, request["inputs"])
         planning = (self.pool.predecessor is not None and stage == "design" and role == "research_architect"
-                    and job in {"portfolio-supplement", "portfolio-supplement-format-retry"})
+                    and job in {"portfolio-supplement", "portfolio-supplement-format-retry",
+                                "portfolio-supplement-review"})
         if not self.pooled_revision(batch, family, revision) or (not planning and role not in STAGE_ROLES.get(stage, set())):
             raise ValueError("A pooled reservation requires a released revision, stage and isolated role.")
         self._verify_active_stage(connection, family, revision, stage)

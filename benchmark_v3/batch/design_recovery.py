@@ -77,8 +77,10 @@ def _without_full_file_snapshot(design: DesignOutput) -> DesignOutput:
     return design.model_copy(update={"scaling_snapshots": snapshots[:-1]})
 
 
-def verify_milestone_design(runner: SessionRunner, slot: FamilySlot, design: DesignOutput) -> DesignOutput:
-    corrected = _without_full_file_snapshot(design) if runner.revision == 1 else design
+def verify_milestone_design(
+    runner: SessionRunner, slot: FamilySlot, design: DesignOutput, *, fresh_replacement: bool = False,
+) -> DesignOutput:
+    corrected = _without_full_file_snapshot(design) if runner.revision == 1 or fresh_replacement else design
     science.verify_design(slot, corrected)
     if corrected is design:
         return design
