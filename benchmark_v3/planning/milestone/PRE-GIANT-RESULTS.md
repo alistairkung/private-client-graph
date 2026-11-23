@@ -1,6 +1,6 @@
 # Pre-giant development outcome
 
-[Subsequent isolated restart scope](ISOLATED-RESTART.md)
+[Subsequent isolated restart and shared stop](ISOLATED-RESTART.md)
 
 **The pre-giant phase stopped at a verified shared scientific-integrity
 failure.** It produced no new qualifying families. The earlier milestone

@@ -1,5 +1,11 @@
 # Benchmark v3 isolated production restart
 
+**The replacement pool stopped on a verified attachment-provenance
+failure. Six of 19 families remain technically countable.** The fresh
+phase charged 83 sessions, bringing the cumulative total to 549 of
+1,000. The remaining 451 sessions stay unspent. A, B, C, D and F retain
+human admission. X’s technical dossier remains pending human admission.
+
 The owner released the remaining **534 of 1,000 sessions** for fresh
 non-giant development. The verified starting balance is **466 charged
 sessions**. The historical scientific halt and its receipts remain in
@@ -52,3 +58,49 @@ Family V remains excluded. The large rehearsal keeps its verified
 intermediate-workload prerequisite. Source production uses zero paid PCG
 extraction calls. Technical qualification and human admission remain
 separate. [Review PR #203](https://github.com/alistairkung/private-client-graph/pull/203)
+
+## Shared attachment-provenance stop
+
+The first participant-context review of fresh T approved the listed
+attachments. Subsequent review compared the declared delivery links
+with the committed transmission paths and returned two. Custody verified
+that the full attachments reached two earlier author turns. One author
+reproduced a value that was absent from the participant brief.
+
+Both deliveries matched their declared IDs and previously authored
+Source bytes. The review accepted receipt without corroborating access
+for the named participant. The later review blocked that revision before
+any new author turn. The completed earlier handoffs establish the shared
+stop. This differs from an intercepted scope return.
+
+| Fresh lineage | Charged sessions | Disposition |
+| --- | ---: | --- |
+| T | 32 | Affected Sources quarantined. Exact inputs, earlier reviews and later objections retained. |
+| W | 37 | Documentary repair material retained under the shared stop. |
+| I | 12 | Replacement Sources and completed blind work retained under the shared stop. |
+| L | 2 | Design and scope-review reservation retained under the shared stop. |
+
+The immutable incident commitment is
+`ab3f1ca9b43303994f23a3c5b27924d62269b3a1eb596eaf283933a45199abd2`.
+The stop applies to the entire replacement pool. Future production requires
+independent verification of sender, recipient and delivery time for each
+attachment and a review of the affected lineages. The existing five
+admissions and X are outside this replacement pool. No fresh family was
+qualified. Family V received zero sessions.
+
+## Review package
+
+The owner-only archive contains 417 indexed files, including exact
+review inputs, both attachment exposures, quarantine findings,
+replacement lineages and 83 terminal phase receipts. The predecessor
+archive remains linked by its immutable index. The private archive
+commitment is
+`95e3986be844df6a0935d07c7da2e0396e4c71962b58654be0afcec461ddf807`.
+The final accounting commitment is
+`43ca446591128bc7243481871959078db2502c1216637ca047d9dea3ef88df6c`.
+Receipt timestamps show zero scientific submissions after the shared stop.
+
+The PostgreSQL-backed development suite passed 1,030 tests. Two legacy
+held-out modules were excluded and one held-out replay test was
+deselected. The focused author and factory suite passed 145 tests.
+The CI-equivalent type check passed across 145 source files.
