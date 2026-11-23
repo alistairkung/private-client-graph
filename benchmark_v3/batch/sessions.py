@@ -102,7 +102,8 @@ class SessionRunner:
         )
         if role == "audit" and stage == "audit" and job == audit_boundary.RECHECK:
             retry_instructions += audit_boundary.retry_instructions(self)
-        elif role == "audit" and stage == "audit" and job == "audit" and self.ledger.requires_delivery_attestation:
+        elif (role == "audit" and stage == "audit" and job == "audit" and self.ledger.requires_delivery_attestation
+              and audit_boundary.ACCEPTANCE_LAYOUT not in instructions):
             retry_instructions += audit_boundary.ACCEPTANCE_LAYOUT
         elif role == "audit" and job == repair_authority.VERIFY_JOB and self.ledger.requires_delivery_attestation:
             retry_instructions += repair_authority.VERIFY_RETRY_INSTRUCTIONS

@@ -827,6 +827,9 @@ class FamilyWorkflow:
                 or audit_contract.SCOPED_INSTRUCTIONS in reserved_prompt):
             prompt += audit_contract.SCOPED_INSTRUCTIONS
             schema = audit_contract.output_schema(bundles, freeze, result_type)
+        if (job == "audit" and self.runner.ledger.requires_delivery_attestation
+                and self._use_scoped_prompt(job, audit_boundary.ACCEPTANCE_LAYOUT)):
+            prompt += audit_boundary.ACCEPTANCE_LAYOUT
 
         def science_audit(value: AuditReview) -> AuditReview:
             if self.runner.ledger.requires_delivery_attestation and isinstance(value, MilestoneAudit):

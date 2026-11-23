@@ -242,3 +242,9 @@ verified capacity commitment is
 New reservations use at most two independent runtime slots under the
 same shared integrity check. A later quarantine invalidates that
 capacity release and returns scheduling to one slot.
+
+New audit and repair-plan packets state the required disposition and
+classification layouts at the first attempt. The controller reconstructs
+previously reserved prompts exactly. When both verified slots are busy,
+waiting reservations pass through a scheduling lock. The next turn
+releases that lock before it runs, preserving the two independent slots.

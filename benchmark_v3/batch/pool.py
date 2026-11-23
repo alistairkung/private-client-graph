@@ -732,18 +732,23 @@ class PooledLedger(Ledger):
                 yield True
             return
         paths = (first, self.pool.root / "scientific-dispatch-second.lock")
-        while True:
-            for path in paths:
-                with path.open("a") as lock:
-                    try:
-                        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
-                    except BlockingIOError:
-                        continue
-                    self.require_running()
-                    if path == first or self.pool.verified_dispatch_slots() == 2:
-                        yield True
-                        return
-            time.sleep(0.25)
+        # Keep incoming reservations from racing each other for each newly freed slot.
+        with (self.pool.root / "scientific-dispatch-queue.lock").open("a") as queue:
+            fcntl.flock(queue, fcntl.LOCK_EX)
+            while True:
+                self.require_running()
+                for path in paths:
+                    with path.open("a") as lock:
+                        try:
+                            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                        except BlockingIOError:
+                            continue
+                        self.require_running()
+                        if path == first or self.pool.verified_dispatch_slots() == 2:
+                            fcntl.flock(queue, fcntl.LOCK_UN)
+                            yield True
+                            return
+                time.sleep(0.25)
 
     def _check_reservation_halt(self, connection: sqlite3.Connection) -> None:
         self.pool.check_member(self.root, connection)

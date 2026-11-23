@@ -2711,6 +2711,7 @@ def test_exact_classification_retry_retains_both_failed_plans_and_uses_the_same_
     )
     runner = commission.session_runner(ledger, family, rev)
     original_packets = [runner.committed_packet("design", key, "audit") for key in (job, retry)]
+    assert all(autonomous_realism.CLASSIFICATION_LAYOUT in request["prompt"] for _, _, request in original_packets)
     coordinator.release_exact_plan_classification(ledger, batch, family)
     with pytest.raises(ValueError, match="Only the authorised audit or repair job"):
         runner.run("design", exact, "audit", {"audit_rules": "Different repair packet."},
@@ -3567,7 +3568,7 @@ def test_word_preserving_blind_quote_recovery_uses_the_retained_reader(autonomou
 def test_frozen_evidence_review_reuses_sources_and_blind_receipts_without_cueing_the_new_key(
     approved, transport, tmp_path, monkeypatch, disposition,
 ):
-    from benchmark_v3.batch import frozen_rekey, science
+    from benchmark_v3.batch import audit_boundary, frozen_rekey, science
     from benchmark_v3.batch.pool import PooledLedger
 
     original, fixture = approved
@@ -3628,6 +3629,9 @@ def test_frozen_evidence_review_reuses_sources_and_blind_receipts_without_cueing
         coordinator._work_family(active, commission, slot)
         coordinator.recover_blind_whitespace(active, batch, family, blind_job)
         coordinator._work_family(active, commission, slot)
+    runner = commission.session_runner(active, family, 1)
+    retained_audit = runner.committed_packet("audit", "audit", "audit")[2]
+    assert retained_audit["prompt"].count(audit_boundary.ACCEPTANCE_LAYOUT) == 1
     if disposition.endswith("_layout") or disposition == "missing_critical":
         revision, stage, issue = coordinator.family_status(active, batch, family)
         assert (revision, stage, issue["evidence"]) == (1, "audit", science.AUDIT_COVERAGE_ERROR)
@@ -4077,6 +4081,34 @@ def test_resuming_a_terminal_receipt_does_not_enter_a_scientific_dispatch_slot(m
     coordinator._work_family(ledger, commission, commission.portfolio.slots[0], design_only=True)
     assert coordinator.family_status(ledger, batch, family) == (1, "author", None)
     assert len(calls) == len(slot_entries) == len(ledger.attempts(family)) == 1
+
+
+def test_two_slot_dispatch_releases_scheduling_lock_before_the_scientific_turn(milestone, tmp_path, monkeypatch):
+    import fcntl
+
+    original, commission = milestone
+    coordinator.commission_batch(original, commission, BOUNDARY)
+    pool = MilestonePool(tmp_path / "shared-dispatch", PoolAuthority(
+        owner=OWNER, reference="Fixture verified slots.", prior_archive_sha256="b" * 64,
+        starting_charges=295, cumulative_ceiling=335, additional_target=1,
+        members=[CustodyMember(root=str(original.root), task_id=commission.manifest.task_id, starting_charges=0)],
+    ))
+    monkeypatch.setattr(pool, "serial_scientific_dispatch", lambda: True)
+    monkeypatch.setattr(pool, "verified_dispatch_slots", lambda: 2)
+    ledger = pool.join(original.root)
+    first = pool.root / "scientific-dispatch.lock"
+    second = pool.root / "scientific-dispatch-second.lock"
+    queue = pool.root / "scientific-dispatch-queue.lock"
+    with first.open("a") as other_turn:
+        fcntl.flock(other_turn, fcntl.LOCK_EX)
+        with ledger.scientific_dispatch() as guarded:
+            assert guarded
+            with second.open("r") as held, pytest.raises(BlockingIOError):
+                fcntl.flock(held, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            with queue.open("r") as next_reservation:
+                fcntl.flock(next_reservation, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        with second.open("r") as completed:
+            fcntl.flock(completed, fcntl.LOCK_EX | fcntl.LOCK_NB)
 
 
 def test_only_the_independently_returned_separate_reply_sentence_is_omitted(autonomous, monkeypatch):

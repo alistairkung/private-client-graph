@@ -30,6 +30,10 @@ PLAN_PROMPT = (
 ADJUDICATION_RETURN = "Adjudication has unresolved scientific objections."
 PLAN_REFERENCE_FAILURE = "Every additional classification must identify a retained earlier objection."
 PARTICIPANT_LITERAL_FAILURE = "A participant instruction exposes a condition identifier or alternate literal."
+CLASSIFICATION_LAYOUT = (
+    " Classify the current audit_rules.objections using their exact keys. Discuss earlier documentary"
+    " findings in the rationale, with revision numbers where needed."
+)
 VERIFY_PROMPT = (
     "Independently compare the original and revised fictional files with their designs and the approved hypothesis. "
     "Check that the intended contrast, scoped relationships, cut-off question, invariant evidence, participant "
@@ -298,6 +302,8 @@ def _select_plan(
         runner.ledger.require_capacity(runner.family, runner.revision, mandatory_jobs(design, affected, verification=True))
         _record_plan_selection(runner, job, receipt)
         return plan, receipt, design, affected, job
+    if attested and _classification_layout_for_plan(runner):
+        prompt += CLASSIFICATION_LAYOUT
     plan, receipt = propose(repair_authority.PLAN_JOB, prompt, inputs)
     design, affected = _verify_plan(slot, parent, plan, attested=attested)
     original_jobs = mandatory_jobs(design, affected, verification=True)
@@ -337,6 +343,12 @@ def _select_plan(
     runner.ledger.require_capacity(runner.family, runner.revision, mandatory_jobs(design, affected, verification=True))
     _record_plan_selection(runner, budget_job, receipt)
     return plan, receipt, design, affected, budget_job
+
+
+def _classification_layout_for_plan(runner: SessionRunner) -> bool:
+    attempt = next((row for row in runner.ledger.attempts(runner.family)
+                    if row["revision"] == runner.revision and row["job"] == repair_authority.PLAN_JOB), None)
+    return attempt is None or CLASSIFICATION_LAYOUT in commissioning._read_json(attempt["request"])["prompt"]
 
 
 def _record_plan_selection(runner: SessionRunner, job: str, receipt: dict[str, Any]) -> None:
