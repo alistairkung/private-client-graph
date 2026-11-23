@@ -8,7 +8,7 @@ from typing import Any, Literal
 
 from benchmark_v3 import commissioning, packet
 from benchmark_v3.batch import (
-    adjudication_contract, adjudication_recovery, annotation_recovery, artifacts, audit_recovery, authorisation,
+    adjudication_contract, adjudication_recovery, annotation_recovery, artifacts, audit_boundary, audit_recovery, author_repair, authorisation,
     autonomous_realism, construction, continuation, design_recovery, design_review, evidence_recovery, exception_review,
     milestone_repair, read_format_recovery, repair_authority, science,
 )
@@ -455,7 +455,8 @@ def family_status(ledger: Ledger, batch_id: str, family: str) -> tuple[int, str,
             if record["kind"] == "reconcile" and record["name"] == repair_authority.PLAN_RECOVERY:
                 state = "design"
             if record["kind"] == "reconcile" and (
-                record["name"].startswith("construction-followup") or record["name"].startswith(("pooled-release", read_format_recovery.RELEASE))
+                record["name"].startswith("construction-followup") or record["name"] in {audit_boundary.RECHECK, audit_boundary.FORMAT_RETRY}
+                or record["name"].startswith(("pooled-release", read_format_recovery.RELEASE))
             ):
                 state = record["next"] or state
     return revision, state, blocking
@@ -589,6 +590,11 @@ def _block(
         qualifier = repair_authority.PLAN_RECOVERY
     elif workflow.audit_recovery is not None:
         qualifier = audit_recovery.JOB
+    elif workflow.stage == "audit" and audit_boundary.release(workflow.runner) is not None:
+        qualifier = (audit_boundary.FORMAT_RETRY if any(
+            row["revision"] == revision and row["name"] == audit_boundary.FORMAT_RETRY
+            for row in ledger.events(batch, family)
+        ) else audit_boundary.RECHECK)
     elif workflow.release_action == "complete_evidence_adjudication":
         qualifier = "complete-evidence"
     elif workflow.stage == "blind" and any(
@@ -631,6 +637,57 @@ def quarantine(ledger: Ledger, batch_id: str, family: str, reference: str) -> No
             raise ValueError("Quarantine requires an unresolved exception before admission.")
         ledger.event(batch_id, family, revision, "operator_close", "quarantine", state, "quarantined",
                      {"reference": reference, "exception": blocking, "role": "custodian"})
+
+
+def release_unused_delivery_recheck(ledger: Ledger, batch: str, family: str, source_id: str) -> None:
+    with ledger.coordinator_lock():
+        ledger.require_running()
+        commission = load_commission(ledger, batch)
+        revision, state, issue = family_status(ledger, batch, family)
+        if (state != "quarantined" or not issue or issue["stage"] != "author"
+                or any(row["name"] == author_repair.RECHECK_UNUSED_DELIVERY for row in ledger.events(batch, family))):
+            raise ValueError("Only one unused-delivery clarification may follow a pre-author scope return.")
+        details = author_repair.unused_delivery_return(commission.session_runner(ledger, family, revision), source_id)
+        ledger.event(batch, family, revision + 1, "transition", author_repair.RECHECK_UNUSED_DELIVERY,
+                     state, "design", details)
+
+
+def release_audit_recheck(
+    ledger: Ledger, batch: str, family: str, receipt_sha256: str, excerpts: list[audit_boundary.ExactExcerpt],
+) -> None:
+    with ledger.coordinator_lock():
+        ledger.require_running()
+        commission = load_commission(ledger, batch)
+        revision, state, issue = family_status(ledger, batch, family)
+        runner = commission.session_runner(ledger, family, revision)
+        if (state != "returned" or not issue or (issue["stage"], issue["code"]) != ("audit", "scientific_review")
+                or audit_boundary.release(runner) is not None):
+            raise ValueError("A scientific recheck requires the first retained, exact audit repair request.")
+        path = runner.directory / "family" / "freeze.json"
+        record = {"receipt_sha256": receipt_sha256, "freeze_sha256": commissioning.digest(artifacts.read_bytes(path)),
+                  "excerpt_controls": [view.model_dump(mode="json") for view in excerpts]}
+        original = audit_boundary.returned_audit(runner, record)
+        if commissioning._read_json(issue["evidence"]) != original.model_dump(mode="json"):
+            raise ValueError("The fresh audit does not bind the actual returned disposition.")
+        ledger.event(batch, family, revision, "reconcile", audit_boundary.RECHECK, state, "audit", record)
+
+
+def recover_audit_recheck_representation(ledger: Ledger, batch: str, family: str) -> None:
+    with ledger.coordinator_lock():
+        ledger.require_running()
+        commission = load_commission(ledger, batch)
+        revision, state, issue = family_status(ledger, batch, family)
+        runner = commission.session_runner(ledger, family, revision)
+        if (state != "audit" or not issue or issue["evidence"] != audit_boundary.ACCEPTANCE_FORMAT_ERROR
+                or audit_boundary.release(runner) is None
+                or any(row["revision"] == revision and row["job"] == audit_boundary.RECHECK + repair_authority.FORMAT_RETRY
+                       for row in ledger.attempts(family))):
+            raise ValueError("A fresh representation attempt requires an exhausted, explicitly accepting audit recheck.")
+        review, receipt, _ = runner.committed_result("audit", audit_boundary.RECHECK, "audit", audit_boundary.RecheckedAudit)
+        if review.verdict != "accept" or not review.objections:
+            raise ValueError("The existing recheck did not return the exact ambiguous acceptance representation.")
+        ledger.event(batch, family, revision, "reconcile", audit_boundary.FORMAT_RETRY, state, state,
+                     {"receipt_sha256": receipt["receipt_sha256"], "reference": "One fresh bounded representation check."})
 
 
 def release_empty_attachment_ticket_recovery(ledger: Ledger, batch: str, family: str, source_id: str) -> None:

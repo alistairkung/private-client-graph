@@ -133,8 +133,8 @@ No verified findings recorded.
 | `independent-parentage-disagreement@1` · Independent reports about the same relationship | E | approved | `1c6fbc49c9be191bc6dab14845e0db2afe94675f10f6634c54d897bacede2cae` |
 | `complete-record-label-collision@1` · A shared display label across complete records | F | approved | `86c152a0d7816d83f3de38c16d265f7619ce7ccf08223d22e116b04bb98ea09c` |
 | `incidental-kinship-in-correspondence@1` · Ordinary kinship in routine correspondence | G | proposed | `18ac2949770a2beb57602a12d705c08ae482c443c7f2991c225e2158c644cd01` |
-| `former-name-explicit-link@1` · Former-name reconciliation | M | proposed | `fa467f9804834d9382162f1e7fb16db15d8b55d08680b2ed3dab060632ecbcc0` |
-| `duplicate-origin-salience@1` · Repeated quotation from one origin | P | proposed | `06f97ebd0d9c651404b28ed49fa8a468ea39ba148d49bcb5c8392d97a1f723d0` |
+| `former-name-explicit-link@1` · Former-name reconciliation | M | approved | `fa467f9804834d9382162f1e7fb16db15d8b55d08680b2ed3dab060632ecbcc0` |
+| `duplicate-origin-salience@1` · Repeated quotation from one origin | P | approved | `06f97ebd0d9c651404b28ed49fa8a468ea39ba148d49bcb5c8392d97a1f723d0` |
 | `civil-record-information-boundary@1` · Limits of a civil-record sighting | L | approved | `ec3efd9fbd411a36c75df375b63fe08aea1aa25961ce74822816beed5f76f9cb` |
 | `executed-version-record@1` · Execution status among retained counterparts | N | approved | `e6aa572b315905421af40e9b8cf5fd698dcc9ac41dbac955ffcb75476a37f9d3` |
 | `land-register-lag-invariance@1` · Title-application progress with trustee office fixed | O | approved | `e9a85561cbd07eaf097bf5bff337d61fa684a8728e5cb4f359a02ce17c2274fa` |

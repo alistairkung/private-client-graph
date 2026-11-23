@@ -421,11 +421,15 @@ def _verify_classification(
     }
     reference_aliases = set()
     for key in plan.objections.keys() - parent.objections.keys():
-        match = re.fullmatch(r"revision[_ -]?([1-9][0-9]*):(.+)", key)
-        if match is None:
+        match = re.fullmatch(r"(?:earlier[_ -])?revision[_ -]?([1-9][0-9]*):(.+)", key)
+        if match is not None:
+            candidates = {(int(match[1]), match[2])} & earlier
+        else:
+            candidates = {reference for reference in earlier if reference[1] == key.removeprefix("earlier:")}
+        if len(candidates) != 1:
             raise ValueError("Every additional classification must identify a retained earlier objection.")
-        reference = (int(match[1]), match[2])
-        if reference not in earlier or reference in reference_aliases:
+        reference, = candidates
+        if reference in reference_aliases:
             raise ValueError("Earlier classifications must bind unique retained objections.")
         reference_aliases.add(reference)
     roster = set(parent.freeze.order[parent.freeze.natural])

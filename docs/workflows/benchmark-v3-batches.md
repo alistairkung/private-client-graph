@@ -521,3 +521,18 @@ hypothesis and reruns every dependent gate if Sources change. A returned
 factory instruction mentioning absent correspondence can reopen its
 unchanged plan in a new revision. A separate scope review must clear the
 corrected participant projection before authoring.
+
+The audit packet reports the immutable earlier gate commitments. Exact
+controls and zero-provider replay still determine technical readiness.
+A bounded independent recheck uses the same frozen conditions and keys,
+retains previous valid control expectations, and can precommit exact
+quotation-only views when needed. Each excerpt comes from a single
+contiguous span of its named immutable Source. Delivery metadata stays
+outside those views. Masked observations run in bounded independent
+pairs and stop scheduling when a required control fails.
+
+Draft-only scope reviews distinguish fictional correspondence from
+actual transfers between author packets. A mistaken request to attest
+an unused transfer can receive a fresh review of the unchanged design.
+Every actual incoming attachment still requires its sender's exact
+receipt.

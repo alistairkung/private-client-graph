@@ -3051,7 +3051,10 @@ def test_adjudication_objection_reopens_documentary_review_before_any_key_lock(a
     assert {"repair-plan", "realism-000", "reading-000-a-full", "reading-000-b-full", "adjudicate-000"} <= set(jobs)
 
 
-def test_adjudication_approval_ids_recover_from_unique_committed_names(autonomous, transport, monkeypatch):
+@pytest.mark.parametrize("source_ids_in_truth", [False, True])
+def test_adjudication_approval_ids_recover_from_unique_committed_names(
+    autonomous, transport, monkeypatch, source_ids_in_truth,
+):
     from benchmark_v3.batch.workflow import FamilyWorkflow
 
     ledger, commission = autonomous
@@ -3069,6 +3072,8 @@ def test_adjudication_approval_ids_recover_from_unique_committed_names(autonomou
         review = _output("adjudication", "G", "", inputs)
         relationship = review["key"]["source_approval"]["relationships"][0]
         relationship.update(source=EDGE[0], target=EDGE[2])
+        if source_ids_in_truth:
+            review["key"]["truth"]["relationships"][0]["approved_evidence"] = ["src1"]
         return review
 
     behavior["G", "adjudicate-000"] = adjudicate
@@ -3084,7 +3089,8 @@ def test_adjudication_approval_ids_recover_from_unique_committed_names(autonomou
     assert len([job for _, _, job, _ in calls if job == "adjudicate-000"]) == 1
     directory = commission.session_runner(ledger, "G", 1).directory
     lineage = json.loads((directory / "recoveries/adjudicate-000/local-approval-ids.json").read_bytes())
-    assert [row["after"] for row in lineage["changes"]] == ["p1", "p2"]
+    expected = ["p1", "p2", [QUOTE]] if source_ids_in_truth else ["p1", "p2"]
+    assert [row["after"] for row in lineage["changes"]] == expected
 
 
 def test_empty_attachment_ticket_return_retries_scope_without_repeating_the_plan(autonomous, transport, monkeypatch):
@@ -3143,3 +3149,121 @@ def test_empty_attachment_ticket_return_retries_scope_without_repeating_the_plan
     assert coordinator.family_status(ledger, batch, "G") == (3, "admission_ready", None)
     assert [parent for _, parent, job, _ in calls if job == "repair-plan"] == ["G@2"]
     assert [parent for _, parent, job, _ in calls if job == "author-src2"] == ["G@1", "G@3"]
+
+
+def test_fresh_audit_retains_independent_excerpts_and_replays_the_original_key(autonomous, transport, monkeypatch):
+    from benchmark_v3.batch import audit_boundary
+
+    ledger, commission = autonomous
+    calls, behavior, _ = transport
+    monkeypatch.setattr(type(ledger), "requires_author_context", property(lambda _: True))
+    monkeypatch.setattr(type(ledger), "requires_delivery_attestation", property(lambda _: True))
+    behavior["G", "author-context"] = lambda inputs: {
+        "verdict": "accept", "objections": [],
+        "findings": {key: "Reviewed." for key in json.loads(inputs["audit_rules"])["participant_packets"]},
+    }
+    behavior["G", "author-src1"] = lambda _: {"title": "Record", "text": f"Prefix\n{QUOTE}\nSuffix", "deliveries": []}
+    behavior["G", "author-src2"] = lambda _: {"title": "Note", "text": "Ordinary note.", "deliveries": []}
+    behavior["G", "audit"] = lambda inputs: _output("audit", "G", "", inputs) | {
+        "verdict": "repair", "objections": ["Check the approved excerpt on its own."],
+    }
+    excerpt = audit_boundary.ExactExcerpt(
+        condition="G000", risk="shortcut", reason="Exact evidence in isolation.", question="What is established?",
+        included=["src1"], retained_quotes={"src1": QUOTE}, present=[EDGE], absent=[],
+    )
+
+    def fresh(inputs):
+        rules = json.loads(inputs["audit_rules"])
+        assert rules["verified_prior_gates"]["blind"]["receipts"]
+        assert rules["retained_audit_objections"] == ["Check the approved excerpt on its own."]
+        return _output("audit", "G", "", inputs) | {"excerpt_controls": [excerpt.model_dump(mode="json")]}
+
+    behavior["G", "audit-recheck"] = fresh
+    batch = commission.manifest.batch_id
+    coordinator.commission_batch(ledger, commission, BOUNDARY)
+    coordinator.run_batch(ledger, batch)
+    assert coordinator.family_status(ledger, batch, "G")[:2] == (1, "returned")
+    runner = commission.session_runner(ledger, "G", 1)
+    key = runner.directory / "family/G000.json"
+    before = key.read_bytes()
+    _, receipt, _ = runner.committed_result("audit", "audit", "audit", audit_boundary.MilestoneAudit)
+    coordinator.release_audit_recheck(ledger, batch, "G", receipt["receipt_sha256"], [excerpt])
+    coordinator.run_batch(ledger, batch)
+    assert coordinator.family_status(ledger, batch, "G") == (1, "admission_ready", None)
+    mask = next(inputs for _, _, job, inputs in calls if job.startswith("mask-"))
+    assert json.loads(mask["sources"]) == [{"id": "src1", "text": QUOTE, "title": "Evidence excerpt"}]
+    assert key.read_bytes() == before
+
+
+def test_milestone_mask_observations_stop_before_later_control_pairs(autonomous, transport, monkeypatch):
+    ledger, commission = autonomous
+    calls, behavior, _ = transport
+    monkeypatch.setattr(type(ledger), "parallel_scientific_jobs", property(lambda _: 2))
+    barrier = threading.Barrier(2)
+
+    def audit(inputs):
+        result = _output("audit", "G", "", inputs)
+        result["risks"] = ["shortcut"]
+        result["masks"] = [
+            {"condition": "G000", "risk": "shortcut", "reason": f"Check {index}.",
+             "question": f"What does view {index} establish?", "included": ["src1"],
+             "present": [EDGE], "absent": []}
+            for index in range(3)
+        ]
+        return result
+
+    def first_mask(inputs):
+        barrier.wait(timeout=3)
+        return _output("masked", "G", "", inputs) | {"candidates": {"relationships": []}}
+
+    def second_mask(inputs):
+        barrier.wait(timeout=3)
+        return _output("masked", "G", "", inputs)
+
+    behavior["G", "audit"] = audit
+    behavior["G", "mask-000"] = first_mask
+    behavior["G", "mask-001"] = second_mask
+    batch = commission.manifest.batch_id
+    coordinator.commission_batch(ledger, commission, BOUNDARY)
+    coordinator.run_batch(ledger, batch)
+    assert coordinator.family_status(ledger, batch, "G")[:2] == (1, "quarantined")
+    assert {job for _, _, job, _ in calls if job.startswith("mask-")} == {"mask-000", "mask-001"}
+
+
+def test_unused_outgoing_delivery_rechecks_scope_without_changing_the_design(autonomous, transport, monkeypatch):
+    from benchmark_v3.batch import author_repair
+
+    ledger, commission = autonomous
+    calls, behavior, _ = transport
+    monkeypatch.setattr(type(ledger), "requires_author_context", property(lambda _: True))
+    monkeypatch.setattr(type(ledger), "requires_delivery_attestation", property(lambda _: True))
+
+    def design(_):
+        result = _design("G")
+        result["inventory"][0]["provenance"] += f"\nDelivered {TODAY.isoformat()} to Writer 2"
+        return result
+
+    def context(inputs):
+        projected = json.loads(inputs["audit_rules"])["participant_packets"]
+        assert json.loads(projected["src1"]["author_brief"])["outgoing_deliveries"] == []
+        initial = sum(job == "author-context" for _, _, job, _ in calls) == 1
+        return {"verdict": "return" if initial else "accept", "findings": {key: "Checked." for key in projected},
+                "objections": ["src1: The outgoing delivery has no attestation."] if initial else []}
+
+    behavior["G", "design"] = design
+    behavior["G", "author-context"] = context
+    behavior["G", "author-src1"] = lambda _: {"title": "Record", "text": QUOTE, "deliveries": []}
+    behavior["G", "author-src2"] = lambda _: {"title": "Note", "text": "Ordinary note.", "deliveries": []}
+    batch = commission.manifest.batch_id
+    coordinator.commission_batch(ledger, commission, BOUNDARY)
+    coordinator.run_batch(ledger, batch)
+    assert coordinator.family_status(ledger, batch, "G")[:2] == (1, "quarantined")
+    coordinator.release_unused_delivery_recheck(ledger, batch, "G", "src1")
+    coordinator.run_batch(ledger, batch)
+    assert coordinator.family_status(ledger, batch, "G") == (2, "admission_ready", None)
+    first = commission.session_runner(ledger, "G", 1).directory
+    second = commission.session_runner(ledger, "G", 2).directory
+    assert (first / "design.json").read_bytes() == (second / "design.json").read_bytes()
+    assert author_repair.SELECTED_DELIVERY_SCOPE in json.loads(
+        (second / "packets/author-context/request.json").read_bytes(),
+    )["prompt"]

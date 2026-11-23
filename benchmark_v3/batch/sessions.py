@@ -10,7 +10,7 @@ from pydantic import BaseModel
 
 from benchmark_v3 import commissioning, packet
 from benchmark_v3.batch import (
-    adjudication_contract, adjudication_recovery, annotation_recovery, artifacts, audit_recovery, author_context,
+    adjudication_contract, adjudication_recovery, annotation_recovery, artifacts, audit_boundary, audit_recovery, author_context,
     author_delivery, author_repair, authorisation, construction, continuation, design_review, repair_authority,
 )
 from benchmark_v3.batch.contracts import BatchManifest, Code, Role, Stage
@@ -99,6 +99,8 @@ class SessionRunner:
         retry_instructions = instructions if role == "designer" else (
             instructions + " Return only the exact requested JSON object."
         )
+        if role == "audit" and stage == "audit" and job == audit_boundary.RECHECK:
+            retry_instructions += audit_boundary.retry_instructions(self)
         choice = self._selection(job) if unwrap else None
         if choice and choice["selected_job"] == retry:
             result, receipt, unwrapped = self._run_one(
@@ -201,6 +203,8 @@ class SessionRunner:
         if role == "audit":
             base_job = job.removesuffix(repair_authority.FORMAT_RETRY) if recovery else job
             permitted = base_job == (audit_recovery.JOB if audit_release else "audit")
+            if self.ledger.requires_delivery_attestation and stage == "audit" and base_job == audit_boundary.RECHECK:
+                permitted = audit_boundary.release(self) is not None
             if recovery and (stage, base_job) in {
                 ("design", repair_authority.PLAN_JOB), ("design", repair_authority.BUDGET_PLAN_JOB),
                 ("author", repair_authority.VERIFY_JOB),
