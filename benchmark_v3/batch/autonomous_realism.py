@@ -7,7 +7,7 @@ from typing import Any, Literal
 from pydantic import TypeAdapter
 
 from benchmark_v3 import commissioning, packet
-from benchmark_v3.batch import artifacts, author_context, author_delivery, authorisation, design_review, repair_authority, science
+from benchmark_v3.batch import artifacts, author_context, author_delivery, authorisation, delivery_particulars, design_review, repair_authority, science
 from benchmark_v3.batch.contracts import Adjudication, DesignOutput, MatchedCondition, RealismReview, SourceId
 from benchmark_v3.batch.ledger import BudgetExhausted
 from benchmark_v3.batch.sessions import SessionRunner
@@ -99,6 +99,7 @@ class ReturnedFile:
     prior_scope_return: dict[str, Any] | None = None
     earlier_scope_references: tuple[tuple[int, str], ...] = ()
     retained_literal_briefs: frozenset[SourceId] = frozenset()
+    incoming_particulars: delivery_particulars.IncomingParticulars | None = None
 
     def inputs(self, slot: FamilySlot) -> dict[str, str]:
         key = f"{slot.hypothesis.hypothesis_id}@{slot.hypothesis.revision}"
@@ -122,6 +123,15 @@ class Revision:
     affected: set[str]
     lineage: dict[str, Any]
     planner_job: str
+
+    def participant_tickets(self) -> dict[SourceId, str]:
+        particulars = self.parent.incoming_particulars
+        if particulars is None:
+            return self.plan.tickets
+        source_id = particulars.source_id
+        basis = self.plan.tickets.get(source_id)
+        ticket = particulars.local_ticket()
+        return self.plan.tickets | {source_id: f"{basis}\n\n{ticket}" if basis else ticket}
 
 
 def release_event(runner: SessionRunner) -> dict[str, Any] | None:
@@ -191,6 +201,8 @@ def plan_revision(
         lineage["parent_revision"] = parent.prior_scope_return["revision"]
         lineage["prior_scope_return_receipt_sha256"] = parent.prior_scope_return["receipt_sha256"]
         lineage["last_realism_source_commitments"] = parent.prior_scope_return["original_realism_source_commitments"]
+    if parent.incoming_particulars is not None:
+        lineage["incoming_particulars"] = release["incoming_particulars"]
     return Revision(parent, design, plan, affected, lineage, job), receipt
 
 
@@ -300,6 +312,11 @@ def _select_plan(
         prompt += (" The exact scoped return is the immediate documentary draft. Address the new scope objections "
                    "and preserve all unaffected records. Retain prior documentary objections for context and arrange "
                    "fresh independent realism on the revised full conditions.")
+    if parent.incoming_particulars is not None:
+        prompt += (f" The original authorised direct-transmission particulars for {parent.incoming_particulars.source_id}"
+                   " will be appended in full, in attachment order, after your local instructions. Do not embed"
+                   " lists of delivery facts, quote the review, or single out a relationship proof. Preserve the exact"
+                   " set of incoming attachments and every one of their original sending acts and Sources.")
     if exact := repair_authority.recorded_classification_retry(runner):
         expected, previous_inputs = classification_retry_details(runner)
         if exact != expected or inputs != previous_inputs:
@@ -465,10 +482,7 @@ def _read_return(runner: SessionRunner, slot: FamilySlot, release: dict[str, Any
     result = ReturnedFile(design, bundles, freeze, objections, reviews, receipts, prior, earlier,
                           earlier_scope_references=scope_references,
                           retained_literal_briefs=_retained_literal_briefs(previous, design, natural, events))
-    if authored_return:
-        result = _scope_repair_parent(runner, slot, result, release["scope_return_receipt_sha256"],
-                                      rejected_revision=revision + 1)
-    for expected_revision, expected_return in enumerate(preauthor_returns, runner.revision - len(preauthor_returns)):
+    for expected_revision, expected_return in enumerate(preauthor_returns, revision + 1):
         skipped = replace(runner, revision=expected_revision, directory=runner.directory.with_name(str(expected_revision)))
         record, rejected = pre_author_scope_return(skipped, slot=slot)
         if record != expected_return:
@@ -479,6 +493,17 @@ def _read_return(runner: SessionRunner, slot: FamilySlot, release: dict[str, Any
         else:
             references = tuple((expected_revision, key) for key in scope_objections)
             result = replace(result, earlier_scope_references=(*result.earlier_scope_references, *references))
+    if authored_return:
+        rejected_revision = revision + len(preauthor_returns) + 1
+        result = _scope_repair_parent(runner, slot, result, release["scope_return_receipt_sha256"],
+                                      rejected_revision=rejected_revision, original_revision=revision)
+        if details := release.get("incoming_particulars"):
+            previous_draft = replace(runner, revision=rejected_revision,
+                                     directory=runner.directory.with_name(str(rejected_revision)))
+            particulars = delivery_particulars.reopen(previous_draft, details["source_id"])
+            if authorisation.commitment(particulars) != details["record_sha256"]:
+                raise ValueError("The participant's original delivery particulars changed.")
+            result = replace(result, incoming_particulars=particulars)
     return result
 
 
@@ -751,6 +776,7 @@ def document_adjudication_return(runner: SessionRunner) -> dict[str, Any]:
 
 def _scope_repair_parent(
     runner: SessionRunner, slot: FamilySlot, parent: ReturnedFile, expected_receipt: str, *, rejected_revision: int,
+    original_revision: int,
 ) -> ReturnedFile:
     rejected = replace(runner, revision=rejected_revision, directory=runner.directory.with_name(str(rejected_revision)))
     finding, receipt, request = rejected.committed_result("author", repair_authority.VERIFY_JOB, "audit", ScopeReview)
@@ -772,7 +798,9 @@ def _scope_repair_parent(
                     "original_realism_review_receipts": parent.review_commitments,
                     "original_realism_sources": files["original"],
                     "independent_finding": finding.model_dump(mode="json")}
-    earlier = [*parent.earlier_objections, {"revision": rejected_revision - 1, "reviews": parent.reviews}]
+    if original_revision != rejected_revision - 1:
+        scope_record["original_realism_revision"] = original_revision
+    earlier = [*parent.earlier_objections, {"revision": original_revision, "reviews": parent.reviews}]
     return replace(parent, design=rejected_design, bundles=bundles, freeze=freeze, retained_literal_briefs=frozenset(),
                    objections={f"scope:{index}": issue for index, issue in enumerate(finding.objections, start=1)},
                    earlier_objections=earlier, prior_scope_return=scope_record)
@@ -796,7 +824,7 @@ def _verify_classification(
         if match is not None:
             candidates = {(int(match[1]), match[2])} & earlier
         elif parent.prior_scope_return is not None and key.startswith(("original:", "realism:")):
-            original_realism = parent.prior_scope_return["revision"] - 1
+            original_realism = parent.prior_scope_return.get("original_realism_revision", parent.prior_scope_return["revision"] - 1)
             candidates = {(original_realism, key.split(":", 1)[1])} & earlier
         elif key.startswith("prior_repair:"):
             candidates = {reference for reference in parent.earlier_scope_references if reference[1] == key.split(":", 1)[1]}
@@ -875,6 +903,8 @@ def _verify_plan(
             raise RepairStopped("A revised matched literal must regenerate its affected Source.")
     if not affected:
         raise RepairStopped("The repair proposes no change to any authored Source.")
+    if parent.incoming_particulars is not None:
+        parent.incoming_particulars.require_unchanged_senders(design, affected)
     return design, affected
 
 

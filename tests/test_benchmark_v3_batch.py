@@ -2673,6 +2673,97 @@ def test_pooled_scope_return_reopens_only_the_verified_prior_realism_file(autono
     assert scope_record in [event["details"] for event in ledger.events(batch, "G") if event["kind"] == "session"]
 
 
+def test_authored_scope_repair_reuses_checked_delivery_after_preauthor_return(autonomous, transport, tmp_path, monkeypatch):
+    from benchmark_v3.batch import delivery_particulars
+    from benchmark_v3.batch.pool import PooledLedger
+
+    original, commission = autonomous
+    manifest, slot = commission.manifest, commission.portfolio.slots[0]
+    batch, family = manifest.batch_id, "G"
+    coordinator.commission_batch(original, commission, BOUNDARY)
+    pool = MilestonePool(tmp_path / "delivery-particulars-repair", PoolAuthority(
+        owner=OWNER, reference="Exact delivery scope repair.", prior_archive_sha256="b" * 64,
+        starting_charges=295, cumulative_ceiling=360, additional_target=1,
+        members=[CustodyMember(root=str(original.root), task_id=manifest.task_id, starting_charges=0)],
+    ))
+    monkeypatch.setattr(PooledLedger, "requires_author_context", property(lambda _: True))
+    monkeypatch.setattr(PooledLedger, "requires_delivery_attestation", property(lambda _: True))
+    ledger = pool.join(original.root)
+    ledger.release(batch, family, 1, "design", parent_sha256="a" * 64, reference="Original work.")
+    calls, behavior, _ = transport
+    design = _design(family)
+    design["inventory"][0]["provenance"] = f"Direct dispatch.\nDelivered {TODAY} to Writer 2"
+    design["inventory"][1]["received"] = ["src1"]
+    behavior[family, "design"] = lambda _: design
+    behavior[family, "author-src1"] = lambda _: {
+        "title": "Dated record", "text": QUOTE, "deliveries": [{"recipient": "Writer 2", "sent_on": TODAY.isoformat()}],
+    }
+
+    def scope(inputs):
+        packets = json.loads(inputs["audit_rules"])["participant_packets"]
+        obstructed = packets["src2"].get("revision_ticket") == "Unavailable receipt."
+        return {"verdict": "return" if obstructed else "accept", "findings": {key: "Reviewed." for key in packets},
+                "objections": ["src2: the receipt is unavailable."] if obstructed else []}
+
+    def plan(inputs):
+        rules = json.loads(inputs["audit_rules"])
+        ticket = "Document your checked direct receipt." if "prior_scope_return" in rules else (
+            "Prepare a local inventory." if "pre-author:1" in rules["objections"] else "Unavailable receipt."
+        )
+        return _repair_plan(inputs, ticket=None) | {"tickets": {"src2": ticket}}
+
+    def inventory(inputs):
+        ticket = inputs.get("revision_ticket", "")
+        content = "Counterpart in file."
+        if "1. Writer 1 |" in ticket:
+            content = "Verified dispatch."
+        elif ticket:
+            content = "Verified counterpart in file."
+        return {"title": "Intake inventory", "text": content, "deliveries": []}
+
+    def verify(inputs):
+        preserved = "Verified dispatch." in json.loads(inputs["paired_bundles"])["revised"]["G000"][1]["text"]
+        return {"verdict": "preserved" if preserved else "changed", "scope": "Reviewed.", "provenance": "Reviewed.",
+                "contrast": "Reviewed.", "objections": [] if preserved else ["src2 lacks the direct dispatch date."]}
+
+    behavior[family, "author-context"] = scope
+    behavior[family, "author-src2"] = inventory
+    behavior[family, "repair-plan"] = plan
+    behavior[family, "repair-verification"] = verify
+    behavior[family, "realism-000"] = lambda inputs: _output("realism", family, "", inputs) | (
+        {} if "Verified dispatch." in inputs["sources"] else {"verdict": "repair", "objections": ["Missing delivery."]}
+    )
+    coordinator._work_family(ledger, commission, slot)
+    coordinator._work_family(ledger, commission, slot)
+    assert coordinator.family_status(ledger, batch, family)[:2] == (2, "quarantined")
+    coordinator.release_returned_pre_author_plan(ledger, batch, family)
+    coordinator._work_family(ledger, commission, slot)
+    assert coordinator.family_status(ledger, batch, family)[:2] == (3, "quarantined")
+    draft = commission.session_runner(ledger, family, 3)
+    particulars = delivery_particulars.reopen(draft, "src2")
+    locked_design = artifacts.read_contract(draft.directory / "design.json", DesignOutput)
+    with pytest.raises(ValueError, match="unchanged prior deliveries"):
+        particulars.require_unchanged_senders(locked_design, {"src1", "src2"})
+    with pytest.raises(ValueError, match="unchanged prior deliveries"):
+        particulars.model_copy(update={"recipient_author": "Another participant"}).require_unchanged_senders(
+            locked_design, {"src2"},
+        )
+    with pytest.raises(ValueError, match="specific recipient Source"):
+        coordinator.release_returned_authored_scope_plan(ledger, batch, family, incoming_particulars_source="src1")
+    coordinator.release_returned_authored_scope_plan(ledger, batch, family, incoming_particulars_source="src2")
+    coordinator._work_family(ledger, commission, slot)
+
+    assert coordinator.family_status(ledger, batch, family) == (4, "admission_ready", None)
+    authored = [(revision, job, inputs) for _, revision, job, inputs in calls if job in {"author-src1", "author-src2"}]
+    assert [(revision, job) for revision, job, _ in authored] == [
+        ("G@1", "author-src1"), ("G@1", "author-src2"), ("G@3", "author-src2"), ("G@4", "author-src2"),
+    ]
+    ticket = authored[-1][2]["revision_ticket"]
+    assert f"1. Writer 1 | {TODAY}" in ticket
+    assert "lacks the direct dispatch" not in ticket and "receipt_sha256" not in ticket
+    assert {revision for _, revision, job, _ in calls if job.startswith("reading")} == {"G@4"}
+
+
 def test_exact_classification_retry_retains_both_failed_plans_and_uses_the_same_file(
     autonomous, transport, tmp_path, monkeypatch,
 ):

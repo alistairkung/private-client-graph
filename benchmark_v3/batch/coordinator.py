@@ -11,7 +11,7 @@ from pydantic import TypeAdapter
 from benchmark_v3 import commissioning, packet
 from benchmark_v3.batch import (
     adjudication_contract, adjudication_recovery, annotation_recovery, artifacts, audit_boundary, audit_recovery, author_repair, authorisation,
-    autonomous_realism, clean_redesign, construction, continuation, design_recovery, design_review, evidence_recovery, exception_review, frozen_rekey, joint_control_plan,
+    autonomous_realism, clean_redesign, construction, continuation, delivery_particulars, design_recovery, design_review, evidence_recovery, exception_review, frozen_rekey, joint_control_plan,
     milestone_repair, read_format_recovery, repair_authority, science,
 )
 from benchmark_v3.batch.contracts import (
@@ -978,7 +978,9 @@ def recover_audit_recheck_representation(ledger: Ledger, batch: str, family: str
                      {"receipt_sha256": receipt["receipt_sha256"], "reference": "One fresh bounded representation check."})
 
 
-def release_returned_authored_scope_plan(ledger: PooledLedger, batch: str, family: str) -> None:
+def release_returned_authored_scope_plan(
+    ledger: PooledLedger, batch: str, family: str, *, incoming_particulars_source: str | None = None,
+) -> None:
     """Open one documentary replan from an independently rejected authored repair."""
     with ledger.coordinator_lock():
         ledger.require_running()
@@ -987,7 +989,8 @@ def release_returned_authored_scope_plan(ledger: PooledLedger, batch: str, famil
         runner = commission.session_runner(ledger, family, revision)
         earlier = autonomous_realism.release_event(runner)
         if (not ledger.requires_delivery_attestation or earlier is None
-                or earlier.get("parent_revision") != revision - 1 or "scope_return_receipt_sha256" in earlier
+                or earlier.get("parent_revision") != revision - 1 - len(autonomous_realism._pre_author_returns(earlier))
+                or "scope_return_receipt_sha256" in earlier
                 or state != "quarantined" or not issue or (issue["stage"], issue["code"]) != ("author", "scientific_review")
                 or not ledger.pooled_revision(batch, family, revision)):
             raise ValueError("An authored-scope replan requires an independently returned documentary revision.")
@@ -995,10 +998,17 @@ def release_returned_authored_scope_plan(ledger: PooledLedger, batch: str, famil
                                                      autonomous_realism.ScopeReview)
         if review.verdict != "changed" or not review.objections or issue["evidence"] != autonomous_realism.scope_failure(review):
             raise ValueError("The exact retained scope review must establish the documentary objection.")
-        release = earlier | {
+        release = {key: value for key, value in earlier.items()
+                   if key not in {"scope_ticket_omission", "generated_attachment_ticket"}} | {
             "scope_return_receipt_sha256": receipt["receipt_sha256"],
             "family_sessions_remaining": ledger.effective_budget().families[family] - len(ledger.attempts(family)),
         }
+        if incoming_particulars_source is not None:
+            if not any(incoming_particulars_source in reason for reason in review.objections):
+                raise ValueError("The returned scope must identify the specific recipient Source.")
+            particulars = delivery_particulars.reopen(runner, incoming_particulars_source)
+            release["incoming_particulars"] = {"source_id": particulars.source_id,
+                                              "record_sha256": authorisation.commitment(particulars)}
         slot = next(row for row in commission.portfolio.slots if row.family_id == family)
         successor = commission.session_runner(ledger, family, revision + 1)
         autonomous_realism._read_return(successor, slot, release)

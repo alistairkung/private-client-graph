@@ -128,6 +128,15 @@ commissioned for isolated construction. The registered round is
 The independent merits review is
 `39f369c27665aa115ba9b80dbd8dd25c3778581a783a38b6fc59e432dd73b47e`.
 
+The eighth reserve review selected CE to test retention of a factual
+relationship assertion after the client withdraws the particular will
+instruction containing it. It deferred CD pending documentary evidence
+that a separate receipt record and the larger joint review are plausible.
+The registered round is
+`3e3d81384a80fca145859bc4471d19eb2ab22f70ee5e4a41a70ed382a30a7f58`.
+The independent merits review is
+`4003b88ef8d1d9964cd528f77ebe61c5694c33cbe9109bb0cf9b48fa1b8dea56`.
+
 ## Subsequent verified qualification
 
 E revision 3 qualified for the two-condition test of contradictory
@@ -293,6 +302,15 @@ instructions. An exact omission removes those two sentences while
 retaining the original event trigger. The revised scope must pass
 fresh review before authoring. The independently reviewed revision 14
 projection passed and entered separately attested authoring.
+The completed revision 14 inventory then omitted checked dispatch and
+delivery particulars. The independent scope review returned the file
+before realism or key generation. Revision 14 stays quarantined at
+`29a13e271e085ca2e7dc2e11b33f6e60d74aa982ef7387f42a8a9cdaa85f62c8`.
+The bounded successor preserves the 64 already-authored sending
+Sources. Only the receiving participant can see the corresponding
+sender identities and delivery dates, in the order of their actual
+earlier attachments. Fresh scope review must clear that exact packet
+and the resulting documentary file before realism and blind review.
 
 L's scope review exposed a factory-generated attachment instruction
 that implied undocumented revised correspondence. Fresh repair
@@ -354,6 +372,10 @@ capacity release and returns scheduling to one slot. Successive
 verifications retain each proof under the digest of the exact set of
 quarantine commitments. A capacity proof for an earlier set cannot
 release the second slot following another quarantine.
+Fourteen completed serial receipts and a fresh pair of empty isolated
+contexts supported a two-slot release following the BW recovery. The
+current proof is
+`37eaf5bd9010731b4537681255928b46655cf7377bb0a406aa6eadba7bff822d`.
 
 New audit and repair-plan packets state the required disposition and
 classification layouts at the first attempt. The controller reconstructs

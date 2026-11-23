@@ -200,7 +200,7 @@ class FamilyWorkflow:
             self.documentary_revision = revision
             self.sessions.append(receipt)
             design = revision.design
-            self.repair_tickets = revision.plan.tickets
+            self.repair_tickets = revision.participant_tickets()
             lineage_name = ("repair-budget-lineage.json" if revision.planner_job == repair_authority.BUDGET_PLAN_JOB
                             else "repair-lineage.json")
             self.transition_inputs["repair_lineage"] = artifacts.write_json(
