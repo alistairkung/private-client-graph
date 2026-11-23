@@ -106,6 +106,15 @@ replay reproduced all three supported edges. Its technical dossier is
 Ten families now technically qualify. X, T, N, E and W await owner
 admission.
 
+O revision 7 qualified for a matched change in reported application
+progress at a fixed trustee-office snapshot. It passed 28 evidence
+assignments. An independent zero-provider replay reproduced both
+graphs, eight true positives and all tested evidence results. Its
+technical dossier is
+`63e1b9a8ac05f14457174d0caae7ca53681986e34099b54b960757151c70bf82`.
+Eleven families technically qualify. X, T, N, E, W and O await owner
+admission.
+
 ## Isolated runtime recovery
 
 AB and AD received independent initial design and scope reviews. Their
