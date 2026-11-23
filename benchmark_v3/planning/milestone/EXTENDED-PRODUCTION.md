@@ -219,6 +219,20 @@ classification on the identical inputs. The independently reviewed
 revision still requires exact author scope, fresh realism and all
 downstream checks.
 
+AP's proposed repair initially stopped because the matched alternative
+used an ordinary provision identifier already present in two separate
+counterparts. The controller authenticates both original author packets,
+their prior approved local scopes and their exact retained Sources. The
+allowance applies only when those authors and their dependencies are
+untouched in the repair. New and revised participant instructions still
+reject any exposure of condition identifiers or the alternate literal.
+
+BG's first lineage remains quarantined after a masked reader identified
+support that the signed designation minute retained on its own. A
+separately commissioned replacement retains the asset-transfer
+hypothesis and must independently determine any standalone proof before
+testing the distinct transfer shortcut.
+
 An immutable reserved packet can be reopened without holding the live
 dispatch slot. Reopen-only reservations cannot start a new scientific
 turn. After stable serial production, a fresh zero-turn check verified

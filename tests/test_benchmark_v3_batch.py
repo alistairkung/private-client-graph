@@ -3898,6 +3898,61 @@ def test_realism_classifications_bind_their_original_source_inventory(approved):
         autonomous_realism._verify_classification(slot, parent, result)
 
 
+def test_repair_retains_only_attested_unchanged_counterpart_literal_briefs(approved, monkeypatch):
+    from benchmark_v3.batch import autonomous_realism, author_delivery
+    from benchmark_v3.batch.sessions import SessionRunner
+
+    ledger, commission = approved
+    runner = commission.session_runner(ledger, "G", 1)
+    value = _design("G", count=4)
+    value["matched"] = [
+        {"kind": "literal_edit", "edit": {"source_id": "src1", "before": "A.1", "after": "B.1"}},
+    ]
+    value["required"]["G001"] = [EDGE]
+    value["inventory"][1]["participant_brief"] = "Draft the variation using A.1."
+    value["inventory"][2].update(participant_brief="Independently define standing clause B.1.", received=["src2"])
+    design = DesignOutput.model_validate(value)
+    sources = [Source(id=f"src{index}", title="Record", text="Standing clause B.1.") for index in range(1, 5)]
+    document = author_delivery.AttestedSource(title=sources[2].title, text=sources[2].text, deliveries=[])
+    inputs = {"author_brief": commissioning.json_text({
+        "participant": "Writer 3", "date": TODAY.isoformat(), "brief": design.inventory[2].participant_brief,
+    })}
+    events = [{"name": "author-src3", "kind": "session", "details": {"status": "completed"}}]
+    checked = []
+
+    def completed(_runner, stage, job, role, contract):
+        assert (stage, job, role, contract) == ("author", "author-src3", "author", author_delivery.AttestedSource)
+        return document, {}, {"inputs": inputs, "prompt": "Exact prompt."}
+
+    monkeypatch.setattr(type(ledger), "requires_delivery_attestation", property(lambda _: True))
+    monkeypatch.setattr(SessionRunner, "committed_result", completed)
+    monkeypatch.setattr(author_delivery, "require_prompt", lambda job, prompt: checked.append((job, prompt)))
+    monkeypatch.setattr(author_delivery, "require_projection", lambda worker, job, packet: checked.append((job, packet)))
+    retained = autonomous_realism._retained_literal_briefs(runner, design, sources, events)
+    assert retained == {"src3"}
+    assert checked == [("author-src3", "Exact prompt."), ("author-src3", inputs)]
+    assert autonomous_realism._retained_literal_briefs(runner, design, sources, []) == set()
+    assert autonomous_realism._retained_literal_briefs(
+        runner, design, [row.model_copy(update={"text": "Different."}) for row in sources], events,
+    ) == set()
+
+    plan = autonomous_realism.RepairPlan(
+        disposition="repair", objections={}, tickets={"src4": "Report only the dated intake."},
+        progress="improved", rationale="Keep the standing clauses unchanged.",
+    )
+    assert not autonomous_realism._exposes_hidden_text(design, plan, retained)
+    assert autonomous_realism._exposes_hidden_text(design, plan, frozenset())
+    for tickets in (
+        {"src4": "Use alternate B.1 in the variation."},
+        {"src4": "Review hidden sibling G001."},
+        {"src3": "Regenerate the counterpart."},
+        {"src2": "Regenerate a record the counterpart author reads."},
+    ):
+        assert autonomous_realism._exposes_hidden_text(design, plan.model_copy(update={"tickets": tickets}), retained)
+    revised = design.model_copy(update={"neutral_brief": "New brief."})
+    assert autonomous_realism._exposes_hidden_text(revised, plan.model_copy(update={"revised_design": revised}), retained)
+
+
 def test_joint_control_proposals_preserve_source_order_and_reject_a_surviving_route():
     from benchmark_v3.batch import joint_control_plan
     from benchmark_v3.replay_manifest import SufficientEvidence

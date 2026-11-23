@@ -29,6 +29,7 @@ PLAN_PROMPT = (
 )
 ADJUDICATION_RETURN = "Adjudication has unresolved scientific objections."
 PLAN_REFERENCE_FAILURE = "Every additional classification must identify a retained earlier objection."
+PARTICIPANT_LITERAL_FAILURE = "A participant instruction exposes a condition identifier or alternate literal."
 VERIFY_PROMPT = (
     "Independently compare the original and revised fictional files with their designs and the approved hypothesis. "
     "Check that the intended contrast, scoped relationships, cut-off question, invariant evidence, participant "
@@ -78,6 +79,7 @@ class ReturnedFile:
     earlier_objections: list[dict[str, Any]]
     prior_scope_return: dict[str, Any] | None = None
     earlier_scope_references: tuple[tuple[int, str], ...] = ()
+    retained_literal_briefs: frozenset[SourceId] = frozenset()
 
     def inputs(self, slot: FamilySlot) -> dict[str, str]:
         key = f"{slot.hypothesis.hypothesis_id}@{slot.hypothesis.revision}"
@@ -431,7 +433,8 @@ def _read_return(runner: SessionRunner, slot: FamilySlot, release: dict[str, Any
     ]
     scope_references = _earlier_pre_author_references(runner, history, revision, slot=slot)
     result = ReturnedFile(design, bundles, freeze, objections, reviews, receipts, prior, earlier,
-                          earlier_scope_references=scope_references)
+                          earlier_scope_references=scope_references,
+                          retained_literal_briefs=_retained_literal_briefs(previous, design, natural, events))
     if authored_return:
         result = _scope_repair_parent(runner, slot, result, release["scope_return_receipt_sha256"],
                                       rejected_revision=revision + 1)
@@ -447,6 +450,38 @@ def _read_return(runner: SessionRunner, slot: FamilySlot, release: dict[str, Any
             references = tuple((expected_revision, key) for key in scope_objections)
             result = replace(result, earlier_scope_references=(*result.earlier_scope_references, *references))
     return result
+
+
+def _retained_literal_briefs(
+    runner: SessionRunner, design: DesignOutput, natural: list[Source], events: list[dict[str, Any]],
+) -> frozenset[SourceId]:
+    """Prove a counterpart's ordinary use of an unchanged term independently of the matched edit."""
+    alternate = _hidden_literals(design)
+    if not alternate or not runner.ledger.requires_delivery_attestation:
+        return frozenset()
+    edited = {control.edit.source_id for control in design.matched if control.edit is not None}
+    completed = {row["name"] for row in events if row["kind"] == "session" and row["details"]["status"] == "completed"}
+    selected = {row["name"]: row["details"]["selected_job"] for row in events if row["kind"] == "output_selection"}
+    sources = {source.id: source for source in natural}
+    approved = set()
+    for brief in design.inventory:
+        identity = brief.source_id
+        ordinary = {word for word in alternate if word.casefold() in brief.participant_brief.casefold()}
+        job = f"author-{identity}"
+        chosen = selected.get(job, job)
+        if not ordinary or identity in edited or chosen not in completed:
+            continue
+        document, _, request = runner.committed_result("author", job, "author", author_delivery.AttestedSource)
+        local = commissioning._read_json(request["inputs"]["author_brief"])
+        if (local["brief"] != brief.participant_brief or local["participant"] != brief.author
+                or local["date"] != brief.created_on.isoformat()
+                or (document.title, document.text) != (sources[identity].title, sources[identity].text)
+                or any(word.casefold() not in document.text.casefold() for word in ordinary)):
+            continue
+        author_delivery.require_prompt(chosen, request["prompt"])
+        author_delivery.require_projection(runner, job, request["inputs"])
+        approved.add(identity)
+    return frozenset(approved)
 
 
 def _committed_prior_plan(
@@ -652,7 +687,7 @@ def _scope_repair_parent(
                     "original_realism_sources": files["original"],
                     "independent_finding": finding.model_dump(mode="json")}
     earlier = [*parent.earlier_objections, {"revision": rejected_revision - 1, "reviews": parent.reviews}]
-    return replace(parent, design=rejected_design, bundles=bundles, freeze=freeze,
+    return replace(parent, design=rejected_design, bundles=bundles, freeze=freeze, retained_literal_briefs=frozenset(),
                    objections={f"scope:{index}": issue for index, issue in enumerate(finding.objections, start=1)},
                    earlier_objections=earlier, prior_scope_return=scope_record)
 
@@ -696,7 +731,7 @@ def _verify_classification(
     ):
         raise ValueError("Classify every exact supplied objection using only supplied Source identifiers.")
     if plan.disposition == "repair":
-        design = _verify_design_change(slot, parent.design, plan)
+        design = _verify_design_change(slot, parent, plan)
         if attested:
             author_delivery.projection(design, plan.tickets)
 
@@ -708,10 +743,21 @@ def recover_stopped_plan(runner: SessionRunner, slot: FamilySlot, release: dict[
     if repair_authority.PLAN_JOB not in attempted:
         return False
     try:
-        plan, _, _ = runner.committed_result("design", repair_authority.PLAN_JOB, "audit", RepairPlan)
+        plan, receipt, _ = runner.committed_result("design", repair_authority.PLAN_JOB, "audit", RepairPlan)
         _verify_classification(slot, parent, plan, attested=runner.ledger.requires_delivery_attestation)
     except (ValueError, OSError, KeyError):
         return False
+    if parent.retained_literal_briefs and any(
+        row["revision"] == runner.revision and row["kind"] == "rejected_output"
+        and row["name"] == repair_authority.PLAN_JOB
+        and row["details"] == {"reason": PARTICIPANT_LITERAL_FAILURE, "receipt_sha256": receipt["receipt_sha256"]}
+        for row in runner.ledger.events(runner.manifest.batch_id, runner.family)
+    ):
+        try:
+            _verify_plan(slot, parent, plan, attested=True)
+        except ValueError:
+            return False
+        return True
     return bool(plan.objections.keys() - parent.objections.keys())
 
 
@@ -726,7 +772,7 @@ def _verify_plan(
     ):
         raise RepairStopped("The same repair or two consecutive planning assessments showed no meaningful progress.")
     old = parent.design
-    design = _verify_design_change(slot, old, plan)
+    design = _verify_design_change(slot, parent, plan)
     old_briefs = {brief.source_id: brief for brief in old.inventory}
     affected: set[str] = set()
     if attested:
@@ -746,7 +792,8 @@ def _verify_plan(
     return design, affected
 
 
-def _verify_design_change(slot: FamilySlot, old: DesignOutput, plan: RepairPlan) -> DesignOutput:
+def _verify_design_change(slot: FamilySlot, parent: ReturnedFile, plan: RepairPlan) -> DesignOutput:
+    old = parent.design
     design = plan.revised_design or old
     science.verify_design(slot, design)
     roster = {brief.source_id for brief in old.inventory}
@@ -759,17 +806,35 @@ def _verify_design_change(slot: FamilySlot, old: DesignOutput, plan: RepairPlan)
                for left, right in zip(old.matched, design.matched, strict=True))
     ):
         raise ValueError("The proposed repair changes committed targets, roster or contrast structure.")
-    hidden_literals = {
-        condition.edit.after for condition in design.matched
-        if condition.edit and condition.edit.after not in condition.edit.before
-    }
-    participant_texts = [brief.participant_brief for brief in design.inventory] + list(plan.tickets.values())
-    if any(
-        any(hidden.casefold() in text.casefold() for hidden in (*design.required, *hidden_literals))
-        for text in participant_texts
-    ):
-        raise ValueError("A participant instruction exposes a condition identifier or alternate literal.")
+    if _exposes_hidden_text(design, plan, parent.retained_literal_briefs):
+        raise ValueError(PARTICIPANT_LITERAL_FAILURE)
     return design
+
+
+def _hidden_literals(design: DesignOutput) -> set[str]:
+    return {condition.edit.after for condition in design.matched
+            if condition.edit and condition.edit.after not in condition.edit.before}
+
+
+def _exposes_hidden_text(
+    design: DesignOutput, plan: RepairPlan, retained_literal_briefs: frozenset[SourceId],
+) -> bool:
+    affected = set(plan.tickets)
+    alternate = _hidden_literals(design)
+    for ticket in plan.tickets.values():
+        if any(hidden.casefold() in ticket.casefold() for hidden in (*design.required, *alternate)):
+            return True
+    for brief in design.inventory:
+        subject = brief.participant_brief.casefold()
+        if affected.intersection(brief.received):
+            affected.add(brief.source_id)
+        retained = (plan.revised_design is None and brief.source_id in retained_literal_briefs
+                    and brief.source_id not in affected)
+        if any(identifier.casefold() in subject for identifier in design.required) or (
+            not retained and any(literal.casefold() in subject for literal in alternate)
+        ):
+            return True
+    return False
 
 
 def _control_identity(control: MatchedCondition) -> tuple[str, str | None, list[str] | None]:

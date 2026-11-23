@@ -285,7 +285,11 @@ def _reopen_recovered_plans(ledger: Ledger, commission: Commission, slots: dict[
                 continue
             reason = "A retained pre-authoring budget stop can receive one independent capacity replan."
         elif autonomous_realism.recover_stopped_plan(runner, slots[family], release):
-            reason = "Validated exact current and retained historical objection IDs."
+            reason = (
+                "Verified unchanged local scope and prior Source contents for an ordinary counterpart term."
+                if blocking["evidence"].endswith(autonomous_realism.PARTICIPANT_LITERAL_FAILURE)
+                else "Validated exact current and retained historical objection IDs."
+            )
         else:
             continue
         ledger.event(manifest.batch_id, family, revision, "reconcile", repair_authority.PLAN_RECOVERY,
