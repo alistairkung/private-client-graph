@@ -2884,6 +2884,60 @@ def test_authored_scope_repair_reuses_checked_delivery_after_preauthor_return(
     assert {revision for _, revision, job, _ in calls if job.startswith("reading")} == {f"G@{qualified_revision}"}
 
 
+def test_missing_sender_repair_retains_unaffected_author_receipts(autonomous, transport, tmp_path, monkeypatch):
+    from benchmark_v3.batch import author_repair
+    from benchmark_v3.batch.pool import PooledLedger
+
+    original, base = autonomous
+    slot = base.portfolio.slots[0].model_copy(update={"expected_sources": 3})
+    portfolio = base.portfolio.model_copy(update={"slots": [slot]})
+    manifest = base.manifest.model_copy(update={"portfolio_sha256": authorisation.commitment(portfolio)})
+    commission = coordinator.Commission(portfolio, manifest, _approval(portfolio, manifest))
+    batch, family = manifest.batch_id, slot.family_id
+    coordinator.commission_batch(original, commission, BOUNDARY)
+    pool = MilestonePool(tmp_path / "missing-sender", PoolAuthority(
+        owner=OWNER, reference="Retained sender proof test.", prior_archive_sha256="b" * 64,
+        starting_charges=295, cumulative_ceiling=360, additional_target=1,
+        members=[CustodyMember(root=str(original.root), task_id=manifest.task_id, starting_charges=0)],
+    ))
+    monkeypatch.setattr(PooledLedger, "requires_author_context", property(lambda _: True))
+    monkeypatch.setattr(PooledLedger, "requires_delivery_attestation", property(lambda _: True))
+    ledger = pool.join(original.root)
+    ledger.release(batch, family, 1, "design", parent_sha256="a" * 64, reference="Original work.")
+    calls, behavior, _ = transport
+    design = _design(family, count=3)
+    design["inventory"][1]["provenance"] = f"The writer sends this record personally.\nDelivered {TODAY} to Writer 3"
+    design["inventory"][2]["received"] = ["src2"]
+    behavior[family, "design"] = lambda _: design
+    behavior[family, "author-context"] = lambda inputs: {
+        "verdict": "accept", "objections": [],
+        "findings": {key: "Verified local." for key in json.loads(inputs["audit_rules"])["participant_packets"]},
+    }
+    behavior[family, "author-src1"] = lambda _: {"title": "Independent record", "text": QUOTE, "deliveries": []}
+    behavior[family, "author-src3"] = lambda _: {"title": "Received note", "text": "I retained the incoming note.", "deliveries": []}
+
+    def sender(inputs):
+        brief = json.loads(inputs["author_brief"])
+        deliveries = brief["outgoing_deliveries"] if "Personally send this record" in brief["brief"] else []
+        return {"title": "Sent note", "text": "The sender retained an ordinary counterpart.", "deliveries": deliveries}
+
+    behavior[family, "author-src2"] = behavior[family, "author-src2-format-retry"] = sender
+    coordinator._work_family(ledger, commission, slot)
+    assert coordinator.family_status(ledger, batch, family)[:2] == (1, "quarantined")
+    with pytest.raises(ValueError, match="exactly retained missing sender attestation"):
+        coordinator.release_empty_sender_repair(ledger, batch, family, "src1")
+    coordinator.release_empty_sender_repair(ledger, batch, family, "src2")
+    coordinator._work_family(ledger, commission, slot)
+
+    assert any(row["revision"] == 2 and row["name"] == "author" and row["kind"] == "transition"
+               for row in ledger.events(batch, family))
+    retained = next(row["details"] for row in ledger.events(batch, family) if row["name"] == author_repair.EMPTY_ATTESTATION_REPAIR)
+    assert retained["retained_sources"].keys() == {"src1"}
+    actors = [(rev, job) for _, rev, job, _ in calls if job.startswith("author-src")]
+    assert actors == [(f"{family}@1", "author-src1"), (f"{family}@1", "author-src2"), (f"{family}@1", "author-src2-format-retry"),
+                      (f"{family}@2", "author-src2"), (f"{family}@2", "author-src3")]
+
+
 def test_exact_classification_retry_retains_both_failed_plans_and_uses_the_same_file(
     autonomous, transport, tmp_path, monkeypatch,
 ):

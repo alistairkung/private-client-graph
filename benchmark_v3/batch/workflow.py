@@ -51,6 +51,7 @@ class FamilyWorkflow:
         self.stage: Stage = "design"
         self.sessions: list[dict[str, Any]] = []
         self.repair_tickets: dict[str, str] = {}
+        self.retained_authored_sources: dict[str, Source] = {}
         self.realism_release = autonomous_realism.release_event(runner)
         self.documentary_revision: autonomous_realism.Revision | None = None
         self.audit_recovery = audit_recovery.recorded(runner)
@@ -185,7 +186,13 @@ class FamilyWorkflow:
         cutoff_repair = design_recovery.isolated_cutoff_recovery(self.runner, self.slot)
         replacement = clean_redesign.recorded(self.runner)
         initial_retry = design_recovery.initial_runtime_retry(self.runner)
-        if cutoff_repair is not None:
+        sender_repair = author_repair.reopen_empty_sender_repair(self.runner)
+        if sender_repair is not None:
+            design, self.retained_authored_sources, record = sender_repair
+            self.transition_inputs["retained_sender_repair"] = artifacts.write_json(
+                self.directory / "sender-repair-lineage.json", record,
+            )
+        elif cutoff_repair is not None:
             design, receipt, digest = cutoff_repair
             self.sessions.append(receipt)
             self.transition_inputs["assembled_inventory_cutoff"] = digest
@@ -290,6 +297,8 @@ class FamilyWorkflow:
         changed: set[str] = set()
         if revision is not None:
             changed = revision.affected
+        elif self.retained_authored_sources:
+            changed = {brief.source_id for brief in design.inventory} - self.retained_authored_sources.keys()
         else:
             for brief in design.inventory:
                 if not self.repair_tickets or brief.source_id in self.repair_tickets or changed.intersection(brief.received):
@@ -357,6 +366,9 @@ class FamilyWorkflow:
         prior_sources = ({source.id: source for source in revision.parent.bundles[revision.parent.freeze.natural]}
                          if revision is not None else {})
         for brief in design.inventory:
+            if prior := self.retained_authored_sources.get(brief.source_id):
+                assignments.append((brief, None, False, prior))
+                continue
             if revision is not None and brief.source_id not in revision.affected:
                 assignments.append((brief, None, False, prior_sources[brief.source_id]))
                 continue

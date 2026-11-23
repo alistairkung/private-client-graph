@@ -1,12 +1,13 @@
-"""Plan a bounded brief correction before any document is authored."""
+"""Plan and verify bounded participant-local authoring repairs."""
 
 from dataclasses import replace
 from typing import TYPE_CHECKING, Any
 
 from benchmark_v3 import commissioning
-from benchmark_v3.batch import artifacts, author_context, authorisation
+from benchmark_v3.batch import artifacts, author_context, author_delivery, authorisation, repair_authority
 from benchmark_v3.batch.contracts import DesignOutput
 from benchmark_v3.research_contracts import Contract, Text
+from private_client_graph.models.source import Source
 
 if TYPE_CHECKING:
     from benchmark_v3.batch.workflow import FamilyWorkflow
@@ -102,6 +103,101 @@ def reopen_unused_delivery(runner: "SessionRunner") -> DesignOutput | None:
 
 
 UNUSED_ATTESTATION = "author-unneeded-attestation"
+EMPTY_ATTESTATION_REPAIR = "author-empty-attestation-repair"
+ATTESTATION_ERROR = "The sending author must attest the exact ordered same-day grants."
+
+
+def empty_sender_repair(
+    runner: "SessionRunner", source_id: str,
+) -> tuple[dict[str, Any], DesignOutput, dict[str, Source]]:
+    """Bind an omitted grant to its approved sender's existing act, with no derived attestation."""
+    if not runner.ledger.requires_delivery_attestation or (runner.directory / "family").exists():
+        raise ValueError("A missing sender attestation must precede the family freeze.")
+    events = [row for row in runner.ledger.events(runner.manifest.batch_id, runner.family)
+              if row["revision"] == runner.revision]
+    design = artifacts.read_contract(runner.directory / "design.json", DesignOutput)
+    design_hash = authorisation.commitment(design)
+    transition = next(row["details"] for row in events if (row["kind"], row["name"]) == ("transition", "design"))
+    if transition["outputs"]["design"] != design_hash:
+        raise ValueError("A sender repair requires the exact original design commitment.")
+    review, scope_receipt, scope_request = runner.committed_result("author", author_context.JOB, "audit", author_context.AuthorContextReview)
+    original_packets = commissioning._read_json(scope_request["inputs"]["audit_rules"])["participant_packets"]
+    if review.verdict != "accept" or review.objections or original_packets != author_delivery.projection(design, {}):
+        raise ValueError("A sender reminder requires an independently approved original unticketed projection.")
+    outgoing = commissioning._read_json(original_packets[source_id]["author_brief"])["outgoing_deliveries"]
+    if not outgoing:
+        raise ValueError("A sender reminder requires documented outgoing attachment grants.")
+    failure_receipts = _missing_sender_receipts(runner, source_id, events)
+    revised = _explicit_sender_design(design, source_id, outgoing)
+    original_retained, retained = _retained_sender_sources(runner, design, source_id, events)
+    record = {"source_id": source_id, "scope_receipt_sha256": scope_receipt["receipt_sha256"],
+              "design_sha256": design_hash, "revised_design_sha256": authorisation.commitment(revised),
+              "rejected_author_receipts": failure_receipts, "retained_sources": original_retained}
+    return record, revised, retained
+
+
+def _missing_sender_receipts(runner: "SessionRunner", source_id: str, events: list[dict[str, Any]]) -> dict[str, str]:
+    rejected = {row["name"]: row["details"] for row in events if row["kind"] == "rejected_output"}
+    job = f"author-{source_id}"
+    found = {}
+    for name in (job, job + repair_authority.FORMAT_RETRY):
+        output, receipt, request = runner.committed_packet("author", name, "author")
+        author_delivery.require_projection(runner, name, request["inputs"])
+        author_delivery.require_prompt(name, request["prompt"])
+        if (author_delivery.AttestedSource.model_validate_json(output).deliveries
+                or rejected.get(name) != {"receipt_sha256": receipt["receipt_sha256"], "reason": ATTESTATION_ERROR}):
+            raise ValueError("Both original authors must have returned empty attestations under the same cleared scope.")
+        found[name] = receipt["receipt_sha256"]
+    return found
+
+
+def _explicit_sender_design(design: DesignOutput, source_id: str, outgoing: list[dict[str, str]]) -> DesignOutput:
+    declared = " and ".join(f"{item['recipient']} on {item['sent_on']}" for item in outgoing)
+    source = next(brief for brief in design.inventory if brief.source_id == source_id)
+    brief = source.participant_brief + f" Personally send this record to {declared} as part of this documented act."
+    revised = design.model_copy(update={"inventory": [
+        row.model_copy(update={"participant_brief": brief}) if row.source_id == source_id else row for row in design.inventory
+    ]})
+    author_delivery.projection(revised, {})
+    return revised
+
+
+def _retained_sender_sources(
+    runner: "SessionRunner", design: DesignOutput, source_id: str, events: list[dict[str, Any]],
+) -> tuple[dict[str, str], dict[str, Source]]:
+    affected = {source_id}
+    selected = {row["name"]: row["details"]["selected_job"] for row in events if row["kind"] == "output_selection"}
+    rejected = {row["name"] for row in events if row["kind"] == "rejected_output"}
+    verified = {row["name"] for row in events if row["kind"] == "session" and row["details"]["status"] == "completed"}
+    commitments: dict[str, str] = {}
+    sources: dict[str, Source] = {}
+    for row in design.inventory:
+        if row.source_id in affected or affected.intersection(row.received):
+            affected.add(row.source_id)
+            continue
+        job = f"author-{row.source_id}"
+        actual = selected.get(job, job)
+        if actual not in verified or actual in rejected or not set(row.received) <= sources.keys():
+            continue
+        author, receipt, request = runner.committed_result("author", job, "author", author_delivery.AttestedSource)
+        author_delivery.require_projection(runner, actual, request["inputs"])
+        author_delivery.require_prompt(actual, request["prompt"])
+        author_delivery.verify_attestation(author, request["inputs"]["author_brief"])
+        commitments[row.source_id] = receipt["receipt_sha256"]
+        sources[row.source_id] = Source(id=row.source_id, title=author.title, text=author.text)
+    return commitments, sources
+
+
+def reopen_empty_sender_repair(runner: "SessionRunner") -> tuple[DesignOutput, dict[str, Source], dict[str, Any]] | None:
+    record = next((row["details"] for row in runner.ledger.events(runner.manifest.batch_id, runner.family)
+                   if (row["revision"], row["kind"], row["name"]) == (runner.revision, "transition", EMPTY_ATTESTATION_REPAIR)), None)
+    if record is None:
+        return None
+    previous = replace(runner, revision=runner.revision - 1, directory=runner.directory.with_name(str(runner.revision - 1)))
+    expected, design, retained = empty_sender_repair(previous, record["source_id"])
+    if expected != record:
+        raise ValueError("The sender reminder differs from the original independently held receipts.")
+    return design, retained, record
 
 
 def verify_unused_attestation(runner: "SessionRunner", source_id: str, design: DesignOutput) -> dict[str, Any]:

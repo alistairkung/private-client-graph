@@ -153,6 +153,12 @@ inventory still needs a credible reason for the adviser to receive
 the full records. Two planning sessions were charged. The candidate
 received no commission or participant turns. The independent review is
 `25d9ec9537022cddac08f4181c50e7c4ac46b0237f1ddc91bc4887f955161943`.
+A second preflight examined whether a trustee-commissioned review
+could justify the full custody. It retained the mechanism and returned
+the proposed 51-Source inventory because required possession and
+document boundaries remained unverified. No large replacement was
+commissioned on that decision. The follow-up is
+`e6de1b7fe77ae0515ce732ff309d45d989289fe6851b9dca73d6227364db959b`.
 
 The next independently reviewed moderate reserve selected DA for the
 distinction between a testamentary trust and an outright distribution,
@@ -450,6 +456,17 @@ delivery to the later author. The fresh five-Source design retains the
 linked withdrawal and factual-identity test. The prior receipt
 commitment is
 `7ad1b6017431237fe51709cfe4556a408656f6a783a221584a2b4b566a307e9d`.
+Its later scope gate contained another unsupported draft reference
+before any participant turn in that revision. The preserved final
+return is `f75736ca9ff2aa08452e4d34d3f8475358a89de7408acf0eeda5337cfa05f886`.
+
+DB's bounded sender repair preserved six independently attested
+Sources and issued a fresh scope review for the existing proposed
+transmission. Both fresh authors again omitted the active attestation
+and recorded no enclosures. The receipt remained blocked before any
+reliant participant could use it. The controller retained both
+lineages and opened a separate clean design. The exact disposition is
+`cc76b8e59ed760c79b706ded0575fb5ba1ee16a4f98b497ca1e8390fb6ea4c67`.
 
 BV's first lineage reached its independently accepted control plan.
 Multiple masked readings quoted the operative notice reference from its

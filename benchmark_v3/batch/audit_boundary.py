@@ -202,6 +202,7 @@ ACCEPTANCE_LAYOUT = (
 
 LARGE_CONFIRMATION = "audit-isolated-whole-file-confirmation"
 MASK_RENDER_FAILURE = "A targeted mask must remove evidence and precommit distinct edge expectations."
+MASK_QUOTE_FAILURE = "Masked text must occur exactly once in its assigned Source."
 JOINT_PLAN_FAILURE = "Each joint alternative needs an independent sufficient subset and one deletion per Source."
 
 

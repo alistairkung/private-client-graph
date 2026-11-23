@@ -759,6 +759,23 @@ def recover_unused_attestation(ledger: Ledger, batch: str, family: str, source_i
         ledger.event(batch, family, revision, "reconcile", author_repair.UNUSED_ATTESTATION, state, "author", details)
 
 
+def release_empty_sender_repair(ledger: PooledLedger, batch: str, family: str, source_id: str) -> None:
+    """Reopen only the documented local sending act and its dependent authoring."""
+    with ledger.coordinator_lock():
+        ledger.require_running()
+        commission = load_commission(ledger, batch)
+        revision, state, issue = family_status(ledger, batch, family)
+        expected = f"author-{source_id}-format-retry failed its output contract: {author_repair.ATTESTATION_ERROR}"
+        if (state != "quarantined" or not issue or (issue["stage"], issue["code"], issue["evidence"])
+                != ("author", "scientific_review", expected)
+                or not ledger.pooled_revision(batch, family, revision)
+                or any(row["name"] == author_repair.EMPTY_ATTESTATION_REPAIR for row in ledger.events(batch, family))):
+            raise ValueError("Only one exactly retained missing sender attestation can receive a local remedy.")
+        runner = commission.session_runner(ledger, family, revision)
+        record, _, _ = author_repair.empty_sender_repair(runner, source_id)
+        ledger.event(batch, family, revision + 1, "transition", author_repair.EMPTY_ATTESTATION_REPAIR, state, "design", record)
+
+
 def clarify_pre_author_cover(ledger: PooledLedger, batch: str, family: str, source: str, wrong: str, right: str) -> None:
     with ledger.coordinator_lock():
         ledger.require_running()
@@ -797,8 +814,9 @@ def release_audit_recheck(
         if (not issue or (issue["stage"], issue["code"]) != ("audit", "scientific_review")
                 or audit_boundary.release(runner) is not None):
             raise ValueError("A scientific recheck requires the first retained, exact audit repair request.")
-        invalid_plan = (state == "audit" and issue["evidence"] ==
-                        "A targeted mask must remove evidence and precommit distinct edge expectations.")
+        invalid_plan = state == "audit" and issue["evidence"] in {
+            audit_boundary.MASK_RENDER_FAILURE, audit_boundary.MASK_QUOTE_FAILURE,
+        }
         ambiguous_acceptance = state == "audit" and issue["evidence"] == audit_boundary.ACCEPTANCE_FORMAT_ERROR
         if state != "returned" and not invalid_plan and not ambiguous_acceptance:
             raise ValueError("Only documentary audit returns or exact unrenderable control plans are eligible.")
@@ -818,8 +836,8 @@ def release_audit_recheck(
             ) for condition in original.completeness}
             exact, repairs = audit_boundary.exact_mask_quotes(original, by_condition)
             _, whole = audit_boundary.original_views(exact, by_condition)
-            if not whole:
-                raise ValueError("An accepted control plan can reopen only for verified unmodified whole-file views.")
+            if not whole and not repairs:
+                raise ValueError("An accepted control plan needs an exact whole-file or quotation representation defect.")
             if repairs:
                 record["mask_quote_repairs"] = repairs
         ledger.event(batch, family, revision, "reconcile", audit_boundary.RECHECK, state, "audit", record)
