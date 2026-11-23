@@ -8,8 +8,8 @@ from typing import Any, Literal
 
 from benchmark_v3 import commissioning, packet
 from benchmark_v3.batch import (
-    adjudication_contract, adjudication_recovery, annotation_recovery, artifacts, audit_recovery, authorisation,
-    construction, continuation, design_recovery, design_review, evidence_recovery, exception_review, milestone_repair, science,
+    adjudication_contract, adjudication_recovery, annotation_recovery, artifacts, audit_recovery, authorisation, autonomous_realism,
+    construction, continuation, design_recovery, design_review, evidence_recovery, exception_review, milestone_repair, repair_authority, science,
 )
 from benchmark_v3.batch.contracts import (
     AdjudicationQuoteRecovery, AnnotationRecovery, AuditRecovery, BatchDecision, BatchManifest, BudgetAmendment,
@@ -18,7 +18,7 @@ from benchmark_v3.batch.contracts import (
 )
 from benchmark_v3.batch.custody import namespace_directory
 from benchmark_v3.batch.ledger import BudgetExhausted, Ledger, TaskHalted
-from benchmark_v3.batch.sessions import Blocked, SessionRunner
+from benchmark_v3.batch.sessions import Blocked, InvalidRoleOutput, SessionRunner
 from benchmark_v3.batch.workflow import FamilyWorkflow, verify_dossier
 from benchmark_v3.portfolio import FamilySlot, Portfolio
 
@@ -69,7 +69,7 @@ def load_commission(ledger: Ledger, batch_id: str) -> Commission:
 
 def run_batch(
     ledger: Ledger, batch_id: str, *, family_id: str | None = None,
-    stop_after: Literal["audit", "masks"] | None = None,
+    stop_after: Literal["audit", "masks"] | None = None, realism_amendment_reference: str | None = None,
 ) -> None:
     with ledger.coordinator_lock():
         commission = load_commission(ledger, batch_id)
@@ -79,8 +79,12 @@ def run_batch(
         if manifest.phase == "milestone":
             if family_id is not None or stop_after is not None:
                 raise ValueError("A milestone runs in its commissioned roadmap order.")
+            if realism_amendment_reference is not None:
+                _record_realism_amendment(ledger, commission, realism_amendment_reference)
             _run_roadmap(ledger, commission)
             return
+        if realism_amendment_reference is not None:
+            raise ValueError("The realism amendment applies only to the milestone roadmap.")
         review = design_review.recorded_review(ledger, manifest, commission.decision.owner)
         design_only = manifest.requires_design_review and review is None
         slots = {slot.family_id: slot for slot in commission.portfolio.slots}
@@ -99,6 +103,28 @@ def run_batch(
                 (family for family in selected if review is None or review.accepts(family.family_id)
                  or continuation.family_release(ledger.events(batch_id, family.family_id)) is not None),
             ))
+
+
+def _record_realism_amendment(ledger: Ledger, commission: Commission, reference: str) -> None:
+    manifest = commission.manifest
+    if manifest.phase != "milestone" or not manifest.repair_cycles or not reference.strip():
+        raise ValueError("Supply the owner's realism amendment reference for an approved milestone repair allocation.")
+    ledger.event(manifest.batch_id, None, 0, repair_authority.AMENDMENT, "owner_scope", None, None, {
+        "manifest_sha256": authorisation.commitment(manifest), "owner": commission.decision.owner,
+        "reference": reference,
+    })
+
+
+def _returned_realism(
+    ledger: Ledger, commission: Commission, family: str, revision: int, state: str,
+) -> dict[str, Any] | None:
+    if state not in {"returned", "quarantined"} or not repair_authority.enabled(ledger, commission.manifest):
+        return None
+    events = [row for row in ledger.events(commission.manifest.batch_id, family) if row["revision"] == revision]
+    if any(row["kind"] in {"human_decision", "task_halt"} or row["name"] in {"freeze", repair_authority.STOP}
+           for row in events):
+        return None
+    return next((row for row in events if row["kind"] == "disposition" and row["name"] == "realism"), None)
 
 
 @dataclass(frozen=True)
@@ -124,7 +150,8 @@ def roadmap_progress(ledger: Ledger, commission: Commission) -> RoadmapProgress:
         if blocking is None and state in {"admission_ready", "admitted"} and ready:
             verify_dossier(ledger, batch, family, revision, ready["family_sha256"])
             progress.qualified.append(family)
-        elif state == "returned" and _can_repair(ledger, commission, family, revision):
+        elif (_returned_realism(ledger, commission, family, revision, state)
+              or state == "returned" and _can_repair(ledger, commission, family, revision)):
             progress.active.append(family)
         elif blocking is None and state not in {"returned", "quarantined", "admitted"}:
             progress.active.append(family)
@@ -372,13 +399,23 @@ def _work_family(
     revision, state, blocking = family_status(ledger, batch, slot.family_id)
     if design_only and state != "design":
         return
-    if state in {"admitted", "quarantined"} or state == "returned" and not _can_repair(
+    documentary_return = _returned_realism(ledger, commission, slot.family_id, revision, state)
+    if documentary_return is not None:
+        ledger.event(batch, slot.family_id, revision + 1, "transition", repair_authority.REVISION, state, "design", {
+            "role": "batch_coordinator", "parent_revision": revision,
+            "disposition_sequence": documentary_return["sequence"],
+            "manifest_sha256": authorisation.commitment(commission.manifest),
+            "family_sessions_remaining": ledger.effective_budget().families[slot.family_id]
+            - len(ledger.attempts(slot.family_id)),
+        })
+        revision += 1
+    elif state in {"admitted", "quarantined"} or state == "returned" and not _can_repair(
         ledger, commission, slot.family_id, revision,
     ):
         return
-    if blocking and state != "returned":
+    elif blocking and state != "returned":
         return
-    if state == "returned":
+    elif state == "returned":
         revision += 1
         ledger.event(batch, slot.family_id, revision, "transition", "repair", "returned", "design",
                      {"role": "batch_coordinator", "previous_revision": revision - 1,
@@ -402,6 +439,17 @@ def _work_family(
         _block(ledger, commission, workflow, error.code, str(error), error.job)
     except BudgetExhausted as error:
         _block(ledger, commission, workflow, "budget", str(error))
+        if workflow.realism_release is not None:
+            _stop_documentary_repair(ledger, commission, workflow, str(error))
+    except InvalidRoleOutput as error:
+        _block(ledger, commission, workflow, "scientific_review", str(error))
+        if repair_authority.enabled(ledger, commission.manifest):
+            _stop_documentary_repair(ledger, commission, workflow, str(error))
+    except autonomous_realism.RepairStopped as error:
+        _block(ledger, commission, workflow, "scientific_review", str(error))
+        _stop_documentary_repair(ledger, commission, workflow, str(error))
+    except packet.PacketIsolationError as error:
+        _block(ledger, commission, workflow, "isolation", str(error))
     except sqlite3.IntegrityError:
         _block(ledger, commission, workflow, "isolation", "A scientific session or thread identity was reused.")
     except (ValueError, OSError, KeyError, TypeError) as error:
@@ -416,8 +464,16 @@ def _work_family(
             if state != "quarantined":
                 ledger.event(batch, slot.family_id, revision, "operator_close", "quarantine", state, "quarantined",
                              {"reference": "Commissioned unattended exception policy.", "exception": blocking})
-    elif not design_only and _can_repair(ledger, commission, slot.family_id, revision):
+    elif (not design_only and not repair_authority.enabled(ledger, commission.manifest)
+          and _can_repair(ledger, commission, slot.family_id, revision)):
         _work_family(ledger, commission, slot)
+
+
+def _stop_documentary_repair(ledger: Ledger, commission: Commission, workflow: FamilyWorkflow, reason: str) -> None:
+    ledger.event(
+        commission.manifest.batch_id, workflow.slot.family_id, workflow.runner.revision,
+        "operator_close", repair_authority.STOP, workflow.stage, "quarantined", {"reference": reason},
+    )
 
 
 def _can_repair(ledger: Ledger, commission: Commission, family: str, revision: int) -> bool:

@@ -72,6 +72,7 @@ class BatchManifest(Contract):
     task_session_ceiling: Count
     max_parallel_families: Annotated[int, Field(strict=True, ge=1, le=20)] = 2
     repair_cycles: Literal[0, 1] = 1
+    autonomous_realism: Literal[True] | None = Field(default=None, exclude_if=lambda value: value is None)
     scope: IsolationScope
     models: dict[Role, Allocation]
     stop_conditions: NonemptyNotes
@@ -85,6 +86,8 @@ class BatchManifest(Contract):
         families = [row.family_id for row in self.families]
         if len(set(families)) != len(families) or self.models.keys() != ROLES:
             raise ValueError("Allocate distinct families and specify all seven scientific roles.")
+        if self.autonomous_realism and (self.phase != "milestone" or self.repair_cycles == 0):
+            raise ValueError("The autonomous realism loop requires a milestone with approved repair spending.")
         if self.phase == "pilot" and len(families) != 3:
             raise ValueError("An efficiency pilot requires exactly three distinct families.")
         if self.phase == "milestone":

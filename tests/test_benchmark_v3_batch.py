@@ -1896,3 +1896,199 @@ def test_milestone_reconciles_only_shared_exact_ordinary_evidence_before_fresh_a
     assert len(dossier["mask_results"]) == 2
     assert {row["observation_job"] for row in dossier["mask_results"]} == {"mask-000"}
     assert dossier["replay"]["paid_attempts"] == 0
+
+
+@pytest.fixture
+def autonomous(approved):
+    ledger, base = approved
+    manifest = BatchManifest.model_validate(base.manifest.model_dump() | {
+        "phase": "milestone", "qualification_target": 1, "autonomous_realism": True,
+        "families": [base.manifest.families[0].model_dump() | {"sessions": 28}],
+        "task_session_ceiling": 28,
+    })
+    commission = coordinator.Commission(base.portfolio, manifest, _approval(base.portfolio, manifest))
+    return ledger, commission
+
+
+def _repair_plan(inputs, *, ticket, disposition="repair", revised_design=None, progress="improved"):
+    rules = json.loads(inputs["audit_rules"])
+    return {
+        "disposition": disposition, "progress": progress, "rationale": "Fixture independent assessment.",
+        "revised_design": revised_design, "tickets": {"src1": ticket} if ticket else {},
+        "objections": {
+            key: {"cause": "chronology", "sources": ["src1"], "diagnosis": "Clarify the date."}
+            for key in rules["objections"]
+        },
+    }
+
+
+def test_autonomous_realism_iterates_and_isolates_dependency_regeneration(autonomous, transport):
+    ledger, commission = autonomous
+    batch = commission.manifest.batch_id
+    calls, behavior, _ = transport
+
+    def original_design(_):
+        design = _design("G")
+        design["inventory"][1]["received"] = ["src1"]
+        return design
+
+    def author(inputs):
+        ticket = inputs.get("revision_ticket", "")
+        assert "Private fixture history marker." not in json.dumps(inputs)
+        return {"title": "Record", "text": f"{QUOTE}\n{ticket}"}
+
+    def realism(inputs):
+        if "Final dated account" in inputs["sources"]:
+            return _output("realism", "G", "", inputs)
+        return _output("realism", "G", "", inputs) | {
+            "verdict": "return", "objections": ["Chronology remains unclear."],
+        }
+
+    def plan(inputs):
+        prior = json.loads(inputs["audit_rules"])["prior_repair"]
+        ticket = "First date correction." if not prior else "Final dated account."
+        return _repair_plan(inputs, ticket=ticket)
+
+    behavior["G", "design"] = original_design
+    behavior["G", "author-src1"] = author
+    behavior["G", "realism-000"] = realism
+    behavior["G", "repair-plan"] = plan
+    behavior["G", "repair-verification"] = lambda _: {
+        "verdict": "preserved", "scope": "Preserved.", "provenance": "Confirmed.", "contrast": "Preserved.",
+        "objections": [],
+    }
+    coordinator.commission_batch(ledger, commission, BOUNDARY)
+    coordinator.run_batch(ledger, batch)
+
+    assert coordinator.family_status(ledger, batch, "G")[:2] == (3, "admission_ready")
+    jobs = [(parent, job) for _, parent, job, _ in calls]
+    for revision in ("G@2", "G@3"):
+        assert (revision, "author-src2") in jobs
+        assert (revision, "repair-verification") in jobs
+        assert (revision, "realism-000") in jobs
+    assert {parent for parent, job in jobs if job.startswith("reading")} == {"G@3"}
+    lineage = ledger.root / "batches" / batch / "G" / "3" / "repair-lineage.json"
+    assert json.loads(lineage.read_text())["affected_sources"] == ["src1", "src2"]
+    assert json.loads(lineage.read_text())["parent_revision"] == 2
+    charges = len(ledger.attempts("G"))
+    coordinator.run_batch(ledger, batch)
+    assert len(ledger.attempts("G")) == charges
+
+
+def test_autonomous_realism_keeps_same_repair_from_repeating(autonomous, transport):
+    ledger, commission = autonomous
+    batch = commission.manifest.batch_id
+    calls, behavior, _ = transport
+    behavior["G", "realism-000"] = "return"
+    behavior["G", "author-src1"] = lambda inputs: {
+        "title": "Record", "text": QUOTE + inputs.get("revision_ticket", ""),
+    }
+    behavior["G", "repair-plan"] = lambda inputs: _repair_plan(inputs, ticket="Clarify date.")
+    behavior["G", "repair-verification"] = lambda _: {
+        "verdict": "preserved", "scope": "Preserved.", "provenance": "Confirmed.", "contrast": "Preserved.",
+        "objections": [],
+    }
+    coordinator.commission_batch(ledger, commission, BOUNDARY)
+    coordinator.run_batch(ledger, batch)
+
+    assert coordinator.family_status(ledger, batch, "G")[:2] == (3, "quarantined")
+    assert [(parent, job) for _, parent, job, _ in calls if parent == "G@3"] == [("G@3", "repair-plan")]
+    assert sum(job == "author-src2" for _, _, job, _ in calls) == 1
+
+
+def test_autonomous_realism_retries_malformed_independent_read_within_allowance(autonomous, transport):
+    ledger, commission = autonomous
+    batch = commission.manifest.batch_id
+    calls, behavior, _ = transport
+
+    def wrong_source(inputs):
+        reading = _output("annotation", "G", "", inputs)
+        reading["candidates"]["relationships"][0]["source_id"] = "wrong"
+        return reading
+
+    behavior["G", "reading-000-a-full"] = wrong_source
+    coordinator.commission_batch(ledger, commission, BOUNDARY)
+    coordinator.run_batch(ledger, batch)
+
+    assert coordinator.roadmap_progress(ledger, commission).qualified == ["G"]
+    paired = [(job, inputs) for _, _, job, inputs in calls if job.startswith("reading-000-a-full")]
+    assert [job for job, _ in paired] == ["reading-000-a-full", "reading-000-a-full-format-retry"]
+    assert paired[0][1] == paired[1][1]
+    rows = [row for row in ledger.events(batch, "G") if row["kind"] == "output_selection"]
+    assert rows[0]["details"]["selected_job"] == "reading-000-a-full-format-retry"
+
+
+def test_recorded_amendment_reopens_an_old_realism_quarantine(autonomous, transport):
+    ledger, base = autonomous
+    manifest = BatchManifest.model_validate(base.manifest.model_dump() | {"autonomous_realism": None})
+    commission = coordinator.Commission(base.portfolio, manifest, _approval(base.portfolio, manifest))
+    batch = manifest.batch_id
+    _, behavior, _ = transport
+    behavior["G", "realism-000"] = "return"
+    behavior["G", "repair-plan"] = lambda inputs: _repair_plan(
+        inputs, ticket=None, disposition="scope_change",
+    )
+    coordinator.commission_batch(ledger, commission, BOUNDARY)
+    coordinator.run_batch(ledger, batch)
+    coordinator.quarantine(ledger, batch, "G", "Fixture historical closure.")
+
+    coordinator.run_batch(ledger, batch, realism_amendment_reference="Fixture owner amendment.")
+    assert coordinator.family_status(ledger, batch, "G")[:2] == (2, "quarantined")
+    assert len(ledger.attempts("G")) == 5
+    coordinator.run_batch(ledger, batch)
+    assert len(ledger.attempts("G")) == 5
+    assert ledger.effective_budget().shared == 28
+
+
+def test_autonomous_realism_resumes_after_a_charged_planner_receipt(autonomous, transport, monkeypatch):
+    ledger, commission = autonomous
+    batch = commission.manifest.batch_id
+    calls, behavior, original_run = transport
+    behavior["G", "realism-000"] = "return"
+    behavior["G", "repair-plan"] = lambda inputs: _repair_plan(inputs, ticket="Clarify the author date.")
+    behavior["G", "author-src1"] = lambda inputs: {
+        "title": "Record", "text": QUOTE + inputs.get("revision_ticket", ""),
+    }
+    behavior["G", "repair-verification"] = lambda _: {
+        "verdict": "changed", "scope": "Changed.", "provenance": "Confirmed.", "contrast": "Changed.",
+        "objections": ["A scoped effect was altered."],
+    }
+
+    def interrupt(directory, *, before_turn):
+        original_run(directory, before_turn=before_turn)
+        if directory.name == "repair-plan":
+            raise Interrupted()
+
+    coordinator.commission_batch(ledger, commission, BOUNDARY)
+    with monkeypatch.context() as patch:
+        patch.setattr(packet, "run_packet", interrupt)
+        with pytest.raises(Interrupted):
+            coordinator.run_batch(ledger, batch)
+    coordinator.run_batch(ledger, batch)
+
+    assert sum(job == "repair-plan" for _, _, job, _ in calls) == 1
+    assert coordinator.family_status(ledger, batch, "G")[:2] == (2, "quarantined")
+    assert not any(job.startswith("reading") for _, _, job, _ in calls)
+
+
+def test_autonomous_realism_unwraps_one_exact_json_response_without_retry(autonomous, transport, monkeypatch):
+    ledger, commission = autonomous
+    batch = commission.manifest.batch_id
+    calls, _, _ = transport
+    turn = packet._run_turn
+
+    def wrap(codex, thread, message, effort):
+        result = turn(codex, thread, message, effort)
+        inputs = json.loads(message)["inputs"]
+        if "possession_ledger" in inputs:
+            result["text"] = "```json\n" + result["text"] + "\n```"
+        return result
+
+    monkeypatch.setattr(packet, "_run_turn", wrap)
+    coordinator.commission_batch(ledger, commission, BOUNDARY)
+    coordinator.run_batch(ledger, batch)
+
+    assert coordinator.roadmap_progress(ledger, commission).qualified == ["G"]
+    assert [job for _, _, job, _ in calls if job.startswith("realism")] == ["realism-000"]
+    row = next(row for row in ledger.events(batch, "G") if row["kind"] == "output_selection")
+    assert row["details"]["representation_unwrapped"] is True

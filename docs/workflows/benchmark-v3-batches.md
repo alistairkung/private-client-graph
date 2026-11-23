@@ -362,3 +362,36 @@ risk and expected edge sets must all agree. The package retains the complete
 assignment list and identifies the independent receipt used for each
 assignment. The runner reserves separate jobs wherever the scope differs
 or the fresh auditor requires separate observations.
+
+### Autonomous documentary repair
+
+A milestone can commission `autonomous_realism: true`. An existing milestone
+can record the owner's scope amendment with
+`run CUSTODY BATCH --realism-amendment-reference REFERENCE`. This appends an
+authority event against the exact manifest and keeps the original family and
+task ceilings. A later invocation resumes using the recorded authority.
+The former single-cycle paths remain available for their original manifests.
+
+Under the autonomous authority, a condition-local realism return schedules
+another revision. A fresh isolated planner classifies every exact objection
+and proposes the smallest defensible revision. It can revise internal history
+and documentary design while retaining the commissioned mechanism. The runner
+preserves the declared critical edges, Source roster, control structure and
+proper-prefix views, and validates the revised chronology. It commits the
+prior design, every reviewed Source, independent review receipts, planner
+output and affected Source IDs in the revision lineage.
+
+Only the affected Sources and their chronological recipient closure are
+regenerated. Authors see their own dated instructions, participant-safe
+tickets and received correspondence. A separately isolated scope verifier
+checks the resulting files and scientific comparison before they go to
+fresh condition-local realism reviewers. Every passed revision proceeds
+through a fresh blind reconstruction and the remaining scientific gates.
+The loop closes on demonstrated lack of progress, scientific scope or
+plausibility limits, exhausted authorised capacity or an integrity incident.
+
+One exactly delimited JSON wrapper can be removed deterministically. An
+invalid role result can receive one fresh isolated format attempt with the
+same inputs. Both responses or the original and its derivative remain
+committed. Quote and Source-reference checks, exact matched literals and
+reviewed inventories retain their original validation requirements.

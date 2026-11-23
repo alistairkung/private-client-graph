@@ -1,7 +1,7 @@
 """Coordinate a family from approved design through an offline technical package."""
 
 import os
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any, Literal, TypeVar
@@ -11,7 +11,7 @@ from pydantic import BaseModel
 from benchmark_v3 import commissioning, packet, replay
 from benchmark_v3.batch import (
     adjudication_contract, adjudication_recovery, annotation_recovery, artifacts, audit_contract, audit_recovery,
-    construction, continuation, design_recovery, evidence_recovery, milestone_repair, science,
+    autonomous_realism, construction, continuation, design_recovery, evidence_recovery, milestone_repair, repair_authority, science,
 )
 from benchmark_v3.batch.contracts import (
     Adjudication, AuditReview, AuthoredSource, Code, DesignOutput, Reading, RealismReview,
@@ -36,6 +36,8 @@ class FamilyWorkflow:
         self.stage: Stage = "design"
         self.sessions: list[dict[str, Any]] = []
         self.repair_tickets: dict[str, str] = {}
+        self.realism_release = autonomous_realism.release_event(runner)
+        self.documentary_revision: autonomous_realism.Revision | None = None
         self.audit_recovery = audit_recovery.recorded(runner)
         self.release = continuation.recorded(runner)
         self.evidence_release = next((
@@ -59,6 +61,9 @@ class FamilyWorkflow:
             design = self.design()
             natural = self.author(design)
             bundles, freeze = science.freeze_bundles(self.slot, design, natural)
+            if self.documentary_revision is not None:
+                receipt = autonomous_realism.verify_revision(self.runner, self.slot, self.documentary_revision, bundles)
+                self.sessions.append(receipt)
             self.advance("realism", {"natural": _source_array(natural)}, gate="complete authored inventory and matched diff")
             realism = self.realism(design, bundles)
             self.freeze(bundles, freeze)
@@ -94,10 +99,10 @@ class FamilyWorkflow:
 
     def job(
         self, key: str, role: Role, inputs: dict[str, str], instructions: str, result_type: type[_T],
-        *, output_schema: dict[str, Any] | None = None,
+        *, output_schema: dict[str, Any] | None = None, validate: Callable[[_T], None] | None = None,
     ) -> _T:
         result, receipt = self.runner.run(
-            self.stage, key, role, inputs, instructions, result_type, output_schema=output_schema,
+            self.stage, key, role, inputs, instructions, result_type, output_schema=output_schema, validate=validate,
         )
         self.sessions.append(receipt)
         return result
@@ -129,7 +134,16 @@ class FamilyWorkflow:
         recovery = design_recovery.recorded_cutoff_recovery(self.runner)
         ref = self.slot.hypothesis
         allocation = next(row for row in self.runner.manifest.families if row.family_id == self.slot.family_id)
-        if allocation.approved_design:
+        if self.realism_release is not None:
+            revision, receipt = autonomous_realism.plan_revision(self.runner, self.slot, self.realism_release)
+            self.documentary_revision = revision
+            self.sessions.append(receipt)
+            design = revision.design
+            self.repair_tickets = revision.plan.tickets
+            self.transition_inputs["repair_lineage"] = artifacts.write_json(
+                self.directory / "repair-lineage.json", revision.lineage,
+            )
+        elif allocation.approved_design:
             candidate = construction.load_design(self.runner.ledger.root, self.runner.manifest.batch_id, allocation)
             self.transition_inputs["approved_design"] = allocation.approved_design.design_sha256
             self.transition_inputs["design_lineage"] = allocation.approved_design.lineage_sha256
@@ -176,17 +190,15 @@ class FamilyWorkflow:
         return design
 
     def _check_design_capacity(self, design: DesignOutput) -> None:
+        revision = self.documentary_revision
         changed: set[str] = set()
-        for brief in design.inventory:
-            if not self.repair_tickets or brief.source_id in self.repair_tickets or changed.intersection(brief.received):
-                changed.add(brief.source_id)
-        jobs = {f"author-{source_id}" for source_id in changed} | {"audit"}
-        for index in range(len(design.required)):
-            jobs.update({f"realism-{index:03}", f"adjudicate-{index:03}"})
-            for reader in ("a", "b"):
-                prefix = f"reading-{index:03}-{reader}"
-                jobs.add(f"{prefix}-full")
-                jobs.update(f"{prefix}-part-{part:03}" for part in range(len(design.sections)))
+        if revision is not None:
+            changed = revision.affected
+        else:
+            for brief in design.inventory:
+                if not self.repair_tickets or brief.source_id in self.repair_tickets or changed.intersection(brief.received):
+                    changed.add(brief.source_id)
+        jobs = autonomous_realism.mandatory_jobs(design, changed, verification=revision is not None)
         self.runner.ledger.require_capacity(self.runner.family, self.runner.revision, jobs)
 
     def author(self, design: DesignOutput) -> list[Source]:
@@ -195,7 +207,14 @@ class FamilyWorkflow:
         tickets = self.repair_tickets
         if not tickets.keys() <= {brief.source_id for brief in design.inventory}:
             raise ValueError("Repair tickets must identify known Sources.")
+        revision = self.documentary_revision
+        prior_sources: dict[str, Source] = {}
+        if revision is not None:
+            prior_sources = {source.id: source for source in revision.parent.bundles[revision.parent.freeze.natural]}
         for brief in design.inventory:
+            if revision is not None and brief.source_id not in revision.affected:
+                sources[brief.source_id] = prior_sources[brief.source_id]
+                continue
             received = [sources[identity].model_dump(mode="json") for identity in brief.received]
             inputs = {
                 "author_brief": _json({
@@ -210,12 +229,16 @@ class FamilyWorkflow:
             if ticket:
                 inputs["revision_ticket"] = ticket
                 changed.add(brief.source_id)
-            result = self.authored(brief.source_id, inputs, reuse=bool(tickets) and ticket is None)
+            if revision is not None and "revision_ticket" not in inputs:
+                inputs["revision_ticket"] = "Write this record using its revised instructions and received correspondence."
+            result = self.authored(
+                brief.source_id, inputs, reuse=revision is None and bool(tickets) and ticket is None, design=design,
+            )
             sources[brief.source_id] = Source(id=brief.source_id, title=result.title, text=result.text)
         natural = list(sources.values())
         return natural
 
-    def authored(self, identity: str, inputs: dict[str, str], *, reuse: bool) -> AuthoredSource:
+    def authored(self, identity: str, inputs: dict[str, str], *, reuse: bool, design: DesignOutput) -> AuthoredSource:
         name = f"author-{identity}"
         if reuse:
             original = continuation.previous_runner(self.runner)
@@ -223,14 +246,27 @@ class FamilyWorkflow:
             if request["inputs"] != inputs:
                 raise ValueError("An unaffected author packet changed before repair.")
             return AuthoredSource.model_validate(commissioning._read_json(content))
+        literals = [control.edit.before for control in design.matched if control.edit and control.edit.source_id == identity]
+
+        def verify_literals(source: AuthoredSource) -> None:
+            if any(source.text.count(literal) != 1 for literal in literals):
+                raise ValueError("An assigned exact body literal must occur exactly once.")
+
         return self.job(
             name, "author", inputs, "Write this one fictional record from the participant's dated perspective. "
             "Return its title and complete text without editorial notes.", AuthoredSource,
+            validate=verify_literals if repair_authority.enabled(self.runner.ledger, self.runner.manifest) else None,
         )
 
     def realism(self, design: DesignOutput, bundles: dict[str, list[Source]]) -> dict[str, RealismReview]:
         result = {}
         for index, (condition, sources) in enumerate(bundles.items()):
+            inventory = {source.id for source in sources}
+
+            def verify_inventory(review: RealismReview) -> None:
+                if review.source_findings.keys() != inventory or not review.repair_tickets.keys() <= inventory:
+                    raise ValueError("Documentary realism must assess every Source and target only supplied records.")
+
             review = self.job(
                 f"realism-{index:03}", "realism",
                 {
@@ -245,6 +281,7 @@ class FamilyWorkflow:
                 "Review documentary realism independently. Assess purpose, possession, chronology, form, "
                 "density and cues. Supply a source_findings entry for each Source ID. If repair is needed, "
                 "return participant-safe documentary repair tickets keyed by Source ID and describe objections.", RealismReview,
+                validate=verify_inventory if repair_authority.enabled(self.runner.ledger, self.runner.manifest) else None,
             )
             if review.source_findings.keys() != {source.id for source in sources}:
                 raise ValueError("Documentary realism must assess every Source.")
@@ -308,12 +345,22 @@ class FamilyWorkflow:
             self.sessions.append(receipt)
             return reading
         extra_instructions = audit_recovery.MASK_INSTRUCTIONS if role == "masked" and self.audit_recovery else ""
+        def verify_mechanical_evidence(reading: Reading) -> None:
+            by_id = {source.id: source.text for source in sources}
+            if len(reading.reviewed_sources) != len(by_id) or set(reading.reviewed_sources) != by_id.keys():
+                raise ValueError("The reading must account for the exact Source inventory.")
+            for candidate in reading.candidates.relationships:
+                if candidate.source_id not in by_id or candidate.supporting_text not in by_id[candidate.source_id]:
+                    raise ValueError("The reading must quote the exact attributed Source.")
+
         result = self.job(
             key, role, _reading_inputs(design, sources) | (extra or {}),
             "Read only the supplied file. Record exact sourced candidates, unresolved questions, and "
             "each reviewed Source ID. Where your own sectional readings are supplied, independently "
             "reconcile identities, supersession and cross-section claims against every full Source." + extra_instructions,
-            Reading,
+            Reading, validate=verify_mechanical_evidence if repair_authority.enabled(
+                self.runner.ledger, self.runner.manifest,
+            ) else None,
         )
         science.check_reading(result, sources)
         return result
@@ -571,8 +618,11 @@ class FamilyWorkflow:
     def reject(
         self, code: Code, evidence: str, *, repair_tickets: dict[str, str] | None = None, quarantine: bool = False,
     ) -> None:
-        permitted = (self.release is None and bool(repair_tickets)
-                     and self.runner.revision <= self.runner.manifest.repair_cycles)
+        autonomous = code == "documentary_realism" and repair_authority.enabled(
+            self.runner.ledger, self.runner.manifest,
+        )
+        permitted = autonomous or (self.release is None and bool(repair_tickets)
+                                   and self.runner.revision <= self.runner.manifest.repair_cycles)
         target = "quarantined" if quarantine or (repair_tickets and not permitted) else "returned"
         self.record("disposition", self.stage, self.stage, target, {
             "repair_permitted": permitted, "repair_tickets": repair_tickets or {},

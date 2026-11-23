@@ -37,6 +37,7 @@ def main() -> None:
         command.add_argument("batch")
         if name == "run":
             command.add_argument("--family")
+            command.add_argument("--realism-amendment-reference")
             command.add_argument("--stop-after", choices=("audit", "masks"))
         if name in {"reconcile", "quarantine"}:
             command.add_argument("family")
@@ -86,7 +87,10 @@ def _execute(args: argparse.Namespace) -> None:
             )
             coordinator.commission_batch(ledger, commission, artifacts.read_bytes(args.boundary.absolute()))
         case "run":
-            coordinator.run_batch(ledger, args.batch, family_id=args.family, stop_after=args.stop_after)
+            coordinator.run_batch(
+                ledger, args.batch, family_id=args.family, stop_after=args.stop_after,
+                realism_amendment_reference=args.realism_amendment_reference,
+            )
         case "designs":
             print(json.dumps(coordinator.preview_design_review(ledger, args.batch), indent=2))
         case "recover-source-cutoffs":
