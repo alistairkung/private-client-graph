@@ -275,6 +275,18 @@ class MilestoneRealismRepair(Contract):
     scope_reference: Text
 
 
+class MilestoneEvidenceRepair(Contract):
+    schema_version: Literal[1]
+    batch_id: Slug
+    family_id: FamilyId
+    manifest_sha256: Digest
+    freeze_sha256: Digest
+    audit_receipt_sha256: Digest
+    audit_output_sha256: Digest
+    invariant_edge: SemanticEdge
+    scope_reference: Text
+
+
 class ConstructionRepairDecision(Contract):
     schema_version: Literal[1]
     batch_id: Slug
@@ -386,6 +398,10 @@ class AuditReview(Contract):
     masks: list[MaskAssignment]
     objections: list[Text]
     limitations: list[Text]
+
+
+class MilestoneAudit(AuditReview):
+    equivalent_views_reusable: bool = False
 
 
 class AuditMaskView(Contract):

@@ -9,12 +9,12 @@ from typing import Any, Literal
 from benchmark_v3 import commissioning, packet
 from benchmark_v3.batch import (
     adjudication_contract, adjudication_recovery, annotation_recovery, artifacts, audit_recovery, authorisation,
-    construction, continuation, design_recovery, design_review, exception_review, milestone_repair,
+    construction, continuation, design_recovery, design_review, evidence_recovery, exception_review, milestone_repair, science,
 )
 from benchmark_v3.batch.contracts import (
     AdjudicationQuoteRecovery, AnnotationRecovery, AuditRecovery, BatchDecision, BatchManifest, BudgetAmendment,
     ChildDesignMerits, Code, DeferredExceptionReview, DesignReview, ExceptionRecord, FamilyContinuation, FreshAdjudication,
-    MilestoneRealismRepair, OwnerFamilyReview, RepairExecution, RepairScopeReview, SourceCutoffRecovery,
+    MilestoneEvidenceRepair, MilestoneRealismRepair, OwnerFamilyReview, RepairExecution, RepairScopeReview, SourceCutoffRecovery,
 )
 from benchmark_v3.batch.custody import namespace_directory
 from benchmark_v3.batch.ledger import BudgetExhausted, Ledger, TaskHalted
@@ -221,6 +221,34 @@ def release_milestone_realism_repair(ledger: Ledger, plan: MilestoneRealismRepai
             {"plan": plan.model_dump(mode="json"), "plan_sha256": digest, "role": "custodian"},
         )
         return digest
+
+
+def release_milestone_evidence_repair(ledger: Ledger, plan: MilestoneEvidenceRepair) -> str:
+    with ledger.coordinator_lock():
+        ledger.require_running()
+        commission = load_commission(ledger, plan.batch_id)
+        _verify_resume(ledger, commission)
+        batch, family = plan.batch_id, plan.family_id
+        revision, state, blocking = family_status(ledger, batch, family)
+        prior = next((row for row in ledger.events(batch, family) if row["name"] == evidence_recovery.RELEASE), None)
+        if prior is not None and prior["details"]["plan"] == plan.model_dump(mode="json"):
+            return str(prior["details"]["plan_sha256"])
+        if revision != 1 or state not in {"audit", "returned"} or not blocking or (
+            blocking["code"], blocking["stage"]
+        ) != ("scientific_review", "audit"):
+            raise ValueError("Evidence repair requires the original independently returned scientific audit.")
+        original = commission.session_runner(ledger, family, 1)
+        slot = next(row for row in commission.portfolio.slots if row.family_id == family)
+        recovered = evidence_recovery.derive(original, slot, plan)
+        possible_views = {evidence_recovery.observation_key(mask, science.mask_sources(
+            mask, recovered.bundles[mask.condition],
+        )) for mask in recovered.prior_audit.masks}
+        ledger.require_capacity(family, 2, {"audit", *(f"mask-{index:03}" for index in range(len(possible_views)))})
+        ledger.event(
+            batch, family, 2, "transition", evidence_recovery.RELEASE, state, "adjudicate",
+            {"plan": plan.model_dump(mode="json"), "plan_sha256": recovered.plan_sha256, "role": "custodian"},
+        )
+        return recovered.plan_sha256
 
 
 def preview_design_review(ledger: Ledger, batch_id: str) -> dict[str, Any]:

@@ -343,3 +343,22 @@ The normal run reuses unaffected author receipts, regenerates affected
 recipients in chronology and repeats all scientific gates. A disagreement
 about repair scope or a change to the comparison leaves the original return
 in custody.
+
+A paired audit can return a family for inconsistent quotation approvals on
+an otherwise invariant ordinary edge. Use `schema milestone-evidence-repair`
+and `release-milestone-evidence-repair CUSTODY PLAN` after checking that
+the disagreement concerns nested, independently approved exact spans of the
+same unchanged Source. The repair verifies the original realism, full-file
+readings, condition-local adjudications, freeze and returned audit. It
+projects the two approved routes into both condition keys and replays each
+route through the existing validators. It preserves every original Source,
+graph edge, quotation approval and receipt. The fresh auditor must then
+accept the revised key, independently resolve the objections and retain
+the required controls.
+
+A milestone audit can explicitly allow identical masked inputs to share one
+independent observation. The rendered ordered Source bytes, neutral question,
+risk and expected edge sets must all agree. The package retains the complete
+assignment list and identifies the independent receipt used for each
+assignment. The runner reserves separate jobs wherever the scope differs
+or the fresh auditor requires separate observations.

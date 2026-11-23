@@ -20,7 +20,7 @@ from benchmark_v3.batch import (
 from benchmark_v3.batch.contracts import (
     AdjudicationQuoteRecovery, AdmissionDecisions, AnnotationRecovery, AuditReview, AuditRecovery, AuthoredSource, BatchDecision,
     BatchManifest, BudgetAmendment,
-    DeferredExceptionReview, DesignOutput, DesignReview, FamilyContinuation, MilestoneRealismRepair,
+    DeferredExceptionReview, DesignOutput, DesignReview, FamilyContinuation, MilestoneEvidenceRepair, MilestoneRealismRepair,
     PilotDecision, SourceCutoffRecovery,
 )
 from benchmark_v3.batch.ledger import BudgetExhausted, TaskHalted
@@ -806,15 +806,20 @@ def test_audit_contract_keeps_reserved_legacy_request(approved, transport, monke
     from benchmark_v3.batch.workflow import FamilyWorkflow
 
     with monkeypatch.context() as patch:
-        patch.setattr(FamilyWorkflow, "_uses_scoped_audit", lambda _: False)
+        patch.setattr(FamilyWorkflow, "_reserved_audit_prompt", lambda _: "Legacy audit contract.")
         ledger, batch = _run(approved)
     _, commission = approved
     runner = commission.session_runner(ledger, "G", 1)
     slot = next(slot for slot in commission.portfolio.slots if slot.family_id == "G")
     workflow = FamilyWorkflow(runner, slot, [])
     assert _status(ledger, batch)["G"] == "admission_ready"
-    assert not workflow._uses_scoped_audit()
-    assert FamilyWorkflow(commission.session_runner(ledger, "G", 2), slot, [])._uses_scoped_audit()
+    assert audit_contract.SCOPED_INSTRUCTIONS not in workflow._reserved_audit_prompt()
+    assert FamilyWorkflow(commission.session_runner(ledger, "G", 2), slot, [])._reserved_audit_prompt() is None
+    observed, _, _ = transport
+    charge_count = len(observed)
+    coordinator.run_batch(ledger, batch)
+    assert len(observed) == charge_count
+    assert _status(ledger, batch)["G"] == "admission_ready"
 
 
 def test_audit_requires_fresh_masks_for_joint_proof():
@@ -1813,3 +1818,81 @@ def test_milestone_fills_a_released_worker_slot_while_the_other_family_runs(mile
 
     assert coordinator.roadmap_progress(ledger, commission).qualified == ["H", "I"]
     assert not ledger.attempts("J")
+
+
+@pytest.mark.parametrize("approved", ["paired"], indirect=True)
+def test_milestone_reconciles_only_shared_exact_ordinary_evidence_before_fresh_audit(approved, transport):
+    ledger, base = approved
+    manifest = BatchManifest.model_validate(base.manifest.model_dump() | {
+        "phase": "milestone", "qualification_target": 1,
+        "families": [base.manifest.families[0].model_dump() | {"sessions": 24}],
+        "task_session_ceiling": 24,
+    })
+    commission = coordinator.Commission(base.portfolio, manifest, _approval(base.portfolio, manifest))
+    batch = manifest.batch_id
+    calls, behavior, _ = transport
+    longer = QUOTE + "\nSigned and dated."
+    behavior["G", "author-src1"] = lambda _: {"title": "Parent record", "text": longer}
+    behavior["G", "design"] = lambda _: _design("G") | {
+        "matched": [{"kind": "literal_edit", "edit": {
+            "source_id": "src2", "before": "Ordinary synthetic note.", "after": "Routine synthetic note.",
+        }}],
+        "required": {"G000": [EDGE], "G001": [EDGE]},
+    }
+
+    def sibling_adjudication(inputs):
+        result = _output("adjudication", "G", "", inputs)
+        key = result["key"]
+        additional = {"source_id": "src1", "supporting_text": longer}
+        key["truth"]["relationships"][0]["approved_evidence"].append(longer)
+        key["source_approval"]["relationships"][0]["approved_evidence"].append(additional)
+        key["sufficient_evidence"][0]["alternatives"].append([additional])
+        key["ideal"]["relationships"][0]["supporting_text"] = longer
+        return result
+
+    def audit(inputs):
+        result = _output("audit", "G", "audit", inputs)
+        for key in ("completeness", "sufficiency", "negative_controls", "shortcuts", "matched_controls"):
+            result[key]["G001"] = result[key]["G000"]
+        result["risks"] = ["shortcut"]
+        result["masks"] = [{
+            "condition": condition, "risk": "shortcut", "reason": "Check the immutable evidence Source.",
+            "question": "What relationship is supported here?", "included": ["src1"], "present": [EDGE], "absent": [],
+        } for condition in ("G000", "G001")]
+        if "prior_objections" not in json.loads(inputs["audit_rules"]):
+            return result | {"verdict": "repair", "objections": ["Align approved exact spans on identical bytes."]}
+        keys = json.loads(inputs["provisional_keys"])
+        for review in keys.values():
+            assert review["key"]["truth"]["relationships"][0]["approved_evidence"] == [QUOTE, longer]
+        return result | {"equivalent_views_reusable": True}
+
+    behavior["G", "adjudicate-001"] = sibling_adjudication
+    behavior["G", "audit"] = audit
+    coordinator.commission_batch(ledger, commission, BOUNDARY)
+    coordinator.run_batch(ledger, batch)
+    original = commission.session_runner(ledger, "G", 1)
+    audit_receipt = original.committed_packet("audit", "audit", "audit")[1]
+    original_key = original.directory / "family" / "G000.json"
+    original_bytes = original_key.read_bytes()
+    plan = MilestoneEvidenceRepair(
+        schema_version=1, batch_id=batch, family_id="G", manifest_sha256=authorisation.commitment(manifest),
+        freeze_sha256=commissioning.digest((original_key.parent / "freeze.json").read_bytes()),
+        audit_receipt_sha256=audit_receipt["receipt_sha256"], audit_output_sha256=audit_receipt["output_sha256"],
+        invariant_edge=tuple(EDGE), scope_reference="Fixture invariant quote repair.",
+    )
+    with pytest.raises(ValueError, match="same ordinary invariant edge"):
+        coordinator.release_milestone_evidence_repair(
+            ledger, plan.model_copy(update={"invariant_edge": ("Different Parent", "parent_of", "Different Child")}),
+        )
+    coordinator.release_milestone_evidence_repair(ledger, plan)
+    coordinator.run_batch(ledger, batch)
+
+    assert coordinator.roadmap_progress(ledger, commission).qualified == ["G"]
+    assert original_key.read_bytes() == original_bytes
+    second_revision = [(job, inputs) for _, parent, job, inputs in calls if parent == "G@2"]
+    assert [job for job, _ in second_revision] == ["audit", "mask-000"]
+    assert "Reviewer question:" in second_revision[1][1]["neutral_brief"]
+    dossier = json.loads((original.directory.parent / "2" / "family" / "dossier.json").read_bytes())
+    assert len(dossier["mask_results"]) == 2
+    assert {row["observation_job"] for row in dossier["mask_results"]} == {"mask-000"}
+    assert dossier["replay"]["paid_attempts"] == 0

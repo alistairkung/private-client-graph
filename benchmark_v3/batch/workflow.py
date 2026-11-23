@@ -11,11 +11,11 @@ from pydantic import BaseModel
 from benchmark_v3 import commissioning, packet, replay
 from benchmark_v3.batch import (
     adjudication_contract, adjudication_recovery, annotation_recovery, artifacts, audit_contract, audit_recovery,
-    construction, continuation, design_recovery, milestone_repair, science,
+    construction, continuation, design_recovery, evidence_recovery, milestone_repair, science,
 )
 from benchmark_v3.batch.contracts import (
     Adjudication, AuditReview, AuthoredSource, Code, DesignOutput, Reading, RealismReview,
-    RecoveredAuditReview, Role, Stage,
+    MilestoneEvidenceRepair, MilestoneAudit, RecoveredAuditReview, Role, Stage,
 )
 from benchmark_v3.batch.ledger import Ledger
 from benchmark_v3.batch.sessions import Blocked, SessionRunner
@@ -38,6 +38,12 @@ class FamilyWorkflow:
         self.repair_tickets: dict[str, str] = {}
         self.audit_recovery = audit_recovery.recorded(runner)
         self.release = continuation.recorded(runner)
+        self.evidence_release = next((
+            row["details"] for row in runner.ledger.events(runner.manifest.batch_id, runner.family)
+            if row["revision"] == runner.revision and row["kind"] == "transition"
+            and row["name"] == evidence_recovery.RELEASE
+        ), None)
+        self.recovered_evidence: evidence_recovery.RecoveredEvidence | None = None
         self.release_action = self.release["decision"]["release"]["action"] if self.release else None
         self.transition_inputs: dict[str, str] = {
             "hypothesis": slot.hypothesis.hypothesis_sha256,
@@ -45,14 +51,19 @@ class FamilyWorkflow:
         }
 
     def run(self, *, stop_after: Literal["audit", "masks"] | None = None) -> None:
-        design = self.design()
-        natural = self.author(design)
-        bundles, freeze = science.freeze_bundles(self.slot, design, natural)
-        self.advance("realism", {"natural": _source_array(natural)}, gate="complete authored inventory and matched diff")
-        realism = self.realism(design, bundles)
-        self.freeze(bundles, freeze)
-        readings, agreements = self.blind(design, bundles)
-        reviews = self.adjudicate(design, bundles, readings, agreements)
+        if self.evidence_release is not None:
+            recovered = self.recover_invariant_evidence(self.evidence_release)
+            design, bundles, freeze = recovered.design, recovered.bundles, recovered.freeze
+            realism, agreements, reviews = recovered.realism, recovered.agreements, recovered.adjudications
+        else:
+            design = self.design()
+            natural = self.author(design)
+            bundles, freeze = science.freeze_bundles(self.slot, design, natural)
+            self.advance("realism", {"natural": _source_array(natural)}, gate="complete authored inventory and matched diff")
+            realism = self.realism(design, bundles)
+            self.freeze(bundles, freeze)
+            readings, agreements = self.blind(design, bundles)
+            reviews = self.adjudicate(design, bundles, readings, agreements)
         audit = self.audit(design, bundles, freeze, reviews, agreements)
         if stop_after == "audit":
             return
@@ -61,6 +72,25 @@ class FamilyWorkflow:
             return
         report, manifest = self.technical(freeze, reviews)
         self.dossier(realism, agreements, reviews, audit, masks, report, manifest)
+
+    def recover_invariant_evidence(self, release: dict[str, Any]) -> evidence_recovery.RecoveredEvidence:
+        self.stage = "adjudicate"
+        previous = continuation.previous_runner(self.runner)
+        plan = MilestoneEvidenceRepair.model_validate(release["plan"])
+        recovered = evidence_recovery.derive(previous, self.slot, plan)
+        if recovered.plan_sha256 != release["plan_sha256"]:
+            raise ValueError("The accepted invariant evidence plan failed its commitment.")
+        self.recovered_evidence = recovered
+        root = self.directory / "family"
+        for condition, sources in recovered.bundles.items():
+            artifacts.write_json(root / "sources" / f"{condition}.json", _source_array(sources))
+            _locked_key_digest(root, condition, recovered.adjudications[condition].key)
+        artifacts.write_json(root / "freeze.json", recovered.freeze.model_dump(mode="json"))
+        self.transition_inputs["evidence_repair"] = recovered.plan_sha256
+        self.transition_inputs["original_freeze"] = plan.freeze_sha256
+        self.advance("audit", {"provisional": _models(recovered.adjudications)},
+                     gate="same frozen Sources and graph with reconciled independently approved invariant evidence")
+        return recovered
 
     def job(
         self, key: str, role: Role, inputs: dict[str, str], instructions: str, result_type: type[_T],
@@ -387,7 +417,19 @@ class FamilyWorkflow:
             ]
             prompt += audit_recovery.INSTRUCTIONS
             result_type = RecoveredAuditReview
-        if self.audit_recovery is not None or self._uses_scoped_audit():
+        reserved_prompt = self._reserved_audit_prompt()
+        if self.runner.manifest.phase == "milestone" and (
+            reserved_prompt is None or evidence_recovery.MASK_EQUIVALENCE_INSTRUCTIONS in reserved_prompt
+        ):
+            prompt += evidence_recovery.MASK_EQUIVALENCE_INSTRUCTIONS
+            result_type = MilestoneAudit
+        if self.recovered_evidence is not None:
+            previous_audit = self.recovered_evidence.prior_audit
+            prompt += evidence_recovery.AUDIT_INSTRUCTIONS
+            rules["prior_objections"] = previous_audit.objections
+            rules["proposed_exact_views"] = evidence_recovery.proposed_views(previous_audit)
+        if (self.audit_recovery is not None or reserved_prompt is None
+                or audit_contract.SCOPED_INSTRUCTIONS in reserved_prompt):
             prompt += audit_contract.SCOPED_INSTRUCTIONS
             schema = audit_contract.output_schema(bundles, freeze, result_type)
         result = self.job(
@@ -406,19 +448,22 @@ class FamilyWorkflow:
             self.reject("scientific_review", result.model_dump_json(), quarantine=result.verdict == "quarantine")
         if self.audit_recovery is not None:
             audit_recovery.verify_plan(RecoveredAuditReview.model_validate(result), self.audit_recovery)
+        if self.recovered_evidence is not None:
+            evidence_recovery.verify_controls(self.recovered_evidence.prior_audit, result)
         self.advance("masks", {"audit": result.model_dump(mode="json")}, gate="independent scientific audit and risk plan")
         return result
 
-    def _uses_scoped_audit(self) -> bool:
+    def _reserved_audit_prompt(self) -> str | None:
         for row in self.runner.ledger.attempts(self.runner.family):
             if row["revision"] == self.runner.revision and row["job"] == "audit":
-                # Reopening a reserved packet must reconstruct its original input commitment.
-                return audit_contract.SCOPED_INSTRUCTIONS in commissioning._read_json(row["request"])["prompt"]
-        return True
+                return str(commissioning._read_json(row["request"])["prompt"])
+        return None
 
     def masks(
         self, design: DesignOutput, bundles: dict[str, list[Source]], audit: AuditReview,
     ) -> list[dict[str, Any]]:
+        if isinstance(audit, MilestoneAudit):
+            return self.milestone_masks(design, bundles, audit)
         jobs = {f"mask-{index:03}": mask for index, mask in enumerate(audit.masks)}
         if (self.runner.manifest.phase in {"construction", "milestone"} or self.release
                 or annotation_recovery.recorded(self.runner) is not None):
@@ -433,6 +478,40 @@ class FamilyWorkflow:
                             quarantine=True)
             results.append({"assignment": mask.model_dump(mode="json"), "observed_edges": sorted(edges)})
         self.advance("technical", {"mask_results": results}, gate="all targeted masked readings satisfy commitments")
+        return results
+
+    def milestone_masks(
+        self, design: DesignOutput, bundles: dict[str, list[Source]], audit: MilestoneAudit,
+    ) -> list[dict[str, Any]]:
+        assignments = []
+        first_jobs: dict[str, str] = {}
+        for index, mask in enumerate(audit.masks):
+            if any(condition.casefold() in mask.question.casefold() for condition in bundles):
+                self.reject("scientific_review", "A masked reviewer question exposes a condition identifier.")
+            sources = science.mask_sources(mask, bundles[mask.condition])
+            signature = evidence_recovery.observation_key(mask, sources)
+            job = f"mask-{index:03}"
+            if audit.equivalent_views_reusable:
+                job = first_jobs.setdefault(signature, job)
+            assignments.append((job, mask, sources))
+        self.runner.ledger.require_capacity(
+            self.runner.family, self.runner.revision, {job for job, _, _ in assignments},
+        )
+        observations = {}
+        results = []
+        for job, mask, sources in assignments:
+            if job not in observations:
+                brief = design.neutral_brief + "\n\nReviewer question: " + mask.question
+                reading = self.read(job, "masked", design.model_copy(update={"neutral_brief": brief}), sources)
+                observations[job] = science.check_reading(reading, sources).keys()
+            edges = observations[job]
+            if not set(mask.present) <= edges or set(mask.absent) & edges:
+                self.reject("scientific_review", f"Independent observation {job} failed a required control.",
+                            quarantine=True)
+            results.append({"assignment": mask.model_dump(mode="json"), "observation_job": job,
+                            "observed_edges": sorted(edges)})
+        self.advance("technical", {"mask_results": results},
+                     gate="independent masked readings satisfy every retained precommitment")
         return results
 
     def technical(
@@ -480,6 +559,9 @@ class FamilyWorkflow:
             + "\n\n[Full dossier](dossier.json) · [Manifest](manifest.json) · [Offline replay](replay/preflight.json)\n"
         )
         artifacts.write_bytes(root / "DOSSIER.md", markdown.encode())
+        if self.recovered_evidence is not None:
+            dossier["invariant_evidence_recovery"] = self.evidence_release
+            dossier["invariant_route_replay"] = self.recovered_evidence.exact_route_checks
         dossier["review_files"] = review_commitments(root, manifest)
         digest = artifacts.write_json(root / "dossier.json", dossier)
         self.record("transition", "dossier", "admission_ready", "admission_ready",
