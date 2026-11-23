@@ -154,6 +154,15 @@ the full records. Two planning sessions were charged. The candidate
 received no commission or participant turns. The independent review is
 `25d9ec9537022cddac08f4181c50e7c4ac46b0237f1ddc91bc4887f955161943`.
 
+The next independently reviewed moderate reserve selected DA for the
+distinction between a testamentary trust and an outright distribution,
+and DB for the direction of parentage across records that describe the
+same people from different perspectives. Both commissions require the
+full scientific gates. The registered round is
+`c6a68a64865d39ac0b97cf75e43caf953901bdef16ad55a9f5e06858459e6fbc`.
+The independent merits review is
+`3fc1a8ba49e77144bab7f83329f001886559d136324d17007d20b2d3133187df`.
+
 ## Subsequent verified qualification
 
 E revision 3 qualified for the two-condition test of contradictory
@@ -381,6 +390,13 @@ and returned remaining presentation and reconciliation issues. A
 separately bounded plan preserves the verified delivery facts and keeps
 unverified historical mandates, records and workings open. The release
 is `50a1ec2a084c26153965b49993fe76bc668cc534127233e5fa9ebadc2b65ed02`.
+Revision 19 retained unsupported aggregate categories and an
+underidentified payment extract. Three recent realism reviews found
+related issues. The current lineage remains quarantined after 361
+custody charges and has no technical dossier. The exact disposition is
+`d8b89d940f41c9d013ad155c2432b52ef3d4b031dd311fd59bde1691346f1a0a`.
+The next large candidate requires its own independent documentary
+feasibility review before authoring.
 
 L's scope review exposed a factory-generated attachment instruction
 that implied undocumented revised correspondence. Fresh repair

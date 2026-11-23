@@ -143,6 +143,9 @@ No verified findings recorded.
 | `named-scope-capacity@1` · Scoped adoption and concurrent roles | S | approved | `888372b762667bab8ffd03519f92405dd246118df8806798244fb69abf6e3263` |
 | `administrative-estate-load@1` · Completeness in an administrative handover | U | approved | `55e95c4e91d4a99cabbc0c03f4c9831fc0054b0df045983be5ae1af3ace18b90` |
 | `longitudinal-cross-section-reconstruction@1` · Longitudinal cross-section reconstruction | V | proposed | `925b5fdd603297092c963366da245eea3f95c8d0e4a6804cceff9ae57655156d` |
+| `testamentary-trust-versus-outright-distribution@1` · Two completed testamentary dispositions, only one a trust provision | DA | approved | `1894d78619d67f766332fd298f019c41bece57ed4c238eeb2fb924fb8245ec62` |
+| `parentage-direction-across-record-frames@1` · The same person is a child in one record and a parent in another | DB | approved | `dc04dbb3e78408f58f216be291627a8e882d682846add8e067f6fd67f1cb7973` |
+| `continuing-office-reference-follows-holder@1` · A companion trust follows one continuing office, not the whole trustee roster | DC | proposed | `9f2ae38c277b4a5516cc712a54c82c49db0bf4117ead2b5954f3257af64ea20e` |
 | `bounded-negative-receipt-coverage@1` · A default provision requires complete negative receipt coverage | AG | approved | `aa9daf7b4f40611a569bc456466e5f3ab3cc54ddd74f93e1e9803c33d58344c8` |
 | `mixed-origin-field-attestation@1` · A signed check vouches only for the fields it covers | AH | approved | `675663a370b5acb848e500fc799f042b1ded8e0e3121c331fd9f029a814e58db` |
 | `fixed-versus-rolling-incorporation@1` · A later issue matters only under rolling incorporation | AJ | proposed | `7e65cd45da7a876ff28d23046307bc5296b44be293f28ff645a03b67b6fcda6f` |
