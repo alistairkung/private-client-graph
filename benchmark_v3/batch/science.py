@@ -161,6 +161,9 @@ def audit_risks(
     return risks
 
 
+AUDIT_COVERAGE_ERROR = "Audit must cover all conditions and all standard checks."
+
+
 def verify_audit(
     review: AuditReview, bundles: dict[str, list[Source]], freeze: BatchSourceFreeze,
     required_risks: set[Risk], adjudications: dict[str, Adjudication],
@@ -169,7 +172,7 @@ def verify_audit(
     if any(index.keys() != conditions for index in (
         review.completeness, review.sufficiency, review.negative_controls, review.shortcuts, review.matched_controls,
     )):
-        raise ValueError("Audit must cover all conditions and all standard checks.")
+        raise ValueError(AUDIT_COVERAGE_ERROR)
     for condition, sources in bundles.items():
         if review.completeness[condition].keys() != {source.id for source in sources}:
             raise ValueError("Audit must account for every Source independently of the adjudication.")

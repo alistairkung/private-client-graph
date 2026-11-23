@@ -6,7 +6,7 @@ from typing import Any
 from pydantic import TypeAdapter
 
 from benchmark_v3 import commissioning
-from benchmark_v3.batch import artifacts, audit_boundary, authorisation, science
+from benchmark_v3.batch import annotation_recovery, artifacts, audit_boundary, authorisation, read_format_recovery, science
 from benchmark_v3.batch.contracts import Adjudication, DesignOutput, MilestoneAudit, Reading, RealismReview
 from benchmark_v3.batch.sessions import SessionRunner
 from benchmark_v3.portfolio import FamilySlot
@@ -96,6 +96,7 @@ def _reopen(prior: SessionRunner, slot: FamilySlot, record: FrozenEvidenceReview
                 condition: commissioning._read_json(_source_text(sources)) for condition, sources in bundles.items()
             }):
         raise ValueError("Evidence review requires an authenticated independent return on the same frozen Sources.")
+    _verify_reviewed_scope(audit, bundles, freeze)
     audit_boundary.original_views(audit, bundles)
     locked = TypeAdapter(dict[str, Adjudication]).validate_json(request["inputs"]["provisional_keys"])
     if locked.keys() != bundles.keys():
@@ -143,6 +144,16 @@ def _read_audit(runner: SessionRunner) -> tuple[MilestoneAudit, dict[str, Any], 
     return runner.committed_result("audit", "audit", "audit", result_type)
 
 
+def _verify_reviewed_scope(
+    audit: MilestoneAudit, bundles: dict[str, list[Source]], freeze: BatchSourceFreeze,
+) -> None:
+    if ({name: set(findings) for name, findings in audit.completeness.items()}
+            != {name: {source.id for source in sources} for name, sources in bundles.items()}
+            or {name: set(findings) for name, findings in audit.sufficiency.items()}
+            != {name: {commissioning.json_text(edge) for edge in edges} for name, edges in freeze.required.items()}):
+        raise ValueError("Evidence review requires a retained return examining every Source and critical edge.")
+
+
 def _stages(runner: SessionRunner) -> dict[str, dict[str, Any]]:
     stages = {row["name"]: row["details"] for row in runner.ledger.events(runner.manifest.batch_id, runner.family)
               if row["revision"] == runner.revision and row["kind"] == "transition"
@@ -162,9 +173,21 @@ def _realism(prior: SessionRunner, design: DesignOutput, sources: list[Source], 
 
 
 def _reading(prior: SessionRunner, design: DesignOutput, index: int, name: str, sources: list[Source]) -> Reading:
-    report, _, request = prior.committed_result("blind", f"reading-{index:03}-{name}-full", "annotation", Reading)
-    if request["inputs"]["sources"] != _source_text(sources) or request["inputs"]["neutral_brief"] != design.neutral_brief:
+    job = f"reading-{index:03}-{name}-full"
+    _, _, request = prior.committed_packet("blind", job, "annotation")
+    inputs = request["inputs"]
+    if inputs["sources"] != _source_text(sources) or inputs["neutral_brief"] != design.neutral_brief:
         raise ValueError("A full-file blind packet does not bind the same frozen condition.")
+    recovery = annotation_recovery.recorded(prior)
+    if recovery and recovery["decision"]["reader_job"] == job:
+        return annotation_recovery.reopen(prior, recovery)[0]
+    whitespace = read_format_recovery.reopen_whitespace(prior, job, inputs)
+    if whitespace is not None:
+        return whitespace[0]
+    selected = read_format_recovery.selected_job(prior, job, inputs)
+    report, _, committed_request = prior.committed_result("blind", selected, "annotation", Reading)
+    if committed_request["inputs"] != inputs:
+        raise ValueError("The retained independent reading does not bind the original packet inputs.")
     return report
 
 

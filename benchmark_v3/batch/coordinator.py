@@ -712,7 +712,10 @@ def release_frozen_evidence_review(ledger: PooledLedger, batch: str, family: str
         commission = load_commission(ledger, batch)
         revision, state, issue = family_status(ledger, batch, family)
         prior_reviews = [row for row in ledger.events(batch, family) if "frozen_evidence_review" in row["details"]]
-        if (not ledger.requires_delivery_attestation or not rationale.strip() or state != "returned"
+        returned = state == "returned" or (
+            state == "audit" and issue is not None and issue["evidence"] == science.AUDIT_COVERAGE_ERROR
+        )
+        if (not ledger.requires_delivery_attestation or not rationale.strip() or not returned
                 or not issue or (issue["stage"], issue["code"]) != ("audit", "scientific_review")
                 or len(prior_reviews) >= 2 or (prior_reviews and prior_reviews[0]["revision"] != revision)
                 or any(row["revision"] == revision and row["stage"] == "masks" for row in ledger.attempts(family))):

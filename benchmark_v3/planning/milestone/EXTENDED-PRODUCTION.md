@@ -123,6 +123,17 @@ technical dossier is
 Eleven families technically qualify. X, T, N, E, W and O await owner
 admission.
 
+L revision 9 qualified on a newly authored matched pair testing what a
+bounded civil record established at an earlier snapshot. Fresh isolated
+readers and condition-local adjudicators reconstructed the pair after
+the documentary scope repairs. All 12 evidence controls passed. A
+separate zero-provider replay reproduced both scored graphs and all
+three supported edges. L's earlier returned lineage remains in custody.
+The exact technical dossier is
+`88e1e784a0ab025cc132b5abd7859dcf6b1aed950e122facabae02d3a5f962a2`.
+Twelve families technically qualify. X, T, N, E, W, O and L await owner
+admission.
+
 ## Isolated runtime recovery
 
 AB and AD received independent initial design and scope reviews. Their
@@ -163,8 +174,13 @@ Q's retained adjudication required one unique whitespace correction
 across its quotation representations. Four proposed sufficient sets
 contained the same already approved exact singleton proof. The
 controller preserves the original adjudication and records the
-inclusion-minimal equivalent. Q still requires its scientific audit,
-independent controls and replay.
+inclusion-minimal equivalent. A subsequent audit returned the evidence
+mapping and recorded Source coverage and critical-edge sufficiency for
+both conditions. Its narrative check headings crossed condition keys.
+The frozen evidence review reopens the exact retained blind derivatives
+and independently relocks each condition. The original objections and
+control commitments remain in scope for fresh audit, independent controls
+and replay.
 
 ## Large-file and restart controls
 

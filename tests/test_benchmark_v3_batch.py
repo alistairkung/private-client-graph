@@ -3488,16 +3488,20 @@ def test_word_preserving_blind_quote_recovery_uses_the_retained_reader(autonomou
         read_format_recovery.exact_whitespace_span("a  a", "a a a")
 
 
-@pytest.mark.parametrize("disposition", ["repair", "quarantine", "followup"])
+@pytest.mark.parametrize("disposition", ["repair", "quarantine", "followup", "returned_layout",
+                                        "accepted_layout", "missing_critical"])
 def test_frozen_evidence_review_reuses_sources_and_blind_receipts_without_cueing_the_new_key(
     approved, transport, tmp_path, monkeypatch, disposition,
 ):
-    from benchmark_v3.batch import frozen_rekey
+    from benchmark_v3.batch import frozen_rekey, science
     from benchmark_v3.batch.pool import PooledLedger
 
     original, fixture = approved
     portfolio = fixture.portfolio
-    manifest = fixture.manifest.model_copy(update={"phase": "milestone", "qualification_target": 1})
+    manifest = fixture.manifest.model_copy(update={
+        "phase": "milestone", "qualification_target": 1,
+        "autonomous_realism": True if disposition == "returned_layout" else None,
+    })
     commission = coordinator.Commission(portfolio, manifest, _approval(portfolio, manifest))
     coordinator.commission_batch(original, commission, BOUNDARY)
     pool = MilestonePool(tmp_path / "frozen-evidence-review", PoolAuthority(
@@ -3522,12 +3526,46 @@ def test_frozen_evidence_review_reuses_sources_and_blind_receipts_without_cueing
         "The fictional unresolved dispatch may be outside the audit-workflow dispatch rule."
         if disposition == "quarantine" else "Use a consistent exact local context policy."
     )
-    behavior[family, "audit"] = lambda inputs: _output("audit", family, "", inputs) | {
-        "verdict": "repair" if disposition == "followup" else disposition, "objections": [objection],
-    }
+    quotation_recovery = disposition == "returned_layout"
+    blind_job = "reading-000-a-full"
+    if quotation_recovery:
+        def bad_spacing(inputs):
+            reading = _output("annotation", family, "", inputs)
+            reading["candidates"]["relationships"][0]["supporting_text"] = QUOTE.replace(" is ", "  is ")
+            return reading
+        for suffix in ("", "-format-retry", "-exact-format"):
+            behavior[family, blind_job + suffix] = bad_spacing
+
+    def original_audit(inputs):
+        audit = _output("audit", family, "", inputs)
+        audit.update(verdict="quarantine" if disposition == "quarantine" else "repair", objections=[objection])
+        if disposition.endswith("_layout") or disposition == "missing_critical":
+            audit["shortcuts"] = {"cross-condition": "Check scope."}
+        if disposition == "accepted_layout":
+            audit.update(verdict="accept", objections=[])
+        if disposition == "missing_critical":
+            audit["sufficiency"][f"{family}000"] = {}
+        return audit
+
+    behavior[family, "audit"] = original_audit
     coordinator._work_family(active, commission, slot)
-    expected_state = "quarantined" if disposition == "quarantine" else "returned"
-    assert coordinator.family_status(active, batch, family)[:2] == (1, expected_state)
+    if quotation_recovery:
+        coordinator.recover_blind_representation(active, batch, family, blind_job)
+        coordinator._work_family(active, commission, slot)
+        coordinator.recover_blind_whitespace(active, batch, family, blind_job)
+        coordinator._work_family(active, commission, slot)
+    if disposition.endswith("_layout") or disposition == "missing_critical":
+        revision, stage, issue = coordinator.family_status(active, batch, family)
+        assert (revision, stage, issue["evidence"]) == (1, "audit", science.AUDIT_COVERAGE_ERROR)
+        if disposition != "returned_layout":
+            reason = "authenticated independent return" if disposition == "accepted_layout" else "every Source and critical edge"
+            with pytest.raises(ValueError, match=reason):
+                coordinator.release_frozen_evidence_review(active, batch, family, "Reassess exact local context.")
+            assert coordinator.family_status(active, batch, family)[0] == revision
+            return
+    else:
+        expected_state = "quarantined" if disposition == "quarantine" else "returned"
+        assert coordinator.family_status(active, batch, family)[:2] == (1, expected_state)
     prior = commission.session_runner(active, family, 1).directory / "family"
     frozen_bytes = (prior / "freeze.json").read_bytes()
     original_saved = (prior / "G000.json").read_bytes()
