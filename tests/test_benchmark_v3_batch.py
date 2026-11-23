@@ -2629,3 +2629,19 @@ def test_pooled_scope_return_reopens_only_the_verified_prior_realism_file(autono
     assert [row["independent_finding"]["objections"] for row in verified_inputs] == [["Prematurely cues an answer."]]
     assert {revision for _, revision, job, _ in calls if job.startswith("reading")} == {"G@3"}
     assert scope_record in [event["details"] for event in ledger.events(batch, "G") if event["kind"] == "session"]
+
+
+def test_scoped_review_context_preserves_reserved_prompt_on_resume(approved, monkeypatch):
+    from benchmark_v3.batch.workflow import FamilyWorkflow
+
+    ledger, commission = approved
+    runner = commission.session_runner(ledger, "G", 1)
+    workflow = FamilyWorkflow(runner, commission.portfolio.slots[0], commission.portfolio.admission_criteria)
+    monkeypatch.setattr(type(ledger), "parallel_scientific_jobs", property(lambda _: 4))
+    note = " Exact supplied possession context."
+    assert workflow._use_scoped_prompt("realism-000", note)
+    monkeypatch.setattr(ledger, "attempts", lambda _: [
+        {"revision": 1, "job": "realism-000", "request": '{"prompt":"Earlier approved prompt."}'},
+    ])
+    assert not workflow._use_scoped_prompt("realism-000", note)
+    assert workflow._use_scoped_prompt("realism-001", note)

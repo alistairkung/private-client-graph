@@ -28,6 +28,16 @@ from private_client_graph.models.source import Source
 from private_client_graph.workbench.artifacts import artifact_digest
 
 _T = TypeVar("_T", bound=BaseModel)
+_POSSESSION_CONTEXT = (
+    " The possession ledger's received field lists selected earlier author-context records. "
+    "Use documentary covers, receipts and provenance to assess the actual enclosure inventory. "
+    "Assess inconsistencies between what participants knew, held and actually delivered."
+)
+_KEY_ROSTER_CONTEXT = (
+    " Record the complete condition-local roster of clearly identified named people and trusts, including names "
+    "without a supported relationship. Do not infer relationships from roster membership. Use canonical endpoint "
+    "names in sufficient_evidence edge triples and use local IDs only where the truth graph fields request them."
+)
 
 
 class FamilyWorkflow:
@@ -325,8 +335,14 @@ class FamilyWorkflow:
                 if review.source_findings.keys() != inventory or not review.repair_tickets.keys() <= inventory:
                     raise ValueError("Documentary realism must assess every Source and target only supplied records.")
 
+            job = f"realism-{index:03}"
+            instructions = ("Review documentary realism independently. Assess purpose, possession, chronology, form, "
+                            "density and cues. Supply a source_findings entry for each Source ID. If repair is needed, "
+                            "return participant-safe documentary repair tickets keyed by Source ID and describe objections.")
+            if self._use_scoped_prompt(job, _POSSESSION_CONTEXT):
+                instructions += _POSSESSION_CONTEXT
             review = self.job(
-                f"realism-{index:03}", "realism",
+                job, "realism",
                 {
                     "sources": _json(_source_array(sources)), "neutral_brief": design.neutral_brief,
                     "cutoff": design.cutoff.isoformat(),
@@ -336,9 +352,7 @@ class FamilyWorkflow:
                     ]),
                     "genre_references": _json(design.documentary_references),
                 },
-                "Review documentary realism independently. Assess purpose, possession, chronology, form, "
-                "density and cues. Supply a source_findings entry for each Source ID. If repair is needed, "
-                "return participant-safe documentary repair tickets keyed by Source ID and describe objections.", RealismReview,
+                instructions, RealismReview,
                 validate=verify_inventory if self._validates_documentary_outputs() else None,
             )
             if review.source_findings.keys() != {source.id for source in sources}:
@@ -353,6 +367,14 @@ class FamilyWorkflow:
             self.reject("documentary_realism", _json(_models(result)), repair_tickets=tickets)
         self.advance("freeze", {"realism": _models(result)}, gate="independent realism for every condition")
         return result
+
+    def _use_scoped_prompt(self, job: str, addition: str) -> bool:
+        if self.runner.ledger.parallel_scientific_jobs <= 1:
+            return False
+        for attempt in self.runner.ledger.attempts(self.runner.family):
+            if attempt["revision"] == self.runner.revision and attempt["job"] == job:
+                return addition in commissioning._read_json(attempt["request"])["prompt"]
+        return True
 
     def _validates_documentary_outputs(self) -> bool:
         return self.realism_release is not None or repair_authority.enabled(self.runner.ledger, self.runner.manifest)
@@ -499,6 +521,8 @@ class FamilyWorkflow:
                     or self.release_action == "complete_evidence_adjudication")
         if complete:
             prompt += adjudication_contract.COMPLETE_EVIDENCE_INSTRUCTIONS
+        if self._use_scoped_prompt(job, _KEY_ROSTER_CONTEXT):
+            prompt += _KEY_ROSTER_CONTEXT
         return self.job(
             job, "adjudication", inputs, prompt, Adjudication,
             output_schema=adjudication_contract.output_schema(ids, complete_evidence=complete),
