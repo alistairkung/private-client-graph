@@ -112,6 +112,9 @@ def test_a_large_whole_file_confirmation_cannot_satisfy_targeted_mask_coverage()
     )
     assert audit_boundary.targeted_audit(audit, {"T000": sources}).masks == [targeted]
     assert audit_boundary.large_confirmation(whole, sources)
+    fresh = audit_boundary.RecheckedAudit(**audit.model_dump(), excerpt_controls=[])
+    audit_boundary.verify_recheck(fresh, audit_boundary.targeted_audit(audit, {"T000": sources}),
+                                  [whole], [], {"T000": sources})
     with pytest.raises(ValueError, match="must remove evidence"):
         science.mask_sources(whole, sources)
     assert not audit_boundary.large_confirmation(whole.model_copy(update={"risk": "shortcut"}), sources)

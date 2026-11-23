@@ -120,10 +120,13 @@ def verify_recheck(
 
     evidence_recovery.verify_controls(valid, result)
     for old in whole:
+        sources = bundles[old.condition]
+        is_full_file_confirmation = large_confirmation(old, sources)
         if not any((mask.risk, mask.condition, mask.question) == (old.risk, old.condition, old.question)
                    and set(old.present) <= set(mask.present) and set(old.absent) <= set(mask.absent)
+                   and (is_full_file_confirmation or not large_confirmation(mask, sources))
                    for mask in result.masks):
-            raise ValueError("A retained whole-file objective needs a targeted control with compatible expectations.")
+            raise ValueError("A retained whole-file objective needs a conforming control with compatible expectations.")
     approved = {(view.condition, evidence_recovery.observation_key(view, render_excerpt(view, bundles[view.condition])))
                 for view in result.excerpt_controls}
     for view in requested:

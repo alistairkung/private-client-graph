@@ -27,3 +27,50 @@ participant routes in the delivered correspondence.
 | Shared successor pool | `4152a1cf320a40c1d58a53edf1890f8faef3124892d5b891e216f0cc64d0c170` |
 
 [Previous stop and private archive commitments](ISOLATED-RESTART.md)
+
+## Execution safeguards
+
+The successor can retry a mechanical role-output failure against the same
+frozen inputs, reopen a bounded documentary return with explicit lineage,
+and commission a fresh audit while preserving earlier valid controls and
+negative expectations. It keeps the original Source bytes, reviews and
+session receipts. A complete independent replication of a large file is
+recorded alongside the required targeted tests. The replication cannot
+satisfy a targeted risk check that requires evidence removal. Shared
+ledger readers use a bounded lock timeout so they can wait through
+ordinary write contention and still detect a committed integrity halt.
+
+## Closed result
+
+Seven of the 19 non-giant families are technically qualified. A, B, C,
+D and F retain human admission. X and the replacement T are pending
+separate owner decisions. The original I, L and T quarantines remain
+in private custody with their exact Source and receipt commitments.
+
+T revision 4 adds a 25-Source intermediate workload on custody and
+absence. Its dossier binds documentary realism, ten independent
+sectional readings, two independent whole-file readings, adjudication,
+and scientific audit. All 19 targeted control observations and one
+additional whole-file confirmation passed. A separate protected replay
+reproduced all five expected edges in the natural file with zero
+provider attempts. The evidence covers one natural-file condition.
+The 65-Source large tier remains outstanding.
+
+The phase charged 435 sessions, bringing the cumulative balance to
+984 of 1,000. All 1,066 custody receipts reconcile, including 82 older
+pilot and construction receipts outside the cumulative ceiling. The
+remaining 16 sessions cannot complete any eligible roadmap family.
+N reached audit with 28 distinct renderable controls and additional
+views requiring repair. W needed at least 17 sessions for re-adjudication,
+audit and retained controls. The private assessment records the other
+returns, failed controls and workload costs. Paid PCG extraction,
+sealed evaluation access, new human admissions and giant-family
+sessions each total zero.
+
+| Closed evidence | SHA-256 |
+| --- | --- |
+| T revision 4 technical dossier | `23e33572163f94639a5adbfebb5d646abf16aa394db074ee68cec773d20bf847` |
+| Roadmap capacity assessment | `15885d078a69c13b302f163c753a3be50b0273107a5550997f390a1b2cde7a33` |
+| Final accounting | `726a782ae01492e3fb9fe158836bab5842578e39875d98c59dce4ddde076898e` |
+| Private owner review | `45245699d480eb313106716934e781eeadf64fde3f350c29308d1984e96c9ec4` |
+| Private archive commitment for 1,988 files | `dd5c8585b29ff383bdd8446c9ab87d823640bc2e498e35e7ff56f112ec0692d6` |
