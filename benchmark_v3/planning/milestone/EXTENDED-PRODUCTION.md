@@ -95,6 +95,15 @@ documentation and possible alternative proof. The registered round is
 The independent merits review is
 `fea6cf1cfc16123885c06ca21d3c8bc46ec4bd3de37eb3e0a4449143a783f213`.
 
+The sixth reserve review selected BN for projecting a dated range of
+possible commencement dates from a bounded age observation. It also
+selected BO for reconstructing a cumulative benefit cap from settled
+payments and an independently documented failed debit. Both proposals
+are commissioned for isolated construction. The registered round is
+`8aade6358636e4ce10c7060a03b4b126b025263e16b7aadf03eaa7b35d4f59f9`.
+The independent merits review is
+`d994eccc631bf2e96c8443eb52d529e73ff4ebca410c703eb4f61415a8eb5d2a`.
+
 ## Subsequent verified qualification
 
 E revision 3 qualified for the two-condition test of contradictory
