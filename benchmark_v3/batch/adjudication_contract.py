@@ -1,11 +1,14 @@
 """Explicit output keys for a condition-local adjudication."""
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from benchmark_v3.batch.contracts import Adjudication
 from benchmark_v3.commissioning import json_text
 from private_client_graph.evaluation import _edge
 from private_client_graph.models.evaluation_result import SemanticEdge
+
+if TYPE_CHECKING:
+    from benchmark_v3.batch.sessions import SessionRunner
 
 
 RELEASE_JOBS = {
@@ -106,6 +109,12 @@ TRUTH_QUOTATIONS = (
 
 
 KEY_REPLAY_FAILURE = "Provisional key fails canonical replay or the existing evidence policies."
+PROOF_RETRY = "independent-proof-retry-"
+
+
+def proof_retry(runner: "SessionRunner", job: str) -> dict[str, Any] | None:
+    return next((row["details"] for row in runner.ledger.events(runner.manifest.batch_id, runner.family)
+                 if (row["revision"], row["kind"], row["name"]) == (runner.revision, "reconcile", PROOF_RETRY + job)), None)
 
 
 def localize_key_presentation(review: Adjudication) -> tuple[Adjudication, list[dict[str, Any]]]:

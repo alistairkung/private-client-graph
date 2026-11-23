@@ -152,6 +152,8 @@ def transport(monkeypatch, tmp_path):
         calls.append((family, request["parent"], local.job, inputs))
         if mode == "failed":
             raise packet.PacketError("Fixture provider did not complete.")
+        if mode == "runtime_alert":
+            packet._check_notification("error", {"params": {"codexErrorInfo": {"responseTooManyFailedAttempts": {}}}})
         if callable(mode):
             result = mode(inputs)
         elif mode == "return" or mode == "repair" and request["parent"].endswith("@1"):
@@ -1159,10 +1161,10 @@ def test_shared_pool_propagates_new_integrity_stops_across_custodies(approved, t
     reached_peer = threading.Event()
     check_member = pool.check_member
 
-    def observe_guard(root, connection):
+    def observe_guard(root, connection, *, allow_quarantined=False):
         if root == right.root:
             reached_peer.set()
-        check_member(root, connection)
+        check_member(root, connection, allow_quarantined=allow_quarantined)
 
     monkeypatch.setattr(pool, "check_member", observe_guard)
     with ThreadPoolExecutor(max_workers=1) as executor, closing(right.connect()) as writer:
@@ -3486,7 +3488,7 @@ def test_word_preserving_blind_quote_recovery_uses_the_retained_reader(autonomou
         read_format_recovery.exact_whitespace_span("a  a", "a a a")
 
 
-@pytest.mark.parametrize("disposition", ["repair", "quarantine"])
+@pytest.mark.parametrize("disposition", ["repair", "quarantine", "followup"])
 def test_frozen_evidence_review_reuses_sources_and_blind_receipts_without_cueing_the_new_key(
     approved, transport, tmp_path, monkeypatch, disposition,
 ):
@@ -3513,14 +3515,15 @@ def test_frozen_evidence_review_reuses_sources_and_blind_receipts_without_cueing
         "verdict": "accept", "objections": [],
         "findings": {key: "Reviewed." for key in json.loads(inputs["audit_rules"])["participant_packets"]},
     }
-    behavior[family, "author-src1"] = lambda _: {"title": "Record", "text": QUOTE, "deliveries": []}
+    longer_quote = QUOTE + " Signed on the documented issue date."
+    behavior[family, "author-src1"] = lambda _: {"title": "Record", "text": longer_quote, "deliveries": []}
     behavior[family, "author-src2"] = lambda _: {"title": "Note", "text": "Ordinary note.", "deliveries": []}
     objection = (
         "The fictional unresolved dispatch may be outside the audit-workflow dispatch rule."
         if disposition == "quarantine" else "Use a consistent exact local context policy."
     )
     behavior[family, "audit"] = lambda inputs: _output("audit", family, "", inputs) | {
-        "verdict": disposition, "objections": [objection],
+        "verdict": "repair" if disposition == "followup" else disposition, "objections": [objection],
     }
     coordinator._work_family(active, commission, slot)
     expected_state = "quarantined" if disposition == "quarantine" else "returned"
@@ -3547,6 +3550,24 @@ def test_frozen_evidence_review_reuses_sources_and_blind_receipts_without_cueing
 
     coordinator.release_frozen_evidence_review(active, batch, family, "Reassess exact local context.")
     behavior[family, "audit"] = lambda inputs: _output("audit", family, "", inputs) | {"excerpt_controls": []}
+    if disposition == "followup":
+        behavior[family, "adjudicate-000"] = lambda inputs: json.loads(
+            json.dumps(_output("adjudication", family, "", inputs)).replace(QUOTE, longer_quote),
+        )
+        behavior[family, "audit"] = lambda inputs: _output("audit", family, "", inputs) | {
+            "verdict": "repair", "objections": ["The exact issue date still needs its local margin."], "excerpt_controls": [],
+        }
+        coordinator._work_family(active, commission, slot)
+        assert coordinator.family_status(active, batch, family)[:2] == (2, "returned")
+        coordinator.release_frozen_evidence_review(active, batch, family, "Address the separate returned issue-date objection.")
+        behavior[family, "audit"] = lambda inputs: _output("audit", family, "", inputs) | {"excerpt_controls": []}
+        coordinator._work_family(active, commission, slot)
+        assert coordinator.family_status(active, batch, family) == (3, "admission_ready", None)
+        last = commission.session_runner(active, family, 3).directory / "family"
+        assert (last / "freeze.json").read_bytes() == frozen_bytes
+        assert (prior / "G000.json").read_bytes() == original_saved
+        assert [job for _, parent, job, _ in calls if parent == "G@3"] == ["adjudicate-000", "audit"]
+        return
     coordinator._work_family(active, commission, slot)
     assert coordinator.family_status(active, batch, family) == (2, "admission_ready", None)
     work = commission.session_runner(active, family, 2).directory / "family"
@@ -3619,7 +3640,7 @@ def test_new_pre_author_plan_binds_the_rejected_scope_and_precedes_authoring(aut
                                                 objections=["The letter came from a different issuing counterpart."])
 
     def retained(self, stage, job, role, result_type):
-        assert self.revision == 2 and role == "audit"
+        assert self.revision in (2, 3) and role == "audit"
         if job == repair_authority.PLAN_JOB:
             return plan, {"receipt_sha256": "a" * 64}, {}
         assert job == author_context.JOB and stage == "author"
@@ -3633,6 +3654,12 @@ def test_new_pre_author_plan_binds_the_rejected_scope_and_precedes_authoring(aut
     ledger.event(batch, family, 3, "transition", repair_authority.REVISION, "quarantined", "design",
                  {"parent_revision": 1, "pre_author_scope_return": details})
     assert autonomous_realism._earlier_pre_author_references(runner, ledger.events(batch, family), 3) == ((2, "pre-author:1"),)
+    ledger.event(batch, family, 3, "repair_plan_selection", "chosen", "design", "design", {
+        "job": repair_authority.PLAN_JOB, "receipt_sha256": "a" * 64,
+    })
+    successor = commission.session_runner(ledger, family, 3)
+    second, _ = autonomous_realism.pre_author_scope_return(successor)
+    assert second["revision"] == 3
     monkeypatch.setattr(type(ledger), "attempts", lambda *_: [{"revision": 2, "stage": "author", "job": "author-src1"}])
     with pytest.raises(ValueError, match="before any author dispatch"):
         autonomous_realism.pre_author_scope_return(runner)
@@ -3749,3 +3776,102 @@ def test_realism_classifications_bind_their_original_source_inventory(approved):
         autonomous_realism._verify_classification(slot, parent, plan("old-copy", "old-copy"))
     with pytest.raises(ValueError, match="referenced or current Source inventory"):
         autonomous_realism._verify_classification(slot, parent, plan("current-copy", "invented-copy"))
+
+
+def test_joint_control_proposals_preserve_source_order_and_reject_a_surviving_route():
+    from benchmark_v3.batch import joint_control_plan
+    from benchmark_v3.replay_manifest import SufficientEvidence
+
+    sources = [Source(id="authority", title="Rule", text="Relevant rule."),
+               Source(id="identity", title="Identity", text="Relevant identity."),
+               Source(id="unused", title="Note", text="Ordinary work.")]
+    quotes = [{"source_id": source.id, "supporting_text": source.text} for source in sources[:2]]
+    proof = SufficientEvidence.model_validate({"edge": EDGE, "alternatives": [quotes]})
+    planned = joint_control_plan._missing_views("G000", proof, sources, [])
+    assert ([view.included for view in planned], [bool(view.present) for view in planned]) == (
+        [["authority", "identity"], ["identity"], ["authority"]], [True, False, False],
+    )
+    assert joint_control_plan._missing_views("G000", proof, sources, planned) == []
+    with pytest.raises(ValueError, match="independently approved alternative route"):
+        joint_control_plan._missing_views(
+            "G000", SufficientEvidence.model_validate({"edge": EDGE, "alternatives": [quotes, [quotes[0]]]}), sources, [],
+        )
+
+
+def test_initial_design_runtime_retry_requires_same_unsubmitted_receipt(autonomous, monkeypatch):
+    from benchmark_v3.batch import design_recovery
+
+    ledger, commission = autonomous
+    coordinator.commission_batch(ledger, commission, BOUNDARY)
+    batch, family = commission.manifest.batch_id, "G"
+    runner = commission.session_runner(ledger, family, 2)
+    monkeypatch.setattr(type(ledger), "requires_delivery_attestation", property(lambda _: True))
+    monkeypatch.setattr(type(ledger), "pooled_revision", lambda *_: True)
+    monkeypatch.setattr(type(ledger), "attempts", lambda *_: [{"revision": 1, "job": "design", "stage": "design"}])
+    first = runner.directory.with_name("1") / "packets" / "design"
+    receipt = artifacts.write_json(first / "receipt.json", {
+        "status": "rejected", "reason": design_recovery.CONNECTION_FAILURE,
+    })
+    ledger.event(batch, family, 1, "session", "design", "design", "design", {
+        "role": "designer", "status": "rejected", "receipt_sha256": receipt,
+    })
+    ledger.event(batch, family, 2, "reconcile", design_recovery.INITIAL_RUNTIME_RETRY, "design", "design", {
+        "rejected_packet_sha256": receipt,
+    })
+    assert design_recovery.initial_runtime_retry(runner) == {"rejected_packet_sha256": receipt}
+    (first / "output.txt").write_text("An unexpected response.")
+    with pytest.raises(ValueError, match="exact rejected, unsubmitted design packet"):
+        design_recovery.initial_runtime_retry(runner)
+
+
+def test_verified_quarantine_releases_the_pool_but_never_the_affected_custody(approved, transport, monkeypatch, tmp_path):
+    from benchmark_v3.batch import author_delivery
+    from benchmark_v3.batch.pool import PooledLedger
+
+    local, fixture = approved
+    portfolio = fixture.portfolio
+    manifest = fixture.manifest.model_copy(update={"phase": "milestone", "qualification_target": 1})
+    commission = coordinator.Commission(portfolio, manifest, _approval(portfolio, manifest))
+    coordinator.commission_batch(local, commission, BOUNDARY)
+    pool = MilestonePool(tmp_path / "isolated-custody-retirement", PoolAuthority(
+        owner=OWNER, reference="Fixture recovery mandate.", prior_archive_sha256="d" * 64,
+        starting_charges=2, cumulative_ceiling=90, additional_target=2,
+        members=[CustodyMember(root=str(local.root), task_id=manifest.task_id, starting_charges=0)],
+    ))
+    monkeypatch.setattr(PooledLedger, "requires_delivery_attestation", property(lambda _: True))
+    active = pool.join(local.root)
+    batch, family = manifest.batch_id, "G"
+    active.release(batch, family, 1, "design", parent_sha256="a" * 64, reference="Original design.")
+    calls, behavior, _ = transport
+    behavior[family, "design"] = "runtime_alert"
+    coordinator._work_family(active, commission, portfolio.slots[0], design_only=True)
+    original = active.events(batch, family)[-1]
+    assert original["kind"] == "task_halt"
+    assert [job for _, _, job, _ in calls] == ["design"]
+    with pytest.raises(TaskHalted, match="unresolved shared integrity"):
+        pool.check_running()
+
+    def runtime(effort):
+        return {"effort": effort, "ephemeral": True, "empty_workspace": True, "approval_policy": "never",
+                "sandbox": {"type": "readOnly", "networkAccess": False},
+                "permission_profile": {"id": "benchmark_packet", "extends": None},
+                "runtime_workspace_roots": [], "instruction_sources": [], "thread_environments": []}
+
+    proof = {"submitted_turns": 0, "filesystem": {"inside": {"allowed": True},
+             "outside": {"allowed": False, "denied": True}, "repository": {"allowed": False, "denied": True}},
+             "runtime": {effort: runtime(effort) for effort in ("medium", "high")},
+             "packet_sha256": commissioning.digest(Path(packet.__file__).read_bytes()),
+             "author_delivery_sha256": commissioning.digest(Path(author_delivery.__file__).read_bytes())}
+    with pytest.raises(ValueError, match="fresh exact zero-turn"):
+        pool.quarantine_runtime_custody(active, proof | {"submitted_turns": 1}, "Fixture follow-up.")
+    assert not pool.serial_scientific_dispatch()
+    commitment = pool.quarantine_runtime_custody(active, proof, "The exact notification was not retained.")
+    assert pool.runtime_quarantine(active.root)[-1] == commitment
+    assert active.events(batch, family)[-1] == original
+    pool.check_running()
+    assert pool.serial_scientific_dispatch()
+    with pytest.raises(TaskHalted, match="affected custody is quarantined"):
+        active.require_running()
+    with pytest.raises(TaskHalted, match="affected custody is quarantined"):
+        active.reserve(family, 1, "design", "design", {}, "a" * 64)
+    assert pool.qualifications() == []

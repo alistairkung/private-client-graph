@@ -11,9 +11,9 @@ from pydantic import BaseModel
 from benchmark_v3 import commissioning, packet
 from benchmark_v3.batch import (
     adjudication_contract, adjudication_recovery, annotation_recovery, artifacts, audit_boundary, audit_recovery, author_context,
-    author_delivery, author_repair, authorisation, construction, continuation, design_review, repair_authority,
+    author_delivery, author_repair, authorisation, construction, continuation, design_review, joint_control_plan, repair_authority,
 )
-from benchmark_v3.batch.contracts import BatchManifest, Code, Role, Stage
+from benchmark_v3.batch.contracts import BatchManifest, Code, ExceptionRecord, Role, Stage
 from benchmark_v3.batch.ledger import Ledger, TaskHalted
 
 _T = TypeVar("_T", bound=BaseModel)
@@ -209,6 +209,8 @@ class SessionRunner:
             permitted = base_job == (audit_recovery.JOB if audit_release else "audit")
             if self.ledger.requires_delivery_attestation and stage == "audit" and base_job == audit_boundary.RECHECK:
                 permitted = audit_boundary.release(self) is not None
+            if self.ledger.requires_delivery_attestation and stage == "audit" and base_job == joint_control_plan.JOB:
+                permitted = joint_control_plan.released(self) is not None
             if recovery and (stage, base_job) in {
                 ("design", repair_authority.PLAN_JOB), ("design", repair_authority.BUDGET_PLAN_JOB),
                 ("author", repair_authority.VERIFY_JOB),
@@ -240,29 +242,20 @@ class SessionRunner:
                 raise ValueError("The mask job is outside the authorised audit recovery plan.")
         active_only = (release is not None or self.manifest.phase == "milestone" or followup is not None
                        or self.ledger.pooled_revision(self.manifest.batch_id, self.family, self.revision))
-        fresh = self.ledger.reserve(
-            self.family, self.revision, job, stage, request,
-            commissioning.digest(commissioning.json_text(request).encode()),
-            reuse_only=(role in {"designer", "author", "realism", "annotation"}
-                        and annotation_recovery.recorded(self) is not None)
-            or (role == "designer" and release is not None),
-            active_only=active_only,
-        )
-        if fresh:
+        reuse_only = (role in {"designer", "author", "realism", "annotation"}
+                      and annotation_recovery.recorded(self) is not None) or (role == "designer" and release is not None)
+        with self.ledger.scientific_dispatch() as serial:
             try:
-                artifacts.write_json(path / "request.json", request)
-                packet.run_packet(
-                    path, before_turn=lambda: self._before_turn(role, stage, active_only, path, request),
-                )
-            except (packet.PacketError, OSError, ValueError) as error:
-                if not (path / "receipt.json").is_file():
-                    code: Code = "isolation" if isinstance(error, packet.PacketIsolationError) else "uncertain_dispatch"
-                    raise Blocked(stage, code, str(error), job=job) from error
-        result, evidence = self.read_reserved(stage, job, request)
-        # Commit the receipt even when the output subsequently fails its scientific schema.
-        self.ledger.event(
-            self.manifest.batch_id, self.family, self.revision, "session", job, stage, stage, evidence,
-        )
+                result, evidence = self._dispatch(stage, job, role, path, request, active_only, reuse_only)
+            except Blocked as error:
+                if not serial or error.code != "isolation":
+                    raise
+                self.ledger.block(self.manifest.batch_id, self.revision, ExceptionRecord(
+                    stage=stage, family_id=self.family, code="isolation", evidence=str(error), job=job,
+                    repair_permitted=False, human_action="Investigate shared isolation before commissioning further work.",
+                    remaining_work="task_halted",
+                ), qualifier="isolated-dispatch")
+                raise TaskHalted("The isolated dispatcher recorded a shared integrity stop.") from error
         try:
             value, unwrapped = _decode(result, result_type, unwrap=recovery)
             if validate is not None:
@@ -275,6 +268,28 @@ class SessionRunner:
                 )
             raise InvalidRoleOutput(f"{job} failed its output contract: {error}") from error
         return value, evidence, unwrapped
+
+    def _dispatch(
+        self, stage: Stage, job: str, role: Role, path: Path, request: dict[str, Any],
+        active_only: bool, reuse_only: bool,
+    ) -> tuple[bytes, dict[str, Any]]:
+        fresh = self.ledger.reserve(
+            self.family, self.revision, job, stage, request,
+            commissioning.digest(commissioning.json_text(request).encode()),
+            reuse_only=reuse_only, active_only=active_only,
+        )
+        if fresh:
+            try:
+                artifacts.write_json(path / "request.json", request)
+                packet.run_packet(path, before_turn=lambda: self._before_turn(role, stage, active_only, path, request))
+            except (packet.PacketError, OSError, ValueError) as error:
+                if not (path / "receipt.json").is_file():
+                    code: Code = "isolation" if isinstance(error, packet.PacketIsolationError) else "uncertain_dispatch"
+                    raise Blocked(stage, code, str(error), job=job) from error
+        result, evidence = self.read_reserved(stage, job, request)
+        # A completed receipt remains valid even when its scientific content is subsequently rejected.
+        self.ledger.event(self.manifest.batch_id, self.family, self.revision, "session", job, stage, stage, evidence)
+        return result, evidence
 
     def _author_guard(self) -> Any:
         return author_delivery if self.ledger.requires_delivery_attestation else author_context

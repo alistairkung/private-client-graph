@@ -70,6 +70,14 @@ mixed-origin record. The registered round is
 The independent merits review is
 `7600d2f1f655ca2e178a0f7869e3dafa11ab12b80e0f0acce7074eb7653e3a0c`.
 
+The third reserve review selected AP for which of two operative
+provisions supports a matched invariant edge, and AR for authority at
+exercise when an act takes effect later. It retained AQ for a narrower
+negative check that the scorer can only partly observe. The registered
+round is `f84ebce78f604e4003859e70a1516c5c168dd939bd1f80ae2f771389cc67b4e2`.
+The independent merits review is
+`66b0a3a10c0525309cfb0f17976c6f1e4ae994ec569034ae60828c58c8faf54b`.
+
 ## Subsequent verified qualification
 
 E revision 3 qualified for the two-condition test of contradictory
@@ -80,3 +88,31 @@ A separate zero-provider replay reproduced both graphs. E's exact
 technical dossier is
 `aae4ef05a2e640ee624ebd46a574d59731fa5b5f952924ead1b6a9e8b5471ea4`.
 The owner admission decision for E remains open.
+
+W revision 2 qualified for reconciling independent competing accounts
+of trustee office at a specified snapshot. The natural eight-Source file
+passed 16 independent evidence assignments. A separate zero-provider
+replay reproduced all three supported edges. Its technical dossier is
+`697a21d6c06a19ebd6972814622d43599b8fe641f311261420dc29ec13d37b2f`.
+Ten families now technically qualify. X, T, N, E and W await owner
+admission.
+
+## Isolated runtime recovery
+
+AB and AD received independent initial design and scope reviews. Their
+first author packets then rejected unexpected app-server events and
+stopped shared dispatch. The original receipts omit the notification
+subtype. Another isolated runtime recorded a contemporaneous HTTP 429,
+but that observation does not identify the two rejected events.
+
+Both lineages remain quarantined. The rejected author handoffs were
+reconstructed from their exact sender-attested projections and matched
+their retained commitments. A fresh zero-turn preflight passed the
+filesystem, disabled-connector, isolated-thread and unexpected-event
+checks. The controller resumed unaffected work with one scientific
+dispatch at a time. Every later unexpected event still stops dispatch.
+
+The recovery commitment is
+`455451aa1ef5bf33b0b1d6d50642214c0d72bf2e81a179e7f92dc81abbf3ba33`.
+Accounting at release reconciled 1,632 cumulative charges and 1,352
+available sessions. The original halt events remain in the ledgers.

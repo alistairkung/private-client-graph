@@ -15,7 +15,7 @@ from benchmark_v3.batch import (
     adjudication_contract, adjudication_recovery, annotation_recovery, artifacts, audit_boundary, audit_contract, audit_recovery,
     author_context, author_delivery, author_repair, authorisation, autonomous_realism, clean_redesign, construction, continuation,
     design_recovery,
-    design_review, evidence_recovery, frozen_rekey, milestone_repair, read_format_recovery, repair_authority, science,
+    design_review, evidence_recovery, frozen_rekey, joint_control_plan, milestone_repair, read_format_recovery, repair_authority, science,
 )
 from benchmark_v3.batch.contracts import (
     Adjudication, AuditReview, AuthorBrief, AuthoredSource, Code, DesignOutput, MaskAssignment, Reading, RealismReview,
@@ -184,6 +184,7 @@ class FamilyWorkflow:
         restored_cover = author_repair.reopen_cover_clarification(self.runner)
         cutoff_repair = design_recovery.isolated_cutoff_recovery(self.runner, self.slot)
         replacement = clean_redesign.recorded(self.runner)
+        initial_retry = design_recovery.initial_runtime_retry(self.runner)
         if cutoff_repair is not None:
             design, receipt, digest = cutoff_repair
             self.sessions.append(receipt)
@@ -218,7 +219,7 @@ class FamilyWorkflow:
         elif self.release and self.runner.revision > 1:
             design = continuation.released_design(self.runner, self.release)
             self.repair_tickets = self.release.get("repair_tickets", {})
-        elif self.runner.revision == 1 or replacement is not None:
+        elif self.runner.revision == 1 or replacement is not None or initial_retry is not None:
             slot = clean_redesign.fresh_slot(self.slot, replacement) if replacement else self.slot
 
             def verify_design(value: DesignOutput) -> None:
@@ -236,6 +237,8 @@ class FamilyWorkflow:
             )
             if replacement is not None:
                 self.transition_inputs["documentary_redesign"] = authorisation.commitment(replacement)
+            if initial_retry is not None:
+                self.transition_inputs["initial_design_runtime_retry"] = commissioning.digest(_json(initial_retry).encode())
         else:
             previous = self.directory.parent / str(self.runner.revision - 1)
             design = artifacts.read_contract(previous / "design.json", DesignOutput)
@@ -253,12 +256,10 @@ class FamilyWorkflow:
             if commissioning.digest(_json(design.model_dump(mode="json")).encode()) != expected:
                 raise ValueError("Repair changed the locked design or hypothesis.")
         if self.runner.manifest.phase == "milestone":
-            if replacement is None:
-                design = design_recovery.verify_milestone_design(self.runner, self.slot, design)
+            if replacement is not None or initial_retry is not None:
+                design = design_recovery.verify_milestone_design(self.runner, self.slot, design, fresh_replacement=True)
             else:
-                design = design_recovery.verify_milestone_design(
-                    self.runner, self.slot, design, fresh_replacement=True,
-                )
+                design = design_recovery.verify_milestone_design(self.runner, self.slot, design)
             self._check_design_capacity(design)
         else:
             science.verify_design(self.slot, design)
@@ -645,6 +646,18 @@ class FamilyWorkflow:
             prompt += adjudication_contract.COMPLETE_EVIDENCE_INSTRUCTIONS
         if self.frozen_case is not None:
             prompt += frozen_rekey.POLICY
+        proof_retry = adjudication_contract.proof_retry(self.runner, job)
+        if proof_retry is not None:
+            _, receipt, previous = self.runner.committed_packet("adjudicate", job, "adjudication")
+            if previous["inputs"] != inputs or receipt["receipt_sha256"] != proof_retry["receipt_sha256"]:
+                raise ValueError("An independent proof retry requires the exact prior blind inputs and receipt.")
+            self.transition_inputs[f"{job}_proof_retry"] = commissioning.digest(_json(proof_retry).encode())
+            job += "-complete-proof"
+            prompt += (
+                " Verify each sufficient alternative against the literal Source text. Attach every exact Source ID "
+                "and verbatim text pair from at least one complete approved alternative, including all pairs from "
+                "a multi-quote single Source. Reconstruct and assess the proof independently."
+            )
         if self._use_scoped_prompt(job, _KEY_ROSTER_CONTEXT):
             prompt += _KEY_ROSTER_CONTEXT
         if (self.runner.ledger.requires_delivery_attestation
@@ -656,6 +669,7 @@ class FamilyWorkflow:
         review = self.job(
             job, "adjudication", inputs, prompt, Adjudication,
             output_schema=adjudication_contract.output_schema(ids, complete_evidence=complete),
+            allow_format_retry=proof_retry is None,
         )
         if self.runner.ledger.requires_delivery_attestation and not review.unresolved:
             review = self._localize_approval_ids(job, review)
@@ -681,6 +695,9 @@ class FamilyWorkflow:
         reviews: dict[str, Adjudication], agreements: dict[str, dict[str, Any]],
     ) -> AuditReview:
         required = science.audit_risks(self.slot, reviews, agreements)
+        completion = joint_control_plan.released(self.runner)
+        if completion is not None:
+            return self.confirm_joint_plan(design, bundles, freeze, reviews, required, completion)
         prompt = (
             "Audit each Source for ground-truth completeness and each critical edge for evidence "
             "necessity and sufficiency. Key sufficiency by compact JSON edge array. Check negative "
@@ -733,6 +750,8 @@ class FamilyWorkflow:
             else:
                 assert self.frozen_case is not None
                 original = self.frozen_case.audit
+                if isinstance(original, audit_boundary.RecheckedAudit):
+                    requested = original.excerpt_controls
                 prompt += " Independently audit the fresh condition-local evidence keys on the exact retained freeze."
             if recheck is not None and recheck.get("incomplete_joint_control_plan") is True:
                 assert self.frozen_case is not None
@@ -821,6 +840,55 @@ class FamilyWorkflow:
         if valid is not None:
             audit_boundary.verify_recheck(audit_boundary.RecheckedAudit.model_validate(result), valid, whole, requested, bundles)
         self.advance("masks", {"audit": result.model_dump(mode="json")}, gate="independent scientific audit and risk plan")
+        return result
+
+    def confirm_joint_plan(
+        self, design: DesignOutput, bundles: dict[str, list[Source]], freeze: BatchSourceFreeze,
+        reviews: dict[str, Adjudication], required: set[science.Risk], release: dict[str, Any],
+    ) -> AuditReview:
+        original = joint_control_plan.retained_audit(self.runner, release)
+        earlier: list[MilestoneAudit] = [self.frozen_case.audit] if self.frozen_case is not None else []
+        recheck = audit_boundary.release(self.runner)
+        if recheck is not None:
+            earlier.append(audit_boundary.returned_audit(self.runner, recheck))
+        plan = joint_control_plan.build_plan(original, earlier, bundles, freeze, required, reviews)
+        proposed = plan.commitments
+
+        def verify_acceptance(review: joint_control_plan.Confirmation) -> None:
+            if review.verdict == "accept" and (review.objections or len(review.confirmed_views) != len(proposed)
+                                              or set(review.confirmed_views) != proposed.keys()):
+                raise ValueError("An accepted plan must independently confirm every proposed exact view.")
+
+        confirmation = self.job(
+            joint_control_plan.JOB, "audit", {
+                "paired_bundles": _json({name: _source_array(sources) for name, sources in bundles.items()}),
+                "intended_intervention": _json(freeze.model_dump(mode="json", include={"required", "variants", "candidates"})),
+                "ontology": _instruction("ontology.md"), "neutral_brief": design.neutral_brief,
+                "provisional_keys": _json(_models(reviews)),
+                "audit_rules": _json({
+                    "retained_exact_audit": original.model_dump(mode="json"),
+                    "earlier_independent_objections": [note for review in earlier for note in review.objections],
+                    "full_control_plan": plan.audit.model_dump(mode="json"),
+                    "additional_proposed_views_by_commitment": proposed,
+                    "verified_prior_gates": audit_boundary.prior_gates(self.runner),
+                }),
+            },
+            "Independently test the documentary and scientific validity of this exact control plan for the frozen "
+            "adjudicated file. Check each newly proposed sufficient subset, its verbatim quotations and each proper "
+            "deletion. Decide independently whether the expected edge follows from those Sources at the requested "
+            "cutoff, whether another route remains and whether the inherited plan is still coherent. Return if a "
+            "proof route or any control expectation is unsupported. If all controls are appropriate, accept and give "
+            "every exact proposed view commitment in confirmed_views. This assessment precommits predictions for "
+            "separate masked reviewers. Report any scientific limitation.",
+            joint_control_plan.Confirmation, validate=verify_acceptance,
+        )
+        if confirmation.verdict != "accept":
+            self.reject("scientific_review", confirmation.model_dump_json(), quarantine=True)
+        result = plan.audit.model_copy(update={
+            "limitations": [*plan.audit.limitations, *confirmation.limitations],
+        })
+        self.advance("masks", {"audit": result.model_dump(mode="json"), "joint_plan_confirmation": confirmation.model_dump(mode="json")},
+                     gate="independently confirmed exact joint control assignments")
         return result
 
     def _reserved_audit_prompt(self, job: str = "audit") -> str | None:

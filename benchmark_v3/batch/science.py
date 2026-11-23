@@ -125,14 +125,22 @@ def verify_adjudication(
         raise ValueError("Adjudication must resolve every graph or attached-evidence disagreement.")
     if review.unresolved:
         raise ValueError("Adjudication has unresolved scientific objections.")
+    ordinary_failed, incomplete = adjudication_replay_defects(review, sources)
+    if ordinary_failed or incomplete:
+        raise ValueError("Provisional key fails canonical replay or the existing evidence policies.")
+
+
+def adjudication_replay_defects(review: Adjudication, sources: list[Source]) -> tuple[bool, bool]:
     saved = review.key
     truth_edges(saved.truth)
     state = build_canonical_state(saved.ideal.relationships, sources=sources)
     score = evaluate_graph(reconstruct_graph(state), saved.truth)
     evidence = assess_evidence(state, saved)
-    if (score.fp or score.fn or evidence["quotation"]["failed"] or evidence["source_attribution"]["failed"]
-            or evidence["sufficiency"]["incomplete"] or evidence["sufficiency"]["missed"]):
-        raise ValueError("Provisional key fails canonical replay or the existing evidence policies.")
+    return (
+        bool(score.fp or score.fn or evidence["quotation"]["failed"] or evidence["source_attribution"]["failed"]
+             or evidence["sufficiency"]["missed"]),
+        bool(evidence["sufficiency"]["incomplete"]),
+    )
 
 
 def audit_risks(

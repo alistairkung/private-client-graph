@@ -11,7 +11,7 @@ from pydantic import TypeAdapter
 from benchmark_v3 import commissioning, packet
 from benchmark_v3.batch import (
     adjudication_contract, adjudication_recovery, annotation_recovery, artifacts, audit_boundary, audit_recovery, author_repair, authorisation,
-    autonomous_realism, clean_redesign, construction, continuation, design_recovery, design_review, evidence_recovery, exception_review, frozen_rekey,
+    autonomous_realism, clean_redesign, construction, continuation, design_recovery, design_review, evidence_recovery, exception_review, frozen_rekey, joint_control_plan,
     milestone_repair, read_format_recovery, repair_authority, science,
 )
 from benchmark_v3.batch.contracts import (
@@ -462,7 +462,7 @@ def family_status(ledger: Ledger, batch_id: str, family: str) -> tuple[int, str,
                                            read_format_recovery.MASK_RELEASE))
                 or record["name"] in {audit_boundary.RECHECK, audit_boundary.FORMAT_RETRY,
                                       audit_boundary.LARGE_CONFIRMATION, author_repair.UNUSED_ATTESTATION,
-                                      repair_authority.SCOPE_REVIEW_RETRY}
+                                      repair_authority.SCOPE_REVIEW_RETRY, joint_control_plan.RELEASE}
             ):
                 state = record["next"] or state
     return revision, state, blocking
@@ -592,7 +592,9 @@ def _block(
         "input_integrity": "Verify exact approved artifacts and decide whether to quarantine.",
     }
     qualifier = None
-    if workflow.stage == "audit" and audit_boundary.release(workflow.runner) is not None:
+    if workflow.stage == "audit" and joint_control_plan.released(workflow.runner) is not None:
+        qualifier = joint_control_plan.RELEASE
+    elif workflow.stage == "audit" and audit_boundary.release(workflow.runner) is not None:
         qualifier = next((row["name"] for row in reversed(ledger.events(batch, family))
                           if row["revision"] == revision and row["kind"] == "reconcile"
                           and row["name"] in {audit_boundary.FORMAT_RETRY, audit_boundary.LARGE_CONFIRMATION}),
@@ -608,15 +610,15 @@ def _block(
         qualifier = audit_recovery.JOB
     elif workflow.release_action == "complete_evidence_adjudication":
         qualifier = "complete-evidence"
-    elif workflow.stage == "blind" and any(
-        row["revision"] == revision and row["kind"] == "reconcile"
-        and row["name"].startswith(read_format_recovery.RELEASE) for row in ledger.events(batch, family)
-    ):
-        qualifier = read_format_recovery.RELEASE.rstrip("-")
-    if workflow.stage == "masks":
+    reading_release_prefix = {
+        "blind": read_format_recovery.RELEASE,
+        "masks": read_format_recovery.MASK_RELEASE,
+        "adjudicate": adjudication_contract.PROOF_RETRY,
+    }.get(workflow.stage)
+    if reading_release_prefix is not None:
         qualifier = next((row["name"] for row in reversed(ledger.events(batch, family))
                           if row["revision"] == revision and row["kind"] == "reconcile"
-                          and row["name"].startswith(read_format_recovery.MASK_RELEASE)), qualifier)
+                          and row["name"].startswith(reading_release_prefix)), qualifier)
     ledger.block(batch, revision, ExceptionRecord(
         stage=workflow.stage, family_id=family, code=code, evidence=evidence, job=job,
         repair_permitted=repair,
@@ -705,10 +707,12 @@ def release_frozen_evidence_review(ledger: PooledLedger, batch: str, family: str
         ledger.require_running()
         commission = load_commission(ledger, batch)
         revision, state, issue = family_status(ledger, batch, family)
+        prior_reviews = [row for row in ledger.events(batch, family) if "frozen_evidence_review" in row["details"]]
         if (not ledger.requires_delivery_attestation or not rationale.strip() or state != "returned"
                 or not issue or (issue["stage"], issue["code"]) != ("audit", "scientific_review")
-                or any("frozen_evidence_review" in row["details"] for row in ledger.events(batch, family))):
-            raise ValueError("A frozen evidence review requires the first preserved scientific audit return.")
+                or len(prior_reviews) >= 2 or (prior_reviews and prior_reviews[0]["revision"] != revision)
+                or any(row["revision"] == revision and row["stage"] == "masks" for row in ledger.attempts(family))):
+            raise ValueError("A frozen evidence review requires an exact preserved audit return within the two-review bound.")
         slot = next(row for row in commission.portfolio.slots if row.family_id == family)
         if commission.manifest.phase != "milestone" or slot.tier == "giant" or slot.expected_sources >= 100:
             raise ValueError("Frozen evidence review is scoped to non-giant milestone candidates.")
@@ -794,6 +798,31 @@ def release_audit_recheck(
             if not whole:
                 raise ValueError("An accepted control plan can reopen only for verified unmodified whole-file views.")
         ledger.event(batch, family, revision, "reconcile", audit_boundary.RECHECK, state, "audit", record)
+
+
+def release_joint_control_confirmation(ledger: PooledLedger, batch: str, family: str, job: str) -> None:
+    with ledger.coordinator_lock():
+        ledger.require_running()
+        commission = load_commission(ledger, batch)
+        revision, state, issue = family_status(ledger, batch, family)
+        runner = commission.session_runner(ledger, family, revision)
+        if (not ledger.requires_delivery_attestation or state != "quarantined" or not issue or issue["stage"] != "audit"
+                or issue["evidence"] != f"{job} failed its output contract: {audit_boundary.JOINT_PLAN_FAILURE}"
+                or joint_control_plan.released(runner) is not None
+                or any(row["revision"] == revision and row["stage"] == "masks" for row in ledger.attempts(family))):
+            raise ValueError("The exact incomplete joint plan must be held before any masked observations.")
+        _, receipt, _ = runner.committed_packet("audit", job, "audit")
+        if not any((row["revision"], row["kind"], row["name"]) == (revision, "rejected_output", job)
+                   and row["details"] == {"reason": audit_boundary.JOINT_PLAN_FAILURE,
+                                          "receipt_sha256": receipt["receipt_sha256"]}
+                   for row in ledger.events(batch, family)):
+            raise ValueError("The missing joint controls must bind the exact independent rejected plan.")
+        record = {
+            "job": job, "receipt_sha256": receipt["receipt_sha256"],
+            "freeze_sha256": commissioning.digest(artifacts.read_bytes(runner.directory / "family" / "freeze.json")),
+        }
+        joint_control_plan.retained_audit(runner, record)
+        ledger.event(batch, family, revision, "reconcile", joint_control_plan.RELEASE, state, "audit", record)
 
 
 def release_joint_plan_recheck(ledger: PooledLedger, batch: str, family: str) -> None:
@@ -943,8 +972,13 @@ def release_returned_pre_author_plan(ledger: PooledLedger, batch: str, family: s
         record, _ = autonomous_realism.pre_author_scope_return(runner)
         if commissioning._read_json(issue["evidence"]) != record["review"]:
             raise ValueError("The retained independent scope review differs from the current exception.")
+        earlier = autonomous_realism._pre_author_returns(original)
+        if earlier and (len(record["objections"]) >= len(earlier[-1]["objections"])
+                        or earlier[-1]["objections"] == record["objections"]):
+            raise ValueError("A repeated un-authored scope repair requires tangible progress on earlier objections.")
         ledger.event(batch, family, revision + 1, "transition", repair_authority.REVISION, state, "design", original | {
             "pre_author_scope_return": record,
+            **({"prior_pre_author_scope_returns": earlier} if earlier else {}),
             "family_sessions_remaining": ledger.effective_budget().families[family] - len(ledger.attempts(family)),
         })
 
@@ -1038,6 +1072,35 @@ def recover_adjudication_approval_ids(ledger: Ledger, batch: str, family: str, i
         ledger.event(batch, family, revision, "reconcile", f"{job}-local-approval-ids", state, state, {
             "receipt_sha256": receipt["receipt_sha256"], "changes": edits,
             "reference": "Unique existing local entity IDs verified by the unchanged evidence validator.",
+        })
+
+
+def release_incomplete_adjudication_proof(ledger: PooledLedger, batch: str, family: str, index: int) -> None:
+    with ledger.coordinator_lock():
+        ledger.require_running()
+        commission = load_commission(ledger, batch)
+        revision, state, issue = family_status(ledger, batch, family)
+        runner = commission.session_runner(ledger, family, revision)
+        prior = frozen_rekey.recorded(runner)
+        job = f"adjudicate-{index:03}"
+        if (prior is None or state != "adjudicate" or not issue
+                or issue["evidence"] != adjudication_contract.KEY_REPLAY_FAILURE
+                or adjudication_contract.proof_retry(runner, job) is not None):
+            raise ValueError("A fresh proof attempt requires the exact unlocked frozen-evidence failure.")
+        slot = next(row for row in commission.portfolio.slots if row.family_id == family)
+        condition = science.condition_ids(slot)[index]
+        case = frozen_rekey.reopen(runner, slot, prior)
+        original, receipt, request = runner.committed_result("adjudicate", job, "adjudication", Adjudication)
+        result, _ = adjudication_contract.localize_key_presentation(original)
+        sources = case.bundles[condition]
+        if (result.unresolved or result.key.condition != "local"
+                or (runner.directory / "family" / f"{condition}.json").exists()
+                or TypeAdapter(list[Source]).validate_json(request["inputs"]["sources"]) != sources
+                or science.adjudication_replay_defects(result, sources) != (False, True)):
+            raise ValueError("Only exact proof attachments may be incomplete in the rejected same-graph key.")
+        frozen_rekey.verify_same_semantics(result, case.locked[condition])
+        ledger.event(batch, family, revision, "reconcile", adjudication_contract.PROOF_RETRY + job, state, state, {
+            "receipt_sha256": receipt["receipt_sha256"], "freeze_sha256": prior.freeze_sha256,
         })
 
 

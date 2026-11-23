@@ -3,7 +3,7 @@
 from typing import Any
 
 from benchmark_v3 import commissioning
-from benchmark_v3.batch import authorisation, science
+from benchmark_v3.batch import artifacts, authorisation, science
 from benchmark_v3.batch.contracts import DesignOutput
 from benchmark_v3.batch.sessions import SessionRunner
 from benchmark_v3.portfolio import FamilySlot
@@ -11,6 +11,35 @@ from benchmark_v3.portfolio import FamilySlot
 CUTOFF_RECOVERY = "source-cutoff"
 PREFIX_RECOVERY = "redundant-full-file-snapshot"
 PREFIX_FAILURE = "Scaling snapshots must be increasing proper prefixes of the inventory."
+INITIAL_RUNTIME_RETRY = "initial-design-runtime-retry"
+CONNECTION_FAILURE = "The Codex app-server closed its connection."
+
+
+def initial_runtime_retry(runner: SessionRunner) -> dict[str, Any] | None:
+    """Reopen only an initial runtime rejection that preceded every scientific turn."""
+    if runner.revision != 2 or not runner.ledger.requires_delivery_attestation:
+        return None
+    events = runner.ledger.events(runner.manifest.batch_id, runner.family)
+    release = next((row["details"] for row in events
+                    if (row["revision"], row["kind"], row["name"]) == (2, "reconcile", INITIAL_RUNTIME_RETRY)), None)
+    if release is None:
+        return None
+    prior = runner.directory.with_name("1")
+    rejected = prior / "packets" / "design"
+    raw = artifacts.read_bytes(rejected / "receipt.json")
+    receipt = commissioning._read_json(raw)
+    charged = [row for row in runner.ledger.attempts(runner.family) if row["revision"] == 1]
+    sessions = [row["details"] for row in events if row["revision"] == 1 and row["kind"] == "session"]
+    if (len(charged) != 1 or (charged[0]["stage"], charged[0]["job"]) != ("design", "design")
+            or len(sessions) != 1 or sessions[0]["role"] != "designer" or sessions[0]["status"] != "rejected"
+            or sessions[0]["receipt_sha256"] != release["rejected_packet_sha256"]
+            or commissioning.digest(raw) != sessions[0]["receipt_sha256"]
+            or receipt["status"] != "rejected" or receipt["reason"] != CONNECTION_FAILURE
+            or receipt.get("failure_kind") == "isolation" or "submitted_at" in receipt
+            or (rejected / "output.txt").exists() or (prior / "design.json").exists()
+            or not runner.ledger.pooled_revision(runner.manifest.batch_id, runner.family, 2)):
+        raise ValueError("An initial runtime retry requires the exact rejected, unsubmitted design packet.")
+    return release
 
 
 def recorded_cutoff_recovery(runner: SessionRunner) -> dict[str, Any] | None:

@@ -61,7 +61,7 @@ def recorded(runner: SessionRunner) -> FrozenEvidenceReview | None:
 
 
 def make_release(runner: SessionRunner, slot: FamilySlot, rationale: str) -> FrozenEvidenceReview:
-    _, receipt, _ = runner.committed_result("audit", "audit", "audit", MilestoneAudit)
+    _, receipt, _ = _read_audit(runner)
     freeze_path = runner.directory / "family" / "freeze.json"
     record = FrozenEvidenceReview(
         parent_revision=runner.revision, manifest_sha256=authorisation.commitment(runner.manifest),
@@ -90,7 +90,7 @@ def _reopen(prior: SessionRunner, slot: FamilySlot, record: FrozenEvidenceReview
                                   != (_source_text(sources) + "\n").encode()
                                   for condition, sources in bundles.items())):
         raise ValueError("Evidence review requires every exact locked condition.")
-    audit, receipt, request = prior.committed_result("audit", "audit", "audit", MilestoneAudit)
+    audit, receipt, request = _read_audit(prior)
     if (audit.verdict != "repair" or not audit.objections or receipt["receipt_sha256"] != record.audit_receipt_sha256
             or commissioning._read_json(request["inputs"]["paired_bundles"]) != {
                 condition: commissioning._read_json(_source_text(sources)) for condition, sources in bundles.items()
@@ -100,11 +100,20 @@ def _reopen(prior: SessionRunner, slot: FamilySlot, record: FrozenEvidenceReview
     locked = TypeAdapter(dict[str, Adjudication]).validate_json(request["inputs"]["provisional_keys"])
     if locked.keys() != bundles.keys():
         raise ValueError("The retained audit and freeze differ in their exact conditions.")
+    inherited = recorded(prior)
+    original = reopen(prior, slot, inherited) if inherited is not None else None
+    if original is not None and (original.freeze != freeze or original.design != design):
+        raise ValueError("A follow-up evidence review requires the identical retained Sources and design.")
     realism, readings, agreements = {}, {}, {}
     stages = _stages(prior)
     for index, (condition, sources) in enumerate(bundles.items()):
-        realism[condition] = _realism(prior, design, sources, index)
-        first, second = (_reading(prior, design, index, name, sources) for name in ("a", "b"))
+        if original is None:
+            realism[condition] = _realism(prior, design, sources, index)
+            first, second = (_reading(prior, design, index, name, sources) for name in ("a", "b"))
+        else:
+            realism[condition] = original.realism[condition]
+            first, second = original.readings[condition]
+            verify_same_semantics(locked[condition], original.locked[condition])
         readings[condition] = first, second
         agreements[condition] = science.compare_readings(first, second, sources)
         if locked[condition].key != artifacts.read_contract(root / f"{condition}.json", SavedIdeal):
@@ -118,7 +127,20 @@ def _reopen(prior: SessionRunner, slot: FamilySlot, record: FrozenEvidenceReview
     if recorded_blind != {name: commissioning.digest(commissioning.json_text(value).encode())
                           for name, value in outputs.items()}:
         raise ValueError("The reopened independent readings differ from the frozen agreement commitment.")
+    if original is not None:
+        if all(locked[condition].key == previous.key for condition, previous in original.locked.items()):
+            raise ValueError("A second evidence review requires an intervening independently changed key.")
+        if audit.objections == original.audit.objections:
+            raise ValueError("A second evidence review requires changed independent scientific objections.")
+        masks = {authorisation.commitment(mask): mask for mask in [*original.audit.masks, *audit.masks]}
+        audit = audit.model_copy(update={"masks": list(masks.values()),
+                                         "objections": list(dict.fromkeys([*original.audit.objections, *audit.objections]))})
     return ReopenedCase(design, freeze, bundles, realism, readings, agreements, locked, audit, stages)
+
+
+def _read_audit(runner: SessionRunner) -> tuple[MilestoneAudit, dict[str, Any], dict[str, Any]]:
+    result_type = MilestoneAudit if recorded(runner) is None else audit_boundary.RecheckedAudit
+    return runner.committed_result("audit", "audit", "audit", result_type)
 
 
 def _stages(runner: SessionRunner) -> dict[str, dict[str, Any]]:

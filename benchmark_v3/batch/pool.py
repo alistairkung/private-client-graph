@@ -36,6 +36,10 @@ CREATE TABLE IF NOT EXISTS boundary_successors (
     packet_sha256 TEXT NOT NULL, evidence_sha256 TEXT NOT NULL, record_sha256 TEXT NOT NULL
 );
 """
+QUARANTINE_SCHEMA = """CREATE TABLE IF NOT EXISTS quarantined_runtime_custody (
+    custody TEXT PRIMARY KEY, halt_sequence INTEGER NOT NULL, halt_sha256 TEXT NOT NULL,
+    verification_sha256 TEXT NOT NULL, record_sha256 TEXT NOT NULL
+)"""
 LOCK_TIMEOUT_SECONDS = 30
 STAGE_ROLES = {
     "design": {"designer", "audit"}, "author": {"author", "audit"}, "realism": {"realism"},
@@ -339,12 +343,20 @@ class MilestonePool:
         for path in self.members:
             self._verify_enrolment(path)
             with closing(_read_only(path / "ledger-v1.sqlite")) as db:
-                self.check_member(path, db)
+                self.check_member(path, db, allow_quarantined=True)
 
-    def check_member(self, root: Path, connection: sqlite3.Connection) -> None:
+    def check_member(self, root: Path, connection: sqlite3.Connection, *, allow_quarantined: bool = False) -> None:
         if connection.execute("SELECT 1 FROM events WHERE kind = 'task_freeze'").fetchone():
             raise TaskHalted("A development custody member has been frozen.")
         halts = connection.execute("SELECT sequence, details FROM events WHERE kind = 'task_halt'").fetchall()
+        quarantine = self.runtime_quarantine(root)
+        if quarantine is not None:
+            if not allow_quarantined or len(halts) != 1 or quarantine[:2] != (
+                halts[0][0], commissioning.digest(halts[0][1].encode()),
+            ):
+                raise TaskHalted("The affected custody is quarantined after an isolated runtime failure.")
+            self._verify_runtime_quarantine(quarantine[2], quarantine[3])
+            return
         if not halts:
             return
         boundary = self._boundary_record(root)
@@ -359,6 +371,89 @@ class MilestonePool:
         record = artifacts.read_bytes(directory / f"{recovered[4]}.json")
         if commissioning.digest(evidence) != recovered[3] or commissioning.digest(record) != recovered[4]:
             raise TaskHalted("The successor packet boundary evidence changed.")
+
+    def runtime_quarantine(self, root: Path) -> tuple[int, str, str, str] | None:
+        with closing(_read_only(self.path)) as connection:
+            if not _has_runtime_quarantine(connection):
+                return None
+            row = connection.execute(
+                "SELECT halt_sequence, halt_sha256, verification_sha256, record_sha256"
+                " FROM quarantined_runtime_custody WHERE custody = ?", (str(root),),
+            ).fetchone()
+            return row
+
+    def _verify_runtime_quarantine(self, evidence_sha: str, record_sha: str) -> None:
+        directory = self.root / "boundary"
+        try:
+            evidence = artifacts.read_bytes(directory / f"{evidence_sha}.json")
+            record = artifacts.read_bytes(directory / f"{record_sha}.json")
+        except (ValueError, OSError) as error:
+            raise TaskHalted("The runtime quarantine verification is missing.") from error
+        if commissioning.digest(evidence) != evidence_sha or commissioning.digest(record) != record_sha:
+            raise TaskHalted("The runtime quarantine verification changed.")
+
+    def quarantine_runtime_custody(self, ledger: "PooledLedger", proof: dict[str, Any], rationale: str) -> str:
+        """Retain an ambiguous runtime halt and permanently exclude its whole scientific lineage."""
+        if ledger.pool is not self or not ledger.requires_delivery_attestation or not rationale.strip():
+            raise ValueError("Runtime quarantine requires the active isolated development custody.")
+        self._verify_restart_runtime()
+        runtime = proof.get("runtime", {})
+        boundary = proof.get("filesystem", {})
+        if (proof.get("submitted_turns") != 0 or not boundary.get("inside", {}).get("allowed")
+                or any(boundary.get(name, {}) != {"allowed": False, "denied": True} for name in ("outside", "repository"))
+                or any(not _isolated_runtime(runtime.get(effort, {}), effort) for effort in ("medium", "high"))
+                or proof.get("packet_sha256") != commissioning.digest(Path(packet.__file__).read_bytes())
+                or proof.get("author_delivery_sha256") != commissioning.digest(Path(author_delivery.__file__).read_bytes())):
+            raise ValueError("Runtime quarantine requires fresh exact zero-turn filesystem and role verification.")
+        with closing(_read_only(ledger.path)) as member:
+            halts = member.execute("SELECT sequence, family, details FROM events WHERE kind = 'task_halt'").fetchall()
+        if len(halts) != 1:
+            raise ValueError("Runtime quarantine requires the one exact retained unreconciled halt.")
+        sequence, family, raw_halt = halts[0]
+        halt = commissioning._read_json(raw_halt)
+        if (halt.get("code") != "isolation" or not halt.get("job")
+                or halt.get("evidence") != "Codex reported an unexpected runtime action or error."):
+            raise ValueError("Only an ambiguous runtime notification is eligible for this quarantine.")
+        batch, = ledger.batch_ids()
+        events = ledger.events(batch, family)
+        halted = next(row for row in events if row["sequence"] == sequence)
+        directory = ledger.root / "batches" / batch / family / str(halted["revision"]) / "packets" / halt["job"]
+        receipt_bytes = artifacts.read_bytes(directory / "receipt.json")
+        receipt = commissioning._read_json(receipt_bytes)
+        receipt_sha = commissioning.digest(receipt_bytes)
+        if (receipt.get("status") != "rejected" or receipt.get("failure_kind") != "isolation"
+                or receipt.get("reason") != halt["evidence"] or "submitted_at" not in receipt
+                or (directory / "output.txt").exists() or not any(row["kind"] == "session"
+                    and row["revision"] == halted["revision"] and row["name"] == halt["job"]
+                    and row["details"]["receipt_sha256"] == receipt_sha for row in events)):
+            raise ValueError("Runtime quarantine must bind the terminal rejected scientific receipt with no output.")
+        evidence = (commissioning.json_text(proof) + "\n").encode()
+        evidence_sha = commissioning.digest(evidence)
+        halt_sha = commissioning.digest(raw_halt.encode())
+        record = {
+            "pool_sha256": self.digest, "family": family, "custody": str(ledger.root), "halt_sha256": halt_sha,
+            "halt_sequence": sequence, "rejected_receipt_sha256": receipt_sha, "verification_sha256": evidence_sha,
+            "disposition": "permanently_quarantined", "dispatch_parallelism": 1, "rationale": rationale,
+        }
+        record_bytes = (commissioning.json_text(record) + "\n").encode()
+        record_sha = commissioning.digest(record_bytes)
+        artifacts.write_bytes(self.root / "boundary" / f"{record_sha}.json", record_bytes)
+        artifacts.write_bytes(self.root / "boundary" / f"{evidence_sha}.json", evidence)
+        with closing(sqlite3.connect(self.path, timeout=LOCK_TIMEOUT_SECONDS)) as connection, connection:
+            connection.execute("BEGIN IMMEDIATE")
+            if connection.execute("SELECT 1 FROM qualified WHERE custody = ?", (str(ledger.root),)).fetchone():
+                raise ValueError("A qualified custody requires separate technical revalidation before runtime quarantine.")
+            connection.execute(QUARANTINE_SCHEMA)
+            saved = (str(ledger.root), sequence, halt_sha, evidence_sha, record_sha)
+            connection.execute("INSERT OR IGNORE INTO quarantined_runtime_custody VALUES (?, ?, ?, ?, ?)", saved)
+            if connection.execute("SELECT * FROM quarantined_runtime_custody WHERE custody = ?", saved[:1]).fetchone() != saved:
+                raise ValueError("The runtime quarantine disposition is immutable.")
+        return record_sha
+
+    def serial_scientific_dispatch(self) -> bool:
+        with closing(_read_only(self.path)) as connection:
+            return (_has_runtime_quarantine(connection)
+                    and connection.execute("SELECT 1 FROM quarantined_runtime_custody LIMIT 1").fetchone() is not None)
 
     def reconcile_packet_boundary(
         self, ledger: "PooledLedger", manifest: BatchManifest, previous_packet: bytes,
@@ -434,6 +529,7 @@ class MilestonePool:
         from benchmark_v3.batch.coordinator import family_status
         from benchmark_v3.batch.workflow import verify_dossier
 
+        ledger.require_running()
         if (ledger.pool is not self or family in self.authority.excluded_families
                 or self._previously_qualified(family)
                 or family_status(ledger, batch, family) != (revision, "admission_ready", None)):
@@ -458,6 +554,12 @@ class MilestonePool:
         previous = self.predecessor
         return previous is not None and (any(row["family"] == family for row in previous.qualifications())
                                          or previous._previously_qualified(family))
+
+
+def _has_runtime_quarantine(connection: sqlite3.Connection) -> bool:
+    return connection.execute(
+        "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'quarantined_runtime_custody'",
+    ).fetchone() is not None
 
 
 def _isolated_runtime(data: dict[str, Any], effort: str) -> bool:
@@ -584,6 +686,18 @@ class PooledLedger(Ledger):
 
     def require_running(self) -> None:
         self.pool.check_running()
+        if self.pool.runtime_quarantine(self.root) is not None:
+            raise TaskHalted("The affected custody is quarantined after an isolated runtime failure.")
+
+    @contextmanager
+    def scientific_dispatch(self) -> Iterator[bool]:
+        if not self.pool.serial_scientific_dispatch():
+            yield False
+            return
+        with (self.pool.root / "scientific-dispatch.lock").open("a") as lock:
+            fcntl.flock(lock, fcntl.LOCK_EX)
+            self.require_running()
+            yield True
 
     def _check_reservation_halt(self, connection: sqlite3.Connection) -> None:
         self.pool.check_member(self.root, connection)

@@ -155,6 +155,10 @@ class Ledger:
         with closing(self.connect()) as connection:
             self.check_halt(connection)
 
+    @contextmanager
+    def scientific_dispatch(self) -> Iterator[bool]:
+        yield False
+
     def record_construction_repair(self, manifest: BatchManifest, decision: ConstructionRepairDecision) -> None:
         """Append the owner's single repair decision and start the second revision atomically."""
         payload = decision.model_dump(mode="json")

@@ -258,14 +258,14 @@ def _record_plan_selection(runner: SessionRunner, job: str, receipt: dict[str, A
 def _read_return(runner: SessionRunner, slot: FamilySlot, release: dict[str, Any]) -> ReturnedFile:
     revision = release["parent_revision"]
     ledger, batch, family = runner.ledger, runner.manifest.batch_id, runner.family
-    if revision != runner.revision - 1 and (
-        revision != runner.revision - 2 or not (
-            release.get("scope_return_receipt_sha256") or release.get("empty_ticket_return")
-            or release.get("pre_author_scope_return")
-        )
-        or not ledger.pooled_revision(batch, family, runner.revision)
-    ):
-        raise ValueError("A repair may bypass only one verified intervening scope return in its pooled lineage.")
+    authored_return = bool(release.get("scope_return_receipt_sha256"))
+    preauthor_returns = _pre_author_returns(release)
+    empty_ticket = bool(release.get("empty_ticket_return"))
+    if (revision != runner.revision - 1 - int(authored_return or empty_ticket) - len(preauthor_returns)
+            or (empty_ticket and (authored_return or preauthor_returns))
+            or ((authored_return or preauthor_returns or empty_ticket)
+                and not ledger.pooled_revision(batch, family, runner.revision))):
+        raise ValueError("A repair must bind each of its verified intervening scope returns.")
     previous = SessionRunner(ledger, runner.manifest, family, revision, runner.directory.parent / str(revision), runner.owner)
     history = ledger.events(batch, family)
     events = [row for row in history if row["revision"] == revision]
@@ -333,27 +333,40 @@ def _read_return(runner: SessionRunner, slot: FamilySlot, release: dict[str, Any
     scope_references = _earlier_pre_author_references(runner, history, revision)
     result = ReturnedFile(design, bundles, freeze, objections, reviews, receipts, prior, earlier,
                           earlier_scope_references=scope_references)
-    if revision == runner.revision - 2 and "scope_return_receipt_sha256" in release:
-        return _scope_repair_parent(runner, slot, result, release["scope_return_receipt_sha256"])
-    if revision == runner.revision - 2 and "pre_author_scope_return" in release:
-        skipped = replace(runner, revision=runner.revision - 1, directory=runner.directory.with_name(str(runner.revision - 1)))
+    if authored_return:
+        result = _scope_repair_parent(runner, slot, result, release["scope_return_receipt_sha256"],
+                                      rejected_revision=revision + 1)
+    for expected_revision, expected_return in enumerate(preauthor_returns, runner.revision - len(preauthor_returns)):
+        skipped = replace(runner, revision=expected_revision, directory=runner.directory.with_name(str(expected_revision)))
         record, rejected = pre_author_scope_return(skipped)
-        if record != release["pre_author_scope_return"]:
+        if record != expected_return:
             raise ValueError("The rejected un-authored scope proposal changed after review.")
         scope_objections = {f"pre-author:{index}": issue for index, issue in enumerate(record["objections"], 1)}
-        return replace(result, objections=objections | scope_objections, previous_plan=rejected)
+        if expected_revision == runner.revision - 1:
+            result = replace(result, objections=result.objections | scope_objections, previous_plan=rejected)
+        else:
+            references = tuple((expected_revision, key) for key in scope_objections)
+            result = replace(result, earlier_scope_references=(*result.earlier_scope_references, *references))
     return result
+
+
+def _pre_author_returns(release: dict[str, Any]) -> list[dict[str, Any]]:
+    records = list(release.get("prior_pre_author_scope_returns", []))
+    if "pre_author_scope_return" in release:
+        records.append(release["pre_author_scope_return"])
+    return records
 
 
 def pre_author_scope_return(runner: SessionRunner) -> tuple[dict[str, Any], RepairPlan]:
     batch, family = runner.manifest.batch_id, runner.family
     parent = release_event(runner)
-    if (not runner.ledger.requires_delivery_attestation or parent is None or "pre_author_scope_return" in parent
-            or parent["parent_revision"] != runner.revision - 1
+    if (not runner.ledger.requires_delivery_attestation or parent is None or len(_pre_author_returns(parent)) > 1
+            or parent["parent_revision"] != runner.revision - 1 - len(_pre_author_returns(parent))
+            - int(bool(parent.get("scope_return_receipt_sha256")))
             or any(row["revision"] == runner.revision and row["stage"] == "author"
                    and row["job"] not in {author_context.JOB, author_context.JOB + repair_authority.FORMAT_RETRY}
                    for row in runner.ledger.attempts(family))):
-        raise ValueError("A new preauthor plan requires a first independently returned repair before any author dispatch.")
+        raise ValueError("A new preauthor plan requires a bounded independently returned repair before any author dispatch.")
     chosen = next(row["details"] for row in runner.ledger.events(batch, family)
                   if row["revision"] == runner.revision and row["kind"] == "repair_plan_selection")
     plan, planner, _ = runner.committed_result("design", chosen["job"], "audit", RepairPlan)
@@ -435,9 +448,9 @@ def document_adjudication_return(runner: SessionRunner) -> dict[str, Any]:
     return {"receipt_sha256": receipt["receipt_sha256"], "objections": review.unresolved}
 
 
-def _scope_repair_parent(runner: SessionRunner, slot: FamilySlot, parent: ReturnedFile,
-                         expected_receipt: str) -> ReturnedFile:
-    rejected_revision = runner.revision - 1
+def _scope_repair_parent(
+    runner: SessionRunner, slot: FamilySlot, parent: ReturnedFile, expected_receipt: str, *, rejected_revision: int,
+) -> ReturnedFile:
     rejected = replace(runner, revision=rejected_revision, directory=runner.directory.with_name(str(rejected_revision)))
     finding, receipt, request = rejected.committed_result("author", repair_authority.VERIFY_JOB, "audit", ScopeReview)
     if receipt["receipt_sha256"] != expected_receipt or not finding.objections:
