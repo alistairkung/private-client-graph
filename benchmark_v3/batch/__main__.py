@@ -7,7 +7,7 @@ from pathlib import Path
 from benchmark_v3.batch import admission, artifacts, authorisation, coordinator, freeze
 from benchmark_v3.batch.contracts import (
     AdjudicationQuoteRecovery, AdmissionDecisions, AnnotationRecovery, AuditRecovery, BatchDecision, BatchManifest, BudgetAmendment, DeferredExceptionReview,
-    DesignReview, FamilyContinuation,
+    DesignReview, FamilyContinuation, MilestoneRealismRepair,
     PilotDecision, SourceCutoffRecovery,
 )
 from benchmark_v3.portfolio import Portfolio
@@ -20,7 +20,7 @@ def main() -> None:
     commands.add_parser("schema").add_argument(
         "contract", choices=(
             "portfolio", "manifest", "approval", "design-review", "source-cutoff-recovery",
-            "annotation-recovery", "adjudication-quote-recovery", "audit-recovery", "deferred-exception-review", "budget-amendment", "family-continuation", "pilot", "admissions", "freeze",
+            "annotation-recovery", "adjudication-quote-recovery", "audit-recovery", "deferred-exception-review", "budget-amendment", "family-continuation", "milestone-realism-repair", "pilot", "admissions", "freeze",
         ),
     )
     commands.add_parser("coverage")
@@ -42,7 +42,8 @@ def main() -> None:
             command.add_argument("family")
             command.add_argument("reference")
     for name in ("recover-source-cutoffs", "recover-annotation", "recover-adjudication-quote", "release-audit", "record-deferred-review",
-                 "review-designs", "amend-budget", "continue-family", "pilot-review", "admit", "freeze"):
+                 "release-milestone-realism-repair", "review-designs", "amend-budget", "continue-family",
+                 "pilot-review", "admit", "freeze"):
         command = commands.add_parser(name)
         command.add_argument("custody", type=Path)
         command.add_argument("decisions", type=Path)
@@ -61,6 +62,7 @@ def _execute(args: argparse.Namespace) -> None:
         "audit-recovery": AuditRecovery,
         "annotation-recovery": AnnotationRecovery, "deferred-exception-review": DeferredExceptionReview,
         "budget-amendment": BudgetAmendment, "family-continuation": FamilyContinuation,
+        "milestone-realism-repair": MilestoneRealismRepair,
         "pilot": PilotDecision, "admissions": AdmissionDecisions, "freeze": freeze.FreezeDecision,
     }
     if args.command == "schema":
@@ -117,6 +119,9 @@ def _execute(args: argparse.Namespace) -> None:
             coordinator.reconcile_dispatch(ledger, args.batch, args.family, args.reference)
         case "quarantine":
             coordinator.quarantine(ledger, args.batch, args.family, args.reference)
+        case "release-milestone-realism-repair":
+            plan = artifacts.read_contract(args.decisions.absolute(), MilestoneRealismRepair)
+            print(coordinator.release_milestone_realism_repair(ledger, plan))
         case "pilot-review":
             decision = artifacts.read_contract(args.decisions.absolute(), PilotDecision)
             admission.record_pilot_review(ledger, decision)

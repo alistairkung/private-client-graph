@@ -20,7 +20,8 @@ from benchmark_v3.batch import (
 from benchmark_v3.batch.contracts import (
     AdjudicationQuoteRecovery, AdmissionDecisions, AnnotationRecovery, AuditReview, AuditRecovery, AuthoredSource, BatchDecision,
     BatchManifest, BudgetAmendment,
-    DeferredExceptionReview, DesignOutput, DesignReview, FamilyContinuation, PilotDecision, SourceCutoffRecovery,
+    DeferredExceptionReview, DesignOutput, DesignReview, FamilyContinuation, MilestoneRealismRepair,
+    PilotDecision, SourceCutoffRecovery,
 )
 from benchmark_v3.batch.ledger import BudgetExhausted, TaskHalted
 from benchmark_v3.batch.sessions import Blocked
@@ -42,16 +43,16 @@ BOUNDARY = b'{"inside":{"returncode":0,"denied":false,"matched_inside_count":tru
 
 
 @pytest.fixture
-def approved(architect_root, hypothesis, tmp_path):
+def approved(architect_root, hypothesis, tmp_path, request):
     for name in ("batch-designer-v1.md", "batch-portfolio-v1.md", "annotation.md"):
         (architect_root / "instructions" / name).write_bytes((ROOT / "instructions" / name).read_bytes())
     refs = []
     slots = []
     for family, revision in (("G", 1), ("H", 2), ("I", 3), ("J", 4)):
-        # Register v2 natural-only proposals in independent planning rounds.
+        paired = family == "G" and getattr(request, "param", None) == "paired"
         proposal = hypothesis | {
             "schema_version": 2, "hypothesis_id": f"test-{family.lower()}", "family_id": family,
-            "feasibility": hypothesis["feasibility"] | {"conditions": 1},
+            "feasibility": hypothesis["feasibility"] | {"conditions": 2 if paired else 1},
         }
         ref = _register_proposal(architect_root, proposal)
         round_path = architect_root / "planning" / "rounds"
@@ -63,7 +64,8 @@ def approved(architect_root, hypothesis, tmp_path):
             "primary_axis": proposal["objective"]["primary_axis"],
             "secondary_axes": proposal["objective"]["secondary_axes"],
             "tier": "routine", "expected_sources": 2,
-            "natural_condition": "Natural record.", "matched_conditions": [],
+            "natural_condition": "Natural record.",
+            "matched_conditions": ["Change an ordinary phrase."] if paired else [],
             "retainer": proposal["grounding"]["retainer"], "workflow": proposal["grounding"]["legal_workflow"],
             "estimated_sessions": 9, "estimated_cost_usd": None, "independent_authoring": ["Separate roles."],
         })
@@ -1693,3 +1695,121 @@ def test_milestone_recovers_a_redundant_full_file_snapshot_without_reissuing_des
     assert corrected["scaling_snapshots"] == [1]
     event = next(row for row in ledger.events(batch, "G") if row["kind"] == "reconcile")
     assert event["details"]["design_sha256"] == authorisation.commitment(DesignOutput.model_validate(corrected))
+
+
+def test_milestone_snapshot_recovery_contains_a_second_design_defect(milestone, transport, monkeypatch):
+    from benchmark_v3.batch import design_recovery
+
+    ledger, commission = milestone
+    batch = commission.manifest.batch_id
+    _, behavior, _ = transport
+    behavior["G", "design"] = lambda _: _design("G") | {"scaling_snapshots": [1, 2], "required": {"G001": [EDGE]}}
+    behavior["H", "design"] = "interrupt_after_receipt"
+    coordinator.commission_batch(ledger, commission, BOUNDARY)
+
+    def validate_as_before(runner, slot, design):
+        science.verify_design(slot, design)
+        return design
+
+    with monkeypatch.context() as patch:
+        patch.setattr(design_recovery, "verify_milestone_design", validate_as_before)
+        with pytest.raises(Interrupted):
+            coordinator.run_batch(ledger, batch)
+
+    del behavior["H", "design"]
+    coordinator.run_batch(ledger, batch)
+
+    assert coordinator.roadmap_progress(ledger, commission).qualified == ["H", "I"]
+    exception = coordinator.family_status(ledger, batch, "G")[2]
+    assert exception["evidence"] == "Every planned condition needs an exact critical target declaration."
+    assert len(ledger.attempts("G")) == 1
+    assert len([row for row in ledger.events(batch, "G") if row["kind"] == "exception"]) == 2
+
+
+@pytest.mark.parametrize("approved", ["paired"], indirect=True)
+def test_milestone_common_repair_requires_both_receipts_and_repeats_science(approved, transport):
+    ledger, base = approved
+    manifest = BatchManifest.model_validate(base.manifest.model_dump() | {
+        "phase": "milestone", "qualification_target": 1,
+        "families": [base.manifest.families[0].model_dump() | {"sessions": 24}],
+        "task_session_ceiling": 24,
+    })
+    commission = coordinator.Commission(base.portfolio, manifest, _approval(base.portfolio, manifest))
+    batch = manifest.batch_id
+    calls, behavior, _ = transport
+    behavior["G", "design"] = lambda _: _design("G") | {
+        "matched": [{"kind": "literal_edit", "edit": {
+            "source_id": "src2", "before": "Ordinary synthetic note.", "after": "Routine synthetic note.",
+        }}],
+        "required": {"G000": [EDGE], "G001": [EDGE]},
+    }
+
+    def realism(inputs):
+        result = _output("realism", "G", "", inputs)
+        if "Dated record" in inputs["sources"]:
+            return result
+        return result | {
+            "verdict": "repair", "objections": ["Missing date."],
+            "repair_tickets": {"src1": "Add the record date."},
+        }
+
+    def audit(inputs):
+        result = _output("audit", "G", "audit", inputs)
+        for key in ("completeness", "sufficiency", "negative_controls", "shortcuts", "matched_controls"):
+            result[key]["G001"] = result[key]["G000"]
+        return result
+
+    behavior["G", "realism-000"] = behavior["G", "realism-001"] = realism
+    behavior["G", "audit"] = audit
+    coordinator.commission_batch(ledger, commission, BOUNDARY)
+    coordinator.run_batch(ledger, batch)
+    original = commission.session_runner(ledger, "G", 1)
+    design = artifacts.read_contract(original.directory / "design.json", DesignOutput)
+    outputs = {job: original.committed_packet("realism", job, "realism")[1]["output_sha256"]
+               for job in ("realism-000", "realism-001")}
+    plan = MilestoneRealismRepair(
+        schema_version=1, batch_id=batch, family_id="G", manifest_sha256=authorisation.commitment(manifest),
+        design_sha256=authorisation.commitment(design), realism_outputs=outputs,
+        repair_tickets={"src1": "Record the date without changing substantive statements."},
+        scope_reference="Fixture milestone custodian scope.",
+    )
+    altered = plan.model_copy(update={"realism_outputs": outputs | {"realism-001": "0" * 64}})
+    with pytest.raises(ValueError, match="Every condition"):
+        coordinator.release_milestone_realism_repair(ledger, altered)
+    assert coordinator.family_status(ledger, batch, "G")[:2] == (1, "returned")
+
+    commitment = coordinator.release_milestone_realism_repair(ledger, plan)
+    assert coordinator.release_milestone_realism_repair(ledger, plan) == commitment
+    behavior["G", "author-src1"] = lambda inputs: {
+        "title": "Dated record", "text": QUOTE,
+    }
+    coordinator.run_batch(ledger, batch)
+
+    second = [job for _, parent, job, _ in calls if parent == "G@2"]
+    assert "author-src1" in second and "author-src2" not in second
+    assert {"realism-000", "realism-001", "adjudicate-000", "adjudicate-001", "audit"} <= set(second)
+    assert coordinator.roadmap_progress(ledger, commission).qualified == ["G"]
+
+
+def test_milestone_fills_a_released_worker_slot_while_the_other_family_runs(milestone, transport):
+    ledger, commission = milestone
+    batch = commission.manifest.batch_id
+    _, behavior, _ = transport
+    replacement_started = threading.Event()
+    behavior["G", "realism-000"] = "return"
+
+    def continue_h(_):
+        assert replacement_started.wait(5)
+        return _design("H")
+
+    def start_replacement(_):
+        replacement_started.set()
+        return _design("I")
+
+    behavior["H", "design"] = continue_h
+    behavior["I", "design"] = start_replacement
+    coordinator.commission_batch(ledger, commission, BOUNDARY)
+    coordinator.run_batch(ledger, batch)
+
+    assert coordinator.roadmap_progress(ledger, commission).qualified == ["H", "I"]
+    assert not ledger.attempts("J")

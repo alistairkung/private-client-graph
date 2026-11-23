@@ -85,20 +85,32 @@ def verify_milestone_design(runner: SessionRunner, slot: FamilySlot, design: Des
     output, receipt, _ = runner.committed_packet("design", "design", "designer")
     if DesignOutput.model_validate(commissioning._read_json(output)) != design:
         raise ValueError("Snapshot recovery must match the immutable original design.")
+    _record_snapshot_recovery(runner, design, corrected, receipt)
+    return corrected
+
+
+def recover_milestone_snapshot(runner: SessionRunner, slot: FamilySlot) -> str | None:
+    raw, receipt, _ = runner.committed_packet("design", "design", "designer")
+    original = DesignOutput.model_validate(commissioning._read_json(raw))
+    corrected = _without_full_file_snapshot(original)
+    if original is corrected:
+        raise ValueError("The returned design contains no redundant terminal full-file snapshot.")
+    try:
+        science.verify_design(slot, corrected)
+    except ValueError as error:
+        return str(error)
+    _record_snapshot_recovery(runner, original, corrected, receipt)
+    return None
+
+
+def _record_snapshot_recovery(
+    runner: SessionRunner, original: DesignOutput, corrected: DesignOutput, receipt: dict[str, Any],
+) -> None:
     runner.ledger.event(
         runner.manifest.batch_id, runner.family, runner.revision, "reconcile", PREFIX_RECOVERY, "design", "design",
         {
             "output_sha256": receipt["output_sha256"], "receipt_sha256": receipt["receipt_sha256"],
-            "previous_scaling_snapshots": design.scaling_snapshots,
+            "previous_scaling_snapshots": original.scaling_snapshots,
             "scaling_snapshots": corrected.scaling_snapshots, "design_sha256": authorisation.commitment(corrected),
         },
     )
-    return corrected
-
-
-def recover_milestone_snapshot(runner: SessionRunner, slot: FamilySlot) -> None:
-    raw, _, _ = runner.committed_packet("design", "design", "designer")
-    original = DesignOutput.model_validate(commissioning._read_json(raw))
-    if original is _without_full_file_snapshot(original):
-        raise ValueError("The returned design contains no redundant terminal full-file snapshot.")
-    verify_milestone_design(runner, slot, original)

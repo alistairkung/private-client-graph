@@ -331,3 +331,15 @@ from the proper-prefix list. It keeps every proper prefix, revalidates the
 design, and records the original output and receipt alongside the corrected
 design digest. This mechanical recovery can reopen the matching design
 exception without another designer turn.
+
+When all paired realism reviews independently request repairs to the same
+Sources, the milestone custodian can release one common natural-file repair.
+Use `schema milestone-realism-repair` and
+`release-milestone-realism-repair CUSTODY PLAN`. The plan binds the manifest,
+design and every original realism output. Its participant-safe tickets
+address the common documentary problem and preserve the original matched
+intervention. The coordinator checks the exact scope and records revision two.
+The normal run reuses unaffected author receipts, regenerates affected
+recipients in chronology and repeats all scientific gates. A disagreement
+about repair scope or a change to the comparison leaves the original return
+in custody.

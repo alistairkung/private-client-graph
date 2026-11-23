@@ -264,6 +264,17 @@ class FamilyContinuation(OwnerFamilyReview):
     release: Annotated[FreshAdjudication | RepairExecution | ChildActivation, Field(discriminator="action")]
 
 
+class MilestoneRealismRepair(Contract):
+    schema_version: Literal[1]
+    batch_id: Slug
+    family_id: FamilyId
+    manifest_sha256: Digest
+    design_sha256: Digest
+    realism_outputs: Annotated[dict[Slug, Digest], Field(min_length=2)]
+    repair_tickets: Annotated[dict[SourceId, Text], Field(min_length=1)]
+    scope_reference: Text
+
+
 class ConstructionRepairDecision(Contract):
     schema_version: Literal[1]
     batch_id: Slug

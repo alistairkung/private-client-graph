@@ -11,7 +11,7 @@ from pydantic import BaseModel
 from benchmark_v3 import commissioning, packet, replay
 from benchmark_v3.batch import (
     adjudication_contract, adjudication_recovery, annotation_recovery, artifacts, audit_contract, audit_recovery,
-    construction, continuation, design_recovery, science,
+    construction, continuation, design_recovery, milestone_repair, science,
 )
 from benchmark_v3.batch.contracts import (
     Adjudication, AuditReview, AuthoredSource, Code, DesignOutput, Reading, RealismReview,
@@ -127,7 +127,9 @@ class FamilyWorkflow:
                 row for row in self.runner.ledger.events(self.runner.manifest.batch_id, self.slot.family_id)
                 if row["kind"] == "disposition" and row["revision"] == self.runner.revision - 1
             ]
-            self.repair_tickets = dispositions[-1]["details"]["repair_tickets"]
+            self.repair_tickets = (
+                milestone_repair.recorded_tickets(self.runner, self.slot) or dispositions[-1]["details"]["repair_tickets"]
+            )
             expected = next(row["details"]["outputs"]["design"] for row in self.runner.ledger.events(
                 self.runner.manifest.batch_id, self.slot.family_id,
             ) if row["kind"] == "transition" and row["name"] == "design"

@@ -1,20 +1,20 @@
 """Commission and resume independent development family workers."""
 
 import sqlite3
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import FIRST_COMPLETED, Future, ThreadPoolExecutor, wait
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal
 
-from benchmark_v3 import commissioning
+from benchmark_v3 import commissioning, packet
 from benchmark_v3.batch import (
     adjudication_contract, adjudication_recovery, annotation_recovery, artifacts, audit_recovery, authorisation,
-    construction, continuation, design_recovery, design_review, exception_review,
+    construction, continuation, design_recovery, design_review, exception_review, milestone_repair,
 )
 from benchmark_v3.batch.contracts import (
     AdjudicationQuoteRecovery, AnnotationRecovery, AuditRecovery, BatchDecision, BatchManifest, BudgetAmendment,
     ChildDesignMerits, Code, DeferredExceptionReview, DesignReview, ExceptionRecord, FamilyContinuation, FreshAdjudication,
-    OwnerFamilyReview, RepairExecution, RepairScopeReview, SourceCutoffRecovery,
+    MilestoneRealismRepair, OwnerFamilyReview, RepairExecution, RepairScopeReview, SourceCutoffRecovery,
 )
 from benchmark_v3.batch.custody import namespace_directory
 from benchmark_v3.batch.ledger import BudgetExhausted, Ledger, TaskHalted
@@ -137,26 +137,37 @@ def _run_roadmap(ledger: Ledger, commission: Commission) -> None:
     assert target is not None
     slots = {slot.family_id: slot for slot in commission.portfolio.slots}
     _reopen_redundant_snapshots(ledger, commission, slots)
-    while True:
-        ledger.require_running()
-        progress = roadmap_progress(ledger, commission)
-        needed = target - len(progress.qualified)
-        if needed <= 0:
-            return
-        open_workers = max(0, min(needed, manifest.max_parallel_families) - len(progress.active))
-        next_families = progress.reserve[:open_workers]
-        scheduled = (progress.active + next_families)[:min(needed, manifest.max_parallel_families)]
-        if not scheduled:
-            return
-        with ledger.transaction() as connection:
-            ledger.check_halt(connection)
-            for family in next_families:
-                ledger._append(
-                    connection, manifest.batch_id, family, 1, "roadmap_activation", "commissioned",
-                    "design", "design", {"manifest_sha256": commission.decision.manifest_sha256},
-                )
-        with ThreadPoolExecutor(max_workers=manifest.max_parallel_families) as executor:
-            list(executor.map(lambda family: _work_family(ledger, commission, slots[family]), scheduled))
+    with ThreadPoolExecutor(max_workers=manifest.max_parallel_families) as executor:
+        workers: dict[Future[None], str] = {}
+        while True:
+            ledger.require_running()
+            progress = roadmap_progress(ledger, commission)
+            needed = target - len(progress.qualified)
+            open_workers = max(0, min(needed, manifest.max_parallel_families) - len(workers))
+            in_progress = set(workers.values())
+            active = [family for family in progress.active if family not in in_progress]
+            new = progress.reserve[:max(0, open_workers - len(active))]
+            _activate_roadmap_slots(ledger, commission, new)
+            for family in (active + new)[:open_workers]:
+                workers[executor.submit(_work_family, ledger, commission, slots[family])] = family
+            if not workers:
+                return
+            finished, _ = wait(workers, return_when=FIRST_COMPLETED)
+            for worker in finished:
+                workers.pop(worker)
+                worker.result()
+
+
+def _activate_roadmap_slots(ledger: Ledger, commission: Commission, families: list[str]) -> None:
+    if not families:
+        return
+    with ledger.transaction() as connection:
+        ledger.check_halt(connection)
+        for family in families:
+            ledger._append(
+                connection, commission.manifest.batch_id, family, 1, "roadmap_activation", "commissioned",
+                "design", "design", {"manifest_sha256": commission.decision.manifest_sha256},
+            )
 
 
 def _reopen_redundant_snapshots(
@@ -171,7 +182,45 @@ def _reopen_redundant_snapshots(
         ) != ("input_integrity", design_recovery.PREFIX_FAILURE):
             continue
         runner = commission.session_runner(ledger, family, revision)
-        design_recovery.recover_milestone_snapshot(runner, slots[family])
+        try:
+            remaining_defect = design_recovery.recover_milestone_snapshot(runner, slots[family])
+        except (packet.PacketIsolationError, OSError, ValueError, KeyError, TypeError) as error:
+            ledger.block(batch, revision, ExceptionRecord(
+                stage="design", family_id=family, code="isolation", evidence=str(error),
+                repair_permitted=False, human_action="Verify original design receipt custody.",
+                remaining_work="task_halted",
+            ), qualifier=design_recovery.PREFIX_RECOVERY)
+            raise TaskHalted("The retained design failed its recovery integrity checks.") from error
+        if remaining_defect is not None:
+            ledger.block(batch, revision, ExceptionRecord(
+                stage="design", family_id=family, code="input_integrity", evidence=remaining_defect,
+                repair_permitted=False, human_action="Review the remaining design defect.",
+                remaining_work="family_halted",
+            ), qualifier=design_recovery.PREFIX_RECOVERY)
+
+
+def release_milestone_realism_repair(ledger: Ledger, plan: MilestoneRealismRepair) -> str:
+    with ledger.coordinator_lock():
+        ledger.require_running()
+        commission = load_commission(ledger, plan.batch_id)
+        _verify_resume(ledger, commission)
+        batch, family = plan.batch_id, plan.family_id
+        slots = {slot.family_id: slot for slot in commission.portfolio.slots}
+        original = commission.session_runner(ledger, family, 1)
+        digest = milestone_repair.verify_plan(original, slots[family], plan)
+        revision, state, blocking = family_status(ledger, batch, family)
+        prior = next((row for row in ledger.events(batch, family) if row["name"] == milestone_repair.RELEASE), None)
+        if prior is not None and prior["details"]["plan_sha256"] == digest:
+            return digest
+        if (revision, state) != (1, "returned") or not blocking or (
+            blocking["code"], blocking["stage"]
+        ) != ("documentary_realism", "realism"):
+            raise ValueError("A common repair can reopen only the original paired documentary-realism return.")
+        ledger.event(
+            batch, family, 2, "transition", milestone_repair.RELEASE, "returned", "design",
+            {"plan": plan.model_dump(mode="json"), "plan_sha256": digest, "role": "custodian"},
+        )
+        return digest
 
 
 def preview_design_review(ledger: Ledger, batch_id: str) -> dict[str, Any]:
