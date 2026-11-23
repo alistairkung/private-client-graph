@@ -6,7 +6,7 @@ from pathlib import Path
 
 from benchmark_v3.batch import admission, artifacts, authorisation, coordinator, freeze
 from benchmark_v3.batch.contracts import (
-    AdjudicationQuoteRecovery, AdmissionDecisions, AnnotationRecovery, BatchDecision, BatchManifest, BudgetAmendment, DeferredExceptionReview,
+    AdjudicationQuoteRecovery, AdmissionDecisions, AnnotationRecovery, AuditRecovery, BatchDecision, BatchManifest, BudgetAmendment, DeferredExceptionReview,
     DesignReview, FamilyContinuation,
     PilotDecision, SourceCutoffRecovery,
 )
@@ -20,7 +20,7 @@ def main() -> None:
     commands.add_parser("schema").add_argument(
         "contract", choices=(
             "portfolio", "manifest", "approval", "design-review", "source-cutoff-recovery",
-            "annotation-recovery", "adjudication-quote-recovery", "deferred-exception-review", "budget-amendment", "family-continuation", "pilot", "admissions", "freeze",
+            "annotation-recovery", "adjudication-quote-recovery", "audit-recovery", "deferred-exception-review", "budget-amendment", "family-continuation", "pilot", "admissions", "freeze",
         ),
     )
     commands.add_parser("coverage")
@@ -37,10 +37,11 @@ def main() -> None:
         command.add_argument("batch")
         if name == "run":
             command.add_argument("--family")
+            command.add_argument("--stop-after", choices=("audit", "masks"))
         if name in {"reconcile", "quarantine"}:
             command.add_argument("family")
             command.add_argument("reference")
-    for name in ("recover-source-cutoffs", "recover-annotation", "recover-adjudication-quote", "record-deferred-review",
+    for name in ("recover-source-cutoffs", "recover-annotation", "recover-adjudication-quote", "release-audit", "record-deferred-review",
                  "review-designs", "amend-budget", "continue-family", "pilot-review", "admit", "freeze"):
         command = commands.add_parser(name)
         command.add_argument("custody", type=Path)
@@ -57,6 +58,7 @@ def _execute(args: argparse.Namespace) -> None:
         "portfolio": Portfolio, "manifest": BatchManifest, "approval": BatchDecision,
         "design-review": DesignReview, "source-cutoff-recovery": SourceCutoffRecovery,
         "adjudication-quote-recovery": AdjudicationQuoteRecovery,
+        "audit-recovery": AuditRecovery,
         "annotation-recovery": AnnotationRecovery, "deferred-exception-review": DeferredExceptionReview,
         "budget-amendment": BudgetAmendment, "family-continuation": FamilyContinuation,
         "pilot": PilotDecision, "admissions": AdmissionDecisions, "freeze": freeze.FreezeDecision,
@@ -81,7 +83,7 @@ def _execute(args: argparse.Namespace) -> None:
             )
             coordinator.commission_batch(ledger, commission, artifacts.read_bytes(args.boundary.absolute()))
         case "run":
-            coordinator.run_batch(ledger, args.batch, family_id=args.family)
+            coordinator.run_batch(ledger, args.batch, family_id=args.family, stop_after=args.stop_after)
         case "designs":
             print(json.dumps(coordinator.preview_design_review(ledger, args.batch), indent=2))
         case "recover-source-cutoffs":
@@ -93,6 +95,9 @@ def _execute(args: argparse.Namespace) -> None:
         case "recover-adjudication-quote":
             quote = artifacts.read_contract(args.decisions.absolute(), AdjudicationQuoteRecovery)
             print(coordinator.recover_adjudication_quote(ledger, quote))
+        case "release-audit":
+            audit = artifacts.read_contract(args.decisions.absolute(), AuditRecovery)
+            print(coordinator.release_audit(ledger, audit))
         case "record-deferred-review":
             deferred = artifacts.read_contract(args.decisions.absolute(), DeferredExceptionReview)
             coordinator.record_deferred_review(ledger, deferred)

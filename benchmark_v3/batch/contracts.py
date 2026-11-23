@@ -339,6 +339,39 @@ class AuditReview(Contract):
     limitations: list[Text]
 
 
+class AuditMaskView(Contract):
+    condition: SourceId
+    risk: Risk
+    included: Annotated[list[SourceId], Field(min_length=1)]
+    remove_quotes: dict[SourceId, Text] = Field(default_factory=dict)
+
+
+class AuditMaskExpectation(AuditMaskView):
+    present: list[SemanticEdge]
+    absent: list[SemanticEdge]
+
+
+class AuditRecovery(OwnerFamilyReview):
+    budget_amendment_sha256: Digest
+    output_sha256: Digest
+    receipt_sha256: Digest
+    freeze_sha256: Digest
+    adjudication_derivative_sha256: Digest
+    views: Annotated[list[AuditMaskExpectation], Field(min_length=1, max_length=8)]
+    combined_cutoff_view: AuditMaskView
+
+
+class CutoffAssessment(Contract):
+    decision: Literal["justified", "separate_required"]
+    appointment_evidence: Text
+    designation_evidence: Text
+    rationale: Text
+
+
+class RecoveredAuditReview(AuditReview):
+    cutoff_assessment: CutoffAssessment
+
+
 class ExceptionRecord(Contract):
     stage: Stage
     family_id: FamilyId

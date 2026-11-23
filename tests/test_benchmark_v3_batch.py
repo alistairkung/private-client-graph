@@ -14,11 +14,11 @@ import pytest
 
 from benchmark_v3 import commissioning, packet
 from benchmark_v3.batch import (
-    adjudication_contract, adjudication_recovery, admission, artifacts, audit_contract, authorisation, continuation,
+    adjudication_contract, adjudication_recovery, admission, artifacts, audit_contract, audit_recovery, authorisation, continuation,
     coordinator, custody, science,
 )
 from benchmark_v3.batch.contracts import (
-    AdjudicationQuoteRecovery, AdmissionDecisions, AnnotationRecovery, AuditReview, AuthoredSource, BatchDecision,
+    AdjudicationQuoteRecovery, AdmissionDecisions, AnnotationRecovery, AuditReview, AuditRecovery, AuthoredSource, BatchDecision,
     BatchManifest, BudgetAmendment,
     DeferredExceptionReview, DesignOutput, DesignReview, FamilyContinuation, PilotDecision, SourceCutoffRecovery,
 )
@@ -1169,7 +1169,9 @@ def test_budget_amendment_is_append_only_and_no_transfer(approved, transport):
 
 
 @pytest.mark.parametrize("annotation_exception", ["disagreed"], indirect=True)
-@pytest.mark.parametrize("fresh_valid", [True, False, "evidence", "evidence_invalid", "evidence_quote"])
+@pytest.mark.parametrize("fresh_valid", [
+    True, False, "evidence", "evidence_invalid", "evidence_quote", "audit_separate", "audit_mismatch", "audit_pass",
+])
 def test_fresh_adjudication_uses_only_actual_disputes_and_is_single_attempt(annotation_exception, transport, fresh_valid):
     ledger, batch, runner, calls, draft, _, _ = annotation_exception
     _, behavior, _ = transport
@@ -1258,11 +1260,12 @@ def test_fresh_adjudication_uses_only_actual_disputes_and_is_single_attempt(anno
         coordinator.continue_family(ledger, authorised)
         coordinator.continue_family(ledger, release)
         passed = fresh_valid == "evidence"
+        quote_recovery = fresh_valid == "evidence_quote" or str(fresh_valid).startswith("audit_")
         def evidence_reply(inputs):
-            if not passed and fresh_valid != "evidence_quote":
+            if not passed and not quote_recovery:
                 return fresh_reply(inputs)
             result = fixture_reply(inputs) | {"disagreement_resolutions": {disputed: "Resolve the proof."}}
-            if fresh_valid == "evidence_quote":
+            if quote_recovery:
                 result["key"]["truth"]["relationships"][0]["approved_evidence"] = ["src1"]
             return result
 
@@ -1283,11 +1286,11 @@ def test_fresh_adjudication_uses_only_actual_disputes_and_is_single_attempt(anno
         assert adjudication_contract.COMPLETE_EVIDENCE_INSTRUCTIONS in final_request["prompt"]
         contract = json.loads(final_request["prompt"].split("Output schema: ", 1)[1])
         assert contract["$defs"]["SourceEvidenceRelationship"]["properties"]["approved_evidence"]["minItems"] == 1
-        if fresh_valid == "evidence_quote":
-            _test_quote_derivative(ledger, batch, runner, commission, calls)
+        if quote_recovery:
+            _check_quote_derivative(ledger, batch, runner, commission, calls, behavior, fresh_valid)
 
 
-def _test_quote_derivative(ledger, batch, runner, commission, calls):
+def _check_quote_derivative(ledger, batch, runner, commission, calls, behavior, variant):
     assert coordinator.family_status(ledger, batch, "G")[2]["evidence"] == adjudication_recovery.QUOTE_SEMANTICS_ERROR
     job = "adjudicate-000-evidence"
     raw, receipt, _ = runner.committed_packet("adjudicate", job, "adjudication")
@@ -1323,11 +1326,95 @@ def _test_quote_derivative(ledger, batch, runner, commission, calls):
     coordinator.recover_adjudication_quote(ledger, decision)
     assert len(calls) == cursor
     assert adjudication_recovery.derivative_path(runner).read_bytes() == derivative
+    if variant != "evidence_quote":
+        _check_audit_recovery(ledger, batch, runner, commission, calls, behavior, variant, decision)
+        return
     coordinator.run_batch(ledger, batch, family_id="G")
     assert [entry[2] for entry in calls[cursor:]] == ["audit", "mask-000"]
     assert coordinator.family_status(ledger, batch, "G")[1] == "admission_ready"
     assert runner.committed_packet("adjudicate", job, "adjudication")[:2] == (raw, receipt)
     coordinator.recover_adjudication_quote(ledger, decision)
+
+
+def _check_audit_recovery(ledger, batch, runner, commission, calls, behavior, variant, derivative):
+    mask = {"risk": "reader_disagreement", "condition": "G000", "included": ["src2"],
+            "present": [], "absent": [EDGE], "reason": "Check disputed proof.", "question": "What holds?"}
+    def returned(inputs):
+        output = _output("audit", "G", "audit", inputs)
+        other = commissioning.json_text(["Other Parent", "parent_of", "Other Child"])
+        output["sufficiency"]["G000"][other] = "Outside the frozen map."
+        return output
+
+    behavior["G", "audit"] = returned
+    cursor = len(calls)
+    other_attempts = [ledger.attempts(family) for family in ("H", "I")]
+    coordinator.run_batch(ledger, batch, family_id="G")
+    coordinator.run_batch(ledger, batch, family_id="G")
+    assert [call[2] for call in calls[cursor:]] == ["audit"]
+    assert coordinator.family_status(ledger, batch, "G")[2]["evidence"] == audit_recovery.FAILURE
+    original = runner.committed_packet("audit", "audit", "audit")
+    quote = runner.committed_packet("adjudicate", "adjudicate-000-evidence", "adjudication")[2]
+    source = next(row["text"] for row in json.loads(quote["inputs"]["sources"]) if row["id"] == "src1")
+    low, high = derivative.source_quote_interval
+    first_view = {"condition": "G000", "risk": "joint_proof", "included": ["src1", "src2"],
+                  "remove_quotes": {"src1": source.encode()[low:high].decode()}}
+    second_view = {key: mask[key] for key in ("condition", "risk", "included")}
+    parent = continuation.recorded_budget(ledger.events(batch))
+    amendment = _chained_amendment(parent).model_copy(update={
+        "completed_charges": {family: len(ledger.attempts(family)) for family in "GHI"},
+    })
+    coordinator.apply_budget_amendment(ledger, amendment)
+    decision = AuditRecovery.model_validate(_exception_owner(commission, "G") | {
+        "budget_amendment_sha256": authorisation.commitment(amendment),
+        "output_sha256": original[1]["output_sha256"], "receipt_sha256": original[1]["receipt_sha256"],
+        "freeze_sha256": commissioning.digest((runner.directory / "family" / "freeze.json").read_bytes()),
+        "adjudication_derivative_sha256": derivative.derivative_sha256,
+        "views": [view | {"present": [], "absent": [EDGE]} for view in (first_view, second_view)],
+        "combined_cutoff_view": first_view,
+    })
+    with pytest.raises(ValueError, match="retained audit output and receipt"):
+        coordinator.release_audit(ledger, decision.model_copy(update={"receipt_sha256": "0" * 64}))
+    coordinator.release_audit(ledger, decision)
+    coordinator.release_audit(ledger, decision)
+    with pytest.raises(ValueError, match="immutable"):
+        coordinator.release_audit(ledger, decision.model_copy(update={"decision_reference": "Different decision."}))
+
+    def recovered(inputs):
+        rules = json.loads(inputs["audit_rules"])
+        assert rules["proposed_exact_views"][0] == first_view
+        assert "Outside the frozen map." not in str(inputs)
+        assert all("present" not in row for row in rules["proposed_exact_views"])
+        cutoff = "separate_required" if variant == "audit_separate" else "justified"
+        joint = mask | first_view
+        return _output("audit", "G", audit_recovery.JOB, inputs) | {
+            "cutoff_assessment": {"decision": cutoff, "appointment_evidence": "Appointment observation.",
+                                  "designation_evidence": "Designation observation.", "rationale": "Independent result."},
+            "risks": ["reader_disagreement", "joint_proof"],
+            "masks": [mask, joint] if variant != "audit_mismatch" else [mask, joint | {"included": ["src1"]}],
+        }
+
+    behavior["G", audit_recovery.JOB] = recovered
+    for job in ("mask-000", "mask-001"):
+        behavior["G", job] = lambda inputs: {
+            "candidates": {"relationships": []}, "open_questions": [],
+            "reviewed_sources": [row["id"] for row in json.loads(inputs["sources"])],
+        }
+    coordinator.run_batch(ledger, batch, family_id="G", stop_after="audit")
+    assert [call[2] for call in calls[cursor:]] == ["audit", audit_recovery.JOB]
+    if variant == "audit_pass":
+        assert coordinator.family_status(ledger, batch, "G")[1] == "masks"
+        coordinator.run_batch(ledger, batch, family_id="G", stop_after="masks")
+        assert coordinator.family_status(ledger, batch, "G")[1] == "technical"
+        coordinator.run_batch(ledger, batch, family_id="G")
+        assert coordinator.family_status(ledger, batch, "G")[1] == "admission_ready"
+        assert [call[2] for call in calls[cursor:]] == ["audit", audit_recovery.JOB, "mask-000", "mask-001"]
+    else:
+        issue = coordinator.family_status(ledger, batch, "G")[2]["evidence"]
+        assert ("separate cut-off checks" if variant == "audit_separate" else "different mask plan") in issue
+        coordinator.run_batch(ledger, batch, family_id="G")
+        assert [call[2] for call in calls[cursor:]] == ["audit", audit_recovery.JOB]
+    assert runner.committed_packet("audit", "audit", "audit") == original
+    assert [ledger.attempts(family) for family in ("H", "I")] == other_attempts
 
 
 def test_three_disagreement_ids_are_order_stable_and_duplicate_json_is_rejected():

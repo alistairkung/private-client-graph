@@ -4,18 +4,18 @@ import os
 from collections.abc import Mapping
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Any, TypeVar
+from typing import Any, Literal, TypeVar
 
 from pydantic import BaseModel
 
 from benchmark_v3 import commissioning, packet, replay
 from benchmark_v3.batch import (
-    adjudication_contract, adjudication_recovery, annotation_recovery, artifacts, audit_contract, continuation,
-    design_recovery, science,
+    adjudication_contract, adjudication_recovery, annotation_recovery, artifacts, audit_contract, audit_recovery,
+    continuation, design_recovery, science,
 )
 from benchmark_v3.batch.contracts import (
     Adjudication, AuditReview, AuthoredSource, Code, DesignOutput, Reading, RealismReview,
-    Role, Stage,
+    RecoveredAuditReview, Role, Stage,
 )
 from benchmark_v3.batch.sessions import Blocked, SessionRunner
 from benchmark_v3.portfolio import FamilySlot
@@ -35,6 +35,7 @@ class FamilyWorkflow:
         self.stage: Stage = "design"
         self.sessions: list[dict[str, Any]] = []
         self.repair_tickets: dict[str, str] = {}
+        self.audit_recovery = audit_recovery.recorded(runner)
         self.release = continuation.recorded(runner)
         self.release_action = self.release["decision"]["release"]["action"] if self.release else None
         self.transition_inputs: dict[str, str] = {
@@ -42,7 +43,7 @@ class FamilyWorkflow:
             "portfolio": runner.manifest.portfolio_sha256,
         }
 
-    def run(self) -> None:
+    def run(self, *, stop_after: Literal["audit", "masks"] | None = None) -> None:
         design = self.design()
         natural = self.author(design)
         bundles, freeze = science.freeze_bundles(self.slot, design, natural)
@@ -52,7 +53,11 @@ class FamilyWorkflow:
         readings, agreements = self.blind(design, bundles)
         reviews = self.adjudicate(design, bundles, readings, agreements)
         audit = self.audit(design, bundles, freeze, reviews, agreements)
+        if stop_after == "audit":
+            return
         masks = self.masks(design, bundles, audit)
+        if stop_after == "masks":
+            return
         report, manifest = self.technical(freeze, reviews)
         self.dossier(realism, agreements, reviews, audit, masks, report, manifest)
 
@@ -245,11 +250,12 @@ class FamilyWorkflow:
                 raise Blocked(self.stage, "input_integrity", str(error), job=key) from error
             self.sessions.append(receipt)
             return reading
+        extra_instructions = audit_recovery.MASK_INSTRUCTIONS if role == "masked" and self.audit_recovery else ""
         result = self.job(
             key, role, _reading_inputs(design, sources) | (extra or {}),
             "Read only the supplied file. Record exact sourced candidates, unresolved questions, and "
             "each reviewed Source ID. Where your own sectional readings are supplied, independently "
-            "reconcile identities, supersession and cross-section claims against every full Source.",
+            "reconcile identities, supersession and cross-section claims against every full Source." + extra_instructions,
             Reading,
         )
         science.check_reading(result, sources)
@@ -334,29 +340,44 @@ class FamilyWorkflow:
             "Apply the supplied admission and stopping criteria. Recommend accept only if all scientific "
             "objections are resolved."
         )
+        rules: dict[str, Any] = {
+            "mandatory_risks": sorted(required), "blind_agreement": agreements,
+            "portfolio_admission_criteria": self.admission_criteria,
+            "batch_stop_conditions": self.runner.manifest.stop_conditions,
+        }
+        job = "audit"
         schema = None
-        if self._uses_scoped_audit():
+        result_type: type[AuditReview] = AuditReview
+        if self.audit_recovery is not None:
+            job = audit_recovery.JOB
+            audit_recovery.verify_authority(self.runner, self.audit_recovery)
+            rules.update(audit_recovery.rules(self.audit_recovery))
+            rules["verified_prior_gates"] = [
+                "Condition-local documentary realism passed.",
+                "The frozen bundle preceded two separate full-file blind readings.",
+                "The provisional key was fully validated before this audit.",
+            ]
+            prompt += audit_recovery.INSTRUCTIONS
+            result_type = RecoveredAuditReview
+        if self.audit_recovery is not None or self._uses_scoped_audit():
             prompt += audit_contract.SCOPED_INSTRUCTIONS
-            schema = audit_contract.output_schema(bundles, freeze)
+            schema = audit_contract.output_schema(bundles, freeze, result_type)
         result = self.job(
-            "audit", "audit", {
+            job, "audit", {
                 "paired_bundles": _json({condition: _source_array(sources) for condition, sources in bundles.items()}),
                 "intended_intervention": _json(freeze.model_dump(mode="json", include={
                     "natural", "variants", "required", "candidates",
                 })),
                 "provisional_keys": _json(_models(reviews)), "neutral_brief": design.neutral_brief,
-                "ontology": _instruction("ontology.md"),
-                "audit_rules": _json({
-                    "mandatory_risks": sorted(required), "blind_agreement": agreements,
-                    "portfolio_admission_criteria": self.admission_criteria,
-                    "batch_stop_conditions": self.runner.manifest.stop_conditions,
-                }),
+                "ontology": _instruction("ontology.md"), "audit_rules": _json(rules),
             },
-            prompt, AuditReview, output_schema=schema,
+            prompt, result_type, output_schema=schema,
         )
         science.verify_audit(result, bundles, freeze, required, reviews)
         if result.verdict != "accept":
             self.reject("scientific_review", result.model_dump_json(), quarantine=result.verdict == "quarantine")
+        if self.audit_recovery is not None:
+            audit_recovery.verify_plan(RecoveredAuditReview.model_validate(result), self.audit_recovery)
         self.advance("masks", {"audit": result.model_dump(mode="json")}, gate="independent scientific audit and risk plan")
         return result
 

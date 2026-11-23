@@ -161,6 +161,16 @@ requires full adjudication validation before committing the derivative.
 The original packet remains intact. The scoped run reopens the derivative
 and can proceed to independent audit without another adjudication session.
 
+Use `release-audit CUSTODY DECISION` for a separately authorised fresh
+audit of a natural revision held by the frozen critical-edge map contract.
+The release binds the earlier receipt, locked Sources, validated adjudication,
+budget and exact proposed mask views. The new auditor supplies its own
+expected findings and assesses the combined cut-off deletion. A return,
+separate-deletion requirement or different plan holds mask dispatch.
+The scoped `run --family FAMILY --stop-after audit` command stops after
+the audit. Use `--stop-after masks` to inspect mask evidence before
+deterministic replay. Re-entry reuses the charged jobs and receipts.
+
 Use `schema deferred-exception-review` and
 `record-deferred-review CUSTODY DECISION` to record approval of a documentary
 repair scope or the merits of a proposed child design. Both decisions hold

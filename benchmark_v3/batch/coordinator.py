@@ -4,13 +4,16 @@ import sqlite3
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from benchmark_v3 import commissioning
-from benchmark_v3.batch import adjudication_contract, adjudication_recovery, annotation_recovery, artifacts, authorisation, continuation, design_recovery, design_review, exception_review
+from benchmark_v3.batch import (
+    adjudication_contract, adjudication_recovery, annotation_recovery, artifacts, audit_recovery, authorisation,
+    continuation, design_recovery, design_review, exception_review,
+)
 from benchmark_v3.batch.contracts import (
-    AdjudicationQuoteRecovery, AnnotationRecovery, BatchDecision, BatchManifest, BudgetAmendment, ChildDesignMerits, Code,
-    DeferredExceptionReview, DesignReview, ExceptionRecord, FamilyContinuation, FreshAdjudication,
+    AdjudicationQuoteRecovery, AnnotationRecovery, AuditRecovery, BatchDecision, BatchManifest, BudgetAmendment,
+    ChildDesignMerits, Code, DeferredExceptionReview, DesignReview, ExceptionRecord, FamilyContinuation, FreshAdjudication,
     OwnerFamilyReview, RepairExecution, RepairScopeReview, SourceCutoffRecovery,
 )
 from benchmark_v3.batch.custody import namespace_directory
@@ -63,7 +66,10 @@ def load_commission(ledger: Ledger, batch_id: str) -> Commission:
     )
 
 
-def run_batch(ledger: Ledger, batch_id: str, *, family_id: str | None = None) -> None:
+def run_batch(
+    ledger: Ledger, batch_id: str, *, family_id: str | None = None,
+    stop_after: Literal["audit", "masks"] | None = None,
+) -> None:
     with ledger.coordinator_lock():
         commission = load_commission(ledger, batch_id)
         ledger.require_running()
@@ -75,9 +81,15 @@ def run_batch(ledger: Ledger, batch_id: str, *, family_id: str | None = None) ->
         selected = [family for family in manifest.families if family_id in (None, family.family_id)]
         if not selected:
             raise ValueError("The requested family is outside this batch.")
+        if stop_after is not None and (family_id is None or not audit_recovery.recorded(
+            commission.session_runner(ledger, family_id, family_status(ledger, batch_id, family_id)[0]),
+        )):
+            raise ValueError("Stop-after requires the exact released audit recovery family.")
         with ThreadPoolExecutor(max_workers=manifest.max_parallel_families) as executor:
             list(executor.map(
-                lambda family: _work_family(ledger, commission, slots[family.family_id], design_only=design_only),
+                lambda family: _work_family(
+                    ledger, commission, slots[family.family_id], design_only=design_only, stop_after=stop_after,
+                ),
                 (family for family in selected if review is None or review.accepts(family.family_id)
                  or continuation.family_release(ledger.events(batch_id, family.family_id)) is not None),
             ))
@@ -197,6 +209,7 @@ def family_status(ledger: Ledger, batch_id: str, family: str) -> tuple[int, str,
 
 def _work_family(
     ledger: Ledger, commission: Commission, slot: FamilySlot, *, design_only: bool = False,
+    stop_after: Literal["audit", "masks"] | None = None,
 ) -> None:
     batch = commission.manifest.batch_id
     revision, state, blocking = family_status(ledger, batch, slot.family_id)
@@ -222,7 +235,7 @@ def _work_family(
         if design_only:
             workflow.design()
         else:
-            workflow.run()
+            workflow.run(stop_after=stop_after)
     except TaskHalted:
         return
     except Blocked as error:
@@ -268,7 +281,8 @@ def _block(
         human_action=None if repair else actions.get(code, "Review the retained scientific objection."),
         remaining_work="task_halted" if code == "isolation" else "family_halted",
     ), continuation=workflow.release is not None,
-        qualifier="complete-evidence" if workflow.release_action == "complete_evidence_adjudication" else None)
+        qualifier=(audit_recovery.JOB if workflow.audit_recovery is not None
+                   else "complete-evidence" if workflow.release_action == "complete_evidence_adjudication" else None))
 
 
 def reconcile_dispatch(ledger: Ledger, batch_id: str, family: str, reference: str) -> None:
@@ -342,6 +356,36 @@ def recover_adjudication_quote(ledger: Ledger, decision: AdjudicationQuoteRecove
         ledger.event(decision.batch_id, decision.family_id, revision, "reconcile",
                      adjudication_recovery.ADJUDICATION_QUOTE_RECOVERY, "adjudicate", "adjudicate", record)
         return digest
+
+
+def release_audit(ledger: Ledger, decision: AuditRecovery) -> str:
+    with ledger.coordinator_lock():
+        commission, slot, review = _owner_family_review(ledger, decision)
+        revision, state, blocking = family_status(ledger, decision.batch_id, decision.family_id)
+        runner = commission.session_runner(ledger, decision.family_id, revision)
+        existing = audit_recovery.recorded(runner)
+        audit_recovery.verify_authority(runner, decision)
+        if existing is not None:
+            if existing != decision:
+                raise ValueError("The one-time audit recovery is immutable.")
+            return authorisation.commitment(decision)
+        budget = continuation.recorded_budget(ledger.events(decision.batch_id))
+        if budget is None or authorisation.commitment(budget) != decision.budget_amendment_sha256:
+            raise ValueError("Release requires the current approved budget amendment.")
+        if (not review.accepts(slot.family_id) or state != "audit" or not blocking
+                or blocking["code"] != "scientific_review" or blocking["evidence"] != audit_recovery.FAILURE):
+            raise ValueError("Only the retained critical-map audit exception can enter this recovery.")
+        recovery = adjudication_recovery.recorded(runner)
+        if recovery is None:
+            raise ValueError("Fresh audit requires the completed adjudication recovery.")
+        adjudication_recovery.reopen(runner, recovery)
+        jobs = {audit_recovery.JOB} | {f"mask-{number:03}" for number in range(len(decision.views))}
+        if any(row["revision"] == revision and row["job"] in jobs for row in ledger.attempts(slot.family_id)):
+            raise ValueError("Fresh audit requires unreserved recovery and mask jobs.")
+        ledger.require_capacity(slot.family_id, revision, jobs)
+        ledger.event(decision.batch_id, decision.family_id, revision, "reconcile", audit_recovery.JOB,
+                     "audit", "audit", decision.model_dump(mode="json"))
+        return authorisation.commitment(decision)
 
 
 def record_deferred_review(ledger: Ledger, decision: DeferredExceptionReview) -> None:

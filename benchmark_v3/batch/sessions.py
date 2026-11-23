@@ -7,7 +7,10 @@ from typing import Any, TypeVar
 from pydantic import BaseModel
 
 from benchmark_v3 import commissioning, packet
-from benchmark_v3.batch import adjudication_contract, adjudication_recovery, annotation_recovery, artifacts, authorisation, continuation, design_review
+from benchmark_v3.batch import (
+    adjudication_contract, adjudication_recovery, annotation_recovery, artifacts, audit_recovery, authorisation,
+    continuation, design_review,
+)
 from benchmark_v3.batch.contracts import BatchManifest, Code, Role, Stage
 from benchmark_v3.batch.ledger import Ledger, TaskHalted
 
@@ -75,6 +78,13 @@ class SessionRunner:
         released_job = adjudication_contract.RELEASE_JOBS.get(release["decision"]["release"]["action"]) if release else None
         if released_job and role == "adjudication" and job != released_job:
             raise ValueError("Only one fresh adjudication job is authorised.")
+        audit_release = audit_recovery.recorded(self)
+        if role == "audit" and job != (audit_recovery.JOB if audit_release else "audit"):
+            raise ValueError("Only the authorised audit job may be reserved.")
+        if role == "masked" and audit_release:
+            authorised_jobs = {f"mask-{index:03}" for index in range(len(audit_release.views))}
+            if job not in authorised_jobs:
+                raise ValueError("The mask job is outside the authorised audit recovery plan.")
         fresh = self.ledger.reserve(
             self.family, self.revision, job, stage, request,
             commissioning.digest(commissioning.json_text(request).encode()),

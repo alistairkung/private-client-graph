@@ -18,8 +18,10 @@ SCOPED_INSTRUCTIONS = (
 )
 
 
-def output_schema(bundles: dict[str, list[Source]], freeze: BatchSourceFreeze) -> dict[str, Any]:
-    schema = AuditReview.model_json_schema()
+def output_schema(
+    bundles: dict[str, list[Source]], freeze: BatchSourceFreeze, result_type: type[AuditReview] = AuditReview,
+) -> dict[str, Any]:
+    schema = result_type.model_json_schema()
     finding = {"type": "string", "minLength": 1}
     schema["properties"]["completeness"] = _exact_object({
         condition: _exact_object({source.id: finding for source in sources})
