@@ -168,10 +168,9 @@ class SessionRunner:
     def _require_audited_replacement_merits(self) -> None:
         if not self.ledger.requires_delivery_attestation:
             return
-        from benchmark_v3.batch import clean_redesign
+        from benchmark_v3.batch import clean_redesign, large_merits_repair
 
-        replacement = clean_redesign.recorded(self)
-        if replacement is not None and replacement.audited_replacement is not None:
+        if large_merits_repair.requires_review(self):
             clean_redesign.require_merits(self)
 
     def _run_one(
@@ -245,12 +244,16 @@ class SessionRunner:
                     and self.manifest.requires_design_review
                     and self.ledger.pooled_revision(self.manifest.batch_id, self.family, self.revision)):
                 permitted = True
-            if self.ledger.requires_delivery_attestation and stage == "author":
-                from benchmark_v3.batch import clean_redesign
+            if self.ledger.requires_delivery_attestation:
+                from benchmark_v3.batch import clean_redesign, large_merits_repair
 
-                if base_job == clean_redesign.MERITS_JOB:
-                    replacement = clean_redesign.recorded(self)
-                    permitted = replacement is not None and replacement.audited_replacement is not None
+                if (stage, base_job) == ("author", clean_redesign.MERITS_JOB):
+                    permitted = large_merits_repair.requires_review(self)
+                if (stage, base_job) == ("design", large_merits_repair.JOB):
+                    repair = large_merits_repair.recorded(self)
+                    if repair is not None:
+                        large_merits_repair.reopen(self, repair)
+                        permitted = True
             if self.ledger.requires_author_context:
                 if (stage, base_job) == ("author", author_context.JOB):
                     self._require_audited_replacement_merits()

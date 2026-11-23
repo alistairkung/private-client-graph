@@ -3925,6 +3925,24 @@ def test_clean_redesign_retains_a_failed_lineage_and_rejects_relabelled_design(a
                and "distinct documentary history" in row["details"]["reason"] for row in active.events(batch, family))
 
 
+def test_large_merits_repair_preserves_the_exact_design_outside_approved_rows():
+    from benchmark_v3.batch import large_merits_repair
+
+    design = DesignOutput.model_validate(_design("G"))
+    row = design.inventory[0]
+    repaired = row.model_copy(update={"participant_brief": "Record your verified earlier receipt."})
+    plan = large_merits_repair.MeritsRepairPlan(revised_records={row.source_id: repaired}, rationale="Dated documentary proof.")
+    revised = large_merits_repair.apply(design, plan, {row.source_id})
+    assert revised == design.model_copy(update={"inventory": [repaired, design.inventory[1]]})
+    with pytest.raises(ValueError, match="exact released Source scope"):
+        large_merits_repair.apply(design, plan, {design.inventory[1].source_id})
+    moved = plan.model_copy(update={"revised_records": {row.source_id: repaired.model_copy(
+        update={"created_on": row.created_on + timedelta(days=1)},
+    )}})
+    with pytest.raises(ValueError, match="preserve all record IDs, authors and dates"):
+        large_merits_repair.apply(design, moved, {row.source_id})
+
+
 def test_audited_large_replacement_requires_merits_before_participant_authoring(autonomous, transport, monkeypatch):
     from benchmark_v3.batch import clean_redesign
     from benchmark_v3.batch.workflow import FamilyWorkflow
@@ -3938,7 +3956,8 @@ def test_audited_large_replacement_requires_merits_before_participant_authoring(
     runner = commission.session_runner(ledger, family, 1)
     workflow = FamilyWorkflow(runner, slot, commission.portfolio.admission_criteria)
     workflow.stage = "author"
-    workflow.replacement = clean_redesign.CleanRedesign(
+    workflow.large_merits_required = True
+    replacement = clean_redesign.CleanRedesign(
         parent_revision=0, manifest_sha256="a" * 64, parent_design_sha256="b" * 64,
         reason="Carry the actual capacity predicate into the new design.",
         audited_replacement=clean_redesign.AuditedReplacement(
@@ -3949,7 +3968,7 @@ def test_audited_large_replacement_requires_merits_before_participant_authoring(
     design = artifacts.read_contract(runner.directory / "design.json", DesignOutput)
     with pytest.raises(ValueError, match="Only the authorised audit or repair job"):
         workflow.author(design)
-    monkeypatch.setattr(clean_redesign, "recorded", lambda _: workflow.replacement)
+    monkeypatch.setattr(clean_redesign, "recorded", lambda _: replacement)
     calls, behavior, _ = transport
     behavior[family, clean_redesign.MERITS_JOB] = lambda _: {
         "verdict": "return", "findings": {"src1": "Prior delivery is not documented.", "src2": "Ordinary record."},

@@ -21,6 +21,7 @@ from benchmark_v3.batch.contracts import (
     Adjudication, AuditReview, AuthorBrief, AuthoredSource, Code, DesignOutput, MaskAssignment, Reading, RealismReview,
     MilestoneEvidenceRepair, MilestoneAudit, RecoveredAuditReview, Role, Stage,
 )
+from benchmark_v3.batch import large_merits_repair
 from benchmark_v3.batch.ledger import Ledger
 from benchmark_v3.batch.sessions import Blocked, SessionRunner
 from benchmark_v3.portfolio import FamilySlot
@@ -54,7 +55,7 @@ class FamilyWorkflow:
         self.retained_authored_sources: dict[str, Source] = {}
         self.realism_release = autonomous_realism.release_event(runner)
         self.documentary_revision: autonomous_realism.Revision | None = None
-        self.replacement: clean_redesign.CleanRedesign | None = None
+        self.large_merits_required = False
         self.audit_recovery = audit_recovery.recorded(runner)
         self.frozen_release = frozen_rekey.recorded(runner)
         self.frozen_case: frozen_rekey.ReopenedCase | None = None
@@ -185,10 +186,15 @@ class FamilyWorkflow:
         unused_delivery = author_repair.reopen_unused_delivery(self.runner)
         restored_cover = author_repair.reopen_cover_clarification(self.runner)
         cutoff_repair = design_recovery.isolated_cutoff_recovery(self.runner, self.slot)
-        self.replacement = replacement = clean_redesign.recorded(self.runner)
+        replacement = clean_redesign.recorded(self.runner)
+        merits_repair = large_merits_repair.recorded(self.runner)
+        self.large_merits_required = (merits_repair is not None or
+                                      (replacement is not None and replacement.audited_replacement is not None))
         initial_retry = design_recovery.initial_runtime_retry(self.runner)
         sender_repair = author_repair.reopen_empty_sender_repair(self.runner)
-        if sender_repair is not None:
+        if merits_repair is not None:
+            design = large_merits_repair.repair(self, merits_repair)
+        elif sender_repair is not None:
             design, self.retained_authored_sources, record = sender_repair
             self.transition_inputs["retained_sender_repair"] = artifacts.write_json(
                 self.directory / "sender-repair-lineage.json", record,
@@ -305,12 +311,12 @@ class FamilyWorkflow:
                 if not self.repair_tickets or brief.source_id in self.repair_tickets or changed.intersection(brief.received):
                     changed.add(brief.source_id)
         jobs = autonomous_realism.mandatory_jobs(design, changed, verification=revision is not None)
-        if self.replacement is not None and self.replacement.audited_replacement is not None:
+        if self.large_merits_required:
             jobs.update({clean_redesign.MERITS_JOB, author_context.JOB})
         self.runner.ledger.require_capacity(self.runner.family, self.runner.revision, jobs)
 
     def author(self, design: DesignOutput) -> list[Source]:
-        if self.replacement is not None and self.replacement.audited_replacement is not None:
+        if self.large_merits_required:
             self._review_large_workload_merits(design)
         assignments = self._author_assignments(design)
         if self.runner.ledger.requires_author_context:
@@ -343,7 +349,7 @@ class FamilyWorkflow:
            "with no objections on acceptance. This review is separate from the author-scope gate.",
            author_context.AuthorContextReview)
         if review.verdict != "accept" or review.objections or review.findings.keys() != {row.source_id for row in design.inventory}:
-            self.reject("scientific_review", review.model_dump_json(), quarantine=True)
+            self.reject("scientific_review", review.model_dump_json(), quarantine=True, disposition=clean_redesign.MERITS_JOB)
 
     def _project_authors(self, design: DesignOutput, tickets: dict[str, str]) -> dict[str, Any]:
         guard = author_delivery if self.runner.ledger.requires_delivery_attestation else author_context

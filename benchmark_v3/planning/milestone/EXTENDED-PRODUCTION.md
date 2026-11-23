@@ -504,6 +504,14 @@ scientific roles. An independent merits review checks dated operative
 capacity and exact custody before any participant turn, alongside the
 separate participant-scope gate. Its commitment is
 `3f947d15f2a092b2846ce7fb0c30f2b08905188e584aa34280b18f8a513eee99`.
+The first merits review held the new design before any participant
+turn. It identified an incomplete historical-capacity chain, a release
+chronology, and a shared-document version inconsistency. One bounded
+independent planning revision was released to address these points.
+The controller preserves all Source IDs, authors, dates, scope and
+research commitments and requires a fresh independent merits decision
+before the separate participant-scope review. The retained release is
+`3048143a8c760ac6ed6313a3a5eea5cdf7406d72542e62265e7ef41e75d3fa3a`.
 
 L's scope review exposed a factory-generated attachment instruction
 that implied undocumented revised correspondence. Fresh repair

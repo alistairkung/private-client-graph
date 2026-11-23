@@ -12,7 +12,7 @@ from benchmark_v3 import commissioning, packet
 from benchmark_v3.batch import (
     adjudication_contract, adjudication_recovery, annotation_recovery, artifacts, audit_boundary, audit_recovery, author_repair, authorisation,
     autonomous_realism, clean_redesign, construction, continuation, delivery_particulars, design_recovery, design_review, evidence_recovery, exception_review, frozen_rekey, joint_control_plan,
-    milestone_repair, read_format_recovery, recipient_edit, repair_authority, science,
+    large_merits_repair, milestone_repair, read_format_recovery, recipient_edit, repair_authority, science,
 )
 from benchmark_v3.batch.contracts import (
     Adjudication, AdjudicationQuoteRecovery, AnnotationRecovery, AuditRecovery, BatchDecision, BatchManifest, BudgetAmendment,
@@ -620,6 +620,11 @@ def _block(
                           and row["name"] in {audit_boundary.FORMAT_RETRY, audit_boundary.LARGE_CONFIRMATION}),
                          audit_boundary.RECHECK)
     elif workflow.stage == "author" and any(
+        row["revision"] == revision and row["kind"] == "disposition" and row["name"] == clean_redesign.MERITS_JOB
+        for row in ledger.events(batch, family)
+    ):
+        qualifier = clean_redesign.MERITS_JOB
+    elif workflow.stage == "author" and any(
         row["revision"] == revision and row["name"] == repair_authority.SCOPE_REVIEW_RETRY
         for row in ledger.events(batch, family)
     ):
@@ -734,6 +739,26 @@ def release_clean_redesign(
         ledger.release(batch, family, revision + 1, "design", parent_sha256=authorisation.commitment(record),
                        reference="Fresh documentary design after a retained scientific failure.",
                        documentary_redesign=record.model_dump(mode="json"))
+
+
+def release_large_merits_repair(ledger: PooledLedger, batch: str, family: str, source_ids: set[str]) -> None:
+    with ledger.coordinator_lock():
+        ledger.require_running()
+        commission = load_commission(ledger, batch)
+        revision, state, _ = family_status(ledger, batch, family)
+        events = ledger.events(batch, family)
+        if (state != "quarantined" or not ledger.requires_delivery_attestation
+                or not ledger.pooled_revision(batch, family, revision)
+                or any(row["name"] == large_merits_repair.RELEASE for row in events)):
+            raise ValueError("One bounded large design merits repair may follow the retained pre-author return.")
+        runner = commission.session_runner(ledger, family, revision)
+        design, review, receipt = large_merits_repair.returned(runner)
+        if not source_ids or not source_ids <= review.findings.keys():
+            raise ValueError("A merits repair must target specific Sources from the independent review.")
+        ledger.event(batch, family, revision + 1, "transition", large_merits_repair.RELEASE, state, "design", {
+            "parent_revision": revision, "review_sha256": receipt,
+            "design_sha256": authorisation.commitment(design), "source_ids": sorted(source_ids),
+        })
 
 
 def release_frozen_evidence_review(ledger: PooledLedger, batch: str, family: str, rationale: str) -> None:
