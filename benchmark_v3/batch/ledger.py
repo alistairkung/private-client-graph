@@ -440,6 +440,12 @@ class Ledger:
     def _check_reservation_halt(self, connection: sqlite3.Connection) -> None:
         self.check_halt(connection)
 
+    def has_reservation(self, family: str, revision: int, job: str) -> bool:
+        with closing(self.connect()) as connection:
+            return connection.execute(
+                "SELECT 1 FROM attempts WHERE family = ? AND revision = ? AND job = ?", (family, revision, job),
+            ).fetchone() is not None
+
     def reservation_transaction(self) -> AbstractContextManager[sqlite3.Connection]:
         return self.transaction()
 

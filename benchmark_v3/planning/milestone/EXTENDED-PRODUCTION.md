@@ -129,3 +129,22 @@ R's two unrenderable excerpt controls differed from their unique
 frozen spans by a blank line. The controller retains both original
 commitments and records whitespace-only derivatives. R still needs
 independent scientific acceptance and observed controls.
+
+## Large-file and restart controls
+
+U's independent planner retained its exact un-authored 65-Source
+design. The reply placed a practitioner follow-up in the author-ticket
+map while explicitly identifying it as a separate review action. The
+controller archives that note with the original receipt and validates
+the retained design and exact affected closure. It still requires fresh
+scope, realism and downstream scientific review.
+
+An immutable reserved packet can be reopened without holding the live
+dispatch slot. Reopen-only reservations cannot start a new scientific
+turn. After stable serial production, a fresh zero-turn check verified
+two concurrent empty contexts with independent thread identities. The
+verified capacity commitment is
+`af201b9cf19fa9b347bd1acc7e69eab28aabcccd8c981bfd8d52cdcd565b74e2`.
+New reservations use at most two independent runtime slots under the
+same shared integrity check. A later quarantine invalidates that
+capacity release and returns scheduling to one slot.

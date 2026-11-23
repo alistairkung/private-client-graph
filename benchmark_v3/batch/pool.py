@@ -2,6 +2,7 @@
 
 import fcntl
 import sqlite3
+import time
 from collections.abc import Iterator
 from contextlib import closing, contextmanager
 from pathlib import Path
@@ -455,6 +456,35 @@ class MilestonePool:
             return (_has_runtime_quarantine(connection)
                     and connection.execute("SELECT 1 FROM quarantined_runtime_custody LIMIT 1").fetchone() is not None)
 
+    def verified_dispatch_slots(self) -> int:
+        """Allow a bounded second slot only on the exact verified recovery epoch."""
+        path = self.root / "verified-dispatch-capacity.json"
+        if not path.exists():
+            return 1
+        try:
+            proof = commissioning._read_json(artifacts.read_bytes(path))
+        except (ValueError, OSError) as error:
+            raise TaskHalted("The independent dispatch-capacity proof cannot be verified.") from error
+        if (not isinstance(proof, dict) or proof.get("pool_sha256") != self.digest
+                or proof.get("submitted_turns") != 0 or proof.get("parallelism") != 2
+                or proof.get("packet_sha256") != commissioning.digest(Path(packet.__file__).read_bytes())
+                or proof.get("author_delivery_sha256") != commissioning.digest(Path(author_delivery.__file__).read_bytes())):
+            raise TaskHalted("The independent dispatch-capacity proof differs from the current isolation release.")
+        with closing(_read_only(self.path)) as connection:
+            releases = [record for record, in connection.execute(
+                "SELECT record_sha256 FROM quarantined_runtime_custody ORDER BY record_sha256",
+            )]
+        if releases != proof.get("quarantine_releases"):
+            return 1
+        contexts = proof.get("concurrent_runtime_contexts")
+        if (not isinstance(contexts, list) or len(contexts) != 2
+                or any(not isinstance(context, dict) for context in contexts)
+                or {context.get("effort") for context in contexts} != {"medium", "high"}
+                or len({context.get("thread_id") for context in contexts if context.get("thread_id")}) != 2
+                or any(not _isolated_runtime(context, context["effort"]) for context in contexts)):
+            raise TaskHalted("A second dispatch slot requires two independently verified empty runtime contexts.")
+        return 2
+
     def reconcile_packet_boundary(
         self, ledger: "PooledLedger", manifest: BatchManifest, previous_packet: bytes,
         boundary: bytes, runtime: dict[str, Any], rationale: str,
@@ -694,10 +724,26 @@ class PooledLedger(Ledger):
         if not self.pool.serial_scientific_dispatch():
             yield False
             return
-        with (self.pool.root / "scientific-dispatch.lock").open("a") as lock:
-            fcntl.flock(lock, fcntl.LOCK_EX)
-            self.require_running()
-            yield True
+        first = self.pool.root / "scientific-dispatch.lock"
+        if self.pool.verified_dispatch_slots() == 1:
+            with first.open("a") as lock:
+                fcntl.flock(lock, fcntl.LOCK_EX)
+                self.require_running()
+                yield True
+            return
+        paths = (first, self.pool.root / "scientific-dispatch-second.lock")
+        while True:
+            for path in paths:
+                with path.open("a") as lock:
+                    try:
+                        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                    except BlockingIOError:
+                        continue
+                    self.require_running()
+                    if path == first or self.pool.verified_dispatch_slots() == 2:
+                        yield True
+                        return
+            time.sleep(0.25)
 
     def _check_reservation_halt(self, connection: sqlite3.Connection) -> None:
         self.pool.check_member(self.root, connection)

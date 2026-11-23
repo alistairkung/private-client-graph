@@ -118,7 +118,15 @@ def plan_revision(
     except (OSError, ValueError, KeyError, TypeError, StopIteration) as error:
         raise packet.PacketIsolationError("The original realism inputs and receipts failed their commitments.") from error
     ticket_return = release.get("empty_ticket_return")
-    if ticket_return is None:
+    note_recovery = retained_design_note(runner)
+    if note_recovery is not None:
+        actual, plan, receipt = recover_retained_design_note(runner, slot, parent, note_recovery["note_key"])
+        if actual != note_recovery:
+            raise packet.PacketIsolationError("A retained review note or un-authored design changed.")
+        design, affected = _verify_plan(slot, parent, plan, attested=True)
+        runner.ledger.require_capacity(runner.family, runner.revision, mandatory_jobs(design, affected, verification=True))
+        job = repair_authority.PLAN_JOB
+    elif ticket_return is None:
         plan, receipt, design, affected, job = _plan_from_objections(runner, slot, parent, release)
     else:
         plan, receipt, design, affected, job = _retained_plan_for_empty_ticket(runner, slot, parent, ticket_return)
@@ -132,12 +140,50 @@ def plan_revision(
     }
     if ticket_return is not None or release.get("pre_author_scope_return") is not None:
         lineage["rejected_author_context"] = ticket_return or release["pre_author_scope_return"]
+    if note_recovery is not None:
+        lineage["retained_plan_derivative"] = note_recovery
     if parent.prior_scope_return is not None:
         lineage["last_realism_revision"] = release["parent_revision"]
         lineage["parent_revision"] = parent.prior_scope_return["revision"]
         lineage["prior_scope_return_receipt_sha256"] = parent.prior_scope_return["receipt_sha256"]
         lineage["last_realism_source_commitments"] = parent.prior_scope_return["original_realism_source_commitments"]
     return Revision(parent, design, plan, affected, lineage, job), receipt
+
+
+def retained_design_note(runner: SessionRunner) -> dict[str, Any] | None:
+    return next((row["details"] for row in runner.ledger.events(runner.manifest.batch_id, runner.family)
+                 if (row["revision"], row["kind"], row["name"]) ==
+                 (runner.revision, "reconcile", repair_authority.RETAINED_DESIGN_NOTE)), None)
+
+
+def recover_retained_design_note(
+    runner: SessionRunner, slot: FamilySlot, parent: ReturnedFile, note_key: str,
+) -> tuple[dict[str, Any], RepairPlan, dict[str, Any]]:
+    original_job = repair_authority.PLAN_JOB + repair_authority.FORMAT_RETRY
+    original, receipt, _ = runner.committed_result("design", original_job, "audit", RepairPlan)
+    plan = _separate_documentary_note(parent, original, note_key)
+    _verify_classification(slot, parent, plan, attested=True)
+    assert plan.revised_design is not None
+    return {
+        "receipt_sha256": receipt["receipt_sha256"], "original_job": original_job, "note_key": note_key,
+        "retained_note": original.tickets[note_key], "original_plan_sha256": authorisation.commitment(original),
+        "retained_design_sha256": authorisation.commitment(plan.revised_design),
+        "derivative_sha256": authorisation.commitment(plan),
+    }, plan, receipt
+
+
+def _separate_documentary_note(parent: ReturnedFile, original: RepairPlan, note_key: str) -> RepairPlan:
+    retained = parent.previous_plan.revised_design if parent.previous_plan is not None else None
+    roster = {brief.source_id for brief in parent.design.inventory}
+    if (original.disposition != "repair" or original.revised_design is not None or retained is None
+            or "retain that revised design" not in original.rationale.casefold()
+            or "follow-up is a review action, not a new source" not in original.rationale.casefold()
+            or not note_key.endswith("_followup") or note_key in roster or note_key not in original.tickets
+            or note_key.removesuffix("_followup") not in roster & original.tickets.keys()
+            or not original.tickets.keys() - {note_key} <= roster):
+        raise ValueError("A review note may only be separated from an explicit, unchanged prior design.")
+    return original.model_copy(update={"revised_design": retained,
+                                       "tickets": {key: text for key, text in original.tickets.items() if key != note_key}})
 
 
 
@@ -317,15 +363,7 @@ def _read_return(runner: SessionRunner, slot: FamilySlot, release: dict[str, Any
     prior = None
     previous_release = release_event(previous)
     if previous_release is not None:
-        plan_revision = revision - 1 if "empty_ticket_return" in previous_release else revision
-        planner = replace(previous, revision=plan_revision, directory=previous.directory.with_name(str(plan_revision)))
-        selection = next((row["details"] for row in history if row["revision"] == plan_revision
-                          and row["kind"] == "repair_plan_selection"), None)
-        job = selection["job"] if selection else repair_authority.PLAN_JOB
-        prior = artifacts.read_contract(planner.directory / f"{job}.json", RepairPlan)
-        committed, receipt, _ = planner.committed_result("design", job, "audit", RepairPlan)
-        if prior != committed or selection and receipt["receipt_sha256"] != selection["receipt_sha256"]:
-            raise ValueError("The prior repair plan differs from its charged original.")
+        prior = _committed_prior_plan(previous, slot, previous_release, history)
     earlier = [
         {"revision": row["revision"], "reviews": commissioning._read_json(row["details"]["evidence"])}
         for row in history if row["revision"] < revision and row["kind"] == "disposition" and row["name"] == "realism"
@@ -348,6 +386,28 @@ def _read_return(runner: SessionRunner, slot: FamilySlot, release: dict[str, Any
             references = tuple((expected_revision, key) for key in scope_objections)
             result = replace(result, earlier_scope_references=(*result.earlier_scope_references, *references))
     return result
+
+
+def _committed_prior_plan(
+    previous: SessionRunner, slot: FamilySlot, release: dict[str, Any], history: list[dict[str, Any]],
+) -> RepairPlan:
+    note = retained_design_note(previous)
+    if note is not None:
+        parent = _read_return(previous, slot, release)
+        actual, plan, _ = recover_retained_design_note(previous, slot, parent, note["note_key"])
+        if actual != note:
+            raise ValueError("The prior review-note derivative differs from its retained evidence.")
+        return plan
+    revision = previous.revision - int("empty_ticket_return" in release)
+    planner = replace(previous, revision=revision, directory=previous.directory.with_name(str(revision)))
+    selection = next((row["details"] for row in history if row["revision"] == revision
+                      and row["kind"] == "repair_plan_selection"), None)
+    job = selection["job"] if selection else repair_authority.PLAN_JOB
+    stored = artifacts.read_contract(planner.directory / f"{job}.json", RepairPlan)
+    committed, receipt, _ = planner.committed_result("design", job, "audit", RepairPlan)
+    if stored != committed or selection and receipt["receipt_sha256"] != selection["receipt_sha256"]:
+        raise ValueError("The prior repair plan differs from its charged original.")
+    return stored
 
 
 def _pre_author_returns(release: dict[str, Any]) -> list[dict[str, Any]]:

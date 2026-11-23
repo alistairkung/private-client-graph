@@ -455,7 +455,9 @@ def family_status(ledger: Ledger, batch_id: str, family: str) -> tuple[int, str,
             blocking = record["details"]
         if record["kind"] in {"reconcile", "family_release"}:
             blocking = None
-            if record["kind"] == "reconcile" and record["name"] == repair_authority.PLAN_RECOVERY:
+            if record["kind"] == "reconcile" and record["name"] in {
+                repair_authority.PLAN_RECOVERY, repair_authority.RETAINED_DESIGN_NOTE,
+            }:
                 state = "design"
             if record["kind"] == "reconcile" and (
                 record["name"].startswith(("construction-followup", "pooled-release", read_format_recovery.RELEASE,
@@ -996,6 +998,32 @@ def release_empty_attachment_ticket_recovery(ledger: Ledger, batch: str, family:
         details = autonomous_realism.empty_attachment_ticket_return(runner, source_id)
         ledger.event(batch, family, revision + 1, "transition", repair_authority.REVISION, state, "design",
                      parent | {"empty_ticket_return": details})
+
+
+def release_unambiguous_review_note(ledger: PooledLedger, batch: str, family: str, note_key: str) -> None:
+    with ledger.coordinator_lock():
+        ledger.require_running()
+        commission = load_commission(ledger, batch)
+        revision, state, issue = family_status(ledger, batch, family)
+        runner = commission.session_runner(ledger, family, revision)
+        release = autonomous_realism.release_event(runner)
+        job = repair_authority.PLAN_JOB + repair_authority.FORMAT_RETRY
+        reason = "The proposed repair changes committed targets, roster or contrast structure."
+        if (not ledger.requires_delivery_attestation or not ledger.pooled_revision(batch, family, revision)
+                or release is None or "pre_author_scope_return" not in release
+                or state != "quarantined" or not issue or issue["stage"] != "design"
+                or issue["evidence"] != f"{job} failed its output contract: {reason}"
+                or any(row["revision"] == revision and row["stage"] != "design" for row in ledger.attempts(family))):
+            raise ValueError("A review-note recovery requires the exact stopped un-authored repair lineage.")
+        slot = next(row for row in commission.portfolio.slots if row.family_id == family)
+        parent = autonomous_realism._read_return(runner, slot, release)
+        record, plan, receipt = autonomous_realism.recover_retained_design_note(runner, slot, parent, note_key)
+        if not any(row["revision"] == revision and row["kind"] == "rejected_output" and row["name"] == job
+                   and row["details"] == {"reason": reason, "receipt_sha256": receipt["receipt_sha256"]}
+                   for row in ledger.events(batch, family)):
+            raise ValueError("The recovery must bind the exact independent rejected plan.")
+        autonomous_realism._verify_plan(slot, parent, plan, attested=True)
+        ledger.event(batch, family, revision, "reconcile", repair_authority.RETAINED_DESIGN_NOTE, state, "design", record)
 
 
 def recover_blind_whitespace(ledger: Ledger, batch: str, family: str, job: str) -> None:

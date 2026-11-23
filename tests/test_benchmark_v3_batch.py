@@ -4,7 +4,7 @@ import json
 import re
 import threading
 from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeout
-from contextlib import closing, nullcontext
+from contextlib import closing, contextmanager, nullcontext
 from datetime import date, timedelta
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -3860,6 +3860,51 @@ def test_joint_audit_repairs_only_a_unique_whitespace_excerpt():
         joint_control_plan._recover_exact_excerpt_format(audit, ambiguous)
 
 
+def test_review_note_recovery_retains_the_prior_independent_un_authored_design():
+    from types import SimpleNamespace
+    from benchmark_v3.batch import autonomous_realism
+
+    original = DesignOutput.model_validate(_design("G"))
+    earlier = original.model_copy(update={"private_history": "Retained prior independent plan."})
+    parent = SimpleNamespace(design=original, previous_plan=SimpleNamespace(revised_design=earlier))
+    plan = autonomous_realism.RepairPlan(
+        disposition="repair", objections={}, tickets={"src1": "Document your own dated observation.",
+                                                       "src1_followup": "Verify the later bank response."},
+        progress="improved", rationale="Retain that revised design. The follow-up is a review action, not a new Source.",
+    )
+    derivative = autonomous_realism._separate_documentary_note(parent, plan, "src1_followup")
+    assert derivative.revised_design == earlier and derivative.objections == plan.objections
+    assert derivative.tickets == {"src1": plan.tickets["src1"]}
+    assert "src1_followup" in plan.tickets
+    with pytest.raises(ValueError, match="explicit, unchanged prior design"):
+        autonomous_realism._separate_documentary_note(
+            parent, plan.model_copy(update={"rationale": "Issue a new follow-up Source."}), "src1_followup",
+        )
+
+
+def test_resuming_a_terminal_receipt_does_not_enter_a_scientific_dispatch_slot(milestone, transport, monkeypatch):
+    ledger, commission = milestone
+    batch, family = commission.manifest.batch_id, "G"
+    coordinator.commission_batch(ledger, commission, BOUNDARY)
+    coordinator._activate_roadmap_slots(ledger, commission, [family])
+    calls, behavior, _ = transport
+    slot_entries = []
+
+    @contextmanager
+    def dispatch_slot(_ledger):
+        slot_entries.append("entered")
+        yield True
+
+    monkeypatch.setattr(type(ledger), "scientific_dispatch", dispatch_slot)
+    behavior[family, "design"] = "interrupt_after_receipt"
+    with pytest.raises(Interrupted):
+        coordinator._work_family(ledger, commission, commission.portfolio.slots[0], design_only=True)
+    del behavior[family, "design"]
+    coordinator._work_family(ledger, commission, commission.portfolio.slots[0], design_only=True)
+    assert coordinator.family_status(ledger, batch, family) == (1, "author", None)
+    assert len(calls) == len(slot_entries) == len(ledger.attempts(family)) == 1
+
+
 def test_verified_quarantine_releases_the_pool_but_never_the_affected_custody(approved, transport, monkeypatch, tmp_path):
     from benchmark_v3.batch import author_delivery
     from benchmark_v3.batch.pool import PooledLedger
@@ -3906,6 +3951,12 @@ def test_verified_quarantine_releases_the_pool_but_never_the_affected_custody(ap
     assert active.events(batch, family)[-1] == original
     pool.check_running()
     assert pool.serial_scientific_dispatch()
+    assert pool.verified_dispatch_slots() == 1
+    capacity = proof | {"pool_sha256": pool.digest, "parallelism": 2, "quarantine_releases": [commitment],
+                        "concurrent_runtime_contexts": [runtime(effort) | {"thread_id": effort}
+                                                        for effort in ("medium", "high")]}
+    artifacts.write_json(pool.root / "verified-dispatch-capacity.json", capacity)
+    assert pool.verified_dispatch_slots() == 2
     with pytest.raises(TaskHalted, match="affected custody is quarantined"):
         active.require_running()
     with pytest.raises(TaskHalted, match="affected custody is quarantined"):

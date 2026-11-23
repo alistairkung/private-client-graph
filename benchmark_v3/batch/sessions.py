@@ -2,6 +2,7 @@
 
 import re
 from collections.abc import Callable
+from contextlib import nullcontext
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, TypeVar
@@ -244,9 +245,11 @@ class SessionRunner:
                        or self.ledger.pooled_revision(self.manifest.batch_id, self.family, self.revision))
         reuse_only = (role in {"designer", "author", "realism", "annotation"}
                       and annotation_recovery.recorded(self) is not None) or (role == "designer" and release is not None)
-        with self.ledger.scientific_dispatch() as serial:
+        retained_only = reuse_only or self.ledger.has_reservation(self.family, self.revision, job)
+        slot = nullcontext(False) if retained_only else self.ledger.scientific_dispatch()
+        with slot as serial:
             try:
-                result, evidence = self._dispatch(stage, job, role, path, request, active_only, reuse_only)
+                result, evidence = self._dispatch(stage, job, role, path, request, active_only, retained_only)
             except Blocked as error:
                 if not serial or error.code != "isolation":
                     raise
