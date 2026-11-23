@@ -137,6 +137,16 @@ The registered round is
 The independent merits review is
 `4003b88ef8d1d9964cd528f77ebe61c5694c33cbe9109bb0cf9b48fa1b8dea56`.
 
+The ninth reserve review selected CM for two completed settling acts
+at different times on a continuing trust. The planned ten-Source
+matter requires independently identified role evidence for each act
+and an exact link to the same trust. The reviewer deferred CL's
+two-capacity consent design pending documentary preflight.
+The registered round is
+`0940f376faa54307a7cd7f69dad5b604007aa87f7df13885005dcde6153fb14a`.
+The independent merits review is
+`9f83c9a0c7f2cfd8888f44b17f4368b4308050b59f38f4cd5a807f58ead29375`.
+
 ## Subsequent verified qualification
 
 E revision 3 qualified for the two-condition test of contradictory
@@ -234,6 +244,19 @@ recovery reconciled 2,159 cumulative charges and all outstanding
 reservations. The commitment is
 `a6d46efdea1d30923fcb35c1ada1d3e2ee3648ec67dc8a3f782795c76815c96a`.
 
+U's subsequent realism repair stopped before dispatch because the
+controller treated inherited pre-author returns as belonging to the
+revision immediately before each later reference. It now authenticates
+each retained return at its own recorded revision and rejects changed
+copies. The exact 65-Source parent and six documentary objections
+reopened. The independent zero-turn check and reconciliation settled
+all 2,319 charges and 2,400 retained receipts before work resumed. The
+mechanical recovery commitment is
+`60872f0a4c19ce42692faa07fa1d856c36b53319328a1383f5e9877eb57f2065`.
+AY's interrupted reading retained a rejected receipt with no submitted
+turn. Its fresh reading must use the exact frozen inputs. The release is
+`ec0441c0a288c66241a84b1ead85a8929b18a92963742de5a1a35a6e958fcf90`.
+
 ## Retained joint-proof reviews
 
 H's frozen case includes a standalone route that survives a simple
@@ -328,6 +351,14 @@ documented facts and the complete original question. The returned
 draft never acquired a key. The corrected result still requires the
 full large-file realism, independent reads, adjudication, evidence
 audit and replay before it can qualify.
+That scope check passed. A new realism return identified six
+documentary limits and later pre-author review identified one addressee
+that the underlying Source did not establish. The revised plan reopens
+the original recipient's independently verified sender and date facts.
+It keeps the addressee conditional on what the actual counterpart
+shows. The earlier author-scope return dispatched zero participants and
+is retained at
+`26f8a7a887cced208099c4133c86a8d3e4c883a80aecc70a5d8f47bad5342bd8`.
 
 L's scope review exposed a factory-generated attachment instruction
 that implied undocumented revised correspondence. Fresh repair
@@ -375,6 +406,10 @@ The controller retained the observations and returned the lineage at
 `3e025be9db87bd6acb2d3d4b6fd74f8d4329d739078db1d6e7a3e47908495f79`.
 The fresh independent design retains the late-notice cure hypothesis
 and requires contemporaneous body text for operative references.
+The replacement reached actual controls. The isolated reader recovered
+both precommitted absent relationships after removal of the deed. The
+failed assignment and observation stay quarantined at
+`ffcef39b93ad4a1d39e9fe3e25ef538059ab4b3b3c7d964063f26e97fc688e0a`.
 
 BN's initial audit supported the matched graphs and joint age proof
 while returning an overapproved singleton for office at the cutoff.

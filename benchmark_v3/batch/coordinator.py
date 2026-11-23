@@ -816,9 +816,12 @@ def release_audit_recheck(
             by_condition = {condition: TypeAdapter(list[Source]).validate_json(
                 artifacts.read_bytes(path.parent / "sources" / f"{condition}.json"),
             ) for condition in original.completeness}
-            _, whole = audit_boundary.original_views(original, by_condition)
+            exact, repairs = audit_boundary.exact_mask_quotes(original, by_condition)
+            _, whole = audit_boundary.original_views(exact, by_condition)
             if not whole:
                 raise ValueError("An accepted control plan can reopen only for verified unmodified whole-file views.")
+            if repairs:
+                record["mask_quote_repairs"] = repairs
         ledger.event(batch, family, revision, "reconcile", audit_boundary.RECHECK, state, "audit", record)
 
 
@@ -1055,6 +1058,7 @@ def reopen_delivery_body_repair(ledger: PooledLedger, batch: str, family: str) -
 def release_returned_pre_author_plan(
     ledger: PooledLedger, batch: str, family: str, *,
     omit_reply_for: str | None = None, omit_future_reference: autonomous_realism.FutureReferenceOmission | None = None,
+    incoming_particulars_source: str | None = None,
 ) -> None:
     with ledger.coordinator_lock():
         ledger.require_running()
@@ -1080,12 +1084,23 @@ def release_returned_pre_author_plan(
             raise ValueError("A repeated un-authored scope repair requires tangible progress on earlier objections.")
         else:
             omission = autonomous_realism.remove_separate_reply_ticket(runner, slot, omit_reply_for)[0] if omit_reply_for else None
-        ledger.event(batch, family, revision + 1, "transition", repair_authority.REVISION, state, "design", original | {
+        release = original | {
             "pre_author_scope_return": record,
             **({"prior_pre_author_scope_returns": earlier} if earlier else {}),
             **({"scope_ticket_omission": omission} if omission is not None else {}),
             "family_sessions_remaining": ledger.effective_budget().families[family] - len(ledger.attempts(family)),
-        })
+        }
+        if incoming_particulars_source is not None:
+            if omission is not None or autonomous_realism._authored_scope_receipts(original) or len(science.condition_ids(slot)) != 1:
+                raise ValueError("Carried delivery facts require a fresh plan for the same previously reviewed natural file.")
+            parent = commission.session_runner(ledger, family, original["parent_revision"])
+            autonomous_realism.require_verified_incoming_basis(parent, incoming_particulars_source)
+            particulars = delivery_particulars.reopen(parent, incoming_particulars_source)
+            release["incoming_particulars"] = {
+                "source_id": particulars.source_id, "record_sha256": authorisation.commitment(particulars),
+                "reviewed_source_revision": parent.revision,
+            }
+        ledger.event(batch, family, revision + 1, "transition", repair_authority.REVISION, state, "design", release)
 
 
 def release_exact_plan_classification(ledger: PooledLedger, batch: str, family: str) -> None:
@@ -1213,6 +1228,22 @@ def recover_mask_output(ledger: Ledger, batch: str, family: str, job: str) -> No
         else:
             prefix = read_format_recovery.MASK_WHITESPACE_RELEASE
         ledger.event(batch, family, revision, "reconcile", prefix + job, state, "masks", record)
+
+
+def reopen_paused_reading(ledger: PooledLedger, batch: str, family: str) -> None:
+    """Allow one fresh isolated observation after a verified pause interrupted dispatch."""
+    with ledger.coordinator_lock():
+        ledger.require_running()
+        revision, state, issue = family_status(ledger, batch, family)
+        if (state not in {"blind", "masks"} or not issue or issue["stage"] != state
+                or issue["code"] != "failed_dispatch" or issue["evidence"] != read_format_recovery.PAUSE_REASON
+                or not issue["job"]):
+            raise ValueError("Only a retained predispatch pause can reopen an unchanged reading.")
+        job = issue["job"]
+        runner = load_commission(ledger, batch).session_runner(ledger, family, revision)
+        record, _ = read_format_recovery.paused_reading(runner, job, role="annotation" if state == "blind" else "masked")
+        ledger.require_capacity(family, revision, {job + "-after-pause"})
+        ledger.event(batch, family, revision, "reconcile", read_format_recovery.PAUSE_RELEASE + job, state, state, record)
 
 
 def recover_adjudication_approval_ids(ledger: Ledger, batch: str, family: str, index: int) -> None:

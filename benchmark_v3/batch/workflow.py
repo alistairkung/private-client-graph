@@ -779,6 +779,8 @@ class FamilyWorkflow:
             if recheck is not None:
                 original = audit_boundary.returned_audit(self.runner, recheck)
                 requested = [audit_boundary.ExactExcerpt.model_validate(row) for row in recheck["excerpt_controls"]]
+                if recheck.get("mask_quote_repairs"):
+                    rules["mechanical_mask_quote_repairs"] = recheck["mask_quote_repairs"]
             else:
                 assert self.frozen_case is not None
                 original = self.frozen_case.audit

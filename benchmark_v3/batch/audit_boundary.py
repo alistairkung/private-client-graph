@@ -2,8 +2,10 @@
 
 from typing import TYPE_CHECKING, Any
 
+from pydantic import TypeAdapter
+
 from benchmark_v3 import commissioning
-from benchmark_v3.batch import artifacts, repair_authority, science
+from benchmark_v3.batch import artifacts, read_format_recovery, repair_authority, science
 from benchmark_v3.batch.contracts import MaskAssignment, MilestoneAudit, SourceId
 from benchmark_v3.research_contracts import Text
 from private_client_graph.evaluation import _edge
@@ -99,7 +101,35 @@ def returned_audit(runner: "SessionRunner", record: dict[str, Any]) -> Milestone
             or commissioning.digest(artifacts.read_bytes(runner.directory / "family" / "freeze.json"))
             != record["freeze_sha256"]):
         raise ValueError("The fresh audit must bind an actual repair request and the same frozen conditions.")
+    if expected := record.get("mask_quote_repairs"):
+        sources = runner.directory / "family" / "sources"
+        bundles = {condition: TypeAdapter(list[Source]).validate_json(artifacts.read_bytes(sources / f"{condition}.json"))
+                   for condition in original.completeness}
+        corrected, actual = exact_mask_quotes(original, bundles)
+        if expected != actual:
+            raise ValueError("The retained mechanical mask quotation repair changed.")
+        return corrected
     return original
+
+
+def exact_mask_quotes(audit: MilestoneAudit, bundles: dict[str, list[Source]]) -> tuple[MilestoneAudit, list[dict[str, Any]]]:
+    """Preserve control assignments while restoring unique verbatim whitespace."""
+    views = []
+    repairs = []
+    for index, view in enumerate(audit.masks):
+        quotes = view.remove_quotes.copy()
+        sources = {source.id: source.text for source in bundles[view.condition]}
+        for identity, quote in view.remove_quotes.items():
+            text = sources[identity]
+            if quote in text:
+                continue
+            exact = read_format_recovery.exact_whitespace_span(quote, text)
+            quotes[identity] = exact
+            repairs.append({"mask_index": index, "source_id": identity,
+                            "original_sha256": commissioning.digest(quote.encode()),
+                            "exact_sha256": commissioning.digest(exact.encode())})
+        views.append(view.model_copy(update={"remove_quotes": quotes}))
+    return audit.model_copy(update={"masks": views}), repairs
 
 
 def original_views(

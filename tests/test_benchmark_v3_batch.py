@@ -2677,7 +2677,7 @@ def test_pooled_scope_return_reopens_only_the_verified_prior_realism_file(autono
 def test_authored_scope_repair_reuses_checked_delivery_after_preauthor_return(
     autonomous, transport, tmp_path, monkeypatch, second_scope_return,
 ):
-    from benchmark_v3.batch import delivery_particulars
+    from benchmark_v3.batch import autonomous_realism, author_delivery, delivery_particulars, read_format_recovery, repair_authority
     from benchmark_v3.batch.pool import PooledLedger
 
     original, commission = autonomous
@@ -2783,7 +2783,63 @@ def test_authored_scope_repair_reuses_checked_delivery_after_preauthor_return(
         coordinator.release_returned_authored_scope_plan(
             ledger, batch, family, incoming_particulars_source="src2", natural_provenance_restoration=True,
         )
+        successor = commission.session_runner(ledger, family, 5)
+        history = ledger.events(batch, family)
+        assert autonomous_realism._earlier_pre_author_references(successor, history, 5, slot=slot) == ((2, "pre-author:1"),)
+        release = next(row for row in history if row["revision"] == 5 and row["name"] == repair_authority.REVISION)
+        forged = release["details"]["pre_author_scope_return"] | {"objections": ["Changed on a later reference."]}
+        forged_history = [row if row != release else row | {"details": row["details"] | {"pre_author_scope_return": forged}}
+                          for row in history]
+        with pytest.raises(ValueError, match="differs from its immutable receipts"):
+            autonomous_realism._earlier_pre_author_references(successor, forged_history, 5, slot=slot)
+
+        def interrupted_replay(*args, **kwargs):
+            raise ValueError("Fixture old chronology of inherited references.")
+
+        with monkeypatch.context() as interrupted:
+            interrupted.setattr(autonomous_realism, "_earlier_pre_author_references", interrupted_replay)
+            coordinator._work_family(ledger, commission, slot)
+        with pytest.raises(TaskHalted, match="unresolved shared integrity"):
+            pool.check_running()
+        assert not any(attempt["revision"] == 5 for attempt in ledger.attempts(family))
+        proof = {
+            "submitted_turns": 0, "packet_sha256": commissioning.digest(Path(packet.__file__).read_bytes()),
+            "author_delivery_sha256": commissioning.digest(Path(author_delivery.__file__).read_bytes()),
+            "filesystem": {"inside": {"allowed": True, "denied": False}, "outside": {"allowed": False, "denied": True},
+                           "repository": {"allowed": False, "denied": True}},
+            "runtime": {effort: {"effort": effort, "thread_id": effort, "ephemeral": True, "empty_workspace": True,
+                                 "approval_policy": "never", "sandbox": {"type": "readOnly", "networkAccess": False},
+                                 "permission_profile": {"id": "benchmark_packet", "extends": None}, "instruction_sources": [],
+                                 "thread_environments": [], "runtime_workspace_roots": []} for effort in ("medium", "high")},
+        }
+        with pytest.raises(ValueError, match="fresh independent zero-turn"):
+            pool.reconcile_documentary_lineage(ledger, family, proof | {"submitted_turns": 1})
+        pool.reconcile_documentary_lineage(ledger, family, proof)
+        pool.check_running()
+        assert any(row["revision"] == 5 and row["kind"] == "task_halt" for row in ledger.events(batch, family))
+        reader_job = "reading-000-a-full"
+        transport_run = transport[2]
+
+        def interrupt_before_turn(directory, *, before_turn):
+            def pause():
+                raise TaskHalted(read_format_recovery.PAUSE_REASON)
+            return transport_run(directory, before_turn=pause if directory.name == reader_job else before_turn)
+
+        with monkeypatch.context() as interrupted:
+            interrupted.setattr(packet, "run_packet", interrupt_before_turn)
+            coordinator._work_family(ledger, commission, slot)
+        _, state, issue = coordinator.family_status(ledger, batch, family)
+        assert state == "blind" and issue["job"] == reader_job and issue["code"] == "failed_dispatch"
+        record, original_inputs = read_format_recovery.paused_reading(successor, reader_job, role="annotation")
+        coordinator.reopen_paused_reading(ledger, batch, family)
+        with pytest.raises(ValueError, match="identical frozen input"):
+            read_format_recovery.selected_job(successor, reader_job, original_inputs | {"extra": "Changed"})
         coordinator._work_family(ledger, commission, slot)
+        assert record == read_format_recovery.paused_reading(successor, reader_job, role="annotation")[0]
+        assert any(name == reader_job + "-after-pause" for _, _, name, _ in calls)
+        autonomous_realism.require_verified_incoming_basis(successor, "src2")
+        with pytest.raises(ValueError, match="independently verified natural-file facts"):
+            autonomous_realism.require_verified_incoming_basis(successor, "src1")
         qualified_revision = 5
     assert coordinator.family_status(ledger, batch, family) == (qualified_revision, "admission_ready", None)
     authored = [(revision, job, inputs) for _, revision, job, inputs in calls if job in {"author-src1", "author-src2"}]
@@ -4469,6 +4525,26 @@ def test_adjudicated_whitespace_recovery_keeps_only_exact_independently_supporte
     science.verify_adjudication("local", corrected, sources, {"disagreements": []})
     with pytest.raises(ValueError, match="one exact span"):
         adjudication_contract.exact_whitespace_key(original, [sources[0].model_copy(update={"text": f"{QUOTE}\n{QUOTE}"}), sources[1]])
+
+
+def test_mask_quote_repair_preserves_the_exact_control_and_rejects_ambiguous_spans():
+    from benchmark_v3.batch import audit_boundary
+    from benchmark_v3.batch.contracts import MaskAssignment, MilestoneAudit
+
+    quote = "First record.\n\nSecond record."
+    source = Source(id="src1", title="Exact masked control", text=f"{quote}\nA different record stays.")
+    view = MaskAssignment.model_validate({
+        "condition": "G000", "risk": "joint_proof", "reason": "Test the necessary portion.",
+        "question": "Which relationship is established?", "included": ["src1"], "present": [], "absent": [EDGE],
+        "remove_quotes": {"src1": quote.replace("\n\n", "\n")},
+    })
+    audit = MilestoneAudit.model_construct(masks=[view])
+    corrected, repairs = audit_boundary.exact_mask_quotes(audit, {"G000": [source]})
+    assert corrected.masks == [view.model_copy(update={"remove_quotes": {"src1": quote}})]
+    assert audit.masks == [view] and len(repairs) == 1
+    ambiguous = source.model_copy(update={"text": f"{quote}\n\n{quote}"})
+    with pytest.raises(ValueError, match="one exact span"):
+        audit_boundary.exact_mask_quotes(audit, {"G000": [ambiguous]})
 
 
 def test_verified_quarantine_releases_the_pool_but_never_the_affected_custody(approved, transport, monkeypatch, tmp_path):

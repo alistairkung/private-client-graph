@@ -606,22 +606,84 @@ class MilestonePool:
             "halt_sequence": sequence, "halt_sha256": commissioning.digest(raw_halt.encode()),
             "runtime": runtime, "rationale": rationale,
         }
-        artifacts.write_bytes(self.root / "boundary" / f"{evidence_sha}.json", boundary)
+        return self._install_boundary_successor(ledger.root, boundary, record)
+
+    def reconcile_documentary_lineage(self, ledger: "PooledLedger", family: str, proof: dict[str, Any]) -> str:
+        """Release a predispatch lineage reconstruction stop after exact replay and zero-turn verification."""
+        from benchmark_v3.batch import autonomous_realism, coordinator
+
+        if ledger.pool is not self or not ledger.requires_delivery_attestation:
+            raise ValueError("A documentary lineage recovery requires the active isolated custody.")
+        self._verify_restart_runtime()
+        batch, = ledger.batch_ids()
+        commission = coordinator.load_commission(ledger, batch)
+        revision, state, issue = coordinator.family_status(ledger, batch, family)
+        packet_sha = commissioning.digest(Path(packet.__file__).read_bytes())
+        delivery_sha = commissioning.digest(Path(author_delivery.__file__).read_bytes())
+        with closing(_read_only(ledger.path)) as db:
+            halts = db.execute("SELECT sequence, family, revision, details FROM events WHERE kind = 'task_halt'").fetchall()
+        if (len(halts) != 1 or halts[0][1:3] != (family, revision) or state != "design"
+                or not issue or (issue["stage"], issue["code"], issue["evidence"])
+                != ("design", "isolation", autonomous_realism.LINEAGE_REOPEN_FAILURE)
+                or commissioning._read_json(halts[0][3]) != issue
+                or packet_sha != commission.manifest.scope.packet_implementation_sha256
+                or any(row["revision"] >= revision for row in ledger.attempts(family))):
+            raise ValueError("Only the exact predispatch documentary lineage stop is eligible for recovery.")
+        ledger.verify_commission_boundary(commission)
+        runtime = proof.get("runtime", {})
+        filesystem = proof.get("filesystem", {})
+        if (proof.get("submitted_turns") != 0 or proof.get("packet_sha256") != packet_sha
+                or proof.get("author_delivery_sha256") != delivery_sha
+                or filesystem.get("inside") != {"allowed": True, "denied": False}
+                or any(filesystem.get(key) != {"allowed": False, "denied": True} for key in ("outside", "repository"))
+                or any(not _isolated_runtime(runtime.get(effort, {}), effort) for effort in ("medium", "high"))
+                or len({runtime[effort].get("thread_id") for effort in ("medium", "high")
+                        if runtime[effort].get("thread_id")}) != 2):
+            raise ValueError("Documentary lineage recovery requires fresh independent zero-turn verification.")
+        runner = commission.session_runner(ledger, family, revision)
+        release = autonomous_realism.release_event(runner)
+        if release is None or not ledger.pooled_revision(batch, family, revision):
+            raise ValueError("Documentary lineage recovery requires the original pooled repair release.")
+        slot = next(row for row in commission.portfolio.slots if row.family_id == family)
+        parent = autonomous_realism._read_return(runner, slot, release)
+        evidence = (commissioning.json_text(proof) + "\n").encode()
+        sequence, _, _, raw_halt = halts[0]
+        record = {
+            "recovery": "verified_documentary_lineage", "pool_sha256": self.digest, "family": family, "revision": revision,
+            "packet_sha256": packet_sha, "evidence_sha256": commissioning.digest(evidence),
+            "halt_sequence": sequence, "halt_sha256": commissioning.digest(raw_halt.encode()),
+            "manifest_sha256": authorisation.commitment(commission.manifest),
+            "parent_freeze_sha256": commissioning.digest(commissioning.json_text(parent.freeze.model_dump(mode="json")).encode()),
+            "parent_review_receipts": parent.review_commitments,
+            "repair_authority_sha256": commissioning.digest(commissioning.json_text(release).encode()),
+            "lineage_verifier_sha256": commissioning.digest(Path(autonomous_realism.__file__).read_bytes()),
+        }
+        digest = self._install_boundary_successor(ledger.root, evidence, record, undispatched_revision=revision)
+        ledger.event(batch, family, revision, "reconcile", "verified_documentary_lineage", state, state,
+                     {"boundary_sha256": digest, "parent_freeze_sha256": record["parent_freeze_sha256"]})
+        return digest
+
+    def _install_boundary_successor(
+        self, root: Path, evidence: bytes, record: dict[str, Any], *, undispatched_revision: int | None = None,
+    ) -> str:
+        evidence_sha = record["evidence_sha256"]
+        artifacts.write_bytes(self.root / "boundary" / f"{evidence_sha}.json", evidence)
         encoded = (commissioning.json_text(record) + "\n").encode()
         record_sha = commissioning.digest(encoded)
         artifacts.write_bytes(self.root / "boundary" / f"{record_sha}.json", encoded)
         with closing(sqlite3.connect(self.path, timeout=LOCK_TIMEOUT_SECONDS)) as connection, connection:
             connection.execute("BEGIN IMMEDIATE")
-            stored = (str(ledger.root), sequence, record["halt_sha256"], current_sha, evidence_sha, record_sha)
+            stored = (str(root), record["halt_sequence"], record["halt_sha256"], record["packet_sha256"], evidence_sha, record_sha)
             existing = connection.execute(
-                "SELECT * FROM boundary_successors WHERE custody = ?", (str(ledger.root),),
+                "SELECT * FROM boundary_successors WHERE custody = ?", (str(root),),
             ).fetchone()
             if existing is not None:
                 if existing != stored:
                     raise ValueError("The successor boundary reconciliation is immutable.")
                 return record_sha
-            if connection.execute("SELECT 1 FROM reservations WHERE custody = ?", (str(ledger.root),)).fetchone():
-                raise ValueError("The version mismatch must precede any new dispatch in this custody member.")
+            if connection.execute("SELECT 1 FROM reservations WHERE custody = ? AND revision >= ?",
+                                  (str(root), undispatched_revision or 0)).fetchone():
+                raise ValueError("The integrity stop must precede any new dispatch in the affected revision.")
             connection.execute("INSERT INTO boundary_successors VALUES (?, ?, ?, ?, ?, ?)", stored)
         return record_sha
 

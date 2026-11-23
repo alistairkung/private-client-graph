@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any, Literal
 from pydantic import TypeAdapter
 
 from benchmark_v3 import commissioning
-from benchmark_v3.batch import authorisation, repair_authority, science
+from benchmark_v3.batch import artifacts, authorisation, repair_authority, science
 from benchmark_v3.batch.contracts import Reading
 from private_client_graph.models.source import Source
 
@@ -15,6 +15,8 @@ if TYPE_CHECKING:
 
 RELEASE = "blind-representation-"
 MASK_RELEASE = "masked-representation-"
+PAUSE_RELEASE = "reading-after-shared-pause-"
+PAUSE_REASON = "A custody member has an unresolved shared integrity stop."
 ReadingRole = Literal["annotation", "masked"]
 QUOTE_ERROR = "The reading must quote the exact attributed Source."
 INVENTORY_ERROR = "The reading must account for the exact Source inventory."
@@ -62,9 +64,14 @@ def release_details(
 def selected_job(
     runner: "SessionRunner", job: str, inputs: dict[str, str], *, role: ReadingRole = "annotation",
 ) -> str:
-    record = next((event["details"] for event in runner.ledger.events(runner.manifest.batch_id, runner.family)
-                   if event["revision"] == runner.revision and event["kind"] == "reconcile"
-                   and event["name"] == _release(role) + job), None)
+    releases = {event["name"]: event["details"] for event in runner.ledger.events(runner.manifest.batch_id, runner.family)
+                if event["revision"] == runner.revision and event["kind"] == "reconcile"}
+    if paused := releases.get(PAUSE_RELEASE + job):
+        exact, original = paused_reading(runner, job, role=role)
+        if paused != exact or inputs != original:
+            raise ValueError("The resumed reading must have the identical frozen input and interrupted receipt.")
+        return job + "-after-pause"
+    record = releases.get(_release(role) + job)
     if record is None:
         return job
     if record != release_details(runner, job, role=role):
@@ -74,6 +81,36 @@ def selected_job(
         if request["inputs"] != inputs:
             raise ValueError("A fresh blind reading requires the identical frozen input.")
     return job + "-exact-format"
+
+
+def paused_reading(
+    runner: "SessionRunner", job: str, *, role: ReadingRole,
+) -> tuple[dict[str, Any], dict[str, str]]:
+    pattern = _JOB if role == "annotation" else _MASK_JOB
+    if not runner.ledger.requires_delivery_attestation or pattern.fullmatch(job) is None:
+        raise ValueError("A paused reading requires an exact isolated reader role.")
+    attempt = next(item for item in runner.ledger.attempts(runner.family)
+                   if (item["revision"], item["stage"], item["job"]) == (runner.revision, _stage(role), job))
+    events = runner.ledger.events(runner.manifest.batch_id, runner.family)
+    session = next(item["details"] for item in events
+                   if (item["revision"], item["kind"], item["name"]) == (runner.revision, "session", job))
+    folder = runner.directory / "packets" / job
+    request = commissioning._read_json(artifacts.read_bytes(folder / "request.json"))
+    handoff_bytes = artifacts.read_bytes(folder / "handoff.json")
+    handoff = commissioning._read_json(handoff_bytes)
+    receipt_bytes = artifacts.read_bytes(folder / "receipt.json")
+    receipt = commissioning._read_json(receipt_bytes)
+    receipt_sha = commissioning.digest(receipt_bytes)
+    if (request["role"] != role or handoff["role"] != role or session["role"] != role
+            or request != commissioning._read_json(attempt["request"])
+            or commissioning.digest(commissioning.json_text(request).encode()) != attempt["request_sha256"]
+            or receipt["status"] != "rejected" or receipt["reason"] != PAUSE_REASON or "submitted_at" in receipt
+            or "output" in receipt or (folder / "output.txt").exists()
+            or session["status"] != "rejected" or session["receipt_sha256"] != receipt_sha
+            or receipt["handoff_sha256"] != commissioning.digest(handoff_bytes)
+            or session["packet_sha256"] != receipt["packet_sha256"] or handoff["packet_sha256"] != receipt["packet_sha256"]):
+        raise ValueError("A paused reading must have its original unsubmitted request and rejected receipt.")
+    return {"request_sha256": attempt["request_sha256"], "receipt_sha256": receipt_sha}, request["inputs"]
 
 
 WHITESPACE_RELEASE = RELEASE + "whitespace-"

@@ -29,6 +29,7 @@ PLAN_PROMPT = (
 )
 ADJUDICATION_RETURN = "Adjudication has unresolved scientific objections."
 PLAN_REFERENCE_FAILURE = "Every additional classification must identify a retained earlier objection."
+LINEAGE_REOPEN_FAILURE = "The original realism inputs and receipts failed their commitments."
 PARTICIPANT_LITERAL_FAILURE = "A participant instruction exposes a condition identifier or alternate literal."
 CLASSIFICATION_LAYOUT = (
     " Classify the current audit_rules.objections using their exact keys. Discuss earlier documentary"
@@ -148,7 +149,7 @@ def plan_revision(
     try:
         parent = _read_return(runner, slot, release)
     except (OSError, ValueError, KeyError, TypeError, StopIteration) as error:
-        raise packet.PacketIsolationError("The original realism inputs and receipts failed their commitments.") from error
+        raise packet.PacketIsolationError(LINEAGE_REOPEN_FAILURE) from error
     ticket_return = release.get("empty_ticket_return")
     note_recovery = retained_design_note(runner)
     omission = release.get("scope_ticket_omission")
@@ -502,13 +503,27 @@ def _read_return(runner: SessionRunner, slot: FamilySlot, release: dict[str, Any
         result = _scope_repair_parent(runner, slot, result, receipt_sha,
                                       rejected_revision=rejected_revision, original_revision=revision)
     if details := release.get("incoming_particulars"):
-        previous_draft = replace(runner, revision=runner.revision - 1,
-                                 directory=runner.directory.with_name(str(runner.revision - 1)))
+        source_revision = details.get("reviewed_source_revision", runner.revision - 1)
+        retained_natural = not authored_receipts and bool(preauthor_returns) and source_revision == revision
+        if not (retained_natural or (authored_receipts and source_revision == runner.revision - 1)):
+            raise ValueError("Delivery particulars require the exact reviewed draft revision.")
+        previous_draft = replace(runner, revision=source_revision,
+                                 directory=runner.directory.with_name(str(source_revision)))
+        if retained_natural:
+            require_verified_incoming_basis(previous_draft, details["source_id"])
         particulars = delivery_particulars.reopen(previous_draft, details["source_id"])
-        if not authored_receipts or authorisation.commitment(particulars) != details["record_sha256"]:
+        if authorisation.commitment(particulars) != details["record_sha256"]:
             raise ValueError("The participant's original delivery particulars changed.")
         result = replace(result, incoming_particulars=particulars)
     return result
+
+
+def require_verified_incoming_basis(runner: SessionRunner, source_id: str) -> None:
+    release = release_event(runner) or {}
+    review, _, _ = runner.committed_result("author", repair_authority.VERIFY_JOB, "audit", ScopeReview)
+    if (not release.get("natural_provenance_restoration") or release.get("incoming_particulars", {}).get("source_id") != source_id
+            or review.verdict != "preserved" or review.objections):
+        raise ValueError("Incoming particulars can carry only the recipient's independently verified natural-file facts.")
 
 
 def _retained_literal_briefs(
@@ -629,19 +644,21 @@ def _earlier_pre_author_references(
     runner: SessionRunner, history: list[dict[str, Any]], parent_revision: int, *, slot: FamilySlot | None = None,
 ) -> tuple[tuple[int, str], ...]:
     exact: list[tuple[int, str]] = []
+    verified: dict[int, dict[str, Any]] = {}
     for row in history:
         if row["revision"] > parent_revision or row["kind"] != "transition" or row["name"] != repair_authority.REVISION:
             continue
-        retained = row["details"].get("pre_author_scope_return")
-        if retained is None:
-            continue
-        revision = row["revision"] - 1
-        former = replace(runner, revision=revision, directory=runner.directory.with_name(str(revision)))
-        proof, _ = pre_author_scope_return(former, slot=slot)
-        if retained != proof:
-            raise ValueError("The historical preauthor objection differs from its immutable receipts.")
-        exact.extend((revision, f"pre-author:{index}")
-                     for index in range(1, len(proof["objections"]) + 1))
+        for retained in _pre_author_returns(row["details"]):
+            revision = retained["revision"]
+            if not 0 < revision < row["revision"]:
+                raise ValueError("A preauthor objection must reference an earlier revision.")
+            if revision not in verified:
+                former = replace(runner, revision=revision, directory=runner.directory.with_name(str(revision)))
+                proof, _ = pre_author_scope_return(former, slot=slot)
+                verified[revision] = proof
+                exact.extend((revision, f"pre-author:{index}") for index in range(1, len(proof["objections"]) + 1))
+            if retained != verified[revision]:
+                raise ValueError("The historical preauthor objection differs from its immutable receipts.")
     return tuple(exact)
 
 
