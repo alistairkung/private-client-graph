@@ -332,12 +332,19 @@ class FamilyWorkflow:
         exact_context = ""
         if self.documentary_revision is not None and self.documentary_revision.parent.exact_recipient_edit is not None:
             exact = self.documentary_revision.parent.exact_recipient_edit
-            rules["locally_owned_repair"] = exact.model_dump(mode="json")
-            exact_context = (
-                " One exact repair revises a dated inventory the same participant previously authored. Review the"
-                " candidate text as their own earlier record with the documented omissions and label correction."
-                " Reject new facts, new possession, new transmissions or cues to a scientific answer."
-            )
+            rules["locally_owned_repair"] = exact.model_dump(mode="json", exclude_none=True)
+            if exact.brief_omission is None:
+                exact_context = (
+                    " The independently retained complete draft belongs to this author. The revised copy changes"
+                    " one entry to reflect the contemporaneous counterpart they actually received. Check the exact"
+                    " author, attachment and direct delivery. Return on any new fact, possession, transmission or cue."
+                )
+            else:
+                exact_context = (
+                    " One exact repair revises a dated inventory the same participant previously authored. Review the"
+                    " candidate text as their own earlier record with the documented omissions and label correction."
+                    " Reject new facts, new possession, new transmissions or cues to a scientific answer."
+                )
             if self.documentary_revision.lineage.get("exact_omission_assessment"):
                 exact_context += (
                     " The two authorised documentary edits revise the retained intake scope. The"

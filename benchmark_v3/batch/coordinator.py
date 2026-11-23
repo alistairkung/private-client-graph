@@ -1003,6 +1003,7 @@ def recover_audit_recheck_representation(ledger: Ledger, batch: str, family: str
 def release_returned_authored_scope_plan(
     ledger: PooledLedger, batch: str, family: str, *, incoming_particulars_source: str | None = None,
     natural_provenance_restoration: bool = False,
+    exact_inventory_edit: recipient_edit.ExactRecipientEdit | None = None,
 ) -> None:
     """Open one documentary replan from an independently rejected authored repair."""
     with ledger.coordinator_lock():
@@ -1046,6 +1047,11 @@ def release_returned_authored_scope_plan(
             release["incoming_particulars"] = {"source_id": particulars.source_id,
                                               "record_sha256": authorisation.commitment(particulars),
                                               "reviewed_source_revision": revision}
+        if exact_inventory_edit is not None:
+            if (not natural_provenance_restoration or incoming_particulars_source != exact_inventory_edit.source_id
+                    or exact_inventory_edit.brief_omission is not None or "exact_recipient_edit" in earlier):
+                raise ValueError("A single inventory entry can reopen only with exact natural-file lineage and receipts.")
+            release["exact_recipient_edit"] = exact_inventory_edit.model_dump(mode="json", exclude_none=True)
         successor = commission.session_runner(ledger, family, revision + 1)
         autonomous_realism._read_return(successor, slot, release)
         ledger.event(batch, family, revision + 1, "transition", repair_authority.REVISION, state, "design", release)
@@ -1092,7 +1098,8 @@ def release_realism_with_retained_delivery_facts(
         slot = next(row for row in commission.portfolio.slots if row.family_id == family)
         repairs = [row for row in ledger.events(batch, family) if row["details"].get("keep_documentary_limits")]
         permitted = not repairs if exact_edit is None else (
-            exact_edit.source_id == recipient and state == "quarantined" and len(repairs) == 1
+            exact_edit.source_id == recipient and exact_edit.brief_omission is not None
+            and state == "quarantined" and len(repairs) == 1
             and "exact_recipient_edit" not in repairs[0]["details"]
         )
         if (not ledger.requires_delivery_attestation or disposition is None or len(science.condition_ids(slot)) != 1

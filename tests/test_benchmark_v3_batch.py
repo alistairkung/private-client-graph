@@ -2977,6 +2977,10 @@ def test_exact_recipient_document_repair_preserves_the_original_delivery_graph()
     assert source.text == "Line: Payment run.\n\nOld tally.\n\nSigned record."
     with pytest.raises(ValueError, match="one exact paragraph and one ordinary label"):
         edit.revise_source(source.model_copy(update={"text": source.text + "\n\nPayment run"}))
+    label_only = ExactRecipientEdit(source_id="src2", old_label="Payment run", new_label="Retained payment extract",
+                                    feasibility_sha256="a" * 64)
+    assert label_only.revise_design(design) == design
+    assert label_only.revise_source(source).text == "Line: Retained payment extract.\n\nOld tally.\n\nSigned record."
     exact_objections = ["src2: Restore ‘Include the aggregate tally.’", "src2: Restore ‘Old tally.’"]
     edit.require_exact_omission_objections(exact_objections)
     with pytest.raises(ValueError, match="two exact objections to the local omissions"):

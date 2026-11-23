@@ -478,6 +478,13 @@ return, the controller reopened both exact receipts in their original
 chronological order. The earlier receipt remains the basis for the
 64 checked transmission particulars. The zero-turn verification is
 `5541ad709a1b53366724a75f43adb1c33e4113047ad165e9218b7b7befa2750e`.
+The next authored attempt preserved the sender and date pairs but
+introduced additional relationship cues in its restored inventory.
+The subsequent release retains the independently verified earlier
+inventory and fixes only its description of the later authenticated
+counterpart. It requires exact authored bytes and fresh independent
+scope and realism. The one-entry release is
+`e49963f1943cb88e4cdbba17123f5cbdf4315679f62d9d0da8269e6aa200627f`.
 
 L's scope review exposed a factory-generated attachment instruction
 that implied undocumented revised correspondence. Fresh repair

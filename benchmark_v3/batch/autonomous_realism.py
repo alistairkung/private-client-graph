@@ -102,12 +102,14 @@ class ReturnedFile:
     retained_literal_briefs: frozenset[SourceId] = frozenset()
     incoming_particulars: delivery_particulars.IncomingParticulars | None = None
     exact_recipient_edit: recipient_edit.ExactRecipientEdit | None = None
+    prior_owned_source: Source | None = None
 
     def expected_local_source(self) -> Source | None:
         if self.exact_recipient_edit is None:
             return None
-        original = next(item for item in self.bundles[self.freeze.natural] if item.id == self.exact_recipient_edit.source_id)
-        return self.exact_recipient_edit.revise_source(original)
+        if self.prior_owned_source is None:
+            raise ValueError("The exact recipient edit requires its authenticated earlier Source.")
+        return self.exact_recipient_edit.revise_source(self.prior_owned_source)
 
     def inputs(self, slot: FamilySlot) -> dict[str, str]:
         key = f"{slot.hypothesis.hypothesis_id}@{slot.hypothesis.revision}"
@@ -350,12 +352,20 @@ def _select_plan(
             " enquiry as practitioner follow-up, not as an author instruction to supply new evidence."
         )
     if parent.exact_recipient_edit is not None:
-        prompt += (
-            " Independently assess the exact locally owned edit. Classify every current objection. If feasible,"
-            " return only a ticket for that recipient and no revised design. The validated derivative removes the"
-            " conflicting original brief instruction and implements the exact record changes. Return infeasible if"
-            " anything beyond these edits is materially necessary. Preserve all existing verified evidence and limits."
-        )
+        if parent.exact_recipient_edit.brief_omission is None:
+            prompt += (
+                " Independently assess the exact correction to one entry in the same recipient's authenticated"
+                " earlier record. The verified counterpart is retained from the authored revision."
+                " Classify every objection. Return a single ticket for the recipient and no revised design, or"
+                " return infeasible if the exact edit would lose evidence, invent a fact or alter scientific scope."
+            )
+        else:
+            prompt += (
+                " Independently assess the exact locally owned edit. Classify every current objection. If feasible,"
+                " return only a ticket for that recipient and no revised design. The validated derivative removes the"
+                " conflicting original brief instruction and implements the exact record changes. Return infeasible if"
+                " anything beyond these edits is materially necessary. Preserve all existing verified evidence and limits."
+            )
     if release.get("exact_omission_assessment"):
         prompt += (
             " Classify the retained pre-author objections, including whether the omitted tally was required for"
@@ -569,7 +579,7 @@ def _read_return(runner: SessionRunner, slot: FamilySlot, release: dict[str, Any
         author_delivery.require_projection(previous, f"author-{exact.source_id}", request["inputs"])
         exact.revise_source(source)
         exact.revise_design(design)
-        result = replace(result, exact_recipient_edit=exact)
+        result = replace(result, exact_recipient_edit=exact, prior_owned_source=source)
     return result
 
 
