@@ -3811,6 +3811,13 @@ def test_joint_control_proposals_preserve_source_order_and_reject_a_surviving_ro
     assert planned[-1].included == ["authority"]
     assert planned[-1].remove_quotes == {"authority": "Separate proof."}
     assert science.mask_sources(planned[-1], extended)[0].text == "Relevant rule. [redacted]"
+    assignment = planned[-1]
+    digest = authorisation.commitment(assignment)
+    exact = assignment.model_copy(update={"question": "As at 30 September 2025, what is supported by this record?"})
+    joint_control_plan.verify_replacements({digest: assignment}, {digest: exact})
+    wrong = exact.model_copy(update={"remove_quotes": {}})
+    with pytest.raises(ValueError, match="preserve exact Source selection"):
+        joint_control_plan.verify_replacements({digest: assignment}, {digest: wrong})
 
 
 def test_initial_design_runtime_retry_requires_same_unsubmitted_receipt(autonomous, monkeypatch):
@@ -3903,6 +3910,36 @@ def test_resuming_a_terminal_receipt_does_not_enter_a_scientific_dispatch_slot(m
     coordinator._work_family(ledger, commission, commission.portfolio.slots[0], design_only=True)
     assert coordinator.family_status(ledger, batch, family) == (1, "author", None)
     assert len(calls) == len(slot_entries) == len(ledger.attempts(family)) == 1
+
+
+def test_only_the_independently_returned_separate_reply_sentence_is_omitted(autonomous, monkeypatch):
+    from benchmark_v3.batch import author_context, autonomous_realism
+    from benchmark_v3.batch.sessions import SessionRunner
+
+    ledger, commission = autonomous
+    runner = commission.session_runner(ledger, "G", 3)
+    design = DesignOutput.model_validate(_design("G"))
+    ticket = "Confirm the dated record. In a separate reply, supply later details. Preserve the original effective date."
+    plan = autonomous_realism.RepairPlan(disposition="repair", objections={}, revised_design=design,
+                                        tickets={"src1": ticket, "src2": "Keep its exact remit."}, progress="initial",
+                                        rationale="The original documentary instruction.")
+    review = author_context.AuthorContextReview(
+        verdict="return", findings={"src1": "This scope cannot author a reply."},
+        objections=["src1: Remove the instruction to produce a separate later reply."],
+    )
+    monkeypatch.setattr(autonomous_realism, "pre_author_scope_return", lambda *args, **kwargs: ({"revision": 3}, plan))
+
+    def retained(_runner, _stage, _job, _role, _type):
+        request = {"inputs": {"audit_rules": json.dumps({"participant_packets": {"src1": {"revision_ticket": ticket}}})}}
+        return review, {"receipt_sha256": "a" * 64}, request
+
+    monkeypatch.setattr(SessionRunner, "committed_result", retained)
+    record, derivative, _ = autonomous_realism.remove_separate_reply_ticket(runner, commission.portfolio.slots[0], "src1")
+    assert record["removed_sentence"] == "In a separate reply, supply later details. "
+    assert derivative.revised_design == design
+    assert derivative.tickets == {"src1": "Confirm the dated record. Preserve the original effective date.",
+                                  "src2": plan.tickets["src2"]}
+    assert plan.tickets["src1"] == ticket
 
 
 def test_verified_quarantine_releases_the_pool_but_never_the_affected_custody(approved, transport, monkeypatch, tmp_path):

@@ -852,6 +852,19 @@ class FamilyWorkflow:
         if recheck is not None:
             earlier.append(audit_boundary.returned_audit(self.runner, recheck))
         plan = joint_control_plan.build_plan(original, earlier, bundles, freeze, required, reviews)
+        job = joint_control_plan.JOB
+        return_context = {}
+        followup = joint_control_plan.followup(self.runner)
+        if followup is not None:
+            returned, receipt, request = self.runner.committed_result("audit", job, "audit", joint_control_plan.Confirmation)
+            prior_rules = commissioning._read_json(request["inputs"]["audit_rules"])
+            if (receipt["receipt_sha256"] != followup.receipt_sha256 or returned.verdict != "return"
+                    or prior_rules["additional_proposed_views_by_commitment"] != plan.commitments):
+                raise ValueError("A joint-plan follow-up must preserve the exact returned precommitments.")
+            plan = joint_control_plan.amend(plan, followup)
+            science.verify_audit(audit_boundary.targeted_audit(plan.audit, bundles), bundles, freeze, required, reviews)
+            return_context = {"prior_review_and_objections": returned.model_dump(mode="json")}
+            job = joint_control_plan.FOLLOWUP_JOB
         proposed = plan.commitments
 
         def verify_acceptance(review: joint_control_plan.Confirmation) -> None:
@@ -860,7 +873,7 @@ class FamilyWorkflow:
                 raise ValueError("An accepted plan must independently confirm every proposed exact view.")
 
         confirmation = self.job(
-            joint_control_plan.JOB, "audit", {
+            job, "audit", {
                 "paired_bundles": _json({name: _source_array(sources) for name, sources in bundles.items()}),
                 "intended_intervention": _json(freeze.model_dump(mode="json", include={"required", "variants", "candidates"})),
                 "ontology": _instruction("ontology.md"), "neutral_brief": design.neutral_brief,
@@ -871,6 +884,7 @@ class FamilyWorkflow:
                     "full_control_plan": plan.audit.model_dump(mode="json"),
                     "additional_proposed_views_by_commitment": proposed,
                     "verified_prior_gates": audit_boundary.prior_gates(self.runner),
+                    **return_context,
                     **({"exact_whitespace_excerpt_derivatives": plan.excerpt_derivatives}
                        if plan.excerpt_derivatives else {}),
                 }),

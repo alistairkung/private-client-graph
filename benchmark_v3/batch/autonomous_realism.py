@@ -119,7 +119,16 @@ def plan_revision(
         raise packet.PacketIsolationError("The original realism inputs and receipts failed their commitments.") from error
     ticket_return = release.get("empty_ticket_return")
     note_recovery = retained_design_note(runner)
-    if note_recovery is not None:
+    omission = release.get("scope_ticket_omission")
+    if omission is not None:
+        prior = replace(runner, revision=runner.revision - 1, directory=runner.directory.with_name(str(runner.revision - 1)))
+        expected, plan, receipt = remove_separate_reply_ticket(prior, slot, omission["source_id"])
+        if expected != omission:
+            raise packet.PacketIsolationError("The exact scoped ticket omission or its independent review changed.")
+        design, affected = _verify_plan(slot, parent, plan, attested=True)
+        runner.ledger.require_capacity(runner.family, runner.revision, mandatory_jobs(design, affected, verification=True))
+        job = repair_authority.PLAN_JOB
+    elif note_recovery is not None:
         actual, plan, receipt = recover_retained_design_note(runner, slot, parent, note_recovery["note_key"])
         if actual != note_recovery:
             raise packet.PacketIsolationError("A retained review note or un-authored design changed.")
@@ -142,6 +151,8 @@ def plan_revision(
         lineage["rejected_author_context"] = ticket_return or release["pre_author_scope_return"]
     if note_recovery is not None:
         lineage["retained_plan_derivative"] = note_recovery
+    if omission is not None:
+        lineage["scoped_ticket_omission"] = omission
     if parent.prior_scope_return is not None:
         lineage["last_realism_revision"] = release["parent_revision"]
         lineage["parent_revision"] = parent.prior_scope_return["revision"]
@@ -368,7 +379,7 @@ def _read_return(runner: SessionRunner, slot: FamilySlot, release: dict[str, Any
         {"revision": row["revision"], "reviews": commissioning._read_json(row["details"]["evidence"])}
         for row in history if row["revision"] < revision and row["kind"] == "disposition" and row["name"] == "realism"
     ]
-    scope_references = _earlier_pre_author_references(runner, history, revision)
+    scope_references = _earlier_pre_author_references(runner, history, revision, slot=slot)
     result = ReturnedFile(design, bundles, freeze, objections, reviews, receipts, prior, earlier,
                           earlier_scope_references=scope_references)
     if authored_return:
@@ -376,7 +387,7 @@ def _read_return(runner: SessionRunner, slot: FamilySlot, release: dict[str, Any
                                       rejected_revision=revision + 1)
     for expected_revision, expected_return in enumerate(preauthor_returns, runner.revision - len(preauthor_returns)):
         skipped = replace(runner, revision=expected_revision, directory=runner.directory.with_name(str(expected_revision)))
-        record, rejected = pre_author_scope_return(skipped)
+        record, rejected = pre_author_scope_return(skipped, slot=slot)
         if record != expected_return:
             raise ValueError("The rejected un-authored scope proposal changed after review.")
         scope_objections = {f"pre-author:{index}": issue for index, issue in enumerate(record["objections"], 1)}
@@ -398,6 +409,13 @@ def _committed_prior_plan(
         if actual != note:
             raise ValueError("The prior review-note derivative differs from its retained evidence.")
         return plan
+    omission = release.get("scope_ticket_omission")
+    if omission is not None:
+        older = replace(previous, revision=previous.revision - 1, directory=previous.directory.with_name(str(previous.revision - 1)))
+        actual, plan, _ = remove_separate_reply_ticket(older, slot, omission["source_id"])
+        if actual != omission:
+            raise ValueError("The prior scoped ticket omission differs from its retained evidence.")
+        return plan
     revision = previous.revision - int("empty_ticket_return" in release)
     planner = replace(previous, revision=revision, directory=previous.directory.with_name(str(revision)))
     selection = next((row["details"] for row in history if row["revision"] == revision
@@ -417,7 +435,7 @@ def _pre_author_returns(release: dict[str, Any]) -> list[dict[str, Any]]:
     return records
 
 
-def pre_author_scope_return(runner: SessionRunner) -> tuple[dict[str, Any], RepairPlan]:
+def pre_author_scope_return(runner: SessionRunner, *, slot: FamilySlot | None = None) -> tuple[dict[str, Any], RepairPlan]:
     batch, family = runner.manifest.batch_id, runner.family
     parent = release_event(runner)
     if (not runner.ledger.requires_delivery_attestation or parent is None or len(_pre_author_returns(parent)) > 1
@@ -427,9 +445,18 @@ def pre_author_scope_return(runner: SessionRunner) -> tuple[dict[str, Any], Repa
                    and row["job"] not in {author_context.JOB, author_context.JOB + repair_authority.FORMAT_RETRY}
                    for row in runner.ledger.attempts(family))):
         raise ValueError("A new preauthor plan requires a bounded independently returned repair before any author dispatch.")
-    chosen = next(row["details"] for row in runner.ledger.events(batch, family)
-                  if row["revision"] == runner.revision and row["kind"] == "repair_plan_selection")
-    plan, planner, _ = runner.committed_result("design", chosen["job"], "audit", RepairPlan)
+    note = retained_design_note(runner)
+    if note is not None:
+        if slot is None:
+            raise ValueError("A retained review-note plan requires the exact approved workload.")
+        actual, plan, planner = recover_retained_design_note(runner, slot, _read_return(runner, slot, parent), note["note_key"])
+        if actual != note:
+            raise ValueError("The independently rejected scope must bind the exact retained plan derivative.")
+        chosen = note
+    else:
+        chosen = next(row["details"] for row in runner.ledger.events(batch, family)
+                      if row["revision"] == runner.revision and row["kind"] == "repair_plan_selection")
+        plan, planner, _ = runner.committed_result("design", chosen["job"], "audit", RepairPlan)
     review, receipt, _ = runner.committed_result("author", author_context.JOB, "audit", author_context.AuthorContextReview)
     if review.verdict != "return" or not review.objections or planner["receipt_sha256"] != chosen["receipt_sha256"]:
         raise ValueError("A new preauthor plan must bind the exact independently rejected documentary proposal.")
@@ -441,7 +468,7 @@ def pre_author_scope_return(runner: SessionRunner) -> tuple[dict[str, Any], Repa
 
 
 def _earlier_pre_author_references(
-    runner: SessionRunner, history: list[dict[str, Any]], parent_revision: int,
+    runner: SessionRunner, history: list[dict[str, Any]], parent_revision: int, *, slot: FamilySlot | None = None,
 ) -> tuple[tuple[int, str], ...]:
     exact: list[tuple[int, str]] = []
     for row in history:
@@ -452,12 +479,35 @@ def _earlier_pre_author_references(
             continue
         revision = row["revision"] - 1
         former = replace(runner, revision=revision, directory=runner.directory.with_name(str(revision)))
-        proof, _ = pre_author_scope_return(former)
+        proof, _ = pre_author_scope_return(former, slot=slot)
         if retained != proof:
             raise ValueError("The historical preauthor objection differs from its immutable receipts.")
         exact.extend((revision, f"pre-author:{index}")
                      for index in range(1, len(proof["objections"]) + 1))
     return tuple(exact)
+
+
+def remove_separate_reply_ticket(
+    runner: SessionRunner, slot: FamilySlot, source_id: str,
+) -> tuple[dict[str, Any], RepairPlan, dict[str, Any]]:
+    record, prior = pre_author_scope_return(runner, slot=slot)
+    review, receipt, request = runner.committed_result("author", author_context.JOB, "audit", author_context.AuthorContextReview)
+    proposed = commissioning._read_json(request["inputs"]["audit_rules"])["participant_packets"][source_id]
+    ticket = prior.tickets[source_id]
+    if (len(review.objections) != 1 or not review.objections[0].startswith(f"{source_id}: Remove the instruction to produce a separate ")
+            or proposed["revision_ticket"] != ticket):
+        raise ValueError("The exact independent scope return must identify one unsupported separate reply.")
+    sentences = re.findall(r"(?<= )In a separate reply,[^.]+\. ", ticket)
+    if len(sentences) != 1 or ticket.count(sentences[0]) != 1:
+        raise ValueError("A separately requested reply must occupy one exact uniquely identifiable sentence.")
+    removed, = sentences
+    revised = ticket.replace(removed, "", 1)
+    plan = prior.model_copy(update={"tickets": prior.tickets | {source_id: revised}, "progress": "improved"})
+    return {
+        "source_id": source_id, "scope_receipt_sha256": receipt["receipt_sha256"], "reviewed_pre_author_return": record,
+        "prior_plan_sha256": authorisation.commitment(prior), "removed_sentence": removed,
+        "derivative_sha256": authorisation.commitment(plan),
+    }, plan, receipt
 
 
 def empty_attachment_ticket_return(runner: SessionRunner, source_id: str) -> dict[str, Any]:

@@ -212,6 +212,8 @@ class SessionRunner:
                 permitted = audit_boundary.release(self) is not None
             if self.ledger.requires_delivery_attestation and stage == "audit" and base_job == joint_control_plan.JOB:
                 permitted = joint_control_plan.released(self) is not None
+            if self.ledger.requires_delivery_attestation and stage == "audit" and base_job == joint_control_plan.FOLLOWUP_JOB:
+                permitted = joint_control_plan.followup(self) is not None
             if recovery and (stage, base_job) in {
                 ("design", repair_authority.PLAN_JOB), ("design", repair_authority.BUDGET_PLAN_JOB),
                 ("author", repair_authority.VERIFY_JOB),

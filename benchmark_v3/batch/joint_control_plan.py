@@ -18,6 +18,8 @@ if TYPE_CHECKING:
 
 RELEASE = "joint-control-plan-confirmation"
 JOB = "joint-plan-confirmation"
+FOLLOWUP_RELEASE = "joint-control-plan-followup"
+FOLLOWUP_JOB = "joint-plan-confirmation-followup"
 QUESTION = "Which relationships are supported at the requested snapshot by these supplied records? Cite exact evidence."
 
 
@@ -27,6 +29,11 @@ class Confirmation(Contract):
     findings: Text
     objections: list[Text]
     limitations: list[Text]
+
+
+class Followup(Contract):
+    receipt_sha256: Digest
+    replacements: dict[Digest, MaskAssignment]
 
 
 @dataclass(frozen=True)
@@ -43,6 +50,33 @@ class Plan:
 def released(runner: "SessionRunner") -> dict[str, Any] | None:
     return next((row["details"] for row in runner.ledger.events(runner.manifest.batch_id, runner.family)
                  if (row["revision"], row["kind"], row["name"]) == (runner.revision, "reconcile", RELEASE)), None)
+
+
+def followup(runner: "SessionRunner") -> Followup | None:
+    record = next((row["details"] for row in runner.ledger.events(runner.manifest.batch_id, runner.family)
+                   if (row["revision"], row["kind"], row["name"]) ==
+                   (runner.revision, "reconcile", FOLLOWUP_RELEASE)), None)
+    return Followup.model_validate(record) if record is not None else None
+
+
+def verify_replacements(original: dict[str, MaskAssignment], replacements: dict[str, MaskAssignment]) -> None:
+    if not replacements or not replacements.keys() <= original.keys():
+        raise ValueError("A follow-up must bind the exact previous control commitments.")
+    for digest, amended in replacements.items():
+        prior = original[digest]
+        if (amended.model_dump(exclude={"present", "absent", "question"}) !=
+                prior.model_dump(exclude={"present", "absent", "question"})
+                or not set(prior.present) <= set(amended.present) or not set(prior.absent) <= set(amended.absent)
+                or amended == prior):
+            raise ValueError("A follow-up must preserve exact Source selection, deletions and earlier expectations.")
+
+
+def amend(plan: Plan, replacement: Followup) -> Plan:
+    by_digest = {authorisation.commitment(view): view for view in plan.proposed}
+    verify_replacements(by_digest, replacement.replacements)
+    masks = [replacement.replacements.get(authorisation.commitment(view), view) for view in plan.audit.masks]
+    proposed = [replacement.replacements.get(authorisation.commitment(view), view) for view in plan.proposed]
+    return Plan(plan.audit.model_copy(update={"masks": masks}), proposed, plan.excerpt_derivatives)
 
 
 def retained_audit(runner: "SessionRunner", record: dict[str, Any]) -> audit_boundary.RecheckedAudit:

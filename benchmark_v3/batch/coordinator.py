@@ -17,7 +17,7 @@ from benchmark_v3.batch import (
 from benchmark_v3.batch.contracts import (
     Adjudication, AdjudicationQuoteRecovery, AnnotationRecovery, AuditRecovery, BatchDecision, BatchManifest, BudgetAmendment,
     ChildDesignMerits, Code, DeferredExceptionReview, DesignOutput, DesignReview, ExceptionRecord, FamilyContinuation, FreshAdjudication,
-    MilestoneAudit, MilestoneEvidenceRepair, MilestoneRealismRepair, OwnerFamilyReview, Reading, RepairExecution, RepairScopeReview,
+    MaskAssignment, MilestoneAudit, MilestoneEvidenceRepair, MilestoneRealismRepair, OwnerFamilyReview, Reading, RepairExecution, RepairScopeReview,
     SourceCutoffRecovery,
 )
 from benchmark_v3.batch.custody import namespace_directory
@@ -464,7 +464,8 @@ def family_status(ledger: Ledger, batch_id: str, family: str) -> tuple[int, str,
                                            read_format_recovery.MASK_RELEASE))
                 or record["name"] in {audit_boundary.RECHECK, audit_boundary.FORMAT_RETRY,
                                       audit_boundary.LARGE_CONFIRMATION, author_repair.UNUSED_ATTESTATION,
-                                      repair_authority.SCOPE_REVIEW_RETRY, joint_control_plan.RELEASE}
+                                      repair_authority.SCOPE_REVIEW_RETRY, joint_control_plan.RELEASE,
+                                      joint_control_plan.FOLLOWUP_RELEASE}
             ):
                 state = record["next"] or state
     return revision, state, blocking
@@ -595,7 +596,8 @@ def _block(
     }
     qualifier = None
     if workflow.stage == "audit" and joint_control_plan.released(workflow.runner) is not None:
-        qualifier = joint_control_plan.RELEASE
+        qualifier = (joint_control_plan.FOLLOWUP_RELEASE if joint_control_plan.followup(workflow.runner) is not None
+                     else joint_control_plan.RELEASE)
     elif workflow.stage == "audit" and audit_boundary.release(workflow.runner) is not None:
         qualifier = next((row["name"] for row in reversed(ledger.events(batch, family))
                           if row["revision"] == revision and row["kind"] == "reconcile"
@@ -827,6 +829,31 @@ def release_joint_control_confirmation(ledger: PooledLedger, batch: str, family:
         ledger.event(batch, family, revision, "reconcile", joint_control_plan.RELEASE, state, "audit", record)
 
 
+def release_joint_plan_followup(
+    ledger: PooledLedger, batch: str, family: str, changes: dict[str, MaskAssignment],
+) -> None:
+    with ledger.coordinator_lock():
+        ledger.require_running()
+        commission = load_commission(ledger, batch)
+        revision, state, issue = family_status(ledger, batch, family)
+        runner = commission.session_runner(ledger, family, revision)
+        if (state != "quarantined" or not issue or issue["stage"] != "audit"
+                or joint_control_plan.released(runner) is None or joint_control_plan.followup(runner) is not None
+                or any(row["revision"] == revision and row["stage"] == "masks" for row in ledger.attempts(family))):
+            raise ValueError("One independent joint-plan follow-up can precede all masked observations.")
+        verdict, receipt, request = runner.committed_result(
+            "audit", joint_control_plan.JOB, "audit", joint_control_plan.Confirmation,
+        )
+        if verdict.verdict != "return" or not verdict.objections or issue["evidence"] != verdict.model_dump_json():
+            raise ValueError("A follow-up must bind the exact independently recorded return and objections.")
+        rules = commissioning._read_json(request["inputs"]["audit_rules"])
+        proposed = TypeAdapter(dict[str, MaskAssignment]).validate_python(rules["additional_proposed_views_by_commitment"])
+        joint_control_plan.verify_replacements(proposed, changes)
+        release = joint_control_plan.Followup(receipt_sha256=receipt["receipt_sha256"], replacements=changes)
+        ledger.event(batch, family, revision, "reconcile", joint_control_plan.FOLLOWUP_RELEASE, state, "audit",
+                     release.model_dump(mode="json"))
+
+
 def release_joint_plan_recheck(ledger: PooledLedger, batch: str, family: str) -> None:
     """Independently complete all required joint observations before any mask is sent."""
     with ledger.coordinator_lock():
@@ -960,7 +987,7 @@ def release_returned_authored_scope_plan(ledger: PooledLedger, batch: str, famil
         ledger.event(batch, family, revision + 1, "transition", repair_authority.REVISION, state, "design", release)
 
 
-def release_returned_pre_author_plan(ledger: PooledLedger, batch: str, family: str) -> None:
+def release_returned_pre_author_plan(ledger: PooledLedger, batch: str, family: str, *, omit_reply_for: str | None = None) -> None:
     with ledger.coordinator_lock():
         ledger.require_running()
         commission = load_commission(ledger, batch)
@@ -971,16 +998,19 @@ def release_returned_pre_author_plan(ledger: PooledLedger, batch: str, family: s
                 or (issue["stage"], issue["code"]) != ("author", "scientific_review")
                 or not ledger.pooled_revision(batch, family, revision)):
             raise ValueError("A preauthor replan requires an exact retained scientific scope return.")
-        record, _ = autonomous_realism.pre_author_scope_return(runner)
+        slot = next(row for row in commission.portfolio.slots if row.family_id == family)
+        record, _ = autonomous_realism.pre_author_scope_return(runner, slot=slot)
         if commissioning._read_json(issue["evidence"]) != record["review"]:
             raise ValueError("The retained independent scope review differs from the current exception.")
         earlier = autonomous_realism._pre_author_returns(original)
         if earlier and (len(record["objections"]) >= len(earlier[-1]["objections"])
                         or earlier[-1]["objections"] == record["objections"]):
             raise ValueError("A repeated un-authored scope repair requires tangible progress on earlier objections.")
+        omission = autonomous_realism.remove_separate_reply_ticket(runner, slot, omit_reply_for)[0] if omit_reply_for else None
         ledger.event(batch, family, revision + 1, "transition", repair_authority.REVISION, state, "design", original | {
             "pre_author_scope_return": record,
             **({"prior_pre_author_scope_returns": earlier} if earlier else {}),
+            **({"scope_ticket_omission": omission} if omission is not None else {}),
             "family_sessions_remaining": ledger.effective_budget().families[family] - len(ledger.attempts(family)),
         })
 

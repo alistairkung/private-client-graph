@@ -78,6 +78,15 @@ round is `f84ebce78f604e4003859e70a1516c5c168dd939bd1f80ae2f771389cc67b4e2`.
 The independent merits review is
 `66b0a3a10c0525309cfb0f17976c6f1e4ae994ec569034ae60828c58c8faf54b`.
 
+The fourth reserve review selected AY for continuation of a named
+benefit when a separate relationship ends, and AZ for distinguishing
+testamentary group membership from factual kinship. AX remains held
+for documentary co-retention and possible shorter evidence routes.
+The registered round is
+`4f50799524492a42ec32cf97feee669396b34ffb414c5d943240ae85540d9d17`.
+The independent merits review is
+`8d3619bb73c54ba006c520e9392f43f0d9a60c48c139b9850567c32542f7fc46`.
+
 ## Subsequent verified qualification
 
 E revision 3 qualified for the two-condition test of contradictory
@@ -122,8 +131,11 @@ available sessions. The original halt events remain in the ledgers.
 H's frozen case includes a standalone route that survives a simple
 Source omission. The new proposed control suppresses that exact
 standalone passage and preserves the other quotation from the same
-Source. An independent audit must confirm the expected result before
-separate masked reviewers see the control.
+Source. The initial review asked for the explicit snapshot and the
+unchanged companion edges. That scoped follow-up binds the first
+return and keeps the exact Source selection and deletion. A fresh
+independent audit must confirm the revised assignment before masked
+reviewers see it.
 
 R's two unrenderable excerpt controls differed from their unique
 frozen spans by a blank line. The controller retains both original
@@ -137,7 +149,10 @@ design. The reply placed a practitioner follow-up in the author-ticket
 map while explicitly identifying it as a separate review action. The
 controller archives that note with the original receipt and validates
 the retained design and exact affected closure. It still requires fresh
-scope, realism and downstream scientific review.
+scope, realism and downstream scientific review. A subsequent scope
+review identified one separate reply instruction outside that Source's
+remit. An exact sentence-level omission uses the same retained design
+and a fresh scope review.
 
 An immutable reserved packet can be reopened without holding the live
 dispatch slot. Reopen-only reservations cannot start a new scientific

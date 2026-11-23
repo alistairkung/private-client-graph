@@ -149,6 +149,9 @@ No verified findings recorded.
 | `selective-ending-of-parallel-benefit-bases@1` · One beneficiary edge, a different surviving provision | AP | approved | `a89b748456f1c32487795600ff6bdbd88114314e54540d9e34646f6e048b8f37` |
 | `representative-signature-without-personal-office@1` · A named signatory is not necessarily a named trustee | AQ | proposed | `fb5530db9f86ba9e6b38b63c718e3966d7dc1146f244d1db3de281ad4fc4aecb` |
 | `authority-at-exercise-before-deferred-effect@1` · A decision survives the end of its maker's office | AR | approved | `c009d18694f204128719997fddba0759c43293d52e3a32d55da33d030db81d9f` |
+| `separate-or-joint-commencement-of-appointments@1` · One acceptance, separate or joint commencement | AX | proposed | `f816be9e56b0c0a7f7a2191b74686c71ec81b2aed98f8dd9512e34c01f154324` |
+| `named-benefit-with-or-without-continuing-spousal-condition@1` · A named designation need not depend on continuing marriage | AY | approved | `d119f024401d75371a224354169a4dfbb246ff464001dc4d77a026e08e60b4e0` |
+| `testamentary-group-definition-versus-factual-kinship@1` · A will's defined group is not a family assertion | AZ | approved | `b158525daad26a7f8aa30d52e18a9a9784157b78305646f7bce6125c96f6506c` |
 | `concurrent-assent-to-one-decision@1` · Separate assents must concern the same decision | AA | proposed | `4156635b4a723dd63ab71c9919f574e6cfe882ed2a8d74d463399d7663528c3b` |
 | `shared-parent-without-sibling-assertion@1` · Supported common parentage does not supply a sibling edge | AB | approved | `9dd22215c301d0855fa3660b14caa92651730dbf325c2928eb7a9d7ff20994df` |
 | `automatic-reversion-after-temporary-substitution@1` · A suspended provision resumes without a new act | AC | proposed | `11735f0da17407c28981c349d865eaed29adc508305e3a19eef40edccd8b4d1b` |
