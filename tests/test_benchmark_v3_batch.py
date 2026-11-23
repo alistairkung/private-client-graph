@@ -3169,7 +3169,7 @@ def test_empty_attachment_ticket_return_retries_scope_without_repeating_the_plan
 
     def legacy_ticket(work, design):
         return [(brief, "Write this record using its revised instructions and received correspondence."
-                 if ticket == "Write this record using its revised instructions." else ticket, reuse, prior)
+                 if work.documentary_revision is not None and prior is None and ticket is None else ticket, reuse, prior)
                 for brief, ticket, reuse, prior in assignment(work, design)]
 
     def context(inputs):
@@ -3940,6 +3940,34 @@ def test_only_the_independently_returned_separate_reply_sentence_is_omitted(auto
     assert derivative.tickets == {"src1": "Confirm the dated record. Preserve the original effective date.",
                                   "src2": plan.tickets["src2"]}
     assert plan.tickets["src1"] == ticket
+
+
+def test_fresh_dependency_repair_uses_documented_attachments_without_automatic_tickets(autonomous, monkeypatch):
+    from types import SimpleNamespace
+    from benchmark_v3.batch import author_context, repair_authority
+    from benchmark_v3.batch.workflow import FamilyWorkflow
+
+    ledger, commission = autonomous
+    runner = commission.session_runner(ledger, "G", 3)
+    raw = _design("G")
+    raw["inventory"][1]["received"] = ["src1"]
+    design = DesignOutput.model_validate(raw)
+    workflow = FamilyWorkflow(runner, commission.portfolio.slots[0], [])
+    workflow.documentary_revision = SimpleNamespace(
+        affected={"src1", "src2"}, parent=SimpleNamespace(freeze=SimpleNamespace(natural="G000"), bundles={"G000": []}),
+    )
+    workflow.repair_tickets = {"src1": "Record your own observation."}
+    monkeypatch.setattr(type(ledger), "requires_delivery_attestation", property(lambda _: True))
+    monkeypatch.setattr(type(ledger), "attempts", lambda *_: [])
+    assert [ticket for _, ticket, _, _ in workflow._author_assignments(design)] == ["Record your own observation.", None]
+
+    legacy = repair_authority.LEGACY_REVISED_ATTACHMENTS
+    projection = {"participant_packets": {"src2": {"revision_ticket": legacy}}}
+    request = {"inputs": {"audit_rules": json.dumps(projection)}}
+    monkeypatch.setattr(type(ledger), "attempts", lambda *_: [
+        {"revision": 3, "job": author_context.JOB, "request": json.dumps(request)},
+    ])
+    assert [ticket for _, ticket, _, _ in workflow._author_assignments(design)] == ["Record your own observation.", legacy]
 
 
 def test_verified_quarantine_releases_the_pool_but_never_the_affected_custody(approved, transport, monkeypatch, tmp_path):

@@ -154,6 +154,14 @@ review identified one separate reply instruction outside that Source's
 remit. An exact sentence-level omission uses the same retained design
 and a fresh scope review.
 
+L's scope review exposed a factory-generated attachment instruction
+that implied undocumented revised correspondence. Fresh repair
+projections now provide each author the documented brief, exact
+received attachments and any explicit participant-local repair ticket.
+The exact already-reserved historical projections remain reopenable.
+L's reviewed plan continues in a fresh scope revision with the
+unsupported automatic instruction removed.
+
 An immutable reserved packet can be reopened without holding the live
 dispatch slot. Reopen-only reservations cannot start a new scientific
 turn. After stable serial production, a fresh zero-turn check verified

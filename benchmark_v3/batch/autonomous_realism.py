@@ -120,7 +120,16 @@ def plan_revision(
     ticket_return = release.get("empty_ticket_return")
     note_recovery = retained_design_note(runner)
     omission = release.get("scope_ticket_omission")
-    if omission is not None:
+    generated = release.get("generated_attachment_ticket")
+    if generated is not None:
+        prior = replace(runner, revision=runner.revision - 1, directory=runner.directory.with_name(str(runner.revision - 1)))
+        actual, plan, receipt = generated_attachment_ticket(prior, slot, generated["source_id"])
+        if actual != generated:
+            raise packet.PacketIsolationError("The reviewed automatic ticket or its retained plan changed.")
+        design, affected = _verify_plan(slot, replace(parent, previous_plan=None), plan, attested=True)
+        runner.ledger.require_capacity(runner.family, runner.revision, mandatory_jobs(design, affected, verification=True))
+        job = repair_authority.PLAN_JOB
+    elif omission is not None:
         prior = replace(runner, revision=runner.revision - 1, directory=runner.directory.with_name(str(runner.revision - 1)))
         expected, plan, receipt = remove_separate_reply_ticket(prior, slot, omission["source_id"])
         if expected != omission:
@@ -153,6 +162,8 @@ def plan_revision(
         lineage["retained_plan_derivative"] = note_recovery
     if omission is not None:
         lineage["scoped_ticket_omission"] = omission
+    if generated is not None:
+        lineage["retired_automatic_ticket"] = generated
     if parent.prior_scope_return is not None:
         lineage["last_realism_revision"] = release["parent_revision"]
         lineage["parent_revision"] = parent.prior_scope_return["revision"]
@@ -416,6 +427,13 @@ def _committed_prior_plan(
         if actual != omission:
             raise ValueError("The prior scoped ticket omission differs from its retained evidence.")
         return plan
+    generated = release.get("generated_attachment_ticket")
+    if generated is not None:
+        older = replace(previous, revision=previous.revision - 1, directory=previous.directory.with_name(str(previous.revision - 1)))
+        actual, plan, _ = generated_attachment_ticket(older, slot, generated["source_id"])
+        if actual != generated:
+            raise ValueError("The prior automatic ticket recovery differs from its retained evidence.")
+        return plan
     revision = previous.revision - int("empty_ticket_return" in release)
     planner = replace(previous, revision=revision, directory=previous.directory.with_name(str(revision)))
     selection = next((row["details"] for row in history if row["revision"] == revision
@@ -438,7 +456,7 @@ def _pre_author_returns(release: dict[str, Any]) -> list[dict[str, Any]]:
 def pre_author_scope_return(runner: SessionRunner, *, slot: FamilySlot | None = None) -> tuple[dict[str, Any], RepairPlan]:
     batch, family = runner.manifest.batch_id, runner.family
     parent = release_event(runner)
-    if (not runner.ledger.requires_delivery_attestation or parent is None or len(_pre_author_returns(parent)) > 1
+    if (not runner.ledger.requires_delivery_attestation or parent is None or len(_pre_author_returns(parent)) > 2
             or parent["parent_revision"] != runner.revision - 1 - len(_pre_author_returns(parent))
             - int(bool(parent.get("scope_return_receipt_sha256")))
             or any(row["revision"] == runner.revision and row["stage"] == "author"
@@ -508,6 +526,19 @@ def remove_separate_reply_ticket(
         "prior_plan_sha256": authorisation.commitment(prior), "removed_sentence": removed,
         "derivative_sha256": authorisation.commitment(plan),
     }, plan, receipt
+
+
+def generated_attachment_ticket(
+    runner: SessionRunner, slot: FamilySlot, source_id: str,
+) -> tuple[dict[str, Any], RepairPlan, dict[str, Any]]:
+    record, plan = pre_author_scope_return(runner, slot=slot)
+    review, receipt, request = runner.committed_result("author", author_context.JOB, "audit", author_context.AuthorContextReview)
+    prior = commissioning._read_json(request["inputs"]["audit_rules"])["participant_packets"][source_id]
+    if (source_id in plan.tickets or len(review.objections) != 1 or not review.objections[0].startswith(source_id + ":")
+            or repair_authority.LEGACY_REVISED_ATTACHMENTS not in review.objections[0]
+            or prior.get("revision_ticket") != repair_authority.LEGACY_REVISED_ATTACHMENTS or not prior["received_ids"]):
+        raise ValueError("The independently returned instruction must be one automatic attachment ticket.")
+    return {"source_id": source_id, "prior_scope": record, "plan_sha256": authorisation.commitment(plan)}, plan, receipt
 
 
 def empty_attachment_ticket_return(runner: SessionRunner, source_id: str) -> dict[str, Any]:

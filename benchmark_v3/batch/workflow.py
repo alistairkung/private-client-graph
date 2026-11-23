@@ -345,6 +345,8 @@ class FamilyWorkflow:
         if not tickets.keys() <= {brief.source_id for brief in design.inventory}:
             raise ValueError("Repair tickets must identify known Sources.")
         revision = self.documentary_revision
+        scoped = revision is not None and self.runner.ledger.requires_delivery_attestation
+        retained_tickets = self._retained_generated_tickets() if scoped else {}
         prior_sources = ({source.id: source for source in revision.parent.bundles[revision.parent.freeze.natural]}
                          if revision is not None else {})
         for brief in design.inventory:
@@ -352,16 +354,30 @@ class FamilyWorkflow:
                 assignments.append((brief, None, False, prior_sources[brief.source_id]))
                 continue
             ticket = tickets.get(brief.source_id)
+            if scoped:
+                assignments.append((brief, ticket or retained_tickets.get(brief.source_id), False, None))
+                continue
             if ticket is None and changed.intersection(brief.received):
-                ticket = "Rewrite this record using the revised received correspondence."
+                ticket = repair_authority.LEGACY_REVISED_ATTACHMENTS
             if ticket:
                 changed.add(brief.source_id)
             if revision is not None and ticket is None:
-                ticket = ("Write this record using its revised instructions."
-                          if self.runner.ledger.requires_delivery_attestation and not brief.received
-                          else "Write this record using its revised instructions and received correspondence.")
+                ticket = repair_authority.LEGACY_REVISED_CONTEXT
             assignments.append((brief, ticket, revision is None and bool(tickets) and ticket is None, None))
         return assignments
+
+    def _retained_generated_tickets(self) -> dict[str, str]:
+        """Preserve exact historic packets while fresh authors use their documented attachments."""
+        attempt = next((row for row in self.runner.ledger.attempts(self.runner.family)
+                        if row["revision"] == self.runner.revision and row["job"] == author_context.JOB), None)
+        if attempt is None:
+            return {}
+        request = commissioning._read_json(attempt["request"])
+        projections = commissioning._read_json(request["inputs"]["audit_rules"])["participant_packets"]
+        generated = {repair_authority.LEGACY_REVISED_ATTACHMENTS, repair_authority.LEGACY_REVISED_INSTRUCTIONS,
+                     repair_authority.LEGACY_REVISED_CONTEXT}
+        return {identity: row["revision_ticket"] for identity, row in projections.items()
+                if row.get("revision_ticket") in generated}
 
     def _author_record(self, design: DesignOutput, brief: AuthorBrief, ticket: str | None, reuse: bool,
                        received: list[Source]) -> Source:

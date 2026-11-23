@@ -1003,14 +1003,37 @@ def release_returned_pre_author_plan(ledger: PooledLedger, batch: str, family: s
         if commissioning._read_json(issue["evidence"]) != record["review"]:
             raise ValueError("The retained independent scope review differs from the current exception.")
         earlier = autonomous_realism._pre_author_returns(original)
-        if earlier and (len(record["objections"]) >= len(earlier[-1]["objections"])
-                        or earlier[-1]["objections"] == record["objections"]):
+        if len(earlier) >= 2 or (earlier and len(record["objections"]) >= len(earlier[-1]["objections"])):
             raise ValueError("A repeated un-authored scope repair requires tangible progress on earlier objections.")
         omission = autonomous_realism.remove_separate_reply_ticket(runner, slot, omit_reply_for)[0] if omit_reply_for else None
         ledger.event(batch, family, revision + 1, "transition", repair_authority.REVISION, state, "design", original | {
             "pre_author_scope_return": record,
             **({"prior_pre_author_scope_returns": earlier} if earlier else {}),
             **({"scope_ticket_omission": omission} if omission is not None else {}),
+            "family_sessions_remaining": ledger.effective_budget().families[family] - len(ledger.attempts(family)),
+        })
+
+
+def release_generated_attachment_ticket_recovery(ledger: PooledLedger, batch: str, family: str, source_id: str) -> None:
+    with ledger.coordinator_lock():
+        ledger.require_running()
+        commission = load_commission(ledger, batch)
+        revision, state, issue = family_status(ledger, batch, family)
+        runner = commission.session_runner(ledger, family, revision)
+        original = autonomous_realism.release_event(runner)
+        if (original is None or state != "quarantined" or not issue
+                or (issue["stage"], issue["code"]) != ("author", "scientific_review")
+                or "generated_attachment_ticket" in original or "scope_ticket_omission" in original
+                or not ledger.pooled_revision(batch, family, revision)):
+            raise ValueError("An automatic-ticket recovery requires the exact stopped un-authored scope review.")
+        slot = next(row for row in commission.portfolio.slots if row.family_id == family)
+        proof, _, _ = autonomous_realism.generated_attachment_ticket(runner, slot, source_id)
+        scope = proof["prior_scope"]
+        if commissioning._read_json(issue["evidence"]) != scope["review"]:
+            raise ValueError("The independently returned automatic ticket differs from the stopped packet.")
+        ledger.event(batch, family, revision + 1, "transition", repair_authority.REVISION, state, "design", original | {
+            "pre_author_scope_return": scope, "prior_pre_author_scope_returns": autonomous_realism._pre_author_returns(original),
+            "generated_attachment_ticket": proof,
             "family_sessions_remaining": ledger.effective_budget().families[family] - len(ledger.attempts(family)),
         })
 
