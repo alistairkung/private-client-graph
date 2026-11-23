@@ -34,3 +34,17 @@ new documentary and review roles.
 | Extended pool authority | `4ea6ed6c452e14b21d6c7a02f3d9f91878db32f55f76266d28b3a4b7e610a17b` |
 
 [Previous closed review](DELIVERY-RECOVERY.md) · [Architect roadmap](../development-20/ROADMAP.md)
+
+## First verified qualification
+
+N revision 3 preserves the exact ten-Source natural and matched
+conditions for execution status among retained counterparts. It reused
+the earlier realism, blind reconstruction and adjudication commitments.
+An independent audit replaced unrenderable controls while preserving
+the prior scientific expectations. The controller passed 38 control
+assignments. A separate zero-provider replay reproduced both scored
+graphs with five true positives and zero false positives or omissions.
+
+N's technical dossier is `3aab2c4c905c95fef1290fc5fbd876ec604393286b1117386be5ba89cd96a026`.
+Eight families now technically qualify. X, T and N await separate human
+admission. Further non-giant production remains active.

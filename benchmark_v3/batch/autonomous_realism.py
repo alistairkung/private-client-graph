@@ -129,8 +129,8 @@ def plan_revision(
         "original_source_commitments": parent.freeze.source_commitments,
         "original_review_receipts": parent.review_commitments, "affected_sources": sorted(affected),
     }
-    if ticket_return is not None:
-        lineage["rejected_author_context"] = ticket_return
+    if ticket_return is not None or release.get("pre_author_scope_return") is not None:
+        lineage["rejected_author_context"] = ticket_return or release["pre_author_scope_return"]
     if parent.prior_scope_return is not None:
         lineage["last_realism_revision"] = release["parent_revision"]
         lineage["parent_revision"] = parent.prior_scope_return["revision"]
@@ -258,7 +258,10 @@ def _read_return(runner: SessionRunner, slot: FamilySlot, release: dict[str, Any
     revision = release["parent_revision"]
     ledger, batch, family = runner.ledger, runner.manifest.batch_id, runner.family
     if revision != runner.revision - 1 and (
-        revision != runner.revision - 2 or not (release.get("scope_return_receipt_sha256") or release.get("empty_ticket_return"))
+        revision != runner.revision - 2 or not (
+            release.get("scope_return_receipt_sha256") or release.get("empty_ticket_return")
+            or release.get("pre_author_scope_return")
+        )
         or not ledger.pooled_revision(batch, family, runner.revision)
     ):
         raise ValueError("A repair may bypass only one verified intervening scope return in its pooled lineage.")
@@ -329,7 +332,36 @@ def _read_return(runner: SessionRunner, slot: FamilySlot, release: dict[str, Any
     result = ReturnedFile(design, bundles, freeze, objections, reviews, receipts, prior, earlier)
     if revision == runner.revision - 2 and "scope_return_receipt_sha256" in release:
         return _scope_repair_parent(runner, slot, result, release["scope_return_receipt_sha256"])
+    if revision == runner.revision - 2 and "pre_author_scope_return" in release:
+        skipped = replace(runner, revision=runner.revision - 1, directory=runner.directory.with_name(str(runner.revision - 1)))
+        record, rejected = pre_author_scope_return(skipped)
+        if record != release["pre_author_scope_return"]:
+            raise ValueError("The rejected un-authored scope proposal changed after review.")
+        scope_objections = {f"pre-author:{index}": issue for index, issue in enumerate(record["objections"], 1)}
+        return replace(result, objections=objections | scope_objections, previous_plan=rejected)
     return result
+
+
+def pre_author_scope_return(runner: SessionRunner) -> tuple[dict[str, Any], RepairPlan]:
+    batch, family = runner.manifest.batch_id, runner.family
+    parent = release_event(runner)
+    if (not runner.ledger.requires_delivery_attestation or parent is None or "pre_author_scope_return" in parent
+            or parent["parent_revision"] != runner.revision - 1
+            or any(row["revision"] == runner.revision and row["stage"] == "author"
+                   and row["job"] not in {author_context.JOB, author_context.JOB + repair_authority.FORMAT_RETRY}
+                   for row in runner.ledger.attempts(family))):
+        raise ValueError("A new preauthor plan requires a first independently returned repair before any author dispatch.")
+    chosen = next(row["details"] for row in runner.ledger.events(batch, family)
+                  if row["revision"] == runner.revision and row["kind"] == "repair_plan_selection")
+    plan, planner, _ = runner.committed_result("design", chosen["job"], "audit", RepairPlan)
+    review, receipt, _ = runner.committed_result("author", author_context.JOB, "audit", author_context.AuthorContextReview)
+    if review.verdict != "return" or not review.objections or planner["receipt_sha256"] != chosen["receipt_sha256"]:
+        raise ValueError("A new preauthor plan must bind the exact independently rejected documentary proposal.")
+    return {
+        "revision": runner.revision, "planner_receipt_sha256": planner["receipt_sha256"],
+        "scope_receipt_sha256": receipt["receipt_sha256"], "objections": review.objections,
+        "review": review.model_dump(mode="json"),
+    }, plan
 
 
 def empty_attachment_ticket_return(runner: SessionRunner, source_id: str) -> dict[str, Any]:

@@ -3575,3 +3575,39 @@ def test_pre_author_cover_clarification_preserves_the_participant_projection(app
     assert author_delivery.projection(corrected, {}) == author_delivery.projection(original, {})
     with pytest.raises(ValueError, match="unique actual forwarding cover"):
         author_repair.cover_clarification(runner, "src1", "src3", "src2")
+
+
+def test_new_pre_author_plan_binds_the_rejected_scope_and_precedes_authoring(autonomous, monkeypatch):
+    from benchmark_v3.batch import author_context, autonomous_realism, repair_authority
+    from benchmark_v3.batch.sessions import SessionRunner
+
+    ledger, commission = autonomous
+    batch, family = commission.manifest.batch_id, "G"
+    coordinator.commission_batch(ledger, commission, BOUNDARY)
+    monkeypatch.setattr(type(ledger), "requires_delivery_attestation", property(lambda _: True))
+    ledger.event(batch, family, 2, "transition", repair_authority.REVISION, "returned", "design",
+                 {"parent_revision": 1})
+    ledger.event(batch, family, 2, "repair_plan_selection", "chosen", "design", "design", {
+        "job": repair_authority.PLAN_JOB, "receipt_sha256": "a" * 64,
+    })
+    plan = autonomous_realism.RepairPlan(disposition="repair", objections={}, revised_design=None,
+                                        tickets={"src1": "Clarify the received letter."}, progress="initial",
+                                        rationale="Address the earlier documentary return.")
+    review = author_context.AuthorContextReview(verdict="return", findings={"src1": "Wrong attachment version."},
+                                                objections=["The letter came from a different issuing counterpart."])
+
+    def retained(self, stage, job, role, result_type):
+        assert self.revision == 2 and role == "audit"
+        if job == repair_authority.PLAN_JOB:
+            return plan, {"receipt_sha256": "a" * 64}, {}
+        assert job == author_context.JOB and stage == "author"
+        return review, {"receipt_sha256": "b" * 64}, {}
+
+    monkeypatch.setattr(SessionRunner, "committed_result", retained)
+    runner = commission.session_runner(ledger, family, 2)
+    details, original = autonomous_realism.pre_author_scope_return(runner)
+    assert original == plan and details["scope_receipt_sha256"] == "b" * 64
+    assert details["objections"] == review.objections
+    monkeypatch.setattr(type(ledger), "attempts", lambda *_: [{"revision": 2, "stage": "author", "job": "author-src1"}])
+    with pytest.raises(ValueError, match="before any author dispatch"):
+        autonomous_realism.pre_author_scope_return(runner)

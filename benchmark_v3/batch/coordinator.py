@@ -839,6 +839,26 @@ def recover_audit_recheck_representation(ledger: Ledger, batch: str, family: str
                      {"receipt_sha256": receipt["receipt_sha256"], "reference": "One fresh bounded representation check."})
 
 
+def release_returned_pre_author_plan(ledger: PooledLedger, batch: str, family: str) -> None:
+    with ledger.coordinator_lock():
+        ledger.require_running()
+        commission = load_commission(ledger, batch)
+        revision, state, issue = family_status(ledger, batch, family)
+        runner = commission.session_runner(ledger, family, revision)
+        original = autonomous_realism.release_event(runner)
+        if (original is None or state != "quarantined" or not issue
+                or (issue["stage"], issue["code"]) != ("author", "scientific_review")
+                or not ledger.pooled_revision(batch, family, revision)):
+            raise ValueError("A preauthor replan requires an exact retained scientific scope return.")
+        record, _ = autonomous_realism.pre_author_scope_return(runner)
+        if commissioning._read_json(issue["evidence"]) != record["review"]:
+            raise ValueError("The retained independent scope review differs from the current exception.")
+        ledger.event(batch, family, revision + 1, "transition", repair_authority.REVISION, state, "design", original | {
+            "pre_author_scope_return": record,
+            "family_sessions_remaining": ledger.effective_budget().families[family] - len(ledger.attempts(family)),
+        })
+
+
 def release_empty_attachment_ticket_recovery(ledger: Ledger, batch: str, family: str, source_id: str) -> None:
     with ledger.coordinator_lock():
         ledger.require_running()
