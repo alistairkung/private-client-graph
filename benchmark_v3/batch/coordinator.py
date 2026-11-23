@@ -192,8 +192,12 @@ def _run_roadmap(ledger: Ledger, commission: Commission, review: DesignReview | 
     _reopen_recovered_plans(ledger, commission, slots)
     with ThreadPoolExecutor(max_workers=manifest.max_parallel_families) as executor:
         workers: dict[Future[None], str] = {}
+        snapshot_recovery_pending = False
         while True:
             ledger.require_running()
+            if snapshot_recovery_pending and not workers:
+                _reopen_redundant_snapshots(ledger, commission, slots)
+                snapshot_recovery_pending = False
             progress = roadmap_progress(ledger, commission)
             needed = target - len(progress.qualified)
             open_workers = max(0, min(needed, manifest.max_parallel_families) - len(workers))
@@ -202,7 +206,8 @@ def _run_roadmap(ledger: Ledger, commission: Commission, review: DesignReview | 
                 family for family in progress.active
                 if family not in in_progress and (review is None or review.accepts(family))
             ]
-            new = progress.reserve[:max(0, open_workers - len(active))]
+            # Preserve the slot for an exact retained repair until its peers settle.
+            new = [] if snapshot_recovery_pending else progress.reserve[:max(0, open_workers - len(active))]
             _activate_roadmap_slots(ledger, commission, new)
             for family in (active + new)[:open_workers]:
                 workers[executor.submit(_work_family, ledger, commission, slots[family])] = family
@@ -210,8 +215,9 @@ def _run_roadmap(ledger: Ledger, commission: Commission, review: DesignReview | 
                 return
             finished, _ = wait(workers, return_when=FIRST_COMPLETED)
             for worker in finished:
-                workers.pop(worker)
+                family = workers.pop(worker)
                 worker.result()
+                snapshot_recovery_pending |= _redundant_snapshot_stop(family_status(ledger, manifest.batch_id, family))
 
 
 def _activate_roadmap_slots(ledger: Ledger, commission: Commission, families: list[str]) -> None:
@@ -226,17 +232,22 @@ def _activate_roadmap_slots(ledger: Ledger, commission: Commission, families: li
             )
 
 
+def _redundant_snapshot_stop(status: tuple[int, str, dict[str, Any] | None]) -> bool:
+    revision, state, blocking = status
+    return ((revision, state) == (1, "design") and blocking is not None
+            and (blocking["code"], blocking["evidence"]) == ("input_integrity", design_recovery.PREFIX_FAILURE))
+
+
 def _reopen_redundant_snapshots(
     ledger: Ledger, commission: Commission, slots: dict[str, FamilySlot],
 ) -> None:
     batch = commission.manifest.batch_id
     for allocation in commission.manifest.families:
         family = allocation.family_id
-        revision, state, blocking = family_status(ledger, batch, family)
-        if (revision, state) != (1, "design") or not blocking or (
-            blocking["code"], blocking["evidence"]
-        ) != ("input_integrity", design_recovery.PREFIX_FAILURE):
+        status = family_status(ledger, batch, family)
+        if not _redundant_snapshot_stop(status):
             continue
+        revision = status[0]
         runner = commission.session_runner(ledger, family, revision)
         try:
             remaining_defect = design_recovery.recover_milestone_snapshot(runner, slots[family])

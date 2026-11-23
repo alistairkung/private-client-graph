@@ -2118,16 +2118,36 @@ def test_milestone_recovers_a_redundant_full_file_snapshot_without_reissuing_des
     behavior["G", "design"] = lambda _: _design("G") | {"scaling_snapshots": [1, 2]}
     behavior["H", "design"] = "interrupt_after_receipt"
     coordinator.commission_batch(ledger, commission, BOUNDARY)
+    release_peer = threading.Event()
+    work_family = coordinator._work_family
+    wait = coordinator.wait
+    wait_count = 0
 
     def validate_as_before(runner, slot, design):
         science.verify_design(slot, design)
         return design
 
+    def hold_peer(ledger, commission, slot):
+        if slot.family_id == "H":
+            assert release_peer.wait(5)
+        work_family(ledger, commission, slot)
+
+    def wait_with_peer_held(workers, *, return_when):
+        nonlocal wait_count
+        wait_count += 1
+        if wait_count == 2:
+            release_peer.set()
+            assert len(workers) == 1
+        return wait(workers, return_when=return_when)
+
     with monkeypatch.context() as patch:
         patch.setattr(design_recovery, "verify_milestone_design", validate_as_before)
+        patch.setattr(coordinator, "_work_family", hold_peer)
+        patch.setattr(coordinator, "wait", wait_with_peer_held)
         with pytest.raises(Interrupted):
             coordinator.run_batch(ledger, batch)
     assert coordinator.family_status(ledger, batch, "G")[2]["evidence"] == design_recovery.PREFIX_FAILURE
+    assert coordinator.roadmap_progress(ledger, commission).reserve == ["I", "J"]
 
     del behavior["H", "design"]
     coordinator.run_batch(ledger, batch)
@@ -4378,3 +4398,17 @@ def test_verified_quarantine_releases_the_pool_but_never_the_affected_custody(ap
     with pytest.raises(TaskHalted, match="affected custody is quarantined"):
         active.reserve(family, 1, "design", "design", {}, "a" * 64)
     assert pool.qualifications() == []
+
+    successor = sorted([commitment, "f" * 64])
+    monkeypatch.setattr(pool, "dispatch_quarantine_digests", lambda: successor)
+    assert pool.verified_dispatch_slots() == 1
+    path = pool.dispatch_capacity_path(successor)
+    artifacts.write_json(path, capacity | {"quarantine_releases": successor})
+    assert pool.verified_dispatch_slots() == 2
+
+    newest = sorted([*successor, "0" * 64])
+    monkeypatch.setattr(pool, "dispatch_quarantine_digests", lambda: newest)
+    assert pool.verified_dispatch_slots() == 1
+    artifacts.write_json(pool.dispatch_capacity_path(newest), capacity)
+    with pytest.raises(TaskHalted, match="does not bind the current quarantine epoch"):
+        pool.verified_dispatch_slots()

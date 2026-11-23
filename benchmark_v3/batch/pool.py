@@ -521,9 +521,29 @@ class MilestonePool:
             return (_has_runtime_quarantine(connection)
                     and connection.execute("SELECT 1 FROM quarantined_runtime_custody LIMIT 1").fetchone() is not None)
 
+    def dispatch_quarantine_digests(self) -> list[str]:
+        with closing(_read_only(self.path)) as connection:
+            if not _has_runtime_quarantine(connection):
+                return []
+            return [record for record, in connection.execute(
+                "SELECT record_sha256 FROM quarantined_runtime_custody ORDER BY record_sha256",
+            )]
+
+    def dispatch_capacity_path(self, quarantine_digests: list[str]) -> Path:
+        epoch = commissioning.digest(commissioning.json_text(quarantine_digests).encode())
+        return self.root / "dispatch-capacity" / f"{epoch}.json"
+
     def verified_dispatch_slots(self) -> int:
         """Allow a bounded second slot only on the exact verified recovery epoch."""
-        path = self.root / "verified-dispatch-capacity.json"
+        if self.giant_phase is not None:
+            return 1
+        releases = self.dispatch_quarantine_digests()
+        if not releases:
+            return 1
+        path = self.dispatch_capacity_path(releases)
+        legacy = not path.exists()
+        if legacy:
+            path = self.root / "verified-dispatch-capacity.json"
         if not path.exists():
             return 1
         try:
@@ -535,12 +555,10 @@ class MilestonePool:
                 or proof.get("packet_sha256") != commissioning.digest(Path(packet.__file__).read_bytes())
                 or proof.get("author_delivery_sha256") != commissioning.digest(Path(author_delivery.__file__).read_bytes())):
             raise TaskHalted("The independent dispatch-capacity proof differs from the current isolation release.")
-        with closing(_read_only(self.path)) as connection:
-            releases = [record for record, in connection.execute(
-                "SELECT record_sha256 FROM quarantined_runtime_custody ORDER BY record_sha256",
-            )]
         if releases != proof.get("quarantine_releases"):
-            return 1
+            if legacy:
+                return 1
+            raise TaskHalted("The dispatch-capacity proof does not bind the current quarantine epoch.")
         contexts = proof.get("concurrent_runtime_contexts")
         if (not isinstance(contexts, list) or len(contexts) != 2
                 or any(not isinstance(context, dict) for context in contexts)

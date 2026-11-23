@@ -334,9 +334,13 @@ testing the distinct transfer shortcut.
 
 BN's initial audit supported the matched graphs and joint age proof
 while returning an overapproved singleton for office at the cutoff.
-The controller reopens the exact audit return for independent
-condition-local adjudication on the same freeze. The original
-objection and precommitted controls remain part of the next review.
+The controller retained that return for two fresh condition-local
+evidence reviews on the same freeze. The final audit still rejected
+standalone office proof in both keys and identified overstated custody
+dating in one condition. The control proposals remain unobserved. BN
+is quarantined at the bounded review limit after 30 charged sessions.
+Its exact disposition is
+`75c45b85ab75b179fa70ae41761a6f3519e9a1aee5ddabaf25bbcdfe09077290`.
 
 An immutable reserved packet can be reopened without holding the live
 dispatch slot. Reopen-only reservations cannot start a new scientific
@@ -346,10 +350,16 @@ verified capacity commitment is
 `af201b9cf19fa9b347bd1acc7e69eab28aabcccd8c981bfd8d52cdcd565b74e2`.
 New reservations use at most two independent runtime slots under the
 same shared integrity check. A later quarantine invalidates that
-capacity release and returns scheduling to one slot.
+capacity release and returns scheduling to one slot. Successive
+verifications retain each proof under the digest of the exact set of
+quarantine commitments. A capacity proof for an earlier set cannot
+release the second slot following another quarantine.
 
 New audit and repair-plan packets state the required disposition and
 classification layouts at the first attempt. The controller reconstructs
 previously reserved prompts exactly. When both verified slots are busy,
 waiting reservations pass through a scheduling lock. The next turn
 releases that lock before it runs, preserving the two independent slots.
+An exact recoverable design stop retains its place in the roadmap while
+the other in-flight family settles. The controller reopens the original
+receipt before allocating a reserve for that place.
