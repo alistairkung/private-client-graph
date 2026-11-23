@@ -149,6 +149,28 @@ receipt. A worker checks shared stops and the technical qualification
 target before admitting any fresh reservation. Verification of a dossier
 is a prerequisite for counting it toward the pooled target.
 
+A successor phase can bind a qualified predecessor at the exact closing
+balance. The owner scope carries the same cumulative ceiling, the predecessor
+pool digest and its closing archive. Each retained custody records a new
+binding alongside the original. Its starting balance includes every original
+and pooled charge. Prior pool handles cannot reserve fresh work after the
+successor takes effect. A new independent development commission can enrol
+at zero charges after its exact manifest and task identity are committed.
+
+The pre-giant phase excludes Family V and prohibited workloads at enrolment
+and reservation. A 51–99 Source commission requires a verified 21–50 Source
+technical dossier. A large administrative case requires the large-file
+scientific audit. Individual author jobs can run concurrently after their
+recorded deliveries are available. The workflow commits their outputs in
+the declared inventory order and keeps two independent blind reading lanes.
+
+When an exact documentary repair was infeasible only under a former
+allocation, a fresh capacity review can bind the original decision at the
+same revision. A scope return can instead commission a new revision from
+the last realism-assessed file after verifying the intervening comparison
+receipt, revised design, both Source bundles and the independent objections.
+Each path retains the earlier output and requires fresh dependent gates.
+
 Earlier ceilings and reservations remain available as historical records.
 An ordinary ledger cannot start new work outside the pool after it is
 bound. A legacy packet implementation mismatch stops the pool until a

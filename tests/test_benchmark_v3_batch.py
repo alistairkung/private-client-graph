@@ -1237,6 +1237,116 @@ def test_shared_pool_counts_verified_dossiers_and_stops_new_reservations(approve
         ledger.reserve("H", 1, "design", "design", {"role": "designer"}, "no-new-reservation")
 
 
+
+def test_successor_preserves_the_cumulative_ceiling_and_blocks_predecessor_reservations(approved, transport, tmp_path):
+    original, commission = approved
+    coordinator.commission_batch(original, commission, BOUNDARY)
+    manifest = commission.manifest
+    member = CustodyMember(root=str(original.root), task_id=manifest.task_id, starting_charges=0)
+    previous = MilestonePool(tmp_path / "prior-pool", PoolAuthority(
+        owner=OWNER, reference="Exact baseline phase.", prior_archive_sha256="a" * 64,
+        starting_charges=199, cumulative_ceiling=225, additional_target=1, members=[member],
+    ))
+    first = previous.join(original.root)
+    first.release(manifest.batch_id, "G", 1, "design", parent_sha256="a" * 64, reference="Baseline development scope.")
+    coordinator._work_family(first, commission, commission.portfolio.slots[0])
+    dossier = next(row["details"]["family_sha256"] for row in first.events(manifest.batch_id, "G")
+                   if row["kind"] == "transition" and row["name"] == "dossier")
+    previous.record_qualification(first, manifest.batch_id, "G", 1, dossier)
+    charged = len(original.attempts("G"))
+    scope = PoolAuthority(
+        owner=OWNER, reference="Exact successor phase.", prior_archive_sha256="b" * 64,
+        starting_charges=199 + charged, cumulative_ceiling=225, additional_target=2,
+        predecessor_sha256=previous.digest, excluded_families=("I", "V"),
+        members=[member.model_copy(update={"starting_charges": charged})],
+    )
+    with pytest.raises(ValueError, match="predecessor pool is required"):
+        MilestonePool(tmp_path / "missing-parent", scope)
+    with pytest.raises(ValueError, match="preserve its predecessor owner and cumulative ceiling"):
+        MilestonePool(tmp_path / "changed-budget", scope.model_copy(update={"cumulative_ceiling": 226}),
+                      predecessor=previous)
+    with pytest.raises(ValueError, match="exact charges retained"):
+        MilestonePool(tmp_path / "lost-charge", scope.model_copy(update={"starting_charges": 198 + charged}),
+                      predecessor=previous)
+    second = MilestonePool(tmp_path / "next-pool", scope, predecessor=previous)
+    active = second.join(original.root)
+    assert first.attempts("G") == active.attempts("G")
+    assert previous.qualifications()[0]["dossier_sha256"] == dossier
+    assert second.qualifications() == []
+    for family in ("G", "I"):
+        with pytest.raises(ValueError, match="exact scientific stage"):
+            active.release(manifest.batch_id, family, 1, "design", parent_sha256="b" * 64, reference="Invalid scope.")
+    active.release(manifest.batch_id, "H", 1, "design", parent_sha256="b" * 64, reference="One successor slot.")
+    assert coordinator.family_status(active, manifest.batch_id, "H") == (1, "design", None)
+    with pytest.raises(TaskHalted, match="active custody pool"):
+        first.reserve("H", 1, "old-pool", "design", {"role": "designer"}, "former-stage")
+    assert active.reserve("H", 1, "successor", "design", {"role": "designer"}, "later-stage")
+    assert len(active.attempts("H")) == 1
+    assert second.join(original.root).attempts("H") == active.attempts("H")
+
+    slot = commission.portfolio.slots[3]
+    next_manifest = manifest.model_copy(update={
+        "task_id": "fresh-development-task", "batch_id": "fresh-development-batch", "phase": "milestone",
+        "qualification_target": 1,
+        "families": [type(manifest.families[0])(family_id="J", hypothesis=slot.hypothesis, sessions=10)],
+    })
+    fresh = coordinator.open_ledger(tmp_path / "fresh-v3-custody")
+    coordinator.commission_batch(fresh, coordinator.Commission(
+        commission.portfolio, next_manifest, _approval(commission.portfolio, next_manifest),
+    ), BOUNDARY)
+    with pytest.raises(ValueError, match="outside this shared milestone"):
+        second.join(fresh.root)
+    enrollment = second.enrol(fresh, next_manifest, reference="Exact fresh independent development case.")
+    same = second.enrol(fresh, next_manifest, reference="Exact fresh independent development case.")
+    assert enrollment == same
+    peer = second.join(fresh.root)
+    peer.release(next_manifest.batch_id, "J", 1, "design", parent_sha256=enrollment, reference="Fresh release.")
+    assert peer.reserve("J", 1, "peer-design", "design", {"role": "designer"}, "new-design")
+    fresh.event(next_manifest.batch_id, "J", 1, "task_halt", "runtime-isolation", "design", None, {"reason": "Tool use."})
+    with pytest.raises(TaskHalted, match="shared integrity stop"):
+        active.require_running()
+
+
+
+def test_pooled_parallel_authors_keep_exact_deliveries_and_inventory_order(approved, tmp_path, monkeypatch):
+    from benchmark_v3.batch.workflow import FamilyWorkflow
+
+    ledger, commission = approved
+    runner = commission.session_runner(ledger, "G", 1)
+    slot = commission.portfolio.slots[0]
+    workflow = FamilyWorkflow(runner, slot, commission.portfolio.admission_criteria)
+    day = date(2026, 1, 1)
+    inventory = [
+        {"source_id": identity, "author": identity, "created_on": day,
+         "provenance": "Fictional participant record.", "participant_brief": "Draft the record.", "received": received}
+        for identity, received in (("AAA", []), ("BBB", []), ("CCC", ["AAA"]))
+    ]
+    design = DesignOutput.model_validate({
+        "cutoff": day, "neutral_brief": "Review the records.", "documentary_references": [],
+        "private_history": "Three local participant records.", "inventory": inventory, "matched": [],
+        "candidates": [EDGE], "required": {"G000": [EDGE]},
+    })
+    barrier = threading.Barrier(2)
+
+    def write_record(worker, identity, inputs, *, reuse, design):
+        assert worker is not workflow
+        assert not reuse
+        deliveries = json.loads(inputs["received_correspondence"])
+        if identity in ("AAA", "BBB"):
+            barrier.wait(timeout=5)
+            assert deliveries == []
+        else:
+            assert deliveries == [{"id": "AAA", "title": "AAA", "text": "Text of AAA."}]
+        worker.sessions.append({"source_id": identity})
+        return AuthoredSource(title=identity, text=f"Text of {identity}.")
+
+    monkeypatch.setattr(type(ledger), "parallel_scientific_jobs", property(lambda _: 2))
+    monkeypatch.setattr(FamilyWorkflow, "authored", write_record)
+    sources = workflow.author(design)
+    assert [source.id for source in sources] == ["AAA", "BBB", "CCC"]
+    assert workflow.sessions == [{"source_id": source.id} for source in sources]
+
+
 def test_shared_pool_preserves_an_earlier_close_when_a_resumed_revision_fails(approved, tmp_path):
     from benchmark_v3.batch.workflow import FamilyWorkflow
 
@@ -2459,3 +2569,63 @@ def test_autonomous_realism_replans_before_spending_on_unaffordable_authors(auto
     ]
     selected = next(row for row in ledger.events(batch, "G") if row["kind"] == "repair_plan_selection")
     assert selected["details"]["job"] == "repair-budget-plan"
+
+
+def test_pooled_scope_return_reopens_only_the_verified_prior_realism_file(autonomous, transport, tmp_path):
+    from benchmark_v3.batch import repair_authority
+
+    original, commission = autonomous
+    manifest = commission.manifest
+    batch = manifest.batch_id
+    slot = commission.portfolio.slots[0]
+    calls, behavior, _ = transport
+    coordinator.commission_batch(original, commission, BOUNDARY)
+    pool = MilestonePool(tmp_path / "scope-return-pool", PoolAuthority(
+        owner=OWNER, reference="Exact pooled scope repair.", prior_archive_sha256="b" * 64,
+        starting_charges=295, cumulative_ceiling=335, additional_target=1,
+        members=[CustodyMember(root=str(original.root), task_id=manifest.task_id, starting_charges=0)],
+    ))
+    ledger = pool.join(original.root)
+    ledger.release(batch, "G", 1, "design", parent_sha256="a" * 64, reference="Original work.")
+    behavior["G", "author-src1"] = lambda inputs: {
+        "title": "Record", "text": f"{QUOTE}\n{inputs.get('revision_ticket', '')}",
+    }
+    behavior["G", "realism-000"] = lambda inputs: _output("realism", "G", "", inputs) | {
+        "verdict": "pass" if "Accurate document" in inputs["sources"] else "repair",
+        "objections": [] if "Accurate document" in inputs["sources"] else ["Date documentation missing."],
+    }
+    verified_inputs = []
+
+    def plan(inputs):
+        rules = json.loads(inputs["audit_rules"])
+        if "prior_scope_return" in rules:
+            verified_inputs.append(rules["prior_scope_return"])
+            return _repair_plan(inputs, ticket="Accurate document creates no preview cue.")
+        return _repair_plan(inputs, ticket="First repair adds a preview cue.")
+
+    def scope(inputs):
+        content = json.loads(inputs["paired_bundles"])["revised"]["G000"][0]["text"]
+        return {"verdict": "preserved" if "Accurate document" in content else "changed",
+                "scope": "Reviewed.", "provenance": "Reviewed.", "contrast": "Reviewed.",
+                "objections": [] if "Accurate document" in content else ["Prematurely cues an answer."]}
+
+    behavior["G", "repair-plan"] = plan
+    behavior["G", "repair-verification"] = scope
+    coordinator._work_family(ledger, commission, slot)
+    coordinator._work_family(ledger, commission, slot)
+    assert coordinator.family_status(ledger, batch, "G")[:2] == (2, "quarantined")
+    events = ledger.events(batch, "G")
+    parent = next(row for row in events if row["revision"] == 1 and row["kind"] == "disposition")
+    scope_record = next(row["details"] for row in events if row["revision"] == 2 and row["kind"] == "session"
+                        and row["name"] == "repair-verification")
+    ledger.release(batch, "G", 3, "design", parent_sha256=scope_record["receipt_sha256"], reference="Bound scope remedy.")
+    ledger.event(batch, "G", 3, "transition", repair_authority.REVISION, "quarantined", "design", {
+        "role": "fixture custodian", "parent_revision": 1, "disposition_sequence": parent["sequence"],
+        "scope_return_receipt_sha256": scope_record["receipt_sha256"],
+        "manifest_sha256": authorisation.commitment(manifest), "family_sessions_remaining": 27,
+    })
+    coordinator._work_family(ledger, commission, slot)
+    assert coordinator.family_status(ledger, batch, "G") == (3, "admission_ready", None)
+    assert [row["independent_finding"]["objections"] for row in verified_inputs] == [["Prematurely cues an answer."]]
+    assert {revision for _, revision, job, _ in calls if job.startswith("reading")} == {"G@3"}
+    assert scope_record in [event["details"] for event in ledger.events(batch, "G") if event["kind"] == "session"]

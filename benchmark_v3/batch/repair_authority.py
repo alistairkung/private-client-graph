@@ -14,6 +14,7 @@ STOP = "autonomous_realism_stop"
 PLAN_JOB = "repair-plan"
 BUDGET_PLAN_JOB = "repair-budget-plan"
 PLAN_RECOVERY = "realism_plan_reference_recovery"
+CAPACITY_SUCCESSOR = "realism_capacity_successor"
 VERIFY_JOB = "repair-verification"
 FORMAT_RETRY = "-format-retry"
 

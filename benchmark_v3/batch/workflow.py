@@ -2,6 +2,8 @@
 
 import os
 from collections.abc import Callable, Mapping
+from concurrent.futures import Future, ThreadPoolExecutor
+from copy import copy
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any, Literal, TypeVar
@@ -15,7 +17,7 @@ from benchmark_v3.batch import (
     milestone_repair, repair_authority, science,
 )
 from benchmark_v3.batch.contracts import (
-    Adjudication, AuditReview, AuthoredSource, Code, DesignOutput, Reading, RealismReview,
+    Adjudication, AuditReview, AuthorBrief, AuthoredSource, Code, DesignOutput, Reading, RealismReview,
     MilestoneEvidenceRepair, MilestoneAudit, RecoveredAuditReview, Role, Stage,
 )
 from benchmark_v3.batch.ledger import Ledger
@@ -219,41 +221,80 @@ class FamilyWorkflow:
         self.runner.ledger.require_capacity(self.runner.family, self.runner.revision, jobs)
 
     def author(self, design: DesignOutput) -> list[Source]:
+        assignments = self._author_assignments(design)
+        workers = self.runner.ledger.parallel_scientific_jobs
+        if workers > 1:
+            return self._author_in_parallel(design, assignments, workers)
         sources: dict[str, Source] = {}
+        for brief, ticket, reuse, prior in assignments:
+            source = prior or self._author_record(design, brief, ticket, reuse, [sources[key] for key in brief.received])
+            sources[brief.source_id] = source
+        return list(sources.values())
+
+    def _author_assignments(self, design: DesignOutput) -> list[tuple[AuthorBrief, str | None, bool, Source | None]]:
+        assignments: list[tuple[AuthorBrief, str | None, bool, Source | None]] = []
         changed: set[str] = set()
         tickets = self.repair_tickets
         if not tickets.keys() <= {brief.source_id for brief in design.inventory}:
             raise ValueError("Repair tickets must identify known Sources.")
         revision = self.documentary_revision
-        prior_sources: dict[str, Source] = {}
-        if revision is not None:
-            prior_sources = {source.id: source for source in revision.parent.bundles[revision.parent.freeze.natural]}
+        prior_sources = ({source.id: source for source in revision.parent.bundles[revision.parent.freeze.natural]}
+                         if revision is not None else {})
         for brief in design.inventory:
             if revision is not None and brief.source_id not in revision.affected:
-                sources[brief.source_id] = prior_sources[brief.source_id]
+                assignments.append((brief, None, False, prior_sources[brief.source_id]))
                 continue
-            received = [sources[identity].model_dump(mode="json") for identity in brief.received]
-            inputs = {
-                "author_brief": _json({
-                    "participant": brief.author, "date": brief.created_on.isoformat(), "brief": brief.participant_brief,
-                }),
-                "genre_references": _json(design.documentary_references),
-                "received_correspondence": _json(received),
-            }
             ticket = tickets.get(brief.source_id)
             if ticket is None and changed.intersection(brief.received):
                 ticket = "Rewrite this record using the revised received correspondence."
             if ticket:
-                inputs["revision_ticket"] = ticket
                 changed.add(brief.source_id)
-            if revision is not None and "revision_ticket" not in inputs:
-                inputs["revision_ticket"] = "Write this record using its revised instructions and received correspondence."
-            result = self.authored(
-                brief.source_id, inputs, reuse=revision is None and bool(tickets) and ticket is None, design=design,
-            )
-            sources[brief.source_id] = Source(id=brief.source_id, title=result.title, text=result.text)
-        natural = list(sources.values())
-        return natural
+            if revision is not None and ticket is None:
+                ticket = "Write this record using its revised instructions and received correspondence."
+            assignments.append((brief, ticket, revision is None and bool(tickets) and ticket is None, None))
+        return assignments
+
+    def _author_record(self, design: DesignOutput, brief: AuthorBrief, ticket: str | None, reuse: bool,
+                       received: list[Source]) -> Source:
+        inputs = {
+            "author_brief": _json({
+                "participant": brief.author, "date": brief.created_on.isoformat(), "brief": brief.participant_brief,
+            }),
+            "genre_references": _json(design.documentary_references),
+            "received_correspondence": _json(_source_array(received)),
+        }
+        if ticket:
+            inputs["revision_ticket"] = ticket
+        result = self.authored(brief.source_id, inputs, reuse=reuse, design=design)
+        return Source(id=brief.source_id, title=result.title, text=result.text)
+
+    def _author_in_parallel(
+        self, design: DesignOutput, assignments: list[tuple[AuthorBrief, str | None, bool, Source | None]], workers: int,
+    ) -> list[Source]:
+        def produce(brief: AuthorBrief, ticket: str | None, reuse: bool,
+                    deliveries: list[Future[tuple[Source, list[dict[str, Any]]]]],
+                    ) -> tuple[Source, list[dict[str, Any]]]:
+            # Each author sees only the declared deliveries and keeps a local receipt list.
+            received = [task.result()[0] for task in deliveries]
+            worker = copy(self)
+            worker.sessions = []
+            return worker._author_record(design, brief, ticket, reuse, received), worker.sessions
+
+        jobs: dict[str, Future[tuple[Source, list[dict[str, Any]]]]] = {}
+        sources = []
+        with ThreadPoolExecutor(max_workers=workers) as executor:
+            for brief, ticket, reuse, prior in assignments:
+                if prior is None:
+                    job = executor.submit(produce, brief, ticket, reuse, [jobs[key] for key in brief.received])
+                else:
+                    job = Future()
+                    job.set_result((prior, []))
+                jobs[brief.source_id] = job
+            for job in jobs.values():
+                source, receipts = job.result()
+                sources.append(source)
+                self.sessions.extend(receipts)
+        return sources
 
     def authored(self, identity: str, inputs: dict[str, str], *, reuse: bool, design: DesignOutput) -> AuthoredSource:
         name = f"author-{identity}"
@@ -272,7 +313,7 @@ class FamilyWorkflow:
         return self.job(
             name, "author", inputs, "Write this one fictional record from the participant's dated perspective. "
             "Return its title and complete text without editorial notes.", AuthoredSource,
-            validate=verify_literals if repair_authority.enabled(self.runner.ledger, self.runner.manifest) else None,
+            validate=verify_literals if self._validates_documentary_outputs() else None,
         )
 
     def realism(self, design: DesignOutput, bundles: dict[str, list[Source]]) -> dict[str, RealismReview]:
@@ -298,7 +339,7 @@ class FamilyWorkflow:
                 "Review documentary realism independently. Assess purpose, possession, chronology, form, "
                 "density and cues. Supply a source_findings entry for each Source ID. If repair is needed, "
                 "return participant-safe documentary repair tickets keyed by Source ID and describe objections.", RealismReview,
-                validate=verify_inventory if repair_authority.enabled(self.runner.ledger, self.runner.manifest) else None,
+                validate=verify_inventory if self._validates_documentary_outputs() else None,
             )
             if review.source_findings.keys() != {source.id for source in sources}:
                 raise ValueError("Documentary realism must assess every Source.")
@@ -312,6 +353,9 @@ class FamilyWorkflow:
             self.reject("documentary_realism", _json(_models(result)), repair_tickets=tickets)
         self.advance("freeze", {"realism": _models(result)}, gate="independent realism for every condition")
         return result
+
+    def _validates_documentary_outputs(self) -> bool:
+        return self.realism_release is not None or repair_authority.enabled(self.runner.ledger, self.runner.manifest)
 
     def freeze(self, bundles: dict[str, list[Source]], freeze: BatchSourceFreeze) -> None:
         root = self.directory / "family"
@@ -329,8 +373,7 @@ class FamilyWorkflow:
         readings = {}
         agreements = {}
         for index, (condition, sources) in enumerate(bundles.items()):
-            first = self.reader(f"{index:03}-a", design, sources)
-            second = self.reader(f"{index:03}-b", design, sources)
+            first, second = self._condition_readers(index, design, sources)
             readings[condition] = first, second
             agreements[condition] = science.compare_readings(first, second, sources)
         persisted = {condition: [reply.model_dump(mode="json") for reply in pair]
@@ -338,6 +381,22 @@ class FamilyWorkflow:
         self.advance("adjudicate", {"readings": persisted, "agreements": agreements},
                      gate="two separately isolated full-file readings per frozen condition")
         return readings, agreements
+
+    def _condition_readers(self, index: int, design: DesignOutput, sources: list[Source]) -> tuple[Reading, Reading]:
+        keys = (f"{index:03}-a", f"{index:03}-b")
+        if self.runner.ledger.parallel_scientific_jobs <= 1:
+            first, second = keys
+            return self.reader(first, design, sources), self.reader(second, design, sources)
+
+        def read_independently(key: str) -> tuple[Reading, list[dict[str, Any]]]:
+            worker = copy(self)
+            worker.sessions = []
+            return worker.reader(key, design, sources), worker.sessions
+
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            (first_reading, first_receipts), (second_reading, second_receipts) = executor.map(read_independently, keys)
+        self.sessions.extend(first_receipts + second_receipts)
+        return first_reading, second_reading
 
     def reader(self, key: str, design: DesignOutput, sources: list[Source]) -> Reading:
         parts = []
@@ -375,9 +434,7 @@ class FamilyWorkflow:
             "Read only the supplied file. Record exact sourced candidates, unresolved questions, and "
             "each reviewed Source ID. Where your own sectional readings are supplied, independently "
             "reconcile identities, supersession and cross-section claims against every full Source." + extra_instructions,
-            Reading, validate=verify_mechanical_evidence if repair_authority.enabled(
-                self.runner.ledger, self.runner.manifest,
-            ) else None,
+            Reading, validate=verify_mechanical_evidence if self._validates_documentary_outputs() else None,
         )
         science.check_reading(result, sources)
         return result
@@ -425,7 +482,7 @@ class FamilyWorkflow:
             "Use compact JSON without spaces and sort names for symmetric edges."
         )
         job = f"adjudicate-{index:03}"
-        if not self.release and self.runner.manifest.phase != "milestone":
+        if not self.release and self.runner.manifest.phase != "milestone" and self.realism_release is None:
             return self.job(job, "adjudication", inputs, prompt, Adjudication)
         ids = adjudication_contract.resolution_ids(agreement["disagreements"])
         released_job = adjudication_contract.RELEASE_JOBS.get(self.release_action or "")
@@ -438,7 +495,7 @@ class FamilyWorkflow:
             "Use unresolved for remaining scientific objections to the provisional key. "
             "Include ordinary practitioner follow-up in the relevant source_audit entry."
         )
-        complete = (self.runner.manifest.phase == "milestone"
+        complete = (self.runner.manifest.phase == "milestone" or self.realism_release is not None
                     or self.release_action == "complete_evidence_adjudication")
         if complete:
             prompt += adjudication_contract.COMPLETE_EVIDENCE_INSTRUCTIONS

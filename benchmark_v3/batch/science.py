@@ -139,7 +139,7 @@ def audit_risks(
     slot: FamilySlot, adjudications: dict[str, Adjudication], agreements: dict[str, dict[str, Any]],
 ) -> set[Risk]:
     risks: set[Risk] = set()
-    if slot.tier in {"complex", "giant"}:
+    if slot.tier in {"complex", "giant"} or (slot.tier == "administrative" and slot.expected_sources >= 51):
         risks.add("large_or_complex")
     if any(row["disagreements"] for row in agreements.values()):
         risks.add("reader_disagreement")

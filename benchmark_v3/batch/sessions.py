@@ -69,8 +69,18 @@ class SessionRunner:
         if role != "designer" and self.manifest.requires_design_review:
             review = design_review.recorded_review(self.ledger, self.manifest, self.owner)
             activated = release is not None and release["decision"]["release"]["action"] == "child_activation"
+            if not activated and self._pooled_documentary_repair(events):
+                activated = any(row["kind"] == "family_release" and row["revision"] < self.revision
+                                and row["details"]["decision"]["release"]["action"] == "child_activation"
+                                for row in events)
             if review is None or not (review.accepts(self.family) or activated):
                 raise ValueError("The commissioning owner must accept this exact design before authoring.")
+
+    def _pooled_documentary_repair(self, events: list[dict[str, Any]]) -> bool:
+        return self.ledger.pooled_revision(self.manifest.batch_id, self.family, self.revision) and any(
+            row["revision"] == self.revision and row["kind"] == "transition" and row["name"] == repair_authority.REVISION
+            for row in events
+        )
 
     def run(
         self, stage: Stage, job: str, role: Role, inputs: dict[str, str], instructions: str,
@@ -187,11 +197,17 @@ class SessionRunner:
                 ("design", repair_authority.PLAN_JOB), ("design", repair_authority.BUDGET_PLAN_JOB),
                 ("author", repair_authority.VERIFY_JOB),
             }:
-                permitted = any(
-                    row["revision"] == self.revision and row["kind"] == "transition"
-                    and row["name"] == repair_authority.REVISION
-                    for row in self.ledger.events(self.manifest.batch_id, self.family)
+                events = self.ledger.events(self.manifest.batch_id, self.family)
+                permitted = self._pooled_documentary_repair(events) or (
+                    repair_authority.enabled(self.ledger, self.manifest) and any(
+                        row["revision"] == self.revision and row["kind"] == "transition"
+                        and row["name"] == repair_authority.REVISION for row in events
+                    )
                 )
+            if (recovery and (stage, base_job) == ("author", "design-scope") and self.revision == 1
+                    and self.manifest.requires_design_review
+                    and self.ledger.pooled_revision(self.manifest.batch_id, self.family, self.revision)):
+                permitted = True
             followup_job = self.ledger.construction_jobs(followup).get(job) if followup else None
             if followup_job is not None and followup_job.stage == stage and followup_job.role == role:
                 permitted = True

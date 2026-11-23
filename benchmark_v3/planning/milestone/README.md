@@ -1,5 +1,7 @@
 # Benchmark v3 development milestone
 
+[Pre-giant continuation scope](PRE-GIANT-SCOPE.md) · [Eight-family qualification](SHARED-POOL-RESULTS.md)
+
 [Continuation scope and budget](CONTINUATION.md) · [Autonomous realism amendment outcome](AUTONOMOUS-REALISM.md) · [Original execution outcome](RESULTS.md)
 
 The milestone target is eight independent development Matter histories.

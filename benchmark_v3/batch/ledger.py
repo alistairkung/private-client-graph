@@ -442,6 +442,10 @@ class Ledger:
     def pooled_revision(self, batch: str, family: str, revision: int) -> bool:
         return False
 
+    @property
+    def parallel_scientific_jobs(self) -> int:
+        return 1
+
     def _authorize_reservation(
         self, connection: sqlite3.Connection, family: str, revision: int, job: str, stage: Stage,
         request: dict[str, Any], request_sha256: str, *, active_only: bool,
