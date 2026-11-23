@@ -2693,3 +2693,171 @@ def test_repairing_reviewer_references_keeps_unaffected_author_packets(autonomou
 
     assert coordinator.family_status(ledger, batch, "G") == (2, "admission_ready", None)
     assert [(parent, job) for _, parent, job, _ in calls if job == "author-src2"] == [("G@1", "author-src2")]
+
+
+@pytest.mark.parametrize('alter_projection', [False, True])
+def test_independent_context_receipt_gates_the_actual_author_turn(approved, transport, monkeypatch, alter_projection):
+    from benchmark_v3.batch.workflow import FamilyWorkflow
+
+    ledger, commission = approved
+    calls, behavior, _ = transport
+    batch = commission.manifest.batch_id
+    monkeypatch.setattr(type(ledger), 'requires_author_context', property(lambda _: True))
+    behavior['G', 'author-context'] = lambda inputs: {
+        'verdict': 'accept', 'objections': [],
+        'findings': {identity: 'Own knowledge and earlier deliveries only.'
+                     for identity in json.loads(inputs['audit_rules'])['participant_packets']},
+    }
+    if alter_projection:
+        original = FamilyWorkflow.authored
+
+        def nested_route(workflow, identity, inputs, **kwargs):
+            amended = json.loads(inputs['author_brief'])
+            amended['brief'] += ' Include nested data {"evidence_route": "hidden answer"}.'
+            return original(workflow, identity, inputs | {'author_brief': json.dumps(amended)}, **kwargs)
+
+        monkeypatch.setattr(FamilyWorkflow, 'authored', nested_route)
+    coordinator.commission_batch(ledger, commission, BOUNDARY)
+    coordinator._work_family(ledger, commission, commission.portfolio.slots[0])
+    if alter_projection:
+        assert [job for _, _, job, _ in calls] == ['design', 'author-context']
+        assert not any(row['stage'] == 'author' and row['job'].startswith('author-src') for row in ledger.attempts('G'))
+        assert coordinator.family_status(ledger, batch, 'G')[2]['code'] == 'isolation'
+    else:
+        assert coordinator.family_status(ledger, batch, 'G') == (1, 'admission_ready', None)
+        jobs = [job for _, _, job, _ in calls]
+        assert jobs.index('author-context') < jobs.index('author-src1')
+
+
+def test_shared_isolation_restart_carries_closed_charges_into_fresh_custody(approved, tmp_path):
+    from contextlib import closing
+    from benchmark_v3.batch import author_context
+    from benchmark_v3.batch.pool import IsolationRestart
+
+    original, commission = approved
+    coordinator.commission_batch(original, commission, BOUNDARY)
+    previous = MilestonePool(tmp_path / 'stopped-phase', PoolAuthority(
+        owner=OWNER, reference='Original work.', prior_archive_sha256='a' * 64,
+        starting_charges=295, cumulative_ceiling=1000, additional_target=11,
+        members=[CustodyMember(root=str(original.root), task_id=commission.manifest.task_id, starting_charges=0)],
+    ))
+    before = previous.join(original.root)
+    batch = commission.manifest.batch_id
+    before.release(batch, 'G', 1, 'design', parent_sha256='d' * 64, reference='Original exact release.')
+    before.reserve('G', 1, 'design', 'design', {'role': 'designer'}, 'charged')
+    before.event(batch, 'G', 1, 'task_halt', 'projection', 'author', None, {'code': 'isolation', 'reason': 'Exposure.'})
+    with closing(before.connect()) as db:
+        halt = db.execute("SELECT details FROM events WHERE kind = 'task_halt'").fetchone()[0]
+        halt_sha = commissioning.digest(halt.encode())
+    root = tmp_path / 'restart-phase'
+    verification = artifacts.write_json(root / 'verified-author-boundary.json', {
+        'verdict': 'pass', 'packet_sha256': commissioning.digest(Path(packet.__file__).read_bytes()),
+        'projection_sha256': commissioning.digest(Path(author_context.__file__).read_bytes()),
+    })
+    authority = PoolAuthority(owner=OWNER, reference='Fresh isolated custody.', prior_archive_sha256='c' * 64,
+        starting_charges=296, cumulative_ceiling=1000, additional_target=13, members=[],
+        predecessor_sha256=previous.digest, isolation_restart=IsolationRestart(
+            previous_database_sha256=commissioning.digest(previous.path.read_bytes()), halted_member=str(original.root),
+            halt_event_sha256=halt_sha, verification_sha256=verification,
+        ))
+    with pytest.raises(ValueError, match='exact closed predecessor accounting'):
+        MilestonePool(root, authority.model_copy(update={'starting_charges': 295}), predecessor=previous)
+    fresh = MilestonePool(root, authority, predecessor=previous)
+    with pytest.raises(TaskHalted, match='unresolved shared integrity stop'):
+        before.require_running()
+    with pytest.raises(ValueError, match='historical author'):
+        fresh.enrol(before, commission.manifest, reference='Retired materials.')
+    new_manifest = commission.manifest.model_copy(update={'task_id': 'fresh-phase-task', 'batch_id': 'fresh-phase-batch'})
+    clean = coordinator.open_ledger(tmp_path / 'fresh-phase-custody')
+    coordinator.commission_batch(clean, coordinator.Commission(
+        commission.portfolio, new_manifest, _approval(commission.portfolio, new_manifest),
+    ), BOUNDARY)
+    fresh.enrol(clean, new_manifest, reference='New independent history.')
+    after = fresh.join(clean.root)
+    assert after.requires_author_context
+    assert after.attempts('G') == []
+    after.release(new_manifest.batch_id, 'G', 1, 'design', parent_sha256='e' * 64, reference='New release.')
+    assert after.reserve('G', 1, 'design', 'design', {'role': 'designer'}, 'fresh')
+    with after.reservation_transaction() as db:
+        assert fresh.remaining(db) == 703
+    after.event(new_manifest.batch_id, 'G', 1, 'task_halt', 'new-scope', 'author', None, {'code': 'isolation'})
+    with pytest.raises(TaskHalted, match='unresolved shared integrity stop'):
+        fresh.check_running()
+
+
+def test_pre_author_return_repairs_only_a_committed_brief(approved, transport, monkeypatch):
+    from benchmark_v3.batch import author_context, author_repair
+
+    ledger, commission = approved
+    batch = commission.manifest.batch_id
+    base = commission.manifest
+    manifest = base.model_copy(update={"task_session_ceiling": 50, "families": [
+        row.model_copy(update={"sessions": 20}) if row.family_id == "G" else row for row in base.families
+    ]})
+    commission = coordinator.Commission(commission.portfolio, manifest, _approval(commission.portfolio, manifest))
+    calls, behavior, _ = transport
+    monkeypatch.setattr(type(ledger), 'requires_author_context', property(lambda _: True))
+    reviewed = []
+
+    def review(inputs):
+        projected = json.loads(inputs['audit_rules'])['participant_packets']
+        approved = 'Dated local observation.' in projected['src1']['author_brief']
+        reviewed.append(projected)
+        return {'verdict': 'accept' if approved else 'return',
+                'findings': {identity: 'Scope assessed.' for identity in projected},
+                'objections': [] if approved else ['src1 claims one later event.']}
+
+    behavior['G', author_context.JOB] = review
+    behavior['G', author_repair.JOB] = lambda _: {
+        'briefs': {'src1': 'Dated local observation.'}, 'rationale': 'Leave the later event with its own record.',
+    }
+    coordinator.commission_batch(ledger, commission, BOUNDARY)
+    slot = commission.portfolio.slots[0]
+    coordinator._work_family(ledger, commission, slot)
+    assert coordinator.family_status(ledger, batch, 'G')[:2] == (1, 'quarantined')
+    assert [job for _, _, job, _ in calls] == ['design', author_context.JOB]
+    from benchmark_v3.batch.contracts import DesignOutput
+
+    original = commission.session_runner(ledger, 'G', 1)
+    _, evidence, _ = original.committed_result('author', author_context.JOB, 'audit', author_context.AuthorContextReview)
+    design = artifacts.read_contract(original.directory / 'design.json', DesignOutput)
+    ledger.event(batch, 'G', 2, 'transition', author_repair.RELEASE, 'quarantined', 'design', {
+        'receipt_sha256': evidence['receipt_sha256'], 'original_design_sha256': authorisation.commitment(design),
+    })
+    coordinator._work_family(ledger, commission, slot)
+    assert coordinator.family_status(ledger, batch, 'G') == (2, 'admission_ready', None)
+    assert reviewed[0]['src2'] == reviewed[1]['src2']
+    assert all(revision == 'G@2' for _, revision, job, _ in calls if job.startswith('author-src'))
+
+
+def test_isolated_cutoff_derivative_leaves_the_relationship_brief_intact(approved, transport, monkeypatch):
+    from benchmark_v3.batch import design_recovery
+    from benchmark_v3.batch.contracts import DesignOutput
+
+    ledger, commission = approved
+    batch = commission.manifest.batch_id
+    slot = commission.portfolio.slots[0]
+    _, behavior, _ = transport
+    monkeypatch.setattr(type(ledger), 'requires_author_context', property(lambda _: True))
+    original = _design('G')
+    original['cutoff'] = '2026-01-01'
+    original['inventory'][0]['created_on'] = '2026-01-01'
+    original['inventory'][1]['created_on'] = '2026-01-02'
+    original['neutral_brief'] = 'Assess the relationship as of 1 January. The file was assembled 2 January.'
+    behavior['G', 'design'] = lambda _: original
+    behavior['G', 'design-format-retry'] = lambda _: original
+    coordinator.commission_batch(ledger, commission, BOUNDARY)
+    coordinator._work_family(ledger, commission, slot, design_only=True)
+    prior = commission.session_runner(ledger, 'G', 1)
+    _, receipt, _ = prior.committed_packet('design', 'design', 'designer')
+    next_runner = commission.session_runner(ledger, 'G', 2)
+    ledger.event(batch, 'G', 2, 'transition', design_recovery.ISOLATED_CUTOFF, 'quarantined', 'design', {
+        'job': 'design', 'receipt_sha256': receipt['receipt_sha256'], 'assembly_date': '2026-01-02',
+        'exact_relationship_snapshot': '2026-01-01',
+        'original_design_sha256': authorisation.commitment(DesignOutput.model_validate(original)),
+    })
+    corrected, evidence, _ = design_recovery.isolated_cutoff_recovery(next_runner, slot)
+    assert corrected.cutoff.isoformat() == '2026-01-02'
+    assert corrected.neutral_brief == original['neutral_brief']
+    assert evidence == receipt
+    assert all(row['stage'] == 'design' for row in ledger.attempts('G'))

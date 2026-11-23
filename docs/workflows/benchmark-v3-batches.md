@@ -186,6 +186,19 @@ Retain the original handoffs and independently reviewed results. Review
 the affected author lineages before reusing Sources or requesting a new
 execution release, and verify the corrected runtime with zero turns.
 
+A release after a verified shared author exposure binds the exact
+halted predecessor ledger and the new projection verification. It opens
+fresh author custody, with the same cumulative ceiling and the earlier
+charges retained. Before each new or repaired family revision starts
+writing Sources, an independent reviewer assesses the precise participant
+brief and earlier delivery list. The runner verifies this receipt at
+reservation and again before dispatch. Each earlier delivery must be
+backed by the exact authored output in the fresh custody. If the initial
+review returns a brief before any author turn, a new isolated planner may
+revise only the affected wording. The revised inventory requires a fresh
+review before authoring. The historical halt remains recorded in the predecessor, and a halt in the new pool
+stops other active families.
+
 A SQLite transaction reserves one session before packet dispatch. Every
 reservation uses one family slot and one task slot. Failed, interrupted,
 uncertain and rejected sessions remain charged. Exact duplicate job

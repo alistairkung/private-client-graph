@@ -443,6 +443,10 @@ class Ledger:
         return False
 
     @property
+    def requires_author_context(self) -> bool:
+        return False
+
+    @property
     def parallel_scientific_jobs(self) -> int:
         return 1
 

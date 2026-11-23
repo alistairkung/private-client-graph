@@ -10,7 +10,7 @@ from pydantic import BaseModel
 
 from benchmark_v3 import commissioning, packet
 from benchmark_v3.batch import (
-    adjudication_contract, adjudication_recovery, annotation_recovery, artifacts, audit_recovery, authorisation,
+    adjudication_contract, adjudication_recovery, annotation_recovery, artifacts, audit_recovery, author_context, author_repair, authorisation,
     construction, continuation, design_review, repair_authority,
 )
 from benchmark_v3.batch.contracts import BatchManifest, Code, Role, Stage
@@ -173,6 +173,11 @@ class SessionRunner:
             raise Blocked(stage, "isolation", str(error), job=job) from error
         except (ValueError, OSError) as error:
             raise Blocked(stage, "input_integrity", str(error), job=job) from error
+        if role == "author" and self.ledger.requires_author_context:
+            try:
+                author_context.require_projection(self, job, inputs)
+            except (ValueError, OSError, KeyError, TypeError, packet.PacketError) as error:
+                raise Blocked(stage, "isolation", str(error), job=job) from error
         allocation = self.manifest.models[role]
         prompt = instructions if role == "designer" else (
             f"{instructions}\nReturn one JSON object. Output schema: "
@@ -210,6 +215,11 @@ class SessionRunner:
                     and self.manifest.requires_design_review
                     and self.ledger.pooled_revision(self.manifest.batch_id, self.family, self.revision)):
                 permitted = True
+            if self.ledger.requires_author_context:
+                if (stage, base_job) == ("author", author_context.JOB):
+                    permitted = True
+                if (stage, base_job) == ("design", author_repair.JOB) and author_repair.recorded(self) is not None:
+                    permitted = True
             followup_job = self.ledger.construction_jobs(followup).get(job) if followup else None
             if followup_job is not None and followup_job.stage == stage and followup_job.role == role:
                 permitted = True
@@ -232,7 +242,7 @@ class SessionRunner:
         if fresh:
             try:
                 artifacts.write_json(path / "request.json", request)
-                packet.run_packet(path, before_turn=lambda: self._before_turn(role, stage, active_only))
+                packet.run_packet(path, before_turn=lambda: self._before_turn(role, stage, active_only, job, inputs))
             except (packet.PacketError, OSError, ValueError) as error:
                 if not (path / "receipt.json").is_file():
                     code: Code = "isolation" if isinstance(error, packet.PacketIsolationError) else "uncertain_dispatch"
@@ -255,8 +265,10 @@ class SessionRunner:
             raise InvalidRoleOutput(f"{job} failed its output contract: {error}") from error
         return value, evidence, unwrapped
 
-    def _before_turn(self, role: Role, stage: Stage, active_only: bool) -> None:
+    def _before_turn(self, role: Role, stage: Stage, active_only: bool, job: str, inputs: dict[str, str]) -> None:
         self._require_authority(role)
+        if role == "author" and self.ledger.requires_author_context:
+            author_context.require_projection(self, job, inputs)
         if active_only:
             self.ledger.verify_active_stage(self.family, self.revision, stage)
 

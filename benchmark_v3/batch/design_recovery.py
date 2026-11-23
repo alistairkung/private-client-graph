@@ -82,10 +82,10 @@ def verify_milestone_design(runner: SessionRunner, slot: FamilySlot, design: Des
     science.verify_design(slot, corrected)
     if corrected is design:
         return design
-    output, receipt, _ = runner.committed_packet("design", "design", "designer")
-    if DesignOutput.model_validate(commissioning._read_json(output)) != design:
+    selected, selected_receipt, _ = runner.committed_result("design", "design", "designer", DesignOutput)
+    if selected != design:
         raise ValueError("Snapshot recovery must match the immutable original design.")
-    _record_snapshot_recovery(runner, design, corrected, receipt)
+    _record_snapshot_recovery(runner, design, corrected, selected_receipt)
     return corrected
 
 
@@ -114,3 +114,38 @@ def _record_snapshot_recovery(
             "scaling_snapshots": corrected.scaling_snapshots, "design_sha256": authorisation.commitment(corrected),
         },
     )
+
+
+ISOLATED_CUTOFF = "isolation-restart-cutoff"
+
+
+def isolated_cutoff_recovery(runner: SessionRunner, slot: FamilySlot) -> tuple[DesignOutput, dict[str, Any], str] | None:
+    """Recover the documentary assembly date from a rejected, un-authored design."""
+    from dataclasses import replace
+
+    release = next((event["details"] for event in runner.ledger.events(runner.manifest.batch_id, runner.family)
+                    if event["revision"] == runner.revision and event["kind"] == "transition"
+                    and event["name"] == ISOLATED_CUTOFF), None)
+    if release is None:
+        return None
+    previous = replace(runner, revision=runner.revision - 1, directory=runner.directory.with_name(str(runner.revision - 1)))
+    if not runner.ledger.requires_author_context or any(
+        row["revision"] == previous.revision and row["stage"] != "design"
+        for row in runner.ledger.attempts(runner.family)
+    ):
+        raise ValueError("A cutoff derivative requires an un-authored design in the verified isolated custody.")
+    job = release["job"]
+    if job not in {"design", "design-format-retry"}:
+        raise ValueError("A cutoff derivative requires an actual retained designer attempt.")
+    output, receipt, _ = previous.committed_packet("design", job, "designer")
+    if receipt["receipt_sha256"] != release["receipt_sha256"]:
+        raise ValueError("The retained designer receipt changed.")
+    original = DesignOutput.model_validate(commissioning._read_json(output))
+    cutoff = max(brief.created_on for brief in original.inventory)
+    if (original.cutoff >= cutoff or cutoff.isoformat() != release["assembly_date"]
+            or original.cutoff.isoformat() != release["exact_relationship_snapshot"]
+            or authorisation.commitment(original) != release["original_design_sha256"]):
+        raise ValueError("The exact documentary assembly date or relationship snapshot differs from the review.")
+    revised = _without_full_file_snapshot(original).model_copy(update={"cutoff": cutoff})
+    science.verify_design(slot, revised)
+    return revised, receipt, authorisation.commitment(revised)

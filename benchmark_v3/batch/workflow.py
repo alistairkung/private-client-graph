@@ -13,7 +13,7 @@ from pydantic import BaseModel
 from benchmark_v3 import commissioning, packet, replay
 from benchmark_v3.batch import (
     adjudication_contract, adjudication_recovery, annotation_recovery, artifacts, audit_contract, audit_recovery,
-    autonomous_realism, construction, continuation, design_recovery, design_review, evidence_recovery,
+    author_context, author_repair, autonomous_realism, construction, continuation, design_recovery, design_review, evidence_recovery,
     milestone_repair, repair_authority, science,
 )
 from benchmark_v3.batch.contracts import (
@@ -147,7 +147,15 @@ class FamilyWorkflow:
         recovery = design_recovery.recorded_cutoff_recovery(self.runner)
         ref = self.slot.hypothesis
         allocation = next(row for row in self.runner.manifest.families if row.family_id == self.slot.family_id)
-        if self.realism_release is not None:
+        brief_repair = author_repair.recorded(self.runner)
+        cutoff_repair = design_recovery.isolated_cutoff_recovery(self.runner, self.slot)
+        if cutoff_repair is not None:
+            design, receipt, digest = cutoff_repair
+            self.sessions.append(receipt)
+            self.transition_inputs["assembled_inventory_cutoff"] = digest
+        elif brief_repair is not None:
+            design = author_repair.repair(self, brief_repair)
+        elif self.realism_release is not None:
             revision, receipt = autonomous_realism.plan_revision(self.runner, self.slot, self.realism_release)
             self.documentary_revision = revision
             self.sessions.append(receipt)
@@ -178,6 +186,7 @@ class FamilyWorkflow:
                     "portfolio_slot": self.slot.model_dump_json(),
                 },
                 "commissioned-designer-batch-v1", DesignOutput,
+                validate=self._verify_fresh_design if self.runner.ledger.requires_author_context else None,
             )
         else:
             previous = self.directory.parent / str(self.runner.revision - 1)
@@ -206,6 +215,10 @@ class FamilyWorkflow:
             return self._reviewed_design(design)
         return design
 
+    def _verify_fresh_design(self, design: DesignOutput) -> None:
+        science.verify_design(self.slot, design_recovery._without_full_file_snapshot(design))
+        author_context.projection(design, {})
+
     def _reviewed_design(self, design: DesignOutput) -> DesignOutput:
         review = design_review.recorded_review(self.runner.ledger, self.runner.manifest, self.runner.owner)
         correction = next((row.name_correction for row in review.designs
@@ -232,6 +245,8 @@ class FamilyWorkflow:
 
     def author(self, design: DesignOutput) -> list[Source]:
         assignments = self._author_assignments(design)
+        if self.runner.ledger.requires_author_context:
+            self._review_author_context(design, {brief.source_id: ticket for brief, ticket, _, _ in assignments if ticket})
         workers = self.runner.ledger.parallel_scientific_jobs
         if workers > 1:
             return self._author_in_parallel(design, assignments, workers)
@@ -240,6 +255,21 @@ class FamilyWorkflow:
             source = prior or self._author_record(design, brief, ticket, reuse, [sources[key] for key in brief.received])
             sources[brief.source_id] = source
         return list(sources.values())
+
+    def _review_author_context(self, design: DesignOutput, tickets: dict[str, str]) -> None:
+        projected = author_context.projection(design, tickets)
+        review = self.job(author_context.JOB, "audit", {
+            "intended_intervention": design.model_dump_json(),
+            "audit_rules": _json({"participant_packets": projected}),
+        }, "Independently audit every exact proposed participant packet before any author is called. "
+           "Check participant and date, what they personally know, and each declared earlier delivery against "
+           "the chronology and origin. Inspect nested text and tickets for references to future or unavailable "
+           "documents, case-wide summaries, alternate conditions, hidden answers or intended proof routes. "
+           "The participant's own act or observation may be documented in ordinary wording. Check that other "
+           "people's knowledge and experimental reasoning stay out. Return on any material objection. "
+           "Give one finding keyed to every Source ID.", author_context.AuthorContextReview)
+        if review.verdict != "accept" or review.objections or review.findings.keys() != projected.keys():
+            self.reject("scientific_review", review.model_dump_json(), quarantine=True)
 
     def _author_assignments(self, design: DesignOutput) -> list[tuple[AuthorBrief, str | None, bool, Source | None]]:
         assignments: list[tuple[AuthorBrief, str | None, bool, Source | None]] = []
@@ -320,8 +350,7 @@ class FamilyWorkflow:
                 raise ValueError("An assigned exact body literal must occur exactly once.")
 
         return self.job(
-            name, "author", inputs, "Write this one fictional record from the participant's dated perspective. "
-            "Return its title and complete text without editorial notes.", AuthoredSource,
+            name, "author", inputs, author_context.INSTRUCTIONS, AuthoredSource,
             validate=verify_literals if self._validates_documentary_outputs() else None,
         )
 

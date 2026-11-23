@@ -1,5 +1,7 @@
 # Pre-giant development outcome
 
+[Subsequent isolated restart scope](ISOLATED-RESTART.md)
+
 **The pre-giant phase stopped at a verified shared scientific-integrity
 failure.** It produced no new qualifying families. The earlier milestone
 recorded eight. A, B, C, D and F retain human admission, X retains its

@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Annotated, Any
 from pydantic import Field, TypeAdapter
 
 from benchmark_v3 import commissioning, packet
-from benchmark_v3.batch import artifacts, authorisation, construction
+from benchmark_v3.batch import artifacts, author_context, authorisation, construction
 from benchmark_v3.batch.contracts import BatchManifest, BudgetAllocation, Stage
 from benchmark_v3.batch.custody import namespace_directory
 from benchmark_v3.batch.ledger import BudgetExhausted, Ledger, TaskHalted
@@ -48,6 +48,14 @@ class CustodyMember(Contract):
     starting_charges: Annotated[int, Field(strict=True, ge=0)]
 
 
+class IsolationRestart(Contract):
+    previous_database_sha256: Digest
+    halted_member: Text
+    halt_event_sha256: Digest
+    verification_sha256: Digest
+    replace_qualified: tuple[FamilyId, ...] = ()
+
+
 class PoolAuthority(Contract):
     owner: Text
     reference: Text
@@ -58,6 +66,7 @@ class PoolAuthority(Contract):
     members: list[CustodyMember]
     predecessor_sha256: Digest | None = None
     excluded_families: tuple[FamilyId, ...] = ()
+    isolation_restart: IsolationRestart | None = None
 
 
 class MilestonePool:
@@ -66,7 +75,8 @@ class MilestonePool:
         self.path = root / "milestone-pool.sqlite"
         self.authority = authority
         self.predecessor = predecessor
-        if not authority.starting_charges < authority.cumulative_ceiling or not authority.members:
+        if (not authority.starting_charges < authority.cumulative_ceiling
+                or (not authority.members and authority.isolation_restart is None)):
             raise ValueError("Milestone pool needs a bounded positive continuation and qualification target.")
         paths = [Path(member.root) for member in authority.members]
         task_ids = {member.task_id for member in authority.members}
@@ -95,7 +105,7 @@ class MilestonePool:
     def _verify_predecessor(self) -> None:
         previous = self.predecessor
         if previous is None:
-            if self.authority.predecessor_sha256 is not None:
+            if self.authority.predecessor_sha256 is not None or self.authority.isolation_restart is not None:
                 raise ValueError("The exact predecessor pool is required to resume the shared ceiling.")
             return
         authority = self.authority
@@ -106,6 +116,9 @@ class MilestonePool:
         with closing(sqlite3.connect(f"{previous.path.as_uri()}?mode=ro", uri=True)) as connection:
             remaining = previous.remaining(connection, attached=False)
             count = connection.execute("SELECT COUNT(*) FROM qualified").fetchone()[0]
+            if authority.isolation_restart is not None:
+                self._verify_isolation_restart(previous, remaining)
+                return
             if (authority.starting_charges != authority.cumulative_ceiling - remaining
                     or count != previous.authority.additional_target or not previous.members.keys() <= self._members.keys()):
                 raise ValueError("The predecessor must be at its verified target with its exact charges retained.")
@@ -119,6 +132,38 @@ class MilestonePool:
                     raise ValueError("A successor custody member must retain every earlier charge.")
                 if prior is None and member.starting_charges:
                     raise ValueError("New custody must join the successor before any scientific session.")
+
+    def _verify_isolation_restart(self, previous: "MilestonePool", remaining: int) -> None:
+        restart = self.authority.isolation_restart
+        assert restart is not None
+        if (self._members or self.authority.starting_charges != self.authority.cumulative_ceiling - remaining
+                or commissioning.digest(artifacts.read_bytes(previous.path)) != restart.previous_database_sha256):
+            raise ValueError("The isolation restart requires fresh custody and the exact closed predecessor accounting.")
+        member = Path(restart.halted_member)
+        if member not in previous.members:
+            raise ValueError("The reported isolation stop is outside the predecessor custody.")
+        with closing(sqlite3.connect(f"{(member / 'ledger-v1.sqlite').as_uri()}?mode=ro", uri=True)) as db:
+            matched = any(commissioning.digest(raw.encode()) == restart.halt_event_sha256
+                          and commissioning._read_json(raw).get("code") == "isolation"
+                          for (raw,) in db.execute("SELECT details FROM events WHERE kind = 'task_halt'"))
+        if not matched:
+            raise ValueError("The original shared isolation stop must remain in custody.")
+        self._verify_restart_runtime()
+
+    def _verify_restart_runtime(self) -> None:
+        restart = self.authority.isolation_restart
+        if restart is None:
+            return
+        raw = artifacts.read_bytes(self.root / "verified-author-boundary.json")
+        details = commissioning._read_json(raw)
+        if (commissioning.digest(raw) != restart.verification_sha256 or details.get("verdict") != "pass"
+                or details.get("packet_sha256") != commissioning.digest(Path(packet.__file__).read_bytes())
+                or details.get("projection_sha256") != commissioning.digest(Path(author_context.__file__).read_bytes())):
+            raise TaskHalted("The verified replacement runtime differs from its isolation release.")
+
+    def _historical_members(self) -> set[Path]:
+        previous = self.predecessor
+        return set(previous.members) | previous._historical_members() if previous is not None else set()
 
     @property
     def members(self) -> dict[Path, CustodyMember]:
@@ -134,6 +179,8 @@ class MilestonePool:
         if (self.predecessor is None or not reference.strip() or ledger.root in self._members
                 or ledger.root != ledger.root.resolve() or manifest.namespace != "development"):
             raise ValueError("New custody requires an exact development commission in a successor pool.")
+        if self.authority.isolation_restart is not None and ledger.root in self._historical_members():
+            raise ValueError("An isolation restart cannot enrol historical author custody.")
         committed = ledger.batch(manifest.batch_id)
         if committed is None or committed["manifest"] != manifest.model_dump(mode="json"):
             raise ValueError("Bind the immutable development commission before enrolment.")
@@ -211,6 +258,7 @@ class MilestonePool:
         return PooledLedger(namespace_directory(root, "development"), self)
 
     def check_running(self) -> None:
+        self._verify_restart_runtime()
         for path in self.members:
             self._verify_enrolment(path)
             with closing(sqlite3.connect(f"{(path / 'ledger-v1.sqlite').as_uri()}?mode=ro", uri=True)) as db:
@@ -327,6 +375,9 @@ class MilestonePool:
                 raise ValueError("A qualified family already has an immutable dossier commitment.")
 
     def _previously_qualified(self, family: str) -> bool:
+        restart = self.authority.isolation_restart
+        if restart is not None and family in restart.replace_qualified:
+            return False
         previous = self.predecessor
         return previous is not None and (any(row["family"] == family for row in previous.qualifications())
                                          or previous._previously_qualified(family))
@@ -421,6 +472,10 @@ class PooledLedger(Ledger):
         self.event(batch, family, revision, "reconcile", self._release_name, current, stage, details)
 
     @property
+    def requires_author_context(self) -> bool:
+        return self.pool.authority.isolation_restart is not None
+
+    @property
     def parallel_scientific_jobs(self) -> int:
         return 4 if self.pool.predecessor is not None else 1
 
@@ -478,6 +533,12 @@ class PooledLedger(Ledger):
             raise ValueError("Scientific reservations cannot include a reserved or already qualified family.")
         batch = connection.execute("SELECT batch FROM families WHERE id = ?", (family,)).fetchone()[0]
         role = request.get("role")
+        if self.requires_author_context and role == "author":
+            from benchmark_v3.batch.coordinator import load_commission
+
+            runner = load_commission(self, batch).session_runner(self, family, revision)
+            author_context.require_prompt(job, request["prompt"])
+            author_context.require_projection(runner, job, request["inputs"])
         planning = (self.pool.predecessor is not None and stage == "design" and role == "research_architect"
                     and job in {"portfolio-supplement", "portfolio-supplement-format-retry"})
         if not self.pooled_revision(batch, family, revision) or (not planning and role not in STAGE_ROLES.get(stage, set())):
