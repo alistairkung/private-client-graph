@@ -2673,9 +2673,11 @@ def test_pooled_scope_return_reopens_only_the_verified_prior_realism_file(autono
     assert scope_record in [event["details"] for event in ledger.events(batch, "G") if event["kind"] == "session"]
 
 
-@pytest.mark.parametrize("second_scope_return, resume_halt", [(False, False), (True, True), (True, False)])
+@pytest.mark.parametrize("second_scope_return, resume_halt, provenance_identifies_recipient", [
+    (False, False, False), (True, True, False), (True, False, False), (False, False, True),
+])
 def test_authored_scope_repair_reuses_checked_delivery_after_preauthor_return(
-    autonomous, transport, tmp_path, monkeypatch, second_scope_return, resume_halt,
+    autonomous, transport, tmp_path, monkeypatch, second_scope_return, resume_halt, provenance_identifies_recipient,
 ):
     from benchmark_v3.batch import autonomous_realism, author_delivery, delivery_particulars, read_format_recovery, repair_authority
     from benchmark_v3.batch.pool import PooledLedger
@@ -2741,8 +2743,10 @@ def test_authored_scope_repair_reuses_checked_delivery_after_preauthor_return(
         if second_scope_return and preserved:
             preserved = ("retained_scope_return" in json.loads(inputs["audit_rules"])
                          or "Remove unsupported administrative detail." in documents[0]["text"])
-        return {"verdict": "preserved" if preserved else "changed", "scope": "Reviewed.", "provenance": "Reviewed.",
-                "contrast": "Reviewed.", "objections": [] if preserved else ["src2 lacks the direct dispatch date."]}
+        provenance = "Only src2 has changed." if provenance_identifies_recipient else "Reviewed."
+        omission = "The direct dispatch date is absent." if provenance_identifies_recipient else "src2 lacks the direct dispatch date."
+        return {"verdict": "preserved" if preserved else "changed", "scope": "Reviewed.", "provenance": provenance,
+                "contrast": "Reviewed.", "objections": [] if preserved else [omission]}
 
     behavior[family, "author-context"] = scope
     behavior[family, "author-src2"] = inventory
@@ -2771,6 +2775,9 @@ def test_authored_scope_repair_reuses_checked_delivery_after_preauthor_return(
     with pytest.raises(ValueError, match="specific recipient Source"):
         coordinator.release_returned_authored_scope_plan(ledger, batch, family, incoming_particulars_source="src1")
     coordinator.release_returned_authored_scope_plan(ledger, batch, family, incoming_particulars_source="src2")
+    if provenance_identifies_recipient:
+        release = autonomous_realism.release_event(commission.session_runner(ledger, family, 4))
+        assert release is not None and release["verified_recipient_scope_restoration"]
 
     def former_stop(*args):
         raise ValueError(delivery_particulars.RETAINED_BODY_REPAIR_STOP)

@@ -1019,7 +1019,7 @@ def release_returned_authored_scope_plan(
                 or state != "quarantined" or not issue or (issue["stage"], issue["code"]) != ("author", "scientific_review")
                 or not ledger.pooled_revision(batch, family, revision)):
             raise ValueError("An authored-scope replan requires an independently returned documentary revision.")
-        review, receipt, _ = runner.committed_result("author", repair_authority.VERIFY_JOB, "audit",
+        review, receipt, request = runner.committed_result("author", repair_authority.VERIFY_JOB, "audit",
                                                      autonomous_realism.ScopeReview)
         if review.verdict != "changed" or not review.objections or issue["evidence"] != autonomous_realism.scope_failure(review):
             raise ValueError("The exact retained scope review must establish the documentary objection.")
@@ -1037,7 +1037,11 @@ def release_returned_authored_scope_plan(
             release.update(earlier_authored_scope_receipts=previous_receipts, natural_provenance_restoration=True)
         if incoming_particulars_source is not None:
             if not any(incoming_particulars_source in reason for reason in review.objections):
-                raise ValueError("The returned scope must identify the specific recipient Source.")
+                affected = commissioning._read_json(request["inputs"]["audit_rules"])["affected_sources"]
+                if (affected != [incoming_particulars_source] or incoming_particulars_source not in review.provenance
+                        or len(science.condition_ids(slot)) != 1 or (runner.directory / "family").exists()):
+                    raise ValueError("The returned scope must identify the specific recipient Source.")
+                release["verified_recipient_scope_restoration"] = True
             particulars = delivery_particulars.reopen(runner, incoming_particulars_source)
             release["incoming_particulars"] = {"source_id": particulars.source_id,
                                               "record_sha256": authorisation.commitment(particulars)}

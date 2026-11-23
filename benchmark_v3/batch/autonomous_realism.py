@@ -219,6 +219,8 @@ def plan_revision(
         lineage["incoming_particulars"] = release["incoming_particulars"]
     if release.get("natural_provenance_restoration"):
         lineage["natural_provenance_restoration"] = True
+    if release.get("verified_recipient_scope_restoration"):
+        lineage["verified_recipient_scope_restoration"] = True
     if parent.exact_recipient_edit is not None:
         lineage["exact_recipient_edit"] = release["exact_recipient_edit"]
         if "exact_omission_assessment" in release:
@@ -1102,7 +1104,8 @@ def verify_revision(
         "revised_design": revision.design.model_dump(mode="json"), "affected_sources": sorted(revision.affected),
     }
     prompt = VERIFY_PROMPT
-    if revision.lineage.get("natural_provenance_restoration"):
+    if (revision.lineage.get("natural_provenance_restoration")
+            or revision.lineage.get("verified_recipient_scope_restoration")):
         rules["retained_scope_return"] = revision.parent.prior_scope_return
         prompt += (
             " This commissioned design has one natural condition. The previous draft was returned and has no key."
