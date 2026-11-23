@@ -165,6 +165,15 @@ class SessionRunner:
         return next((row["details"] for row in self.ledger.events(self.manifest.batch_id, self.family)
                      if (row["revision"], row["kind"], row["name"]) == (self.revision, "output_selection", job)), None)
 
+    def _require_audited_replacement_merits(self) -> None:
+        if not self.ledger.requires_delivery_attestation:
+            return
+        from benchmark_v3.batch import clean_redesign
+
+        replacement = clean_redesign.recorded(self)
+        if replacement is not None and replacement.audited_replacement is not None:
+            clean_redesign.require_merits(self)
+
     def _run_one(
         self, stage: Stage, job: str, role: Role, inputs: dict[str, str], instructions: str,
         result_type: type[_T], *, output_schema: dict[str, Any] | None, validate: Callable[[_T], None] | None,
@@ -236,8 +245,15 @@ class SessionRunner:
                     and self.manifest.requires_design_review
                     and self.ledger.pooled_revision(self.manifest.batch_id, self.family, self.revision)):
                 permitted = True
+            if self.ledger.requires_delivery_attestation and stage == "author":
+                from benchmark_v3.batch import clean_redesign
+
+                if base_job == clean_redesign.MERITS_JOB:
+                    replacement = clean_redesign.recorded(self)
+                    permitted = replacement is not None and replacement.audited_replacement is not None
             if self.ledger.requires_author_context:
                 if (stage, base_job) == ("author", author_context.JOB):
+                    self._require_audited_replacement_merits()
                     permitted = True
                 if (stage, base_job) == ("design", author_repair.JOB) and author_repair.recorded(self) is not None:
                     permitted = True

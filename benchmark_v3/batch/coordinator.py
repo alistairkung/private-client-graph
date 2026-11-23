@@ -698,7 +698,9 @@ def recover_scope_review_representation(ledger: Ledger, batch: str, family: str)
         })
 
 
-def release_clean_redesign(ledger: PooledLedger, batch: str, family: str, reason: str) -> None:
+def release_clean_redesign(
+    ledger: PooledLedger, batch: str, family: str, reason: str, *, independent_large_assessment: str | None = None,
+) -> None:
     """Retain a failed lineage and commission one fresh independent replacement."""
     with ledger.coordinator_lock():
         ledger.require_running()
@@ -708,14 +710,27 @@ def release_clean_redesign(ledger: PooledLedger, batch: str, family: str, reason
         scoped = (commission.manifest.phase == "milestone" and ledger.requires_delivery_attestation
                   and not commission.manifest.requires_design_review)
         if (not scoped or not reason.strip() or state not in {"quarantined", "returned"}
-                or not issue or issue["code"] not in {"scientific_review", "documentary_realism"}
-                or any("documentary_redesign" in row["details"] for row in events)):
-            raise ValueError("A clean redesign needs one retained scientific failure and a released non-giant hypothesis.")
+                or not issue or issue["code"] not in {"scientific_review", "documentary_realism"}):
+            raise ValueError("A clean redesign needs a retained scientific failure and a released non-giant hypothesis.")
+        prior = [row for row in events if "documentary_redesign" in row["details"]]
         slot = next(row for row in commission.portfolio.slots if row.family_id == family)
         if slot.tier == "giant" or slot.expected_sources >= 100:
             raise ValueError("The giant workload is outside clean redesign authority.")
         runner = commission.session_runner(ledger, family, revision + 1)
-        record = clean_redesign.details(runner, revision, reason.strip())
+        audit = None
+        if independent_large_assessment is None:
+            if prior:
+                raise ValueError("The ordinary clean redesign has already been used.")
+        else:
+            if (len(prior) != 1 or not 51 <= slot.expected_sources <= 99 or slot.tier != "administrative"
+                    or state != "quarantined" or (issue["stage"], issue["code"]) != ("audit", "scientific_review")
+                    or any(row["revision"] == revision and row["stage"] == "masks" for row in ledger.attempts(family))):
+                raise ValueError("An additional large redesign requires a quarantined frozen audit return before controls.")
+            audit = clean_redesign.AuditedReplacement(
+                audit_receipt_sha256=clean_redesign.reviewed_audit_receipt(runner, revision),
+                independent_assessment_sha256=independent_large_assessment,
+            )
+        record = clean_redesign.details(runner, revision, reason.strip(), audit)
         ledger.release(batch, family, revision + 1, "design", parent_sha256=authorisation.commitment(record),
                        reference="Fresh documentary design after a retained scientific failure.",
                        documentary_redesign=record.model_dump(mode="json"))

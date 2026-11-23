@@ -485,6 +485,25 @@ inventory and fixes only its description of the later authenticated
 counterpart. It requires exact authored bytes and fresh independent
 scope and realism. The one-entry release is
 `e49963f1943cb88e4cdbba17123f5cbdf4315679f62d9d0da8269e6aa200627f`.
+The fresh file passed realism and both independent complete readers
+reviewed all 65 Sources. Adjudication supported three relationships.
+The independent audit found that the actual recipient's capacity at
+receipt was missing for the required beneficiary relationship. The
+frozen requirements and the independently derived key are both
+preserved. The audit proposed 41 controls and no controls were run.
+The file is quarantined at
+`cab3bf74335deb0e90cfc407173e55e4d0681f418fb2fb0c7fc266eba1fe8ff7`.
+
+An independent feasibility review supported one fresh design at the
+same 65-Source workload. It compared the measured complete-reader
+receipts with the outstanding standby proposals. The independent
+assessment is
+`fc9cfe3fb30ad3488263a6e9682049f19c110f099cf04cc95b0ba44116d471df`.
+The clean release requires fresh identities, chronology and all
+scientific roles. An independent merits review checks dated operative
+capacity and exact custody before any participant turn, alongside the
+separate participant-scope gate. Its commitment is
+`3f947d15f2a092b2846ce7fb0c30f2b08905188e584aa34280b18f8a513eee99`.
 
 L's scope review exposed a factory-generated attachment instruction
 that implied undocumented revised correspondence. Fresh repair

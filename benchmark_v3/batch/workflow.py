@@ -54,6 +54,7 @@ class FamilyWorkflow:
         self.retained_authored_sources: dict[str, Source] = {}
         self.realism_release = autonomous_realism.release_event(runner)
         self.documentary_revision: autonomous_realism.Revision | None = None
+        self.replacement: clean_redesign.CleanRedesign | None = None
         self.audit_recovery = audit_recovery.recorded(runner)
         self.frozen_release = frozen_rekey.recorded(runner)
         self.frozen_case: frozen_rekey.ReopenedCase | None = None
@@ -184,7 +185,7 @@ class FamilyWorkflow:
         unused_delivery = author_repair.reopen_unused_delivery(self.runner)
         restored_cover = author_repair.reopen_cover_clarification(self.runner)
         cutoff_repair = design_recovery.isolated_cutoff_recovery(self.runner, self.slot)
-        replacement = clean_redesign.recorded(self.runner)
+        self.replacement = replacement = clean_redesign.recorded(self.runner)
         initial_retry = design_recovery.initial_runtime_retry(self.runner)
         sender_repair = author_repair.reopen_empty_sender_repair(self.runner)
         if sender_repair is not None:
@@ -304,9 +305,13 @@ class FamilyWorkflow:
                 if not self.repair_tickets or brief.source_id in self.repair_tickets or changed.intersection(brief.received):
                     changed.add(brief.source_id)
         jobs = autonomous_realism.mandatory_jobs(design, changed, verification=revision is not None)
+        if self.replacement is not None and self.replacement.audited_replacement is not None:
+            jobs.update({clean_redesign.MERITS_JOB, author_context.JOB})
         self.runner.ledger.require_capacity(self.runner.family, self.runner.revision, jobs)
 
     def author(self, design: DesignOutput) -> list[Source]:
+        if self.replacement is not None and self.replacement.audited_replacement is not None:
+            self._review_large_workload_merits(design)
         assignments = self._author_assignments(design)
         if self.runner.ledger.requires_author_context:
             self.author_packets = self._review_author_context(
@@ -320,6 +325,25 @@ class FamilyWorkflow:
             source = prior or self._author_record(design, brief, ticket, reuse, [sources[key] for key in brief.received])
             sources[brief.source_id] = source
         return list(sources.values())
+
+    def _review_large_workload_merits(self, design: DesignOutput) -> None:
+        review = self.job(clean_redesign.MERITS_JOB, "audit", {
+            "intended_intervention": design.model_dump_json(),
+            "audit_rules": _json({"hypothesis": self.slot.hypothesis.model_dump(mode="json"),
+                                  "workload": self.slot.expected_sources, "scope": self.slot.natural_condition}),
+        }, "Independently assess the new exact large-file design before any participant dispatch. "
+           "For every required relationship, trace an organised set of contemporaneous documentary facts "
+           "and exact custody paths that could establish every operative premise. A delivery event must "
+           "establish the recipient's specific capacity on that date when the instrument requires it. "
+           "A later engagement, broad job title or index cannot establish an earlier capacity. Inspect every "
+           "planned Source for genuine use, provenance, chronology, required transmission and participant knowledge. "
+           "Check ordinary alternative proofs, varied documentary workstreams, exact evidence scope, "
+           "unscored sections and prefixes, and two complete independently reviewed lanes. Reject unsupported "
+           "historical premises, padding or hidden answers. Return a distinct finding for every Source ID, "
+           "with no objections on acceptance. This review is separate from the author-scope gate.",
+           author_context.AuthorContextReview)
+        if review.verdict != "accept" or review.objections or review.findings.keys() != {row.source_id for row in design.inventory}:
+            self.reject("scientific_review", review.model_dump_json(), quarantine=True)
 
     def _project_authors(self, design: DesignOutput, tickets: dict[str, str]) -> dict[str, Any]:
         guard = author_delivery if self.runner.ledger.requires_delivery_attestation else author_context

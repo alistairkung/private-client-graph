@@ -3925,6 +3925,42 @@ def test_clean_redesign_retains_a_failed_lineage_and_rejects_relabelled_design(a
                and "distinct documentary history" in row["details"]["reason"] for row in active.events(batch, family))
 
 
+def test_audited_large_replacement_requires_merits_before_participant_authoring(autonomous, transport, monkeypatch):
+    from benchmark_v3.batch import clean_redesign
+    from benchmark_v3.batch.workflow import FamilyWorkflow
+
+    ledger, commission = autonomous
+    family, slot = "G", commission.portfolio.slots[0]
+    batch = commission.manifest.batch_id
+    coordinator.commission_batch(ledger, commission, BOUNDARY)
+    coordinator._activate_roadmap_slots(ledger, commission, [family])
+    coordinator._work_family(ledger, commission, slot, design_only=True)
+    runner = commission.session_runner(ledger, family, 1)
+    workflow = FamilyWorkflow(runner, slot, commission.portfolio.admission_criteria)
+    workflow.stage = "author"
+    workflow.replacement = clean_redesign.CleanRedesign(
+        parent_revision=0, manifest_sha256="a" * 64, parent_design_sha256="b" * 64,
+        reason="Carry the actual capacity predicate into the new design.",
+        audited_replacement=clean_redesign.AuditedReplacement(
+            audit_receipt_sha256="c" * 64, independent_assessment_sha256="d" * 64,
+        ),
+    )
+    monkeypatch.setattr(type(ledger), "requires_delivery_attestation", property(lambda _: True))
+    design = artifacts.read_contract(runner.directory / "design.json", DesignOutput)
+    with pytest.raises(ValueError, match="Only the authorised audit or repair job"):
+        workflow.author(design)
+    monkeypatch.setattr(clean_redesign, "recorded", lambda _: workflow.replacement)
+    calls, behavior, _ = transport
+    behavior[family, clean_redesign.MERITS_JOB] = lambda _: {
+        "verdict": "return", "findings": {"src1": "Prior delivery is not documented.", "src2": "Ordinary record."},
+        "objections": ["The recipient's operative historical capacity is missing."],
+    }
+    with pytest.raises(Blocked, match="operative historical capacity"):
+        workflow.author(design)
+    assert coordinator.family_status(ledger, batch, family)[:2] == (1, "quarantined")
+    assert [job for _, _, job, _ in calls] == ["design", clean_redesign.MERITS_JOB]
+
+
 def test_word_preserving_blind_quote_recovery_uses_the_retained_reader(autonomous, transport, monkeypatch):
     from benchmark_v3.batch import read_format_recovery
 
