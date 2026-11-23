@@ -188,8 +188,11 @@ mapping and recorded Source coverage and critical-edge sufficiency for
 both conditions. Its narrative check headings crossed condition keys.
 The frozen evidence review reopens the exact retained blind derivatives
 and independently relocks each condition. The original objections and
-control commitments remain in scope for fresh audit, independent controls
-and replay.
+control commitments remained in scope for two fresh adjudications and
+audits. The final audit still found incompatible proof eligibility for
+invariant edges. Q's frozen lineage is quarantined at the bounded review
+limit. Its graph results and independent evidence objections remain in
+custody. Q is outside the qualified count.
 
 ## Large-file and restart controls
 
@@ -202,6 +205,14 @@ scope, realism and downstream scientific review. A subsequent scope
 review identified one separate reply instruction outside that Source's
 remit. An exact sentence-level omission uses the same retained design
 and a fresh scope review.
+
+U's completed 65-Source revision reached realism. The subsequent repair
+proposal required item-level intake details without evidence that the
+inventory author had those details. Independent pre-author review
+returned that proposal and three additional knowledge gaps. The
+controller retained the proposal and review with zero participant turns
+in that revision. The next planner must establish each record's local
+basis before the independent scope and documentary gates reopen.
 
 L's scope review exposed a factory-generated attachment instruction
 that implied undocumented revised correspondence. Fresh repair
