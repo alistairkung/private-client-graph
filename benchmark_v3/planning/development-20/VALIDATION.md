@@ -37,7 +37,7 @@ verify_portfolio(Portfolio.model_validate_json((plan / "portfolio.json").read_by
 for hypothesis in record.result.proposals:
     reference = commissioning.hypothesis_ref(hypothesis, record.provenance)
     key = f"{reference.hypothesis_id}@{reference.revision}"
-    assert commissioning.proposal_history()[key] == (hypothesis, reference, None)
+    assert commissioning.proposal_history()[key][:2] == (hypothesis, reference)
 PY
 ```
 

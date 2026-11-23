@@ -6,26 +6,37 @@ from typing import Any
 from benchmark_v3 import commissioning
 from benchmark_v3.batch import artifacts, authorisation
 from benchmark_v3.batch.contracts import AdmissionDecisions, PilotDecision
-from benchmark_v3.batch.coordinator import family_status, load_commission
+from benchmark_v3.batch.coordinator import family_status, load_commission, roadmap_progress
 from benchmark_v3.batch.ledger import Ledger, timestamp
-from benchmark_v3.batch.workflow import offline_report, review_commitments
-from benchmark_v3.replay_manifest import BatchFamilyManifest, load_family
+from benchmark_v3.batch.workflow import verify_dossier
 
 
 def package_batch(ledger: Ledger, batch_id: str) -> tuple[Path, str]:
     with ledger.coordinator_lock():
-        manifest = load_commission(ledger, batch_id).manifest
+        commission = load_commission(ledger, batch_id)
+        manifest = commission.manifest
         families = [_family_summary(ledger, batch_id, row.family_id) for row in manifest.families]
         snapshot = {
             "schema_version": 1, "batch_id": batch_id, "phase": manifest.phase,
             "portfolio_sha256": manifest.portfolio_sha256,
             "state": _batch_state(families),
-            "task_session_ceiling": manifest.task_session_ceiling,
+            "task_session_ceiling": ledger.effective_budget().shared,
             "families": families,
         }
         if repair := ledger.construction_repair():
-            snapshot["task_session_ceiling"] = repair.task_ceiling
             snapshot["construction_repair_sha256"] = authorisation.commitment(repair)
+        if manifest.phase == "milestone":
+            progress = roadmap_progress(ledger, commission)
+            target = manifest.qualification_target
+            assert target is not None
+            snapshot["roadmap"] = {
+                "qualification_target": target, "qualified": progress.qualified,
+                "active": progress.active, "reserve": progress.reserve,
+            }
+            if len(progress.qualified) >= target:
+                snapshot["state"] = "target_reached"
+            elif not progress.active and not progress.reserve:
+                snapshot["state"] = "roadmap_exhausted"
         content = (commissioning.json_text(snapshot) + "\n").encode()
         digest = commissioning.digest(content)
         path = ledger.root / "batches" / batch_id / "summaries" / digest
@@ -40,7 +51,10 @@ def _batch_state(families: list[dict[str, Any]]) -> str:
         return "closed"
     if any(row["exception"] for row in families if row["state"] not in {"returned", "quarantined"}):
         return "blocked"
-    if states <= {"admission_ready", "admitted", "returned", "quarantined"}:
+    ready_states = {"admission_ready", "admitted", "returned", "quarantined"}
+    if "pending_design_review" in states and states <= ready_states | {"pending_design_review"}:
+        return "pending_design_review"
+    if states <= ready_states:
         return "awaiting_admission"
     return "running"
 
@@ -52,7 +66,7 @@ def _family_summary(ledger: Ledger, batch: str, family: str) -> dict[str, Any]:
                   if row["revision"] == revision and row["kind"] == "transition" and row["name"] == "dossier"), None)
     dossier = None
     if ready:
-        dossier = _verify_dossier(ledger, batch, family, revision, ready["family_sha256"])
+        dossier = verify_dossier(ledger, batch, family, revision, ready["family_sha256"])
     elif state == "admission_ready":
         state = "technical"
     sessions = [row["details"] for row in events if row["kind"] == "session"]
@@ -83,6 +97,11 @@ def _markdown(snapshot: dict[str, Any], digest: str) -> str:
             f"| {label} | {row['state']} | {row['recommendation']} | {row['charged_attempts']} | "
             f"{row['unpriced_attempts']} | {row['known_cost_usd']:.2f} |"
         )
+    if roadmap := snapshot.get("roadmap"):
+        qualified = ", ".join(roadmap["qualified"]) or "none"
+        reserve = ", ".join(roadmap["reserve"]) or "none"
+        lines.extend(["", f"Technically qualified ({len(roadmap['qualified'])}/{roadmap['qualification_target']}) "
+                      f"· {qualified}.", f"Unstarted reserve · {reserve}."])
     for row in snapshot["families"]:
         if row["family_sha256"]:
             lines.extend(["", f"Family {row['family_id']} commitment `{row['family_sha256']}`."])
@@ -149,7 +168,7 @@ def _validate_decisions(
             or ready["family_sha256"] != decision.family_sha256
         ):
             raise ValueError(f"Family {family} requires the exact technically reviewed dossier.")
-        dossier = _verify_dossier(ledger, decisions.batch_id, family, revision, decision.family_sha256)
+        dossier = verify_dossier(ledger, decisions.batch_id, family, revision, decision.family_sha256)
         previous = next((event for event in events if event["kind"] == "human_decision"), None)
         record = {
             "schema_version": 1, "family": family, "split": "development",
@@ -170,20 +189,3 @@ def _validate_decisions(
         directory = ledger.root / "batches" / decisions.batch_id / family / str(revision) / "family"
         rows.append((family, revision, directory / "admission.json", record))
     return rows
-
-
-def _verify_dossier(ledger: Ledger, batch: str, family: str, revision: int, expected: str) -> dict[str, Any]:
-    root = ledger.root / "batches" / batch / family / str(revision) / "family"
-    content = artifacts.read_bytes(root / "dossier.json")
-    if commissioning.digest(content) != expected:
-        raise ValueError(f"Family {family} dossier digest changed after technical recommendation.")
-    dossier = commissioning._read_json(content)
-    manifest = BatchFamilyManifest.model_validate(dossier["manifest"])
-    if review_commitments(root, manifest) != dossier["review_files"]:
-        raise ValueError(f"Family {family} reviewed artifact bytes changed.")
-    verified = load_family(root / "manifest.json")
-    if verified.family != family or verified.manifest_sha256 != dossier["review_files"]["manifest.json"]:
-        raise ValueError(f"Family {family} manifest commitment does not match the dossier.")
-    if offline_report(root) != dossier["replay"]:
-        raise ValueError(f"Family {family} retained replay differs from its reviewed report.")
-    return dossier

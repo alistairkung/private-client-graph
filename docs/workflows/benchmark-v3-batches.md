@@ -72,6 +72,33 @@ the pilot changes hypotheses, resource assumptions or other scientific inputs.
 | Technical replay | Schema v4 manifest, protected canonical graph and scorer, quote and Source attribution checks, exact sufficient sets and zero paid provider attempts |
 | Admission package | Family dossier, retained replay and exact file commitments |
 
+A schema 2 batch manifest requires a batch-wide human design review.
+The initial `run` advances each eligible family through design only.
+`designs CUSTODY BATCH` prints the exact manifest and design digests
+when every design has committed. The commissioning owner reviews the
+private designs and records a disposition on the complete digest set.
+Design review schema 2 requires each entry to specify `accept` or `return`, with a reason required for
+a return. A returned family stays at `pending_design_review` and cannot
+reserve downstream packets. Record the dated decision with `review-designs CUSTODY DECISION`, using
+`schema design-review` for the contract. Then resume with `run`. The
+coordinator rechecks the design files and the session runner verifies
+the decision before downstream reservations and submissions. A schema 1
+manifest retains its original execution behavior.
+
+If an initial design is blocked because its file cut-off predates a
+required Source, the owner can authorize recovery against the exact
+manifest and completed designer response hashes. First confirm that
+the earlier relationship as-of date or delivery deadline is already
+stated independently in the neutral brief and participant instructions.
+`recover-source-cutoffs CUSTODY DECISION` sets the file cut-off to the
+latest listed Source date and drops a redundant terminal full-file
+snapshot if present. The full-file review and any proper prefixes are
+preserved. It revalidates the full design and commits the result
+without model dispatch. Use `schema source-cutoff-recovery` for the
+decision contract. The ledger retains the original packets, charges and
+exception alongside the recovery commitment. The recovered design still
+requires the same human review before authoring.
+
 The runner projects each role's packet from the approved plan and earlier
 artifacts. An author receives only the participant brief and received
 correspondence. Each blind reader receives one condition in isolation.
@@ -116,6 +143,63 @@ when a blocked job cannot be recovered. Leave failed and uncertain attempts
 in custody. A shared isolation incident requires a custodian investigation
 and fresh approval before further scientific work. The task's ledger remains
 closed to submissions after a shared halt.
+
+For a completed blind reading blocked on an exact quotation, use
+`schema annotation-recovery` and `recover-annotation CUSTODY DECISION`.
+The commissioning owner binds the original output, receipt, frozen bundle,
+cited Source, candidate path and UTF-8 byte interval. The command accepts one
+missing line feed at a unique Source span, preserves the original failed
+reading and writes an immutable derivative with its validation record. A
+verified resume reuses earlier sessions and sends the existing readings to
+adjudication. Repeating the same decision verifies the recorded derivative.
+
+Use `recover-adjudication-quote CUSTODY DECISION` only after an explicit
+owner decision binds the exact output, receipt, frozen Sources, one token
+interval and derivative digest. This path reuses the single exact quote
+already selected in both blind readings and the retained adjudication. It
+requires full adjudication validation before committing the derivative.
+The original packet remains intact. The scoped run reopens the derivative
+and can proceed to independent audit without another adjudication session.
+
+Use `release-audit CUSTODY DECISION` for a separately authorised fresh
+audit of a natural revision held by the frozen critical-edge map contract.
+The release binds the earlier receipt, locked Sources, validated adjudication,
+budget and exact proposed mask views. The new auditor supplies its own
+expected findings and assesses the combined cut-off deletion. A return,
+separate-deletion requirement or different plan holds mask dispatch.
+The scoped `run --family FAMILY --stop-after audit` command stops after
+the audit. Use `--stop-after masks` to inspect mask evidence before
+deterministic replay. Re-entry reuses the charged jobs and receipts.
+
+Use `schema deferred-exception-review` and
+`record-deferred-review CUSTODY DECISION` to record approval of a documentary
+repair scope or the merits of a proposed child design. Both decisions hold
+the family at its existing gate. Repair execution, child activation and
+budget amendments require separate authority and a tested release path.
+
+Use `amend-budget CUSTODY DECISION` for an explicit pilot ceiling increase.
+It binds the original owner approval, manifest, portfolio and completed
+charges. A follow-up amendment uses schema 2 and also binds the latest
+amendment in `previous_amendment_sha256` and the current effective ceilings.
+All amendments, release commitments, original allocations and historical
+charges stay in the ledger. The reservation transaction reads the latest
+amendment before spending. Family allocations cannot decrease or transfer
+under this operation. Scientific execution still requires owner authority.
+
+Use `continue-family CUSTODY DECISION` to release an exact scientific
+exception against the recorded budget amendment. A repair release binds the
+held scope and participant-safe natural tickets. A child activation binds
+the held merits decision and immutable child design. A fresh adjudication
+binds the failed receipt and approved blind derivative, rederives the
+disagreement IDs and publishes only those IDs in the output schema. Its
+single distinct job preserves the charged original. A separately authorised
+complete-evidence adjudication binds the retained fresh receipt and reproduces
+its ordinary Source approval failure. The packet states the full-key
+requirements for both ordinary and joint-only edges and retains the exact
+dispute schema. Its own job preserves both earlier attempts. Use
+`run CUSTODY BATCH --family FAMILY` for family-scoped dispatch. These releases
+do not dispatch sessions by themselves. The normal run checks active revisions,
+exact commitments and remaining capacity before reserving science packets.
 
 The default allows one new scientific revision for participant-safe natural
 documentary repairs. Reuse unaffected author results and regenerate the
@@ -202,3 +286,48 @@ the decision, reuses only verified unaffected outputs and receipts, and checks
 the complete repair and its dependencies. Review gates after authoring repeat
 in the new revision. The same ledger charges every attempt and enforces
 the effective family and shared ceilings.
+
+## Milestone roadmap execution
+
+A milestone commission binds one ordered list of exact hypothesis revisions,
+an additional technical qualification target, a task ceiling and a ceiling
+per family. Keep this approval and its development ledger in a separate
+owner-only custody directory. The owner approves the budget and hypothesis
+revisions once. The manifest authorises the coordinator to proceed after the
+isolated design clears scope, chronology, inventory and capacity checks.
+Existing human design reviews on schema 2 manifests keep their original
+workflow.
+
+The coordinator activates the next required slots in manifest order, up to
+the approved worker limit. An activation stays in the ledger across restarts.
+Only an activated family at its recorded stage can reserve a new milestone
+packet. An independent family that returns, exhausts its allocation or blocks
+can leave a place for the next approved reserve. An uncertain attempt keeps
+its charge and requires the original verified receipt for reconciliation.
+A shared isolation or integrity failure halts progression. Use the same
+`run CUSTODY BATCH` after interruption. The milestone does not accept a
+family selection override.
+
+The design preflight counts the actual section topology and every remaining
+mandatory first-pass packet before authoring. A permitted documentary repair
+gets the same check against its affected authors and repeated reviews. Audit
+determines the exact mask plan, and the ledger checks capacity for the full
+plan before the first reservation. Adjudication supplies the exact disputed
+keys and instructions for whole-graph Source attribution and joint proofs.
+Ordinary follow-up questions stay with the Source audit. Any remaining
+objection to the key blocks progression.
+
+A family contributes to the target only after its dossier and zero-provider
+replay are present and their recorded commitments verify. The package reports
+the technical tally and unstarted reserve. Human admission remains a
+separately recorded decision on the exact dossier. Prior ledgers remain with
+their originally approved packet implementation and releases. If a former
+manifest pins a different packet implementation digest, use its approved
+revision and custody for separately authorised work on that history.
+
+When the original designer lists the required full-file read again as a
+terminal Source-count snapshot, the milestone removes that redundant count
+from the proper-prefix list. It keeps every proper prefix, revalidates the
+design, and records the original output and receipt alongside the corrected
+design digest. This mechanical recovery can reopen the matching design
+exception without another designer turn.

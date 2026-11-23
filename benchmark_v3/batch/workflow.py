@@ -4,20 +4,23 @@ import os
 from collections.abc import Mapping
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Any, TypeVar
+from typing import Any, Literal, TypeVar
 
 from pydantic import BaseModel
 
-from benchmark_v3 import commissioning, replay
-from benchmark_v3.batch import artifacts, construction, science
+from benchmark_v3 import commissioning, packet, replay
+from benchmark_v3.batch import (
+    adjudication_contract, adjudication_recovery, annotation_recovery, artifacts, audit_contract, audit_recovery,
+    construction, continuation, design_recovery, science,
+)
 from benchmark_v3.batch.contracts import (
     Adjudication, AuditReview, AuthoredSource, Code, DesignOutput, Reading, RealismReview,
-    Role, Stage,
+    RecoveredAuditReview, Role, Stage,
 )
-from benchmark_v3.batch.ledger import BudgetExhausted
+from benchmark_v3.batch.ledger import Ledger
 from benchmark_v3.batch.sessions import Blocked, SessionRunner
 from benchmark_v3.portfolio import FamilySlot
-from benchmark_v3.replay_manifest import BatchFamilyManifest, BatchSourceFreeze, SavedIdeal
+from benchmark_v3.replay_manifest import BatchFamilyManifest, BatchSourceFreeze, SavedIdeal, load_family
 from private_client_graph.models.source import Source
 from private_client_graph.workbench.artifacts import artifact_digest
 
@@ -33,12 +36,15 @@ class FamilyWorkflow:
         self.stage: Stage = "design"
         self.sessions: list[dict[str, Any]] = []
         self.repair_tickets: dict[str, str] = {}
+        self.audit_recovery = audit_recovery.recorded(runner)
+        self.release = continuation.recorded(runner)
+        self.release_action = self.release["decision"]["release"]["action"] if self.release else None
         self.transition_inputs: dict[str, str] = {
             "hypothesis": slot.hypothesis.hypothesis_sha256,
             "portfolio": runner.manifest.portfolio_sha256,
         }
 
-    def run(self) -> None:
+    def run(self, *, stop_after: Literal["audit", "masks"] | None = None) -> None:
         design = self.design()
         natural = self.author(design)
         bundles, freeze = science.freeze_bundles(self.slot, design, natural)
@@ -48,14 +54,21 @@ class FamilyWorkflow:
         readings, agreements = self.blind(design, bundles)
         reviews = self.adjudicate(design, bundles, readings, agreements)
         audit = self.audit(design, bundles, freeze, reviews, agreements)
+        if stop_after == "audit":
+            return
         masks = self.masks(design, bundles, audit)
+        if stop_after == "masks":
+            return
         report, manifest = self.technical(freeze, reviews)
         self.dossier(realism, agreements, reviews, audit, masks, report, manifest)
 
     def job(
         self, key: str, role: Role, inputs: dict[str, str], instructions: str, result_type: type[_T],
+        *, output_schema: dict[str, Any] | None = None,
     ) -> _T:
-        result, receipt = self.runner.run(self.stage, key, role, inputs, instructions, result_type)
+        result, receipt = self.runner.run(
+            self.stage, key, role, inputs, instructions, result_type, output_schema=output_schema,
+        )
         self.sessions.append(receipt)
         return result
 
@@ -82,7 +95,8 @@ class FamilyWorkflow:
             kind, name, previous, next_stage, details,
         )
 
-    def design(self) -> DesignOutput:
+    def design(self, *, recovery_only: bool = False) -> DesignOutput:
+        recovery = design_recovery.recorded_cutoff_recovery(self.runner)
         ref = self.slot.hypothesis
         allocation = next(row for row in self.runner.manifest.families if row.family_id == self.slot.family_id)
         if allocation.approved_design:
@@ -90,6 +104,14 @@ class FamilyWorkflow:
             self.transition_inputs["approved_design"] = allocation.approved_design.design_sha256
             self.transition_inputs["design_lineage"] = allocation.approved_design.lineage_sha256
             design = DesignOutput.model_validate(candidate.model_dump(include=set(DesignOutput.model_fields)))
+        elif recovery:
+            design, receipt = design_recovery.reopen_cutoff_recovery(self.runner, self.slot, recovery)
+            self.sessions.append(receipt)
+        elif recovery_only:
+            raise ValueError("No owner-authorized Source cut-off recovery was recorded.")
+        elif self.release and self.runner.revision > 1:
+            design = continuation.released_design(self.runner, self.release)
+            self.repair_tickets = self.release.get("repair_tickets", {})
         elif self.runner.revision == 1:
             design = self.job(
                 "design", "designer", {
@@ -112,10 +134,28 @@ class FamilyWorkflow:
                 and row["revision"] == self.runner.revision - 1)
             if commissioning.digest(_json(design.model_dump(mode="json")).encode()) != expected:
                 raise ValueError("Repair changed the locked design or hypothesis.")
-        science.verify_design(self.slot, design)
+        if self.runner.manifest.phase == "milestone":
+            design = design_recovery.verify_milestone_design(self.runner, self.slot, design)
+            self._check_design_capacity(design)
+        else:
+            science.verify_design(self.slot, design)
         artifacts.write_json(self.directory / "design.json", design.model_dump(mode="json"))
         self.advance("author", {"design": design.model_dump(mode="json")}, gate="approved scope and dated inventory")
         return design
+
+    def _check_design_capacity(self, design: DesignOutput) -> None:
+        changed: set[str] = set()
+        for brief in design.inventory:
+            if not self.repair_tickets or brief.source_id in self.repair_tickets or changed.intersection(brief.received):
+                changed.add(brief.source_id)
+        jobs = {f"author-{source_id}" for source_id in changed} | {"audit"}
+        for index in range(len(design.required)):
+            jobs.update({f"realism-{index:03}", f"adjudicate-{index:03}"})
+            for reader in ("a", "b"):
+                prefix = f"reading-{index:03}-{reader}"
+                jobs.add(f"{prefix}-full")
+                jobs.update(f"{prefix}-part-{part:03}" for part in range(len(design.sections)))
+        self.runner.ledger.require_capacity(self.runner.family, self.runner.revision, jobs)
 
     def author(self, design: DesignOutput) -> list[Source]:
         sources: dict[str, Source] = {}
@@ -138,7 +178,7 @@ class FamilyWorkflow:
             if ticket:
                 inputs["revision_ticket"] = ticket
                 changed.add(brief.source_id)
-            result = self.authored(brief.source_id, inputs, reuse=self.runner.revision > 1 and ticket is None)
+            result = self.authored(brief.source_id, inputs, reuse=bool(tickets) and ticket is None)
             sources[brief.source_id] = Source(id=brief.source_id, title=result.title, text=result.text)
         natural = list(sources.values())
         return natural
@@ -146,13 +186,10 @@ class FamilyWorkflow:
     def authored(self, identity: str, inputs: dict[str, str], *, reuse: bool) -> AuthoredSource:
         name = f"author-{identity}"
         if reuse:
-            events = self.runner.ledger.events(self.runner.manifest.batch_id, self.slot.family_id)
-            original = next(event["details"] for event in events if event["kind"] == "session"
-                            and event["name"] == name and event["revision"] == 1)
-            path = self.directory.parent / "1" / "packets" / name / "output.txt"
-            content = artifacts.read_bytes(path)
-            if commissioning.digest(content) != original["output_sha256"]:
-                raise ValueError("An unaffected authored Source changed before repair.")
+            original = continuation.previous_runner(self.runner)
+            content, _, request = original.committed_packet("author", name, "author")
+            if request["inputs"] != inputs:
+                raise ValueError("An unaffected author packet changed before repair.")
             return AuthoredSource.model_validate(commissioning._read_json(content))
         return self.job(
             name, "author", inputs, "Write this one fictional record from the participant's dated perspective. "
@@ -228,11 +265,22 @@ class FamilyWorkflow:
         self, key: str, role: Role, design: DesignOutput, sources: list[Source],
         extra: dict[str, str] | None = None,
     ) -> Reading:
+        recovery = annotation_recovery.recorded(self.runner) if role == "annotation" else None
+        if recovery and recovery["decision"]["reader_job"] == key:
+            try:
+                reading, receipt = annotation_recovery.reopen(self.runner, recovery)
+            except packet.PacketIsolationError as error:
+                raise Blocked(self.stage, "isolation", str(error), job=key) from error
+            except (ValueError, OSError, KeyError, TypeError) as error:
+                raise Blocked(self.stage, "input_integrity", str(error), job=key) from error
+            self.sessions.append(receipt)
+            return reading
+        extra_instructions = audit_recovery.MASK_INSTRUCTIONS if role == "masked" and self.audit_recovery else ""
         result = self.job(
             key, role, _reading_inputs(design, sources) | (extra or {}),
             "Read only the supplied file. Record exact sourced candidates, unresolved questions, and "
             "each reviewed Source ID. Where your own sectional readings are supplied, independently "
-            "reconcile identities, supersession and cross-section claims against every full Source.",
+            "reconcile identities, supersession and cross-section claims against every full Source." + extra_instructions,
             Reading,
         )
         science.check_reading(result, sources)
@@ -245,16 +293,7 @@ class FamilyWorkflow:
         result = {}
         for index, (condition, sources) in enumerate(bundles.items()):
             first, second = readings[condition]
-            # The condition name is assigned by the custodian after the response.
-            review = self.job(
-                f"adjudicate-{index:03}", "adjudication", _reading_inputs(design, sources) | {
-                    "annotation_a": first.model_dump_json(), "annotation_b": second.model_dump_json(),
-                },
-                "Commit one provisional complete key for this file alone. Set key.condition to 'local'. "
-                "Account for every Source. Explain all edge and evidence disagreements with canonical "
-                "JSON arrays of [source name, relationship type, target name] as resolution-map keys. "
-                "Use compact JSON without spaces and sort names for symmetric edges.", Adjudication,
-            )
+            review = self._adjudicate_condition(index, design, sources, first, second, agreements[condition])
             if review.key.condition != "local":
                 raise ValueError("Adjudication must return a condition-local provisional key.")
             review = review.model_copy(update={"key": review.key.model_copy(update={"condition": condition})})
@@ -264,25 +303,60 @@ class FamilyWorkflow:
         self.advance("audit", {"provisional": _models(result)}, gate="all condition-local keys locked before disclosure")
         return result
 
+    def _adjudicate_condition(
+        self, index: int, design: DesignOutput, sources: list[Source], first: Reading, second: Reading,
+        agreement: dict[str, Any],
+    ) -> Adjudication:
+        recovery = adjudication_recovery.recorded(self.runner)
+        if recovery is not None:
+            if index != 0:
+                raise ValueError("The mechanical adjudication recovery is limited to condition zero.")
+            try:
+                review, receipt = adjudication_recovery.reopen(self.runner, recovery)
+            except packet.PacketIsolationError as error:
+                raise Blocked(self.stage, "isolation", str(error)) from error
+            except (ValueError, OSError, KeyError, TypeError) as error:
+                raise Blocked(self.stage, "input_integrity", str(error)) from error
+            self.sessions.append(receipt)
+            return review
+        inputs = _reading_inputs(design, sources) | {
+            "annotation_a": first.model_dump_json(), "annotation_b": second.model_dump_json(),
+        }
+        prompt = (
+            "Commit one provisional complete key for this file alone. Set key.condition to 'local'. "
+            "Account for every Source. Explain all edge and evidence disagreements with canonical "
+            "JSON arrays of [source name, relationship type, target name] as resolution-map keys. "
+            "Use compact JSON without spaces and sort names for symmetric edges."
+        )
+        job = f"adjudicate-{index:03}"
+        if not self.release and self.runner.manifest.phase != "milestone":
+            return self.job(job, "adjudication", inputs, prompt, Adjudication)
+        ids = adjudication_contract.resolution_ids(agreement["disagreements"])
+        released_job = adjudication_contract.RELEASE_JOBS.get(self.release_action or "")
+        if released_job:
+            if self.release is None or index != 0 or ids != self.release["resolution_ids"]:
+                raise ValueError("The actual disputes differ from the owner-bound adjudication preflight.")
+            job = released_job
+        prompt += (
+            " The required properties of disagreement_resolutions are exactly the disputed IDs. "
+            "Use unresolved for remaining scientific objections to the provisional key. "
+            "Include ordinary practitioner follow-up in the relevant source_audit entry."
+        )
+        complete = (self.runner.manifest.phase == "milestone"
+                    or self.release_action == "complete_evidence_adjudication")
+        if complete:
+            prompt += adjudication_contract.COMPLETE_EVIDENCE_INSTRUCTIONS
+        return self.job(
+            job, "adjudication", inputs, prompt, Adjudication,
+            output_schema=adjudication_contract.output_schema(ids, complete_evidence=complete),
+        )
+
     def audit(
         self, design: DesignOutput, bundles: dict[str, list[Source]], freeze: BatchSourceFreeze,
         reviews: dict[str, Adjudication], agreements: dict[str, dict[str, Any]],
     ) -> AuditReview:
         required = science.audit_risks(self.slot, reviews, agreements)
-        result = self.job(
-            "audit", "audit", {
-                "paired_bundles": _json({condition: _source_array(sources) for condition, sources in bundles.items()}),
-                "intended_intervention": _json(freeze.model_dump(mode="json", include={
-                    "natural", "variants", "required", "candidates",
-                })),
-                "provisional_keys": _json(_models(reviews)), "neutral_brief": design.neutral_brief,
-                "ontology": _instruction("ontology.md"),
-                "audit_rules": _json({
-                    "mandatory_risks": sorted(required), "blind_agreement": agreements,
-                    "portfolio_admission_criteria": self.admission_criteria,
-                    "batch_stop_conditions": self.runner.manifest.stop_conditions,
-                }),
-            },
+        prompt = (
             "Audit each Source for ground-truth completeness and each critical edge for evidence "
             "necessity and sufficiency. Key sufficiency by compact JSON edge array. Check negative "
             "controls, material differences and shortcuts for every condition, including the natural file. "
@@ -290,32 +364,67 @@ class FamilyWorkflow:
             "questions with a rationale, Source subset or exact deletions, and expected present/absent edges. "
             "Cover joint proofs with sufficient-subset and proper-deletion readings. State limitations. "
             "Apply the supplied admission and stopping criteria. Recommend accept only if all scientific "
-            "objections are resolved.", AuditReview,
+            "objections are resolved."
+        )
+        rules: dict[str, Any] = {
+            "mandatory_risks": sorted(required), "blind_agreement": agreements,
+            "portfolio_admission_criteria": self.admission_criteria,
+            "batch_stop_conditions": self.runner.manifest.stop_conditions,
+        }
+        job = "audit"
+        schema = None
+        result_type: type[AuditReview] = AuditReview
+        if self.audit_recovery is not None:
+            job = audit_recovery.JOB
+            audit_recovery.verify_authority(self.runner, self.audit_recovery)
+            rules.update(audit_recovery.rules(self.audit_recovery))
+            rules["verified_prior_gates"] = [
+                "Condition-local documentary realism passed.",
+                "The frozen bundle preceded two separate full-file blind readings.",
+                "The provisional key was fully validated before this audit.",
+            ]
+            prompt += audit_recovery.INSTRUCTIONS
+            result_type = RecoveredAuditReview
+        if self.audit_recovery is not None or self._uses_scoped_audit():
+            prompt += audit_contract.SCOPED_INSTRUCTIONS
+            schema = audit_contract.output_schema(bundles, freeze, result_type)
+        result = self.job(
+            job, "audit", {
+                "paired_bundles": _json({condition: _source_array(sources) for condition, sources in bundles.items()}),
+                "intended_intervention": _json(freeze.model_dump(mode="json", include={
+                    "natural", "variants", "required", "candidates",
+                })),
+                "provisional_keys": _json(_models(reviews)), "neutral_brief": design.neutral_brief,
+                "ontology": _instruction("ontology.md"), "audit_rules": _json(rules),
+            },
+            prompt, result_type, output_schema=schema,
         )
         science.verify_audit(result, bundles, freeze, required, reviews)
         if result.verdict != "accept":
             self.reject("scientific_review", result.model_dump_json(), quarantine=result.verdict == "quarantine")
+        if self.audit_recovery is not None:
+            audit_recovery.verify_plan(RecoveredAuditReview.model_validate(result), self.audit_recovery)
         self.advance("masks", {"audit": result.model_dump(mode="json")}, gate="independent scientific audit and risk plan")
         return result
+
+    def _uses_scoped_audit(self) -> bool:
+        for row in self.runner.ledger.attempts(self.runner.family):
+            if row["revision"] == self.runner.revision and row["job"] == "audit":
+                # Reopening a reserved packet must reconstruct its original input commitment.
+                return audit_contract.SCOPED_INSTRUCTIONS in commissioning._read_json(row["request"])["prompt"]
+        return True
 
     def masks(
         self, design: DesignOutput, bundles: dict[str, list[Source]], audit: AuditReview,
     ) -> list[dict[str, Any]]:
+        jobs = {f"mask-{index:03}": mask for index, mask in enumerate(audit.masks)}
+        if (self.runner.manifest.phase in {"construction", "milestone"} or self.release
+                or annotation_recovery.recorded(self.runner) is not None):
+            self.runner.ledger.require_capacity(self.runner.family, self.runner.revision, set(jobs))
         results = []
-        if self.runner.manifest.phase == "construction":
-            attempts = self.runner.ledger.attempts(self.slot.family_id)
-            used = {row["job"] for row in attempts if row["revision"] == self.runner.revision}
-            jobs = {f"mask-{index:03}" for index in range(len(audit.masks))}
-            allowance, _ = self.runner.ledger.ceilings(self.slot.family_id)
-            needed = len(jobs - used)
-            if needed > allowance - len(attempts):
-                raise BudgetExhausted(
-                    f"The audited mask plan needs {needed} new sessions, with "
-                    f"{allowance - len(attempts)} remaining."
-                )
-        for index, mask in enumerate(audit.masks):
+        for index, (job, mask) in enumerate(jobs.items()):
             sources = science.mask_sources(mask, bundles[mask.condition])
-            reading = self.read(f"mask-{index:03}", "masked", design, sources)
+            reading = self.read(job, "masked", design, sources)
             edges = science.check_reading(reading, sources).keys()
             if not set(mask.present) <= edges or set(mask.absent) & edges:
                 self.reject("scientific_review", f"Independent mask {index} failed its exact precommitment.",
@@ -378,7 +487,8 @@ class FamilyWorkflow:
     def reject(
         self, code: Code, evidence: str, *, repair_tickets: dict[str, str] | None = None, quarantine: bool = False,
     ) -> None:
-        permitted = bool(repair_tickets) and self.runner.revision <= self.runner.manifest.repair_cycles
+        permitted = (self.release is None and bool(repair_tickets)
+                     and self.runner.revision <= self.runner.manifest.repair_cycles)
         target = "quarantined" if quarantine or (repair_tickets and not permitted) else "returned"
         self.record("disposition", self.stage, self.stage, target, {
             "repair_permitted": permitted, "repair_tickets": repair_tickets or {},
@@ -410,6 +520,23 @@ def offline_report(root: Path) -> dict[str, Any]:
     ):
         raise ValueError("Retained offline replay failed integrity checks.")
     return report
+
+
+def verify_dossier(ledger: Ledger, batch: str, family: str, revision: int, expected: str) -> dict[str, Any]:
+    root = ledger.root / "batches" / batch / family / str(revision) / "family"
+    content = artifacts.read_bytes(root / "dossier.json")
+    if commissioning.digest(content) != expected:
+        raise ValueError(f"Family {family} dossier digest changed after technical recommendation.")
+    dossier = commissioning._read_json(content)
+    manifest = BatchFamilyManifest.model_validate(dossier["manifest"])
+    if review_commitments(root, manifest) != dossier["review_files"]:
+        raise ValueError(f"Family {family} reviewed artifact bytes changed.")
+    verified = load_family(root / "manifest.json")
+    if verified.family != family or verified.manifest_sha256 != dossier["review_files"]["manifest.json"]:
+        raise ValueError(f"Family {family} manifest commitment does not match the dossier.")
+    if offline_report(root) != dossier["replay"]:
+        raise ValueError(f"Family {family} retained replay differs from its reviewed report.")
+    return dossier
 
 
 def _locked_key_digest(root: Path, condition: str, key: SavedIdeal) -> str:

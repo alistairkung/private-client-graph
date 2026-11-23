@@ -1,10 +1,11 @@
 """Exercise the coordinator with the real packet projection and a deterministic transport."""
 
 import json
+import re
 import threading
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import nullcontext
-from datetime import date
+from datetime import date, timedelta
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from uuid import uuid4
@@ -12,9 +13,17 @@ from uuid import uuid4
 import pytest
 
 from benchmark_v3 import commissioning, packet
-from benchmark_v3.batch import admission, authorisation, coordinator, custody, science
-from benchmark_v3.batch.contracts import AdmissionDecisions, BatchDecision, BatchManifest, DesignOutput, PilotDecision
+from benchmark_v3.batch import (
+    adjudication_contract, adjudication_recovery, admission, artifacts, audit_contract, audit_recovery, authorisation, continuation,
+    coordinator, custody, science,
+)
+from benchmark_v3.batch.contracts import (
+    AdjudicationQuoteRecovery, AdmissionDecisions, AnnotationRecovery, AuditReview, AuditRecovery, AuthoredSource, BatchDecision,
+    BatchManifest, BudgetAmendment,
+    DeferredExceptionReview, DesignOutput, DesignReview, FamilyContinuation, PilotDecision, SourceCutoffRecovery,
+)
 from benchmark_v3.batch.ledger import BudgetExhausted, TaskHalted
+from benchmark_v3.batch.sessions import Blocked
 from benchmark_v3.portfolio import Portfolio
 from benchmark_v3.replay_manifest import BatchSourceFreeze, load_family, source_commitments
 from private_client_graph.models.source import Source
@@ -140,7 +149,9 @@ def transport(monkeypatch, tmp_path):
         calls.append((family, request["parent"], local.job, inputs))
         if mode == "failed":
             raise packet.PacketError("Fixture provider did not complete.")
-        if mode == "return" or mode == "repair" and request["parent"].endswith("@1"):
+        if callable(mode):
+            result = mode(inputs)
+        elif mode == "return" or mode == "repair" and request["parent"].endswith("@1"):
             result = {
                 "verdict": mode, "summary": "Fixture documentary objection.",
                 "source_findings": {"src1": "Needs provenance.", "src2": "Plausible."},
@@ -289,6 +300,195 @@ def test_batch_demo_resume_package_and_consolidated_admission(approved, transpor
     records = admission.record_admissions(ledger, decisions)
     assert [json.loads(record.read_bytes())["status"] for record in records] == ["admitted", "returned"]
     assert admission.record_admissions(ledger, decisions) == records
+
+
+@pytest.fixture
+def design_gated(approved):
+    ledger, initial = approved
+    manifest = initial.manifest.model_copy(update={"schema_version": 2, "max_parallel_families": 3})
+    commission = coordinator.Commission(initial.portfolio, manifest, _approval(initial.portfolio, manifest))
+    coordinator.commission_batch(ledger, commission, BOUNDARY)
+    return ledger, commission
+
+
+def _design_approval(ledger, commission):
+    preview = coordinator.preview_design_review(ledger, commission.manifest.batch_id)
+    return DesignReview.model_validate(preview | {
+        "schema_version": 1, "owner": OWNER, "decided_on": TODAY,
+        "decision_reference": "Explicit fixture design review.",
+    })
+
+
+def test_stock_run_pauses_for_all_designs_and_reuses_them_after_review(design_gated, transport):
+    ledger, commission = design_gated
+    batch = commission.manifest.batch_id
+    calls, _, _ = transport
+    coordinator.run_batch(ledger, batch)
+    assert set((family, job) for family, _, job, _ in calls) == {(family, "design") for family in "GHI"}
+    assert all(len(ledger.attempts(family)) == 1 for family in "GHI")
+
+    coordinator.run_batch(ledger, batch)
+    assert len(calls) == 3
+    runner = commission.session_runner(ledger, "G", 1)
+    with pytest.raises(Blocked, match="accept this exact design"):
+        runner.run("author", "author-src1", "author", {}, "Fixture author.", AuthoredSource)
+    assert len(ledger.attempts("G")) == 1
+
+    review = _design_approval(ledger, commission)
+    with pytest.raises(ValueError, match="commissioning owner and exact manifest"):
+        coordinator.record_design_review(ledger, review.model_copy(update={"owner": "Other owner"}))
+    with pytest.raises(ValueError, match="commissioning owner and exact manifest"):
+        coordinator.record_design_review(ledger, review.model_copy(update={"manifest_sha256": "0" * 64}))
+    with pytest.raises(ValueError, match="every exact committed design"):
+        coordinator.record_design_review(ledger, review.model_copy(update={"designs": review.designs[:2]}))
+    altered = review.designs[0].model_copy(update={"design_sha256": "0" * 64})
+    with pytest.raises(ValueError, match="every exact committed design"):
+        coordinator.record_design_review(ledger, review.model_copy(update={"designs": [altered, *review.designs[1:]]}))
+    assert not ledger.events(batch)
+
+    coordinator.record_design_review(ledger, review)
+    coordinator.record_design_review(ledger, review)
+    assert len(ledger.events(batch)) == 1
+    coordinator.run_batch(ledger, batch)
+    assert sum(job == "design" for _, _, job, _ in calls) == 3
+    assert _status(ledger, batch) == dict.fromkeys("GHI", "admission_ready")
+
+
+def test_mixed_design_review_releases_only_accepted_families(design_gated, transport):
+    ledger, commission = design_gated
+    batch = commission.manifest.batch_id
+    calls, _, _ = transport
+    coordinator.run_batch(ledger, batch)
+    approval = _design_approval(ledger, commission)
+    payload = approval.model_dump(mode="json")
+    payload["schema_version"] = 2
+    with pytest.raises(ValueError, match="returned design requires"):
+        DesignReview.model_validate(payload | {
+            "designs": [*payload["designs"][:2], payload["designs"][2] | {"disposition": "return"}],
+        })
+    payload["designs"][2].update(disposition="return", reason="Clarify the proof chain.")
+    with pytest.raises(ValueError, match="every disposition to be explicit"):
+        DesignReview.model_validate(payload | {
+            "designs": [{k: v for k, v in payload["designs"][0].items() if k != "disposition"},
+                        *payload["designs"][1:]],
+        })
+    review = DesignReview.model_validate(payload)
+    coordinator.record_design_review(ledger, review)
+    coordinator.record_design_review(ledger, review)
+    with pytest.raises(ValueError, match="immutable"):
+        coordinator.record_design_review(ledger, approval)
+    for revision in (1, 2):
+        runner = commission.session_runner(ledger, "I", revision)
+        with pytest.raises(Blocked, match="accept this exact design"):
+            runner.run("author", "author-src1", "author", {}, "Fixture author.", AuthoredSource)
+    coordinator.run_batch(ledger, batch)
+    assert _status(ledger, batch) == {
+        "G": "admission_ready", "H": "admission_ready", "I": "pending_design_review",
+    }
+    assert [(family, job) for family, _, job, _ in calls if family == "I"] == [("I", "design")]
+    assert len(ledger.attempts("I")) == 1
+    [returned] = [row for row in ledger.events(batch, "I") if row["kind"] == "design_return"]
+    assert returned["details"] == payload["designs"][2]
+
+
+def test_design_review_rechecks_committed_bytes_before_any_author(design_gated, transport):
+    ledger, commission = design_gated
+    batch = commission.manifest.batch_id
+    calls, _, _ = transport
+    coordinator.run_batch(ledger, batch)
+    review = _design_approval(ledger, commission)
+    coordinator.record_design_review(ledger, review)
+    design = commission.session_runner(ledger, "I", 1).directory / "design.json"
+    design.chmod(0o600)
+    design.write_bytes(design.read_bytes() + b"\n")
+    with pytest.raises(ValueError, match="committed design bytes changed"):
+        coordinator.run_batch(ledger, batch)
+    assert len(calls) == 3
+    assert all(len(ledger.attempts(family)) == 1 for family in "GHI")
+
+
+def test_design_only_resume_reopens_completed_receipts_without_authoring(design_gated, transport):
+    ledger, commission = design_gated
+    batch = commission.manifest.batch_id
+    calls, behavior, _ = transport
+    behavior["G", "design"] = "interrupt_after_receipt"
+    with pytest.raises(Interrupted):
+        coordinator.run_batch(ledger, batch)
+    with pytest.raises(ValueError, match="no committed design"):
+        _design_approval(ledger, commission)
+    coordinator.run_batch(ledger, batch)
+    assert len(_design_approval(ledger, commission).designs) == 3
+    assert len(calls) == 3 and all(job == "design" for _, _, job, _ in calls)
+
+
+def test_source_cutoff_recovery_preserves_packets_and_pauses_for_review(design_gated, transport, monkeypatch):
+    ledger, commission = design_gated
+    batch = commission.manifest.batch_id
+    calls, _, _ = transport
+    mock_turn = packet._run_turn
+
+    def design_with_late_sources(codex, thread, message, effort):
+        result = mock_turn(codex, thread, message, effort)
+        brief = json.loads(message)["inputs"].get("capability_brief")
+        if brief and json.loads(brief)["family_id"] in "HI":
+            design = json.loads(result["text"])
+            as_of = (TODAY - timedelta(days=1)).isoformat()
+            design.update(
+                cutoff=as_of, neutral_brief=f"Review what the file establishes as of {as_of}.",
+                scaling_snapshots=[1, len(design["inventory"])],
+            )
+            result["text"] = json.dumps(design)
+        return result
+
+    monkeypatch.setattr(packet, "_run_turn", design_with_late_sources)
+    coordinator.run_batch(ledger, batch)
+    original_design = commission.session_runner(ledger, "G", 1).directory / "design.json"
+    original_bytes = original_design.read_bytes()
+    raw_packets = {
+        path: path.read_bytes()
+        for family in "GHI"
+        for path in (commission.session_runner(ledger, family, 1).directory / "packets" / "design").iterdir()
+    }
+    responses = {
+        family: commissioning.digest(raw_packets[
+            commission.session_runner(ledger, family, 1).directory / "packets" / "design" / "output.txt"
+        ])
+        for family in "HI"
+    }
+    decision = SourceCutoffRecovery(
+        schema_version=1, batch_id=batch, manifest_sha256=authorisation.commitment(commission.manifest),
+        owner=OWNER, decided_on=TODAY, decision_reference="Fixture owner authorized cut-off recovery only.",
+        responses=responses,
+    )
+    with pytest.raises(ValueError, match="exact completed designer response"):
+        coordinator.recover_source_cutoffs(ledger, decision.model_copy(update={
+            "responses": responses | {"I": "0" * 64},
+        }))
+    assert all(coordinator.family_status(ledger, batch, family)[2] for family in "HI")
+
+    def no_dispatch(*_args, **_kwargs):
+        pytest.fail("Offline recovery cannot dispatch a session.")
+
+    with monkeypatch.context() as recovery:
+        recovery.setattr(packet, "run_packet", no_dispatch)
+        coordinator.recover_source_cutoffs(ledger, decision)
+        coordinator.recover_source_cutoffs(ledger, decision)
+        coordinator.run_batch(ledger, batch)
+    assert len(calls) == 3
+    assert all(len(ledger.attempts(family)) == 1 for family in "GHI")
+    assert original_design.read_bytes() == original_bytes
+    assert all(path.read_bytes() == original for path, original in raw_packets.items())
+    for family in "HI":
+        directory = commission.session_runner(ledger, family, 1).directory
+        original = DesignOutput.model_validate_json(raw_packets[directory / "packets" / "design" / "output.txt"])
+        assert json.loads((directory / "design.json").read_bytes()) == (
+            original.model_dump(mode="json") | {"cutoff": TODAY.isoformat(), "scaling_snapshots": [1]}
+        )
+    assert not ledger.events(batch)
+    coordinator.record_design_review(ledger, _design_approval(ledger, commission))
+    coordinator.run_batch(ledger, batch)
+    assert sum(job == "design" for _, _, job, _ in calls) == 3
+    assert _status(ledger, batch) == dict.fromkeys("GHI", "admission_ready")
 
 
 def test_dispatch_receipt_survives_interruption_without_repeat(approved, transport):
@@ -573,6 +773,48 @@ def test_v4_admission_is_compatible_with_architect_and_detects_changed_review_by
         commissioning.admitted_family_ids()
 
 
+def test_scoped_audit_separates_critical_edges_from_whole_graph(approved, transport):
+    ledger, batch = _run(approved)
+    assert _status(ledger, batch)["G"] == "admission_ready"
+    request = json.loads(next(row["request"] for row in ledger.attempts("G") if row["job"] == "audit"))
+    instructions, schema_document = request["prompt"].split("Output schema: ")
+    assert audit_contract.SCOPED_INSTRUCTIONS in instructions
+    critical = commissioning.json_text(EDGE)
+    schema = json.loads(schema_document)["properties"]
+    for key, expected in (("sufficiency", [critical]), ("completeness", ["src1", "src2"])):
+        assert schema[key]["required"] == ["G000"]
+        assert not schema[key]["additionalProperties"]
+        condition = schema[key]["properties"]["G000"]
+        assert condition["required"] == expected
+        assert not condition["additionalProperties"]
+
+    observed = _output("audit", "G", "audit", {})
+    observed["completeness"]["G000"]["src2"] = "An ordinary edge has an independent route."
+    freeze = BatchSourceFreeze(natural="G000", variants={}, candidates=[], required={"G000": [EDGE]},
+                               order={}, sources_sha256={}, source_commitments={})
+    sources = [Source.model_validate(row) for row in json.loads(request["inputs"]["paired_bundles"])["G000"]]
+    science.verify_audit(AuditReview.model_validate(observed), {"G000": sources}, freeze, set(), {})
+    ordinary = commissioning.json_text(["Ordinary Parent", "parent_of", "Ordinary Child"])
+    observed["sufficiency"]["G000"][ordinary] = "Wrong scope."
+    with pytest.raises(ValueError, match="each critical edge"):
+        science.verify_audit(AuditReview.model_validate(observed), {"G000": sources}, freeze, set(), {})
+
+
+def test_audit_contract_keeps_reserved_legacy_request(approved, transport, monkeypatch):
+    from benchmark_v3.batch.workflow import FamilyWorkflow
+
+    with monkeypatch.context() as patch:
+        patch.setattr(FamilyWorkflow, "_uses_scoped_audit", lambda _: False)
+        ledger, batch = _run(approved)
+    _, commission = approved
+    runner = commission.session_runner(ledger, "G", 1)
+    slot = next(slot for slot in commission.portfolio.slots if slot.family_id == "G")
+    workflow = FamilyWorkflow(runner, slot, [])
+    assert _status(ledger, batch)["G"] == "admission_ready"
+    assert not workflow._uses_scoped_audit()
+    assert FamilyWorkflow(commission.session_runner(ledger, "G", 2), slot, [])._uses_scoped_audit()
+
+
 def test_audit_requires_fresh_masks_for_joint_proof():
     from benchmark_v3.batch.contracts import Adjudication, AuditReview, MaskAssignment
 
@@ -749,3 +991,705 @@ def test_construction_repair_preserves_original_limits_and_charges(approved, tmp
         ledger.reserve("G", 2, "over-cap", "author", request, digest)
     with pytest.raises(ValueError, match="owner-authorised"):
         ledger.reserve("G", 3, "another-cycle", "author", request, digest)
+
+
+@pytest.fixture
+def annotation_exception(design_gated, transport, request):
+    ledger, commission = design_gated
+    batch = commission.manifest.batch_id
+    calls, behavior, _ = transport
+    coordinator.run_batch(ledger, batch)
+    review = _design_approval(ledger, commission).model_dump(mode="json")
+    for item in review["designs"][1:]:
+        item.update(disposition="return", reason="Hold other families at design review.")
+    coordinator.record_design_review(ledger, DesignReview.model_validate(review | {"schema_version": 2}))
+
+    exact = QUOTE.replace(" is ", "\n\nis ")
+    submitted = exact.replace("\n\n", "\n")
+    text = f"Synthetic record:\n{exact}" + (f"\n\n{exact}" if getattr(request, "param", False) is True else "")
+    behavior["G", "author-src1"] = lambda _: {"title": "Test record", "text": text}
+
+    def annotation(inputs, quote):
+        return {
+            "candidates": {"relationships": [{"source_name": EDGE[0], "target_name": EDGE[2],
+                "relationship_type": EDGE[1], "source_id": "src1", "supporting_text": quote}]},
+            "reviewed_sources": [item["id"] for item in json.loads(inputs["sources"])], "open_questions": [],
+        }
+
+    first_quote = f"Synthetic record:\n{exact}" if getattr(request, "param", False) == "disagreed" else exact
+    def first_reading(inputs):
+        result = annotation(inputs, first_quote)
+        if first_quote != exact:
+            candidates = result["candidates"]["relationships"]
+            candidates.append(candidates[0] | {"supporting_text": exact})
+        return result
+
+    behavior["G", "reading-000-a-full"] = first_reading
+    behavior["G", "reading-000-b-full"] = lambda inputs: annotation(inputs, submitted)
+    behavior["G", "adjudicate-000"] = lambda inputs: json.loads(json.dumps(
+        _output("adjudication", "G", "fixture", inputs),
+    ).replace(QUOTE, json.dumps(exact)[1:-1]))
+    coordinator.run_batch(ledger, batch)
+    assert coordinator.family_status(ledger, batch, "G")[2]["code"] == "scientific_review"
+    runner = commission.session_runner(ledger, "G", 1)
+    reader = runner.directory / "packets" / "reading-000-b-full"
+    bundle = runner.directory / "family" / "sources" / "G000.json"
+    decision = _exception_owner(commission, "G") | {
+        "reader_job": reader.name, "output_sha256": commissioning.digest((reader / "output.txt").read_bytes()),
+        "receipt_sha256": commissioning.digest((reader / "receipt.json").read_bytes()),
+        "bundle_sha256": commissioning.digest(bundle.read_bytes()), "source_id": "src1",
+        "candidate_path": "candidates.relationships[0].supporting_text",
+        "byte_interval": [text.encode().index(exact.encode()), text.encode().index(exact.encode()) + len(exact.encode())],
+    }
+    return ledger, batch, runner, calls, decision, exact, [reader / "output.txt", reader / "receipt.json", bundle]
+
+
+def _exception_owner(commission, family):
+    return {"schema_version": 1, "batch_id": commission.manifest.batch_id,
+            "manifest_sha256": authorisation.commitment(commission.manifest), "family_id": family,
+            "owner": OWNER, "decided_on": TODAY.isoformat(), "decision_reference": "Fixture owner exception decision."}
+
+
+def test_exact_annotation_recovery_is_immutable_and_resumes_at_adjudication(annotation_exception):
+    ledger, batch, runner, calls, draft, exact, originals = annotation_exception
+    original_bytes = [file.read_bytes() for file in originals]
+    decision = AnnotationRecovery.model_validate(draft)
+    cursor = len(calls)
+    digest = coordinator.recover_annotation(ledger, decision)
+    assert coordinator.recover_annotation(ledger, decision) == digest
+    assert len(calls) == cursor
+    assert coordinator.family_status(ledger, batch, "G") == (1, "blind", None)
+    derivative = (runner.directory / "recoveries" / decision.reader_job / "output.json").read_bytes()
+    assert commissioning.digest(derivative) == digest
+    assert derivative == original_bytes[0].replace(b"Parent\\nis", b"Parent\\n\\nis")
+    with pytest.raises(ValueError, match="one immutable"):
+        coordinator.recover_annotation(ledger, AnnotationRecovery.model_validate(draft | {
+            "decision_reference": "A second owner decision cannot overwrite the first.",
+        }))
+    with pytest.raises(ValueError, match="cannot reserve an earlier"):
+        runner.run("author", "late-author", "author", {}, "Fixture author.", AuthoredSource)
+    coordinator.run_batch(ledger, batch)
+    assert coordinator.family_status(ledger, batch, "G") == (1, "admission_ready", None)
+    assert [job for _, _, job, _ in calls[cursor:]] == ["adjudicate-000", "audit"]
+    adjudication = calls[cursor][3]
+    assert json.loads(adjudication["annotation_b"])["candidates"]["relationships"][0]["supporting_text"] == exact
+    assert [file.read_bytes() for file in originals] == original_bytes
+    assert coordinator.recover_annotation(ledger, decision) == digest
+
+
+@pytest.mark.parametrize(("change", "error"), [
+    ({"owner": "Another owner"}, "commissioning owner"),
+    ({"owner": None}, "owner"),
+    ({"manifest_sha256": "0" * 64}, "exact manifest"),
+    ({"output_sha256": "0" * 64}, "exact original output and receipt"),
+    ({"receipt_sha256": "0" * 64}, "exact original output and receipt"),
+    ({"bundle_sha256": "0" * 64}, "exact committed frozen bundle"),
+    ({"source_id": "src2"}, "candidate path"),
+    ({"candidate_path": "candidates.relationships[1].supporting_text"}, "candidate path"),
+    ({"candidate_path": "candidates.relationships[0].target_name"}, "candidate_path"),
+    ({"byte_interval": [0, 2]}, "unique frozen match"),
+    ({"byte_interval": [2, 1]}, "byte interval"),
+    ({"relationship_type": "child_of"}, "relationship_type"),
+])
+def test_annotation_recovery_fails_closed(annotation_exception, change, error):
+    ledger, batch, runner, calls, draft, _, originals = annotation_exception
+    original_bytes = [file.read_bytes() for file in originals]
+    cursor = len(calls)
+    with pytest.raises(ValueError, match=error):
+        coordinator.recover_annotation(ledger, AnnotationRecovery.model_validate(draft | change))
+    assert not (runner.directory / "recoveries").exists()
+    assert coordinator.family_status(ledger, batch, "G")[2]["code"] == "scientific_review"
+    assert len(calls) == cursor and [file.read_bytes() for file in originals] == original_bytes
+
+
+@pytest.mark.parametrize("annotation_exception", [True], indirect=True)
+def test_annotation_recovery_rejects_nonunique_source_span(annotation_exception):
+    ledger, _, _, _, decision, _, _ = annotation_exception
+    with pytest.raises(ValueError, match="unique frozen match"):
+        coordinator.recover_annotation(ledger, AnnotationRecovery.model_validate(decision))
+
+
+def test_deferred_owner_reviews_do_not_release_either_family(design_gated, transport):
+    ledger, commission = design_gated
+    batch = commission.manifest.batch_id
+    calls, behavior, _ = transport
+    coordinator.run_batch(ledger, batch)
+    payload = _design_approval(ledger, commission).model_dump(mode="json") | {"schema_version": 2}
+    payload["designs"][2].update(disposition="return", reason="Check the chain.")
+    coordinator.record_design_review(ledger, DesignReview.model_validate(payload))
+    behavior["H", "realism-000"] = lambda inputs: _output("realism", "H", "fixture", inputs) | {
+        "verdict": "return", "objections": ["Clarify one record."], "repair_tickets": {"src1": "Use native wording."},
+    }
+    coordinator.run_batch(ledger, batch)
+    original_status = _status(ledger, batch)
+    assert original_status == {"G": "admission_ready", "H": "returned", "I": "pending_design_review"}
+    h = commission.session_runner(ledger, "H", 1)
+    realism = h.directory / "packets" / "realism-000" / "output.txt"
+    scope = _exception_owner(commission, "H") | {"disposition": {
+        "status": "repair_scope_approved_pending_execution", "design_sha256": payload["designs"][1]["design_sha256"],
+        "realism_output_sha256": {"H000": commissioning.digest(realism.read_bytes())}, "scope": ["Fixture clarification."],
+    }}
+    i = commission.session_runner(ledger, "I", 1)
+    parent = payload["designs"][2]["design_sha256"]
+    design = artifacts.read_contract(i.directory / "design.json", DesignOutput).model_copy(update={
+        "private_history": "Clarified fixture chain.",
+    })
+    child = authorisation.commitment(design)
+    directory = i.directory.with_name("2")
+    proposal = {"parent_revision": 1, "child_revision": 2, "status": "pending_design_review",
+                "parent_design_sha256": parent, "design_sha256": child,
+                "manifest_sha256": authorisation.commitment(commission.manifest),
+                "hypothesis_sha256": commission.manifest.families[2].hypothesis.hypothesis_sha256}
+    artifacts.write_json(directory / "design.json", design.model_dump(mode="json"))
+    artifacts.write_json(directory / "design-proposal.json", proposal)
+    ledger.event(batch, "I", 1, "design_clarification", "child-2", "pending_design_review", "pending_design_review", proposal)
+    merits = _exception_owner(commission, "I") | {"disposition": {
+        "status": "design_merits_accepted_pending_activation", "parent_design_sha256": parent,
+        "child_design_sha256": child,
+    }}
+    with pytest.raises(ValueError, match="exact recorded proposal"):
+        coordinator.record_deferred_review(ledger, DeferredExceptionReview.model_validate(merits | {
+            "disposition": merits["disposition"] | {"child_design_sha256": "0" * 64},
+        }))
+    for draft in (scope, merits):
+        decision = DeferredExceptionReview.model_validate(draft)
+        coordinator.record_deferred_review(ledger, decision)
+        coordinator.record_deferred_review(ledger, decision)
+    cursor = len(calls)
+    attempts = [ledger.attempts(family) for family in "HI"]
+    for family in "HI":
+        with pytest.raises(Blocked, match="defers this family"):
+            commission.session_runner(ledger, family, 2).run(
+                "author", "author-new", "author", {}, "Fixture author.", AuthoredSource,
+            )
+    coordinator.run_batch(ledger, batch)
+    assert _status(ledger, batch) == original_status
+    assert len(calls) == cursor and [ledger.attempts(family) for family in "HI"] == attempts
+    assert [event["details"] for family in "HI" for event in ledger.events(batch, family)
+            if event["kind"] == "deferred_review"] == [scope, merits]
+
+    amended = _amendment(ledger, commission)
+    budget_digest = coordinator.apply_budget_amendment(ledger, amended)
+    releases = []
+    for family, draft, release in (
+        ("H", scope, {"action": "repair_execution", "direct_sources": ["src1"],
+                      "scope_review_sha256": authorisation.commitment(DeferredExceptionReview.model_validate(scope))}),
+        ("I", merits, {"action": "child_activation", "child_design_sha256": child,
+                       "merits_review_sha256": authorisation.commitment(DeferredExceptionReview.model_validate(merits))}),
+    ):
+        decision = FamilyContinuation.model_validate(_exception_owner(commission, family) | {
+            "budget_amendment_sha256": budget_digest, "release": release,
+        })
+        with pytest.raises(ValueError, match="bind the recorded budget"):
+            coordinator.continue_family(ledger, decision.model_copy(update={"budget_amendment_sha256": "0" * 64}))
+        coordinator.continue_family(ledger, decision)
+        releases.append(decision)
+    next_budget = _chained_amendment(amended)
+    coordinator.apply_budget_amendment(ledger, next_budget)
+    for decision in releases:
+        coordinator.continue_family(ledger, decision)
+    behavior.pop(("H", "realism-000"))
+    coordinator.run_batch(ledger, batch)
+    assert _status(ledger, batch) == dict.fromkeys("GHI", "admission_ready")
+    new_authors = [(family, parent, job, inputs) for family, parent, job, inputs in calls[cursor:] if job.startswith("author")]
+    assert {(family, parent, job) for family, parent, job, _ in new_authors} == {
+        ("H", "H@2", "author-src1"), ("I", "I@2", "author-src1"), ("I", "I@2", "author-src2"),
+    }
+    assert new_authors and all("revision_ticket" in inputs if f == "H" else "revision_ticket" not in inputs
+                               for f, _, _, inputs in new_authors)
+    assert all(job != "design" for _, _, job, _ in calls[cursor:])
+    assert coordinator.apply_budget_amendment(ledger, amended) == budget_digest
+    assert authorisation.commitment(artifacts.read_contract(directory / "design.json", DesignOutput)) == child
+
+
+
+def test_recovery_stops_before_a_mask_plan_exceeds_remaining_slots(annotation_exception, transport):
+    ledger, batch, _, calls, draft, _, _ = annotation_exception
+    _, behavior, _ = transport
+    mask = {"risk": "shortcut", "condition": "G000", "included": ["src2"], "present": [], "absent": [EDGE],
+            "reason": "Check whether the administrative note leaks the assertion.", "question": "What holds?"}
+    behavior["G", "audit"] = lambda inputs: _output("audit", "G", "audit", inputs) | {
+        "risks": ["shortcut"], "masks": [mask] * 3,
+    }
+    cursor = len(calls)
+    coordinator.recover_annotation(ledger, AnnotationRecovery.model_validate(draft))
+    coordinator.run_batch(ledger, batch)
+    _, stage, error = coordinator.family_status(ledger, batch, "G")
+    assert stage == "masks" and error["code"] == "budget"
+    assert "3 new sessions with 2 available" in error["evidence"]
+    assert [job for _, _, job, _ in calls[cursor:]] == ["adjudicate-000", "audit"]
+    assert len(ledger.attempts("G")) == 8
+
+
+def _amendment(ledger, commission):
+    return BudgetAmendment.model_validate({
+        "schema_version": 1, "batch_id": commission.manifest.batch_id,
+        "manifest_sha256": authorisation.commitment(commission.manifest),
+        "portfolio_sha256": authorisation.commitment(commission.portfolio),
+        "original_approval_sha256": authorisation.commitment(commission.decision),
+        "owner": OWNER, "decided_on": TODAY, "decision_reference": "Fixture owner amendment.",
+        "reason": "Additional isolated reading sections.",
+        "previous": {"shared": 37, "families": dict.fromkeys("GHI", 10)},
+        "allocation": {"shared": 39, "families": {"G": 12, "H": 13, "I": 14}},
+        "completed_charges": {family: len(ledger.attempts(family)) for family in "GHI"},
+    })
+
+
+def _chained_amendment(first: BudgetAmendment) -> BudgetAmendment:
+    return BudgetAmendment.model_validate(first.model_dump(mode="json") | {
+        "schema_version": 2,
+        "previous_amendment_sha256": authorisation.commitment(first),
+        "previous": first.allocation,
+        "allocation": {"shared": 41, "families": {"G": 14, "H": 13, "I": 14}},
+    })
+
+
+def test_followup_budget_amendment_requires_latest_commitment(approved, transport):
+    ledger, commission = approved
+    coordinator.commission_batch(ledger, commission, BOUNDARY)
+    batch = commission.manifest.batch_id
+    first = _amendment(ledger, commission)
+    second = _chained_amendment(first)
+    with pytest.raises(ValueError, match="latest budget amendment"):
+        coordinator.apply_budget_amendment(ledger, second)
+    first_digest = coordinator.apply_budget_amendment(ledger, first)
+    assert "previous_amendment_sha256" not in first.model_dump(mode="json")
+    baseline = ledger.events(batch)
+    with pytest.raises(ValueError, match="previous amendment digest"):
+        BudgetAmendment.model_validate(second.model_dump(mode="json") | {"previous_amendment_sha256": None})
+    with pytest.raises(ValueError, match="latest budget amendment"):
+        coordinator.apply_budget_amendment(ledger, second.model_copy(update={"previous_amendment_sha256": "0" * 64}))
+    with pytest.raises(ValueError, match="exact current ceilings"):
+        coordinator.apply_budget_amendment(ledger, second.model_copy(update={"previous": first.previous}))
+    with pytest.raises(ValueError, match="without moving"):
+        lower = second.allocation.model_copy(update={"families": {"G": 15, "H": 12, "I": 14}})
+        coordinator.apply_budget_amendment(ledger, second.model_copy(update={"allocation": lower}))
+    second_digest = coordinator.apply_budget_amendment(ledger, second)
+    assert coordinator.apply_budget_amendment(ledger, first) == first_digest
+    assert coordinator.apply_budget_amendment(ledger, second) == second_digest
+    events = ledger.events(batch)
+    assert events[:-1] == baseline
+    assert events[-1]["details"] == second.model_dump(mode="json")
+    assert continuation.recorded_budget(events) == second
+    assert continuation.recorded_budget(events, expected_sha256=first_digest) == first
+    assert ledger.effective_budget() == second.allocation
+    assert not any(ledger.attempts(family) for family in "GHI")
+
+
+def test_budget_amendment_is_append_only_and_no_transfer(approved, transport):
+    ledger, commission = approved
+    coordinator.commission_batch(ledger, commission, BOUNDARY)
+    decision = _amendment(ledger, commission)
+    with pytest.raises(ValueError, match="commissioning owner"):
+        coordinator.apply_budget_amendment(ledger, decision.model_copy(update={"owner": "Other"}))
+    with pytest.raises(ValueError, match="exact completed charges"):
+        coordinator.apply_budget_amendment(ledger, decision.model_copy(update={
+            "completed_charges": {"G": 1, "H": 0, "I": 0},
+        }))
+    with pytest.raises(ValueError, match="without moving"):
+        lower = decision.allocation.model_copy(update={"families": {"G": 9, "H": 16, "I": 14}})
+        coordinator.apply_budget_amendment(ledger, decision.model_copy(update={"allocation": lower}))
+    before = ledger.batch(commission.manifest.batch_id)
+    coordinator.apply_budget_amendment(ledger, decision)
+    assert ledger.batch(commission.manifest.batch_id) == before
+    with ledger.connect() as connection:
+        assert connection.execute("SELECT ceiling FROM task").fetchone()[0] == 37
+        assert dict(connection.execute("SELECT id, allowance FROM families")) == dict.fromkeys("GHI", 10)
+    assert ledger.effective_budget() == decision.allocation
+    for number in range(12):
+        assert ledger.reserve("G", 1, f"fixture-{number}", "design", {}, str(number))
+    with pytest.raises(BudgetExhausted, match="Family"):
+        ledger.reserve("G", 1, "surplus", "design", {}, "x")
+    coordinator.apply_budget_amendment(ledger, decision)
+    with pytest.raises(ValueError, match="immutable"):
+        coordinator.apply_budget_amendment(ledger, decision.model_copy(update={"reason": "Overwrite."}))
+
+
+@pytest.mark.parametrize("annotation_exception", ["disagreed"], indirect=True)
+@pytest.mark.parametrize("fresh_valid", [
+    True, False, "evidence", "evidence_invalid", "evidence_quote", "audit_separate", "audit_mismatch", "audit_pass",
+])
+def test_fresh_adjudication_uses_only_actual_disputes_and_is_single_attempt(annotation_exception, transport, fresh_valid):
+    ledger, batch, runner, calls, draft, _, _ = annotation_exception
+    _, behavior, _ = transport
+    coordinator.recover_annotation(ledger, AnnotationRecovery.model_validate(draft))
+    fixture_reply = behavior["G", "adjudicate-000"]
+    disputed = commissioning.json_text(EDGE)
+    surplus = '["Agreed","parent_of","Edge"]'
+    behavior["G", "adjudicate-000"] = lambda inputs: fixture_reply(inputs) | {
+        "disagreement_resolutions": {disputed: "Resolve the proof.", surplus: "Already agreed."},
+    }
+    coordinator.run_batch(ledger, batch)
+    assert coordinator.family_status(ledger, batch, "G")[2]["evidence"] == (
+        "Adjudication must resolve every graph or attached-evidence disagreement."
+    )
+    commission = coordinator.load_commission(ledger, batch)
+    digest = coordinator.apply_budget_amendment(ledger, _amendment(ledger, commission))
+    _, failed, _ = runner.committed_packet("adjudicate", "adjudicate-000", "adjudication")
+    recovery = next(event["details"] for event in ledger.events(batch, "G") if event["name"] == "annotation-newline")
+    release = FamilyContinuation.model_validate(_exception_owner(commission, "G") | {
+        "budget_amendment_sha256": digest, "release": {
+            "action": "fresh_adjudication", "output_sha256": failed["output_sha256"],
+            "receipt_sha256": failed["receipt_sha256"], "annotation_derivative_sha256": recovery["derivative_sha256"],
+            "disagreement_count": 1,
+        },
+    })
+    coordinator.continue_family(ledger, release)
+    evidence_recovery = isinstance(fresh_valid, str)
+
+    def fresh_reply(inputs):
+        output = fixture_reply(inputs) | {
+            "disagreement_resolutions": {disputed: "Resolve the proof."} if fresh_valid else {},
+        }
+        if evidence_recovery:
+            key = output["key"]
+            key["truth"]["relationships"][0]["approved_evidence"] = []
+            key["source_approval"]["relationships"][0]["approved_evidence"] = []
+            key["ideal"]["relationships"] = []
+            proof = key["sufficient_evidence"][0]
+            proof["joint_only"] = True
+            proof["alternatives"][0].append({"source_id": "src2", "supporting_text": "Ordinary synthetic note."})
+        return output
+
+    behavior["G", "adjudicate-000-fresh"] = fresh_reply
+    if fresh_valid:
+        behavior["G", "audit"] = lambda inputs: _output("audit", "G", "fixture", inputs) | {
+            "risks": ["reader_disagreement"], "masks": [{
+                "risk": "reader_disagreement", "condition": "G000", "included": ["src2"],
+                "present": [], "absent": [EDGE], "reason": "Check disputed proof.", "question": "What holds?",
+            }],
+        }
+    cursor = len(calls)
+    coordinator.run_batch(ledger, batch)
+    coordinator.run_batch(ledger, batch)
+    assert [v[2] for v in calls[cursor:]] == (
+        ["adjudicate-000-fresh", "audit", "mask-000"] if fresh_valid is True else ["adjudicate-000-fresh"]
+    )
+    old = runner.committed_packet("adjudicate", "adjudicate-000", "adjudication")[1]
+    assert old == failed
+    request = next(a for a in ledger.attempts("G") if a["job"] == "adjudicate-000-fresh")
+    inputs = json.loads(request["request"])
+    assert set(inputs["inputs"]) == {"sources", "neutral_brief", "ontology", "annotation_rules",
+                                      "annotation_a", "annotation_b"}
+    assert "Already agreed." not in request["request"]
+    schema = json.loads(inputs["prompt"].split("Output schema: ", 1)[1])
+    assert schema["properties"]["disagreement_resolutions"] == {
+        "type": "object", "properties": {disputed: {"type": "string", "minLength": 1}},
+        "required": [disputed], "additionalProperties": False, "minProperties": 1, "maxProperties": 1,
+    }
+    assert coordinator.family_status(ledger, batch, "G")[1] == (
+        "admission_ready" if fresh_valid is True else "adjudicate"
+    )
+    if evidence_recovery:
+        _, retained, _ = runner.committed_packet("adjudicate", "adjudicate-000-fresh", "adjudication")
+        assert coordinator.family_status(ledger, batch, "G")[2]["evidence"] == (
+            adjudication_contract.SOURCE_APPROVAL_FAILURE
+        )
+        authorised = FamilyContinuation.model_validate(release.model_dump(mode="json") | {"release": {
+            "action": "complete_evidence_adjudication", "output_sha256": retained["output_sha256"],
+            "receipt_sha256": retained["receipt_sha256"], "annotation_derivative_sha256": recovery["derivative_sha256"],
+            "disagreement_count": 1,
+        }})
+        wrong = authorised.release.model_copy(update={"receipt_sha256": "0" * 64})
+        with pytest.raises(ValueError, match="bind the failed output and receipt"):
+            coordinator.continue_family(ledger, authorised.model_copy(update={"release": wrong}))
+        coordinator.continue_family(ledger, authorised)
+        coordinator.continue_family(ledger, authorised)
+        coordinator.continue_family(ledger, release)
+        passed = fresh_valid == "evidence"
+        quote_recovery = fresh_valid == "evidence_quote" or str(fresh_valid).startswith("audit_")
+        def evidence_reply(inputs):
+            if not passed and not quote_recovery:
+                return fresh_reply(inputs)
+            result = fixture_reply(inputs) | {"disagreement_resolutions": {disputed: "Resolve the proof."}}
+            if quote_recovery:
+                result["key"]["truth"]["relationships"][0]["approved_evidence"] = ["src1"]
+            return result
+
+        behavior["G", "adjudicate-000-evidence"] = evidence_reply
+        cursor = len(calls)
+        other_attempts = [ledger.attempts(family) for family in ("H", "I")]
+        coordinator.run_batch(ledger, batch, family_id="G")
+        coordinator.run_batch(ledger, batch, family_id="G")
+        assert [v[2] for v in calls[cursor:]] == (
+            ["adjudicate-000-evidence", "audit", "mask-000"] if passed else ["adjudicate-000-evidence"]
+        )
+        assert [ledger.attempts(family) for family in ("H", "I")] == other_attempts
+        assert coordinator.family_status(ledger, batch, "G")[1] == ("admission_ready" if passed else "adjudicate")
+        assert runner.committed_packet("adjudicate", "adjudicate-000-fresh", "adjudication")[1] == retained
+        final = next(a for a in ledger.attempts("G") if a["job"] == "adjudicate-000-evidence")
+        final_request = json.loads(final["request"])
+        assert final_request["inputs"] == inputs["inputs"]
+        assert adjudication_contract.COMPLETE_EVIDENCE_INSTRUCTIONS in final_request["prompt"]
+        contract = json.loads(final_request["prompt"].split("Output schema: ", 1)[1])
+        assert contract["$defs"]["SourceEvidenceRelationship"]["properties"]["approved_evidence"]["minItems"] == 1
+        if quote_recovery:
+            _check_quote_derivative(ledger, batch, runner, commission, calls, behavior, fresh_valid)
+
+
+def _check_quote_derivative(ledger, batch, runner, commission, calls, behavior, variant):
+    assert coordinator.family_status(ledger, batch, "G")[2]["evidence"] == adjudication_recovery.QUOTE_SEMANTICS_ERROR
+    job = "adjudicate-000-evidence"
+    raw, receipt, _ = runner.committed_packet("adjudicate", job, "adjudication")
+    value = commissioning._read_json(raw)
+    source = (runner.directory / "family" / "sources" / "G000.json").read_bytes()
+    donor = value["key"]["source_approval"]["relationships"][0]["approved_evidence"][0]
+    quote = donor["supporting_text"].encode()
+    submitted = next(row["text"].encode() for row in json.loads(source) if row["id"] == "src1")
+    offset = submitted.index(quote)
+    match = re.search(rb'"approved_evidence"\s*:\s*\[("src1")\]', raw)
+    start, stop = match.span(1)
+    derivative = raw[:start] + commissioning.json_text(quote.decode()).encode() + raw[stop:]
+    decision = AdjudicationQuoteRecovery.model_validate(_exception_owner(commission, "G") | {
+        "output_sha256": receipt["output_sha256"], "receipt_sha256": receipt["receipt_sha256"],
+        "bundle_sha256": commissioning.digest(source), "derivative_sha256": commissioning.digest(derivative),
+        "source_id": "src1", "truth_relationship_index": 0, "quote_sha256": commissioning.digest(quote),
+        "source_quote_interval": [offset, offset + len(quote)], "output_token_interval": [start, stop],
+    })
+    for field, wrong, error in (
+        ("owner", "Wrong", "commissioning owner"),
+        ("bundle_sha256", "0" * 64, "exact frozen Source bundle"),
+        ("receipt_sha256", "0" * 64, "exact adjudication output and receipt"),
+        ("truth_relationship_index", 1, "relationship index is absent"),
+        ("quote_sha256", "0" * 64, "unique frozen byte span"),
+        ("derivative_sha256", "0" * 64, "authorised derivative"),
+        ("output_token_interval", (0, 1), "erroneous JSON string"),
+    ):
+        with pytest.raises(ValueError, match=error):
+            coordinator.recover_adjudication_quote(ledger, decision.model_copy(update={field: wrong}))
+    assert not adjudication_recovery.derivative_path(runner).exists()
+    cursor = len(calls)
+    coordinator.recover_adjudication_quote(ledger, decision)
+    coordinator.recover_adjudication_quote(ledger, decision)
+    assert len(calls) == cursor
+    assert adjudication_recovery.derivative_path(runner).read_bytes() == derivative
+    if variant != "evidence_quote":
+        _check_audit_recovery(ledger, batch, runner, commission, calls, behavior, variant, decision)
+        return
+    coordinator.run_batch(ledger, batch, family_id="G")
+    assert [entry[2] for entry in calls[cursor:]] == ["audit", "mask-000"]
+    assert coordinator.family_status(ledger, batch, "G")[1] == "admission_ready"
+    assert runner.committed_packet("adjudicate", job, "adjudication")[:2] == (raw, receipt)
+    coordinator.recover_adjudication_quote(ledger, decision)
+
+
+def _check_audit_recovery(ledger, batch, runner, commission, calls, behavior, variant, derivative):
+    mask = {"risk": "reader_disagreement", "condition": "G000", "included": ["src2"],
+            "present": [], "absent": [EDGE], "reason": "Check disputed proof.", "question": "What holds?"}
+    def returned(inputs):
+        output = _output("audit", "G", "audit", inputs)
+        other = commissioning.json_text(["Other Parent", "parent_of", "Other Child"])
+        output["sufficiency"]["G000"][other] = "Outside the frozen map."
+        return output
+
+    behavior["G", "audit"] = returned
+    cursor = len(calls)
+    other_attempts = [ledger.attempts(family) for family in ("H", "I")]
+    coordinator.run_batch(ledger, batch, family_id="G")
+    coordinator.run_batch(ledger, batch, family_id="G")
+    assert [call[2] for call in calls[cursor:]] == ["audit"]
+    assert coordinator.family_status(ledger, batch, "G")[2]["evidence"] == audit_recovery.FAILURE
+    original = runner.committed_packet("audit", "audit", "audit")
+    quote = runner.committed_packet("adjudicate", "adjudicate-000-evidence", "adjudication")[2]
+    source = next(row["text"] for row in json.loads(quote["inputs"]["sources"]) if row["id"] == "src1")
+    low, high = derivative.source_quote_interval
+    first_view = {"condition": "G000", "risk": "joint_proof", "included": ["src1", "src2"],
+                  "remove_quotes": {"src1": source.encode()[low:high].decode()}}
+    second_view = {key: mask[key] for key in ("condition", "risk", "included")}
+    parent = continuation.recorded_budget(ledger.events(batch))
+    amendment = _chained_amendment(parent).model_copy(update={
+        "completed_charges": {family: len(ledger.attempts(family)) for family in "GHI"},
+    })
+    coordinator.apply_budget_amendment(ledger, amendment)
+    decision = AuditRecovery.model_validate(_exception_owner(commission, "G") | {
+        "budget_amendment_sha256": authorisation.commitment(amendment),
+        "output_sha256": original[1]["output_sha256"], "receipt_sha256": original[1]["receipt_sha256"],
+        "freeze_sha256": commissioning.digest((runner.directory / "family" / "freeze.json").read_bytes()),
+        "adjudication_derivative_sha256": derivative.derivative_sha256,
+        "views": [view | {"present": [], "absent": [EDGE]} for view in (first_view, second_view)],
+        "combined_cutoff_view": first_view,
+    })
+    with pytest.raises(ValueError, match="retained audit output and receipt"):
+        coordinator.release_audit(ledger, decision.model_copy(update={"receipt_sha256": "0" * 64}))
+    coordinator.release_audit(ledger, decision)
+    coordinator.release_audit(ledger, decision)
+    with pytest.raises(ValueError, match="immutable"):
+        coordinator.release_audit(ledger, decision.model_copy(update={"decision_reference": "Different decision."}))
+
+    def recovered(inputs):
+        rules = json.loads(inputs["audit_rules"])
+        assert rules["proposed_exact_views"][0] == first_view
+        assert "Outside the frozen map." not in str(inputs)
+        assert all("present" not in row for row in rules["proposed_exact_views"])
+        cutoff = "separate_required" if variant == "audit_separate" else "justified"
+        joint = mask | first_view
+        return _output("audit", "G", audit_recovery.JOB, inputs) | {
+            "cutoff_assessment": {"decision": cutoff, "appointment_evidence": "Appointment observation.",
+                                  "designation_evidence": "Designation observation.", "rationale": "Independent result."},
+            "risks": ["reader_disagreement", "joint_proof"],
+            "masks": [mask, joint] if variant != "audit_mismatch" else [mask, joint | {"included": ["src1"]}],
+        }
+
+    behavior["G", audit_recovery.JOB] = recovered
+    for job in ("mask-000", "mask-001"):
+        behavior["G", job] = lambda inputs: {
+            "candidates": {"relationships": []}, "open_questions": [],
+            "reviewed_sources": [row["id"] for row in json.loads(inputs["sources"])],
+        }
+    coordinator.run_batch(ledger, batch, family_id="G", stop_after="audit")
+    assert [call[2] for call in calls[cursor:]] == ["audit", audit_recovery.JOB]
+    if variant == "audit_pass":
+        assert coordinator.family_status(ledger, batch, "G")[1] == "masks"
+        coordinator.run_batch(ledger, batch, family_id="G", stop_after="masks")
+        assert coordinator.family_status(ledger, batch, "G")[1] == "technical"
+        coordinator.run_batch(ledger, batch, family_id="G")
+        assert coordinator.family_status(ledger, batch, "G")[1] == "admission_ready"
+        assert [call[2] for call in calls[cursor:]] == ["audit", audit_recovery.JOB, "mask-000", "mask-001"]
+    else:
+        issue = coordinator.family_status(ledger, batch, "G")[2]["evidence"]
+        assert ("separate cut-off checks" if variant == "audit_separate" else "different mask plan") in issue
+        coordinator.run_batch(ledger, batch, family_id="G")
+        assert [call[2] for call in calls[cursor:]] == ["audit", audit_recovery.JOB]
+    assert runner.committed_packet("audit", "audit", "audit") == original
+    assert [ledger.attempts(family) for family in ("H", "I")] == other_attempts
+
+
+def test_three_disagreement_ids_are_order_stable_and_duplicate_json_is_rejected():
+    edges = [tuple(EDGE), ("Tina", "parent_of", "Mina"), ("Eleanor", "parent_of", "Eva")]
+    ids = adjudication_contract.resolution_ids(edges)
+    assert len(ids) == 3 and ids == adjudication_contract.resolution_ids(list(reversed(edges)))
+    assert adjudication_contract.output_schema(ids)["properties"]["disagreement_resolutions"]["required"] == ids
+    with pytest.raises(ValueError, match="unique disagreement IDs"):
+        adjudication_contract.resolution_ids([*edges, edges[0]])
+    with pytest.raises(ValueError, match="unique JSON keys"):
+        commissioning._read_json('{"disagreement_resolutions":{"same":"first","same":"duplicate"}}')
+
+
+@pytest.fixture
+def milestone(approved, tmp_path):
+    _, base = approved
+    last = base.portfolio.slots[-1]
+    values = base.manifest.model_dump() | {
+        "phase": "milestone", "batch_id": "test-roadmap", "qualification_target": 2,
+        "task_session_ceiling": 44,
+        "families": [
+            row.model_dump() | {"sessions": 11} for row in base.manifest.families
+        ] + [{"family_id": last.family_id, "hypothesis": last.hypothesis, "sessions": 11}],
+    }
+    manifest = BatchManifest.model_validate(values)
+    decision = _approval(base.portfolio, manifest)
+    return coordinator.open_ledger(tmp_path / "milestone"), coordinator.Commission(base.portfolio, manifest, decision)
+
+
+def test_milestone_activates_replacement_and_counts_only_verified_dossiers(milestone, transport):
+    ledger, commission = milestone
+    batch = commission.manifest.batch_id
+    calls, behavior, _ = transport
+    behavior["G", "realism-000"] = "return"
+    coordinator.commission_batch(ledger, commission, BOUNDARY)
+    with pytest.raises(ValueError, match="still in reserve"):
+        ledger.reserve("I", 1, "design", "design", {}, "reserved-input")
+    with pytest.raises(ValueError, match="roadmap order"):
+        coordinator.run_batch(ledger, batch, family_id="I")
+
+    coordinator.run_batch(ledger, batch)
+    progress = coordinator.roadmap_progress(ledger, commission)
+    assert progress.qualified == ["H", "I"]
+    assert progress.active == [] and progress.reserve == ["J"]
+    assert coordinator.family_status(ledger, batch, "G")[1] == "returned"
+    assert not ledger.attempts("J")
+    assert not any(event["kind"] == "human_decision" for family in ("G", "H", "I", "J")
+                   for event in ledger.events(batch, family))
+
+    count = len(calls)
+    coordinator.run_batch(ledger, batch)
+    assert len(calls) == count
+    report, _ = admission.package_batch(ledger, batch)
+    assert json.loads(report.with_name("summary.json").read_bytes())["state"] == "target_reached"
+    dossier = ledger.root / "batches" / batch / "I" / "1" / "family" / "dossier.json"
+    dossier.chmod(0o600)
+    dossier.write_text("{}")
+    with pytest.raises(ValueError, match="dossier digest changed"):
+        coordinator.run_batch(ledger, batch)
+    assert len(calls) == count
+
+
+def test_milestone_checks_real_section_cost_before_authoring(milestone, transport):
+    ledger, commission = milestone
+    batch = commission.manifest.batch_id
+    calls, behavior, _ = transport
+    behavior["G", "design"] = lambda _: _design("G") | {"sections": {"first": ["src1"], "second": ["src2"]}}
+    coordinator.commission_batch(ledger, commission, BOUNDARY)
+
+    coordinator.run_batch(ledger, batch)
+
+    assert [(family, job) for family, _, job, _ in calls if family == "G"] == [("G", "design")]
+    exception = coordinator.family_status(ledger, batch, "G")[2]
+    assert exception["code"] == "budget"
+    assert coordinator.roadmap_progress(ledger, commission).qualified == ["H", "I"]
+
+
+def test_milestone_resumes_owned_wave_without_reissuing_receipt(milestone, transport):
+    ledger, commission = milestone
+    batch = commission.manifest.batch_id
+    calls, behavior, _ = transport
+    coordinator.commission_batch(ledger, commission, BOUNDARY)
+    behavior["G", "design"] = "interrupt_after_receipt"
+    with pytest.raises(Interrupted):
+        coordinator.run_batch(ledger, batch)
+    assert coordinator.roadmap_progress(ledger, commission).reserve == ["I", "J"]
+    del behavior["G", "design"]
+
+    coordinator.run_batch(ledger, batch)
+
+    assert sum(family == "G" and job == "design" for family, _, job, _ in calls) == 1
+    assert coordinator.roadmap_progress(ledger, commission).qualified == ["G", "H"]
+    assert not ledger.attempts("I") and not ledger.attempts("J")
+
+
+def test_milestone_shared_isolation_stops_before_reserve_activation(milestone, transport):
+    ledger, commission = milestone
+    batch = commission.manifest.batch_id
+    _, behavior, _ = transport
+    behavior["G", "design"] = "isolation"
+    coordinator.commission_batch(ledger, commission, BOUNDARY)
+
+    with pytest.raises(TaskHalted):
+        coordinator.run_batch(ledger, batch)
+
+    assert coordinator.roadmap_progress(ledger, commission).reserve == ["I", "J"]
+    assert not ledger.attempts("I") and not ledger.attempts("J")
+
+
+def test_milestone_recovers_a_redundant_full_file_snapshot_without_reissuing_design(milestone, transport, monkeypatch):
+    from benchmark_v3.batch import design_recovery
+
+    ledger, commission = milestone
+    batch = commission.manifest.batch_id
+    calls, behavior, _ = transport
+    behavior["G", "design"] = lambda _: _design("G") | {"scaling_snapshots": [1, 2]}
+    behavior["H", "design"] = "interrupt_after_receipt"
+    coordinator.commission_batch(ledger, commission, BOUNDARY)
+
+    def validate_as_before(runner, slot, design):
+        science.verify_design(slot, design)
+        return design
+
+    with monkeypatch.context() as patch:
+        patch.setattr(design_recovery, "verify_milestone_design", validate_as_before)
+        with pytest.raises(Interrupted):
+            coordinator.run_batch(ledger, batch)
+    assert coordinator.family_status(ledger, batch, "G")[2]["evidence"] == design_recovery.PREFIX_FAILURE
+
+    del behavior["H", "design"]
+    coordinator.run_batch(ledger, batch)
+
+    assert coordinator.roadmap_progress(ledger, commission).qualified == ["G", "H"]
+    assert sum(family == "G" and job == "design" for family, _, job, _ in calls) == 1
+    root = ledger.root / "batches" / batch / "G" / "1"
+    original = json.loads((root / "packets" / "design" / "output.txt").read_bytes())
+    assert original["scaling_snapshots"] == [1, 2]
+    corrected = json.loads((root / "design.json").read_bytes())
+    assert corrected["scaling_snapshots"] == [1]
+    event = next(row for row in ledger.events(batch, "G") if row["kind"] == "reconcile")
+    assert event["details"]["design_sha256"] == authorisation.commitment(DesignOutput.model_validate(corrected))

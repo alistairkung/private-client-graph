@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "manifest_sha256": "97cbf92914e2fec9637bed838fc6837b99d3effbf3606b41b51cb49f7e25e027",
+  "portfolio": {
+    "schema_version": 1,
+    "portfolio_sha256": "12f150333e12b94588b1c2bc703f89e681d48298e6b6c851f4f741118ab2e5be",
+    "status": "approved",
+    "owner": "Alistair Kung",
+    "decided_on": null,
+    "decision_reference": null
+  },
+  "owner": "Alistair Kung",
+  "decided_on": null,
+  "decision_reference": null
+}

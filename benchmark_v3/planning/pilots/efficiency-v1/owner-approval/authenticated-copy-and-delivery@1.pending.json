@@ -1,0 +1,10 @@
+{
+  "hypothesis_id": "authenticated-copy-and-delivery",
+  "revision": 1,
+  "hypothesis_sha256": "ae0b12a8394582bbeaab5b0280c1da93390b4e35cb249c743001bdfd454e89d5",
+  "schema_version": 1,
+  "status": "approved",
+  "owner": "Alistair Kung",
+  "decided_on": null,
+  "decision_reference": null
+}
