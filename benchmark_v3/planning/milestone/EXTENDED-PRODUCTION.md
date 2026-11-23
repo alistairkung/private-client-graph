@@ -265,6 +265,15 @@ The technical dossier is
 `646a4ea8186f1fd7635d5b41e34587fc844b078b7523bf4e69242c8f3617eb98`.
 Seventeen families technically qualify. CM awaits owner admission.
 
+DA revision 4 qualified on an eleven-Source natural condition. It
+separates a testamentary trust activated by a documented cleared
+credit from an outright distribution on a different authority. All
+19 evidence controls passed. A separate zero-provider replay
+reproduced the five supported relationships without false positives or
+omissions. Its technical dossier is
+`29dbfbbd6a981722e24595892611175bab98013a9c8a1d858c1ffa19c75f8d04`.
+Eighteen families technically qualify. DA awaits owner admission.
+
 ## Isolated runtime recovery
 
 AB and AD received independent initial design and scope reviews. Their
@@ -457,6 +466,12 @@ originating sender attestations so the authorised recipient can
 record checked dates. It retains the original comparison and requires
 fresh independent review. The release is
 `ccfa988970db2b58511e3162ab59a636d46e748b4ec703f0b3641cef5524adea`.
+The revised inventory restored all 64 checked sender and date pairs
+and passed independent scientific scope review. Fresh realism raised
+one remaining objection to the form and enclosure description of a
+probate record. The independent review and two-Source repair closure
+are retained at
+`0e277b68eb883af60d239f5361b58a45c7a2cd2d38dd27a49c0443a77b0fd9c8`.
 
 L's scope review exposed a factory-generated attachment instruction
 that implied undocumented revised correspondence. Fresh repair
