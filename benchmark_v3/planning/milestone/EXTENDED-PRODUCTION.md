@@ -171,6 +171,15 @@ Its technical dossier is
 Fourteen families technically qualify. X, T, N, E, W, O, L, AH and AG
 await owner admission.
 
+AZ revision 1 qualified for the distinction between a will's defined
+group and factual kinship. The natural condition passed all eight
+evidence assignments. A separate zero-provider replay reproduced both
+supported graph edges and their evidence results. Its technical
+dossier is
+`ce84f2b9bf4a7b7269b277e1110a3162d7c7bc600a8af1af77e273a8b58d199a`.
+Fifteen families technically qualify. X, T, N, E, W, O, L, AH, AG and AZ
+await owner admission.
+
 ## Isolated runtime recovery
 
 AB and AD received independent initial design and scope reviews. Their
@@ -257,7 +266,8 @@ the 64 separate records exist. The independent scope review returned
 two residual references to a later certificate in an earlier author's
 instructions. An exact omission removes those two sentences while
 retaining the original event trigger. The revised scope must pass
-fresh review before authoring.
+fresh review before authoring. The independently reviewed revision 14
+projection passed and entered separately attested authoring.
 
 L's scope review exposed a factory-generated attachment instruction
 that implied undocumented revised correspondence. Fresh repair
