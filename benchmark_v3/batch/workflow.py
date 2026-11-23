@@ -329,6 +329,15 @@ class FamilyWorkflow:
         projected = self._project_authors(design, tickets)
         attested = self.runner.ledger.requires_delivery_attestation
         rules = {"participant_packets": projected, **({"delivery_attestation": 1} if attested else {})}
+        exact_context = ""
+        if self.documentary_revision is not None and self.documentary_revision.parent.exact_recipient_edit is not None:
+            exact = self.documentary_revision.parent.exact_recipient_edit
+            rules["locally_owned_repair"] = exact.model_dump(mode="json")
+            exact_context = (
+                " One exact repair revises a dated inventory the same participant previously authored. Review the"
+                " candidate text as their own earlier record with the documented omissions and label correction."
+                " Reject new facts, new possession, new transmissions or cues to a scientific answer."
+            )
         delivery_scope = (author_repair.SELECTED_DELIVERY_SCOPE if attested and
                           self._use_scoped_prompt(author_context.JOB, author_repair.SELECTED_DELIVERY_SCOPE) else "")
         origin_scope = (
@@ -348,7 +357,7 @@ class FamilyWorkflow:
            "The participant's own act or observation may be documented in ordinary wording. Check that other "
            "people's knowledge and experimental reasoning stay out. Return on any material objection. "
            "Give one finding keyed to every Source ID."
-           + (" " + author_delivery.REVIEW_INSTRUCTION if attested else "") + delivery_scope + origin_scope,
+           + (" " + author_delivery.REVIEW_INSTRUCTION if attested else "") + delivery_scope + origin_scope + exact_context,
            author_context.AuthorContextReview)
         if review.verdict != "accept" or review.objections or review.findings.keys() != projected.keys():
             self.reject("scientific_review", review.model_dump_json(), quarantine=True)
@@ -456,8 +465,13 @@ class FamilyWorkflow:
                 raise ValueError("An assigned exact body literal must occur exactly once.")
 
         if self.runner.ledger.requires_delivery_attestation:
+            expected = self.documentary_revision.parent.expected_local_source() if self.documentary_revision else None
+
             def verify_source(source: author_delivery.AttestedSource) -> None:
                 verify_literals(source)
+                if (expected is not None and expected.id == identity
+                        and (source.title, source.text) != (expected.title, expected.text)):
+                    raise ValueError("The scoped recipient repair must preserve the exact revised title and complete text.")
                 if not author_repair.unused_attestation(self.runner, identity, design):
                     author_delivery.verify_attestation(source, inputs["author_brief"])
 

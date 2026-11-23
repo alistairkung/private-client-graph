@@ -2938,6 +2938,26 @@ def test_missing_sender_repair_retains_unaffected_author_receipts(autonomous, tr
                       (f"{family}@2", "author-src2"), (f"{family}@2", "author-src3")]
 
 
+def test_exact_recipient_document_repair_preserves_the_original_delivery_graph():
+    from benchmark_v3.batch.recipient_edit import ExactRecipientEdit
+
+    original = _design("G")
+    original["inventory"][1]["participant_brief"] = "Copy the earlier notes. Include the aggregate tally. Sign the dated record."
+    original["inventory"][1]["received"] = ["src1"]
+    design = DesignOutput.model_validate(original)
+    source = Source(id="src2", title="Signed inventory", text="Line: Payment run.\n\nOld tally.\n\nSigned record.")
+    edit = ExactRecipientEdit(source_id="src2", brief_omission="Include the aggregate tally.", omitted_paragraph="Old tally.",
+                              old_label="Payment run", new_label="Retained payment extract", feasibility_sha256="a" * 64)
+    revised_design = edit.revise_design(design)
+    revised_source = edit.revise_source(source)
+    assert revised_design.inventory[1].participant_brief == "Copy the earlier notes. Sign the dated record."
+    assert revised_design.inventory[1].received == ["src1"] and revised_design.inventory[0] == design.inventory[0]
+    assert (revised_source.title, revised_source.text) == ("Signed inventory", "Line: Retained payment extract.\n\nSigned record.")
+    assert source.text == "Line: Payment run.\n\nOld tally.\n\nSigned record."
+    with pytest.raises(ValueError, match="one exact paragraph and one ordinary label"):
+        edit.revise_source(source.model_copy(update={"text": source.text + "\n\nPayment run"}))
+
+
 def test_exact_classification_retry_retains_both_failed_plans_and_uses_the_same_file(
     autonomous, transport, tmp_path, monkeypatch,
 ):

@@ -12,7 +12,7 @@ from benchmark_v3 import commissioning, packet
 from benchmark_v3.batch import (
     adjudication_contract, adjudication_recovery, annotation_recovery, artifacts, audit_boundary, audit_recovery, author_repair, authorisation,
     autonomous_realism, clean_redesign, construction, continuation, delivery_particulars, design_recovery, design_review, evidence_recovery, exception_review, frozen_rekey, joint_control_plan,
-    milestone_repair, read_format_recovery, repair_authority, science,
+    milestone_repair, read_format_recovery, recipient_edit, repair_authority, science,
 )
 from benchmark_v3.batch.contracts import (
     Adjudication, AdjudicationQuoteRecovery, AnnotationRecovery, AuditRecovery, BatchDecision, BatchManifest, BudgetAmendment,
@@ -1073,7 +1073,10 @@ def reopen_delivery_body_repair(ledger: PooledLedger, batch: str, family: str) -
         })
 
 
-def release_realism_with_retained_delivery_facts(ledger: PooledLedger, batch: str, family: str, recipient: str) -> None:
+def release_realism_with_retained_delivery_facts(
+    ledger: PooledLedger, batch: str, family: str, recipient: str, *,
+    exact_edit: recipient_edit.ExactRecipientEdit | None = None,
+) -> None:
     """Allow one local documentary repair while keeping unverified questions open."""
     with ledger.coordinator_lock():
         ledger.require_running()
@@ -1081,9 +1084,14 @@ def release_realism_with_retained_delivery_facts(ledger: PooledLedger, batch: st
         revision, state, _ = family_status(ledger, batch, family)
         disposition = _returned_realism(ledger, commission, family, revision, state)
         slot = next(row for row in commission.portfolio.slots if row.family_id == family)
+        repairs = [row for row in ledger.events(batch, family) if row["details"].get("keep_documentary_limits")]
+        permitted = not repairs if exact_edit is None else (
+            exact_edit.source_id == recipient and state == "quarantined" and len(repairs) == 1
+            and "exact_recipient_edit" not in repairs[0]["details"]
+        )
         if (not ledger.requires_delivery_attestation or disposition is None or len(science.condition_ids(slot)) != 1
-                or any(row["details"].get("keep_documentary_limits") for row in ledger.events(batch, family))):
-            raise ValueError("Only one verified natural-file realism return can retain this documentary scope.")
+                or not permitted):
+            raise ValueError("A bounded natural-file realism return must support the exact retained documentary scope.")
         parent = commission.session_runner(ledger, family, revision)
         autonomous_realism.require_verified_incoming_basis(parent, recipient)
         particulars = delivery_particulars.reopen(parent, recipient)
@@ -1095,6 +1103,8 @@ def release_realism_with_retained_delivery_facts(ledger: PooledLedger, batch: st
             "incoming_particulars": {"source_id": recipient, "reviewed_source_revision": revision,
                                      "record_sha256": authorisation.commitment(particulars)},
         }
+        if exact_edit is not None:
+            release["exact_recipient_edit"] = exact_edit.model_dump(mode="json")
         successor = commission.session_runner(ledger, family, revision + 1)
         autonomous_realism._read_return(successor, slot, release)
         ledger.event(batch, family, revision + 1, "transition", repair_authority.REVISION, state, "design", release)

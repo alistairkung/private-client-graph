@@ -7,7 +7,7 @@ from typing import Any, Literal
 from pydantic import TypeAdapter
 
 from benchmark_v3 import commissioning, packet
-from benchmark_v3.batch import artifacts, author_context, author_delivery, authorisation, delivery_particulars, design_review, repair_authority, science
+from benchmark_v3.batch import artifacts, author_context, author_delivery, authorisation, delivery_particulars, design_review, recipient_edit, repair_authority, science
 from benchmark_v3.batch.contracts import Adjudication, DesignOutput, MatchedCondition, RealismReview, SourceId
 from benchmark_v3.batch.ledger import BudgetExhausted
 from benchmark_v3.batch.sessions import SessionRunner
@@ -101,6 +101,13 @@ class ReturnedFile:
     earlier_scope_references: tuple[tuple[int, str], ...] = ()
     retained_literal_briefs: frozenset[SourceId] = frozenset()
     incoming_particulars: delivery_particulars.IncomingParticulars | None = None
+    exact_recipient_edit: recipient_edit.ExactRecipientEdit | None = None
+
+    def expected_local_source(self) -> Source | None:
+        if self.exact_recipient_edit is None:
+            return None
+        original = next(item for item in self.bundles[self.freeze.natural] if item.id == self.exact_recipient_edit.source_id)
+        return self.exact_recipient_edit.revise_source(original)
 
     def inputs(self, slot: FamilySlot) -> dict[str, str]:
         key = f"{slot.hypothesis.hypothesis_id}@{slot.hypothesis.revision}"
@@ -126,6 +133,12 @@ class Revision:
     planner_job: str
 
     def participant_tickets(self) -> dict[SourceId, str]:
+        if (expected := self.parent.expected_local_source()) is not None:
+            return {expected.id: (
+                "Use the exact local retained record supplied below as the revised copy of your own inventory. "
+                "Copy its title and text exactly. Your own earlier transmissions and the status of this retained "
+                "record are unchanged.\nTitle: " + expected.title + "\n\n" + expected.text
+            )}
         particulars = self.parent.incoming_particulars
         if particulars is None:
             return self.plan.tickets
@@ -206,6 +219,8 @@ def plan_revision(
         lineage["incoming_particulars"] = release["incoming_particulars"]
     if release.get("natural_provenance_restoration"):
         lineage["natural_provenance_restoration"] = True
+    if parent.exact_recipient_edit is not None:
+        lineage["exact_recipient_edit"] = release["exact_recipient_edit"]
     return Revision(parent, design, plan, affected, lineage, job), receipt
 
 
@@ -263,6 +278,7 @@ def _plan_from_objections(
             "earlier_documentary_objections": parent.earlier_objections,
             **({"prior_scope_return": parent.prior_scope_return} if parent.prior_scope_return is not None else {}),
             **({"keep_documentary_limits": True} if release.get("keep_documentary_limits") else {}),
+            **({"exact_recipient_edit": release["exact_recipient_edit"]} if parent.exact_recipient_edit is not None else {}),
             "capacity": {
                 "family_sessions_before_planning": release["family_sessions_remaining"],
                 "mandatory_at_existing_topology_before_regenerated_authors_and_masks": len(
@@ -328,6 +344,13 @@ def _select_plan(
             " attachments or later acts. Prefer deleting unsupported summary detail to making up a crosswalk."
             " Repair ambiguous terminology using only documented local facts. Treat any suggested future"
             " enquiry as practitioner follow-up, not as an author instruction to supply new evidence."
+        )
+    if parent.exact_recipient_edit is not None:
+        prompt += (
+            " Independently assess the exact locally owned edit. Classify every current objection. If feasible,"
+            " return only a ticket for that recipient and no revised design. The validated derivative removes the"
+            " conflicting original brief instruction and implements the exact record changes. Return infeasible if"
+            " anything beyond these edits is materially necessary. Preserve all existing verified evidence and limits."
         )
     if exact := repair_authority.recorded_classification_retry(runner):
         expected, previous_inputs = classification_retry_details(runner)
@@ -525,6 +548,18 @@ def _read_return(runner: SessionRunner, slot: FamilySlot, release: dict[str, Any
         if authorisation.commitment(particulars) != details["record_sha256"]:
             raise ValueError("The participant's original delivery particulars changed.")
         result = replace(result, incoming_particulars=particulars)
+    if edit := release.get("exact_recipient_edit"):
+        exact = recipient_edit.ExactRecipientEdit.model_validate(edit)
+        if result.incoming_particulars is None or result.incoming_particulars.source_id != exact.source_id:
+            raise ValueError("The exact edit must belong to the same independently verified receiving participant.")
+        own, _, request = previous.committed_result("author", f"author-{exact.source_id}", "author", author_delivery.AttestedSource)
+        source = next(item for item in natural if item.id == exact.source_id)
+        if (own.title, own.text) != (source.title, source.text):
+            raise ValueError("The exact edit must reopen the verified Source authored by the participant.")
+        author_delivery.require_projection(previous, f"author-{exact.source_id}", request["inputs"])
+        exact.revise_source(source)
+        exact.revise_design(design)
+        result = replace(result, exact_recipient_edit=exact)
     return result
 
 
@@ -961,12 +996,20 @@ def _verify_plan(
         raise RepairStopped("The repair proposes no change to any authored Source.")
     if parent.incoming_particulars is not None:
         parent.incoming_particulars.require_preserved_deliveries(old, design, affected)
+    if parent.exact_recipient_edit is not None and affected != {parent.exact_recipient_edit.source_id}:
+        raise ValueError("An exact recipient edit cannot alter another document or require a descendant repair.")
     return design, affected
 
 
 def _verify_design_change(slot: FamilySlot, parent: ReturnedFile, plan: RepairPlan) -> DesignOutput:
     old = parent.design
-    design = plan.revised_design or old
+    edit = parent.exact_recipient_edit
+    if edit is not None:
+        if plan.revised_design is not None or set(plan.tickets) != {edit.source_id}:
+            raise ValueError("The exact recipient edit requires one participant ticket and the retained design.")
+        design = edit.revise_design(old)
+    else:
+        design = plan.revised_design or old
     science.verify_design(slot, design)
     roster = {brief.source_id for brief in old.inventory}
     if (

@@ -398,11 +398,20 @@ unverified historical mandates, records and workings open. The release
 is `50a1ec2a084c26153965b49993fe76bc668cc534127233e5fa9ebadc2b65ed02`.
 Revision 19 retained unsupported aggregate categories and an
 underidentified payment extract. Three recent realism reviews found
-related issues. The current lineage remains quarantined after 361
-custody charges and has no technical dossier. The exact disposition is
+related issues. That revision remains quarantined after 361 custody
+charges. Its exact disposition is
 `d8b89d940f41c9d013ad155c2432b52ef3d4b031dd311fd59bde1691346f1a0a`.
-The next large candidate requires its own independent documentary
-feasibility review before authoring.
+
+An independent feasibility review identified one bounded local
+revision. It removes an unsupported category tally and labels the
+unchanged, retained payment extract using the recipient's documented
+knowledge. The release preserves all 64 other Sources and their
+attestations. The affected participant must author the exact revised
+inventory in a fresh isolated turn. Documentary realism and all
+subsequent scientific gates apply to the new revision. The independent
+review is `0429165c487d712fe40a5e51e8ad6de5b2dcafe12ca78c85a61c36c3d6ff5f7d`.
+The exact release is
+`35e236ce16a65de9da04df7c58a579d2e3692ce13d1346e26d087fa38929cfe7`.
 
 L's scope review exposed a factory-generated attachment instruction
 that implied undocumented revised correspondence. Fresh repair
