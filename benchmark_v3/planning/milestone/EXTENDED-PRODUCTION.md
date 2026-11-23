@@ -143,6 +143,16 @@ The exact technical dossier is
 Twelve families technically qualify. X, T, N, E, W, O and L await owner
 admission.
 
+AH revision 3 qualified for field-specific attestation in a mixed-origin
+record. Two conditions passed all 14 independent evidence assignments.
+A separate zero-provider replay reproduced both graphs, three supported
+edges in total, and their evidence results. The audit retains the
+limits of the practitioner's certified-record check and the unknown
+origin of an unsigned slip. Its technical dossier is
+`1f372940d07ff3ad777b40340cc4db9aac35ef6d712d0fef7958838584822500`.
+Thirteen families technically qualify. X, T, N, E, W, O, L and AH await
+owner admission.
+
 ## Isolated runtime recovery
 
 AB and AD received independent initial design and scope reviews. Their
@@ -176,8 +186,12 @@ reviewers see it.
 
 R's two unrenderable excerpt controls differed from their unique
 frozen spans by a blank line. The controller retains both original
-commitments and records whitespace-only derivatives. R still needs
-independent scientific acceptance and observed controls.
+commitments and records whitespace-only derivatives. Fresh scientific
+acceptance released the exact control plan. Its first masked observation
+supported the expected timing-dependent beneficiary and found an
+additional trustee edge from the same retained certification. The
+failed absence remains quarantined. A separate replacement preserves
+the registered event-versus-report-date hypothesis.
 
 Q's retained adjudication required one unique whitespace correction
 across its quotation representations. Four proposed sufficient sets
@@ -228,7 +242,10 @@ then used ambiguous references to earlier realism findings. The
 controller verifies both original receipts and allows one new isolated
 classification on the identical inputs. The independently reviewed
 revision still requires exact author scope, fresh realism and all
-downstream checks.
+downstream checks. The subsequent isolated singleton observation
+recovered the named beneficiary directly from the signed designation.
+That contradicted the precommitted absence. The observed result and
+original keys remain quarantined.
 
 AP's proposed repair initially stopped because the matched alternative
 used an ordinary provision identifier already present in two separate
@@ -237,6 +254,11 @@ their prior approved local scopes and their exact retained Sources. The
 allowance applies only when those authors and their dependencies are
 untouched in the repair. New and revised participant instructions still
 reject any exposure of condition identifiers or the alternate literal.
+AP's repaired pair subsequently passed documentary realism. The
+independent audit returned the evidence key for applying asymmetric
+eligibility to the surviving basis. Its replacement keeps the same
+invariant graph test and requires an observable difference in exact
+approved evidence under consistent rules.
 
 BG's first lineage remains quarantined after a masked reader identified
 support that the signed designation minute retained on its own. A
