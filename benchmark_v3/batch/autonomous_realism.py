@@ -28,6 +28,7 @@ PLAN_PROMPT = (
     "out of the tickets and participant briefs. Return infeasible or scope_change with reasons when warranted."
 )
 ADJUDICATION_RETURN = "Adjudication has unresolved scientific objections."
+PLAN_REFERENCE_FAILURE = "Every additional classification must identify a retained earlier objection."
 VERIFY_PROMPT = (
     "Independently compare the original and revised fictional files with their designs and the approved hypothesis. "
     "Check that the intended contrast, scoped relationships, cut-off question, invariant evidence, participant "
@@ -248,6 +249,7 @@ def _select_plan(
             "design", job, "audit", packet_inputs,
             prompt + (" " + author_delivery.DESIGN_INSTRUCTION if attested else ""), RepairPlan,
             validate=lambda plan: _verify_classification(slot, parent, plan, attested=attested),
+            allow_format_retry=job != repair_authority.EXACT_PLAN_JOB,
         )
         artifacts.write_json(runner.directory / f"{job}.json", result.model_dump(mode="json"))
         return result, receipt
@@ -277,6 +279,23 @@ def _select_plan(
         prompt += (" The exact scoped return is the immediate documentary draft. Address the new scope objections "
                    "and preserve all unaffected records. Retain prior documentary objections for context and arrange "
                    "fresh independent realism on the revised full conditions.")
+    if exact := repair_authority.recorded_classification_retry(runner):
+        expected, previous_inputs = classification_retry_details(runner)
+        if exact != expected or inputs != previous_inputs:
+            raise packet.PacketIsolationError("A fresh classification must preserve both retained repair packets.")
+        job = repair_authority.EXACT_PLAN_JOB
+        runner.ledger.require_capacity(runner.family, runner.revision, {
+            job, "author-minimum", *mandatory_jobs(parent.design, set(), verification=True, assume_whole_file=True),
+        })
+        plan, receipt = propose(job, prompt + (
+            " Copy the current keys from audit_rules.objections into your objections map exactly. "
+            "Discuss earlier findings in the rationale with revision numbers. Keep their documentary "
+            "substance in the plan, and use the objections map for the current keys only."
+        ), inputs)
+        design, affected = _verify_plan(slot, parent, plan, attested=attested)
+        runner.ledger.require_capacity(runner.family, runner.revision, mandatory_jobs(design, affected, verification=True))
+        _record_plan_selection(runner, job, receipt)
+        return plan, receipt, design, affected, job
     plan, receipt = propose(repair_authority.PLAN_JOB, prompt, inputs)
     design, affected = _verify_plan(slot, parent, plan, attested=attested)
     original_jobs = mandatory_jobs(design, affected, verification=True)
@@ -321,6 +340,26 @@ def _select_plan(
 def _record_plan_selection(runner: SessionRunner, job: str, receipt: dict[str, Any]) -> None:
     runner.ledger.event(runner.manifest.batch_id, runner.family, runner.revision, "repair_plan_selection",
                         "chosen", "design", "design", {"job": job, "receipt_sha256": receipt["receipt_sha256"]})
+
+
+def classification_retry_details(runner: SessionRunner) -> tuple[dict[str, Any], dict[str, str]]:
+    rejected = {row["name"]: row["details"] for row in runner.ledger.events(runner.manifest.batch_id, runner.family)
+                if row["revision"] == runner.revision and row["kind"] == "rejected_output"}
+    receipts = {}
+    prior_inputs: dict[str, str] | None = None
+    for job in (repair_authority.PLAN_JOB, repair_authority.PLAN_JOB + repair_authority.FORMAT_RETRY):
+        _, receipt, request = runner.committed_packet("design", job, "audit")
+        expected = {"receipt_sha256": receipt["receipt_sha256"], "reason": PLAN_REFERENCE_FAILURE}
+        inputs = request["inputs"]
+        if rejected.get(job) != expected or (prior_inputs is not None and prior_inputs != inputs):
+            raise ValueError("A fresh classification requires two exact historical-reference failures on the same input.")
+        receipts[job] = receipt["receipt_sha256"]
+        prior_inputs = inputs
+    assert prior_inputs is not None
+    return {
+        "manifest_sha256": authorisation.commitment(runner.manifest), "receipts": receipts,
+        "inputs_sha256": commissioning.digest(commissioning.json_text(prior_inputs).encode()),
+    }, prior_inputs
 
 
 def _read_return(runner: SessionRunner, slot: FamilySlot, release: dict[str, Any]) -> ReturnedFile:
@@ -643,7 +682,7 @@ def _verify_classification(
         else:
             candidates = {reference for reference in earlier if reference[1] == key.removeprefix("earlier:")}
         if len(candidates) != 1:
-            raise ValueError("Every additional classification must identify a retained earlier objection.")
+            raise ValueError(PLAN_REFERENCE_FAILURE)
         reference, = candidates
         classification = plan.objections[key]
         if not set(classification.sources) <= roster | historical_sources.get(reference, set()):

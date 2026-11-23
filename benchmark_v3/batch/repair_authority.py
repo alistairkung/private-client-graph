@@ -1,17 +1,19 @@
 """Read the immutable milestone repair mandate without changing its spending limits."""
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from benchmark_v3.batch.authorisation import commitment
 from benchmark_v3.batch.contracts import BatchManifest
 
 if TYPE_CHECKING:
     from benchmark_v3.batch.ledger import Ledger
+    from benchmark_v3.batch.sessions import SessionRunner
 
 AMENDMENT = "autonomous_realism_amendment"
 REVISION = "autonomous_realism_repair"
 STOP = "autonomous_realism_stop"
 PLAN_JOB = "repair-plan"
+EXACT_PLAN_JOB = "repair-plan-exact-classification"
 BUDGET_PLAN_JOB = "repair-budget-plan"
 PLAN_RECOVERY = "realism_plan_reference_recovery"
 RETAINED_DESIGN_NOTE = "realism-retained-design-review-note"
@@ -36,3 +38,10 @@ def enabled(ledger: "Ledger", manifest: BatchManifest) -> bool:
     if any(row["details"]["manifest_sha256"] != commitment(manifest) for row in rows):
         raise ValueError("The realism amendment differs from the commissioned manifest.")
     return bool(manifest.autonomous_realism or rows)
+
+
+def recorded_classification_retry(runner: "SessionRunner") -> dict[str, Any] | None:
+    events = runner.ledger.events(runner.manifest.batch_id, runner.family)
+    return next((row["details"]["exact_classification"] for row in events
+                 if (row["revision"], row["kind"], row["name"]) == (runner.revision, "reconcile", PLAN_RECOVERY)
+                 and "exact_classification" in row["details"]), None)

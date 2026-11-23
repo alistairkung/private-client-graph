@@ -214,6 +214,12 @@ class SessionRunner:
                 permitted = joint_control_plan.released(self) is not None
             if self.ledger.requires_delivery_attestation and stage == "audit" and base_job == joint_control_plan.FOLLOWUP_JOB:
                 permitted = joint_control_plan.followup(self) is not None
+            if self.ledger.requires_delivery_attestation and (stage, job) == ("design", repair_authority.EXACT_PLAN_JOB):
+                events = self.ledger.events(self.manifest.batch_id, self.family)
+                retry = repair_authority.recorded_classification_retry(self)
+                permitted = (self._pooled_documentary_repair(events) and retry is not None
+                             and retry["manifest_sha256"] == authorisation.commitment(self.manifest)
+                             and retry["inputs_sha256"] == commissioning.digest(commissioning.json_text(inputs).encode()))
             if recovery and (stage, base_job) in {
                 ("design", repair_authority.PLAN_JOB), ("design", repair_authority.BUDGET_PLAN_JOB),
                 ("author", repair_authority.VERIFY_JOB),

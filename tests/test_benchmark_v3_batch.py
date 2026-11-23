@@ -2653,6 +2653,80 @@ def test_pooled_scope_return_reopens_only_the_verified_prior_realism_file(autono
     assert scope_record in [event["details"] for event in ledger.events(batch, "G") if event["kind"] == "session"]
 
 
+def test_exact_classification_retry_retains_both_failed_plans_and_uses_the_same_file(
+    autonomous, transport, tmp_path, monkeypatch,
+):
+    from benchmark_v3.batch import autonomous_realism, repair_authority
+    from benchmark_v3.batch.pool import PooledLedger
+
+    original, commission = autonomous
+    manifest, slot = commission.manifest, commission.portfolio.slots[0]
+    batch, family = manifest.batch_id, "G"
+    coordinator.commission_batch(original, commission, BOUNDARY)
+    pool = MilestonePool(tmp_path / "exact-plan-classification", PoolAuthority(
+        owner=OWNER, reference="Fixture pooled repair.", prior_archive_sha256="b" * 64,
+        starting_charges=295, cumulative_ceiling=335, additional_target=1,
+        members=[CustodyMember(root=str(original.root), task_id=manifest.task_id, starting_charges=0)],
+    ))
+    monkeypatch.setattr(PooledLedger, "requires_author_context", property(lambda _: True))
+    monkeypatch.setattr(PooledLedger, "requires_delivery_attestation", property(lambda _: True))
+    ledger = pool.join(original.root)
+    ledger.release(batch, family, 1, "design", parent_sha256="a" * 64, reference="Original work.")
+    calls, behavior, _ = transport
+    behavior[family, "author-context"] = lambda inputs: {
+        "verdict": "accept", "objections": [],
+        "findings": {key: "Reviewed." for key in json.loads(inputs["audit_rules"])["participant_packets"]},
+    }
+    behavior[family, "author-src1"] = lambda inputs: {
+        "title": "Record", "text": QUOTE + inputs.get("revision_ticket", ""), "deliveries": [],
+    }
+    behavior[family, "author-src2"] = lambda _: {"title": "Note", "text": "Routine note.", "deliveries": []}
+    behavior[family, "realism-000"] = lambda inputs: _output("realism", family, "", inputs) | (
+        {"verdict": "repair", "objections": ["Keep the recorded date distinct from receipt."]}
+        if "Clarified date" not in inputs["sources"] else {}
+    )
+    behavior[family, "repair-verification"] = lambda _: {
+        "verdict": "preserved", "scope": "Reviewed.", "provenance": "Reviewed.", "contrast": "Reviewed.",
+        "objections": [],
+    }
+
+    def plan(inputs):
+        return _repair_plan(inputs, ticket="Clarified date.")
+
+    def ambiguous(inputs):
+        output = plan(inputs)
+        output["objections"]["earlier:G000:3"] = output["objections"]["G000:1"]
+        return output
+
+    job = repair_authority.PLAN_JOB
+    retry = job + repair_authority.FORMAT_RETRY
+    exact = repair_authority.EXACT_PLAN_JOB
+    behavior[family, job] = behavior[family, retry] = ambiguous
+    behavior[family, exact] = plan
+    coordinator._work_family(ledger, commission, slot)
+    coordinator._work_family(ledger, commission, slot)
+    rev, state, issue = coordinator.family_status(ledger, batch, family)
+    assert (rev, state, issue["evidence"]) == (
+        2, "quarantined", f"{retry} failed its output contract: {autonomous_realism.PLAN_REFERENCE_FAILURE}",
+    )
+    runner = commission.session_runner(ledger, family, rev)
+    original_packets = [runner.committed_packet("design", key, "audit") for key in (job, retry)]
+    coordinator.release_exact_plan_classification(ledger, batch, family)
+    with pytest.raises(ValueError, match="Only the authorised audit or repair job"):
+        runner.run("design", exact, "audit", {"audit_rules": "Different repair packet."},
+                   "Review the packet.", autonomous_realism.RepairPlan)
+    coordinator._work_family(ledger, commission, slot)
+    assert coordinator.family_status(ledger, batch, family) == (2, "admission_ready", None)
+    assert original_packets == [runner.committed_packet("design", key, "audit") for key in (job, retry)]
+    assert [key for _, _, key, _ in calls if key.startswith(job)] == [job, retry, exact]
+    request = runner.committed_packet("design", exact, "audit")[2]
+    assert request["inputs"] == original_packets[0][2]["inputs"] == original_packets[1][2]["inputs"]
+    assert "Copy the current keys" in request["prompt"]
+    assert [key for _, revision, key, _ in calls if revision == "G@2" and key.startswith("author-src")] == ["author-src1"]
+    with pytest.raises(ValueError, match="One fresh classification"):
+        coordinator.release_exact_plan_classification(ledger, batch, family)
+
+
 def test_scoped_review_context_preserves_reserved_prompt_on_resume(approved, monkeypatch):
     from benchmark_v3.batch.workflow import FamilyWorkflow
 

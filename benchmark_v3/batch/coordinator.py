@@ -1017,6 +1017,27 @@ def release_returned_pre_author_plan(ledger: PooledLedger, batch: str, family: s
         })
 
 
+def release_exact_plan_classification(ledger: PooledLedger, batch: str, family: str) -> None:
+    with ledger.coordinator_lock():
+        ledger.require_running()
+        commission = load_commission(ledger, batch)
+        revision, state, issue = family_status(ledger, batch, family)
+        runner = commission.session_runner(ledger, family, revision)
+        failure = f"{repair_authority.PLAN_JOB}{repair_authority.FORMAT_RETRY} failed its output contract: "
+        events = ledger.events(batch, family)
+        if (not ledger.requires_delivery_attestation or not ledger.pooled_revision(batch, family, revision)
+                or autonomous_realism.release_event(runner) is None or state != "quarantined" or not issue
+                or (issue["stage"], issue["code"], issue["evidence"])
+                != ("design", "scientific_review", failure + autonomous_realism.PLAN_REFERENCE_FAILURE)
+                or any(row["revision"] == revision and row["name"] == repair_authority.PLAN_RECOVERY for row in events)
+                or any(row["revision"] == revision and row["stage"] != "design" for row in ledger.attempts(family))):
+            raise ValueError("One fresh classification requires a stopped pre-author documentary repair.")
+        details, _ = autonomous_realism.classification_retry_details(runner)
+        ledger.event(batch, family, revision, "reconcile", repair_authority.PLAN_RECOVERY, state, "design", {
+            "exact_classification": details,
+        })
+
+
 def release_generated_attachment_ticket_recovery(ledger: PooledLedger, batch: str, family: str, source_id: str) -> None:
     with ledger.coordinator_lock():
         ledger.require_running()

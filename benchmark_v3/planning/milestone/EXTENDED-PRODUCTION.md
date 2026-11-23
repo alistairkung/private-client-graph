@@ -211,6 +211,14 @@ The exact already-reserved historical projections remain reopenable.
 L's reviewed plan continues in a fresh scope revision with the
 unsupported automatic instruction removed.
 
+AR's post-repair scope review found that repeating operative dates in
+an intake note created a new shortcut. Two independent replan outputs
+then used ambiguous references to earlier realism findings. The
+controller verifies both original receipts and allows one new isolated
+classification on the identical inputs. The independently reviewed
+revision still requires exact author scope, fresh realism and all
+downstream checks.
+
 An immutable reserved packet can be reopened without holding the live
 dispatch slot. Reopen-only reservations cannot start a new scientific
 turn. After stable serial production, a fresh zero-turn check verified
