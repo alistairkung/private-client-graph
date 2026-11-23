@@ -4143,6 +4143,63 @@ def test_only_the_independently_returned_separate_reply_sentence_is_omitted(auto
     assert plan.tickets["src1"] == ticket
 
 
+def test_future_reference_omission_binds_the_prior_scope_and_preserves_the_local_act(autonomous, monkeypatch):
+    from benchmark_v3.batch import author_context, author_delivery, autonomous_realism
+    from benchmark_v3.batch.sessions import SessionRunner
+
+    ledger, commission = autonomous
+    runner = commission.session_runner(ledger, "G", 3)
+    later = (TODAY + timedelta(days=2)).isoformat()
+    brief_line = "Do not refer to a bank certificate."
+    ticket_line = "Do not refer to a bank certificate in this instrument or make issuance, receipt or a further act a condition."
+    local_brief = "Use posting as the operative event. Require no further acceptance or act."
+    local_ticket = "Record the signatories' original agreement about posting."
+    raw = _design("G")
+    raw["cutoff"] = later
+    raw["inventory"][0]["participant_brief"] = f"{local_brief} {brief_line}"
+    raw["inventory"][1].update(created_on=later, participant_brief="Issue the certificate for the bank posting.")
+    design = DesignOutput.model_validate(raw)
+    artifacts.write_json(runner.directory / "design.json", design.model_dump(mode="json"))
+    plan = autonomous_realism.RepairPlan(
+        disposition="repair", objections={}, revised_design=design, tickets={"src1": f"{local_ticket} {ticket_line}"},
+        progress="improved", rationale="Preserve the operative date.",
+    )
+    review = author_context.AuthorContextReview(
+        verdict="return", findings={"src1": "Later record.", "src2": "Local observation."},
+        objections=["src1 — Remove both references to the bank certificate. The participant did not receive it."],
+    )
+    monkeypatch.setattr(autonomous_realism, "pre_author_scope_return", lambda *args, **kwargs: (
+        {"planner_receipt_sha256": "a" * 64, "scope_receipt_sha256": "b" * 64}, plan,
+    ))
+    projection = author_delivery.projection(design, plan.tickets)
+
+    def retained(_runner, _stage, _job, _role, _type):
+        rules = json.dumps({"participant_packets": projection})
+        return review, {"receipt_sha256": "b" * 64}, {"inputs": {"audit_rules": rules}}
+
+    monkeypatch.setattr(SessionRunner, "committed_result", retained)
+    slot = commission.portfolio.slots[0]
+    omission = autonomous_realism.FutureReferenceOmission(
+        source_id="src1", later_source_id="src2", reference="bank certificate",
+        brief_sentence=brief_line, ticket_sentence=ticket_line,
+    )
+    record, revised, _ = autonomous_realism.remove_future_reference(runner, slot, omission)
+    expected = raw | {"inventory": [raw["inventory"][0] | {"participant_brief": local_brief}, raw["inventory"][1]]}
+    assert revised.revised_design == DesignOutput.model_validate(expected)
+    assert revised.tickets == {"src1": local_ticket}
+    assert plan.tickets["src1"].endswith(ticket_line)
+    assert autonomous_realism._reopen_scope_omission(runner, slot, record)[1] == revised
+    with pytest.raises(ValueError, match="exact unavailable later document"):
+        autonomous_realism.remove_future_reference(runner, slot, omission.model_copy(update={"later_source_id": "src1"}))
+    with pytest.raises(ValueError, match="exact trailing instruction"):
+        autonomous_realism.remove_future_reference(
+            runner, slot, omission.model_copy(update={"brief_sentence": f"{local_brief} {brief_line}"}),
+        )
+    projection["src1"]["revision_ticket"] = "Different ticket."
+    with pytest.raises(ValueError, match="exact unavailable later document"):
+        autonomous_realism.remove_future_reference(runner, slot, omission)
+
+
 def test_fresh_dependency_repair_uses_documented_attachments_without_automatic_tickets(autonomous, monkeypatch):
     from types import SimpleNamespace
     from benchmark_v3.batch import author_context, repair_authority

@@ -994,7 +994,10 @@ def release_returned_authored_scope_plan(ledger: PooledLedger, batch: str, famil
         ledger.event(batch, family, revision + 1, "transition", repair_authority.REVISION, state, "design", release)
 
 
-def release_returned_pre_author_plan(ledger: PooledLedger, batch: str, family: str, *, omit_reply_for: str | None = None) -> None:
+def release_returned_pre_author_plan(
+    ledger: PooledLedger, batch: str, family: str, *,
+    omit_reply_for: str | None = None, omit_future_reference: autonomous_realism.FutureReferenceOmission | None = None,
+) -> None:
     with ledger.coordinator_lock():
         ledger.require_running()
         commission = load_commission(ledger, batch)
@@ -1010,9 +1013,15 @@ def release_returned_pre_author_plan(ledger: PooledLedger, batch: str, family: s
         if commissioning._read_json(issue["evidence"]) != record["review"]:
             raise ValueError("The retained independent scope review differs from the current exception.")
         earlier = autonomous_realism._pre_author_returns(original)
-        if len(earlier) >= 2 or (earlier and len(record["objections"]) >= len(earlier[-1]["objections"])):
+        omission: dict[str, Any] | None
+        if omit_future_reference is not None:
+            if omit_reply_for is not None or len(earlier) > 2 or "scope_ticket_omission" in original:
+                raise ValueError("Use only one exact unavailable-document omission in an un-authored repair chain.")
+            omission = autonomous_realism.remove_future_reference(runner, slot, omit_future_reference)[0]
+        elif len(earlier) >= 2 or (earlier and len(record["objections"]) >= len(earlier[-1]["objections"])):
             raise ValueError("A repeated un-authored scope repair requires tangible progress on earlier objections.")
-        omission = autonomous_realism.remove_separate_reply_ticket(runner, slot, omit_reply_for)[0] if omit_reply_for else None
+        else:
+            omission = autonomous_realism.remove_separate_reply_ticket(runner, slot, omit_reply_for)[0] if omit_reply_for else None
         ledger.event(batch, family, revision + 1, "transition", repair_authority.REVISION, state, "design", original | {
             "pre_author_scope_return": record,
             **({"prior_pre_author_scope_returns": earlier} if earlier else {}),

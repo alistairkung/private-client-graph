@@ -74,6 +74,14 @@ class ScopeReview(Contract):
     objections: list[Text]
 
 
+class FutureReferenceOmission(Contract):
+    source_id: SourceId
+    later_source_id: SourceId
+    reference: Text
+    brief_sentence: Text
+    ticket_sentence: Text
+
+
 class RepairStopped(ValueError):
     """A documented refusal to advance a repair under the current scope."""
 
@@ -145,7 +153,7 @@ def plan_revision(
         job = repair_authority.PLAN_JOB
     elif omission is not None:
         prior = replace(runner, revision=runner.revision - 1, directory=runner.directory.with_name(str(runner.revision - 1)))
-        expected, plan, receipt = remove_separate_reply_ticket(prior, slot, omission["source_id"])
+        expected, plan, receipt = _reopen_scope_omission(prior, slot, omission)
         if expected != omission:
             raise packet.PacketIsolationError("The exact scoped ticket omission or its independent review changed.")
         design, affected = _verify_plan(slot, parent, plan, attested=True)
@@ -519,7 +527,7 @@ def _committed_prior_plan(
     omission = release.get("scope_ticket_omission")
     if omission is not None:
         older = replace(previous, revision=previous.revision - 1, directory=previous.directory.with_name(str(previous.revision - 1)))
-        actual, plan, _ = remove_separate_reply_ticket(older, slot, omission["source_id"])
+        actual, plan, _ = _reopen_scope_omission(older, slot, omission)
         if actual != omission:
             raise ValueError("The prior scoped ticket omission differs from its retained evidence.")
         return plan
@@ -622,6 +630,62 @@ def remove_separate_reply_ticket(
         "prior_plan_sha256": authorisation.commitment(prior), "removed_sentence": removed,
         "derivative_sha256": authorisation.commitment(plan),
     }, plan, receipt
+
+
+def _reopen_scope_omission(
+    runner: SessionRunner, slot: FamilySlot, record: dict[str, Any],
+) -> tuple[dict[str, Any], RepairPlan, dict[str, Any]]:
+    if "future_reference" in record:
+        return remove_future_reference(runner, slot, FutureReferenceOmission.model_validate(record["future_reference"]))
+    return remove_separate_reply_ticket(runner, slot, record["source_id"])
+
+
+def remove_future_reference(
+    runner: SessionRunner, slot: FamilySlot, omission: FutureReferenceOmission,
+) -> tuple[dict[str, Any], RepairPlan, dict[str, Any]]:
+    retained, prior = pre_author_scope_return(runner, slot=slot)
+    review, receipt, request = runner.committed_result("author", author_context.JOB, "audit", author_context.AuthorContextReview)
+    design = artifacts.read_contract(runner.directory / "design.json", DesignOutput)
+    inventory = {brief.source_id: brief for brief in design.inventory}
+    local = inventory[omission.source_id]
+    future = inventory[omission.later_source_id]
+    ticket = prior.tickets[local.source_id]
+    projected = commissioning._read_json(request["inputs"]["audit_rules"])["participant_packets"][local.source_id]
+    objection = review.objections[0] if len(review.objections) == 1 else ""
+    if (
+        prior.revised_design != design or local.created_on >= future.created_on or future.source_id in local.received
+        or projected != author_delivery.projection(design, prior.tickets)[local.source_id]
+        or receipt["receipt_sha256"] != retained["scope_receipt_sha256"]
+        or not re.match(rf"^{re.escape(local.source_id)}\s*[:—-]\s*Remove\b", objection)
+        or omission.reference.casefold() not in objection.casefold()
+        or not set(omission.reference.casefold().split()) <= set(re.findall(r"\w+", future.participant_brief.casefold()))
+    ):
+        raise ValueError("The retained scope return must identify one exact unavailable later document.")
+    revised_brief = _omit_unavailable_reference(local.participant_brief, omission.brief_sentence, omission.reference)
+    revised_ticket = _omit_unavailable_reference(ticket, omission.ticket_sentence, omission.reference)
+    if "further act" in omission.ticket_sentence and "Require no further acceptance or act." not in revised_brief:
+        raise ValueError("The remaining participant brief must retain its no-further-act condition.")
+    updated = design.model_copy(update={"inventory": [
+        brief.model_copy(update={"participant_brief": revised_brief}) if brief == local else brief
+        for brief in design.inventory
+    ]})
+    plan = prior.model_copy(update={
+        "revised_design": updated, "tickets": prior.tickets | {local.source_id: revised_ticket}, "progress": "improved",
+    })
+    return {
+        "future_reference": omission.model_dump(mode="json"), "receipt_sha256": receipt["receipt_sha256"],
+        "planner_receipt_sha256": retained["planner_receipt_sha256"], "original_plan_sha256": authorisation.commitment(prior),
+        "derivative_sha256": authorisation.commitment(plan),
+    }, plan, receipt
+
+
+def _omit_unavailable_reference(value: str, sentence: str, reference: str) -> str:
+    text = " " + sentence
+    if (not re.fullmatch(rf"Do not refer to (?:a|the) {re.escape(reference)}(?: in this instrument"
+                         r"(?: or make issuance, receipt or a further act a condition)?)?\.", sentence)
+            or not value.endswith(text) or value.count(text) != 1):
+        raise ValueError("Omit only one exact trailing instruction about the unavailable document.")
+    return value.removesuffix(text)
 
 
 def generated_attachment_ticket(

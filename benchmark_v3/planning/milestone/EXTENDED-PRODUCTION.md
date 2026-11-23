@@ -250,6 +250,14 @@ repackaged the prior file as an intake worksheet. It also received zero
 participant turns. Fresh plan and scope reviews now ask for documented
 local origin of every worksheet claim and an honest account of any
 unverified details.
+The next design replaced the worksheet with actual intake delivery
+commitments. Each sending role keeps its own scope and must attest its
+own delivery. The intended recipient assembles the signed index after
+the 64 separate records exist. The independent scope review returned
+two residual references to a later certificate in an earlier author's
+instructions. An exact omission removes those two sentences while
+retaining the original event trigger. The revised scope must pass
+fresh review before authoring.
 
 L's scope review exposed a factory-generated attachment instruction
 that implied undocumented revised correspondence. Fresh repair
