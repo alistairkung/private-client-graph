@@ -152,6 +152,8 @@ No verified findings recorded.
 | `separate-or-joint-commencement-of-appointments@1` · One acceptance, separate or joint commencement | AX | proposed | `f816be9e56b0c0a7f7a2191b74686c71ec81b2aed98f8dd9512e34c01f154324` |
 | `named-benefit-with-or-without-continuing-spousal-condition@1` · A named designation need not depend on continuing marriage | AY | approved | `d119f024401d75371a224354169a4dfbb246ff464001dc4d77a026e08e60b4e0` |
 | `testamentary-group-definition-versus-factual-kinship@1` · A will's defined group is not a family assertion | AZ | approved | `b158525daad26a7f8aa30d52e18a9a9784157b78305646f7bce6125c96f6506c` |
+| `settlement-contribution-versus-remittance@1` · The person remitting the closing funds is not necessarily the settlor | BF | proposed | `ad60c7de71790bbaf57f24680c99815e0f6c0a3304a366e95ca2cdc209cd42bc` |
+| `asset-transfer-without-relationship-migration@1` · Moving assets does not move the named relationships | BG | approved | `29d8aaa32033487f69f4eec69ef821877b066f65d10402d173a9f700f6557e63` |
 | `concurrent-assent-to-one-decision@1` · Separate assents must concern the same decision | AA | proposed | `4156635b4a723dd63ab71c9919f574e6cfe882ed2a8d74d463399d7663528c3b` |
 | `shared-parent-without-sibling-assertion@1` · Supported common parentage does not supply a sibling edge | AB | approved | `9dd22215c301d0855fa3660b14caa92651730dbf325c2928eb7a9d7ff20994df` |
 | `automatic-reversion-after-temporary-substitution@1` · A suspended provision resumes without a new act | AC | proposed | `11735f0da17407c28981c349d865eaed29adc508305e3a19eef40edccd8b4d1b` |

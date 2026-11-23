@@ -87,6 +87,14 @@ The registered round is
 The independent merits review is
 `8d3619bb73c54ba006c520e9392f43f0d9a60c48c139b9850567c32542f7fc46`.
 
+The fifth reserve review selected BG for the risk of treating an
+asset transfer as a transfer of beneficiary relationships between
+two continuing trusts. BF remains held for uncertain completion
+documentation and possible alternative proof. The registered round is
+`b753dc45c8d03811d09dec8721858a0ace2b1ee848c71c5148bd344874637a4a`.
+The independent merits review is
+`fea6cf1cfc16123885c06ca21d3c8bc46ec4bd3de37eb3e0a4449143a783f213`.
+
 ## Subsequent verified qualification
 
 E revision 3 qualified for the two-condition test of contradictory
