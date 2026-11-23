@@ -1,0 +1,369 @@
+{
+  "schema_version": 1,
+  "provenance": {
+    "session": "982e6637-7314-4fbb-92b2-d5cc6d2912d1",
+    "packet_sha256": "976cc1b5bc9a70ee583b5d7261061f46ae419ad4aba5fc93e600693f9f744ca4",
+    "prompt_sha256": "c71b7e369d5f79fa6c7787e95a3354debc96ec038aa53fd881e19c3d69304f24",
+    "output_sha256": "85db00d95786bd85d5cc8134488f128c988603e3b56448b61b5410b05683ecc3",
+    "model": "gpt-6.2-sol",
+    "effort": "high",
+    "completed_at": "2026-11-22T14:39:58.928604Z"
+  },
+  "result": {
+    "schema_version": 1,
+    "portfolio_summary": "The admitted development snapshot contains five independent Matter histories and 12 conditions. A–C have historical independent findings; D and F are admitted with released technical audits but no formal post-admission reconciliation. E is a returned diagnostic, and G is a prior proposal outside this pilot. Run H (P1) first as the lowest-cost test of a complete routine package, I (P2) second for the strongest isolated new contrast, and J (P3) last because its two mechanisms need separate checks before their joint result is interpretable. The pilot proposes three histories and five conditions, not five new histories. If all pass admission, development reaches eight histories and 17 conditions toward the 20-family target. Future planning can consider routine, moderate, complex and larger administrative files, including one provisional 100–200 Source Matter; leave the remaining slots unallocated and do not build a giant Matter in this pilot. The separate 20-family evaluation target and all evaluation material are outside scope. The operational hypothesis is that independent, quality-gated packages can use fewer sessions than observed serial authoring. Budget 62 model sessions across the pilot, including targeted checks and reserves. Use the historical family counts of 40, 25, 33, 25 and 31 for planning only; log actual family work, shared work and rework separately. Neither these budgets nor the undispatched development baseline establish measured efficiency.",
+    "family_assessments": [
+      {
+        "family_id": "A",
+        "assessment": "Wrenhollow intends to recover the trustee at a meeting cut-off despite signed papers and a later administrative message. The blind review distinguishes a registered release, which effects concurrent retirement and replacement, from an affirmative hold that preserves the incumbent. The necessity review verifies the joint instrument-and-disposition proof and rejects the proposed shorter route; the matched-Source audit verifies order-only invariance. Bank and diary material add a supported kinship edge and non-operative cues. Recency, name frequency and draft promotion can mislead, but one two-person office and explanatory wording bound the test.",
+        "overlap": "Shares joint proof with B and C. Unlike D, it varies whether an instrument takes effect, not the reach of an instrument already in effect."
+      },
+      {
+        "family_id": "B",
+        "assessment": "Estate administration intends to resolve who made a parentage report. The comparison and agreement records verify that completing one attendance field binds the native statement to a named speaker; with the field incomplete, two speakers remain possible and ordinary parentage persists. The mask review shows that the forward and export do not introduce a second informant, and proof deletions defeat the target without removing the ordinary edge. A clerk's original-document sighting adds incidental support for ordinary kinship. A field-presence rule followed by first-contact selection can reproduce the delta.",
+        "overlap": "Like C, B withholds a named edge when a discriminating identifier is incomplete. B identifies a speaker and tests a relay of one origin, not independent disagreement or F's populated display collision."
+      },
+      {
+        "family_id": "C",
+        "assessment": "Two trusts intends to allocate an operative designation using a separately held custody reference. The comparison verifies the endpoint switch, and the agreement record verifies withholding both endpoints when the distinguishing character is obscured. Exact-excerpt and deletion reviews verify a three-Source route; whole-file masks defeat the target while preserving ten ordinary edges. Shared trustees, routine details, a wish and an expense add context. First-trust, fixed-trust and assign-both rules fail across variants, but one reference and two parallel settlements still bound the inference.",
+        "overlap": "Shares proof dependency with A and B and underdetermination with B. The ten invariant edges check completeness but do not isolate incidental correspondence or administrative volume."
+      },
+      {
+        "family_id": "D",
+        "assessment": "Alder Fold intends to vary the reach of an effective amendment without changing the replacement beneficiary. The released closing audit reproduced the survivor switch, the unchanged replacement and unaffected trust edges, and independently verified the grouped scope proof attached to current beneficiary edges. Separate office provisions and the variation's effective date add context. Individual fact deletions are incomplete, reading the locator alone can reproduce the graph, and unrelated kinship was outside the comparison. These are technical admission findings, not a completed reconciliation.",
+        "overlap": "Extends A's operative-document coverage from effectiveness to scope and repeats joint proof. It tests one express selective replacement, not general amendment mechanisms."
+      },
+      {
+        "family_id": "F",
+        "assessment": "Park will planning intends to preserve exact identities and their separate proof routes despite a populated working-label collision. The released audit verified both graphs and proof sets, and masking an exact identity entry defeated its dependent edge. One isolated reader identified the right person in the explanation but entered a different structured surname; an independent repeat of the identical packet returned the correct surname. The working index is incidental and non-authoritative. Positional pairing remains a shortcut, and broader collisions are untested. These are technical admission findings, not a completed reconciliation.",
+        "overlap": "Repeats identity and same-edge evidence checks from B and C, but keeps complete authoritative identity records and changes only an ancillary label."
+      }
+    ],
+    "gaps": [
+      {
+        "axes": [
+          "cross-source-reasoning",
+          "evidence-sufficiency"
+        ],
+        "finding": "Joint proof has repeated exposure across A–D and F, with different links and different levels of deletion coverage. Keep same-edge sufficiency as a shared diagnostic; do not count each joint route as evidence for a new reasoning axis."
+      },
+      {
+        "axes": [
+          "contradictory-assertions",
+          "origin-and-copies"
+        ],
+        "finding": "B verifies one origin and its relay, not a dispute between independent, comparable origins. E reproduced a diagnostic contrast but failed documentary realism on retainer relevance, provenance, witness-reference handoff and comparable scope. Leave this gap open; do not reuse E's file, key or mechanism."
+      },
+      {
+        "axes": [
+          "documentary-authority",
+          "versions-and-amendments",
+          "temporal-effectiveness"
+        ],
+        "finding": "A varies an operative event and D varies the scope of a signed amendment. I would test what a record can establish while its date and issue status stay fixed. Other amendment mechanisms and D's full individual fact-deletion coverage remain open."
+      },
+      {
+        "axes": [
+          "entity-identity",
+          "incomplete-information"
+        ],
+        "finding": "B and C verify local withholding with incomplete identifiers; F verifies invariance under an ancillary label collision with complete records. Authoritative-identifier collisions, interacting identity gaps and positional shortcuts remain unaddressed."
+      },
+      {
+        "axes": [
+          "graph-completeness",
+          "administrative-context",
+          "presentation-order"
+        ],
+        "finding": "C verifies a substantial invariant graph and A supplies an order-only control. H adds a routine natural workload with completeness checks, not a matched test of placement, burial or volume, and does not take over G's incidental-kinship contrast."
+      },
+      {
+        "axes": [
+          "axis-interactions",
+          "custody-and-absence"
+        ],
+        "finding": "Local withholding in B and C does not test a supplied substitute for an absent original coupled to a separate operative condition. J would test that conjunction in one file, not establish a general interaction effect."
+      },
+      {
+        "axes": [
+          "source-discovery",
+          "physical-document-quality"
+        ],
+        "finding": "Retrieval, acquisition and OCR would require a scope change. A textual custody record may bound what the supplied file proves, but the benchmark does not ask the extractor to recover a missing artifact."
+      }
+    ],
+    "proposals": [
+      {
+        "schema_version": 2,
+        "hypothesis_id": "routine-trust-records-completeness",
+        "revision": 1,
+        "previous_revision_sha256": null,
+        "family_id": "H",
+        "title": "P1: Routine trust records review",
+        "status": "proposed",
+        "grounding": {
+          "legal_workflow": "Review current trust records and reconcile the supporting expense material before advising the trustees.",
+          "retainer": "Routine trust administration advice on the recorded parties, current provisions and supporting expenses.",
+          "meeting_purpose": "Confirm which relationships the records support at the dated review and note any administrative follow-up separately.",
+          "documentary_situation": "An ordinary pack includes the principal trust extract, a current signed beneficiary schedule, and the native exchange that explains an expense reconciliation.",
+          "confidence": "provisional",
+          "references": [
+            {
+              "title": "HMRC · Records to keep for trusts",
+              "url": "https://www.gov.uk/guidance/trust-record-keeping-for-tax-purposes",
+              "relevance": "Supports retaining trust, beneficial-owner and supporting records; it does not establish this pack's assembly or the effect of its fictional schedule."
+            }
+          ],
+          "assumptions": [
+            "The extract and schedule have naturally distinct reasons to be retained, and the file itself establishes their current effect without a disputed chronology.",
+            "The native email and reconciliation are useful to the expense review even if neither creates a scored relationship."
+          ],
+          "practitioner_unknowns": [
+            "How a practice would assemble the signed provisions and retain the native expense exchange for this particular review."
+          ]
+        },
+        "objective": {
+          "primary_axis": "graph-completeness",
+          "secondary_axes": [
+            "evidence-sufficiency",
+            "administrative-context"
+          ],
+          "failure_mechanism": "An extraction may stop at the principal deed, miss a current relationship recorded elsewhere, attach an exact quote about the wrong role, or promote expense handling into a trust relationship.",
+          "falsifiable_hypothesis": "A natural, economical review pack supports a reproducible complete graph across more than one relationship type and record location, while expense handling alone supports no relationship. Reject the design if readers cannot reproduce the graph and sufficient passages without added puzzle cues.",
+          "coverage_gap": "The admitted portfolio checks invariants under targeted interventions but lacks this dedicated routine natural workload with distributed exact-evidence requirements."
+        },
+        "design": {
+          "scenario": "Trustees share the records they need for an ordinary review of trust particulars and an expense reconciliation. The operative records carry ordinary relationships; the correspondence has a genuine administrative job.",
+          "genres_and_provenance": [
+            "Principal trust extract: prepared from the trustees' retained executed instrument and supplied to the adviser; it records the settlement and ordinary trust offices.",
+            "Signed beneficiary schedule: made under the file's stated terms, retained with the operative records and supplied for the same review.",
+            "Native expense email: written by the participant handling the reconciliation, retained by the trustee recipient and supplied with the expense papers.",
+            "Expense reconciliation: prepared by the person reconciling the entries and retained with the supporting accounts.",
+            "Meeting brief: written and retained by the adviser to state the review purpose and cut-off without restating the graph."
+          ],
+          "intervention": "None. Construct one natural-only condition. Use masks and deletions only to audit support, not as benchmark siblings.",
+          "invariants": [
+            "The full review uses one fixed person and trust roster, record set and cut-off.",
+            "Removing expense-only material in the audit should preserve every independently supported trust relationship."
+          ],
+          "expected_sensitivity_or_invariance": "The full file supports ordinary trust edges from more than one record location. Audit removal of an otherwise unreplicated operative assertion should defeat its dependent edge without changing unrelated edges; expense tasks should not add an edge.",
+          "negative_controls": [
+            "An identifiable person handling or reconciling an expense is not scored in a trust role merely because of that task.",
+            "Masking the expense email and reconciliation leaves the independently supported operative graph unchanged."
+          ],
+          "evidence_dependencies": [
+            "Derive the full key independently from the locked file. Verify exact endpoints, roles, dates and quoted passages in both graph-to-file and file-to-graph directions.",
+            "Use fresh excerpt checks and test singleton routes before requiring joint citations. Delete an unreplicated operative assertion and rederive the masked graph; remove all copies if a fact repeats."
+          ],
+          "shortcut_heuristics": [
+            "Audit deed-only, newest-record-only, role-keyword and first-mention extraction against the complete key.",
+            "Check filenames, summaries, Source position and copied passages for answer leakage or unintended sufficient routes."
+          ],
+          "success_criteria": [
+            "Two blind full-file readers and independent adjudication recover the complete exact-name graph. Fresh excerpt checks verify sufficient evidence on the correct edges.",
+            "Operative-assertion deletion and the expense masks behave as specified, and an administrative role cue is not promoted into the graph.",
+            "Return or quarantine the package if the ordinary meeting purpose does not justify the records, one summary supplies the whole key, or readers still disagree on effect or support after the allowed revision."
+          ]
+        },
+        "feasibility": {
+          "conditions": 1,
+          "documentary_complexity": "Planned Sources: 5. Two operative records supply the distributed graph, two routine records serve the expense review, and one adviser brief fixes purpose and cut-off.",
+          "authoring_and_review_effort": "Estimated sessions: 16. Budget 11 core sessions, four targeted excerpt or mask checks and one reserve. Indicative person-hours: authoring 4–7, blind review and adjudication 3–5, audit 3–5, owner review 1–2. The audit is light but covers every edge in both directions; assume an economical pack and at most one participant-safe revision.",
+          "ontology_compatibility": "Use existing named settlor, trustee and beneficiary relationships. Expense handling, preparer capacity and unanswered follow-up stay in the companion register.",
+          "infrastructure_reuse": "Reuse full-graph comparisons, exact-quote and same-edge checks, singleton review and Source masks, without reusing another family's materials.",
+          "risks_and_limits": [
+            "No causal inference about correspondence, placement, volume or difficulty follows from a natural-only package.",
+            "Do not make the email carry a kinship puzzle or add documents solely to increase the count."
+          ]
+        }
+      },
+      {
+        "schema_version": 2,
+        "hypothesis_id": "certified-extract-record-basis",
+        "revision": 1,
+        "previous_revision_sha256": null,
+        "family_id": "I",
+        "title": "P2: Record authority with issue status held fixed",
+        "status": "proposed",
+        "grounding": {
+          "legal_workflow": "Reconcile an internal trust record with a registration snapshot before answering a current-beneficiary question.",
+          "retainer": "Trust administration advice on reconciling the trustees' records with information held for reporting.",
+          "meeting_purpose": "Identify which named beneficiary relationships the file establishes at the cut-off and which entries remain reporting information only.",
+          "documentary_situation": "A records custodian certifies accurate transcription on a standard extract that identifies its underlying record. The trust file distinguishes its current beneficiary register from an administrative reporting record; a later registration download is available for reconciliation.",
+          "confidence": "provisional",
+          "references": [
+            {
+              "title": "HMRC · Manage your trust’s details",
+              "url": "https://www.gov.uk/guidance/manage-your-trusts-registration-service",
+              "relevance": "Supports the genre of a dated download showing recorded roles. The fictional file, not the guidance, determines what the download can establish here."
+            },
+            {
+              "title": "HMRC · Records to keep for trusts",
+              "url": "https://www.gov.uk/guidance/trust-record-keeping-for-tax-purposes",
+              "relevance": "Supports retention of trust and beneficial-owner records, not the proposed extract form or the evidentiary standing of its two possible bases."
+            }
+          ],
+          "assumptions": [
+            "The same custodian can naturally certify transcription from either underlying record in the same format without independently attesting to the underlying relationship.",
+            "The fictional file expressly identifies which register records current appointments and why reporting entries cannot establish them on their own. The reported row is not a second firsthand confirmation."
+          ],
+          "practitioner_unknowns": [
+            "Whether the same extract form and reconciliation pack would naturally be used for both record bases, and how their different purposes would be documented."
+          ]
+        },
+        "objective": {
+          "primary_axis": "documentary-authority",
+          "secondary_axes": [
+            "origin-and-copies",
+            "evidence-sufficiency",
+            "incomplete-information"
+          ],
+          "failure_mechanism": "An extraction can mistake a certified transcription or a later official-looking snapshot for proof of the appointment, or recover the correct edge while omitting the passage that establishes the underlying record's authority.",
+          "falsifiable_hypothesis": "Changing only the recorded basis of an equally current, equally issued extract changes support for one named beneficiary edge when the file grants the two underlying records different authority. Reject the design if either basis is unnatural, the custodian certifies the relationship in both conditions, or another Source decides the edge.",
+          "coverage_gap": "A isolates effectiveness and D isolates amendment scope; neither isolates what a record can establish while its issue status, date and substantive row are fixed."
+        },
+        "design": {
+          "scenario": "The adviser reconciles a custodian's certified extract with a registration download. The extract is equally final as an issued document in both conditions; which underlying record it transcribes determines what it can show.",
+          "genres_and_provenance": [
+            "Governing instrument extract: supplied from the trustees' executed records; it identifies the trust, records unaffected roles and establishes the standing of the current beneficiary register.",
+            "Certified transcription: issued by the records custodian, kept in the trustee file and supplied to the adviser; its record-basis field identifies the underlying record, and its certification is limited to accurate transcription.",
+            "Registration download: retrieved by an authorised administrator and retained as a snapshot of reported entries, not as a new account of the appointment.",
+            "Native reconciliation transmittal: retained by the recipient; it explains why the materials were supplied and the reporting purpose without confirming the target.",
+            "Meeting brief: written and retained by the adviser; it sets the purpose and cut-off without deciding the disputed support question."
+          ],
+          "intervention": "Add one matched sibling by changing exactly one literal in the certified transcription's record-basis field: it points either to the current beneficiary register or to the administrative reporting record. Hold every other Source byte and presentation order fixed.",
+          "invariants": [
+            "The exact person and trust roster, transcribed relationship row, signature, issuing capacity, as-of date, issue status and meeting cut-off remain fixed.",
+            "The registration snapshot, unrelated relationships and the file's rules for both records remain fixed."
+          ],
+          "expected_sensitivity_or_invariance": "The register-based transcription and governing passage together support the target edge. On the reporting basis, withhold that edge without inferring non-beneficiary status. The unrelated graph and its sufficient evidence stay unchanged.",
+          "negative_controls": [
+            "The later and unchanged registration download cannot resolve the target in either condition; masking it leaves both full-file keys unchanged.",
+            "An independently recorded trust office survives both conditions and all target-only masks."
+          ],
+          "evidence_dependencies": [
+            "Fresh readers test the governing passage and certified transcription jointly, each alone, and with a necessary passage deleted. The proof must establish current standing as well as the exact named row.",
+            "Test the registration download and transmittal alone and together for alternative routes. Trace shared reporting information without counting duplicate appearances as independent evidence."
+          ],
+          "shortcut_heuristics": [
+            "Challenge latest-record, signed-record, official-heading and positive-union rules. Check that source position and summaries do not reveal which record basis controls.",
+            "A record-basis token may predict the graph delta. Require sufficient same-edge attachment and report any remaining token shortcut rather than claiming that the graph alone demonstrates authority reasoning."
+          ],
+          "success_criteria": [
+            "Blind readers agree on both complete keys, the sole target-edge difference and the absence of a supported negative assertion in the reporting condition.",
+            "Fresh excerpt readers verify the needed positive route, reject singletons and alternative reporting routes, and confirm that the invariant office remains supported.",
+            "Return or quarantine if the field also changes issue status, a reporting document independently attests to the appointment, the alternative form is not credible, or the positive route remains ambiguous after the allowed revision."
+          ]
+        },
+        "feasibility": {
+          "conditions": 2,
+          "documentary_complexity": "Planned Sources: 5. One governing record and one transcription carry the authority test; the administrative snapshot and transmittal serve the reconciliation, and the brief supplies the cut-off.",
+          "authoring_and_review_effort": "Estimated sessions: 20. Budget 15 core sessions, four targeted excerpt or mask checks and one reserve. Indicative person-hours: authoring 6–10, blind review and adjudication 5–8, audit 4–7, owner review 1–3. The audit focuses on the provenance of each possible route and assumes at most one participant-safe revision.",
+          "ontology_compatibility": "Score only existing Person/Trust relationships. Extract status, custodian capacity and the unresolved reporting entry go in the companion register.",
+          "infrastructure_reuse": "Reuse matched-byte verification, provenance checks, independent key derivation and same-edge sufficiency checks.",
+          "risks_and_limits": [
+            "This tests one stipulated difference in record authority, not the legal effect or general reliability of trust registration.",
+            "Do not credit an isolated authority contrast if the edit also changes the claim's date, status or substance."
+          ]
+        }
+      },
+      {
+        "schema_version": 2,
+        "hypothesis_id": "authenticated-copy-and-delivery",
+        "revision": 1,
+        "previous_revision_sha256": null,
+        "family_id": "J",
+        "title": "P3: An authenticated copy linked to timely delivery",
+        "status": "proposed",
+        "grounding": {
+          "legal_workflow": "Review the supplied custody and delivery records before recording an additional named beneficiary.",
+          "retainer": "Trust administration advice on the current roster when an executed original is not included in the review pack.",
+          "meeting_purpose": "Determine whether the file establishes both the contents of an additional designation and its delivery by the recorded cut-off.",
+          "documentary_situation": "The adviser receives an authenticated reproduction but not the original. A separate dispatch record and recipient acknowledgement may establish delivery of the instrument, rather than delivery of another routine enclosure.",
+          "confidence": "provisional",
+          "references": [
+            {
+              "title": "HMRC · Records to keep for trusts",
+              "url": "https://www.gov.uk/guidance/trust-record-keeping-for-tax-purposes",
+              "relevance": "Supports the retention setting for instruments and supporting decision records; it does not establish the proposed certification, dispatch or effectiveness rules."
+            }
+          ],
+          "assumptions": [
+            "The fictional governing terms make delivery of the designation the operative event, and the supplied file establishes who can authenticate the reproduction. Authentication proves contents, not delivery.",
+            "An independently made acknowledgement keyed to a dispatch record, without restating the enclosure, is natural for either enclosure. The missing original is a limit of the supplied pack, not a finding of loss or invalidity."
+          ],
+          "practitioner_unknowns": [
+            "Whether this custodian would issue a separate reproduction certificate and whether the trustee and dispatch clerk would retain compatible but nonredundant delivery records."
+          ]
+        },
+        "objective": {
+          "primary_axis": "axis-interactions",
+          "secondary_axes": [
+            "custody-and-absence",
+            "temporal-effectiveness",
+            "evidence-sufficiency"
+          ],
+          "failure_mechanism": "An extraction may treat a copy as either unusable or operative by itself, or may promote a timely receipt for unrelated material into proof of delivery of the instrument.",
+          "falsifiable_hypothesis": "With the original outside the supplied pack, a named edge is supported only when an authenticated reproduction establishes the designation and an independent delivery trail ties that designation to receipt by the cut-off. Reject the design if either mechanism is dispensable or the receipt linkage remains ambiguous.",
+          "coverage_gap": "A verifies an operative release and C verifies a custody-reference link, but neither tests an authorised substitute for a missing original together with independently evidenced delivery. The proposed comparison tests the delivery link only after establishing the substitute route."
+        },
+        "design": {
+          "scenario": "At a routine records review, the adviser must decide whether a supplied reproduction establishes the contents of an additional designation and whether an independently dated acknowledgement belongs to its delivery. No existing named relationship is displaced.",
+          "genres_and_provenance": [
+            "Governing instrument extract: supplied from the trustees' retained records; it identifies the trust, establishes the delivery condition and records unaffected provisions.",
+            "Reproduction of the executed designation: furnished from the custodian's records and retained in the review pack, with no available original in the supplied set.",
+            "Reproduction certificate: made by the authorised custodian from an original-document check, retained separately and supplied to establish what the reproduction represents, not its delivery.",
+            "Dispatch record: made by dispatch staff and retained on the outgoing file; it links a consignment to a single enclosure by local reference.",
+            "Recipient acknowledgement: made and retained by the receiving trustee and supplied from that record; it dates receipt of the consignment without certifying its contents.",
+            "Routine enclosure: an expense reconciliation made for the accounts and supplied in the review pack; it is the plausible alternative item that the dispatch record may identify.",
+            "Intake inventory: compiled and retained by the adviser on receipt of the review material; it records which originals and copies are in the pack without making claims about operative delivery.",
+            "Meeting brief: authored and retained by the adviser to establish the review purpose and cut-off."
+          ],
+          "intervention": "Add one matched sibling by changing exactly one literal enclosure reference in the dispatch record so the dated consignment links either to the authenticated designation or to the routine enclosure. Keep every other Source byte and presentation order fixed.",
+          "invariants": [
+            "The exact party and trust roster, unrelated roles, governing delivery condition, signed contents, authentication and supplied-pack inventory stay fixed.",
+            "The independently recorded consignment receipt, its date, the routine enclosure and the meeting cut-off stay fixed."
+          ],
+          "expected_sensitivity_or_invariance": "The target beneficiary edge is supported only when the authenticated contents and timely receipt are linked. Receipt of the routine enclosure leaves timely delivery of the designation unresolved, not disproved. No unrelated edge changes. The sibling isolates the delivery linkage with authentication held fixed; audit masks check the separate requirements without estimating a two-factor effect.",
+          "negative_controls": [
+            "A pre-cut-off receipt for the routine enclosure licenses no new relationship and does not show that the designation was never delivered.",
+            "An unrelated role established in the governing instrument survives both conditions and each target-only mask."
+          ],
+          "evidence_dependencies": [
+            "Verify the authentication route from the reproduction and certificate without using either to date delivery. Separately verify the dated delivery route from dispatch and acknowledgement without using either to prove signed contents.",
+            "Fresh excerpt readers combine those routes with the governing condition on the same edge. In the supported condition, separately mask the certificate and the delivery link, test singletons and delete the needed linkage fact with all its copies.",
+            "Re-derive each masked key. In particular, loss of authentication or timely-delivery evidence means withholding, not a finding about whether the instrument exists or took effect."
+          ],
+          "shortcut_heuristics": [
+            "Test signature-date, receipt-date, authentic-copy-alone, reject-all-copies and nearest-item rules.",
+            "Audit matching references, copied attachment text, headings, filenames and Source position for a hidden link or verdict. A reference token may predict the delta; it does not by itself supply the required proof."
+          ],
+          "success_criteria": [
+            "Blind full-file readers and adjudication agree on the exact one-edge delta and invariant graph, without inferring non-delivery from the routine-enclosure branch.",
+            "Fresh excerpt readers verify both component routes and their joint same-edge proof. Separate masks defeat the target for the predicted reasons without changing the independently supported role.",
+            "Return or quarantine if the certificate also proves delivery, the acknowledgement identifies the instrument without the edited link, either dispatch record would be implausible, or the result requires retrieval or outside law.",
+            "Do not claim an interaction beyond this file. Defer admission if the component checks cannot explain the joint result after the allowed revision."
+          ]
+        },
+        "feasibility": {
+          "conditions": 2,
+          "documentary_complexity": "Planned Sources: 8. The designation, certificate, dispatch record and acknowledgement must have distinct origins and jobs. The governing extract, routine enclosure, intake inventory and meeting brief make the timing and custody decisions interpretable without padding the file.",
+          "authoring_and_review_effort": "Estimated sessions: 26. Budget 18 core sessions, seven targeted excerpt or mask checks and one reserve. Indicative person-hours: authoring 9–15, blind review and adjudication 7–11, audit 6–10, owner review 2–4. The heavier audit checks each component separately and together, and assumes at most one participant-safe revision.",
+          "ontology_compatibility": "Use existing beneficiary and baseline trust predicates only. Authentication, delivery, missing originals and unresolved questions belong in the companion register; the extractor supplies only graph edges and attached evidence.",
+          "infrastructure_reuse": "Reuse exact-byte sibling checks, custody and provenance audits, independently rederived mask keys and same-edge sufficiency scoring.",
+          "risks_and_limits": [
+            "The admitted comparison would not measure separate main effects for authentication and timing or a population-level interaction.",
+            "A credible dispatch and acknowledgement path matters more than packing in additional controls. Stop rather than invent a routing convention solely to make the edit work."
+          ]
+        }
+      }
+    ],
+    "stopping_criteria": [
+      "Do not author a package until a human accepts the retainer, meeting purpose, participant knowledge and custody path as credible. Defer any design that needs outside law, retrieval, OCR, unavailable Sources or practitioner-outcome assumptions.",
+      "Lock the natural Sources before independent key derivation. Check the full graph in both directions using exact names and quotes under the frozen v2 evidence policy; keep unresolved assertions in the reviewers' companion register. Require two blind readers and adjudication per condition, fresh excerpt verification, singleton checks and targeted masks before dated human admission.",
+      "For each sibling, verify the one predeclared literal edit, fixed order and unchanged material. Quarantine a package with an unintended graph delta, leaked answer, unverified necessary passage, independent alternative proof that defeats the hypothesis, or implausible provenance.",
+      "Allow at most one participant-safe natural revision. Route the private matched realization and contrast-revealing objections to the human. Recheck affected commitments; reuse only verified equivalent packets or unaffected author outputs within the same family. Never reuse material across families or skip blind review.",
+      "Log actual sessions and gate outcomes, including shared work, masks, rework and returns. Stop expansion if the budget cannot support independent review or if the packages fail the quality gates; a lower session count obtained by dropping a gate is not an efficiency result."
+    ]
+  }
+}

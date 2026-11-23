@@ -1,0 +1,868 @@
+{
+  "schema_version": 1,
+  "provenance": {
+    "session": "9b0a254b-490b-41b2-966f-56d4ffdaf6fb",
+    "packet_sha256": "943dee9be2990aa5a51f0894fd2965b6c54bb42623da3726598a16e9df54dba3",
+    "prompt_sha256": "c71b7e369d5f79fa6c7787e95a3354debc96ec038aa53fd881e19c3d69304f24",
+    "output_sha256": "af14e9b1ef29e7119b8941c42fe4658d5b6d0f6763a467d05ef14ae1ba2685b5",
+    "model": "gpt-6.2-sol",
+    "effort": "high",
+    "completed_at": "2026-11-22T16:01:01.097694Z"
+  },
+  "result": {
+    "schema_version": 1,
+    "portfolio_summary": "Ranked by marginal scientific value, documentary credibility and review cost: M, P, L, N, O, R, Q, S, U, V. The first five are compact priorities; R, Q and S have explicit nonredundancy gates; U and V are capacity-gated workload proposals. With five admitted Matter histories and three unadmitted pilot reservations, this gives a planning ceiling of 18 histories, not 18 admissions. K and T are withheld rather than filling the twelve-slot ceiling. E remains diagnostic and G@1 remains outside the allocation. Count a Matter once across its conditions; masks, excerpt reads and optional diagnostics are observations, not additional families. All Source counts and session estimates are unverified planning assumptions.",
+    "family_assessments": [
+      {
+        "family_id": "A",
+        "assessment": "Retain the bounded effectiveness control. The blind review verified that registered release simultaneously retires and replaces one trustee, while an affirmative hold preserves the incumbent at the bank-meeting cut-off. The necessity review verified the instrument-plus-disposition routes and rejected a proposed shorter route; the matched-Source comparison verified that order alone preserves the key. Supported kinship and routine bank and diary details are incidental. Recency, name frequency and draft promotion remain plausible shortcuts in individual conditions.",
+        "overlap": "A shares joint proof with B and C. D varies the reach of an effective act; R must test event-time arithmetic rather than another release/hold decision; O holds the operative change fixed and varies a reporting step."
+      },
+      {
+        "family_id": "B",
+        "assessment": "Retain for speaker attribution and a bounded copy finding. The comparison and agreement reviews tied the native report to a named speaker only with the completed same-session field; two speakers remained compatible in the incomplete condition, and the ordinary parent edge survived. Forward masks showed one informant, not two, and forward-only readings did not identify the speaker. Proof deletions removed the dependent edge without removing the ordinary one. A field-completeness check followed by first-contact selection can mimic the target delta.",
+        "overlap": "Like C, the case withholds a named edge when a joint link is unresolved. Unlike F and M, the identity problem is who spoke, not how two populated labels or different names refer to people. B did not manipulate derivative repetition or competing independent testimony."
+      },
+      {
+        "family_id": "C",
+        "assessment": "Retain for cross-Source allocation. The comparison verified that the parent-deed reference switches the licensed trust endpoint; agreement showed that readers withheld both possible allocations with the partial reference. Independent excerpt and deletion reviews support the three-Source proof; whole-file masks defeat the target while preserving ten ordinary edges. Shared trustees, expenses and wishes make the file mixed but do not independently test distraction. Fixed, first-trust and assign-both rules fail across the variants; the task still reduces to one distinguishing register reference.",
+        "overlap": "C shares joint proof and restraint with A and B and supplies the strongest admitted invariant-graph check. It does not isolate administrative placement, information volume or concurrent capacities for the same person."
+      },
+      {
+        "family_id": "D",
+        "assessment": "Retain the narrow result against the approved express-scope hypothesis. The matched locator edit changed which prior beneficiary survived while preserving the replacement and unaffected trust relationships. The closing audit independently verified grouped same-edge scope proof for the current beneficiaries, but individual fact-level deletions are incomplete; locator reading can reproduce the graph without demonstrating that proof. Unrelated kinship was outside the comparison, not a verified invariant. Formal reconciliation is pending.",
+        "overlap": "A changes whether an instrument operates; D changes what an operative instrument displaces. Q adds value only if the surviving roster must be reconstructed across generations, not if consolidation merely dresses up a second locator switch."
+      },
+      {
+        "family_id": "F",
+        "assessment": "Retain as a bounded display-label invariance result against the approved hypothesis. The matched edit kept complete identities, the named graph and separately attached proofs invariant; masking an exact identity entry defeated its dependent edge. One isolated excerpt reader entered a different structured surname despite describing the right person; the independent identical-packet repeat entered it correctly. This is not uninterrupted first-pass agreement. Positional pairing remains a shortcut, and neither ambiguous official identifiers nor duplicate legal names were tested. Formal reconciliation is pending.",
+        "overlap": "B removes attribution information; F leaves distinguishing information complete. M must demonstrate positive co-reference across different names, not just resistance to an ancillary label collision."
+      }
+    ],
+    "gaps": [
+      {
+        "axes": [
+          "evidence-sufficiency",
+          "cross-source-reasoning",
+          "presentation-order"
+        ],
+        "finding": "Joint evidence recurs in A through D and F uses distinct relationship-plus-identity proofs. Correct graph output is not evidence of sufficient attachment. A alone supplies the admitted matched order contrast; D still lacks full individual fact-deletion coverage and F remains vulnerable to positional pairing."
+      },
+      {
+        "axes": [
+          "contradictory-assertions",
+          "origin-and-copies"
+        ],
+        "finding": "Withhold K. E reproduced its technical contrast but was returned on retainer relevance, witness-reference handoff and comparable account provenance and scope. Before reconsidering K, independently establish why this executor needs this exact sibling assertion, how each witness independently knows and identifies the same pair and assertion, and why both reports and follow-ups would be retained. An authenticated self-withdrawal and a natural unretracted follow-up must differ without recency priority, a disguised new affirmative account or a legal-status decision. P isolates derivative repetition, not equal-standing conflict; neither B nor P closes that gap."
+      },
+      {
+        "axes": [
+          "entity-identity",
+          "incomplete-information"
+        ],
+        "finding": "M is worth a compact test if the bridge is indispensable and historical-name evidence is not erased in the open condition. L tests known identities with bounded record content, not B's attribution ambiguity or C's ambiguous endpoint allocation. Collisions in authoritative identifiers and interacting identity gaps remain open."
+      },
+      {
+        "axes": [
+          "custody-and-absence",
+          "versions-and-amendments",
+          "documentary-authority"
+        ],
+        "finding": "N isolates supplied evidence of execution, not legal validity, delivery, or a lost-original presumption. J reserves a distinct authentication-fixed enclosure/delivery comparison. L is not a missing-original test. A natural supplied-file contrast for a missing original with no equally sufficient substitute remains open."
+      },
+      {
+        "axes": [
+          "versions-and-amendments",
+          "graph-completeness"
+        ],
+        "finding": "Q is conditional on a real carry-forward calculation across generations, including both survival and displacement. Defer if the same proof can be reduced to D's locator switch or if the outcome relies on implied repeal."
+      },
+      {
+        "axes": [
+          "temporal-effectiveness",
+          "documentary-authority"
+        ],
+        "finding": "R earns a slot only if an event date's relation to an express deadline matters independently of report date, receipt and meeting cut-off. If an escrow-style disposition could replace the chronology without loss, retain A alone. O is a different, invariant contrast: title-application progress must not supply or change trustee-office proof."
+      },
+      {
+        "axes": [
+          "axis-interactions",
+          "documentary-authority",
+          "cross-source-reasoning"
+        ],
+        "finding": "I publicly reserves a certified-extract/operative-versus-reporting basis contrast; S must add named-list scope and preservation of concurrently supported roles, not repeat that basis distinction. Withhold T: a positive-action edit with capacity fixed plus component masks shows dependency, not interaction, and is too close to S's scoped adoption and J's joint linkage. Reconsider only after distinct component contrasts and a separately authorized crossed comparison can distinguish recommendation uptake from signatory capacity and ordinary proof failure."
+      },
+      {
+        "axes": [
+          "graph-completeness",
+          "administrative-context"
+        ],
+        "finding": "Reserve H at five Sources and one condition for routine trust, expenses and completeness. Leave G@1 unapproved and outside allocation: its assertion-versus-request edit could test support inside correspondence, but not burial or volume. Reconsider only if H leaves a specific need for that matched speech-act control. U asks about full-file performance under accumulated administration, not merely H with more pages, and neither single file identifies a load or placement effect."
+      },
+      {
+        "axes": [
+          "administrative-context",
+          "cross-source-reasoning",
+          "graph-completeness"
+        ],
+        "finding": "U provisionally uses 65 Sources for an administrative workload; V provisionally uses 150 for indispensable links across years, trusts and sections. V is not a larger U and the primary files are not a volume pair. H (5/1), I (5/2) and J (8/2) are unadmitted routine-size plans, not scale or throughput evidence. Pilot spend and throughput are unknown. Require measured review capacity and end-to-end full-context checks at intermediate tiers before committing to either large file."
+      },
+      {
+        "axes": [
+          "source-discovery",
+          "physical-document-quality"
+        ],
+        "finding": "Defer acquisition, retrieval, OCR and physical recovery. Stipulated missing fields or enclosures can affect evidence only within the supplied text. References ground genres and workflow distinctions, not Source-count norms, legal outcomes or prevalence."
+      }
+    ],
+    "proposals": [
+      {
+        "schema_version": 2,
+        "hypothesis_id": "former-name-explicit-link",
+        "revision": 1,
+        "previous_revision_sha256": null,
+        "family_id": "M",
+        "title": "Former-name reconciliation",
+        "status": "proposed",
+        "grounding": {
+          "legal_workflow": "Reconcile older family records with current contacts during an estate handover.",
+          "retainer": "Estate administration advice on recording and verifying family information.",
+          "meeting_purpose": "Identify which historical relationship can be attributed to a current named contact.",
+          "documentary_situation": "An older family record, contemporary correspondence and a separate name reconciliation have different purposes and provenance.",
+          "confidence": "provisional",
+          "references": [
+            {
+              "title": "GRO · How to order civil registration records",
+              "url": "https://www.gov.uk/government/publications/how-to-order-and-pay-for-certificates/how-to-order-and-pay-for-civil-registration-records-accessible",
+              "relevance": "Short birth certificates omit parentage; full certificates reproduce the full record. The guidance distinguishes underlying records from index or informational copies and describes adoption records; avoid requiring adjudication of contested legal parentage."
+            }
+          ],
+          "assumptions": [
+            "The fictional file credibly records how the adviser verified the name link without repeating the relationship."
+          ],
+          "practitioner_unknowns": [
+            "Which verification and reconciliation records would be retained together for this retainer."
+          ]
+        },
+        "objective": {
+          "primary_axis": "entity-identity",
+          "secondary_axes": [
+            "cross-source-reasoning",
+            "evidence-sufficiency"
+          ],
+          "failure_mechanism": "Surname matching can merge distinct people; literal-name extraction can split a supported identity or omit the bridge from the evidence.",
+          "falsifiable_hypothesis": "An explicit name bridge licenses the current-name attachment; the unresolved bridge does not. Correct endpoints and sufficient proofs in both files disconfirm the predicted errors.",
+          "coverage_gap": "Tests positive co-reference across different names, beyond B's speaker field and F's display-label invariance."
+        },
+        "design": {
+          "scenario": "A verified historical relationship is recorded under an earlier name; separate current records include two distinguishable contacts, neither independently linked to that relationship.",
+          "genres_and_provenance": [
+            "A civil record supplied by its holder establishes the relationship; current contacts author the correspondence; the adviser retains a reconciliation from checked identity material and a neutral handover note."
+          ],
+          "intervention": "Change one reconciliation field from an explicit former-to-current identity link to a natural unresolved finding; keep all names elsewhere and the Source roster fixed.",
+          "invariants": [
+            "Historical relationship evidence, both current identities, cut-off and unrelated edges."
+          ],
+          "expected_sensitivity_or_invariance": "Use the linked current name only when licensed. Without the bridge, retain any independently licensed historical-name claim and withhold its attribution to either current contact.",
+          "negative_controls": [
+            "An unrelated fully named edge and a contact-only cue remain supported and unscored respectively."
+          ],
+          "evidence_dependencies": [
+            "Read the historical assertion and identity bridge together. Remove each separately and rederive the key under the frozen exact-name policy."
+          ],
+          "shortcut_heuristics": [
+            "Test surname overlap, position and shared details; reject an alternative join through headings, correspondence or the reconciliation alone."
+          ],
+          "success_criteria": [
+            "Blind readers agree on historical and current-name treatment; fresh excerpt readers verify the joint route and the masks defeat only dependent attributions."
+          ]
+        },
+        "feasibility": {
+          "conditions": 2,
+          "documentary_complexity": "9 natural Sources, provisionally 7–11; no correspondence retained solely to balance the roster.",
+          "authoring_and_review_effort": "30 working scientific sessions; planning ranges: authoring 9–13, blind and excerpt review 9–12, adjudication and audit 7–10; owner 2–3 additional.",
+          "ontology_compatibility": "Use existing kinship predicates; a name bridge is evidence, not an identity edge.",
+          "infrastructure_reuse": "Reuse B's identity masks and F's exact-name and wrong-person citation checks.",
+          "risks_and_limits": [
+            "Return if the open condition cannot be keyed without changing the frozen naming policy."
+          ]
+        }
+      },
+      {
+        "schema_version": 2,
+        "hypothesis_id": "duplicate-origin-salience",
+        "revision": 1,
+        "previous_revision_sha256": null,
+        "family_id": "P",
+        "title": "Repeated quotation from one origin",
+        "status": "proposed",
+        "grounding": {
+          "legal_workflow": "Reconcile third-party correspondence during an estate and associated trust handover.",
+          "retainer": "Review of the papers supporting the handover and reporting accounts.",
+          "meeting_purpose": "Separate the current trust record from obsolete administrative wording.",
+          "documentary_situation": "A live account-reconciliation thread quotes prior material alongside records that independently establish a trust role.",
+          "confidence": "provisional",
+          "references": [
+            {
+              "title": "HMRC · Identifying estate assets and debts",
+              "url": "https://www.gov.uk/valuing-estate-of-someone-who-died/identify-assets-debts",
+              "relevance": "Guidance describes reviewing papers and obtaining third-party valuations from different organisations. Grounds correspondence and administrative record diversity."
+            }
+          ],
+          "assumptions": [
+            "The stale statement has one identifiable origin; neither the forwarder nor the recipient endorses it as current."
+          ],
+          "practitioner_unknowns": [
+            "Whether both reply fragments would naturally survive in the handover file."
+          ]
+        },
+        "objective": {
+          "primary_axis": "origin-and-copies",
+          "secondary_axes": [
+            "administrative-context",
+            "evidence-sufficiency"
+          ],
+          "failure_mechanism": "An extractor may count quotation as corroboration, or substitute the repeated claim for operative proof.",
+          "falsifiable_hypothesis": "One extra same-origin quotation changes neither the graph nor its independently sufficient proof. Exact recovery and valid attachment in both files disconfirm a repetition-driven error here.",
+          "coverage_gap": "B verified shared origin but did not manipulate repetition while fixing support."
+        },
+        "design": {
+          "scenario": "An operative trust record establishes the current role. An independently retained email contains a stale statement; a working reply naturally quotes that thread.",
+          "genres_and_provenance": [
+            "The trustee holds the operative record; the original sender authors the stale message; the reply author quotes it inline; the adviser retains the native thread and reconciliation papers."
+          ],
+          "intervention": "Replace one quoted fragment with a similar-length fragment from the same origin repeating the stale role. Keep quote attribution, wrapper, placement, dates and all other bytes fixed.",
+          "invariants": [
+            "One origin for the stale assertion, the operative authority and sufficient proof, Source count, cut-off and complete graph."
+          ],
+          "expected_sensitivity_or_invariance": "No edge or sufficient route changes; quotation is not corroboration.",
+          "negative_controls": [
+            "An independently supported ordinary edge persists; the stale role remains unsupported in both files."
+          ],
+          "evidence_dependencies": [
+            "Trace the quotation to the original; mask the reply and verify graph invariance. Verify the current-edge proof without the correspondence and that the thread cannot replace it."
+          ],
+          "shortcut_heuristics": [
+            "Check frequency, newest-email, positive union and copy voting. Reject changes in voice, authority or endorsement, or an implausibly neutral substitute fragment."
+          ],
+          "success_criteria": [
+            "Blind graph and proof reviews agree in both conditions; a fresh origin audit finds no second informant or new sufficient route."
+          ]
+        },
+        "feasibility": {
+          "conditions": 2,
+          "documentary_complexity": "10 natural Sources, provisionally 8–12; the thread must serve a live reconciliation purpose.",
+          "authoring_and_review_effort": "32 working scientific sessions; authoring 10–14, blind and excerpt review 9–12, adjudication and audit 8–11; owner 2–3 additional.",
+          "ontology_compatibility": "Score only the supported Person/Trust roles and kinship; the estate and the quoted claim's provenance remain contextual.",
+          "infrastructure_reuse": "Reuse B's native/relay lineage checks and same-edge sufficiency scoring.",
+          "risks_and_limits": [
+            "Tests one matched quotation substitution, not a general frequency curve or genuine conflict between comparable witnesses."
+          ]
+        }
+      },
+      {
+        "schema_version": 2,
+        "hypothesis_id": "civil-record-information-boundary",
+        "revision": 1,
+        "previous_revision_sha256": null,
+        "family_id": "L",
+        "title": "Limits of a civil-record sighting",
+        "status": "proposed",
+        "grounding": {
+          "legal_workflow": "Inventory received family evidence before an estate advice meeting.",
+          "retainer": "Estate records review, not adjudication of disputed parentage.",
+          "meeting_purpose": "Record which parentage information was actually verified.",
+          "documentary_situation": "A standard adviser sighting records the information visible in the received civil record; independent correspondence identifies the parties without establishing parentage.",
+          "confidence": "provisional",
+          "references": [
+            {
+              "title": "GRO · How to order civil registration records",
+              "url": "https://www.gov.uk/government/publications/how-to-order-and-pay-for-certificates/how-to-order-and-pay-for-civil-registration-records-accessible",
+              "relevance": "Short birth certificates omit parentage; full certificates reproduce the full record. The guidance distinguishes underlying records from index or informational copies and describes adoption records; avoid requiring adjudication of contested legal parentage."
+            }
+          ],
+          "assumptions": [
+            "The adviser uses a neutral sighting format for either received version; no separate enclosure or heading contradicts the field."
+          ],
+          "practitioner_unknowns": [
+            "When a sighting rather than the certificate itself would be retained in the meeting file."
+          ]
+        },
+        "objective": {
+          "primary_axis": "incomplete-information",
+          "secondary_axes": [
+            "evidence-sufficiency"
+          ],
+          "failure_mechanism": "A model may infer parentage from surrounding names or treat an unavailable field as a denial.",
+          "falsifiable_hypothesis": "The verified entry supports a named parent edge; the unavailable entry leaves it open without affecting other edges. Correct recovery and restraint disconfirm the predicted errors.",
+          "coverage_gap": "Tests limits of observed record content with known identities, not attribution or missing delivery evidence."
+        },
+        "design": {
+          "scenario": "Both parties are distinguishable in either file; a received civil record is sighted, not reproduced as a second proof.",
+          "genres_and_provenance": [
+            "The issuer supplies the record to its holder; the adviser retains the dated sighting and inventory; estate contacts supply ordinary independent correspondence."
+          ],
+          "intervention": "Edit only the sighting's parentage field: verified named entry versus expressly unavailable from the version received.",
+          "invariants": [
+            "Record subject, candidate names outside the field, custody framework, unrelated graph and cut-off."
+          ],
+          "expected_sensitivity_or_invariance": "Only support for the named parent changes; there is no negative edge or inferred alternative.",
+          "negative_controls": [
+            "Independent kinship persists and a surname or contact cue licenses nothing."
+          ],
+          "evidence_dependencies": [
+            "Verify the intended exact passage with a fresh reader and check the record-to-person link. Delete the field and mask the sighting; search the remainder for duplicate parentage evidence."
+          ],
+          "shortcut_heuristics": [
+            "Reject a form heading that leaks the result, an impossible hybrid certificate, or an alternate route through a repeated relationship assertion."
+          ],
+          "success_criteria": [
+            "Blind complete keys agree; the positive proof is sufficient and the limited condition yields withholding without loss of the ordinary graph."
+          ]
+        },
+        "feasibility": {
+          "conditions": 2,
+          "documentary_complexity": "7 natural Sources, provisionally 6–9; use a common sighting genre, not cosmetically matched official forms.",
+          "authoring_and_review_effort": "26 working scientific sessions; authoring 7–10, blind and excerpt review 8–11, adjudication and audit 6–9; owner 2–3 additional.",
+          "ontology_compatibility": "Use parent_of; unavailable content belongs in the companion register.",
+          "infrastructure_reuse": "Reuse B and C's withholding, singleton and alternative-proof checks.",
+          "risks_and_limits": [
+            "A simple field check may succeed; this is a bounded content control, not a claim about document retrieval or all missing information."
+          ]
+        }
+      },
+      {
+        "schema_version": 2,
+        "hypothesis_id": "executed-version-record",
+        "revision": 1,
+        "previous_revision_sha256": null,
+        "family_id": "N",
+        "title": "Execution status among retained counterparts",
+        "status": "proposed",
+        "grounding": {
+          "legal_workflow": "Review retained trust papers to establish current provisions.",
+          "retainer": "Trust advice following transfer of archived papers.",
+          "meeting_purpose": "Identify which retained text can be relied upon at the meeting cut-off.",
+          "documentary_situation": "A working copy and a retained counterpart contain the same relevant wording; a separate custody record identifies the counterpart and records execution status.",
+          "confidence": "provisional",
+          "references": [
+            {
+              "title": "SRA · Closing down your practice",
+              "url": "https://www.sra.org.uk/solicitors/guidance/closing-down-your-practice/",
+              "relevance": "SRA addresses client papers and preservation of original wills on closure. Supports custody-transfer plausibility, not a particular archive identifier or custody procedure."
+            },
+            {
+              "title": "HMCTS · Apply for probate with MyHMCTS",
+              "url": "https://www.gov.uk/government/publications/myhmcts-how-to-apply-for-probate-online/apply-for-probate-with-myhmcts",
+              "relevance": "Practitioner routes distinguish originals, court-sealed/notarial copies and evidence to support admission of a copy, draft or reconstruction. Wills and codicils are recorded; score only explicitly established Person/Trust relationships."
+            }
+          ],
+          "assumptions": [
+            "The supplied file makes effect on execution explicit, with no further delivery or approval trigger. The custodian attests status, not legal validity."
+          ],
+          "practitioner_unknowns": [
+            "The natural form of the record and the custodian's basis of knowledge in each branch."
+          ]
+        },
+        "objective": {
+          "primary_axis": "versions-and-amendments",
+          "secondary_axes": [
+            "documentary-authority",
+            "evidence-sufficiency"
+          ],
+          "failure_mechanism": "Text matching, newest-copy selection or a custody label can promote draft wording into a current relationship.",
+          "falsifiable_hypothesis": "The content licenses the target only with verified execution of the identified counterpart. Correct recovery and proof in both branches disconfirm draft promotion.",
+          "coverage_gap": "Execution status differs from A's release of a signed act, D's scope and J's authentication-fixed delivery linkage."
+        },
+        "design": {
+          "scenario": "The same provision text is present in both files. The adviser receives a version inventory and separately sourced status information.",
+          "genres_and_provenance": [
+            "Trustees hold the governing terms; the transferred file preserves the working versions; a custodian with a documented basis records counterpart status; the adviser retains the handover inventory."
+          ],
+          "intervention": "Change only the identified counterpart's execution-status field, from verified executed to affirmatively retained unexecuted.",
+          "invariants": [
+            "Version and custody identifiers, clause text, cut-off, all other operative conditions and unrelated graph."
+          ],
+          "expected_sensitivity_or_invariance": "The target is supported only in the executed branch. An unexecuted text does not displace independently supported provisions.",
+          "negative_controls": [
+            "An independently effective older provision survives both branches; a title such as 'final' does not prove execution."
+          ],
+          "evidence_dependencies": [
+            "Test the counterpart link, clause and explicit effect together; no copy, signature cue or status field alone may prove the complete edge."
+          ],
+          "shortcut_heuristics": [
+            "Audit filenames, apparent signatures, dates and access labels. Reject if the edit also changes authentication, delivery or substantive scope."
+          ],
+          "success_criteria": [
+            "Independent full and excerpt reads distinguish identical wording from verified operative status and confirm the exact joint route."
+          ]
+        },
+        "feasibility": {
+          "conditions": 2,
+          "documentary_complexity": "10 natural Sources, provisionally 8–13; do not retain redundant copies solely to hide the target.",
+          "authoring_and_review_effort": "34 working scientific sessions; authoring 10–15, blind and excerpt review 10–13, adjudication and audit 8–12; owner 2–4 additional.",
+          "ontology_compatibility": "Only expressly supported trust relationships; execution and custody belong in the companion register.",
+          "infrastructure_reuse": "Reuse A's joint authority checks and D's version audit.",
+          "risks_and_limits": [
+            "Return if a branch requires a probate, validity or missing-original determination."
+          ]
+        }
+      },
+      {
+        "schema_version": 2,
+        "hypothesis_id": "land-register-lag-invariance",
+        "revision": 1,
+        "previous_revision_sha256": null,
+        "family_id": "O",
+        "title": "Title-application progress with trustee office fixed",
+        "status": "proposed",
+        "grounding": {
+          "legal_workflow": "Reconcile title-update papers with the current trust office record.",
+          "retainer": "Private trust of land administration advice.",
+          "meeting_purpose": "Distinguish who holds office from what the conveyancer has filed.",
+          "documentary_situation": "The trustee change is complete under explicit file terms while the title application is being handled separately.",
+          "confidence": "provisional",
+          "references": [
+            {
+              "title": "HM Land Registry · Practice guide 24",
+              "url": "https://www.gov.uk/government/publications/private-trusts-of-land-pg24/practice-guide-24-private-trusts-of-land",
+              "relevance": "Section 7 discusses transfers, deeds of appointment/discharge and evidence of death when updating the register. Distinguish recorded title or application progress from current trustee office; use express supplied facts."
+            }
+          ],
+          "assumptions": [
+            "Either application status is credible against the same dated title extract, and the file expressly separates title process from office."
+          ],
+          "practitioner_unknowns": [
+            "Which progress notice would normally be supplied alongside the operative instruments."
+          ]
+        },
+        "objective": {
+          "primary_axis": "documentary-authority",
+          "secondary_axes": [
+            "administrative-context",
+            "evidence-sufficiency"
+          ],
+          "failure_mechanism": "An extractor may vary the trustee roster with filing progress or preserve the roster but cite title material in place of office proof.",
+          "falsifiable_hypothesis": "Both title-application states leave the complete graph and sufficient office proof invariant. Correct proof and roster in both disconfirm the predicted conflation.",
+          "coverage_gap": "Adds an administrative invariance control, not a second release switch or I's planned record-basis contrast."
+        },
+        "design": {
+          "scenario": "A current office change and an older title snapshot coexist with a conveyancer's progress update.",
+          "genres_and_provenance": [
+            "The trust holds operative appointment and retirement papers; the conveyancer retains the title snapshot and application update; the adviser holds minutes and the review brief."
+          ],
+          "intervention": "Edit only the progress field between two plausible application states that do not update the supplied title snapshot.",
+          "invariants": [
+            "Office timeline, title snapshot, sufficient office proof, ordinary graph and cut-off."
+          ],
+          "expected_sensitivity_or_invariance": "No graph or sufficient proof change.",
+          "negative_controls": [
+            "The former trustee's title appearance never licenses current office; an unrelated trust edge stays supported."
+          ],
+          "evidence_dependencies": [
+            "Verify the trust act independently; mask the update for invariance and remove the office proof to show the remaining title trail cannot supply it."
+          ],
+          "shortcut_heuristics": [
+            "Test latest-record and registered-name rules. Reject if status is itself an operative trigger or the contrast requires deciding title."
+          ],
+          "success_criteria": [
+            "Blind readers agree on both keys and fresh excerpt readers distinguish insufficient title evidence from sufficient office evidence."
+          ]
+        },
+        "feasibility": {
+          "conditions": 2,
+          "documentary_complexity": "8 natural Sources, provisionally 7–11.",
+          "authoring_and_review_effort": "29 working scientific sessions; authoring 8–12, blind and excerpt review 8–11, adjudication and audit 7–10; owner 2–3 additional.",
+          "ontology_compatibility": "Score trustee_of, not title, registration or application status.",
+          "infrastructure_reuse": "Reuse A's office-proof checks and F's invariant proof comparison.",
+          "risks_and_limits": [
+            "Marginal value is modest if the update is visibly irrelevant or its alternative statuses create no credible competing cue."
+          ]
+        }
+      },
+      {
+        "schema_version": 2,
+        "hypothesis_id": "typed-event-chronology",
+        "revision": 1,
+        "previous_revision_sha256": null,
+        "family_id": "R",
+        "title": "Event date versus report date",
+        "status": "proposed",
+        "grounding": {
+          "legal_workflow": "Review a dated event-dependent trust provision against supporting records.",
+          "retainer": "Trust administration advice before an accounts meeting.",
+          "meeting_purpose": "Establish the current named relationship under an express event deadline.",
+          "documentary_situation": "A later report records an underlying event; recurring accounts carry a separate reporting period.",
+          "confidence": "provisional",
+          "references": [
+            {
+              "title": "HMRC · Records to keep for trusts",
+              "url": "https://www.gov.uk/guidance/trust-record-keeping-for-tax-purposes",
+              "relevance": "HMRC identifies tax and administration records including expenses, investment information, payment records, meeting minutes, deeds of appointment and distribution decisions. These genres and recurring reporting duties inform bundle composition. The page does not set normal bundle sizes or prove legal effect."
+            }
+          ],
+          "assumptions": [
+            "The file distinguishes an express event deadline from the later meeting cut-off and explains the consequence of missing the deadline."
+          ],
+          "practitioner_unknowns": [
+            "Whether the chosen event is credibly recorded retrospectively for this retainer."
+          ]
+        },
+        "objective": {
+          "primary_axis": "temporal-effectiveness",
+          "secondary_axes": [
+            "cross-source-reasoning",
+            "evidence-sufficiency"
+          ],
+          "failure_mechanism": "Using the report date, receipt date or accounting-period label in place of the actual event date can yield the wrong current roster.",
+          "falsifiable_hypothesis": "Moving only the verified event date across the express deadline changes the licensed edge. Correct keys with event and rule attached disconfirm those date shortcuts.",
+          "coverage_gap": "A changes release disposition; R requires comparing a typed event date to a separate deadline."
+        },
+        "design": {
+          "scenario": "The event occurs in either file and is reported after the deadline but before the meeting. The operative provision treats timely and late events differently.",
+          "genres_and_provenance": [
+            "The party observing the event produces the dated confirmation; trustees hold the governing extract and accounts; the adviser retains the receipt and meeting chronology."
+          ],
+          "intervention": "Edit one event timestamp across the deadline. Both dates precede the unchanged report and receipt, which are in the supplied file by the meeting cut-off.",
+          "invariants": [
+            "Event type and identity, rule, document dates, reporting-period labels, cut-off and unrelated edges."
+          ],
+          "expected_sensitivity_or_invariance": "Change only the expressly deadline-dependent relationship; do not disqualify the timely event because it was reported late.",
+          "negative_controls": [
+            "An independent unconditional relationship persists and report issuance does not confer a role."
+          ],
+          "evidence_dependencies": [
+            "Combine event identity and date with the operative deadline, consequence and named endpoint. Delete each needed element and rederive masked keys."
+          ],
+          "shortcut_heuristics": [
+            "Test latest-date, period-label and default-on-occurrence rules. Return if the report embeds a dispositive 'timely' label or A's binary disposition would test the same thing."
+          ],
+          "success_criteria": [
+            "Readers independently recover the same typed chronology and full keys; no operative rule or report alone is sufficient."
+          ]
+        },
+        "feasibility": {
+          "conditions": 2,
+          "documentary_complexity": "12 natural Sources, provisionally 9–15; count only records with a genuine date or administrative purpose.",
+          "authoring_and_review_effort": "37 working scientific sessions; authoring 12–16, blind and excerpt review 10–14, adjudication and audit 9–13; owner 2–4 additional.",
+          "ontology_compatibility": "Score only the resulting named trust relationship; events and dates are proof, not graph predicates.",
+          "infrastructure_reuse": "Reuse A's cut-off audit, with a separate typed-date consistency check.",
+          "risks_and_limits": [
+            "Return impossible date sequences or any dependence on an unstated legal consequence."
+          ]
+        }
+      },
+      {
+        "schema_version": 2,
+        "hypothesis_id": "restatement-schedule-scope",
+        "revision": 1,
+        "previous_revision_sha256": null,
+        "family_id": "Q",
+        "title": "Carry-forward across instrument generations",
+        "status": "proposed",
+        "grounding": {
+          "legal_workflow": "Reconcile beneficiary schedules after a trust instrument consolidation.",
+          "retainer": "Advice on the roster supported by retained instruments.",
+          "meeting_purpose": "Identify what was restated, what carries forward and what was displaced.",
+          "documentary_situation": "Earlier schedules and an intervening variation are retained alongside a consolidation that expressly treats a defined group of un-restated entries.",
+          "confidence": "provisional",
+          "references": [
+            {
+              "title": "HMRC · Records to keep for trusts",
+              "url": "https://www.gov.uk/guidance/trust-record-keeping-for-tax-purposes",
+              "relevance": "HMRC identifies tax and administration records including expenses, investment information, payment records, meeting minutes, deeds of appointment and distribution decisions. These genres and recurring reporting duties inform bundle composition. The page does not set normal bundle sizes or prove legal effect."
+            }
+          ],
+          "assumptions": [
+            "The fictional file states the consolidation's scope, its effective status and all necessary schedule links; the retention guidance does not establish those effects."
+          ],
+          "practitioner_unknowns": [
+            "Whether successive schedules and their references would be retained and presented this way."
+          ]
+        },
+        "objective": {
+          "primary_axis": "versions-and-amendments",
+          "secondary_axes": [
+            "documentary-authority",
+            "graph-completeness",
+            "evidence-sufficiency"
+          ],
+          "failure_mechanism": "Using only the latest instrument can drop surviving earlier edges; unioning versions or carrying forward a raw schedule can revive displaced ones.",
+          "falsifiable_hypothesis": "The consolidation rule changes only the specified reconstructed subset, not restated or exempt provisions. Correct keys and proof in both states disconfirm those shortcuts.",
+          "coverage_gap": "Goes beyond D only if a current subset must be reconstructed using a base schedule and intervening changes before applying the carry-forward rule."
+        },
+        "design": {
+          "scenario": "The base schedule alone overstates the eligible group; an intervening change removes or replaces entries before consolidation.",
+          "genres_and_provenance": [
+            "Trustees retain executed instruments and a base schedule; the adviser retains authenticated intervening changes and their references; the current briefing establishes the cut-off without summarizing the roster."
+          ],
+          "intervention": "Edit one express consolidation rule to carry forward or end a defined group of un-restated, still-current entries. Do not swap a schedule identifier.",
+          "invariants": [
+            "Schedule references, custody, effect dates, restated and exempt provisions, and edges outside the defined subset."
+          ],
+          "expected_sensitivity_or_invariance": "Only the still-current un-restated subset changes; neither branch resurrects earlier displaced entries.",
+          "negative_controls": [
+            "A restated edge and a separately surviving older edge persist; a previously displaced edge stays unsupported."
+          ],
+          "evidence_dependencies": [
+            "Verify exact same-edge routes through the relevant schedule, intermediate scope and consolidation. Individually delete necessary facts, mask Sources and rederive any fallback roster."
+          ],
+          "shortcut_heuristics": [
+            "Reject a disguised D locator switch, a final clean roster that bypasses history, or a need to infer implied repeal."
+          ],
+          "success_criteria": [
+            "Readers agree on affected and invariant edges across generations; fresh excerpt checks verify scope and disprove proposed short routes."
+          ]
+        },
+        "feasibility": {
+          "conditions": 2,
+          "documentary_complexity": "17 natural Sources, provisionally 13–22; the multigeneration dependency, not the count, is the gate.",
+          "authoring_and_review_effort": "49 working scientific sessions; authoring 17–23, blind and excerpt review 12–17, adjudication and audit 12–18; owner 3–5 additional.",
+          "ontology_compatibility": "No instrument or schedule nodes in the scored graph; use expressly supported beneficiary relationships.",
+          "infrastructure_reuse": "Extend D's scope audit and C's full invariant-graph checking.",
+          "risks_and_limits": [
+            "Do not use greater documentary complexity to compensate for an unchanged reasoning mechanism."
+          ]
+        }
+      },
+      {
+        "schema_version": 2,
+        "hypothesis_id": "named-scope-capacity",
+        "revision": 1,
+        "previous_revision_sha256": null,
+        "family_id": "S",
+        "title": "Scoped adoption and concurrent roles",
+        "status": "proposed",
+        "grounding": {
+          "legal_workflow": "Reconcile a trustee decision with a separately kept named list and reporting records.",
+          "retainer": "Trust administration advice on the purpose and effect of parallel records.",
+          "meeting_purpose": "Distinguish a newly conferred relationship from roles that already hold.",
+          "documentary_situation": "A signed decision uses a separately maintained list; the same person has another independently documented trust role.",
+          "confidence": "provisional",
+          "references": [
+            {
+              "title": "HMRC · Manage your trust's details",
+              "url": "https://www.gov.uk/guidance/manage-your-trusts-registration-service",
+              "relevance": "HMRC describes changing registered roles and downloading proof listing information held by TRS, including named persons and beneficiary classes. Registration data is a reporting record for the benchmark, with office or beneficiary effect established in the supplied file."
+            }
+          ],
+          "assumptions": [
+            "The governing terms expressly establish each use of the named list. Reporting status and decision authority stay constant."
+          ],
+          "practitioner_unknowns": [
+            "Whether the two list uses and separate retention of the named rows are natural in the chosen workflow."
+          ]
+        },
+        "objective": {
+          "primary_axis": "cross-source-reasoning",
+          "secondary_axes": [
+            "graph-completeness",
+            "documentary-authority",
+            "evidence-sufficiency"
+          ],
+          "failure_mechanism": "Role labels can leak across records, or a model may replace an existing role instead of adding the newly licensed one.",
+          "falsifiable_hypothesis": "The scoped adoption changes only the designated named relationship, with concurrent roles and sufficient proofs preserved. Exact recovery in both files disconfirms scope leakage.",
+          "coverage_gap": "Requires a governing rule, decision scope and named row, not merely I's reported record-basis distinction or C's trust-endpoint choice."
+        },
+        "design": {
+          "scenario": "A fixed decision can use a separately held list for either an expressly operative function or an administrative one. The lead person already has a different supported role.",
+          "genres_and_provenance": [
+            "Trustees hold the governing extract and signed decision; a separate recordkeeper holds the named list; reporting staff retain the reporting snapshot; the adviser holds the neutral brief."
+          ],
+          "intervention": "Change only the decision's designation of the list's function. Fix its execution, decision-maker authority, list, names and reporting basis.",
+          "invariants": [
+            "Named identities, cut-off, concurrent licensed roles and reporting cues."
+          ],
+          "expected_sensitivity_or_invariance": "Add only the expressly conferred named edge in the operative branch; do not remove the existing role or promote a class or contact cue.",
+          "negative_controls": [
+            "The same person's independently documented role remains in both files; a reporting-only entry stays unscored."
+          ],
+          "evidence_dependencies": [
+            "Join express governing authority, scoped adoption and exact named row. Mask each, test fixed alternate routes and verify the invariant role separately."
+          ],
+          "shortcut_heuristics": [
+            "Audit repeated names, answer-bearing headings and operative verbs in isolation. Defer if the public I comparison already characterizes the proposed mechanism or if S duplicates a recommendation-approval pair."
+          ],
+          "success_criteria": [
+            "Blind readers recover both complete graphs, including the concurrent role. Excerpt readers verify the three-part attachment and reject singleton routes."
+          ]
+        },
+        "feasibility": {
+          "conditions": 2,
+          "documentary_complexity": "18 natural Sources, provisionally 14–23; parallel workstreams must each have an independent purpose.",
+          "authoring_and_review_effort": "52 working scientific sessions; authoring 18–24, blind and excerpt review 13–18, adjudication and audit 12–19; owner 3–5 additional.",
+          "ontology_compatibility": "Score only existing named predicates; administrative capacity and class mentions do not establish an edge.",
+          "infrastructure_reuse": "Reuse C's join checks and F's same-person proof attachment audit.",
+          "risks_and_limits": [
+            "This is a capacity-scope pair, not a factorial interaction or a test of legal class membership."
+          ]
+        }
+      },
+      {
+        "schema_version": 2,
+        "hypothesis_id": "administrative-estate-load",
+        "revision": 1,
+        "previous_revision_sha256": null,
+        "family_id": "U",
+        "title": "Completeness in an administrative handover",
+        "status": "proposed",
+        "grounding": {
+          "legal_workflow": "Review a late-stage estate and associated trust file before reconciliation and reporting.",
+          "retainer": "Handover review of accounts and supporting records.",
+          "meeting_purpose": "Produce a dated briefing from the supplied administrative and substantive papers.",
+          "documentary_situation": "Several third-party workstreams accumulate naturally, while ordinary kinship and trust proof is unevenly distributed.",
+          "confidence": "provisional",
+          "references": [
+            {
+              "title": "GOV.UK · Distributing the estate",
+              "url": "https://www.gov.uk/probate-estate/distribute-the-estate",
+              "relevance": "Final estate accounts follow distribution; the guidance describes signature by personal representatives and main beneficiaries. Use estate administration as a retainer, not executor or estate beneficiary as scored roles."
+            },
+            {
+              "title": "HMRC · Identifying estate assets and debts",
+              "url": "https://www.gov.uk/valuing-estate-of-someone-who-died/identify-assets-debts",
+              "relevance": "Guidance describes reviewing papers and obtaining third-party valuations from different organisations. Grounds correspondence and administrative record diversity."
+            }
+          ],
+          "assumptions": [
+            "The Source count is a provisional workload tier, not an estimate of normal estate files."
+          ],
+          "practitioner_unknowns": [
+            "Whether the complete set would be retained together for this meeting and how long whole-file review would take."
+          ]
+        },
+        "objective": {
+          "primary_axis": "administrative-context",
+          "secondary_axes": [
+            "graph-completeness",
+            "evidence-sufficiency"
+          ],
+          "failure_mechanism": "Ordinary claims and necessary proof may be overlooked amid credible administrative records, and payment or contact cues may be promoted into relationships.",
+          "falsifiable_hypothesis": "On this full file, test whether the extractor omits any predeclared ordinary edge, mis-scores an administrative cue or fails a critical same-edge proof. Complete correct recovery disconfirms those predicted errors on this file.",
+          "coverage_gap": "H is a compact routine completeness reservation; U tests performance on one larger natural handover without attributing errors to volume."
+        },
+        "design": {
+          "scenario": "Routine records from several providers coexist with both salient and less prominent facts needed for the complete key.",
+          "genres_and_provenance": [
+            "Providers supply bank replies and valuations; the accounting workstream retains reconciliations and receipts; trustees and family record holders supply operative and family material; the adviser retains the inventory."
+          ],
+          "intervention": "One full-file condition. Optionally authorize a separate core-versus-added-administration diagnostic only after verifying fixed truth; it is not a stock sibling.",
+          "invariants": [
+            "One dated cut-off and audited key. Any optional diagnostic must preserve exact edges, sufficient routes, chronology and authority cues needed for the key."
+          ],
+          "expected_sensitivity_or_invariance": "Report complete-graph and same-edge proof recovery on the full file. Only the optional fixed-truth comparison can test a directional load prediction for this bundle.",
+          "negative_controls": [
+            "Predeclare ordinary supported edges in different workstreams and plausible unsupported payment and role cues."
+          ],
+          "evidence_dependencies": [
+            "Audit every Source's purpose and all critical proof. Before any diagnostic, independently rederive the core and show the removed material changes neither sufficient routes nor unresolved claims."
+          ],
+          "shortcut_heuristics": [
+            "Check ignoring routine genres, role keyword promotion and duplicated-origin voting. Remove padding rather than filling a quota."
+          ],
+          "success_criteria": [
+            "Two isolated whole-file reads, exact proof checks and a bidirectional audit yield a defensible key within measured full-context and staffing limits."
+          ]
+        },
+        "feasibility": {
+          "conditions": 1,
+          "documentary_complexity": "65 natural Sources, provisionally 50–80; advance only after an intermediate-tier capacity check.",
+          "authoring_and_review_effort": "125 working scientific sessions; one authoring session per Source plus integration (65–82 at the nominal count), blind and excerpt review 20–30, adjudication and audit 22–34; owner 4–7 additional.",
+          "ontology_compatibility": "Do not score executorship, estate entitlement, payment or administrative responsibility.",
+          "infrastructure_reuse": "Reuse full-file scoring and exact-proof audits; scope any additive comparison separately.",
+          "risks_and_limits": [
+            "One file does not estimate a volume effect or prevalence. Chunked scoring cannot substitute for full-context extraction."
+          ]
+        }
+      },
+      {
+        "schema_version": 2,
+        "hypothesis_id": "longitudinal-cross-section-reconstruction",
+        "revision": 1,
+        "previous_revision_sha256": null,
+        "family_id": "V",
+        "title": "Longitudinal cross-section reconstruction",
+        "status": "proposed",
+        "grounding": {
+          "legal_workflow": "Reconstruct current relationships across multiple years and settlements before an adviser handover.",
+          "retainer": "Review of a coherent retained family trust history.",
+          "meeting_purpose": "Produce one current Person/Trust briefing rather than separate historical summaries.",
+          "documentary_situation": "Operative changes, inherited references, superseded records and routine administration coexist across years and custodians.",
+          "confidence": "provisional",
+          "references": [
+            {
+              "title": "HMRC · Records to keep for trusts",
+              "url": "https://www.gov.uk/guidance/trust-record-keeping-for-tax-purposes",
+              "relevance": "HMRC identifies tax and administration records including expenses, investment information, payment records, meeting minutes, deeds of appointment and distribution decisions. These genres and recurring reporting duties inform bundle composition. The page does not set normal bundle sizes or prove legal effect."
+            },
+            {
+              "title": "HMRC · Report a trust discrepancy",
+              "url": "https://www.gov.uk/guidance/report-a-trust-discrepancy-to-hmrc",
+              "relevance": "Relevant persons compare proof of registration against information they hold and can report substantive discrepancies. Grounds the existence of parallel records, not any automatic resolution."
+            }
+          ],
+          "assumptions": [
+            "The 150-Source tier is provisional. Material in separate sections is indispensable to some claims, not merely redundant corroboration."
+          ],
+          "practitioner_unknowns": [
+            "Whether a single handover would naturally contain this inventory and whether review and transport can sustain it."
+          ]
+        },
+        "objective": {
+          "primary_axis": "graph-completeness",
+          "secondary_axes": [
+            "cross-source-reasoning",
+            "evidence-sufficiency",
+            "temporal-effectiveness",
+            "origin-and-copies"
+          ],
+          "failure_mechanism": "Section-local extraction or merging partial rosters can miss an identity bridge or retain an obsolete role.",
+          "falsifiable_hypothesis": "Within this file, predeclared comparable cross-section claims will show poorer exact edge recovery or sufficient attachment than local claims. Equal or better performance on both measures disconfirms that direction for this file.",
+          "coverage_gap": "Unlike U's accumulated administrative workload, V requires globally integrated identity and status reconstruction."
+        },
+        "design": {
+          "scenario": "Several workstreams appear locally coherent but cannot jointly establish the cut-off graph without cross-section evidence.",
+          "genres_and_provenance": [
+            "Trustees hold instruments, changes and accounts; advisers retain meeting and handover records; record custodians supply inventories; independent family holders and correspondents supply relationship and reconciliation material."
+          ],
+          "intervention": "One primary complete file. Compare predeclared local and cross-section claim groups within it. Fixed-truth prefixes or evolving-cut-off snapshots, if independently justified, are separate optional diagnostics.",
+          "invariants": [
+            "One exact roster of Sources and one dated primary cut-off. Compare groups where predicate mix, proof arity, alternative routes and salience are reasonably balanced."
+          ],
+          "expected_sensitivity_or_invariance": "Report full-file accuracy and proof completeness first, then the in-file group comparison. If groups are not comparable, report descriptive strata only; no volume or causal section effect.",
+          "negative_controls": [
+            "Include direct local edges, superseded assertions and recurring unscored role cues."
+          ],
+          "evidence_dependencies": [
+            "Two isolated review tracks each read every Source and reconstruct the entire graph. Mask cross-section links, verify exact proof and audit all sections bidirectionally before global adjudication."
+          ],
+          "shortcut_heuristics": [
+            "Test per-section union, recency, and repeated-origin shortcuts. Reject any critical cross-section claim with an equally sufficient local route."
+          ],
+          "success_criteria": [
+            "Demonstrate intact dossier transport, two independent global keys, adjudication and complete audit before scoring. Retain a comparative claim only if the predeclared groups pass independent comparability review."
+          ]
+        },
+        "feasibility": {
+          "conditions": 1,
+          "documentary_complexity": "150 natural Sources, provisionally 100–200; proceed only after credible inventory, measured intermediate and large-tier throughput, and budget review.",
+          "authoring_and_review_effort": "260 working scientific sessions; at nominal scale authoring and integration 150–180, blind and excerpt review 40–65, global adjudication and audit 45–70; owner 6–10 additional.",
+          "ontology_compatibility": "One graph with the existing six predicates; custody gaps, superseded roles and unanswered questions stay in the companion register.",
+          "infrastructure_reuse": "Reuse the frozen full-context and same-edge contracts; require verified cross-section audit and exact citation transport.",
+          "risks_and_limits": [
+            "Defer if whole-file independence, documentary realism, reviewer capacity or context limits fail. A stitched collection of section-level keys is not an independent whole-file review."
+          ]
+        }
+      }
+    ],
+    "stopping_criteria": [
+      "Keep planning distinct from authoring, approval and evaluation. Preserve the admitted keys and scores, leave D and F formal reconciliation pending, and admit nothing without a dated human decision after independent review.",
+      "Predeclare the one literal body edit or pure Source-order change, fixed roster and expected graph and proof behavior. Byte-check the match. Masks, excerpt reads, additive packs and changing-cut-off observations are separate diagnostics, not extra scored siblings or families.",
+      "Require a credible participant purpose, provenance and custody route for every Source. Return designs whose result depends on an implausible file, an external authority decision, a leaked heading, position alone or padding. Permit shortcuts only as explicitly bounded limitations, not as proof of the intended mechanism.",
+      "Require two isolated complete blind readings per scored condition, fresh exact excerpt and singleton or alternative-route checks, proper fact deletions and whole-Source masks with rederived keys. Audit passages to graph and graph to passages; do not credit necessary quotes scattered across different edges.",
+      "Use the supplied file at its stated cut-off, exact distinguishable names and the six frozen predicates. Withhold unresolved named claims, record open questions outside the scored graph, and retain all independently licensed ordinary edges.",
+      "Before U and again before V, measure authoring, independent whole-file reading, reconciliation and audit throughput; budget owner and coordination time separately. Verify the entire serialized dossier, prompt and exact-evidence response fit the extraction path without truncation. Pause, resize naturally or defer if staffing, realism, complete independent reconstruction or transport fails; do not infer capacity from H, I or J's planned counts.",
+      "Do not infer difficulty from lower scores or document length, causation from a single full file, or practitioner outcomes or prevalence from fictional contrasts. Drop or relabel any optional comparison whose invariant graph, proof routes or comparison groups fail independent verification."
+    ]
+  }
+}

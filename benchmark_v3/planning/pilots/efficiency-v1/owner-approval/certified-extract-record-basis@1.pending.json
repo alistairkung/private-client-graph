@@ -1,0 +1,10 @@
+{
+  "hypothesis_id": "certified-extract-record-basis",
+  "revision": 1,
+  "hypothesis_sha256": "c85fc859ea1e432e456a3debe241432e44b94467d0d0b754243ab52801ccf737",
+  "schema_version": 1,
+  "status": "approved",
+  "owner": "Alistair Kung",
+  "decided_on": null,
+  "decision_reference": null
+}

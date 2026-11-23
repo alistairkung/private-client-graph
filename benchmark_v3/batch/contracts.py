@@ -8,14 +8,14 @@ from pydantic import Field, model_validator
 from benchmark_v3.portfolio import Count, Portfolio, PortfolioDecision
 from benchmark_v3.replay_manifest import LiteralEdit, SavedIdeal
 from benchmark_v3.research_contracts import (
-    Contract, Digest, FamilyId, HypothesisRef, NonemptyNotes, Slug, Text,
+    Contract, Digest, FamilyId, HypothesisRef, NonemptyNotes, OwnerDecision, Slug, Text,
 )
 from private_client_graph.models import SourcedExtractionResult
 from private_client_graph.models.evaluation_result import SemanticEdge
 
 Stage = Literal[
     "design", "author", "realism", "freeze", "blind", "adjudicate", "audit",
-    "masks", "technical", "admission_ready", "admitted", "returned", "quarantined",
+    "masks", "technical", "admission_ready", "admitted", "returned", "quarantined", "pending_design_review",
 ]
 Code = Literal[
     "budget", "isolation", "input_integrity", "uncertain_dispatch", "failed_dispatch",
@@ -45,35 +45,63 @@ class IsolationScope(Contract):
     scope_reference: Text
 
 
+class ApprovedDesign(Contract):
+    design_sha256: Digest
+    lineage_sha256: Digest
+    hypothesis_decision: OwnerDecision
+    planned_masks: Count
+
+
 class FamilyAllocation(Contract):
     family_id: FamilyId
     hypothesis: HypothesisRef
     sessions: Count
+    approved_design: ApprovedDesign | None = Field(default=None, exclude_if=lambda value: value is None)
 
 
 class BatchManifest(Contract):
-    schema_version: Literal[1]
+    schema_version: Literal[1, 2] = Field(description="Schema 2 requires a batch-wide design review.")
     task_id: Slug
     batch_id: Slug
     namespace: Literal["development"]
-    phase: Literal["pilot", "expansion"]
+    phase: Literal["pilot", "expansion", "construction", "milestone"]
+    qualification_target: Count | None = Field(default=None, exclude_if=lambda value: value is None)
     portfolio_sha256: Digest
     previous_portfolio: Portfolio | None = None
     families: Annotated[list[FamilyAllocation], Field(min_length=1, max_length=20)]
     task_session_ceiling: Count
     max_parallel_families: Annotated[int, Field(strict=True, ge=1, le=20)] = 2
     repair_cycles: Literal[0, 1] = 1
+    autonomous_realism: Literal[True] | None = Field(default=None, exclude_if=lambda value: value is None)
     scope: IsolationScope
     models: dict[Role, Allocation]
     stop_conditions: NonemptyNotes
+
+    @property
+    def requires_design_review(self) -> bool:
+        return self.schema_version == 2
 
     @model_validator(mode="after")
     def verify_allocations(self) -> Self:
         families = [row.family_id for row in self.families]
         if len(set(families)) != len(families) or self.models.keys() != ROLES:
             raise ValueError("Allocate distinct families and specify all seven scientific roles.")
+        if self.autonomous_realism and (self.phase != "milestone" or self.repair_cycles == 0):
+            raise ValueError("The autonomous realism loop requires a milestone with approved repair spending.")
         if self.phase == "pilot" and len(families) != 3:
             raise ValueError("An efficiency pilot requires exactly three distinct families.")
+        if self.phase == "milestone":
+            if self.qualification_target is None or self.qualification_target > len(families):
+                raise ValueError("A milestone needs a qualification target within the commissioned roadmap.")
+        elif self.qualification_target is not None:
+            raise ValueError("Only a milestone can set a technical qualification target.")
+        if self.phase == "construction":
+            if self.requires_design_review or self.repair_cycles or self.previous_portfolio is not None or any(
+                family.approved_design is None for family in self.families
+            ):
+                raise ValueError("Construction requires exact approved designs and zero automatic repairs.")
+        elif any(family.approved_design is not None for family in self.families):
+            raise ValueError("Only a construction batch may import approved designs.")
         if sum(row.sessions for row in self.families) > self.task_session_ceiling:
             raise ValueError("Batch allocations exceed the task-wide session ceiling.")
         return self
@@ -83,6 +111,256 @@ class BatchDecision(Contract):
     schema_version: Literal[1]
     manifest_sha256: Digest
     portfolio: PortfolioDecision
+    owner: Text
+    decided_on: date
+    decision_reference: Text
+
+
+class DesignCommitment(Contract):
+    family_id: FamilyId
+    design_sha256: Digest
+
+
+class DesignNameCorrection(Contract):
+    source_id: SourceId
+    before: Text
+    after: Text
+    revised_design_sha256: Digest
+
+
+class DesignDisposition(DesignCommitment):
+    disposition: Literal["accept", "return"] = "accept"
+    reason: Text | None = None
+    name_correction: DesignNameCorrection | None = Field(default=None, exclude_if=lambda value: value is None)
+
+    @model_validator(mode="after")
+    def verify_return_reason(self) -> Self:
+        if self.disposition == "return" and self.reason is None:
+            raise ValueError("A returned design requires the owner's reason.")
+        if self.name_correction and (self.disposition != "accept" or not self.reason):
+            raise ValueError("Supply the documented reason for an accepted name correction.")
+        return self
+
+
+class DesignReview(Contract):
+    schema_version: Literal[1, 2]
+    batch_id: Slug
+    manifest_sha256: Digest
+    owner: Text
+    decided_on: date
+    decision_reference: Text
+    designs: Annotated[list[DesignDisposition], Field(min_length=1, max_length=20)]
+
+    @model_validator(mode="after")
+    def verify_unique_families(self) -> Self:
+        if len({design.family_id for design in self.designs}) != len(self.designs):
+            raise ValueError("Supply one design disposition per family.")
+        if self.schema_version == 2 and any("disposition" not in design.model_fields_set for design in self.designs):
+            raise ValueError("Design review schema 2 requires every disposition to be explicit.")
+        if self.schema_version == 1 and any(design.disposition != "accept" for design in self.designs):
+            raise ValueError("Returned designs require design review schema 2.")
+        return self
+
+    def accepts(self, family: str) -> bool:
+        return any(row.family_id == family and row.disposition == "accept" for row in self.designs)
+
+
+class SourceCutoffRecovery(Contract):
+    schema_version: Literal[1]
+    batch_id: Slug
+    manifest_sha256: Digest
+    owner: Text
+    decided_on: date
+    decision_reference: Text
+    responses: Annotated[dict[FamilyId, Digest], Field(min_length=1, max_length=20)]
+
+
+class OwnerFamilyReview(Contract):
+    schema_version: Literal[1]
+    batch_id: Slug
+    manifest_sha256: Digest
+    family_id: FamilyId
+    owner: Text
+    decided_on: date
+    decision_reference: Text
+
+
+class AnnotationRecovery(OwnerFamilyReview):
+    reader_job: Annotated[str, Field(pattern=r"^reading-[0-9]{3}-[ab]-full$")]
+    output_sha256: Digest
+    receipt_sha256: Digest
+    bundle_sha256: Digest
+    source_id: SourceId
+    candidate_path: Annotated[str, Field(pattern=r"^candidates\.relationships\[(0|[1-9][0-9]{0,5})\]\.supporting_text$")]
+    byte_interval: tuple[Annotated[int, Field(strict=True, ge=0)], Annotated[int, Field(strict=True, gt=0)]]
+
+
+class AdjudicationQuoteRecovery(OwnerFamilyReview):
+    output_sha256: Digest
+    receipt_sha256: Digest
+    bundle_sha256: Digest
+    derivative_sha256: Digest
+    source_id: SourceId
+    truth_relationship_index: Annotated[int, Field(strict=True, ge=0)]
+    quote_sha256: Digest
+    source_quote_interval: tuple[Annotated[int, Field(strict=True, ge=0)], Annotated[int, Field(strict=True, gt=0)]]
+    output_token_interval: tuple[Annotated[int, Field(strict=True, ge=0)], Annotated[int, Field(strict=True, gt=0)]]
+
+
+class RepairScopeReview(Contract):
+    status: Literal["repair_scope_approved_pending_execution"]
+    design_sha256: Digest
+    realism_output_sha256: Annotated[dict[Text, Digest], Field(min_length=1)]
+    scope: NonemptyNotes
+
+
+class ChildDesignMerits(Contract):
+    status: Literal["design_merits_accepted_pending_activation"]
+    parent_design_sha256: Digest
+    child_design_sha256: Digest
+
+
+class DeferredExceptionReview(OwnerFamilyReview):
+    disposition: Annotated[RepairScopeReview | ChildDesignMerits, Field(discriminator="status")]
+
+
+class BudgetAllocation(Contract):
+    shared: Count
+    families: dict[FamilyId, Count]
+
+
+class BudgetAmendment(Contract):
+    schema_version: Literal[1, 2]
+    batch_id: Slug
+    manifest_sha256: Digest
+    portfolio_sha256: Digest
+    original_approval_sha256: Digest
+    previous_amendment_sha256: Digest | None = Field(default=None, exclude_if=lambda value: value is None)
+    owner: Text
+    decided_on: date
+    decision_reference: Text
+    reason: Text
+    previous: BudgetAllocation
+    allocation: BudgetAllocation
+    completed_charges: dict[FamilyId, Annotated[int, Field(strict=True, ge=0)]]
+
+    @model_validator(mode="after")
+    def verify_amendment_parent(self) -> Self:
+        if (self.previous_amendment_sha256 is not None) != (self.schema_version == 2):
+            raise ValueError("Only a chained budget amendment requires a previous amendment digest.")
+        return self
+
+
+class FreshAdjudication(Contract):
+    action: Literal["fresh_adjudication", "complete_evidence_adjudication"]
+    output_sha256: Digest
+    receipt_sha256: Digest
+    annotation_derivative_sha256: Digest
+    disagreement_count: Count
+
+
+class RepairExecution(Contract):
+    action: Literal["repair_execution"]
+    scope_review_sha256: Digest
+    direct_sources: Annotated[list[SourceId], Field(min_length=1)]
+
+
+class ChildActivation(Contract):
+    action: Literal["child_activation"]
+    merits_review_sha256: Digest
+    child_design_sha256: Digest
+
+
+class FamilyContinuation(OwnerFamilyReview):
+    budget_amendment_sha256: Digest
+    release: Annotated[FreshAdjudication | RepairExecution | ChildActivation, Field(discriminator="action")]
+
+
+class MilestoneRealismRepair(Contract):
+    schema_version: Literal[1]
+    batch_id: Slug
+    family_id: FamilyId
+    manifest_sha256: Digest
+    design_sha256: Digest
+    realism_outputs: Annotated[dict[Slug, Digest], Field(min_length=2)]
+    repair_tickets: Annotated[dict[SourceId, Text], Field(min_length=1)]
+    scope_reference: Text
+
+
+class MilestoneEvidenceRepair(Contract):
+    schema_version: Literal[1]
+    batch_id: Slug
+    family_id: FamilyId
+    manifest_sha256: Digest
+    freeze_sha256: Digest
+    audit_receipt_sha256: Digest
+    audit_output_sha256: Digest
+    invariant_edge: SemanticEdge
+    scope_reference: Text
+
+
+class ConstructionJob(Contract):
+    stage: Stage
+    role: Role
+
+
+class ConstructionFollowup(Contract):
+    schema_version: Literal[1]
+    batch_id: Slug
+    manifest_sha256: Digest
+    design_sha256: Digest
+    owner: Text
+    decision_reference: Text
+    family_id: FamilyId
+    prior_revision: Count
+    revision: Count
+    resume_stage: Literal["adjudicate", "design"]
+    historical_charges: Count
+    additional_sessions: Count
+    parent_receipt_sha256: Digest
+    scope_sha256: Digest
+    jobs: Annotated[dict[SourceId, ConstructionJob], Field(min_length=1)]
+
+    @model_validator(mode="after")
+    def verify_scope(self) -> Self:
+        if (self.revision != self.prior_revision + (self.resume_stage == "design")
+                or len(self.jobs) != self.additional_sessions
+                or any(job.role == "designer" for job in self.jobs.values())):
+            raise ValueError("Follow-up authority requires an exact job allocation and revision.")
+        return self
+
+
+class ConstructionRepairSlots(Contract):
+    schema_version: Literal[1]
+    family_id: FamilyId
+    grant_sha256: Digest
+    scope_sha256: Digest
+    review_job: SourceId
+    review_receipt_sha256: Digest
+    unused_masks: Annotated[list[SourceId], Field(min_length=2, max_length=2)]
+    repair_jobs: Annotated[dict[SourceId, ConstructionJob], Field(min_length=2, max_length=2)]
+
+    @model_validator(mode="after")
+    def verify_slots(self) -> Self:
+        if (len(set(self.unused_masks)) != len(self.unused_masks)
+                or any(not job.startswith("mask-") for job in self.unused_masks)
+                or {job.stage for job in self.repair_jobs.values()} != {"author"}
+                or {job.role for job in self.repair_jobs.values()} != {"author", "audit"}):
+            raise ValueError("Allocate unused contingency to one dependent author and one independent verifier.")
+        return self
+
+
+class ConstructionRepairDecision(Contract):
+    schema_version: Literal[1]
+    batch_id: Slug
+    family_id: FamilyId
+    manifest_sha256: Digest
+    design_sha256: Digest
+    plan_sha256: Digest
+    prior_family_ceiling: Count
+    family_ceiling: Count
+    prior_task_ceiling: Count
+    task_ceiling: Count
     owner: Text
     decided_on: date
     decision_reference: Text
@@ -183,6 +461,43 @@ class AuditReview(Contract):
     masks: list[MaskAssignment]
     objections: list[Text]
     limitations: list[Text]
+
+
+class MilestoneAudit(AuditReview):
+    equivalent_views_reusable: bool = False
+
+
+class AuditMaskView(Contract):
+    condition: SourceId
+    risk: Risk
+    included: Annotated[list[SourceId], Field(min_length=1)]
+    remove_quotes: dict[SourceId, Text] = Field(default_factory=dict)
+
+
+class AuditMaskExpectation(AuditMaskView):
+    present: list[SemanticEdge]
+    absent: list[SemanticEdge]
+
+
+class AuditRecovery(OwnerFamilyReview):
+    budget_amendment_sha256: Digest
+    output_sha256: Digest
+    receipt_sha256: Digest
+    freeze_sha256: Digest
+    adjudication_derivative_sha256: Digest
+    views: Annotated[list[AuditMaskExpectation], Field(min_length=1, max_length=8)]
+    combined_cutoff_view: AuditMaskView
+
+
+class CutoffAssessment(Contract):
+    decision: Literal["justified", "separate_required"]
+    appointment_evidence: Text
+    designation_evidence: Text
+    rationale: Text
+
+
+class RecoveredAuditReview(AuditReview):
+    cutoff_assessment: CutoffAssessment
 
 
 class ExceptionRecord(Contract):

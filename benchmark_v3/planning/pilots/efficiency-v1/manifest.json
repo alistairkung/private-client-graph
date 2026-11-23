@@ -1,0 +1,91 @@
+{
+  "schema_version": 2,
+  "task_id": "benchmark-v3-efficiency",
+  "batch_id": "efficiency-pilot-v1",
+  "namespace": "development",
+  "phase": "pilot",
+  "portfolio_sha256": "12f150333e12b94588b1c2bc703f89e681d48298e6b6c851f4f741118ab2e5be",
+  "previous_portfolio": null,
+  "families": [
+    {
+      "family_id": "H",
+      "hypothesis": {
+        "hypothesis_id": "routine-trust-records-completeness",
+        "revision": 1,
+        "hypothesis_sha256": "06ef87b2ff166f92519c45234f36ffe6c63bcbe614eba22a92c0a966bbf7a670"
+      },
+      "sessions": 20
+    },
+    {
+      "family_id": "I",
+      "hypothesis": {
+        "hypothesis_id": "certified-extract-record-basis",
+        "revision": 1,
+        "hypothesis_sha256": "c85fc859ea1e432e456a3debe241432e44b94467d0d0b754243ab52801ccf737"
+      },
+      "sessions": 25
+    },
+    {
+      "family_id": "J",
+      "hypothesis": {
+        "hypothesis_id": "authenticated-copy-and-delivery",
+        "revision": 1,
+        "hypothesis_sha256": "ae0b12a8394582bbeaab5b0280c1da93390b4e35cb249c743001bdfd454e89d5"
+      },
+      "sessions": 34
+    }
+  ],
+  "task_session_ceiling": 79,
+  "max_parallel_families": 3,
+  "repair_cycles": 1,
+  "scope": {
+    "profile": "benchmark_packet",
+    "packet_implementation_sha256": "63d2ba152800a4c4cdbbb329d43ac082463181c9d5fd0d2250b3233825159ab8",
+    "os_boundary_evidence_sha256": "ea1bc3f5d64b79f1596cd28cacf0d4ec8008040ee504ef98db93db759178ab01",
+    "custodian": "PCG development benchmark custodian",
+    "scope_reference": "Effective only after exact owner authorization on the verified macOS 26.2 arm64, Codex CLI 0.166.0 host. See READINESS.md."
+  },
+  "models": {
+    "designer": {
+      "model": "gpt-6.2-sol",
+      "effort": "high",
+      "rationale": "Construct an independent, reviewable history, chronology and control."
+    },
+    "author": {
+      "model": "gpt-6.2-sol",
+      "effort": "medium",
+      "rationale": "Produce one limited perspective and genre-constrained Source."
+    },
+    "realism": {
+      "model": "gpt-6.2-sol",
+      "effort": "high",
+      "rationale": "Check retainer, custody, chronology and cues condition by condition."
+    },
+    "annotation": {
+      "model": "gpt-6.2-sol",
+      "effort": "high",
+      "rationale": "Read the locked file independently and attach complete exact Evidence."
+    },
+    "adjudication": {
+      "model": "gpt-6.2-sol",
+      "effort": "high",
+      "rationale": "Resolve peer disagreements and lock all key and proof commitments."
+    },
+    "audit": {
+      "model": "gpt-6.2-sol",
+      "effort": "high",
+      "rationale": "Challenge shortcuts, audit sufficient proofs and precommit appropriate masks."
+    },
+    "masked": {
+      "model": "gpt-6.2-sol",
+      "effort": "high",
+      "rationale": "Read a neutral reduced packet independently against the same high standard."
+    }
+  },
+  "stop_conditions": [
+    "Halt the task on a shared isolation incident or unverified approval or implementation commitment.",
+    "Pause the stock runner after all three exact committed designs and before any author reservation. Require the commissioning owner to accept all three design digests after reviewing retainer, meeting purpose, participant knowledge, record origins and custody.",
+    "Halt the affected family on uncertainty, integrity failure, the family or task allowance, unresolved realism or evidence objection, or a new hypothesis or repair outside the authorized scope.",
+    "Stop at consolidated human admission review. Paid PCG extraction is capped at zero. Expansion, baseline and evaluation require distinct authority."
+  ]
+}

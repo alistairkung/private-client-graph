@@ -1,0 +1,246 @@
+{
+  "schema_version": 1,
+  "portfolio_id": "development-efficiency-pilot",
+  "revision": 1,
+  "previous_revision_sha256": null,
+  "namespace": "development",
+  "target_families": 20,
+  "coverage_sha256": "d02473460c7f169eafccd75882bec41eeccc26123739b68f435ce098be65d6bd",
+  "existing": [
+    {
+      "family_id": "A",
+      "admission_sha256": "2a39c36968f8846867070220547a2caf62691fe213e709a38337e293e5bafead",
+      "primary_axis": "temporal-effectiveness",
+      "secondary_axes": [
+        "documentary-authority",
+        "evidence-sufficiency",
+        "presentation-order"
+      ],
+      "conditions": [
+        "A0",
+        "A1",
+        "A2"
+      ]
+    },
+    {
+      "family_id": "B",
+      "admission_sha256": "f6fe34f01a523d9a6f63d42319617bae5a0bb407c9923552e934c3d41122f67e",
+      "primary_axis": "entity-identity",
+      "secondary_axes": [
+        "incomplete-information",
+        "origin-and-copies",
+        "evidence-sufficiency"
+      ],
+      "conditions": [
+        "B0",
+        "B1"
+      ]
+    },
+    {
+      "family_id": "C",
+      "admission_sha256": "8f56a44e5a0a034a4000c1a8c6959cd72de0be528e8981e31e3938e049fbdd61",
+      "primary_axis": "cross-source-reasoning",
+      "secondary_axes": [
+        "evidence-sufficiency",
+        "incomplete-information",
+        "entity-identity"
+      ],
+      "conditions": [
+        "C0",
+        "C1",
+        "C2"
+      ]
+    },
+    {
+      "family_id": "D",
+      "admission_sha256": "d84a3a09182a3311d53ff04f56fd5800731196a09237ff949f716f3b902e376e",
+      "primary_axis": "versions-and-amendments",
+      "secondary_axes": [
+        "documentary-authority",
+        "evidence-sufficiency",
+        "graph-completeness"
+      ],
+      "conditions": [
+        "D0",
+        "D1"
+      ]
+    },
+    {
+      "family_id": "F",
+      "admission_sha256": "e76ee677d3cb6bb980e9324c70277f3d3c4c5df84ea1a862b353efc2516d369d",
+      "primary_axis": "entity-identity",
+      "secondary_axes": [
+        "evidence-sufficiency",
+        "graph-completeness"
+      ],
+      "conditions": [
+        "F0",
+        "F1"
+      ]
+    }
+  ],
+  "slots": [
+    {
+      "family_id": "H",
+      "hypothesis": {
+        "hypothesis_id": "routine-trust-records-completeness",
+        "revision": 1,
+        "hypothesis_sha256": "06ef87b2ff166f92519c45234f36ffe6c63bcbe614eba22a92c0a966bbf7a670"
+      },
+      "primary_axis": "graph-completeness",
+      "secondary_axes": [
+        "evidence-sufficiency",
+        "administrative-context"
+      ],
+      "tier": "routine",
+      "expected_sources": 5,
+      "retainer": "Routine trust administration advice on the recorded parties, current provisions and supporting expenses.",
+      "workflow": "Review current trust records and reconcile the supporting expense material before advising the trustees.",
+      "natural_condition": "Trustees share the records they need for an ordinary review of trust particulars and an expense reconciliation. The operative records support named relationships of more than one type across distinct records. The correspondence serves the reconciliation without itself establishing a relationship.",
+      "matched_conditions": [],
+      "estimated_sessions": 16,
+      "estimated_cost_usd": null,
+      "independent_authoring": [
+        "Create an independent Matter history, names, chronology and custody chain. Isolate role-specific author packets and the blind review packet.",
+        "Give the principal extract, signed beneficiary schedule, native expense email, expense reconciliation and meeting brief distinct reasons to be supplied. Establish the schedule's current effect in the file, and keep the brief from summarising the graph.",
+        "Verify sufficient evidence for every edge without requiring joint citations where a singleton suffices. In audit only, delete an otherwise unreplicated operative assertion and rederive the key; mask the expense material and verify that all supported relationships survive. Do not treat expense handling as a trust role or claim a placement or volume effect.",
+        "Plan 11 core sessions: one independent design, five per-Source authoring sessions, one realism review, two blind readings, one adjudication and one bidirectional full-file reconciliation. Budget four targeted excerpt or mask checks and one reserve."
+      ]
+    },
+    {
+      "family_id": "I",
+      "hypothesis": {
+        "hypothesis_id": "certified-extract-record-basis",
+        "revision": 1,
+        "hypothesis_sha256": "c85fc859ea1e432e456a3debe241432e44b94467d0d0b754243ab52801ccf737"
+      },
+      "primary_axis": "documentary-authority",
+      "secondary_axes": [
+        "origin-and-copies",
+        "evidence-sufficiency",
+        "incomplete-information"
+      ],
+      "tier": "moderate",
+      "expected_sources": 5,
+      "retainer": "Trust administration advice on reconciling the trustees' records with information held for reporting.",
+      "workflow": "Reconcile an internal trust record with a registration snapshot before answering a current-beneficiary question.",
+      "natural_condition": "The adviser reconciles a custodian's certified transcription from the current beneficiary register with a registration download. The certificate attests to transcription accuracy, not to the underlying relationship. The governing record establishes what the register can show.",
+      "matched_conditions": [
+        "Change only the literal record-basis field in the certified transcription from the current beneficiary register to the administrative reporting record. Keep the transcribed row, date, issuing capacity, certification and issue status fixed, along with every other Source byte and presentation order."
+      ],
+      "estimated_sessions": 20,
+      "estimated_cost_usd": null,
+      "independent_authoring": [
+        "Create an independent Matter history, names, chronology and custody chain. Isolate role-specific author packets and condition-local blind packets.",
+        "Make the same certification form credible for both record bases. Use the governing extract to establish their different standing. Trace the source of the registration download and reconciliation transmittal; neither may independently confirm the target appointment.",
+        "Verify that the governing passage and transcription jointly support exactly one additional named beneficiary edge in the register condition and that neither suffices alone. Test necessary passage deletion and alternative reporting routes. Withhold the edge on the reporting basis without inferring non-beneficiary status. Masking the download must preserve both keys, and the unrelated office must survive both conditions and target-only masks.",
+        "Plan 15 core sessions: one independent design, five per-Source authoring sessions, one private sibling realization and byte check, two condition-local realism reviews, four blind readings and two adjudications with full-file reconciliation. Budget four targeted excerpt or mask checks and one reserve."
+      ]
+    },
+    {
+      "family_id": "J",
+      "hypothesis": {
+        "hypothesis_id": "authenticated-copy-and-delivery",
+        "revision": 1,
+        "hypothesis_sha256": "ae0b12a8394582bbeaab5b0280c1da93390b4e35cb249c743001bdfd454e89d5"
+      },
+      "primary_axis": "axis-interactions",
+      "secondary_axes": [
+        "custody-and-absence",
+        "temporal-effectiveness",
+        "evidence-sufficiency"
+      ],
+      "tier": "complex",
+      "expected_sources": 8,
+      "retainer": "Trust administration advice on the current roster when an executed original is not included in the review pack.",
+      "workflow": "Review the supplied custody and delivery records before recording an additional named beneficiary.",
+      "natural_condition": "At a routine records review, the pack contains an authenticated reproduction of an additional designation but not the original. The dispatch record identifies the designation as the enclosure in a consignment that the recipient independently acknowledges receiving by the cut-off. No existing named relationship is displaced.",
+      "matched_conditions": [
+        "Change only the literal enclosure reference in the dispatch record so the same consignment identifies the routine expense reconciliation instead of the authenticated designation. Keep authentication, the acknowledgement, its date, every other Source byte and presentation order fixed."
+      ],
+      "estimated_sessions": 26,
+      "estimated_cost_usd": null,
+      "independent_authoring": [
+        "Create an independent Matter history, names, chronology and custody chain. Isolate role-specific author packets and condition-local blind packets.",
+        "Give distinct origins and functions to the reproduced designation, custodian certificate, dispatch record and recipient acknowledgement. The governing extract supplies the delivery condition; the routine enclosure, intake inventory and meeting brief establish the business purpose, limits of the pack and cut-off. Require a credible dispatch and receipt trail for either enclosure.",
+        "Verify the contents and delivery routes separately and then together on the same edge. The certificate must not prove delivery, and the acknowledgement must not identify the enclosure without the dispatch link. Test singleton routes, mask authentication and delivery linkage separately, and remove all occurrences of a needed linkage fact in its deletion check. Re-derive each masked key and preserve the independently supported role.",
+        "Require exactly one additional beneficiary edge in the natural condition. Acknowledged receipt of the routine enclosure leaves delivery of the designation unresolved; it does not establish non-delivery, invalidity or that the original is lost. The sibling tests only the delivery link with authentication fixed; audit masks do not constitute a factorial experiment.",
+        "Plan 18 core sessions: one independent design, eight per-Source authoring sessions, one private sibling realization and byte check, two condition-local realism reviews, four blind readings and two adjudications with full-file reconciliation. Budget seven targeted excerpt or mask checks and one reserve."
+      ]
+    }
+  ],
+  "admission_criteria": [
+    "Require human approval of the portfolio and resource allocation before construction. Before authoring a family, have a human accept its retainer, meeting purpose, participant knowledge, record origins and custody path. Check documentary realism separately in each realized condition.",
+    "Lock the natural Sources before independent key derivation. Obtain two independent blind full-file readings and adjudicate each condition before revealing the contrast. Reconcile passages to edges and edges to passages under the frozen v2 evidence policy, using exact distinguishable names and only relationships supported at the cut-off. Record unresolved claims, capacities and administrative questions in the companion register.",
+    "Require verbatim Source-attributed evidence and every necessary passage of a verified sufficient proof on the same edge. Use fresh excerpt verification, singleton and alternative-route checks, predeclared negative controls and risk-based deletions or masks. Rederive affected keys rather than assuming a mask can only remove edges.",
+    "For I and J, verify the exact one-literal edit and fixed presentation order, the sole predicted edge difference, and sufficient evidence for the invariant graph. H has one natural condition; its audit masks are not siblings.",
+    "Retain the locked dossiers, adjudications, audit results and a zero-provider replay. Only a dated, consolidated human decision on the exact dossiers admits a family; the proposal itself does not admit or dispatch anything."
+  ],
+  "stopping_criteria": [
+    "Defer any design that needs outside law, retrieval, OCR, an unavailable Source or an assumption about practitioner outcomes. Quarantine a dossier for implausible provenance, an answer leak, an unintended graph difference, an unverified necessary passage or an independent alternative proof that defeats the registered hypothesis.",
+    "Allow at most one participant-safe natural revision. Route the private sibling realization and contrast-revealing objections to the human reviewer. Recheck affected commitments and use only verified equivalent packets or unaffected author outputs within the same family. Never reuse Matter materials across families or skip blind review.",
+    "The three estimates total 62 planned family sessions. Log actual sessions and gate outcomes, including shared work, authoring, masks, rework and returns, with shared work separately identified. Compare effort with released development audits only where work units and gates are comparable. Reducing review does not demonstrate efficiency, and document counts and tier labels are not measures of reasoning difficulty.",
+    "Stop at consolidated human admission, or earlier if credibility, reproducibility or resources cannot support the required gates. Do not replace a failed slot with E, G or another family. Even if all three pass, the portfolio reaches only eight independent histories and 17 conditions, leaving twelve family slots unallocated. Keep evaluation separate and out of this pilot."
+  ],
+  "gaps": [
+    {
+      "axes": [
+        "cross-source-reasoning",
+        "evidence-sufficiency"
+      ],
+      "finding": "A–D and F exercise joint proof with different links and unequal deletion coverage. Keep same-edge sufficiency as a shared diagnostic rather than treating every new joint route as evidence of a distinct reasoning axis."
+    },
+    {
+      "axes": [
+        "contradictory-assertions",
+        "origin-and-copies"
+      ],
+      "finding": "B verifies one origin and its relay, not disagreement between independent, comparable origins. E remains returned and excluded: its diagnostic contrast reproduced, but retainer relevance, provenance, witness-reference handoff and comparable scope did not pass documentary-realism review. Do not reuse its file, key or failed witness mechanism."
+    },
+    {
+      "axes": [
+        "documentary-authority",
+        "versions-and-amendments",
+        "temporal-effectiveness"
+      ],
+      "finding": "A varies an operative event and D varies the scope of an effective amendment. I would isolate a record-basis difference with the claim, date and issue status fixed. Other amendment mechanisms and D's full individual fact-deletion coverage remain open."
+    },
+    {
+      "axes": [
+        "entity-identity",
+        "incomplete-information"
+      ],
+      "finding": "B and C verify local withholding when identifiers are incomplete; F verifies invariance under an ancillary-label collision with complete records. Collisions in authoritative identifiers and interacting identity gaps remain open. The admitted designs do not rule out positional shortcuts."
+    },
+    {
+      "axes": [
+        "graph-completeness",
+        "administrative-context",
+        "presentation-order"
+      ],
+      "finding": "C verifies an invariant ordinary graph and A supplies an order-only control. H would add a routine natural workload and a full-graph audit, not a matched test of placement, burial or volume. G's incidental-kinship contrast remains proposed outside the pilot."
+    },
+    {
+      "axes": [
+        "axis-interactions",
+        "custody-and-absence"
+      ],
+      "finding": "Local withholding in B and C does not test a supplied substitute for an absent original together with a separate operative condition. J would test that conjunction in one file and isolate delivery linkage with authentication fixed. It would not estimate independent main effects or a general interaction."
+    },
+    {
+      "axes": [
+        "graph-completeness",
+        "administrative-context"
+      ],
+      "finding": "Leave twelve slots unallocated even if the pilot succeeds, with room for further routine, moderate, complex and larger administrative Matters. Keep one provisional 100–200 Source giant outside this batch. It would count as one history, and should proceed only under an approved hypothesis that identifies a specific workload mechanism rather than treating document count as reasoning difficulty."
+    },
+    {
+      "axes": [
+        "source-discovery",
+        "physical-document-quality"
+      ],
+      "finding": "Retrieval, acquisition and OCR remain outside the supplied-text benchmark. A textual custody record may limit what the file establishes, but the extractor is not asked to recover a missing artifact."
+    }
+  ],
+  "architect_session": "3e9c9ca1-811c-4d55-a31d-91a404744148"
+}

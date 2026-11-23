@@ -7,7 +7,7 @@ from benchmark_v3 import commissioning, packet
 from benchmark_v3.batch.contracts import BatchDecision, BatchManifest
 from benchmark_v3.portfolio import ExistingFamily, Portfolio, PortfolioProposal
 from benchmark_v3.replay_manifest import load_family
-from benchmark_v3.research_contracts import Contract, HypothesisRef
+from benchmark_v3.research_contracts import Contract, HypothesisRef, OwnerDecision
 
 
 def commitment(value: Contract) -> str:
@@ -87,17 +87,32 @@ def verify_commission(
         slot = slots.get(family.family_id)
         if slot is None or slot.hypothesis != family.hypothesis:
             raise ValueError("The batch must commission exact portfolio hypothesis revisions.")
+        approved = family.approved_design
         minimum = slot.expected_sources + 4 * (1 + len(slot.matched_conditions)) + 2
+        if approved:
+            minimum += approved.planned_masks - 1  # The isolated design has already been charged.
         if family.sessions < max(slot.estimated_sessions, minimum):
             raise ValueError("The family allocation must cover the planned estimate and mandatory base sessions.")
-        verify_hypothesis(family.family_id, family.hypothesis, decision.owner)
+        verify_hypothesis(
+            family.family_id, family.hypothesis, decision.owner,
+            approved.hypothesis_decision if approved else None,
+        )
 
 
-def verify_hypothesis(family_id: str, ref: HypothesisRef, owner: str) -> None:
+def verify_hypothesis(
+    family_id: str, ref: HypothesisRef, owner: str, approved: OwnerDecision | None = None,
+) -> None:
     key = f"{ref.hypothesis_id}@{ref.revision}"
     proposal = commissioning.proposal_history().get(key)
-    if (proposal is None or proposal[1] != ref or proposal[0].family_id != family_id
-            or proposal[2] is None or proposal[2].status != "approved" or proposal[2].owner != owner):
+    if proposal is None or proposal[1] != ref or proposal[0].family_id != family_id:
+        raise ValueError(f"Family {family_id} requires the owner's exact hypothesis approval.")
+    recorded = proposal[2]
+    decision = approved or recorded
+    if (
+        decision is None or decision.status != "approved" or decision.owner != owner
+        or HypothesisRef.model_validate(decision.model_dump(include=set(HypothesisRef.model_fields))) != ref
+        or (approved and recorded and (recorded.status != "approved" or recorded.owner != owner))
+    ):
         raise ValueError(f"Family {family_id} requires the owner's exact hypothesis approval.")
 
 

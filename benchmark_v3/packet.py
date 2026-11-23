@@ -86,6 +86,8 @@ def run_packet(
     request = _read_request(directory)
     if request.get("batch_design") and before_turn is None:
         raise PacketError("Batch design requires the budgeted coordinator.")
+    if request.get("candidate_design") and before_turn is None:
+        raise PacketError("Design candidates require a design-only reservation.")
     message = _json_text({"inputs": request["inputs"], "prompt": request["prompt"]})
     handoff = _handoff(request, message)
     handoff_text = _json_text(handoff) + "\n"
@@ -198,6 +200,11 @@ def _prepare_research_handoff(request: dict[str, Any]) -> None:
 
 def _prepare_designer(request: dict[str, Any]) -> None:
     version = request["prompt"]
+    if version == "candidate-designer-v1":
+        from benchmark_v3 import design_candidate
+
+        design_candidate.prepare(request)
+        return
     batch_design = version == "commissioned-designer-batch-v1"
     labels = {"hypothesis_revision", "portfolio_slot"} if batch_design else {"hypothesis_revision"}
     if version not in {"commissioned-designer-v1", "commissioned-designer-batch-v1"} or (

@@ -1,0 +1,592 @@
+{
+  "schema_version": 1,
+  "namespace": "development",
+  "status": "proposed",
+  "portfolio_id": "development-twenty-family",
+  "revision": 1,
+  "target_independent_families": 20,
+  "contract_portfolio_sha256": "5d082eabddc13bc798c6d75c17063205b419440bd6eef12549707d384a03300f",
+  "admitted_coverage_sha256": "d02473460c7f169eafccd75882bec41eeccc26123739b68f435ce098be65d6bd",
+  "pilot_public_ref": "994cc5c03e37def46d710df922307b529e3ca427",
+  "pilot_public_portfolio_sha256": "1890c6b2ef9e3ef08ebecf6cb3e7a6ca901d3fb20b776b257f73c49b25310a61",
+  "slot_counts": {
+    "admitted": 5,
+    "pending-pilot": 3,
+    "proposed": 10,
+    "unallocated": 2
+  },
+  "condition_counts": {
+    "admitted": 12,
+    "pending-pilot": 5,
+    "proposed": 18
+  },
+  "workload_bands": {
+    "routine": [
+      3,
+      8
+    ],
+    "moderate": [
+      9,
+      20
+    ],
+    "complex": [
+      21,
+      50
+    ],
+    "large": [
+      51,
+      99
+    ],
+    "giant": [
+      100,
+      200
+    ]
+  },
+  "allocated_workload_counts": {
+    "routine": 10,
+    "moderate": 6,
+    "complex": 0,
+    "large": 1,
+    "giant": 1
+  },
+  "families": [
+    {
+      "family_id": "A",
+      "status": "admitted",
+      "title": "Trustee handover",
+      "condition_ids": [
+        "A0",
+        "A1",
+        "A2"
+      ],
+      "condition_count": 3,
+      "source_count_per_condition": 7,
+      "source_counts": {
+        "A0": 7,
+        "A1": 7,
+        "A2": 7
+      },
+      "workload_tier": "routine",
+      "workload_basis": "observed",
+      "hypothesis": null,
+      "hypothesis_status": "historical",
+      "axes": {
+        "primary": "temporal-effectiveness",
+        "secondary": [
+          "documentary-authority",
+          "evidence-sufficiency",
+          "presentation-order"
+        ]
+      },
+      "verified_axes": [
+        "temporal-effectiveness",
+        "documentary-authority",
+        "evidence-sufficiency",
+        "presentation-order"
+      ],
+      "reconciliation_status": "historical",
+      "admission_sha256": "2a39c36968f8846867070220547a2caf62691fe213e709a38337e293e5bafead"
+    },
+    {
+      "family_id": "B",
+      "status": "admitted",
+      "title": "Estate administration",
+      "condition_ids": [
+        "B0",
+        "B1"
+      ],
+      "condition_count": 2,
+      "source_count_per_condition": 7,
+      "source_counts": {
+        "B0": 7,
+        "B1": 7
+      },
+      "workload_tier": "routine",
+      "workload_basis": "observed",
+      "hypothesis": null,
+      "hypothesis_status": "historical",
+      "axes": {
+        "primary": "entity-identity",
+        "secondary": [
+          "incomplete-information",
+          "origin-and-copies",
+          "evidence-sufficiency"
+        ]
+      },
+      "verified_axes": [
+        "entity-identity",
+        "incomplete-information",
+        "origin-and-copies",
+        "evidence-sufficiency"
+      ],
+      "reconciliation_status": "historical",
+      "admission_sha256": "f6fe34f01a523d9a6f63d42319617bae5a0bb407c9923552e934c3d41122f67e"
+    },
+    {
+      "family_id": "C",
+      "status": "admitted",
+      "title": "Two trusts",
+      "condition_ids": [
+        "C0",
+        "C1",
+        "C2"
+      ],
+      "condition_count": 3,
+      "source_count_per_condition": 7,
+      "source_counts": {
+        "C0": 7,
+        "C1": 7,
+        "C2": 7
+      },
+      "workload_tier": "routine",
+      "workload_basis": "observed",
+      "hypothesis": null,
+      "hypothesis_status": "historical",
+      "axes": {
+        "primary": "cross-source-reasoning",
+        "secondary": [
+          "evidence-sufficiency",
+          "incomplete-information",
+          "entity-identity"
+        ]
+      },
+      "verified_axes": [
+        "cross-source-reasoning",
+        "evidence-sufficiency",
+        "incomplete-information"
+      ],
+      "reconciliation_status": "historical",
+      "admission_sha256": "8f56a44e5a0a034a4000c1a8c6959cd72de0be528e8981e31e3938e049fbdd61"
+    },
+    {
+      "family_id": "D",
+      "status": "admitted",
+      "title": "Scoped trust amendment",
+      "condition_ids": [
+        "D0",
+        "D1"
+      ],
+      "condition_count": 2,
+      "source_count_per_condition": 3,
+      "source_counts": {
+        "D0": 3,
+        "D1": 3
+      },
+      "workload_tier": "routine",
+      "workload_basis": "observed",
+      "hypothesis": {
+        "hypothesis_id": "scoped-trust-amendment",
+        "revision": 1,
+        "hypothesis_sha256": "20288d9f35aa29585353393c40d6f6e317fc9fee302b7e35a989b8306224fcb8"
+      },
+      "hypothesis_status": "approved",
+      "axes": {
+        "primary": "versions-and-amendments",
+        "secondary": [
+          "documentary-authority",
+          "evidence-sufficiency",
+          "graph-completeness"
+        ]
+      },
+      "verified_axes": [],
+      "reconciliation_status": "pending",
+      "admission_sha256": "d84a3a09182a3311d53ff04f56fd5800731196a09237ff949f716f3b902e376e"
+    },
+    {
+      "family_id": "F",
+      "status": "admitted",
+      "title": "Complete-record identity collision",
+      "condition_ids": [
+        "F0",
+        "F1"
+      ],
+      "condition_count": 2,
+      "source_count_per_condition": 5,
+      "source_counts": {
+        "F0": 5,
+        "F1": 5
+      },
+      "workload_tier": "routine",
+      "workload_basis": "observed",
+      "hypothesis": {
+        "hypothesis_id": "complete-record-label-collision",
+        "revision": 1,
+        "hypothesis_sha256": "86c152a0d7816d83f3de38c16d265f7619ce7ccf08223d22e116b04bb98ea09c"
+      },
+      "hypothesis_status": "approved",
+      "axes": {
+        "primary": "entity-identity",
+        "secondary": [
+          "evidence-sufficiency",
+          "graph-completeness"
+        ]
+      },
+      "verified_axes": [],
+      "reconciliation_status": "pending",
+      "admission_sha256": "e76ee677d3cb6bb980e9324c70277f3d3c4c5df84ea1a862b353efc2516d369d"
+    },
+    {
+      "family_id": "H",
+      "status": "pending-pilot",
+      "title": "Routine trust records completeness",
+      "condition_count": 1,
+      "source_count_per_condition": 5,
+      "workload_tier": "routine",
+      "pilot_reasoning_tier": "routine",
+      "workload_basis": "planned",
+      "hypothesis": {
+        "hypothesis_id": "routine-trust-records-completeness",
+        "revision": 1,
+        "hypothesis_sha256": "06ef87b2ff166f92519c45234f36ffe6c63bcbe614eba22a92c0a966bbf7a670"
+      },
+      "hypothesis_status": "separate-pilot",
+      "axes": {
+        "primary": "graph-completeness",
+        "secondary": [
+          "evidence-sufficiency",
+          "administrative-context"
+        ]
+      },
+      "estimated_scientific_sessions": 16,
+      "separate_ceiling": 20
+    },
+    {
+      "family_id": "I",
+      "status": "pending-pilot",
+      "title": "Certified extract and record basis",
+      "condition_count": 2,
+      "source_count_per_condition": 5,
+      "workload_tier": "routine",
+      "pilot_reasoning_tier": "moderate",
+      "workload_basis": "planned",
+      "hypothesis": {
+        "hypothesis_id": "certified-extract-record-basis",
+        "revision": 1,
+        "hypothesis_sha256": "c85fc859ea1e432e456a3debe241432e44b94467d0d0b754243ab52801ccf737"
+      },
+      "hypothesis_status": "separate-pilot",
+      "axes": {
+        "primary": "documentary-authority",
+        "secondary": [
+          "origin-and-copies",
+          "evidence-sufficiency",
+          "incomplete-information"
+        ]
+      },
+      "estimated_scientific_sessions": 20,
+      "separate_ceiling": 25
+    },
+    {
+      "family_id": "J",
+      "status": "pending-pilot",
+      "title": "Authenticated copy and delivery",
+      "condition_count": 2,
+      "source_count_per_condition": 8,
+      "workload_tier": "routine",
+      "pilot_reasoning_tier": "complex",
+      "workload_basis": "planned",
+      "hypothesis": {
+        "hypothesis_id": "authenticated-copy-and-delivery",
+        "revision": 1,
+        "hypothesis_sha256": "ae0b12a8394582bbeaab5b0280c1da93390b4e35cb249c743001bdfd454e89d5"
+      },
+      "hypothesis_status": "separate-pilot",
+      "axes": {
+        "primary": "axis-interactions",
+        "secondary": [
+          "custody-and-absence",
+          "temporal-effectiveness",
+          "evidence-sufficiency"
+        ]
+      },
+      "estimated_scientific_sessions": 26,
+      "separate_ceiling": 34
+    },
+    {
+      "family_id": "M",
+      "status": "proposed",
+      "title": "Former-name reconciliation",
+      "condition_count": 2,
+      "source_count_per_condition": 9,
+      "workload_tier": "moderate",
+      "workload_basis": "planned",
+      "hypothesis": {
+        "hypothesis_id": "former-name-explicit-link",
+        "revision": 1,
+        "hypothesis_sha256": "fa467f9804834d9382162f1e7fb16db15d8b55d08680b2ed3dab060632ecbcc0"
+      },
+      "hypothesis_status": "proposed",
+      "axes": {
+        "primary": "entity-identity",
+        "secondary": [
+          "cross-source-reasoning",
+          "evidence-sufficiency"
+        ]
+      },
+      "estimated_scientific_sessions": 30,
+      "estimated_cost_usd": null
+    },
+    {
+      "family_id": "P",
+      "status": "proposed",
+      "title": "Repeated quotation from one origin",
+      "condition_count": 2,
+      "source_count_per_condition": 10,
+      "workload_tier": "moderate",
+      "workload_basis": "planned",
+      "hypothesis": {
+        "hypothesis_id": "duplicate-origin-salience",
+        "revision": 1,
+        "hypothesis_sha256": "06f97ebd0d9c651404b28ed49fa8a468ea39ba148d49bcb5c8392d97a1f723d0"
+      },
+      "hypothesis_status": "proposed",
+      "axes": {
+        "primary": "origin-and-copies",
+        "secondary": [
+          "administrative-context",
+          "evidence-sufficiency"
+        ]
+      },
+      "estimated_scientific_sessions": 32,
+      "estimated_cost_usd": null
+    },
+    {
+      "family_id": "L",
+      "status": "proposed",
+      "title": "Limits of a civil-record sighting",
+      "condition_count": 2,
+      "source_count_per_condition": 7,
+      "workload_tier": "routine",
+      "workload_basis": "planned",
+      "hypothesis": {
+        "hypothesis_id": "civil-record-information-boundary",
+        "revision": 1,
+        "hypothesis_sha256": "ec3efd9fbd411a36c75df375b63fe08aea1aa25961ce74822816beed5f76f9cb"
+      },
+      "hypothesis_status": "proposed",
+      "axes": {
+        "primary": "incomplete-information",
+        "secondary": [
+          "evidence-sufficiency"
+        ]
+      },
+      "estimated_scientific_sessions": 26,
+      "estimated_cost_usd": null
+    },
+    {
+      "family_id": "N",
+      "status": "proposed",
+      "title": "Execution status among retained counterparts",
+      "condition_count": 2,
+      "source_count_per_condition": 10,
+      "workload_tier": "moderate",
+      "workload_basis": "planned",
+      "hypothesis": {
+        "hypothesis_id": "executed-version-record",
+        "revision": 1,
+        "hypothesis_sha256": "e6aa572b315905421af40e9b8cf5fd698dcc9ac41dbac955ffcb75476a37f9d3"
+      },
+      "hypothesis_status": "proposed",
+      "axes": {
+        "primary": "versions-and-amendments",
+        "secondary": [
+          "documentary-authority",
+          "evidence-sufficiency"
+        ]
+      },
+      "estimated_scientific_sessions": 34,
+      "estimated_cost_usd": null
+    },
+    {
+      "family_id": "O",
+      "status": "proposed",
+      "title": "Title-application progress with trustee office fixed",
+      "condition_count": 2,
+      "source_count_per_condition": 8,
+      "workload_tier": "routine",
+      "workload_basis": "planned",
+      "hypothesis": {
+        "hypothesis_id": "land-register-lag-invariance",
+        "revision": 1,
+        "hypothesis_sha256": "e9a85561cbd07eaf097bf5bff337d61fa684a8728e5cb4f359a02ce17c2274fa"
+      },
+      "hypothesis_status": "proposed",
+      "axes": {
+        "primary": "documentary-authority",
+        "secondary": [
+          "administrative-context",
+          "evidence-sufficiency"
+        ]
+      },
+      "estimated_scientific_sessions": 29,
+      "estimated_cost_usd": null
+    },
+    {
+      "family_id": "R",
+      "status": "proposed",
+      "title": "Event date versus report date",
+      "condition_count": 2,
+      "source_count_per_condition": 12,
+      "workload_tier": "moderate",
+      "workload_basis": "planned",
+      "hypothesis": {
+        "hypothesis_id": "typed-event-chronology",
+        "revision": 1,
+        "hypothesis_sha256": "e59adeaeafe55ecc6bf6567932e8d58e6cc11faeb18f35359803818308c2548e"
+      },
+      "hypothesis_status": "proposed",
+      "axes": {
+        "primary": "temporal-effectiveness",
+        "secondary": [
+          "cross-source-reasoning",
+          "evidence-sufficiency"
+        ]
+      },
+      "estimated_scientific_sessions": 37,
+      "estimated_cost_usd": null
+    },
+    {
+      "family_id": "Q",
+      "status": "proposed",
+      "title": "Carry-forward across instrument generations",
+      "condition_count": 2,
+      "source_count_per_condition": 17,
+      "workload_tier": "moderate",
+      "workload_basis": "planned",
+      "hypothesis": {
+        "hypothesis_id": "restatement-schedule-scope",
+        "revision": 1,
+        "hypothesis_sha256": "b5046dc1860b9735a22a323780c982ac143cb74b5284dec4d957190d8c424888"
+      },
+      "hypothesis_status": "proposed",
+      "axes": {
+        "primary": "versions-and-amendments",
+        "secondary": [
+          "documentary-authority",
+          "graph-completeness",
+          "evidence-sufficiency"
+        ]
+      },
+      "estimated_scientific_sessions": 49,
+      "estimated_cost_usd": null
+    },
+    {
+      "family_id": "S",
+      "status": "proposed",
+      "title": "Scoped adoption and concurrent roles",
+      "condition_count": 2,
+      "source_count_per_condition": 18,
+      "workload_tier": "moderate",
+      "workload_basis": "planned",
+      "hypothesis": {
+        "hypothesis_id": "named-scope-capacity",
+        "revision": 1,
+        "hypothesis_sha256": "888372b762667bab8ffd03519f92405dd246118df8806798244fb69abf6e3263"
+      },
+      "hypothesis_status": "proposed",
+      "axes": {
+        "primary": "cross-source-reasoning",
+        "secondary": [
+          "graph-completeness",
+          "documentary-authority",
+          "evidence-sufficiency"
+        ]
+      },
+      "estimated_scientific_sessions": 52,
+      "estimated_cost_usd": null
+    },
+    {
+      "family_id": "U",
+      "status": "proposed",
+      "title": "Completeness in an administrative handover",
+      "condition_count": 1,
+      "source_count_per_condition": 65,
+      "workload_tier": "large",
+      "workload_basis": "planned",
+      "hypothesis": {
+        "hypothesis_id": "administrative-estate-load",
+        "revision": 1,
+        "hypothesis_sha256": "55e95c4e91d4a99cabbc0c03f4c9831fc0054b0df045983be5ae1af3ace18b90"
+      },
+      "hypothesis_status": "proposed",
+      "axes": {
+        "primary": "administrative-context",
+        "secondary": [
+          "graph-completeness",
+          "evidence-sufficiency"
+        ]
+      },
+      "estimated_scientific_sessions": 125,
+      "estimated_cost_usd": null
+    },
+    {
+      "family_id": "V",
+      "status": "proposed",
+      "title": "Longitudinal cross-section reconstruction",
+      "condition_count": 1,
+      "source_count_per_condition": 150,
+      "workload_tier": "giant",
+      "workload_basis": "planned",
+      "hypothesis": {
+        "hypothesis_id": "longitudinal-cross-section-reconstruction",
+        "revision": 1,
+        "hypothesis_sha256": "925b5fdd603297092c963366da245eea3f95c8d0e4a6804cceff9ae57655156d"
+      },
+      "hypothesis_status": "proposed",
+      "axes": {
+        "primary": "graph-completeness",
+        "secondary": [
+          "cross-source-reasoning",
+          "evidence-sufficiency",
+          "temporal-effectiveness",
+          "origin-and-copies"
+        ]
+      },
+      "estimated_scientific_sessions": 260,
+      "estimated_cost_usd": null
+    }
+  ],
+  "excluded_candidates": [
+    {
+      "family_id": "E",
+      "status": "returned",
+      "condition_ids": [
+        "E0",
+        "E1"
+      ],
+      "condition_count": 2,
+      "source_count_per_condition": 7,
+      "diagnostic_only": true,
+      "hypothesis": {
+        "hypothesis_id": "independent-parentage-disagreement",
+        "revision": 1,
+        "hypothesis_sha256": "1c6fbc49c9be191bc6dab14845e0db2afe94675f10f6634c54d897bacede2cae"
+      },
+      "reason": "Retainer relevance and comparable witness provenance required repair."
+    },
+    {
+      "family_id": "G",
+      "status": "prior-proposal-held",
+      "hypothesis": {
+        "hypothesis_id": "incidental-kinship-in-correspondence",
+        "revision": 1,
+        "hypothesis_sha256": "18ac2949770a2beb57602a12d705c08ae482c443c7f2991c225e2158c644cd01"
+      },
+      "reason": "Prior compact correspondence hypothesis overlaps planned routine completeness coverage."
+    },
+    {
+      "family_id": "K",
+      "status": "deferred-draft",
+      "title": "Independent estate accounts and a formal correction",
+      "reason": "Outside the independently selected register. See the critical review."
+    },
+    {
+      "family_id": "T",
+      "status": "deferred-draft",
+      "title": "Independent capacity and consultation scope",
+      "reason": "Outside the independently selected register. See the critical review."
+    }
+  ],
+  "reserved_unallocated_giant_slot": false,
+  "quarantined_candidates": []
+}

@@ -126,7 +126,22 @@ No verified findings recorded.
 
 | Hypothesis | Family | Status | Revision digest |
 | --- | --- | --- | --- |
+| `routine-trust-records-completeness@1` · P1: Routine trust records review | H | proposed | `06ef87b2ff166f92519c45234f36ffe6c63bcbe614eba22a92c0a966bbf7a670` |
+| `certified-extract-record-basis@1` · P2: Record authority with issue status held fixed | I | proposed | `c85fc859ea1e432e456a3debe241432e44b94467d0d0b754243ab52801ccf737` |
+| `authenticated-copy-and-delivery@1` · P3: An authenticated copy linked to timely delivery | J | proposed | `ae0b12a8394582bbeaab5b0280c1da93390b4e35cb249c743001bdfd454e89d5` |
 | `scoped-trust-amendment@1` · Scoped replacement within one trust instrument | D | approved | `20288d9f35aa29585353393c40d6f6e317fc9fee302b7e35a989b8306224fcb8` |
 | `independent-parentage-disagreement@1` · Independent reports about the same relationship | E | approved | `1c6fbc49c9be191bc6dab14845e0db2afe94675f10f6634c54d897bacede2cae` |
 | `complete-record-label-collision@1` · A shared display label across complete records | F | approved | `86c152a0d7816d83f3de38c16d265f7619ce7ccf08223d22e116b04bb98ea09c` |
 | `incidental-kinship-in-correspondence@1` · Ordinary kinship in routine correspondence | G | proposed | `18ac2949770a2beb57602a12d705c08ae482c443c7f2991c225e2158c644cd01` |
+| `former-name-explicit-link@1` · Former-name reconciliation | M | proposed | `fa467f9804834d9382162f1e7fb16db15d8b55d08680b2ed3dab060632ecbcc0` |
+| `duplicate-origin-salience@1` · Repeated quotation from one origin | P | proposed | `06f97ebd0d9c651404b28ed49fa8a468ea39ba148d49bcb5c8392d97a1f723d0` |
+| `civil-record-information-boundary@1` · Limits of a civil-record sighting | L | approved | `ec3efd9fbd411a36c75df375b63fe08aea1aa25961ce74822816beed5f76f9cb` |
+| `executed-version-record@1` · Execution status among retained counterparts | N | approved | `e6aa572b315905421af40e9b8cf5fd698dcc9ac41dbac955ffcb75476a37f9d3` |
+| `land-register-lag-invariance@1` · Title-application progress with trustee office fixed | O | approved | `e9a85561cbd07eaf097bf5bff337d61fa684a8728e5cb4f359a02ce17c2274fa` |
+| `typed-event-chronology@1` · Event date versus report date | R | approved | `e59adeaeafe55ecc6bf6567932e8d58e6cc11faeb18f35359803818308c2548e` |
+| `restatement-schedule-scope@1` · Carry-forward across instrument generations | Q | approved | `b5046dc1860b9735a22a323780c982ac143cb74b5284dec4d957190d8c424888` |
+| `named-scope-capacity@1` · Scoped adoption and concurrent roles | S | approved | `888372b762667bab8ffd03519f92405dd246118df8806798244fb69abf6e3263` |
+| `administrative-estate-load@1` · Completeness in an administrative handover | U | proposed | `55e95c4e91d4a99cabbc0c03f4c9831fc0054b0df045983be5ae1af3ace18b90` |
+| `longitudinal-cross-section-reconstruction@1` · Longitudinal cross-section reconstruction | V | proposed | `925b5fdd603297092c963366da245eea3f95c8d0e4a6804cceff9ae57655156d` |
+| `independent-documentary-disagreement@1` · Independent handover accounts of current trustee office | W | proposed | `ac18d1c2ef9f3f72b0544a4ddf1d62e7af230be3375dab180f28306bc06352ed` |
+| `incidental-correspondence-support@1` · Firsthand relationship support in valuation-access correspondence | X | proposed | `194a1ec56fa6374aa71cfe426dcb6738915ea611b11c3cd767dfe17a1142758d` |

@@ -1,0 +1,92 @@
+{
+  "status": "completed",
+  "session": "3e9c9ca1-811c-4d55-a31d-91a404744148",
+  "packet_sha256": "271469c46466c7a5e6aea5d0c52686b4f51d543003873d934a7920c069450ede",
+  "model_requested": "gpt-6.2-sol",
+  "effort_requested": "high",
+  "submitted_at": "2026-11-22T14:40:31.784153+00:00",
+  "completed_at": "2026-11-22T14:41:36.899173+00:00",
+  "output": {
+    "bytes": 16036,
+    "sha256": "bffdfd4195f937e58eb249c6098ec6e16b4dacc364c888ec4e5a0da7c5640c87"
+  },
+  "observed_tool_actions": [],
+  "profile": "portfolio",
+  "receipt_sha256": "18da2dc9a7404e4315f1aa410283738907421c8911f442baaa6269f4301d4552",
+  "handoff_sha256": "63f677cf61f521d3b5e5fbd395975d628d448f13d4b9e4de51c51dc18fa9e8fe",
+  "input_labels": [
+    "admitted_snapshot",
+    "coverage_register",
+    "development_findings",
+    "ontology",
+    "practice_references",
+    "previous_decisions",
+    "research_specification"
+  ],
+  "published_output": true,
+  "retained_token_usage": {
+    "last": {
+      "cacheWriteInputTokens": 0,
+      "cachedInputTokens": 0,
+      "inputTokens": 24649,
+      "outputTokens": 4369,
+      "reasoningOutputTokens": 987,
+      "totalTokens": 29018
+    },
+    "modelContextWindow": 475000,
+    "total": {
+      "cacheWriteInputTokens": 0,
+      "cachedInputTokens": 0,
+      "inputTokens": 24649,
+      "outputTokens": 4369,
+      "reasoningOutputTokens": 987,
+      "totalTokens": 29018
+    }
+  },
+  "scientific_sessions_charged": 1,
+  "paid_pcg_extraction_calls": 0,
+  "isolation": {
+    "approval_policy": "never",
+    "codex_cli_version": "0.166.0",
+    "disabled_features": [
+      "apps",
+      "browser_use",
+      "browser_use_external",
+      "computer_use",
+      "goals",
+      "hooks",
+      "image_generation",
+      "in_app_browser",
+      "memories",
+      "multi_agent",
+      "plugins",
+      "remote_plugin",
+      "shell_tool",
+      "unified_exec",
+      "skill_search",
+      "tool_suggest",
+      "view_image",
+      "workspace_dependencies",
+      "js_repl",
+      "code_mode_host"
+    ],
+    "effort": "high",
+    "empty_workspace": true,
+    "ephemeral": true,
+    "instruction_sources": [],
+    "model": "gpt-6.2-sol",
+    "permission_profile": {
+      "extends": null,
+      "id": "benchmark_packet"
+    },
+    "provider": "openai",
+    "runtime_workspace_roots": [],
+    "sandbox": {
+      "networkAccess": false,
+      "type": "readOnly"
+    },
+    "service_tier": "priority",
+    "thread_environments": [],
+    "disabled_connector_count": 6
+  }
+}
