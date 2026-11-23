@@ -216,6 +216,15 @@ The recovery commitment is
 Accounting at release reconciled 1,632 cumulative charges and 1,352
 available sessions. The original halt events remain in the ledgers.
 
+BW encountered a later unexpected runtime event during an author turn.
+The exact authorised request and rejected receipt were recovered. No
+Source was committed for that turn. The receipt omits the notification
+subtype, so the whole BW lineage remains quarantined. A new independent
+zero-turn check passed and released unaffected work with one slot. That
+recovery reconciled 2,159 cumulative charges and all outstanding
+reservations. The commitment is
+`a6d46efdea1d30923fcb35c1ada1d3e2ee3648ec67dc8a3f782795c76815c96a`.
+
 ## Retained joint-proof reviews
 
 H's frozen case includes a standalone route that survives a simple
