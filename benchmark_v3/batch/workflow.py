@@ -270,7 +270,6 @@ class FamilyWorkflow:
             "author_brief": _json({
                 "participant": brief.author, "date": brief.created_on.isoformat(), "brief": brief.participant_brief,
             }),
-            "genre_references": _json(design.documentary_references),
             "received_correspondence": _json(_source_array(received)),
         }
         if ticket:

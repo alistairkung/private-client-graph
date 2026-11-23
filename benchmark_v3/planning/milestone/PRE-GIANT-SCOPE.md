@@ -1,5 +1,7 @@
 # Pre-giant development continuation
 
+[Pre-giant outcome and shared integrity stop](PRE-GIANT-RESULTS.md)
+
 The owner authorised a target of **19 technically qualified independent
 non-giant families** on 23 November 2026. Eight had qualified across 18
 conditions when the phase began. A, B, C, D and F retain human admission.

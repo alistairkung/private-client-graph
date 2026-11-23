@@ -178,6 +178,14 @@ successor binds the exact old bytes and stop, the reviewed implementation
 change and fresh zero-turn boundary evidence. The original stop remains
 in custody. This recovery does not resolve a live isolation failure.
 
+Author packets contain the dated participant brief, declared prior
+correspondence and any participant-safe revision ticket. The transport
+and coordinator reject the case-wide documentary reference field for
+this role. A live role-projection exposure triggers the shared halt.
+Retain the original handoffs and independently reviewed results. Review
+the affected author lineages before reusing Sources or requesting a new
+execution release, and verify the corrected runtime with zero turns.
+
 A SQLite transaction reserves one session before packet dispatch. Every
 reservation uses one family slot and one task slot. Failed, interrupted,
 uncertain and rejected sessions remain charged. Exact duplicate job

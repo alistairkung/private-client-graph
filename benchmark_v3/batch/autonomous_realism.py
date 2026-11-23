@@ -320,6 +320,7 @@ def _scope_repair_parent(runner: SessionRunner, slot: FamilySlot, parent: Return
     scope_record = {"revision": rejected_revision, "receipt_sha256": expected_receipt,
                     "original_realism_source_commitments": parent.freeze.source_commitments,
                     "original_realism_review_receipts": parent.review_commitments,
+                    "original_realism_sources": files["original"],
                     "independent_finding": finding.model_dump(mode="json")}
     earlier = [*parent.earlier_objections, {"revision": rejected_revision - 1, "reviews": parent.reviews}]
     return replace(parent, design=rejected_design, bundles=bundles, freeze=freeze,
@@ -382,9 +383,7 @@ def _verify_plan(slot: FamilySlot, parent: ReturnedFile, plan: RepairPlan) -> tu
     for brief in design.inventory:
         identity = brief.source_id
         if (
-            identity in plan.tickets or brief != old_briefs[identity]
-            or design.documentary_references != old.documentary_references
-            or affected.intersection(brief.received)
+            identity in plan.tickets or brief != old_briefs[identity] or affected.intersection(brief.received)
         ):
             affected.add(identity)
     for left, right in zip(old.matched, design.matched, strict=True):

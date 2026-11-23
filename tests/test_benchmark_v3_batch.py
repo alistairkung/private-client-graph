@@ -1322,7 +1322,8 @@ def test_pooled_parallel_authors_keep_exact_deliveries_and_inventory_order(appro
         for identity, received in (("AAA", []), ("BBB", []), ("CCC", ["AAA"]))
     ]
     design = DesignOutput.model_validate({
-        "cutoff": day, "neutral_brief": "Review the records.", "documentary_references": [],
+        "cutoff": day, "neutral_brief": "Review the records.",
+        "documentary_references": ["Other participants' documentary and proof functions."],
         "private_history": "Three local participant records.", "inventory": inventory, "matched": [],
         "candidates": [EDGE], "required": {"G000": [EDGE]},
     })
@@ -1331,6 +1332,7 @@ def test_pooled_parallel_authors_keep_exact_deliveries_and_inventory_order(appro
     def write_record(worker, identity, inputs, *, reuse, design):
         assert worker is not workflow
         assert not reuse
+        assert set(inputs) == {"author_brief", "received_correspondence"}
         deliveries = json.loads(inputs["received_correspondence"])
         if identity in ("AAA", "BBB"):
             barrier.wait(timeout=5)
@@ -2645,3 +2647,49 @@ def test_scoped_review_context_preserves_reserved_prompt_on_resume(approved, mon
     ])
     assert not workflow._use_scoped_prompt("realism-000", note)
     assert workflow._use_scoped_prompt("realism-001", note)
+
+
+def test_author_scope_rejects_global_references_before_reservation(approved):
+    ledger, commission = approved
+    coordinator.commission_batch(ledger, commission, BOUNDARY)
+    runner = commission.session_runner(ledger, "G", 1)
+
+    with pytest.raises(Blocked, match="full-file genre references") as failure:
+        runner.run("author", "author-src1", "author", {
+            "author_brief": "Write your own note.",
+            "received_correspondence": "[]",
+            "genre_references": '["Other participants prove the relationship."]',
+        }, "Write a fictional record.", AuthoredSource)
+
+    assert failure.value.code == "isolation"
+    assert ledger.attempts("G") == []
+
+
+def test_repairing_reviewer_references_keeps_unaffected_author_packets(autonomous, transport):
+    ledger, commission = autonomous
+    batch = commission.manifest.batch_id
+    calls, behavior, _ = transport
+
+    def plan(inputs):
+        original = json.loads(inputs["intended_intervention"])["original_design"]
+        revised = original | {"documentary_references": ["Updated documentary-review note."]}
+        return _repair_plan(inputs, ticket="Clarify date locally.", revised_design=revised)
+
+    def realism(inputs):
+        verdict = "pass" if "Clarify date locally." in inputs["sources"] else "repair"
+        return _output("realism", "G", "", inputs) | {"verdict": verdict}
+
+    behavior["G", "repair-plan"] = plan
+    behavior["G", "realism-000"] = realism
+    behavior["G", "author-src1"] = lambda inputs: {
+        "title": "Record", "text": f"{QUOTE}\n{inputs.get('revision_ticket', '')}",
+    }
+    behavior["G", "repair-verification"] = lambda _: {
+        "verdict": "preserved", "scope": "Preserved.", "provenance": "Confirmed.", "contrast": "Preserved.",
+        "objections": [],
+    }
+    coordinator.commission_batch(ledger, commission, BOUNDARY)
+    coordinator.run_batch(ledger, batch)
+
+    assert coordinator.family_status(ledger, batch, "G") == (2, "admission_ready", None)
+    assert [(parent, job) for _, parent, job, _ in calls if job == "author-src2"] == [("G@1", "author-src2")]

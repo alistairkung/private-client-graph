@@ -163,6 +163,8 @@ class SessionRunner:
     ) -> tuple[_T, dict[str, Any], bool]:
         if self.manifest.phase == "construction" and role == "designer":
             raise Blocked(stage, "input_integrity", "Construction cannot reserve a designer turn.", job=job)
+        if role == "author" and "genre_references" in inputs:
+            raise Blocked(stage, "isolation", "Author packets cannot include full-file genre references.", job=job)
         try:
             self._require_authority(role)
         except TaskHalted:
