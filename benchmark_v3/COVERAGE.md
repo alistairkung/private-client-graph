@@ -162,7 +162,7 @@ No verified findings recorded.
 | `personal-benefit-surrender-with-continuing-office@1` · A trustee gives up a named benefit without leaving office | CD | proposed | `46137c30e9f82fddbd876a265c8e88ccbb7bf57ef9ce88d9a72699eeabb32600` |
 | `withdrawn-drafting-instruction-retains-factual-identification@1` · Dropping a proposed gift does not retract its factual identification | CE | approved | `5d790f2f4443d3b394793211f9691462d41e7bf5e4f8d23041cc1accb221af66` |
 | `dual-capacity-decision-and-personal-consent@1` · A trustee's vote does not supply their separately required personal consent | CL | proposed | `9840b092e7ff0d60433bb71bf7fbba33779f69491f059edf887e13226076b9fc` |
-| `cumulative-settlors-declaration-and-addition@1` · One continuing trust, two independently established settlors | CM | proposed | `983c09573510e09c3c58e4c28f6b34738a9ad8e7a3214e70074f01467647b7d5` |
+| `cumulative-settlors-declaration-and-addition@1` · One continuing trust, two independently established settlors | CM | approved | `983c09573510e09c3c58e4c28f6b34738a9ad8e7a3214e70074f01467647b7d5` |
 | `concurrent-assent-to-one-decision@1` · Separate assents must concern the same decision | AA | proposed | `4156635b4a723dd63ab71c9919f574e6cfe882ed2a8d74d463399d7663528c3b` |
 | `shared-parent-without-sibling-assertion@1` · Supported common parentage does not supply a sibling edge | AB | approved | `9dd22215c301d0855fa3660b14caa92651730dbf325c2928eb7a9d7ff20994df` |
 | `automatic-reversion-after-temporary-substitution@1` · A suspended provision resumes without a new act | AC | proposed | `11735f0da17407c28981c349d865eaed29adc508305e3a19eef40edccd8b4d1b` |

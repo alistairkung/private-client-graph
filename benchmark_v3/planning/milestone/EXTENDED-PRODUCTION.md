@@ -391,12 +391,27 @@ independent audit returned the evidence key for applying asymmetric
 eligibility to the surviving basis. Its replacement keeps the same
 invariant graph test and requires an observable difference in exact
 approved evidence under consistent rules.
+The pre-author validator contained the replacement's alternate literal
+before any participant turn. The original designs and both rejected
+attempts remain at
+`cb535bfaaf92594cfce4b83a186075d4e18475109c89aa73c427e22f0d08834a`.
 
 BG's first lineage remains quarantined after a masked reader identified
 support that the signed designation minute retained on its own. A
 separately commissioned replacement retains the asset-transfer
 hypothesis and must independently determine any standalone proof before
 testing the distinct transfer shortcut.
+The replacement's accepted singleton assignment independently recovered
+both beneficiary edges but missed its precommitted trustee edge. The
+failed result remains at
+`5723ff6ac83ac4b5df8c002a82c3e764157bac6cfdc33da5a47620d96d461d24`.
+
+CE's earlier lineage returned because two participant responses omitted
+the required sender attestation. Their records were preserved without
+delivery to the later author. The fresh five-Source design retains the
+linked withdrawal and factual-identity test. The prior receipt
+commitment is
+`7ad1b6017431237fe51709cfe4556a408656f6a783a221584a2b4b566a307e9d`.
 
 BV's first lineage reached its independently accepted control plan.
 Multiple masked readings quoted the operative notice reference from its
