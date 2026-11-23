@@ -203,6 +203,8 @@ def plan_revision(
         lineage["last_realism_source_commitments"] = parent.prior_scope_return["original_realism_source_commitments"]
     if parent.incoming_particulars is not None:
         lineage["incoming_particulars"] = release["incoming_particulars"]
+    if release.get("natural_provenance_restoration"):
+        lineage["natural_provenance_restoration"] = True
     return Revision(parent, design, plan, affected, lineage, job), receipt
 
 
@@ -414,12 +416,13 @@ def classification_retry_details(runner: SessionRunner) -> tuple[dict[str, Any],
 def _read_return(runner: SessionRunner, slot: FamilySlot, release: dict[str, Any]) -> ReturnedFile:
     revision = release["parent_revision"]
     ledger, batch, family = runner.ledger, runner.manifest.batch_id, runner.family
-    authored_return = bool(release.get("scope_return_receipt_sha256"))
+    authored_receipts = _authored_scope_receipts(release)
     preauthor_returns = _pre_author_returns(release)
     empty_ticket = bool(release.get("empty_ticket_return"))
-    if (revision != runner.revision - 1 - int(authored_return or empty_ticket) - len(preauthor_returns)
-            or (empty_ticket and (authored_return or preauthor_returns))
-            or ((authored_return or preauthor_returns or empty_ticket)
+    if (revision != runner.revision - 1 - len(authored_receipts) - int(empty_ticket) - len(preauthor_returns)
+            or (empty_ticket and (authored_receipts or preauthor_returns))
+            or (len(authored_receipts) > 1 and not release.get("natural_provenance_restoration"))
+            or ((authored_receipts or preauthor_returns or empty_ticket)
                 and not ledger.pooled_revision(batch, family, runner.revision))):
         raise ValueError("A repair must bind each of its verified intervening scope returns.")
     previous = SessionRunner(ledger, runner.manifest, family, revision, runner.directory.parent / str(revision), runner.owner)
@@ -493,17 +496,18 @@ def _read_return(runner: SessionRunner, slot: FamilySlot, release: dict[str, Any
         else:
             references = tuple((expected_revision, key) for key in scope_objections)
             result = replace(result, earlier_scope_references=(*result.earlier_scope_references, *references))
-    if authored_return:
-        rejected_revision = revision + len(preauthor_returns) + 1
-        result = _scope_repair_parent(runner, slot, result, release["scope_return_receipt_sha256"],
+    if release.get("natural_provenance_restoration") and (len(authored_receipts) != 2 or design.matched):
+        raise ValueError("Provenance restoration requires one natural condition and two authenticated scope returns.")
+    for rejected_revision, receipt_sha in enumerate(authored_receipts, revision + len(preauthor_returns) + 1):
+        result = _scope_repair_parent(runner, slot, result, receipt_sha,
                                       rejected_revision=rejected_revision, original_revision=revision)
-        if details := release.get("incoming_particulars"):
-            previous_draft = replace(runner, revision=rejected_revision,
-                                     directory=runner.directory.with_name(str(rejected_revision)))
-            particulars = delivery_particulars.reopen(previous_draft, details["source_id"])
-            if authorisation.commitment(particulars) != details["record_sha256"]:
-                raise ValueError("The participant's original delivery particulars changed.")
-            result = replace(result, incoming_particulars=particulars)
+    if details := release.get("incoming_particulars"):
+        previous_draft = replace(runner, revision=runner.revision - 1,
+                                 directory=runner.directory.with_name(str(runner.revision - 1)))
+        particulars = delivery_particulars.reopen(previous_draft, details["source_id"])
+        if not authored_receipts or authorisation.commitment(particulars) != details["record_sha256"]:
+            raise ValueError("The participant's original delivery particulars changed.")
+        result = replace(result, incoming_particulars=particulars)
     return result
 
 
@@ -582,12 +586,19 @@ def _pre_author_returns(release: dict[str, Any]) -> list[dict[str, Any]]:
     return records
 
 
+def _authored_scope_receipts(release: dict[str, Any]) -> list[str]:
+    receipts = list(release.get("earlier_authored_scope_receipts", []))
+    if "scope_return_receipt_sha256" in release:
+        receipts.append(release["scope_return_receipt_sha256"])
+    return receipts
+
+
 def pre_author_scope_return(runner: SessionRunner, *, slot: FamilySlot | None = None) -> tuple[dict[str, Any], RepairPlan]:
     batch, family = runner.manifest.batch_id, runner.family
     parent = release_event(runner)
     if (not runner.ledger.requires_delivery_attestation or parent is None or len(_pre_author_returns(parent)) > 2
             or parent["parent_revision"] != runner.revision - 1 - len(_pre_author_returns(parent))
-            - int(bool(parent.get("scope_return_receipt_sha256")))
+            - len(_authored_scope_receipts(parent))
             or any(row["revision"] == runner.revision and row["stage"] == "author"
                    and row["job"] not in {author_context.JOB, author_context.JOB + repair_authority.FORMAT_RETRY}
                    for row in runner.ledger.attempts(family))):
@@ -793,17 +804,28 @@ def _scope_repair_parent(
     bundles, freeze = science.freeze_bundles(slot, rejected_design, rejected_natural)
     if files["revised"] != commissioning._read_json(_bundles(bundles)):
         raise ValueError("The rejected scope comparison failed source and matched replay.")
+    earlier_scope = parent.prior_scope_return or {}
     scope_record = {"revision": rejected_revision, "receipt_sha256": expected_receipt,
-                    "original_realism_source_commitments": parent.freeze.source_commitments,
+                    "original_realism_source_commitments": earlier_scope.get("original_realism_source_commitments",
+                                                                          parent.freeze.source_commitments),
                     "original_realism_review_receipts": parent.review_commitments,
-                    "original_realism_sources": files["original"],
+                    "original_realism_sources": earlier_scope.get("original_realism_sources", files["original"]),
                     "independent_finding": finding.model_dump(mode="json")}
     if original_revision != rejected_revision - 1:
         scope_record["original_realism_revision"] = original_revision
-    earlier = [*parent.earlier_objections, {"revision": original_revision, "reviews": parent.reviews}]
+    earlier_objections = parent.earlier_objections
+    references = parent.earlier_scope_references
+    if earlier_scope:
+        earlier_finding = earlier_scope["independent_finding"]
+        scope_record["earlier_authored_scope"] = earlier_finding
+        authored_references = tuple((earlier_scope["revision"], f"scope:{index}")
+                                    for index, _ in enumerate(earlier_finding["objections"], 1))
+        references = (*references, *authored_references)
+    else:
+        earlier_objections = [*earlier_objections, {"revision": original_revision, "reviews": parent.reviews}]
     return replace(parent, design=rejected_design, bundles=bundles, freeze=freeze, retained_literal_briefs=frozenset(),
                    objections={f"scope:{index}": issue for index, issue in enumerate(finding.objections, start=1)},
-                   earlier_objections=earlier, prior_scope_return=scope_record)
+                   earlier_objections=earlier_objections, earlier_scope_references=references, prior_scope_return=scope_record)
 
 
 def _verify_classification(
@@ -986,15 +1008,28 @@ def verify_revision(
         "original": commissioning._read_json(inputs["paired_bundles"]),
         "revised": commissioning._read_json(_bundles(bundles)),
     })
-    inputs["audit_rules"] = commissioning.json_text({
+    rules: dict[str, Any] = {
         "revised_design": revision.design.model_dump(mode="json"), "affected_sources": sorted(revision.affected),
-    })
+    }
+    prompt = VERIFY_PROMPT
+    if revision.lineage.get("natural_provenance_restoration"):
+        rules["retained_scope_return"] = revision.parent.prior_scope_return
+        prompt += (
+            " This commissioned design has one natural condition. The previous draft was returned and has no key."
+            " Independently decide whether revised documentary evidence recovers facts already established by the"
+            " authorised histories and deliveries. A corrected documentary premise may change what the rejected"
+            " draft could prove. Reject any new event, altered research hypothesis, narrowed participant question,"
+            " unjustified proof or hidden answer. Preserve the exact authorised cut-off, targets, controls and"
+            " workload. There is no licence for a matched or fixed-evidence comparison. Require fresh realism,"
+            " blind reconstruction and audit for the revised natural file."
+        )
+    inputs["audit_rules"] = commissioning.json_text(rules)
     def verify_layout(result: ScopeReview) -> None:
         if result.verdict == "preserved" and result.objections:
             raise ValueError("Preserved scope requires resolved objections in the disposition.")
 
     result, receipt = runner.run(
-        "author", repair_authority.VERIFY_JOB, "audit", inputs, VERIFY_PROMPT, ScopeReview,
+        "author", repair_authority.VERIFY_JOB, "audit", inputs, prompt, ScopeReview,
         validate=verify_layout if runner.ledger.requires_delivery_attestation else None,
     )
     if result.verdict != "preserved" or result.objections:

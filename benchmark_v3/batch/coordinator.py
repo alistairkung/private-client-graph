@@ -980,6 +980,7 @@ def recover_audit_recheck_representation(ledger: Ledger, batch: str, family: str
 
 def release_returned_authored_scope_plan(
     ledger: PooledLedger, batch: str, family: str, *, incoming_particulars_source: str | None = None,
+    natural_provenance_restoration: bool = False,
 ) -> None:
     """Open one documentary replan from an independently rejected authored repair."""
     with ledger.coordinator_lock():
@@ -988,9 +989,11 @@ def release_returned_authored_scope_plan(
         revision, state, issue = family_status(ledger, batch, family)
         runner = commission.session_runner(ledger, family, revision)
         earlier = autonomous_realism.release_event(runner)
+        previous_receipts = autonomous_realism._authored_scope_receipts(earlier or {})
         if (not ledger.requires_delivery_attestation or earlier is None
                 or earlier.get("parent_revision") != revision - 1 - len(autonomous_realism._pre_author_returns(earlier))
-                or "scope_return_receipt_sha256" in earlier
+                - len(previous_receipts)
+                or (len(previous_receipts) != int(natural_provenance_restoration))
                 or state != "quarantined" or not issue or (issue["stage"], issue["code"]) != ("author", "scientific_review")
                 or not ledger.pooled_revision(batch, family, revision)):
             raise ValueError("An authored-scope replan requires an independently returned documentary revision.")
@@ -999,17 +1002,23 @@ def release_returned_authored_scope_plan(
         if review.verdict != "changed" or not review.objections or issue["evidence"] != autonomous_realism.scope_failure(review):
             raise ValueError("The exact retained scope review must establish the documentary objection.")
         release = {key: value for key, value in earlier.items()
-                   if key not in {"scope_ticket_omission", "generated_attachment_ticket"}} | {
+                   if key not in {"scope_ticket_omission", "generated_attachment_ticket", "incoming_particulars"}} | {
             "scope_return_receipt_sha256": receipt["receipt_sha256"],
             "family_sessions_remaining": ledger.effective_budget().families[family] - len(ledger.attempts(family)),
         }
+        slot = next(row for row in commission.portfolio.slots if row.family_id == family)
+        if natural_provenance_restoration:
+            previous_particulars = (earlier.get("incoming_particulars") or {}).get("source_id")
+            if (not incoming_particulars_source or incoming_particulars_source != previous_particulars
+                    or len(science.condition_ids(slot)) != 1 or (runner.directory / "family").exists()):
+                raise ValueError("One final natural-file restoration requires the same proven recipient and no key.")
+            release.update(earlier_authored_scope_receipts=previous_receipts, natural_provenance_restoration=True)
         if incoming_particulars_source is not None:
             if not any(incoming_particulars_source in reason for reason in review.objections):
                 raise ValueError("The returned scope must identify the specific recipient Source.")
             particulars = delivery_particulars.reopen(runner, incoming_particulars_source)
             release["incoming_particulars"] = {"source_id": particulars.source_id,
                                               "record_sha256": authorisation.commitment(particulars)}
-        slot = next(row for row in commission.portfolio.slots if row.family_id == family)
         successor = commission.session_runner(ledger, family, revision + 1)
         autonomous_realism._read_return(successor, slot, release)
         ledger.event(batch, family, revision + 1, "transition", repair_authority.REVISION, state, "design", release)

@@ -2673,7 +2673,10 @@ def test_pooled_scope_return_reopens_only_the_verified_prior_realism_file(autono
     assert scope_record in [event["details"] for event in ledger.events(batch, "G") if event["kind"] == "session"]
 
 
-def test_authored_scope_repair_reuses_checked_delivery_after_preauthor_return(autonomous, transport, tmp_path, monkeypatch):
+@pytest.mark.parametrize("second_scope_return", [False, True])
+def test_authored_scope_repair_reuses_checked_delivery_after_preauthor_return(
+    autonomous, transport, tmp_path, monkeypatch, second_scope_return,
+):
     from benchmark_v3.batch import delivery_particulars
     from benchmark_v3.batch.pool import PooledLedger
 
@@ -2695,10 +2698,12 @@ def test_authored_scope_repair_reuses_checked_delivery_after_preauthor_return(au
     design["inventory"][0]["provenance"] = f"Direct dispatch.\nDelivered {TODAY} to Writer 2"
     design["inventory"][1]["received"] = ["src1"]
     behavior[family, "design"] = lambda _: design
-    behavior[family, "author-src1"] = lambda inputs: {
-        "title": "Dated record", "text": QUOTE + (" Ordinary clarification." if "revision_ticket" in inputs else ""),
-        "deliveries": [{"recipient": "Writer 2", "sent_on": TODAY.isoformat()}],
-    }
+    def sender(inputs):
+        ticket = inputs.get("revision_ticket", "")
+        return {"title": "Dated record", "text": QUOTE + (f" Ordinary clarification. {ticket}" if ticket else ""),
+                "deliveries": [{"recipient": "Writer 2", "sent_on": TODAY.isoformat()}]}
+
+    behavior[family, "author-src1"] = sender
 
     def scope(inputs):
         packets = json.loads(inputs["audit_rules"])["participant_packets"]
@@ -2713,7 +2718,8 @@ def test_authored_scope_repair_reuses_checked_delivery_after_preauthor_return(au
         )
         tickets = {"src2": ticket}
         if "prior_scope_return" in rules:
-            tickets["src1"] = "Restore the separate review date in your own record."
+            earlier = rules["prior_scope_return"].get("earlier_authored_scope")
+            tickets["src1"] = "Restore both original questions." if earlier else "Restore the separate review date."
         return _repair_plan(inputs, ticket=None) | {"tickets": tickets}
 
     def inventory(inputs):
@@ -2727,6 +2733,8 @@ def test_authored_scope_repair_reuses_checked_delivery_after_preauthor_return(au
 
     def verify(inputs):
         preserved = "Verified dispatch." in json.loads(inputs["paired_bundles"])["revised"]["G000"][1]["text"]
+        if second_scope_return and preserved:
+            preserved = "retained_scope_return" in json.loads(inputs["audit_rules"])
         return {"verdict": "preserved" if preserved else "changed", "scope": "Reviewed.", "provenance": "Reviewed.",
                 "contrast": "Reviewed.", "objections": [] if preserved else ["src2 lacks the direct dispatch date."]}
 
@@ -2767,19 +2775,32 @@ def test_authored_scope_repair_reuses_checked_delivery_after_preauthor_return(au
     coordinator.reopen_delivery_body_repair(ledger, batch, family)
     coordinator._work_family(ledger, commission, slot)
 
-    assert coordinator.family_status(ledger, batch, family) == (4, "admission_ready", None)
+    qualified_revision = 4
+    if second_scope_return:
+        assert coordinator.family_status(ledger, batch, family)[:2] == (4, "quarantined")
+        with pytest.raises(ValueError, match="independently returned documentary revision"):
+            coordinator.release_returned_authored_scope_plan(ledger, batch, family, incoming_particulars_source="src2")
+        coordinator.release_returned_authored_scope_plan(
+            ledger, batch, family, incoming_particulars_source="src2", natural_provenance_restoration=True,
+        )
+        coordinator._work_family(ledger, commission, slot)
+        qualified_revision = 5
+    assert coordinator.family_status(ledger, batch, family) == (qualified_revision, "admission_ready", None)
     authored = [(revision, job, inputs) for _, revision, job, inputs in calls if job in {"author-src1", "author-src2"}]
-    assert [(revision, job) for revision, job, _ in authored] == [
+    expected = [
         ("G@1", "author-src1"), ("G@1", "author-src2"), ("G@3", "author-src2"),
         ("G@4", "author-src1"), ("G@4", "author-src2"),
     ]
+    if second_scope_return:
+        expected += [("G@5", "author-src1"), ("G@5", "author-src2")]
+    assert [(revision, job) for revision, job, _ in authored] == expected
     inputs = authored[-1][2]
     ticket = inputs["revision_ticket"]
     assert f"1. Writer 1 | {TODAY}" in ticket
     assert "lacks the direct dispatch" not in ticket and "receipt_sha256" not in ticket
     assert "Ordinary clarification." in inputs["received_correspondence"]
     assert sum(revision == "G@4" and job == "repair-plan" for _, revision, job, _ in calls) == 1
-    assert {revision for _, revision, job, _ in calls if job.startswith("reading")} == {"G@4"}
+    assert {revision for _, revision, job, _ in calls if job.startswith("reading")} == {f"G@{qualified_revision}"}
 
 
 def test_exact_classification_retry_retains_both_failed_plans_and_uses_the_same_file(

@@ -318,6 +318,16 @@ Only the receiving participant can see the corresponding sender
 identities and delivery dates in actual attachment order. Fresh scope
 review must clear the packet and resulting file before realism and
 blind review.
+The next independent check confirmed the inventory's documented
+delivery facts and returned the changed scope of the engagement
+letter. Its exact finding is retained at
+`32c140fc94e3955314c78a3ddfff925f9727a97fa55461353f24c37dfc58f2e5`.
+A final bounded authored-scope round reopens both returned receipts.
+For this natural condition, fresh review must confirm restored
+documented facts and the complete original question. The returned
+draft never acquired a key. The corrected result still requires the
+full large-file realism, independent reads, adjudication, evidence
+audit and replay before it can qualify.
 
 L's scope review exposed a factory-generated attachment instruction
 that implied undocumented revised correspondence. Fresh repair
