@@ -529,27 +529,22 @@ def _read_return(runner: SessionRunner, slot: FamilySlot, release: dict[str, Any
     result = ReturnedFile(design, bundles, freeze, objections, reviews, receipts, prior, earlier,
                           earlier_scope_references=scope_references,
                           retained_literal_briefs=_retained_literal_briefs(previous, design, natural, events))
-    for expected_revision, expected_return in enumerate(preauthor_returns, revision + 1):
-        skipped = replace(runner, revision=expected_revision, directory=runner.directory.with_name(str(expected_revision)))
-        record, rejected = pre_author_scope_return(skipped, slot=slot)
-        if record != expected_return:
-            raise ValueError("The rejected un-authored scope proposal changed after review.")
-        scope_objections = {f"pre-author:{index}": issue for index, issue in enumerate(record["objections"], 1)}
-        if expected_revision == runner.revision - 1:
-            result = replace(result, objections=result.objections | scope_objections, previous_plan=rejected)
-        else:
-            references = tuple((expected_revision, key) for key in scope_objections)
-            result = replace(result, earlier_scope_references=(*result.earlier_scope_references, *references))
-    if release.get("natural_provenance_restoration") and (len(authored_receipts) != 2 or design.matched):
+    authored_returns, preauthor = _scope_returns_by_revision(history, authored_receipts, preauthor_returns)
+    if not empty_ticket and sorted((*authored_returns, *preauthor)) != list(range(revision + 1, runner.revision)):
+        raise ValueError("Each intervening revision needs its own authenticated scope return.")
+    if release.get("natural_provenance_restoration") and (len(authored_returns) != 2 or design.matched):
         raise ValueError("Provenance restoration requires one natural condition and two authenticated scope returns.")
-    for rejected_revision, receipt_sha in enumerate(authored_receipts, revision + len(preauthor_returns) + 1):
-        result = _scope_repair_parent(runner, slot, result, receipt_sha,
-                                      rejected_revision=rejected_revision, original_revision=revision)
+    for rejected_revision in sorted((*authored_returns, *preauthor)):
+        if rejected_revision in authored_returns:
+            result = _scope_repair_parent(runner, slot, result, authored_returns[rejected_revision],
+                                          rejected_revision=rejected_revision, original_revision=revision)
+        else:
+            result = _append_pre_author_return(runner, slot, result, rejected_revision, preauthor[rejected_revision])
     if details := release.get("incoming_particulars"):
         source_revision = details.get("reviewed_source_revision", runner.revision - 1)
-        retained_natural = (not authored_receipts and source_revision == revision and not design.matched
+        retained_natural = (not authored_returns and source_revision == revision and not design.matched
                             and ledger.pooled_revision(batch, family, runner.revision))
-        if not (retained_natural or (authored_receipts and source_revision == runner.revision - 1)):
+        if not (retained_natural or (authored_returns and source_revision == max(authored_returns))):
             raise ValueError("Delivery particulars require the exact reviewed draft revision.")
         previous_draft = replace(runner, revision=source_revision,
                                  directory=runner.directory.with_name(str(source_revision)))
@@ -576,6 +571,38 @@ def _read_return(runner: SessionRunner, slot: FamilySlot, release: dict[str, Any
         exact.revise_design(design)
         result = replace(result, exact_recipient_edit=exact)
     return result
+
+
+def _scope_returns_by_revision(
+    events: list[dict[str, Any]], authored_receipts: list[str], preauthor_returns: list[dict[str, Any]],
+) -> tuple[dict[int, str], dict[int, dict[str, Any]]]:
+    authored = {}
+    for receipt in authored_receipts:
+        revisions = [row["revision"] for row in events if row["kind"] == "session" and row["name"] in {
+            repair_authority.VERIFY_JOB, repair_authority.VERIFY_JOB + repair_authority.FORMAT_RETRY,
+        } and row["details"].get("receipt_sha256") == receipt]
+        if len(revisions) != 1 or revisions[0] in authored:
+            raise ValueError("Each authored scope return needs one unique charged receipt.")
+        authored[revisions[0]] = receipt
+    preauthor = {row["revision"]: row for row in preauthor_returns}
+    if (list(authored) != sorted(authored) or len(preauthor) != len(preauthor_returns)
+            or list(preauthor) != sorted(preauthor) or authored.keys() & preauthor.keys()):
+        raise ValueError("Scope returns must retain their original distinct revisions.")
+    return authored, preauthor
+
+
+def _append_pre_author_return(
+    runner: SessionRunner, slot: FamilySlot, parent: ReturnedFile, revision: int, expected: dict[str, Any],
+) -> ReturnedFile:
+    skipped = replace(runner, revision=revision, directory=runner.directory.with_name(str(revision)))
+    record, rejected = pre_author_scope_return(skipped, slot=slot)
+    if record != expected:
+        raise ValueError("The rejected un-authored scope proposal changed after review.")
+    objections = {f"pre-author:{index}": issue for index, issue in enumerate(record["objections"], 1)}
+    if revision == runner.revision - 1:
+        return replace(parent, objections=parent.objections | objections, previous_plan=rejected)
+    references = tuple((revision, key) for key in objections)
+    return replace(parent, earlier_scope_references=(*parent.earlier_scope_references, *references))
 
 
 def require_verified_incoming_basis(runner: SessionRunner, source_id: str) -> None:

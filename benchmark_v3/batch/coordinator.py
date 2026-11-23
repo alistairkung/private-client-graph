@@ -1044,7 +1044,8 @@ def release_returned_authored_scope_plan(
                 release["verified_recipient_scope_restoration"] = True
             particulars = delivery_particulars.reopen(runner, incoming_particulars_source)
             release["incoming_particulars"] = {"source_id": particulars.source_id,
-                                              "record_sha256": authorisation.commitment(particulars)}
+                                              "record_sha256": authorisation.commitment(particulars),
+                                              "reviewed_source_revision": revision}
         successor = commission.session_runner(ledger, family, revision + 1)
         autonomous_realism._read_return(successor, slot, release)
         ledger.event(batch, family, revision + 1, "transition", repair_authority.REVISION, state, "design", release)
@@ -1160,6 +1161,10 @@ def release_returned_pre_author_plan(
             **({"exact_omission_assessment": exact_omission_assessment} if exact_omission_assessment is not None else {}),
             "family_sessions_remaining": ledger.effective_budget().families[family] - len(ledger.attempts(family)),
         }
+        if incoming := original.get("incoming_particulars"):
+            release["incoming_particulars"] = {
+                "reviewed_source_revision": revision - 1, **incoming,
+            }
         if incoming_particulars_source is not None:
             if omission is not None or autonomous_realism._authored_scope_receipts(original) or len(science.condition_ids(slot)) != 1:
                 raise ValueError("Carried delivery facts require a fresh plan for the same previously reviewed natural file.")

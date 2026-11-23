@@ -2945,6 +2945,20 @@ def test_missing_sender_repair_retains_unaffected_author_receipts(autonomous, tr
                       (f"{family}@2", "author-src2"), (f"{family}@2", "author-src3")]
 
 
+def test_scope_replay_preserves_a_preauthor_return_after_an_authored_return():
+    from benchmark_v3.batch import autonomous_realism, repair_authority
+
+    authored = {"revision": 2, "name": repair_authority.VERIFY_JOB, "kind": "session",
+                "details": {"receipt_sha256": "a" * 64}}
+    preauthor = {"revision": 3, "objections": ["Unsupported request for an unavailable earlier draft."]}
+    revisions = autonomous_realism._scope_returns_by_revision([authored], ["a" * 64], [preauthor])
+    assert revisions == ({2: "a" * 64}, {3: preauthor})
+    with pytest.raises(ValueError, match="original distinct revisions"):
+        autonomous_realism._scope_returns_by_revision([authored], ["a" * 64], [preauthor | {"revision": 2}])
+    with pytest.raises(ValueError, match="one unique charged receipt"):
+        autonomous_realism._scope_returns_by_revision([authored], ["b" * 64], [preauthor])
+
+
 def test_exact_recipient_document_repair_preserves_the_original_delivery_graph():
     from benchmark_v3.batch.recipient_edit import ExactRecipientEdit
 
