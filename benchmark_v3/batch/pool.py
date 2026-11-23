@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Annotated, Any
 from pydantic import Field, TypeAdapter
 
 from benchmark_v3 import commissioning, packet
-from benchmark_v3.batch import artifacts, author_context, authorisation, construction
+from benchmark_v3.batch import artifacts, author_context, author_delivery, authorisation, construction
 from benchmark_v3.batch.contracts import BatchManifest, BudgetAllocation, Stage
 from benchmark_v3.batch.custody import namespace_directory
 from benchmark_v3.batch.ledger import BudgetExhausted, Ledger, TaskHalted
@@ -54,6 +54,7 @@ class IsolationRestart(Contract):
     halt_event_sha256: Digest
     verification_sha256: Digest
     replace_qualified: tuple[FamilyId, ...] = ()
+    require_delivery_attestation: bool = False
 
 
 class PoolAuthority(Contract):
@@ -143,11 +144,16 @@ class MilestonePool:
         if member not in previous.members:
             raise ValueError("The reported isolation stop is outside the predecessor custody.")
         with closing(sqlite3.connect(f"{(member / 'ledger-v1.sqlite').as_uri()}?mode=ro", uri=True)) as db:
-            matched = any(commissioning.digest(raw.encode()) == restart.halt_event_sha256
-                          and commissioning._read_json(raw).get("code") == "isolation"
-                          for (raw,) in db.execute("SELECT details FROM events WHERE kind = 'task_halt'"))
-        if not matched:
+            matched = next((name for name, raw in db.execute("SELECT name, details FROM events WHERE kind = 'task_halt'")
+                            if commissioning.digest(raw.encode()) == restart.halt_event_sha256
+                            and commissioning._read_json(raw).get("code") == "isolation"), None)
+        if matched is None:
             raise ValueError("The original shared isolation stop must remain in custody.")
+        prior_restart = previous.authority.isolation_restart
+        if (not restart.require_delivery_attestation
+                and (matched == "author-attachment-provenance-exposure"
+                     or (prior_restart is not None and prior_restart.require_delivery_attestation))):
+            raise ValueError("A successor cannot release an attachment provenance stop without delivery attestation.")
         self._verify_restart_runtime()
 
     def _verify_restart_runtime(self) -> None:
@@ -160,6 +166,11 @@ class MilestonePool:
                 or details.get("packet_sha256") != commissioning.digest(Path(packet.__file__).read_bytes())
                 or details.get("projection_sha256") != commissioning.digest(Path(author_context.__file__).read_bytes())):
             raise TaskHalted("The verified replacement runtime differs from its isolation release.")
+        if restart.require_delivery_attestation and (
+            details.get("delivery_sha256") != commissioning.digest(Path(author_delivery.__file__).read_bytes())
+            or details.get("scientific_turns") != 0
+        ):
+            raise TaskHalted("The replacement pool lacks the exact zero-turn delivery verification.")
 
     def _historical_members(self) -> set[Path]:
         previous = self.predecessor
@@ -476,6 +487,11 @@ class PooledLedger(Ledger):
         return self.pool.authority.isolation_restart is not None
 
     @property
+    def requires_delivery_attestation(self) -> bool:
+        restart = self.pool.authority.isolation_restart
+        return restart is not None and restart.require_delivery_attestation
+
+    @property
     def parallel_scientific_jobs(self) -> int:
         return 4 if self.pool.predecessor is not None else 1
 
@@ -537,8 +553,9 @@ class PooledLedger(Ledger):
             from benchmark_v3.batch.coordinator import load_commission
 
             runner = load_commission(self, batch).session_runner(self, family, revision)
-            author_context.require_prompt(job, request["prompt"])
-            author_context.require_projection(runner, job, request["inputs"])
+            guard = author_delivery if self.requires_delivery_attestation else author_context
+            guard.require_prompt(job, request["prompt"])
+            guard.require_projection(runner, job, request["inputs"])
         planning = (self.pool.predecessor is not None and stage == "design" and role == "research_architect"
                     and job in {"portfolio-supplement", "portfolio-supplement-format-retry"})
         if not self.pooled_revision(batch, family, revision) or (not planning and role not in STAGE_ROLES.get(stage, set())):

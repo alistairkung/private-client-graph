@@ -482,3 +482,26 @@ If a valid plan cannot fund all mandatory work before masks, one fresh
 capacity replan may determine whether a smaller repair preserves the
 scientific scope. The independent scope review still gates progression
 and the runner retains both plans and their exact receipt commitments.
+
+### Recovery from an author delivery failure
+
+The delivery-attested isolation release requires the originating record to
+declare its own named same-day recipient. An independent context reviewer
+checks the exact origin, participant and date before any author runs. The
+sender records its transmissions in a separate output field under the same
+immutable receipt as the Source. The transport verifies the sender receipt
+and the exact delivered bytes against the reviewed request before every
+affected reservation and again at dispatch. A signature, copied workstream
+label or incoming ID alone cannot supply authority.
+
+Sender attestations are custody metadata. The frozen Sources and every
+blind, adjudication and scoring input use documentary text alone. Later
+forwarding can be represented by its own dated cover record. Revisions
+rebuild the dependency closure when the sender projection changes.
+
+The stopped pool and its compromised design and downstream artifacts stay
+immutable. Under delegated recovery authority, the active successor must
+bind the halted ledger and its exact closed charges, the independent
+zero-turn boundary evidence and the corrected implementation. Only fresh
+custody can enter that successor. The hard cumulative ceiling and family
+qualification gates continue to apply.

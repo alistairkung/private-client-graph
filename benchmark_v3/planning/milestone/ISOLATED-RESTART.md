@@ -1,5 +1,7 @@
 # Benchmark v3 isolated production restart
 
+[Subsequent delivery recovery](DELIVERY-RECOVERY.md)
+
 **The replacement pool stopped on a verified attachment-provenance
 failure. Six of 19 families remain technically countable.** The fresh
 phase charged 83 sessions, bringing the cumulative total to 549 of

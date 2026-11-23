@@ -2746,9 +2746,10 @@ def test_independent_context_receipt_gates_the_actual_author_turn(approved, tran
         assert jobs.index('author-context') < jobs.index('author-src1')
 
 
-def test_shared_isolation_restart_carries_closed_charges_into_fresh_custody(approved, tmp_path):
+@pytest.mark.parametrize("attachment_stop", [False, True])
+def test_shared_isolation_restart_carries_closed_charges_into_fresh_custody(approved, tmp_path, attachment_stop):
     from contextlib import closing
-    from benchmark_v3.batch import author_context
+    from benchmark_v3.batch import author_context, author_delivery
     from benchmark_v3.batch.pool import IsolationRestart
 
     original, commission = approved
@@ -2762,7 +2763,8 @@ def test_shared_isolation_restart_carries_closed_charges_into_fresh_custody(appr
     batch = commission.manifest.batch_id
     before.release(batch, 'G', 1, 'design', parent_sha256='d' * 64, reference='Original exact release.')
     before.reserve('G', 1, 'design', 'design', {'role': 'designer'}, 'charged')
-    before.event(batch, 'G', 1, 'task_halt', 'projection', 'author', None, {'code': 'isolation', 'reason': 'Exposure.'})
+    incident = "author-attachment-provenance-exposure" if attachment_stop else "projection"
+    before.event(batch, 'G', 1, 'task_halt', incident, 'author', None, {'code': 'isolation', 'reason': 'Exposure.'})
     with closing(before.connect()) as db:
         halt = db.execute("SELECT details FROM events WHERE kind = 'task_halt'").fetchone()[0]
         halt_sha = commissioning.digest(halt.encode())
@@ -2770,6 +2772,8 @@ def test_shared_isolation_restart_carries_closed_charges_into_fresh_custody(appr
     verification = artifacts.write_json(root / 'verified-author-boundary.json', {
         'verdict': 'pass', 'packet_sha256': commissioning.digest(Path(packet.__file__).read_bytes()),
         'projection_sha256': commissioning.digest(Path(author_context.__file__).read_bytes()),
+        'delivery_sha256': commissioning.digest(Path(author_delivery.__file__).read_bytes()),
+        'scientific_turns': 0,
     })
     authority = PoolAuthority(owner=OWNER, reference='Fresh isolated custody.', prior_archive_sha256='c' * 64,
         starting_charges=296, cumulative_ceiling=1000, additional_target=13, members=[],
@@ -2779,6 +2783,11 @@ def test_shared_isolation_restart_carries_closed_charges_into_fresh_custody(appr
         ))
     with pytest.raises(ValueError, match='exact closed predecessor accounting'):
         MilestonePool(root, authority.model_copy(update={'starting_charges': 295}), predecessor=previous)
+    if attachment_stop:
+        with pytest.raises(ValueError, match="without delivery attestation"):
+            MilestonePool(root, authority, predecessor=previous)
+        stricter = authority.isolation_restart.model_copy(update={"require_delivery_attestation": True})
+        authority = authority.model_copy(update={"isolation_restart": stricter})
     fresh = MilestonePool(root, authority, predecessor=previous)
     with pytest.raises(TaskHalted, match='unresolved shared integrity stop'):
         before.require_running()
@@ -2792,6 +2801,7 @@ def test_shared_isolation_restart_carries_closed_charges_into_fresh_custody(appr
     fresh.enrol(clean, new_manifest, reference='New independent history.')
     after = fresh.join(clean.root)
     assert after.requires_author_context
+    assert after.requires_delivery_attestation == attachment_stop
     assert after.attempts('G') == []
     after.release(new_manifest.batch_id, 'G', 1, 'design', parent_sha256='e' * 64, reference='New release.')
     assert after.reserve('G', 1, 'design', 'design', {'role': 'designer'}, 'fresh')
@@ -2878,3 +2888,92 @@ def test_isolated_cutoff_derivative_leaves_the_relationship_brief_intact(approve
     assert corrected.neutral_brief == original['neutral_brief']
     assert evidence == receipt
     assert all(row['stage'] == 'design' for row in ledger.attempts('G'))
+
+
+@pytest.mark.parametrize("attests", [True, False])
+def test_attested_author_workflow_never_dispatches_an_unverified_recipient(approved, transport, monkeypatch, attests):
+    from benchmark_v3.batch import author_context
+
+    ledger, commission = approved
+    calls, behavior, _ = transport
+    monkeypatch.setattr(type(ledger), "requires_author_context", property(lambda _: True))
+    monkeypatch.setattr(type(ledger), "requires_delivery_attestation", property(lambda _: True))
+
+    def design(_):
+        result = _design("G")
+        result["inventory"][0]["provenance"] += f"\nDelivered {TODAY.isoformat()} to Writer 2"
+        result["inventory"][1]["received"] = ["src1"]
+        return result
+
+    def author(inputs):
+        grants = json.loads(inputs["author_brief"])["outgoing_deliveries"]
+        return {"title": "Trial record", "text": QUOTE, "deliveries": grants if attests else []}
+
+    behavior["G", "design"] = design
+    behavior["G", author_context.JOB] = lambda inputs: {
+        "verdict": "accept", "objections": [],
+        "findings": {key: "Author and route checked."
+                     for key in json.loads(inputs["audit_rules"])["participant_packets"]},
+    }
+    for job in ("author-src1", "author-src1-format-retry", "author-src2"):
+        behavior["G", job] = author
+    batch = commission.manifest.batch_id
+    coordinator.commission_batch(ledger, commission, BOUNDARY)
+    coordinator._work_family(ledger, commission, commission.portfolio.slots[0])
+    recipients = [inputs for _, _, job, inputs in calls if job == "author-src2"]
+    if attests:
+        assert len(recipients) == 1
+        assert json.loads(recipients[0]["received_correspondence"])[0]["text"] == QUOTE
+    else:
+        assert not recipients and not any(row["job"] == "author-src2" for row in ledger.attempts("G"))
+
+
+def test_delivery_repair_regenerates_a_sender_when_an_incoming_route_changes(autonomous, transport, monkeypatch):
+    ledger, commission = autonomous
+    calls, behavior, _ = transport
+    monkeypatch.setattr(type(ledger), "requires_author_context", property(lambda _: True))
+    monkeypatch.setattr(type(ledger), "requires_delivery_attestation", property(lambda _: True))
+
+    def design(_):
+        result = _design("G")
+        result["inventory"][0]["provenance"] += f"\nDelivered {TODAY.isoformat()} to Writer 2"
+        return result
+
+    def plan(inputs):
+        revised = json.loads(inputs["intended_intervention"])["original_design"]
+        revised["inventory"][1]["received"] = ["src1"]
+        result = _repair_plan(inputs, ticket=None, revised_design=revised)
+        result["tickets"] = {"src2": "Record the dated receipt."}
+        return result
+
+    def author(inputs):
+        local = json.loads(inputs["author_brief"])
+        text = QUOTE if local["participant"] == "Writer 1" else inputs.get("revision_ticket", "Ordinary note.")
+        return {"title": "Record", "text": text, "deliveries": local["outgoing_deliveries"]}
+
+    def realism(inputs):
+        result = _output("realism", "G", "", inputs)
+        if "Record the dated receipt." not in inputs["sources"]:
+            return result | {"verdict": "return", "objections": ["The second record lacks dated receipt context."]}
+        return result
+
+    behavior["G", "design"] = design
+    behavior["G", "repair-plan"] = plan
+    behavior["G", "author-context"] = lambda inputs: {
+        "verdict": "accept", "objections": [],
+        "findings": {key: "Reviewed." for key in json.loads(inputs["audit_rules"])["participant_packets"]},
+    }
+    behavior["G", "realism-000"] = realism
+    behavior["G", "repair-verification"] = lambda _: {
+        "verdict": "preserved", "scope": "Same.", "provenance": "Supported.", "contrast": "Same.", "objections": [],
+    }
+    for job in ("author-src1", "author-src2"):
+        behavior["G", job] = author
+    batch = commission.manifest.batch_id
+    coordinator.commission_batch(ledger, commission, BOUNDARY)
+    coordinator.run_batch(ledger, batch)
+    assert coordinator.family_status(ledger, batch, "G") == (2, "admission_ready", None)
+    first, second = [json.loads(inputs["author_brief"])["outgoing_deliveries"]
+                     for _, _, job, inputs in calls if job == "author-src1"]
+    assert first == []
+    assert second == [{"recipient": "Writer 2", "sent_on": TODAY.isoformat()}]

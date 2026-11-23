@@ -13,8 +13,8 @@ from pydantic import BaseModel
 from benchmark_v3 import commissioning, packet, replay
 from benchmark_v3.batch import (
     adjudication_contract, adjudication_recovery, annotation_recovery, artifacts, audit_contract, audit_recovery,
-    author_context, author_repair, autonomous_realism, construction, continuation, design_recovery, design_review, evidence_recovery,
-    milestone_repair, repair_authority, science,
+    author_context, author_delivery, author_repair, autonomous_realism, construction, continuation, design_recovery,
+    design_review, evidence_recovery, milestone_repair, repair_authority, science,
 )
 from benchmark_v3.batch.contracts import (
     Adjudication, AuditReview, AuthorBrief, AuthoredSource, Code, DesignOutput, Reading, RealismReview,
@@ -59,6 +59,7 @@ class FamilyWorkflow:
             and row["name"] == evidence_recovery.RELEASE
         ), None)
         self.recovered_evidence: evidence_recovery.RecoveredEvidence | None = None
+        self.author_packets: dict[str, Any] = {}
         self.release_action = self.release["decision"]["release"]["action"] if self.release else None
         self.transition_inputs: dict[str, str] = {
             "hypothesis": slot.hypothesis.hypothesis_sha256,
@@ -217,7 +218,7 @@ class FamilyWorkflow:
 
     def _verify_fresh_design(self, design: DesignOutput) -> None:
         science.verify_design(self.slot, design_recovery._without_full_file_snapshot(design))
-        author_context.projection(design, {})
+        self._project_authors(design, {})
 
     def _reviewed_design(self, design: DesignOutput) -> DesignOutput:
         review = design_review.recorded_review(self.runner.ledger, self.runner.manifest, self.runner.owner)
@@ -246,7 +247,9 @@ class FamilyWorkflow:
     def author(self, design: DesignOutput) -> list[Source]:
         assignments = self._author_assignments(design)
         if self.runner.ledger.requires_author_context:
-            self._review_author_context(design, {brief.source_id: ticket for brief, ticket, _, _ in assignments if ticket})
+            self.author_packets = self._review_author_context(
+                design, {brief.source_id: ticket for brief, ticket, _, _ in assignments if ticket},
+            )
         workers = self.runner.ledger.parallel_scientific_jobs
         if workers > 1:
             return self._author_in_parallel(design, assignments, workers)
@@ -256,20 +259,28 @@ class FamilyWorkflow:
             sources[brief.source_id] = source
         return list(sources.values())
 
-    def _review_author_context(self, design: DesignOutput, tickets: dict[str, str]) -> None:
-        projected = author_context.projection(design, tickets)
+    def _project_authors(self, design: DesignOutput, tickets: dict[str, str]) -> dict[str, Any]:
+        guard = author_delivery if self.runner.ledger.requires_delivery_attestation else author_context
+        return guard.projection(design, tickets)
+
+    def _review_author_context(self, design: DesignOutput, tickets: dict[str, str]) -> dict[str, Any]:
+        projected = self._project_authors(design, tickets)
+        attested = self.runner.ledger.requires_delivery_attestation
+        rules = {"participant_packets": projected, **({"delivery_attestation": 1} if attested else {})}
         review = self.job(author_context.JOB, "audit", {
             "intended_intervention": design.model_dump_json(),
-            "audit_rules": _json({"participant_packets": projected}),
+            "audit_rules": _json(rules),
         }, "Independently audit every exact proposed participant packet before any author is called. "
            "Check participant and date, what they personally know, and each declared earlier delivery against "
            "the chronology and origin. Inspect nested text and tickets for references to future or unavailable "
            "documents, case-wide summaries, alternate conditions, hidden answers or intended proof routes. "
            "The participant's own act or observation may be documented in ordinary wording. Check that other "
            "people's knowledge and experimental reasoning stay out. Return on any material objection. "
-           "Give one finding keyed to every Source ID.", author_context.AuthorContextReview)
+           "Give one finding keyed to every Source ID."
+           + (" " + author_delivery.REVIEW_INSTRUCTION if attested else ""), author_context.AuthorContextReview)
         if review.verdict != "accept" or review.objections or review.findings.keys() != projected.keys():
             self.reject("scientific_review", review.model_dump_json(), quarantine=True)
+        return projected
 
     def _author_assignments(self, design: DesignOutput) -> list[tuple[AuthorBrief, str | None, bool, Source | None]]:
         assignments: list[tuple[AuthorBrief, str | None, bool, Source | None]] = []
@@ -302,6 +313,8 @@ class FamilyWorkflow:
             }),
             "received_correspondence": _json(_source_array(received)),
         }
+        if self.runner.ledger.requires_delivery_attestation:
+            inputs["author_brief"] = self.author_packets[brief.source_id]["author_brief"]
         if ticket:
             inputs["revision_ticket"] = ticket
         result = self.authored(brief.source_id, inputs, reuse=reuse, design=design)
@@ -349,6 +362,13 @@ class FamilyWorkflow:
             if any(source.text.count(literal) != 1 for literal in literals):
                 raise ValueError("An assigned exact body literal must occur exactly once.")
 
+        if self.runner.ledger.requires_delivery_attestation:
+            def verify_source(source: author_delivery.AttestedSource) -> None:
+                verify_literals(source)
+                author_delivery.verify_attestation(source, inputs["author_brief"])
+
+            return self.job(name, "author", inputs, author_delivery.INSTRUCTIONS, author_delivery.AttestedSource,
+                            validate=verify_source)
         return self.job(
             name, "author", inputs, author_context.INSTRUCTIONS, AuthoredSource,
             validate=verify_literals if self._validates_documentary_outputs() else None,

@@ -7,7 +7,7 @@ from typing import Any, Literal
 from pydantic import TypeAdapter
 
 from benchmark_v3 import commissioning, packet
-from benchmark_v3.batch import artifacts, authorisation, design_review, repair_authority, science
+from benchmark_v3.batch import artifacts, author_delivery, authorisation, design_review, repair_authority, science
 from benchmark_v3.batch.contracts import DesignOutput, MatchedCondition, RealismReview, SourceId
 from benchmark_v3.batch.ledger import BudgetExhausted
 from benchmark_v3.batch.sessions import SessionRunner
@@ -159,10 +159,13 @@ def plan_revision(
 def _select_plan(
     runner: SessionRunner, slot: FamilySlot, parent: ReturnedFile, inputs: dict[str, str], release: dict[str, Any],
 ) -> tuple[RepairPlan, dict[str, Any], DesignOutput, set[str], str]:
+    attested = runner.ledger.requires_delivery_attestation
+
     def propose(job: str, prompt: str, packet_inputs: dict[str, str]) -> tuple[RepairPlan, dict[str, Any]]:
         result, receipt = runner.run(
-            "design", job, "audit", packet_inputs, prompt, RepairPlan,
-            validate=lambda plan: _verify_classification(slot, parent, plan),
+            "design", job, "audit", packet_inputs,
+            prompt + (" " + author_delivery.DESIGN_INSTRUCTION if attested else ""), RepairPlan,
+            validate=lambda plan: _verify_classification(slot, parent, plan, attested=attested),
         )
         artifacts.write_json(runner.directory / f"{job}.json", result.model_dump(mode="json"))
         return result, receipt
@@ -183,7 +186,7 @@ def _select_plan(
         plan, receipt = propose(job, PLAN_PROMPT + " Reassess feasibility under the recorded new shared capacity. "
                                 "Independently confirm the documentary repair or retain the scientific return.",
                                 inputs | {"audit_rules": commissioning.json_text(rules)})
-        design, affected = _verify_plan(slot, parent, plan)
+        design, affected = _verify_plan(slot, parent, plan, attested=attested)
         runner.ledger.require_capacity(runner.family, runner.revision, mandatory_jobs(design, affected, verification=True))
         _record_plan_selection(runner, job, receipt)
         return plan, receipt, design, affected, job
@@ -193,7 +196,7 @@ def _select_plan(
                    "and preserve all unaffected records. Retain prior documentary objections for context and arrange "
                    "fresh independent realism on the revised full conditions.")
     plan, receipt = propose(repair_authority.PLAN_JOB, prompt, inputs)
-    design, affected = _verify_plan(slot, parent, plan)
+    design, affected = _verify_plan(slot, parent, plan, attested=attested)
     original_jobs = mandatory_jobs(design, affected, verification=True)
     events = runner.ledger.events(runner.manifest.batch_id, runner.family)
     selected = next((row["details"]["job"] for row in events if row["revision"] == runner.revision
@@ -227,7 +230,7 @@ def _select_plan(
         "Account for the additional planning turn. Preserve every scientific requirement or return infeasible.",
         inputs | {"audit_rules": commissioning.json_text(rules)},
     )
-    design, affected = _verify_plan(slot, parent, plan)
+    design, affected = _verify_plan(slot, parent, plan, attested=attested)
     runner.ledger.require_capacity(runner.family, runner.revision, mandatory_jobs(design, affected, verification=True))
     _record_plan_selection(runner, budget_job, receipt)
     return plan, receipt, design, affected, budget_job
@@ -328,7 +331,9 @@ def _scope_repair_parent(runner: SessionRunner, slot: FamilySlot, parent: Return
                    earlier_objections=earlier, prior_scope_return=scope_record)
 
 
-def _verify_classification(slot: FamilySlot, parent: ReturnedFile, plan: RepairPlan) -> None:
+def _verify_classification(
+    slot: FamilySlot, parent: ReturnedFile, plan: RepairPlan, *, attested: bool = False,
+) -> None:
     earlier = {
         (row["revision"], f"{condition}:{index}")
         for row in parent.earlier_objections
@@ -351,7 +356,9 @@ def _verify_classification(slot: FamilySlot, parent: ReturnedFile, plan: RepairP
     ):
         raise ValueError("Classify every exact supplied objection using only supplied Source identifiers.")
     if plan.disposition == "repair":
-        _verify_design_change(slot, parent.design, plan)
+        design = _verify_design_change(slot, parent.design, plan)
+        if attested:
+            author_delivery.projection(design, plan.tickets)
 
 
 def recover_stopped_plan(runner: SessionRunner, slot: FamilySlot, release: dict[str, Any]) -> bool:
@@ -362,13 +369,15 @@ def recover_stopped_plan(runner: SessionRunner, slot: FamilySlot, release: dict[
         return False
     try:
         plan, _, _ = runner.committed_result("design", repair_authority.PLAN_JOB, "audit", RepairPlan)
-        _verify_classification(slot, parent, plan)
+        _verify_classification(slot, parent, plan, attested=runner.ledger.requires_delivery_attestation)
     except (ValueError, OSError, KeyError):
         return False
     return bool(plan.objections.keys() - parent.objections.keys())
 
 
-def _verify_plan(slot: FamilySlot, parent: ReturnedFile, plan: RepairPlan) -> tuple[DesignOutput, set[str]]:
+def _verify_plan(
+    slot: FamilySlot, parent: ReturnedFile, plan: RepairPlan, *, attested: bool = False,
+) -> tuple[DesignOutput, set[str]]:
     if plan.disposition != "repair":
         raise RepairStopped(f"Independent repair planning returned {plan.disposition}: {plan.rationale}")
     if parent.previous_plan and (
@@ -380,6 +389,9 @@ def _verify_plan(slot: FamilySlot, parent: ReturnedFile, plan: RepairPlan) -> tu
     design = _verify_design_change(slot, old, plan)
     old_briefs = {brief.source_id: brief for brief in old.inventory}
     affected: set[str] = set()
+    if attested:
+        earlier, revised = author_delivery.projection(old, {}), author_delivery.projection(design, {})
+        affected.update(identity for identity in revised if earlier[identity] != revised[identity])
     for brief in design.inventory:
         identity = brief.source_id
         if (
