@@ -2977,3 +2977,169 @@ def test_delivery_repair_regenerates_a_sender_when_an_incoming_route_changes(aut
                      for _, _, job, inputs in calls if job == "author-src1"]
     assert first == []
     assert second == [{"recipient": "Writer 2", "sent_on": TODAY.isoformat()}]
+
+
+def test_blind_representation_recovery_reopens_the_identical_frozen_inputs(autonomous, transport, monkeypatch):
+    ledger, commission = autonomous
+    calls, behavior, _ = transport
+    monkeypatch.setattr(type(ledger), "requires_author_context", property(lambda _: True))
+    monkeypatch.setattr(type(ledger), "requires_delivery_attestation", property(lambda _: True))
+    behavior["G", "author-context"] = lambda inputs: {
+        "verdict": "accept", "objections": [],
+        "findings": {key: "Reviewed." for key in json.loads(inputs["audit_rules"])["participant_packets"]},
+    }
+    behavior["G", "author-src1"] = lambda _: {"title": "Record", "text": QUOTE, "deliveries": []}
+    behavior["G", "author-src2"] = lambda _: {"title": "Note", "text": "Ordinary note.", "deliveries": []}
+
+    def malformed(inputs):
+        result = _output("annotation", "G", "", inputs)
+        result["candidates"]["relationships"][0]["source_id"] = "N/A"
+        return result
+
+    original = "reading-000-a-full"
+    for job in (original, f"{original}-format-retry"):
+        behavior["G", job] = malformed
+    batch = commission.manifest.batch_id
+    coordinator.commission_batch(ledger, commission, BOUNDARY)
+    coordinator.run_batch(ledger, batch)
+    assert coordinator.family_status(ledger, batch, "G")[:2] == (1, "quarantined")
+    with pytest.raises(ValueError, match="original"):
+        coordinator.recover_blind_representation(ledger, batch, "G", "reading-000-b-full")
+    coordinator.recover_blind_representation(ledger, batch, "G", original)
+    coordinator.run_batch(ledger, batch)
+    assert coordinator.family_status(ledger, batch, "G") == (1, "admission_ready", None)
+    independent = [inputs for _, _, job, inputs in calls if job.startswith(original)]
+    assert len(independent) == 3
+    assert independent[0] == independent[1] == independent[2]
+
+
+def test_adjudication_objection_reopens_documentary_review_before_any_key_lock(autonomous, transport, monkeypatch):
+    ledger, commission = autonomous
+    calls, behavior, _ = transport
+    monkeypatch.setattr(type(ledger), "requires_author_context", property(lambda _: True))
+    monkeypatch.setattr(type(ledger), "requires_delivery_attestation", property(lambda _: True))
+    behavior["G", "author-context"] = lambda inputs: {
+        "verdict": "accept", "objections": [],
+        "findings": {key: "Reviewed." for key in json.loads(inputs["audit_rules"])["participant_packets"]},
+    }
+    behavior["G", "author-src1"] = lambda inputs: {
+        "title": "Record", "text": f"{QUOTE}\n{inputs.get('revision_ticket', '')}", "deliveries": [],
+    }
+    behavior["G", "author-src2"] = lambda _: {"title": "Note", "text": "Ordinary note.", "deliveries": []}
+
+    def adjudicate(inputs):
+        review = _output("adjudication", "G", "", inputs)
+        if "Describe the earlier snapshot." not in inputs["sources"]:
+            review["unresolved"] = ["The authoritative record does not verify the earlier snapshot."]
+        return review
+
+    behavior["G", "adjudicate-000"] = adjudicate
+    behavior["G", "repair-plan"] = lambda inputs: _repair_plan(inputs, ticket="Describe the earlier snapshot.")
+    behavior["G", "repair-verification"] = lambda _: {
+        "verdict": "preserved", "scope": "Same.", "provenance": "Supported.", "contrast": "Same.", "objections": [],
+    }
+    batch = commission.manifest.batch_id
+    coordinator.commission_batch(ledger, commission, BOUNDARY)
+    coordinator.run_batch(ledger, batch)
+    assert coordinator.family_status(ledger, batch, "G")[:2] == (1, "adjudicate")
+    first = commission.session_runner(ledger, "G", 1)
+    assert not (first.directory / "family/G000.json").exists()
+    coordinator.release_adjudication_documentary_repair(ledger, batch, "G")
+    coordinator.run_batch(ledger, batch)
+    assert coordinator.family_status(ledger, batch, "G") == (2, "admission_ready", None)
+    jobs = [job for _, parent, job, _ in calls if parent == "G@2"]
+    assert {"repair-plan", "realism-000", "reading-000-a-full", "reading-000-b-full", "adjudicate-000"} <= set(jobs)
+
+
+def test_adjudication_approval_ids_recover_from_unique_committed_names(autonomous, transport, monkeypatch):
+    from benchmark_v3.batch.workflow import FamilyWorkflow
+
+    ledger, commission = autonomous
+    calls, behavior, _ = transport
+    monkeypatch.setattr(type(ledger), "requires_author_context", property(lambda _: True))
+    monkeypatch.setattr(type(ledger), "requires_delivery_attestation", property(lambda _: True))
+    behavior["G", "author-context"] = lambda inputs: {
+        "verdict": "accept", "objections": [],
+        "findings": {key: "Reviewed." for key in json.loads(inputs["audit_rules"])["participant_packets"]},
+    }
+    behavior["G", "author-src1"] = lambda _: {"title": "Record", "text": QUOTE, "deliveries": []}
+    behavior["G", "author-src2"] = lambda _: {"title": "Note", "text": "Ordinary note.", "deliveries": []}
+
+    def adjudicate(inputs):
+        review = _output("adjudication", "G", "", inputs)
+        relationship = review["key"]["source_approval"]["relationships"][0]
+        relationship.update(source=EDGE[0], target=EDGE[2])
+        return review
+
+    behavior["G", "adjudicate-000"] = adjudicate
+    batch = commission.manifest.batch_id
+    coordinator.commission_batch(ledger, commission, BOUNDARY)
+    with monkeypatch.context() as old_release:
+        old_release.setattr(FamilyWorkflow, "_localize_approval_ids", lambda _, job, review: review)
+        coordinator.run_batch(ledger, batch)
+    assert coordinator.family_status(ledger, batch, "G")[:2] == (1, "adjudicate")
+    coordinator.recover_adjudication_approval_ids(ledger, batch, "G", 0)
+    coordinator.run_batch(ledger, batch)
+    assert coordinator.family_status(ledger, batch, "G") == (1, "admission_ready", None)
+    assert len([job for _, _, job, _ in calls if job == "adjudicate-000"]) == 1
+    directory = commission.session_runner(ledger, "G", 1).directory
+    lineage = json.loads((directory / "recoveries/adjudicate-000/local-approval-ids.json").read_bytes())
+    assert [row["after"] for row in lineage["changes"]] == ["p1", "p2"]
+
+
+def test_empty_attachment_ticket_return_retries_scope_without_repeating_the_plan(autonomous, transport, monkeypatch):
+    from benchmark_v3.batch.workflow import FamilyWorkflow
+
+    ledger, commission = autonomous
+    calls, behavior, _ = transport
+    monkeypatch.setattr(type(ledger), "requires_author_context", property(lambda _: True))
+    monkeypatch.setattr(type(ledger), "requires_delivery_attestation", property(lambda _: True))
+    monkeypatch.setattr(type(ledger), "pooled_revision", lambda *_: True)
+    assignment = FamilyWorkflow._author_assignments
+
+    def legacy_ticket(work, design):
+        return [(brief, "Write this record using its revised instructions and received correspondence."
+                 if ticket == "Write this record using its revised instructions." else ticket, reuse, prior)
+                for brief, ticket, reuse, prior in assignment(work, design)]
+
+    def context(inputs):
+        projected = json.loads(inputs["audit_rules"])["participant_packets"]
+        invalid = any(not row["received_ids"] and "received correspondence" in row.get("revision_ticket", "")
+                      for row in projected.values())
+        return {"verdict": "return" if invalid else "accept",
+                "objections": ["src2: Remove the instruction to use received correspondence."] if invalid else [],
+                "findings": {identity: "Checked." for identity in projected}}
+
+    def plan(inputs):
+        revised = json.loads(inputs["intended_intervention"])["original_design"]
+        revised["inventory"][1]["participant_brief"] = "Record your own observed date."
+        return _repair_plan(inputs, ticket=None, revised_design=revised)
+
+    def author(inputs):
+        local = json.loads(inputs["author_brief"])
+        return {"title": "Record", "text": QUOTE if local["participant"] == "Writer 1" else local["brief"], "deliveries": []}
+
+    def realism(inputs):
+        result = _output("realism", "G", "", inputs)
+        return result if "your own observed date" in inputs["sources"] else (
+            result | {"verdict": "return", "objections": ["The event date is not described."]})
+
+    behavior["G", "author-context"] = context
+    behavior["G", "repair-plan"] = plan
+    behavior["G", "author-src1"] = behavior["G", "author-src2"] = author
+    behavior["G", "realism-000"] = realism
+    behavior["G", "repair-verification"] = lambda _: {
+        "verdict": "preserved", "scope": "Same.", "provenance": "Same.", "contrast": "Same.", "objections": [],
+    }
+    batch = commission.manifest.batch_id
+    coordinator.commission_batch(ledger, commission, BOUNDARY)
+    with monkeypatch.context() as old_release:
+        old_release.setattr(FamilyWorkflow, "_author_assignments", legacy_ticket)
+        coordinator.run_batch(ledger, batch)
+    assert coordinator.family_status(ledger, batch, "G")[:2] == (2, "quarantined")
+    assert not any(parent == "G@2" and job == "author-src2" for _, parent, job, _ in calls)
+    coordinator.release_empty_attachment_ticket_recovery(ledger, batch, "G", "src2")
+    coordinator.run_batch(ledger, batch)
+    assert coordinator.family_status(ledger, batch, "G") == (3, "admission_ready", None)
+    assert [parent for _, parent, job, _ in calls if job == "repair-plan"] == ["G@2"]
+    assert [parent for _, parent, job, _ in calls if job == "author-src2"] == ["G@1", "G@3"]

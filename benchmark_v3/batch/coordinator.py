@@ -10,18 +10,20 @@ from benchmark_v3 import commissioning, packet
 from benchmark_v3.batch import (
     adjudication_contract, adjudication_recovery, annotation_recovery, artifacts, audit_recovery, authorisation,
     autonomous_realism, construction, continuation, design_recovery, design_review, evidence_recovery, exception_review,
-    milestone_repair, repair_authority, science,
+    milestone_repair, read_format_recovery, repair_authority, science,
 )
 from benchmark_v3.batch.contracts import (
-    AdjudicationQuoteRecovery, AnnotationRecovery, AuditRecovery, BatchDecision, BatchManifest, BudgetAmendment,
+    Adjudication, AdjudicationQuoteRecovery, AnnotationRecovery, AuditRecovery, BatchDecision, BatchManifest, BudgetAmendment,
     ChildDesignMerits, Code, DeferredExceptionReview, DesignReview, ExceptionRecord, FamilyContinuation, FreshAdjudication,
-    MilestoneEvidenceRepair, MilestoneRealismRepair, OwnerFamilyReview, RepairExecution, RepairScopeReview, SourceCutoffRecovery,
+    MilestoneEvidenceRepair, MilestoneRealismRepair, OwnerFamilyReview, Reading, RepairExecution, RepairScopeReview,
+    SourceCutoffRecovery,
 )
 from benchmark_v3.batch.custody import namespace_directory
 from benchmark_v3.batch.ledger import BudgetExhausted, Ledger, TaskHalted
 from benchmark_v3.batch.sessions import Blocked, InvalidRoleOutput, SessionRunner
 from benchmark_v3.batch.workflow import FamilyWorkflow, verify_dossier
 from benchmark_v3.portfolio import FamilySlot, Portfolio
+from private_client_graph.models.source import Source
 
 
 @dataclass(frozen=True)
@@ -453,7 +455,7 @@ def family_status(ledger: Ledger, batch_id: str, family: str) -> tuple[int, str,
             if record["kind"] == "reconcile" and record["name"] == repair_authority.PLAN_RECOVERY:
                 state = "design"
             if record["kind"] == "reconcile" and (
-                record["name"].startswith("construction-followup") or record["name"].startswith("pooled-release")
+                record["name"].startswith("construction-followup") or record["name"].startswith(("pooled-release", read_format_recovery.RELEASE))
             ):
                 state = record["next"] or state
     return revision, state, blocking
@@ -582,15 +584,24 @@ def _block(
         "failed_dispatch": "Review the rejected receipt and decide whether to quarantine.",
         "input_integrity": "Verify exact approved artifacts and decide whether to quarantine.",
     }
+    qualifier = None
+    if _plan_reopened(ledger, workflow):
+        qualifier = repair_authority.PLAN_RECOVERY
+    elif workflow.audit_recovery is not None:
+        qualifier = audit_recovery.JOB
+    elif workflow.release_action == "complete_evidence_adjudication":
+        qualifier = "complete-evidence"
+    elif workflow.stage == "blind" and any(
+        row["revision"] == revision and row["kind"] == "reconcile"
+        and row["name"].startswith(read_format_recovery.RELEASE) for row in ledger.events(batch, family)
+    ):
+        qualifier = read_format_recovery.RELEASE.rstrip("-")
     ledger.block(batch, revision, ExceptionRecord(
         stage=workflow.stage, family_id=family, code=code, evidence=evidence, job=job,
         repair_permitted=repair,
         human_action=None if repair else actions.get(code, "Review the retained scientific objection."),
         remaining_work="task_halted" if code == "isolation" else "family_halted",
-    ), continuation=workflow.release is not None,
-        qualifier=(repair_authority.PLAN_RECOVERY if _plan_reopened(ledger, workflow)
-                   else audit_recovery.JOB if workflow.audit_recovery is not None
-                   else "complete-evidence" if workflow.release_action == "complete_evidence_adjudication" else None))
+    ), continuation=workflow.release is not None, qualifier=qualifier)
 
 
 def reconcile_dispatch(ledger: Ledger, batch_id: str, family: str, reference: str) -> None:
@@ -620,6 +631,90 @@ def quarantine(ledger: Ledger, batch_id: str, family: str, reference: str) -> No
             raise ValueError("Quarantine requires an unresolved exception before admission.")
         ledger.event(batch_id, family, revision, "operator_close", "quarantine", state, "quarantined",
                      {"reference": reference, "exception": blocking, "role": "custodian"})
+
+
+def release_empty_attachment_ticket_recovery(ledger: Ledger, batch: str, family: str, source_id: str) -> None:
+    with ledger.coordinator_lock():
+        ledger.require_running()
+        commission = load_commission(ledger, batch)
+        revision, state, blocking = family_status(ledger, batch, family)
+        runner = commission.session_runner(ledger, family, revision)
+        parent = autonomous_realism.release_event(runner)
+        if (state != "quarantined" or not blocking or blocking["stage"] != "author"
+                or parent is None or parent.get("parent_revision") != revision - 1):
+            raise ValueError("Only a freshly returned documentary revision can reopen the empty attachment ticket.")
+        details = autonomous_realism.empty_attachment_ticket_return(runner, source_id)
+        ledger.event(batch, family, revision + 1, "transition", repair_authority.REVISION, state, "design",
+                     parent | {"empty_ticket_return": details})
+
+
+def recover_adjudication_approval_ids(ledger: Ledger, batch: str, family: str, index: int) -> None:
+    """Resume an unlocked key after proving an exact identity representation correction."""
+    with ledger.coordinator_lock():
+        ledger.require_running()
+        commission = load_commission(ledger, batch)
+        revision, state, blocking = family_status(ledger, batch, family)
+        if (not ledger.requires_delivery_attestation or state != "adjudicate" or not blocking
+                or (blocking["code"], blocking["evidence"]) != (
+                    "scientific_review", adjudication_contract.SOURCE_APPROVAL_FAILURE,
+                )):
+            raise ValueError("Only the retained adjudication approval representation failure can reopen.")
+        slot = next(row for row in commission.portfolio.slots if row.family_id == family)
+        condition = science.condition_ids(slot)[index]
+        runner = commission.session_runner(ledger, family, revision)
+        job = f"adjudicate-{index:03}"
+        if (runner.directory / "family" / f"{condition}.json").exists():
+            raise ValueError("A locked adjudication key cannot be relabelled.")
+        original, receipt, request = runner.committed_result("adjudicate", job, "adjudication", Adjudication)
+        result, edits = adjudication_contract.localize_source_approval(original)
+        if not edits or original.key.condition != "local":
+            raise ValueError("The original response contains no unique local-ID correction.")
+        inputs = request["inputs"]
+        sources = [Source.model_validate(row) for row in commissioning._read_json(inputs["sources"])]
+        first = Reading.model_validate_json(inputs["annotation_a"])
+        second = Reading.model_validate_json(inputs["annotation_b"])
+        result = result.model_copy(update={"key": result.key.model_copy(update={"condition": condition})})
+        science.verify_adjudication(condition, result, sources, science.compare_readings(first, second, sources))
+        ledger.event(batch, family, revision, "reconcile", f"{job}-local-approval-ids", state, state, {
+            "receipt_sha256": receipt["receipt_sha256"], "changes": edits,
+            "reference": "Unique existing local entity IDs verified by the unchanged evidence validator.",
+        })
+
+
+def release_adjudication_documentary_repair(ledger: Ledger, batch: str, family: str) -> None:
+    with ledger.coordinator_lock():
+        ledger.require_running()
+        commission = load_commission(ledger, batch)
+        revision, state, blocking = family_status(ledger, batch, family)
+        if (state != "adjudicate" or not blocking
+                or (blocking["code"], blocking["evidence"]) != ("scientific_review", autonomous_realism.ADJUDICATION_RETURN)
+                or any(event["name"] == repair_authority.REVISION and "adjudication_return" in event["details"]
+                       for event in ledger.events(batch, family))):
+            raise ValueError("Only one bounded documentary repair can follow the first unlocked adjudication return.")
+        runner = commission.session_runner(ledger, family, revision)
+        if not repair_authority.enabled(ledger, commission.manifest):
+            raise ValueError("This family has no autonomous documentary repair authority.")
+        adjudication = autonomous_realism.document_adjudication_return(runner)
+        ledger.event(batch, family, revision + 1, "transition", repair_authority.REVISION, state, "design", {
+            "role": "batch_coordinator", "parent_revision": revision,
+            "adjudication_return": adjudication, "manifest_sha256": authorisation.commitment(commission.manifest),
+            "family_sessions_remaining": ledger.effective_budget().families[family] - len(ledger.attempts(family)),
+        })
+
+
+def recover_blind_representation(ledger: Ledger, batch: str, family: str, job: str) -> None:
+    with ledger.coordinator_lock():
+        ledger.require_running()
+        commission = load_commission(ledger, batch)
+        revision, state, blocking = family_status(ledger, batch, family)
+        if state not in {"blind", "quarantined"} or not blocking or (
+            blocking["stage"], blocking["code"]
+        ) != ("blind", "scientific_review"):
+            raise ValueError("A fresh blind reading requires a held blind representation exception.")
+        runner = commission.session_runner(ledger, family, revision)
+        details = read_format_recovery.release_details(runner, job)
+        ledger.event(batch, family, revision, "reconcile", read_format_recovery.RELEASE + job,
+                     state, "blind", details)
 
 
 def recover_annotation(ledger: Ledger, decision: AnnotationRecovery) -> str:

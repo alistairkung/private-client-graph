@@ -7,8 +7,8 @@ from typing import Any, Literal
 from pydantic import TypeAdapter
 
 from benchmark_v3 import commissioning, packet
-from benchmark_v3.batch import artifacts, author_delivery, authorisation, design_review, repair_authority, science
-from benchmark_v3.batch.contracts import DesignOutput, MatchedCondition, RealismReview, SourceId
+from benchmark_v3.batch import artifacts, author_context, author_delivery, authorisation, design_review, repair_authority, science
+from benchmark_v3.batch.contracts import Adjudication, DesignOutput, MatchedCondition, RealismReview, SourceId
 from benchmark_v3.batch.ledger import BudgetExhausted
 from benchmark_v3.batch.sessions import SessionRunner
 from benchmark_v3.portfolio import FamilySlot
@@ -27,6 +27,7 @@ PLAN_PROMPT = (
     "Keep private history, matched alternatives, reviewers' findings, research purpose and planned answers "
     "out of the tickets and participant briefs. Return infeasible or scope_change with reasons when warranted."
 )
+ADJUDICATION_RETURN = "Adjudication has unresolved scientific objections."
 VERIFY_PROMPT = (
     "Independently compare the original and revised fictional files with their designs and the approved hypothesis. "
     "Check that the intended contrast, scoped relationships, cut-off question, invariant evidence, participant "
@@ -115,6 +116,33 @@ def plan_revision(
         parent = _read_return(runner, slot, release)
     except (OSError, ValueError, KeyError, TypeError, StopIteration) as error:
         raise packet.PacketIsolationError("The original realism inputs and receipts failed their commitments.") from error
+    ticket_return = release.get("empty_ticket_return")
+    if ticket_return is None:
+        plan, receipt, design, affected, job = _plan_from_objections(runner, slot, parent, release)
+    else:
+        plan, receipt, design, affected, job = _retained_plan_for_empty_ticket(runner, slot, parent, ticket_return)
+    lineage = {
+        "parent_revision": release["parent_revision"], "hypothesis_sha256": slot.hypothesis.hypothesis_sha256,
+        "parent_design_sha256": authorisation.commitment(parent.design),
+        "design_sha256": authorisation.commitment(design), "plan_sha256": authorisation.commitment(plan),
+        "planner_receipt_sha256": receipt["receipt_sha256"],
+        "original_source_commitments": parent.freeze.source_commitments,
+        "original_review_receipts": parent.review_commitments, "affected_sources": sorted(affected),
+    }
+    if ticket_return is not None:
+        lineage["rejected_author_context"] = ticket_return
+    if parent.prior_scope_return is not None:
+        lineage["last_realism_revision"] = release["parent_revision"]
+        lineage["parent_revision"] = parent.prior_scope_return["revision"]
+        lineage["prior_scope_return_receipt_sha256"] = parent.prior_scope_return["receipt_sha256"]
+        lineage["last_realism_source_commitments"] = parent.prior_scope_return["original_realism_source_commitments"]
+    return Revision(parent, design, plan, affected, lineage, job), receipt
+
+
+
+def _plan_from_objections(
+    runner: SessionRunner, slot: FamilySlot, parent: ReturnedFile, release: dict[str, Any],
+) -> tuple[RepairPlan, dict[str, Any], DesignOutput, set[str], str]:
     if not any(row["revision"] == runner.revision and row["job"] == repair_authority.PLAN_JOB
                for row in runner.ledger.attempts(runner.family)):
         runner.ledger.require_capacity(
@@ -139,22 +167,7 @@ def plan_revision(
             },
         }),
     }
-    plan, receipt, design, affected, job = _select_plan(runner, slot, parent, inputs, release)
-    lineage = {
-        "parent_revision": release["parent_revision"], "hypothesis_sha256": slot.hypothesis.hypothesis_sha256,
-        "parent_design_sha256": authorisation.commitment(parent.design),
-        "design_sha256": authorisation.commitment(design), "plan_sha256": authorisation.commitment(plan),
-        "planner_receipt_sha256": receipt["receipt_sha256"],
-        "original_source_commitments": parent.freeze.source_commitments,
-        "original_review_receipts": parent.review_commitments, "affected_sources": sorted(affected),
-    }
-    if parent.prior_scope_return is not None:
-        lineage["last_realism_revision"] = release["parent_revision"]
-        lineage["parent_revision"] = parent.prior_scope_return["revision"]
-        lineage["prior_scope_return_receipt_sha256"] = parent.prior_scope_return["receipt_sha256"]
-        lineage["last_realism_source_commitments"] = parent.prior_scope_return["original_realism_source_commitments"]
-    return Revision(parent, design, plan, affected, lineage, job), receipt
-
+    return _select_plan(runner, slot, parent, inputs, release)
 
 def _select_plan(
     runner: SessionRunner, slot: FamilySlot, parent: ReturnedFile, inputs: dict[str, str], release: dict[str, Any],
@@ -245,16 +258,19 @@ def _read_return(runner: SessionRunner, slot: FamilySlot, release: dict[str, Any
     revision = release["parent_revision"]
     ledger, batch, family = runner.ledger, runner.manifest.batch_id, runner.family
     if revision != runner.revision - 1 and (
-        revision != runner.revision - 2 or not release.get("scope_return_receipt_sha256")
+        revision != runner.revision - 2 or not (release.get("scope_return_receipt_sha256") or release.get("empty_ticket_return"))
         or not ledger.pooled_revision(batch, family, runner.revision)
     ):
         raise ValueError("A repair may bypass only one verified intervening scope return in its pooled lineage.")
     previous = SessionRunner(ledger, runner.manifest, family, revision, runner.directory.parent / str(revision), runner.owner)
     history = ledger.events(batch, family)
     events = [row for row in history if row["revision"] == revision]
-    disposition = next(row for row in events if row["kind"] == "disposition" and row["name"] == "realism")
-    if (release["disposition_sequence"] != disposition["sequence"]
-            or release["manifest_sha256"] != authorisation.commitment(runner.manifest)):
+    disposition = next((row for row in events if row["kind"] == "disposition" and row["name"] == "realism"), None)
+    adjudication = release.get("adjudication_return")
+    if (release["manifest_sha256"] != authorisation.commitment(runner.manifest)
+            or (adjudication is None and (
+                disposition is None or release["disposition_sequence"] != disposition["sequence"]
+            ))):
         raise ValueError("The repair must bind the exact previous realism disposition and approved manifest.")
     design = artifacts.read_contract(previous.directory / "design.json", DesignOutput)
     locked_design = next(row for row in events if row["kind"] == "transition" and row["name"] == "design")
@@ -271,7 +287,17 @@ def _read_return(runner: SessionRunner, slot: FamilySlot, release: dict[str, Any
         if review.verdict != "pass" or review.objections:
             issues = review.objections or [review.summary]
             objections.update({f"{condition}:{i}": issue for i, issue in enumerate(issues, start=1)})
-    if reviews != commissioning._read_json(disposition["details"]["evidence"]) or not objections:
+    if adjudication is not None:
+        if objections or disposition is not None or adjudication != document_adjudication_return(previous):
+            raise ValueError("The documentary repair must bind passing realism and the exact uncommitted adjudication.")
+        first_condition = science.condition_ids(slot)[0]
+        _, _, request = previous.committed_result("adjudicate", "adjudicate-000", "adjudication", Adjudication)
+        read_sources = TypeAdapter(list[Source]).validate_json(request["inputs"]["sources"])
+        if read_sources != supplied[first_condition]:
+            raise ValueError("The adjudication did not receive the reviewed documentary file.")
+        objections = {f"adjudication:{index}": reason
+                      for index, reason in enumerate(adjudication["objections"], 1)}
+    elif disposition is None or reviews != commissioning._read_json(disposition["details"]["evidence"]) or not objections:
         raise ValueError("The realism responses differ from the returned disposition.")
     natural = supplied[science.condition_ids(slot)[0]]
     authored = next(row for row in events if row["kind"] == "transition" and row["name"] == "author")
@@ -285,11 +311,15 @@ def _read_return(runner: SessionRunner, slot: FamilySlot, release: dict[str, Any
     if supplied != bundles or authored["details"]["outputs"]["natural"] != expected:
         raise ValueError("The reviewed Sources differ from the immutable authored inventory.")
     prior = None
-    if any(row["kind"] == "transition" and row["name"] == repair_authority.REVISION for row in events):
-        selection = next((row["details"] for row in events if row["kind"] == "repair_plan_selection"), None)
+    previous_release = release_event(previous)
+    if previous_release is not None:
+        plan_revision = revision - 1 if "empty_ticket_return" in previous_release else revision
+        planner = replace(previous, revision=plan_revision, directory=previous.directory.with_name(str(plan_revision)))
+        selection = next((row["details"] for row in history if row["revision"] == plan_revision
+                          and row["kind"] == "repair_plan_selection"), None)
         job = selection["job"] if selection else repair_authority.PLAN_JOB
-        prior = artifacts.read_contract(previous.directory / f"{job}.json", RepairPlan)
-        committed, receipt, _ = previous.committed_result("design", job, "audit", RepairPlan)
+        prior = artifacts.read_contract(planner.directory / f"{job}.json", RepairPlan)
+        committed, receipt, _ = planner.committed_result("design", job, "audit", RepairPlan)
         if prior != committed or selection and receipt["receipt_sha256"] != selection["receipt_sha256"]:
             raise ValueError("The prior repair plan differs from its charged original.")
     earlier = [
@@ -297,9 +327,57 @@ def _read_return(runner: SessionRunner, slot: FamilySlot, release: dict[str, Any
         for row in history if row["revision"] < revision and row["kind"] == "disposition" and row["name"] == "realism"
     ]
     result = ReturnedFile(design, bundles, freeze, objections, reviews, receipts, prior, earlier)
-    if revision == runner.revision - 2:
+    if revision == runner.revision - 2 and "scope_return_receipt_sha256" in release:
         return _scope_repair_parent(runner, slot, result, release["scope_return_receipt_sha256"])
     return result
+
+
+def empty_attachment_ticket_return(runner: SessionRunner, source_id: str) -> dict[str, Any]:
+    """Authenticate a pre-author return of the factory's boilerplate attachment wording."""
+    if not runner.ledger.requires_delivery_attestation or any(
+        row["revision"] == runner.revision and row["stage"] == "author"
+        and row["job"] not in {author_context.JOB, author_context.JOB + repair_authority.FORMAT_RETRY}
+        for row in runner.ledger.attempts(runner.family)
+    ):
+        raise ValueError("The boilerplate correction must precede all affected author turns.")
+    review, receipt, request = runner.committed_result("author", author_context.JOB, "audit", author_context.AuthorContextReview)
+    projected = commissioning._read_json(request["inputs"]["audit_rules"])["participant_packets"][source_id]
+    if (review.verdict != "return" or len(review.objections) != 1
+            or not review.objections[0].startswith(source_id)
+            or "received correspondence" not in review.objections[0]
+            or projected["received_ids"] != []
+            or projected.get("revision_ticket") != "Write this record using its revised instructions and received correspondence."):
+        raise ValueError("The retained scope return is not the exact empty-attachment ticket case.")
+    return {"source_id": source_id, "review_receipt_sha256": receipt["receipt_sha256"]}
+
+
+def _retained_plan_for_empty_ticket(
+    runner: SessionRunner, slot: FamilySlot, parent: ReturnedFile, return_details: dict[str, Any],
+) -> tuple[RepairPlan, dict[str, Any], DesignOutput, set[str], str]:
+    previous = replace(runner, revision=runner.revision - 1, directory=runner.directory.with_name(str(runner.revision - 1)))
+    if empty_attachment_ticket_return(previous, return_details["source_id"]) != return_details:
+        raise ValueError("The pre-author ticket return failed its commitment.")
+    choice = next(row["details"] for row in runner.ledger.events(runner.manifest.batch_id, runner.family)
+                  if row["revision"] == previous.revision and row["kind"] == "repair_plan_selection")
+    job = choice["job"]
+    plan, receipt, _ = previous.committed_result("design", job, "audit", RepairPlan)
+    if receipt["receipt_sha256"] != choice["receipt_sha256"] or return_details["source_id"] in plan.tickets:
+        raise ValueError("The selected plan must be unchanged and the returned ticket machine-generated.")
+    design, affected = _verify_plan(slot, parent, plan, attested=True)
+    if design != artifacts.read_contract(previous.directory / "design.json", DesignOutput):
+        raise ValueError("The retained un-authored revision has a different design.")
+    return plan, receipt, design, affected, job
+
+
+def document_adjudication_return(runner: SessionRunner) -> dict[str, Any]:
+    if not runner.ledger.requires_delivery_attestation:
+        raise ValueError("Documentary adjudication repair requires the attested isolation release.")
+    if any((runner.directory / "family").glob(f"{runner.family}[0-9][0-9][0-9].json")):
+        raise ValueError("A documentary return cannot supersede an already locked provisional key.")
+    review, receipt, _ = runner.committed_result("adjudicate", "adjudicate-000", "adjudication", Adjudication)
+    if not review.unresolved:
+        raise ValueError("No independently recorded adjudication objection supports documentary repair.")
+    return {"receipt_sha256": receipt["receipt_sha256"], "objections": review.unresolved}
 
 
 def _scope_repair_parent(runner: SessionRunner, slot: FamilySlot, parent: ReturnedFile,

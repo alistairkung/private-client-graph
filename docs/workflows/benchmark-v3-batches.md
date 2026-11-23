@@ -505,3 +505,19 @@ bind the halted ledger and its exact closed charges, the independent
 zero-turn boundary evidence and the corrected implementation. Only fresh
 custody can enter that successor. The hard cumulative ceiling and family
 qualification gates continue to apply.
+
+Delivery-attested production can repeat a blind representation error
+once with an independent reader on the identical frozen inputs after
+both retained attempts failed exact quotation or inventory checks. The
+fresh packet only clarifies the representation of attached evidence.
+An adjudicated approval may translate a unique canonical name to its
+existing local entity ID. The derivative names the exact receipt and
+changed fields. The original evidence, relationships and protected
+validation still determine whether a key can lock.
+
+A first unresolved adjudication before any key locks can return for one
+independently planned documentary revision. It preserves the approved
+hypothesis and reruns every dependent gate if Sources change. A returned
+factory instruction mentioning absent correspondence can reopen its
+unchanged plan in a new revision. A separate scope review must clear the
+corrected participant projection before authoring.

@@ -13,8 +13,9 @@ from pydantic import BaseModel
 from benchmark_v3 import commissioning, packet, replay
 from benchmark_v3.batch import (
     adjudication_contract, adjudication_recovery, annotation_recovery, artifacts, audit_contract, audit_recovery,
-    author_context, author_delivery, author_repair, autonomous_realism, construction, continuation, design_recovery,
-    design_review, evidence_recovery, milestone_repair, repair_authority, science,
+    author_context, author_delivery, author_repair, authorisation, autonomous_realism, construction, continuation,
+    design_recovery,
+    design_review, evidence_recovery, milestone_repair, read_format_recovery, repair_authority, science,
 )
 from benchmark_v3.batch.contracts import (
     Adjudication, AuditReview, AuthorBrief, AuthoredSource, Code, DesignOutput, Reading, RealismReview,
@@ -114,9 +115,11 @@ class FamilyWorkflow:
     def job(
         self, key: str, role: Role, inputs: dict[str, str], instructions: str, result_type: type[_T],
         *, output_schema: dict[str, Any] | None = None, validate: Callable[[_T], None] | None = None,
+        allow_format_retry: bool = True,
     ) -> _T:
         result, receipt = self.runner.run(
             self.stage, key, role, inputs, instructions, result_type, output_schema=output_schema, validate=validate,
+            allow_format_retry=allow_format_retry,
         )
         self.sessions.append(receipt)
         return result
@@ -301,7 +304,9 @@ class FamilyWorkflow:
             if ticket:
                 changed.add(brief.source_id)
             if revision is not None and ticket is None:
-                ticket = "Write this record using its revised instructions and received correspondence."
+                ticket = ("Write this record using its revised instructions."
+                          if self.runner.ledger.requires_delivery_attestation and not brief.received
+                          else "Write this record using its revised instructions and received correspondence.")
             assignments.append((brief, ticket, revision is None and bool(tickets) and ticket is None, None))
         return assignments
 
@@ -491,20 +496,29 @@ class FamilyWorkflow:
             self.sessions.append(receipt)
             return reading
         extra_instructions = audit_recovery.MASK_INSTRUCTIONS if role == "masked" and self.audit_recovery else ""
+        inputs = _reading_inputs(design, sources) | (extra or {})
+        job = key
+        if self.runner.ledger.requires_delivery_attestation:
+            if role == "annotation":
+                job = read_format_recovery.selected_job(self.runner, key, inputs)
+            if self._use_scoped_prompt(job, read_format_recovery.INSTRUCTIONS):
+                extra_instructions += read_format_recovery.INSTRUCTIONS
+
         def verify_mechanical_evidence(reading: Reading) -> None:
             by_id = {source.id: source.text for source in sources}
             if len(reading.reviewed_sources) != len(by_id) or set(reading.reviewed_sources) != by_id.keys():
-                raise ValueError("The reading must account for the exact Source inventory.")
+                raise ValueError(read_format_recovery.INVENTORY_ERROR)
             for candidate in reading.candidates.relationships:
                 if candidate.source_id not in by_id or candidate.supporting_text not in by_id[candidate.source_id]:
-                    raise ValueError("The reading must quote the exact attributed Source.")
+                    raise ValueError(read_format_recovery.QUOTE_ERROR)
 
         result = self.job(
-            key, role, _reading_inputs(design, sources) | (extra or {}),
+            job, role, inputs,
             "Read only the supplied file. Record exact sourced candidates, unresolved questions, and "
             "each reviewed Source ID. Where your own sectional readings are supplied, independently "
             "reconcile identities, supersession and cross-section claims against every full Source." + extra_instructions,
             Reading, validate=verify_mechanical_evidence if self._validates_documentary_outputs() else None,
+            allow_format_retry=job == key,
         )
         science.check_reading(result, sources)
         return result
@@ -571,10 +585,31 @@ class FamilyWorkflow:
             prompt += adjudication_contract.COMPLETE_EVIDENCE_INSTRUCTIONS
         if self._use_scoped_prompt(job, _KEY_ROSTER_CONTEXT):
             prompt += _KEY_ROSTER_CONTEXT
-        return self.job(
+        if (self.runner.ledger.requires_delivery_attestation
+                and self._use_scoped_prompt(job, adjudication_contract.LOCAL_APPROVAL_IDS)):
+            prompt += adjudication_contract.LOCAL_APPROVAL_IDS
+        review = self.job(
             job, "adjudication", inputs, prompt, Adjudication,
             output_schema=adjudication_contract.output_schema(ids, complete_evidence=complete),
         )
+        if self.runner.ledger.requires_delivery_attestation and not review.unresolved:
+            review = self._localize_approval_ids(job, review)
+        return review
+
+    def _localize_approval_ids(self, job: str, original: Adjudication) -> Adjudication:
+        review, edits = adjudication_contract.localize_source_approval(original)
+        if edits:
+            retained, receipt, _ = self.runner.committed_result("adjudicate", job, "adjudication", Adjudication)
+            if original != retained:
+                raise ValueError("The local-ID derivative requires the exact adjudicated output.")
+            commitment = artifacts.write_json(self.directory / "recoveries" / job / "local-approval-ids.json", {
+                "receipt_sha256": receipt["receipt_sha256"],
+                "output_sha256": receipt["output_sha256"],
+                "derivative_sha256": authorisation.commitment(review),
+                "changes": edits,
+            })
+            self.transition_inputs[f"{job}_local_approval_ids"] = commitment
+        return review
 
     def audit(
         self, design: DesignOutput, bundles: dict[str, list[Source]], freeze: BatchSourceFreeze,

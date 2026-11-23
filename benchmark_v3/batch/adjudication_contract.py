@@ -48,3 +48,35 @@ def output_schema(ids: list[str], *, complete_evidence: bool = False) -> dict[st
         definitions["SourceEvidenceApproval"]["required"] = ["relationships"]
         definitions["SufficientEvidence"]["properties"]["alternatives"]["items"]["minItems"] = 1
     return schema
+
+
+LOCAL_APPROVAL_IDS = (
+    " In key.source_approval.relationships use the exact local entity IDs from key.truth for source and target. "
+    "Keep full canonical names in key.ideal.relationships and in sufficient_evidence edge triples."
+)
+
+
+def localize_source_approval(review: Adjudication) -> tuple[Adjudication, list[dict[str, str]]]:
+    """Translate uniquely named approval endpoints to existing local IDs only."""
+    names: dict[str, list[str]] = {}
+    known_ids = {entity.id for entity in review.key.truth.entities}
+    for entity in review.key.truth.entities:
+        names.setdefault(entity.name, []).append(entity.id)
+    changes = []
+    relationships = []
+    for index, relationship in enumerate(review.key.source_approval.relationships):
+        endpoints = {"source": relationship.source, "target": relationship.target}
+        for field, value in endpoints.items():
+            if value in known_ids:
+                continue
+            matches = names.get(value, [])
+            if len(matches) != 1:
+                raise ValueError("An adjudicated approval endpoint does not name a unique local entity.")
+            endpoints[field] = matches[0]
+            changes.append({"path": f"/key/source_approval/relationships/{index}/{field}",
+                            "before": value, "after": matches[0]})
+        relationships.append(relationship.model_copy(update=endpoints))
+    if not changes:
+        return review, []
+    approval = review.key.source_approval.model_copy(update={"relationships": relationships})
+    return review.model_copy(update={"key": review.key.model_copy(update={"source_approval": approval})}), changes

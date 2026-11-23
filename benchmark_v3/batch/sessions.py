@@ -85,7 +85,7 @@ class SessionRunner:
     def run(
         self, stage: Stage, job: str, role: Role, inputs: dict[str, str], instructions: str,
         result_type: type[_T], *, output_schema: dict[str, Any] | None = None,
-        validate: Callable[[_T], None] | None = None,
+        validate: Callable[[_T], None] | None = None, allow_format_retry: bool = True,
     ) -> tuple[_T, dict[str, Any]]:
         recovery = repair_authority.enabled(self.ledger, self.manifest)
         followup = (
@@ -93,7 +93,8 @@ class SessionRunner:
         )
         pooled = self.ledger.pooled_revision(self.manifest.batch_id, self.family, self.revision)
         unwrap = recovery or followup is not None or pooled
-        fresh_retry_allowed = (recovery or pooled) and not (role == "designer" and self.manifest.requires_design_review)
+        fresh_retry_allowed = (allow_format_retry and (recovery or pooled)
+                               and not (role == "designer" and self.manifest.requires_design_review))
         retry = job + repair_authority.FORMAT_RETRY
         retry_instructions = instructions if role == "designer" else (
             instructions + " Return only the exact requested JSON object."
