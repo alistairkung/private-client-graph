@@ -871,6 +871,8 @@ class FamilyWorkflow:
                     "full_control_plan": plan.audit.model_dump(mode="json"),
                     "additional_proposed_views_by_commitment": proposed,
                     "verified_prior_gates": audit_boundary.prior_gates(self.runner),
+                    **({"exact_whitespace_excerpt_derivatives": plan.excerpt_derivatives}
+                       if plan.excerpt_derivatives else {}),
                 }),
             },
             "Independently test the documentary and scientific validity of this exact control plan for the frozen "
@@ -887,7 +889,12 @@ class FamilyWorkflow:
         result = plan.audit.model_copy(update={
             "limitations": [*plan.audit.limitations, *confirmation.limitations],
         })
-        self.advance("masks", {"audit": result.model_dump(mode="json"), "joint_plan_confirmation": confirmation.model_dump(mode="json")},
+        outputs: dict[str, Any] = {
+            "audit": result.model_dump(mode="json"), "joint_plan_confirmation": confirmation.model_dump(mode="json"),
+        }
+        if plan.excerpt_derivatives:
+            outputs["exact_whitespace_excerpt_derivatives"] = plan.excerpt_derivatives
+        self.advance("masks", outputs,
                      gate="independently confirmed exact joint control assignments")
         return result
 

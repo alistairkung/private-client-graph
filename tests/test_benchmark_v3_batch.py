@@ -3758,7 +3758,7 @@ def test_realism_classifications_bind_their_original_source_inventory(approved):
                 "source_findings": {"old-copy": "Historical document."},
             }},
         }],
-        earlier_scope_references=(), prior_scope_return={"revision": 2},
+        earlier_scope_references=((3, "pre-author:1"),), prior_scope_return={"revision": 2},
         objections={"scope:1": "Current issue."},
         freeze=SimpleNamespace(natural="G000", order={"G000": ["current-copy"]}),
     )
@@ -3776,6 +3776,14 @@ def test_realism_classifications_bind_their_original_source_inventory(approved):
         autonomous_realism._verify_classification(slot, parent, plan("old-copy", "old-copy"))
     with pytest.raises(ValueError, match="referenced or current Source inventory"):
         autonomous_realism._verify_classification(slot, parent, plan("current-copy", "invented-copy"))
+    result = plan("current-copy", "old-copy")
+    compatible = result.objections["original:G000:1"].model_copy(update={"diagnosis": "Additional historical nuance."})
+    result.objections["revision_1:G000:1"] = compatible
+    result.objections["prior_repair:pre-author:1"] = result.objections["scope:1"]
+    autonomous_realism._verify_classification(slot, parent, result)
+    result.objections["revision_1:G000:1"] = result.objections["scope:1"]
+    with pytest.raises(ValueError, match="must agree on cause and Sources"):
+        autonomous_realism._verify_classification(slot, parent, result)
 
 
 def test_joint_control_proposals_preserve_source_order_and_reject_a_surviving_route():
@@ -3796,6 +3804,13 @@ def test_joint_control_proposals_preserve_source_order_and_reject_a_surviving_ro
         joint_control_plan._missing_views(
             "G000", SufficientEvidence.model_validate({"edge": EDGE, "alternatives": [quotes, [quotes[0]]]}), sources, [],
         )
+    standalone = {"source_id": "authority", "supporting_text": "Separate proof."}
+    extended = [sources[0].model_copy(update={"text": "Relevant rule. Separate proof."}), *sources[1:]]
+    separate = SufficientEvidence.model_validate({"edge": EDGE, "alternatives": [quotes, [standalone]]})
+    planned = joint_control_plan._missing_views("G000", separate, extended, [])
+    assert planned[-1].included == ["authority"]
+    assert planned[-1].remove_quotes == {"authority": "Separate proof."}
+    assert science.mask_sources(planned[-1], extended)[0].text == "Relevant rule. [redacted]"
 
 
 def test_initial_design_runtime_retry_requires_same_unsubmitted_receipt(autonomous, monkeypatch):
@@ -3822,6 +3837,27 @@ def test_initial_design_runtime_retry_requires_same_unsubmitted_receipt(autonomo
     (first / "output.txt").write_text("An unexpected response.")
     with pytest.raises(ValueError, match="exact rejected, unsubmitted design packet"):
         design_recovery.initial_runtime_retry(runner)
+
+
+def test_joint_audit_repairs_only_a_unique_whitespace_excerpt():
+    from benchmark_v3.batch import audit_boundary, joint_control_plan
+
+    original = {"condition": "G000", "risk": "joint_proof", "reason": "Independent proof fragment.",
+                "question": "What does the supplied record establish?", "included": ["src1"],
+                "present": [EDGE], "absent": [], "retained_quotes": {"src1": "Heading\nQuoted text."}}
+    audit = audit_boundary.RecheckedAudit.model_validate(
+        _output("audit", "G", "", {}) | {"excerpt_controls": [original]},
+    )
+    exact = "Heading\n\nQuoted text."
+    sources = {"G000": [Source(id="src1", title="Record", text=exact)]}
+    corrected, derivatives = joint_control_plan._recover_exact_excerpt_format(audit, sources)
+    assert corrected.excerpt_controls[0].retained_quotes == {"src1": exact}
+    assert corrected.excerpt_controls[0].present == audit.excerpt_controls[0].present
+    assert derivatives[0]["prior_sha256"] == authorisation.commitment(audit.excerpt_controls[0])
+    assert derivatives[0]["exact_whitespace_derivative_sha256"] == authorisation.commitment(corrected.excerpt_controls[0])
+    ambiguous = {"G000": [sources["G000"][0].model_copy(update={"text": f"{exact}\n{exact}"})]}
+    with pytest.raises(ValueError, match="one exact span"):
+        joint_control_plan._recover_exact_excerpt_format(audit, ambiguous)
 
 
 def test_verified_quarantine_releases_the_pool_but_never_the_affected_custody(approved, transport, monkeypatch, tmp_path):

@@ -116,3 +116,16 @@ The recovery commitment is
 `455451aa1ef5bf33b0b1d6d50642214c0d72bf2e81a179e7f92dc81abbf3ba33`.
 Accounting at release reconciled 1,632 cumulative charges and 1,352
 available sessions. The original halt events remain in the ledgers.
+
+## Retained joint-proof reviews
+
+H's frozen case includes a standalone route that survives a simple
+Source omission. The new proposed control suppresses that exact
+standalone passage and preserves the other quotation from the same
+Source. An independent audit must confirm the expected result before
+separate masked reviewers see the control.
+
+R's two unrenderable excerpt controls differed from their unique
+frozen spans by a blank line. The controller retains both original
+commitments and records whitespace-only derivatives. R still needs
+independent scientific acceptance and observed controls.

@@ -4,13 +4,14 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Literal
 
 from benchmark_v3 import commissioning
-from benchmark_v3.batch import artifacts, audit_boundary, authorisation, science
+from benchmark_v3.batch import artifacts, audit_boundary, authorisation, read_format_recovery, science
 from benchmark_v3.batch.contracts import Adjudication, MaskAssignment, MilestoneAudit, Risk
 from benchmark_v3.replay_manifest import BatchSourceFreeze, SufficientEvidence
 from benchmark_v3.research_contracts import Contract, Digest, Text
 from private_client_graph.evaluation import _edge
 from private_client_graph.models.evaluation_result import SemanticEdge
 from private_client_graph.models.source import Source
+from private_client_graph.research.source_attribution import ApprovedSourceEvidence
 
 if TYPE_CHECKING:
     from benchmark_v3.batch.sessions import SessionRunner
@@ -32,6 +33,7 @@ class Confirmation(Contract):
 class Plan:
     audit: audit_boundary.RecheckedAudit
     proposed: list[MaskAssignment]
+    excerpt_derivatives: list[dict[str, Any]]
 
     @property
     def commitments(self) -> dict[str, dict[str, Any]]:
@@ -60,6 +62,7 @@ def build_plan(
     accepted: audit_boundary.RecheckedAudit, earlier: list[MilestoneAudit], bundles: dict[str, list[Source]],
     freeze: BatchSourceFreeze, risks: set[Risk], reviews: dict[str, Adjudication],
 ) -> Plan:
+    accepted, derivatives = _recover_exact_excerpt_format(accepted, bundles)
     valid, whole = audit_boundary.original_views(accepted, bundles)
     carried = {authorisation.commitment(view): view for view in valid.masks}
     excerpts = {authorisation.commitment(view): view for view in accepted.excerpt_controls}
@@ -86,7 +89,29 @@ def build_plan(
     audit_boundary.verify_recheck(plan, valid, whole, accepted.excerpt_controls, bundles)
     for previous, pending in previous_views:
         audit_boundary.verify_recheck(plan, previous, pending, [], bundles)
-    return Plan(plan, proposed)
+    return Plan(plan, proposed, derivatives)
+
+
+def _recover_exact_excerpt_format(
+    audit: audit_boundary.RecheckedAudit, bundles: dict[str, list[Source]],
+) -> tuple[audit_boundary.RecheckedAudit, list[dict[str, Any]]]:
+    reviewed = []
+    derivatives = []
+    for view in audit.excerpt_controls:
+        by_id = {source.id: source.text for source in bundles[view.condition]}
+        quotes = dict(view.retained_quotes)
+        for identity, quote in view.retained_quotes.items():
+            if identity not in by_id:
+                raise ValueError("A recovered excerpt must preserve its exact Source attribution.")
+            if quote not in by_id[identity]:
+                quotes[identity] = read_format_recovery.exact_whitespace_span(quote, by_id[identity])
+        corrected = view.model_copy(update={"retained_quotes": quotes})
+        audit_boundary.render_excerpt(corrected, bundles[view.condition])
+        reviewed.append(corrected)
+        if corrected != view:
+            derivatives.append({"prior_sha256": authorisation.commitment(view),
+                                "exact_whitespace_derivative_sha256": authorisation.commitment(corrected)})
+    return audit.model_copy(update={"excerpt_controls": reviewed}), derivatives
 
 
 def _missing_views(
@@ -111,10 +136,11 @@ def _missing_views(
             } == {missing} for view, text in pairs):
                 continue
             remaining = included - {missing}
-            if any({quote.source_id for quote in route} <= remaining for route in proof.alternatives):
-                raise ValueError("A proposed proper subset contains an independently approved alternative route.")
             negative = _view(condition, sources, remaining, edge, positive=False)
-            pairs.append((negative, {source.id: source.text for source in sources if source.id in remaining}))
+            surviving = [route for route in proof.alternatives if {quote.source_id for quote in route} <= remaining]
+            if surviving:
+                negative = _isolate_single_standalone_route(negative, missing, alternative, surviving, sources)
+            pairs.append((negative, {source.id: source.text for source in science.mask_sources(negative, sources)}))
             proposed.append(negative)
     return proposed
 
@@ -127,3 +153,19 @@ def _view(condition: str, sources: list[Source], included: set[str], edge: Seman
         question=QUESTION, included=[source.id for source in sources if source.id in included],
         present=[edge] if positive else [], absent=[] if positive else [edge],
     )
+
+
+def _isolate_single_standalone_route(
+    negative: MaskAssignment, missing: str, alternative: list[ApprovedSourceEvidence],
+    surviving: list[list[ApprovedSourceEvidence]], sources: list[Source],
+) -> MaskAssignment:
+    if len(surviving) == 1 and len(surviving[0]) == 1:
+        competing = surviving[0][0]
+        candidate = negative.model_copy(update={
+            "reason": "Isolate the selected joint proof after suppressing the independently approved standalone route.",
+            "remove_quotes": {competing.source_id: competing.supporting_text},
+        })
+        rendered = {source.id: source.text for source in science.mask_sources(candidate, sources)}
+        if all(quote.supporting_text in rendered[quote.source_id] for quote in alternative if quote.source_id != missing):
+            return candidate
+    raise ValueError("A proposed proper subset contains an independently approved alternative route.")

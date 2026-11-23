@@ -489,7 +489,7 @@ def _verify_classification(
     }
     earlier = historical_sources.keys() | set(parent.earlier_scope_references)
     roster = set(parent.freeze.order[parent.freeze.natural])
-    reference_aliases = set()
+    reference_aliases: dict[tuple[int, str], str] = {}
     for key in plan.objections.keys() - parent.objections.keys():
         match = re.fullmatch(r"(?:earlier[_ -]|historical:)?revision[_ -]?([1-9][0-9]*):(.+)", key)
         if match is not None:
@@ -497,16 +497,20 @@ def _verify_classification(
         elif parent.prior_scope_return is not None and key.startswith(("original:", "realism:")):
             original_realism = parent.prior_scope_return["revision"] - 1
             candidates = {(original_realism, key.split(":", 1)[1])} & earlier
+        elif key.startswith("prior_repair:"):
+            candidates = {reference for reference in parent.earlier_scope_references if reference[1] == key.split(":", 1)[1]}
         else:
             candidates = {reference for reference in earlier if reference[1] == key.removeprefix("earlier:")}
         if len(candidates) != 1:
             raise ValueError("Every additional classification must identify a retained earlier objection.")
         reference, = candidates
-        if reference in reference_aliases:
-            raise ValueError("Earlier classifications must bind unique retained objections.")
-        if not set(plan.objections[key].sources) <= roster | historical_sources.get(reference, set()):
+        classification = plan.objections[key]
+        if not set(classification.sources) <= roster | historical_sources.get(reference, set()):
             raise ValueError("A historical classification must use the referenced or current Source inventory.")
-        reference_aliases.add(reference)
+        previous_key = reference_aliases.setdefault(reference, key)
+        previous = plan.objections[previous_key]
+        if (classification.cause, set(classification.sources)) != (previous.cause, set(previous.sources)):
+            raise ValueError("Repeated classifications of a retained objection must agree on cause and Sources.")
     if not parent.objections.keys() <= plan.objections.keys() or any(
         not set(plan.objections[key].sources) <= roster for key in parent.objections.keys() & plan.objections.keys()
     ):
