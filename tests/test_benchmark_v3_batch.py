@@ -699,3 +699,53 @@ def test_construction_preflight_rejects_insufficient_mask_capacity(approved, tmp
     with pytest.raises(ValueError, match="mandatory base sessions"):
         coordinator.commission_batch(ledger, commission, BOUNDARY)
     assert ledger.batch_ids() == [] and ledger.attempts("G") == []
+
+
+def test_construction_repair_preserves_original_limits_and_charges(approved, tmp_path):
+    from benchmark_v3.batch.contracts import ConstructionRepairDecision, ExceptionRecord
+
+    ledger, commission, _ = _approved_construction(approved, tmp_path)
+    coordinator.commission_batch(ledger, commission, BOUNDARY)
+    manifest = commission.manifest
+    batch = manifest.batch_id
+    request = {"role": "author"}
+    digest = commissioning.digest(commissioning.json_text(request).encode())
+    ledger.reserve("G", 1, "first", "author", request, digest)
+    approval = manifest.families[0].approved_design
+    assert approval is not None
+    decision = ConstructionRepairDecision(
+        schema_version=1, batch_id=batch, family_id="G",
+        manifest_sha256=authorisation.commitment(manifest), design_sha256=approval.design_sha256,
+        plan_sha256="a" * 64, prior_family_ceiling=10, family_ceiling=11, prior_task_ceiling=37,
+        task_ceiling=38, owner=OWNER, decided_on=TODAY, decision_reference="Fixture repair authority.",
+    )
+    with pytest.raises(ValueError, match="owner-authorised"):
+        ledger.reserve("G", 2, "unapproved", "author", request, digest)
+    with pytest.raises(ValueError, match="quarantine"):
+        ledger.record_construction_repair(manifest, decision)
+    ledger.event(batch, "G", 1, "disposition", "realism", "realism", "quarantined", {})
+    ledger.block(batch, 1, ExceptionRecord(
+        stage="realism", code="documentary_realism", family_id="G", evidence="Fixture realism return.",
+        repair_permitted=False, human_action="Owner review.", remaining_work="family_halted",
+    ))
+    with pytest.raises(ValueError, match="original construction"):
+        ledger.record_construction_repair(manifest, decision.model_copy(update={"owner": "Different owner"}))
+    ledger.record_construction_repair(manifest, decision)
+    ledger.record_construction_repair(manifest, decision)
+    with pytest.raises(ValueError, match="immutable"):
+        ledger.record_construction_repair(manifest, decision.model_copy(update={"plan_sha256": "b" * 64}))
+
+    assert coordinator.load_commission(ledger, batch).manifest == manifest
+    assert ledger.ceilings("G") == (11, 38)
+    assert coordinator.family_status(ledger, batch, "G") == (2, "design", None)
+    assert len(ledger.attempts("G")) == 1
+    coordinator.run_batch(ledger, batch)
+    assert len(ledger.attempts("G")) == 1
+    with pytest.raises(ValueError, match="Only the named family repair"):
+        ledger.reserve("G", 1, "new-old", "author", request, digest)
+    for index in range(10):
+        assert ledger.reserve("G", 2, f"repair-{index}", "author", request, digest)
+    with pytest.raises(BudgetExhausted, match="Family"):
+        ledger.reserve("G", 2, "over-cap", "author", request, digest)
+    with pytest.raises(ValueError, match="owner-authorised"):
+        ledger.reserve("G", 3, "another-cycle", "author", request, digest)

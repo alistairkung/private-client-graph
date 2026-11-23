@@ -120,6 +120,9 @@ def _work_family(ledger: Ledger, commission: Commission, slot: FamilySlot) -> No
                      {"role": "batch_coordinator", "previous_revision": revision - 1,
                       "hypothesis_sha256": slot.hypothesis.hypothesis_sha256,
                       "gate": "previous review issued participant-scoped documentary repair tickets"})
+    if commission.manifest.phase == "construction" and revision > 1:
+        # Repair inputs are bound separately from the original construction command.
+        return
     workflow = FamilyWorkflow(
         commission.session_runner(ledger, slot.family_id, revision), slot, commission.portfolio.admission_criteria,
     )

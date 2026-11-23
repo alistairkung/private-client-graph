@@ -186,3 +186,19 @@ and estimated mask work within each family's allowance. When the
 independent audit locks its actual mask plan, check the remaining family
 capacity before starting that plan. The ledger retains each charged
 attempt and its terminal evidence.
+
+An owner can separately authorise one explicit construction repair for a
+family quarantined at documentary realism before freeze. The custodian
+records a `ConstructionRepairDecision` against the original manifest and
+design, with the private repair-plan digest and the previous and effective
+ceilings. `Ledger.record_construction_repair` appends the decision and opens
+revision two in one transaction. The original manifest, quota rows and
+reservations are retained. New construction reservations are restricted
+to that family and revision.
+
+Ordinary batch resume leaves this revision to the separately committed
+custodian runner. Before dispatch, that runner verifies the plan bytes against
+the decision, reuses only verified unaffected outputs and receipts, and checks
+the complete repair and its dependencies. Review gates after authoring repeat
+in the new revision. The same ledger charges every attempt and enforces
+the effective family and shared ceilings.

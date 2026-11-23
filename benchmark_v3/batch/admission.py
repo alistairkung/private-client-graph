@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Any
 
 from benchmark_v3 import commissioning
-from benchmark_v3.batch import artifacts
+from benchmark_v3.batch import artifacts, authorisation
 from benchmark_v3.batch.contracts import AdmissionDecisions, PilotDecision
 from benchmark_v3.batch.coordinator import family_status, load_commission
 from benchmark_v3.batch.ledger import Ledger, timestamp
@@ -23,6 +23,9 @@ def package_batch(ledger: Ledger, batch_id: str) -> tuple[Path, str]:
             "task_session_ceiling": manifest.task_session_ceiling,
             "families": families,
         }
+        if repair := ledger.construction_repair():
+            snapshot["task_session_ceiling"] = repair.task_ceiling
+            snapshot["construction_repair_sha256"] = authorisation.commitment(repair)
         content = (commissioning.json_text(snapshot) + "\n").encode()
         digest = commissioning.digest(content)
         path = ledger.root / "batches" / batch_id / "summaries" / digest

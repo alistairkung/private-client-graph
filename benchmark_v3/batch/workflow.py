@@ -304,10 +304,9 @@ class FamilyWorkflow:
         results = []
         if self.runner.manifest.phase == "construction":
             attempts = self.runner.ledger.attempts(self.slot.family_id)
-            used = {row["job"] for row in attempts}
+            used = {row["job"] for row in attempts if row["revision"] == self.runner.revision}
             jobs = {f"mask-{index:03}" for index in range(len(audit.masks))}
-            allowance = next(row.sessions for row in self.runner.manifest.families
-                             if row.family_id == self.slot.family_id)
+            allowance, _ = self.runner.ledger.ceilings(self.slot.family_id)
             needed = len(jobs - used)
             if needed > allowance - len(attempts):
                 raise BudgetExhausted(

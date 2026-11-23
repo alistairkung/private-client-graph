@@ -9,7 +9,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from benchmark_v3.batch.contracts import BatchManifest, ExceptionRecord, Stage
+from benchmark_v3.batch.contracts import BatchManifest, ConstructionRepairDecision, ExceptionRecord, Stage
 from benchmark_v3.commissioning import digest, json_text
 
 SCHEMA = """
@@ -148,6 +148,82 @@ class Ledger:
         with closing(self.connect()) as connection:
             self.check_halt(connection)
 
+    def record_construction_repair(self, manifest: BatchManifest, decision: ConstructionRepairDecision) -> None:
+        """Append the owner's single repair decision and start the second revision atomically."""
+        payload = decision.model_dump(mode="json")
+        identity = digest(json_text(payload).encode())
+        batch, family = decision.batch_id, decision.family_id
+        with self.transaction() as connection:
+            self.check_halt(connection)
+            commission = self.batch(batch)
+            allocation = next((row for row in manifest.families if row.family_id == family), None)
+            if (
+                commission is None or manifest.phase != "construction" or batch != manifest.batch_id
+                or commission["manifest"] != manifest.model_dump(mode="json")
+                or decision.manifest_sha256 != digest(json_text(commission["manifest"]).encode())
+                or decision.owner != commission["decision"]["owner"]
+                or allocation is None or allocation.approved_design is None
+                or allocation.approved_design.design_sha256 != decision.design_sha256
+                or decision.prior_family_ceiling != allocation.sessions
+                or decision.prior_task_ceiling != manifest.task_session_ceiling
+                or decision.family_ceiling < allocation.sessions
+                or decision.task_ceiling < manifest.task_session_ceiling
+                or sum(row.sessions for row in manifest.families if row.family_id != family)
+                + decision.family_ceiling > decision.task_ceiling
+            ):
+                raise ValueError("Repair authority must bind the original construction, owner and budget.")
+            existing = self._construction_repair(connection)
+            if existing is not None:
+                if existing != decision:
+                    raise ValueError("The construction batch already has a different immutable repair decision.")
+                return
+            rows = self.events(batch, family)
+            if (
+                not rows or rows[-1]["revision"] != 1
+                or not any(row["kind"] in {"disposition", "operator_close"} and row["next"] == "quarantined"
+                           for row in rows)
+                or not any(row["kind"] == "exception" and row["details"]["code"] == "documentary_realism"
+                           and row["details"]["stage"] == "realism" for row in rows)
+                or any(row["kind"] == "human_decision" or row["next"] in {"freeze", "admission_ready"}
+                       for row in rows)
+            ):
+                raise ValueError("Repair requires an original documentary-realism quarantine before freeze.")
+            self._append(connection, batch, None, 1, "construction_repair", "owner_authorisation",
+                         None, None, {"sha256": identity, "decision": payload})
+            self._append(connection, batch, family, 2, "transition", "owner_repair", "quarantined", "design",
+                         {"role": "custodian", "authorisation_sha256": identity,
+                          "plan_sha256": decision.plan_sha256})
+
+    def construction_repair(self) -> ConstructionRepairDecision | None:
+        with closing(self.connect()) as connection:
+            return self._construction_repair(connection)
+
+    @staticmethod
+    def _construction_repair(connection: sqlite3.Connection) -> ConstructionRepairDecision | None:
+        row = connection.execute(
+            "SELECT details FROM events WHERE kind = 'construction_repair' AND name = 'owner_authorisation'",
+        ).fetchone()
+        if row is None:
+            return None
+        payload = json.loads(row["details"])
+        if digest(json_text(payload["decision"]).encode()) != payload["sha256"]:
+            raise ValueError("Construction repair decision failed its ledger commitment.")
+        return ConstructionRepairDecision.model_validate(payload["decision"])
+
+    def ceilings(self, family: str) -> tuple[int, int]:
+        with closing(self.connect()) as connection:
+            return self._ceilings(connection, family, self._construction_repair(connection))
+
+    @staticmethod
+    def _ceilings(
+        connection: sqlite3.Connection, family: str, repair: ConstructionRepairDecision | None,
+    ) -> tuple[int, int]:
+        allowance = connection.execute("SELECT allowance FROM families WHERE id = ?", (family,)).fetchone()[0]
+        shared = connection.execute("SELECT ceiling FROM task").fetchone()[0]
+        if repair is None:
+            return allowance, shared
+        return repair.family_ceiling if repair.family_id == family else allowance, repair.task_ceiling
+
     def reserve(
         self, family: str, revision: int, job: str, stage: Stage, request: dict[str, Any], request_sha256: str,
     ) -> bool:
@@ -161,12 +237,22 @@ class Ledger:
                 if prior["request_sha256"] != request_sha256 or prior["request"] != json_text(request):
                     raise ValueError("A reserved scientific input changed.")
                 return False
-            if connection.execute("SELECT COUNT(*) FROM attempts").fetchone()[0] >= connection.execute(
-                "SELECT ceiling FROM task",
-            ).fetchone()[0]:
+            repair = self._construction_repair(connection)
+            phase = connection.execute(
+                "SELECT batches.phase FROM batches JOIN families ON families.batch = batches.id WHERE families.id = ?",
+                (family,),
+            ).fetchone()[0]
+            if phase == "construction" and revision != 1 and (
+                revision != 2 or repair is None or repair.family_id != family
+                or request.get("role") == "designer"
+            ):
+                raise ValueError("Construction reservations require the exact owner-authorised repair revision.")
+            if phase == "construction" and repair is not None and (revision != 2 or family != repair.family_id):
+                raise ValueError("Only the named family repair can reserve new construction work.")
+            allowance, shared = self._ceilings(connection, family, repair)
+            if connection.execute("SELECT COUNT(*) FROM attempts").fetchone()[0] >= shared:
                 raise BudgetExhausted("Task-wide scientific-session ceiling reached.")
             used = connection.execute("SELECT COUNT(*) FROM attempts WHERE family = ?", (family,)).fetchone()[0]
-            allowance = connection.execute("SELECT allowance FROM families WHERE id = ?", (family,)).fetchone()[0]
             if used >= allowance:
                 raise BudgetExhausted("Family scientific-session allowance reached.")
             connection.execute(

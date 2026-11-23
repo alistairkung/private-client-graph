@@ -103,6 +103,22 @@ class BatchDecision(Contract):
     decision_reference: Text
 
 
+class ConstructionRepairDecision(Contract):
+    schema_version: Literal[1]
+    batch_id: Slug
+    family_id: FamilyId
+    manifest_sha256: Digest
+    design_sha256: Digest
+    plan_sha256: Digest
+    prior_family_ceiling: Count
+    family_ceiling: Count
+    prior_task_ceiling: Count
+    task_ceiling: Count
+    owner: Text
+    decided_on: date
+    decision_reference: Text
+
+
 class PilotDecision(Contract):
     schema_version: Literal[1]
     pilot_batch_id: Slug
