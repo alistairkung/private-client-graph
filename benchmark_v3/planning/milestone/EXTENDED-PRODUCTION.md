@@ -159,6 +159,13 @@ frozen spans by a blank line. The controller retains both original
 commitments and records whitespace-only derivatives. R still needs
 independent scientific acceptance and observed controls.
 
+Q's retained adjudication required one unique whitespace correction
+across its quotation representations. Four proposed sufficient sets
+contained the same already approved exact singleton proof. The
+controller preserves the original adjudication and records the
+inclusion-minimal equivalent. Q still requires its scientific audit,
+independent controls and replay.
+
 ## Large-file and restart controls
 
 U's independent planner retained its exact un-authored 65-Source

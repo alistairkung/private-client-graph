@@ -3,9 +3,11 @@
 from typing import TYPE_CHECKING, Any
 
 from benchmark_v3.batch.contracts import Adjudication
+from benchmark_v3.batch.read_format_recovery import exact_whitespace_span
 from benchmark_v3.commissioning import json_text
 from private_client_graph.evaluation import _edge
 from private_client_graph.models.evaluation_result import SemanticEdge
+from private_client_graph.models.source import Source
 
 if TYPE_CHECKING:
     from benchmark_v3.batch.sessions import SessionRunner
@@ -110,11 +112,78 @@ TRUTH_QUOTATIONS = (
 
 KEY_REPLAY_FAILURE = "Provisional key fails canonical replay or the existing evidence policies."
 PROOF_RETRY = "independent-proof-retry-"
+QUOTE_RECOVERY = "adjudication-whitespace-"
 
 
 def proof_retry(runner: "SessionRunner", job: str) -> dict[str, Any] | None:
     return next((row["details"] for row in runner.ledger.events(runner.manifest.batch_id, runner.family)
                  if (row["revision"], row["kind"], row["name"]) == (runner.revision, "reconcile", PROOF_RETRY + job)), None)
+
+
+def quote_recovery(runner: "SessionRunner", job: str) -> dict[str, Any] | None:
+    return next((row["details"] for row in runner.ledger.events(runner.manifest.batch_id, runner.family)
+                 if (row["revision"], row["kind"], row["name"]) == (runner.revision, "reconcile", QUOTE_RECOVERY + job)), None)
+
+
+def exact_whitespace_key(review: Adjudication, sources: list[Source]) -> tuple[Adjudication, list[dict[str, Any]]]:
+    """Normalize uniquely attributable whitespace without changing the independent key's substance."""
+    body = {source.id: source.text for source in sources}
+    key = review.key.model_dump(mode="json")
+    edits: list[dict[str, Any]] = []
+    approved: dict[tuple[SemanticEdge, str], set[str]] = {}
+
+    def quote(pair: dict[str, str], path: str) -> tuple[str, str]:
+        original = pair["supporting_text"]
+        if pair["source_id"] not in body:
+            raise ValueError("Exact quotation recovery cannot change Source attribution.")
+        repaired = (original if original in body[pair["source_id"]]
+                    else exact_whitespace_span(original, body[pair["source_id"]]))
+        if repaired != original:
+            edits.append({"path": path, "source_id": pair["source_id"], "before": original, "after": repaired})
+            pair["supporting_text"] = repaired
+        return original, repaired
+
+    for index, row in enumerate(key["ideal"]["relationships"]):
+        quote(row, f"/ideal/relationships/{index}/supporting_text")
+    for index, row in enumerate(key["source_approval"]["relationships"]):
+        edge = _edge(row["source"], row["type"], row["target"])
+        for number, pair in enumerate(row["approved_evidence"]):
+            original, repaired = quote(pair, f"/source_approval/relationships/{index}/approved_evidence/{number}/supporting_text")
+            approved.setdefault((edge, original), set()).add(repaired)
+    for index, row in enumerate(key["sufficient_evidence"]):
+        for alternative, group in enumerate(row["alternatives"]):
+            for number, pair in enumerate(group):
+                quote(pair, f"/sufficient_evidence/{index}/alternatives/{alternative}/{number}/supporting_text")
+        row["alternatives"] = _retain_minimal_sets(row["alternatives"], index, edits)
+    for index, row in enumerate(key["truth"]["relationships"]):
+        edge = _edge(row["source"], row["type"], row["target"])
+        for number, original in enumerate(row["approved_evidence"]):
+            choices = approved.get((edge, original), {original})
+            if len(choices) != 1:
+                raise ValueError("A truth quotation needs one exact replacement in its approved Sources.")
+            restored, = choices
+            if restored != original:
+                path = f"/truth/relationships/{index}/approved_evidence/{number}"
+                edits.append({"path": path, "before": original, "after": restored})
+                row["approved_evidence"][number] = restored
+    return Adjudication.model_validate(review.model_dump(mode="json") | {"key": key}), edits
+
+
+def _retain_minimal_sets(
+    alternatives: list[list[dict[str, str]]], index: int, edits: list[dict[str, Any]],
+) -> list[list[dict[str, str]]]:
+    # A strict superset cannot be a second minimum when its exact subset was already approved.
+    sets = [{(pair["source_id"], pair["supporting_text"]) for pair in group} for group in alternatives]
+    retained = []
+    for position, group in enumerate(alternatives):
+        contained = next((other for other, proof in enumerate(sets)
+                          if proof < sets[position] or (other < position and proof == sets[position])), None)
+        if contained is None or not sets[contained] or len(sets[position]) != len(group):
+            retained.append(group)
+        else:
+            edits.append({"path": f"/sufficient_evidence/{index}/alternatives/{position}",
+                          "before": group, "covered_by_existing_alternative": contained})
+    return retained
 
 
 def localize_key_presentation(review: Adjudication) -> tuple[Adjudication, list[dict[str, Any]]]:

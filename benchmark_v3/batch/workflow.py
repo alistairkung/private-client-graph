@@ -687,6 +687,15 @@ class FamilyWorkflow:
             output_schema=adjudication_contract.output_schema(ids, complete_evidence=complete),
             allow_format_retry=proof_retry is None,
         )
+        quotation = adjudication_contract.quote_recovery(self.runner, job)
+        if quotation is not None:
+            original, receipt, request = self.runner.committed_result("adjudicate", job, "adjudication", Adjudication)
+            derivative, changes = adjudication_contract.exact_whitespace_key(original, sources)
+            if (original != review or inputs != request["inputs"] or receipt["receipt_sha256"] != quotation["receipt_sha256"]
+                    or authorisation.commitment(derivative) != quotation["derivative_sha256"] or changes != quotation["edits"]):
+                raise packet.PacketIsolationError("The exact adjudication quotation derivative differs from its receipt.")
+            self.transition_inputs[f"{job}_exact_quotes"] = commissioning.digest(_json(quotation).encode())
+            review = derivative
         if self.runner.ledger.requires_delivery_attestation and not review.unresolved:
             review = self._localize_approval_ids(job, review)
         return review

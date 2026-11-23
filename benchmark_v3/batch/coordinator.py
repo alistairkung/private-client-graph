@@ -617,7 +617,7 @@ def _block(
     reading_release_prefix = {
         "blind": read_format_recovery.RELEASE,
         "masks": read_format_recovery.MASK_RELEASE,
-        "adjudicate": adjudication_contract.PROOF_RETRY,
+        "adjudicate": (adjudication_contract.PROOF_RETRY, adjudication_contract.QUOTE_RECOVERY),
     }.get(workflow.stage)
     if reading_release_prefix is not None:
         qualifier = next((row["name"] for row in reversed(ledger.events(batch, family))
@@ -1182,6 +1182,39 @@ def release_incomplete_adjudication_proof(ledger: PooledLedger, batch: str, fami
         frozen_rekey.verify_same_semantics(result, case.locked[condition])
         ledger.event(batch, family, revision, "reconcile", adjudication_contract.PROOF_RETRY + job, state, state, {
             "receipt_sha256": receipt["receipt_sha256"], "freeze_sha256": prior.freeze_sha256,
+        })
+
+
+def recover_adjudication_whitespace(ledger: PooledLedger, batch: str, family: str, index: int) -> None:
+    with ledger.coordinator_lock():
+        ledger.require_running()
+        commission = load_commission(ledger, batch)
+        revision, state, issue = family_status(ledger, batch, family)
+        runner = commission.session_runner(ledger, family, revision)
+        job = f"adjudicate-{index:03}"
+        if (not ledger.requires_delivery_attestation or state != "adjudicate" or not issue
+                or issue["code"] != "scientific_review"
+                or not issue["evidence"].endswith("supporting_text does not occur verbatim in source")
+                or adjudication_contract.quote_recovery(runner, job) is not None):
+            raise ValueError("Only the exact stopped adjudicated quotation can use whitespace recovery.")
+        slot = next(row for row in commission.portfolio.slots if row.family_id == family)
+        condition = science.condition_ids(slot)[index]
+        if (runner.directory / "family" / f"{condition}.json").exists():
+            raise ValueError("An already locked key cannot be changed by whitespace recovery.")
+        original, receipt, request = runner.committed_result("adjudicate", job, "adjudication", Adjudication)
+        sources = TypeAdapter(list[Source]).validate_json(request["inputs"]["sources"])
+        derivative, edits = adjudication_contract.exact_whitespace_key(original, sources)
+        if not edits or original.key.condition != "local":
+            raise ValueError("The rejected key has no unique exact quotation derivative.")
+        projected, local_id_edits = adjudication_contract.localize_key_presentation(derivative)
+        if local_id_edits:
+            raise ValueError("A quotation-only recovery cannot also change local endpoint presentation.")
+        agreement = science.compare_readings(Reading.model_validate_json(request["inputs"]["annotation_a"]),
+                                             Reading.model_validate_json(request["inputs"]["annotation_b"]), sources)
+        locked = projected.model_copy(update={"key": projected.key.model_copy(update={"condition": condition})})
+        science.verify_adjudication(condition, locked, sources, agreement)
+        ledger.event(batch, family, revision, "reconcile", adjudication_contract.QUOTE_RECOVERY + job, state, state, {
+            "receipt_sha256": receipt["receipt_sha256"], "derivative_sha256": authorisation.commitment(derivative), "edits": edits,
         })
 
 

@@ -3970,6 +3970,26 @@ def test_fresh_dependency_repair_uses_documented_attachments_without_automatic_t
     assert [ticket for _, ticket, _, _ in workflow._author_assignments(design)] == ["Record your own observation.", legacy]
 
 
+def test_adjudicated_whitespace_recovery_keeps_only_exact_independently_supported_minimal_sets():
+    from benchmark_v3.batch.contracts import Adjudication
+
+    malformed = QUOTE.replace(" is ", "  is ")
+    raw = json.loads(json.dumps(_output("adjudication", "G", "", {})).replace(QUOTE, malformed))
+    proof = raw["key"]["sufficient_evidence"][0]["alternatives"]
+    proof.append([*proof[0], {"source_id": "src2", "supporting_text": "Separate dated note."}])
+    original = Adjudication.model_validate(raw)
+    sources = [Source(id="src1", title="Record", text=QUOTE), Source(id="src2", title="Note", text="Separate dated note.")]
+    corrected, changes = adjudication_contract.exact_whitespace_key(original, sources)
+    assert len(changes) == 6 and len(corrected.key.sufficient_evidence[0].alternatives) == 1
+    assert corrected.key.ideal.relationships[0].supporting_text == QUOTE
+    assert corrected.key.source_approval.relationships[0].approved_evidence[0].supporting_text == QUOTE
+    assert corrected.key.truth.relationships[0].approved_evidence == [QUOTE]
+    assert len(original.key.sufficient_evidence[0].alternatives) == 2
+    science.verify_adjudication("local", corrected, sources, {"disagreements": []})
+    with pytest.raises(ValueError, match="one exact span"):
+        adjudication_contract.exact_whitespace_key(original, [sources[0].model_copy(update={"text": f"{QUOTE}\n{QUOTE}"}), sources[1]])
+
+
 def test_verified_quarantine_releases_the_pool_but_never_the_affected_custody(approved, transport, monkeypatch, tmp_path):
     from benchmark_v3.batch import author_delivery
     from benchmark_v3.batch.pool import PooledLedger
