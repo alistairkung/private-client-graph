@@ -10,8 +10,8 @@ from pydantic import BaseModel
 
 from benchmark_v3 import commissioning, packet
 from benchmark_v3.batch import (
-    adjudication_contract, adjudication_recovery, annotation_recovery, artifacts, audit_recovery, author_context, author_repair, authorisation,
-    construction, continuation, design_review, repair_authority,
+    adjudication_contract, adjudication_recovery, annotation_recovery, artifacts, audit_recovery, author_context,
+    author_repair, authorisation, construction, continuation, design_review, repair_authority,
 )
 from benchmark_v3.batch.contracts import BatchManifest, Code, Role, Stage
 from benchmark_v3.batch.ledger import Ledger, TaskHalted
@@ -242,7 +242,9 @@ class SessionRunner:
         if fresh:
             try:
                 artifacts.write_json(path / "request.json", request)
-                packet.run_packet(path, before_turn=lambda: self._before_turn(role, stage, active_only, job, inputs))
+                packet.run_packet(
+                    path, before_turn=lambda: self._before_turn(role, stage, active_only, path, request),
+                )
             except (packet.PacketError, OSError, ValueError) as error:
                 if not (path / "receipt.json").is_file():
                     code: Code = "isolation" if isinstance(error, packet.PacketIsolationError) else "uncertain_dispatch"
@@ -265,10 +267,16 @@ class SessionRunner:
             raise InvalidRoleOutput(f"{job} failed its output contract: {error}") from error
         return value, evidence, unwrapped
 
-    def _before_turn(self, role: Role, stage: Stage, active_only: bool, job: str, inputs: dict[str, str]) -> None:
+    def _before_turn(
+        self, role: Role, stage: Stage, active_only: bool, directory: Path, request: dict[str, Any],
+    ) -> None:
         self._require_authority(role)
         if role == "author" and self.ledger.requires_author_context:
-            author_context.require_projection(self, job, inputs)
+            author_context.require_projection(self, directory.name, request["inputs"])
+            message = commissioning.json_text({"inputs": request["inputs"], "prompt": request["prompt"]})
+            handoff = commissioning._read_json(artifacts.read_bytes(directory / "handoff.json"))
+            if handoff["packet_sha256"] != commissioning.digest(message.encode()):
+                raise packet.PacketIsolationError("The staged author message differs from the reviewed reservation.")
         if active_only:
             self.ledger.verify_active_stage(self.family, self.revision, stage)
 

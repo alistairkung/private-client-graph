@@ -17,12 +17,17 @@ public or ordinary genre guidance. Family A's custody and receipt
 fingerprints remain available, with incomplete raw packet custody in the
 locations inspected. The eight X author packets carry public genre
 references, participant-specific instructions and declared deliveries.
-The I, L and pre-giant holds remain intact. Pending legacy attempts remain
-available as research history. Fresh production uses separate designers,
-authors and documentary files.
+The exact I and L dossiers remain quarantined. Historical H, J, M, N,
+O, Q, R, S and T author inputs also carried case-specific inventory,
+chronology or proof instructions outside at least one participant’s
+scope. P retains its historical scientific quarantine. W had no
+completed historical author turn. Every replacement uses separate
+designers, authors and documentary files.
 
 The retrospective audit commitment is
 `8b23e36bb038fee33690189d7be5d4f4f70bfc470f778ef6f68729a9d6b01781`.
+The lineage dispositions commit to the exact historical packets under
+`8e92dd12a42df9ac0114baffece948b3e4e0f00d77561df87eb7fafceddbf4e4`.
 
 ## Verified release
 
@@ -31,8 +36,9 @@ brief changes, hidden proof wording, future attachments, undeclared
 fields and modified receipt-backed Sources. The release requires a
 separate independent review of the exact projected author inputs for each
 revision. The coordinator verifies the review receipt before charging an
-author and rechecks it at dispatch. An actual delivery must match the
-approved inventory and the authenticated earlier author's output. A new
+author and rechecks it at dispatch. The transport’s staged message fingerprint
+must match the reviewed reservation before the turn. An actual delivery
+must match the approved inventory and the authenticated earlier author's output. A new
 shared isolation failure stops the replacement pool.
 
 | Commitment | SHA-256 |
