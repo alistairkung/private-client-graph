@@ -8,8 +8,9 @@ from typing import Any, Literal
 
 from benchmark_v3 import commissioning, packet
 from benchmark_v3.batch import (
-    adjudication_contract, adjudication_recovery, annotation_recovery, artifacts, audit_recovery, authorisation, autonomous_realism,
-    construction, continuation, design_recovery, design_review, evidence_recovery, exception_review, milestone_repair, repair_authority, science,
+    adjudication_contract, adjudication_recovery, annotation_recovery, artifacts, audit_recovery, authorisation,
+    autonomous_realism, construction, continuation, design_recovery, design_review, evidence_recovery, exception_review,
+    milestone_repair, repair_authority, science,
 )
 from benchmark_v3.batch.contracts import (
     AdjudicationQuoteRecovery, AnnotationRecovery, AuditRecovery, BatchDecision, BatchManifest, BudgetAmendment,
@@ -121,10 +122,13 @@ def _returned_realism(
     if state not in {"returned", "quarantined"} or not repair_authority.enabled(ledger, commission.manifest):
         return None
     events = [row for row in ledger.events(commission.manifest.batch_id, family) if row["revision"] == revision]
-    if any(row["kind"] in {"human_decision", "task_halt"} or row["name"] in {"freeze", repair_authority.STOP}
-           for row in events):
+    if any(row["kind"] in {"human_decision", "task_halt"} or row["name"] == "freeze" for row in events):
         return None
-    return next((row for row in events if row["kind"] == "disposition" and row["name"] == "realism"), None)
+    disposition = next((row for row in events if row["kind"] == "disposition" and row["name"] == "realism"), None)
+    if disposition and any(row["name"].startswith(repair_authority.STOP)
+                           and row["sequence"] > disposition["sequence"] for row in events):
+        return None
+    return disposition
 
 
 @dataclass(frozen=True)
@@ -164,6 +168,7 @@ def _run_roadmap(ledger: Ledger, commission: Commission) -> None:
     assert target is not None
     slots = {slot.family_id: slot for slot in commission.portfolio.slots}
     _reopen_redundant_snapshots(ledger, commission, slots)
+    _reopen_recovered_plans(ledger, commission, slots)
     with ThreadPoolExecutor(max_workers=manifest.max_parallel_families) as executor:
         workers: dict[Future[None], str] = {}
         while True:
@@ -224,6 +229,43 @@ def _reopen_redundant_snapshots(
                 repair_permitted=False, human_action="Review the remaining design defect.",
                 remaining_work="family_halted",
             ), qualifier=design_recovery.PREFIX_RECOVERY)
+
+
+def _reopen_recovered_plans(ledger: Ledger, commission: Commission, slots: dict[str, FamilySlot]) -> None:
+    manifest = commission.manifest
+    if not repair_authority.enabled(ledger, manifest):
+        return
+    for allocation in manifest.families:
+        family = allocation.family_id
+        revision, state, blocking = family_status(ledger, manifest.batch_id, family)
+        if state != "quarantined" or not blocking or blocking["stage"] != "design":
+            continue
+        format_failure = blocking["evidence"].startswith("repair-plan-format-retry failed its output contract:")
+        capacity_failure = blocking["code"] == "budget"
+        if not (format_failure or capacity_failure):
+            continue
+        runner = commission.session_runner(ledger, family, revision)
+        release = autonomous_realism.release_event(runner)
+        if any(row["revision"] == revision and row["name"] == repair_authority.PLAN_RECOVERY
+               for row in ledger.events(manifest.batch_id, family)):
+            continue
+        if release is None:
+            continue
+        if capacity_failure:
+            events = ledger.events(manifest.batch_id, family)
+            jobs = {attempt["job"] for attempt in ledger.attempts(family) if attempt["revision"] == revision}
+            if repair_authority.PLAN_JOB not in jobs or repair_authority.BUDGET_PLAN_JOB in jobs or any(
+                row["revision"] == revision and row["kind"] == "transition" and row["name"] == "design"
+                for row in events
+            ):
+                continue
+            reason = "A retained pre-authoring budget stop can receive one independent capacity replan."
+        elif autonomous_realism.recover_stopped_plan(runner, slots[family], release):
+            reason = "Validated exact current and retained historical objection IDs."
+        else:
+            continue
+        ledger.event(manifest.batch_id, family, revision, "reconcile", repair_authority.PLAN_RECOVERY,
+                     state, "design", {"reason": reason})
 
 
 def release_milestone_realism_repair(ledger: Ledger, plan: MilestoneRealismRepair) -> str:
@@ -388,6 +430,8 @@ def family_status(ledger: Ledger, batch_id: str, family: str) -> tuple[int, str,
             blocking = record["details"]
         if record["kind"] in {"reconcile", "family_release"}:
             blocking = None
+            if record["kind"] == "reconcile" and record["name"] == repair_authority.PLAN_RECOVERY:
+                state = "design"
     return revision, state, blocking
 
 
@@ -470,9 +514,19 @@ def _work_family(
 
 
 def _stop_documentary_repair(ledger: Ledger, commission: Commission, workflow: FamilyWorkflow, reason: str) -> None:
+    name = repair_authority.STOP
+    if _plan_reopened(ledger, workflow):
+        name += "_after_recovery"
     ledger.event(
         commission.manifest.batch_id, workflow.slot.family_id, workflow.runner.revision,
-        "operator_close", repair_authority.STOP, workflow.stage, "quarantined", {"reference": reason},
+        "operator_close", name, workflow.stage, "quarantined", {"reference": reason},
+    )
+
+
+def _plan_reopened(ledger: Ledger, workflow: FamilyWorkflow) -> bool:
+    return any(
+        row["revision"] == workflow.runner.revision and row["name"] == repair_authority.PLAN_RECOVERY
+        for row in ledger.events(workflow.runner.manifest.batch_id, workflow.slot.family_id)
     )
 
 
@@ -503,7 +557,8 @@ def _block(
         human_action=None if repair else actions.get(code, "Review the retained scientific objection."),
         remaining_work="task_halted" if code == "isolation" else "family_halted",
     ), continuation=workflow.release is not None,
-        qualifier=(audit_recovery.JOB if workflow.audit_recovery is not None
+        qualifier=(repair_authority.PLAN_RECOVERY if _plan_reopened(ledger, workflow)
+                   else audit_recovery.JOB if workflow.audit_recovery is not None
                    else "complete-evidence" if workflow.release_action == "complete_evidence_adjudication" else None))
 
 

@@ -140,8 +140,10 @@ class FamilyWorkflow:
             self.sessions.append(receipt)
             design = revision.design
             self.repair_tickets = revision.plan.tickets
+            lineage_name = ("repair-lineage.json" if revision.planner_job == repair_authority.PLAN_JOB
+                            else "repair-budget-lineage.json")
             self.transition_inputs["repair_lineage"] = artifacts.write_json(
-                self.directory / "repair-lineage.json", revision.lineage,
+                self.directory / lineage_name, revision.lineage,
             )
         elif allocation.approved_design:
             candidate = construction.load_design(self.runner.ledger.root, self.runner.manifest.batch_id, allocation)
@@ -606,6 +608,8 @@ class FamilyWorkflow:
             + "\n\n[Full dossier](dossier.json) · [Manifest](manifest.json) · [Offline replay](replay/preflight.json)\n"
         )
         artifacts.write_bytes(root / "DOSSIER.md", markdown.encode())
+        if self.documentary_revision is not None:
+            dossier["documentary_repair_lineage"] = self.documentary_revision.lineage
         if self.recovered_evidence is not None:
             dossier["invariant_evidence_recovery"] = self.evidence_release
             dossier["invariant_route_replay"] = self.recovered_evidence.exact_route_checks

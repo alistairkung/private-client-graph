@@ -12,6 +12,8 @@ AMENDMENT = "autonomous_realism_amendment"
 REVISION = "autonomous_realism_repair"
 STOP = "autonomous_realism_stop"
 PLAN_JOB = "repair-plan"
+BUDGET_PLAN_JOB = "repair-budget-plan"
+PLAN_RECOVERY = "realism_plan_reference_recovery"
 VERIFY_JOB = "repair-verification"
 FORMAT_RETRY = "-format-retry"
 

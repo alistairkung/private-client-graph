@@ -17,6 +17,7 @@ from benchmark_v3.batch.contracts import BatchManifest, Code, Role, Stage
 from benchmark_v3.batch.ledger import Ledger, TaskHalted
 
 _T = TypeVar("_T", bound=BaseModel)
+_JSON_WRAPPER = re.compile(rb"\s*```(?:json)?[ \t]*\r?\n(.*?)\r?\n```[ \t]*\s*", re.DOTALL)
 
 
 class InvalidRoleOutput(ValueError):
@@ -24,7 +25,7 @@ class InvalidRoleOutput(ValueError):
 
 
 def _decode(content: bytes, result_type: type[_T], *, unwrap: bool) -> tuple[_T, bool]:
-    fenced = re.fullmatch(rb"\s*```(?:json)?[ \t]*\r?\n(.*?)\r?\n```[ \t]*\s*", content, re.DOTALL) if unwrap else None
+    fenced = _JSON_WRAPPER.fullmatch(content) if unwrap else None
     payload = fenced.group(1) if fenced else content
     return result_type.model_validate(commissioning._read_json(payload)), fenced is not None
 
@@ -76,6 +77,18 @@ class SessionRunner:
         validate: Callable[[_T], None] | None = None,
     ) -> tuple[_T, dict[str, Any]]:
         recovery = repair_authority.enabled(self.ledger, self.manifest)
+        retry = job + repair_authority.FORMAT_RETRY
+        retry_instructions = instructions if role == "designer" else (
+            instructions + " Return only the exact requested JSON object."
+        )
+        choice = self._selection(job) if recovery else None
+        if choice and choice["selected_job"] == retry:
+            result, receipt, unwrapped = self._run_one(
+                stage, retry, role, inputs, retry_instructions, result_type, output_schema=output_schema,
+                validate=validate, recovery=True,
+            )
+            self._record_selection(stage, job, retry, receipt, result, choice["reason"], unwrapped)
+            return result, receipt
         try:
             result, receipt, unwrapped = self._run_one(
                 stage, job, role, inputs, instructions, result_type, output_schema=output_schema,
@@ -84,9 +97,8 @@ class SessionRunner:
         except InvalidRoleOutput as error:
             if not recovery:
                 raise
-            retry = job + repair_authority.FORMAT_RETRY
             result, receipt, unwrapped = self._run_one(
-                stage, retry, role, inputs, instructions + " Return only the exact requested JSON object.",
+                stage, retry, role, inputs, retry_instructions,
                 result_type, output_schema=output_schema, validate=validate, recovery=True,
             )
             self._record_selection(stage, job, retry, receipt, result, str(error), unwrapped)
@@ -108,8 +120,7 @@ class SessionRunner:
     def committed_result(
         self, stage: Stage, job: str, role: Role, result_type: type[_T],
     ) -> tuple[_T, dict[str, Any], dict[str, Any]]:
-        choice = next((row["details"] for row in self.ledger.events(self.manifest.batch_id, self.family)
-                       if (row["revision"], row["kind"], row["name"]) == (self.revision, "output_selection", job)), None)
+        choice = self._selection(job)
         selected = choice["selected_job"] if choice else job
         if selected not in {job, job + repair_authority.FORMAT_RETRY}:
             raise ValueError("A derivative must reference its original job or the single format retry.")
@@ -123,6 +134,10 @@ class SessionRunner:
         ):
             raise ValueError("The recovered role output differs from its committed derivative.")
         return value, receipt, request
+
+    def _selection(self, job: str) -> dict[str, Any] | None:
+        return next((row["details"] for row in self.ledger.events(self.manifest.batch_id, self.family)
+                     if (row["revision"], row["kind"], row["name"]) == (self.revision, "output_selection", job)), None)
 
     def _run_one(
         self, stage: Stage, job: str, role: Role, inputs: dict[str, str], instructions: str,
@@ -160,7 +175,8 @@ class SessionRunner:
             base_job = job.removesuffix(repair_authority.FORMAT_RETRY) if recovery else job
             permitted = base_job == (audit_recovery.JOB if audit_release else "audit")
             if recovery and (stage, base_job) in {
-                ("design", repair_authority.PLAN_JOB), ("author", repair_authority.VERIFY_JOB),
+                ("design", repair_authority.PLAN_JOB), ("design", repair_authority.BUDGET_PLAN_JOB),
+                ("author", repair_authority.VERIFY_JOB),
             }:
                 permitted = any(
                     row["revision"] == self.revision and row["kind"] == "transition"
@@ -200,6 +216,11 @@ class SessionRunner:
             if validate is not None:
                 validate(value)
         except (UnicodeError, ValueError) as error:
+            if recovery:
+                self.ledger.event(
+                    self.manifest.batch_id, self.family, self.revision, "rejected_output", job, stage, stage,
+                    {"receipt_sha256": evidence["receipt_sha256"], "reason": str(error)},
+                )
             raise InvalidRoleOutput(f"{job} failed its output contract: {error}") from error
         return value, evidence, unwrapped
 

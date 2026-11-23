@@ -1947,7 +1947,10 @@ def test_autonomous_realism_iterates_and_isolates_dependency_regeneration(autono
     def plan(inputs):
         prior = json.loads(inputs["audit_rules"])["prior_repair"]
         ticket = "First date correction." if not prior else "Final dated account."
-        return _repair_plan(inputs, ticket=ticket)
+        plan = _repair_plan(inputs, ticket=ticket)
+        if prior:
+            plan["objections"]["revision_1:G000:1"] = plan["objections"]["G000:1"]
+        return plan
 
     behavior["G", "design"] = original_design
     behavior["G", "author-src1"] = author
@@ -2092,3 +2095,58 @@ def test_autonomous_realism_unwraps_one_exact_json_response_without_retry(autono
     assert [job for _, _, job, _ in calls if job.startswith("realism")] == ["realism-000"]
     row = next(row for row in ledger.events(batch, "G") if row["kind"] == "output_selection")
     assert row["details"]["representation_unwrapped"] is True
+
+
+def test_autonomous_realism_fresh_designer_retry_keeps_versioned_packet_profile(autonomous, transport):
+    ledger, commission = autonomous
+    batch = commission.manifest.batch_id
+    calls, behavior, _ = transport
+    behavior["G", "design"] = lambda _: {}
+    coordinator.commission_batch(ledger, commission, BOUNDARY)
+    coordinator.run_batch(ledger, batch)
+
+    assert coordinator.roadmap_progress(ledger, commission).qualified == ["G"]
+    assert [job for _, _, job, _ in calls if job.startswith("design")] == ["design", "design-format-retry"]
+
+
+def test_autonomous_realism_replans_before_spending_on_unaffordable_authors(autonomous, transport):
+    ledger, base = autonomous
+    manifest = BatchManifest.model_validate(base.manifest.model_dump() | {
+        "families": [base.manifest.families[0].model_dump() | {"sessions": 13}], "task_session_ceiling": 13,
+    })
+    commission = coordinator.Commission(base.portfolio, manifest, _approval(base.portfolio, manifest))
+    batch = manifest.batch_id
+    calls, behavior, _ = transport
+
+    def initial_plan(inputs):
+        design = _design("G") | {"sections": {"left": ["src1"], "right": ["src2"]}}
+        return _repair_plan(inputs, ticket="Add the account date.", revised_design=design)
+
+    def lower_cost_plan(inputs):
+        assert json.loads(inputs["audit_rules"])["unaffordable_plan"]["required_remaining_sessions_before_masks"] == 11
+        return _repair_plan(inputs, ticket="Use a dated account with the original whole-file scope.")
+
+    def realism(inputs):
+        verdict = "pass" if "dated account" in inputs["sources"] else "return"
+        return _output("realism", "G", "", inputs) | {"verdict": verdict}
+
+    behavior["G", "repair-plan"] = initial_plan
+    behavior["G", "repair-budget-plan"] = lower_cost_plan
+    behavior["G", "realism-000"] = realism
+    behavior["G", "author-src1"] = lambda inputs: {
+        "title": "Record", "text": f"{QUOTE}\n{inputs.get('revision_ticket', '')}",
+    }
+    behavior["G", "repair-verification"] = lambda _: {
+        "verdict": "preserved", "scope": "Preserved.", "provenance": "Confirmed.", "contrast": "Preserved.",
+        "objections": [],
+    }
+    coordinator.commission_batch(ledger, commission, BOUNDARY)
+    coordinator.run_batch(ledger, batch)
+
+    assert coordinator.roadmap_progress(ledger, commission).qualified == ["G"]
+    assert len(ledger.attempts("G")) == 13
+    assert [job for _, family, job, _ in calls if family == "G@2"][:3] == [
+        "repair-plan", "repair-budget-plan", "author-src1",
+    ]
+    selected = next(row for row in ledger.events(batch, "G") if row["kind"] == "repair_plan_selection")
+    assert selected["details"]["job"] == "repair-budget-plan"

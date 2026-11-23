@@ -395,3 +395,10 @@ invalid role result can receive one fresh isolated format attempt with the
 same inputs. Both responses or the original and its derivative remain
 committed. Quote and Source-reference checks, exact matched literals and
 reviewed inventories retain their original validation requirements.
+
+The planner must classify every current objection. References to earlier
+objections are accepted only if they identify unique retained review findings.
+If a valid plan cannot fund all mandatory work before masks, one fresh
+capacity replan may determine whether a smaller repair preserves the
+scientific scope. The independent scope review still gates progression
+and the runner retains both plans and their exact receipt commitments.
