@@ -156,6 +156,9 @@ No verified findings recorded.
 | `asset-transfer-without-relationship-migration@1` · Moving assets does not move the named relationships | BG | approved | `29d8aaa32033487f69f4eec69ef821877b066f65d10402d173a9f700f6557e63` |
 | `bounded-age-proof-of-named-commencement@1` · An age check can establish commencement without an exact birth date | BN | approved | `1a4cc06acbd0b4aeb614632439fdc522f46f7e232f67a86b1c12875bc3585b41` |
 | `cumulative-benefit-cap-versus-posted-debits@1` · Posted debits do not necessarily exhaust a capped named benefit | BO | approved | `d55453096200efc2ff0db3cb3b2b64f988876f4e618b6f1182b9a9a746d6bd67` |
+| `late-notice-with-separate-operative-cure@1` · An acknowledged late notice is not an accepted late notice | BV | approved | `c34ed48b67b88ea08cb8fc1936a3a8775dde0ef8016400e0e2321f73924c7497` |
+| `derivative-correction-with-historical-scope@1` · A corrected founding record does not reset the current roster | BW | approved | `e1cd810853a60fa9a80df9b6b671997a8c002135341c75e2d4401ef63238f233` |
+| `trust-specific-live-register-cutover@1` · Authority to make an entry transfers trust by trust | BX | proposed | `6949a545a1f33e7a39367b7779b10e1d00e03fb167e42d00f20a17feee0f1dd5` |
 | `concurrent-assent-to-one-decision@1` · Separate assents must concern the same decision | AA | proposed | `4156635b4a723dd63ab71c9919f574e6cfe882ed2a8d74d463399d7663528c3b` |
 | `shared-parent-without-sibling-assertion@1` · Supported common parentage does not supply a sibling edge | AB | approved | `9dd22215c301d0855fa3660b14caa92651730dbf325c2928eb7a9d7ff20994df` |
 | `automatic-reversion-after-temporary-substitution@1` · A suspended provision resumes without a new act | AC | proposed | `11735f0da17407c28981c349d865eaed29adc508305e3a19eef40edccd8b4d1b` |

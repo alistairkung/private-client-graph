@@ -34,6 +34,13 @@ CLASSIFICATION_LAYOUT = (
     " Classify the current audit_rules.objections using their exact keys. Discuss earlier documentary"
     " findings in the rationale, with revision numbers where needed."
 )
+LOCAL_ORIGIN = (
+    " After a participant-scope return, derive each changed instruction from that participant's own acts and"
+    " documented deliveries. Do not copy the reviewed case-wide file or a later Source into a brief under"
+    " the name of a new worksheet. An honest working record may document what the participant actually checked"
+    " and leave unverified fields open. Return infeasible if the commissioned mechanism requires unavailable"
+    " participant knowledge."
+)
 VERIFY_PROMPT = (
     "Independently compare the original and revised fictional files with their designs and the approved hypothesis. "
     "Check that the intended contrast, scoped relationships, cut-off question, invariant evidence, participant "
@@ -302,8 +309,11 @@ def _select_plan(
         runner.ledger.require_capacity(runner.family, runner.revision, mandatory_jobs(design, affected, verification=True))
         _record_plan_selection(runner, job, receipt)
         return plan, receipt, design, affected, job
-    if attested and _classification_layout_for_plan(runner):
-        prompt += CLASSIFICATION_LAYOUT
+    if attested:
+        if _include_plan_instruction(runner, CLASSIFICATION_LAYOUT):
+            prompt += CLASSIFICATION_LAYOUT
+        if _pre_author_returns(release) and _include_plan_instruction(runner, LOCAL_ORIGIN):
+            prompt += LOCAL_ORIGIN
     plan, receipt = propose(repair_authority.PLAN_JOB, prompt, inputs)
     design, affected = _verify_plan(slot, parent, plan, attested=attested)
     original_jobs = mandatory_jobs(design, affected, verification=True)
@@ -345,10 +355,10 @@ def _select_plan(
     return plan, receipt, design, affected, budget_job
 
 
-def _classification_layout_for_plan(runner: SessionRunner) -> bool:
+def _include_plan_instruction(runner: SessionRunner, instruction: str) -> bool:
     attempt = next((row for row in runner.ledger.attempts(runner.family)
                     if row["revision"] == runner.revision and row["job"] == repair_authority.PLAN_JOB), None)
-    return attempt is None or CLASSIFICATION_LAYOUT in commissioning._read_json(attempt["request"])["prompt"]
+    return attempt is None or instruction in commissioning._read_json(attempt["request"])["prompt"]
 
 
 def _record_plan_selection(runner: SessionRunner, job: str, receipt: dict[str, Any]) -> None:

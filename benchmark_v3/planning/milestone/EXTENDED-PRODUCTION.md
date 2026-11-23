@@ -104,6 +104,14 @@ are commissioned for isolated construction. The registered round is
 The independent merits review is
 `d994eccc631bf2e96c8443eb52d529e73ff4ebca410c703eb4f61415a8eb5d2a`.
 
+The seventh reserve review selected BV for a later decision curing
+affirmatively documented lateness and BW for a scoped correction to
+the documentary record of an unchanged founding act. Both are
+commissioned for isolated construction. The registered round is
+`b3e74b8e08222986f583239802610db6bfcb12f7c2ac503cc51a2fbdd3473c89`.
+The independent merits review is
+`39f369c27665aa115ba9b80dbd8dd25c3778581a783a38b6fc59e432dd73b47e`.
+
 ## Subsequent verified qualification
 
 E revision 3 qualified for the two-condition test of contradictory
@@ -152,6 +160,16 @@ origin of an unsigned slip. Its technical dossier is
 `1f372940d07ff3ad777b40340cc4db9aac35ef6d712d0fef7958838584822500`.
 Thirteen families technically qualify. X, T, N, E, W, O, L and AH await
 owner admission.
+
+AG revision 2 qualified for the bounds of a negative receipt record.
+Two matched conditions passed 18 independent evidence assignments.
+A separate zero-provider replay reproduced both graphs, three supported
+edges in total, and their evidence results. The record retains the
+open receipt question when the surviving coverage cannot resolve it.
+Its technical dossier is
+`8b47f7db7e086b1823663baad9e25cca20be911b152e9f5d9fed6899f901f873`.
+Fourteen families technically qualify. X, T, N, E, W, O, L, AH and AG
+await owner admission.
 
 ## Isolated runtime recovery
 
@@ -227,6 +245,11 @@ returned that proposal and three additional knowledge gaps. The
 controller retained the proposal and review with zero participant turns
 in that revision. The next planner must establish each record's local
 basis before the independent scope and documentary gates reopen.
+The following proposal preserved a future-certificate reference and
+repackaged the prior file as an intake worksheet. It also received zero
+participant turns. Fresh plan and scope reviews now ask for documented
+local origin of every worksheet claim and an honest account of any
+unverified details.
 
 L's scope review exposed a factory-generated attachment instruction
 that implied undocumented revised correspondence. Fresh repair

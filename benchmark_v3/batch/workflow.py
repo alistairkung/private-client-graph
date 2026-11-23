@@ -322,6 +322,13 @@ class FamilyWorkflow:
         rules = {"participant_packets": projected, **({"delivery_attestation": 1} if attested else {})}
         delivery_scope = (author_repair.SELECTED_DELIVERY_SCOPE if attested and
                           self._use_scoped_prompt(author_context.JOB, author_repair.SELECTED_DELIVERY_SCOPE) else "")
+        origin_scope = (
+            " A claimed personal worksheet that reproduces the case-wide file needs separately documented local"
+            " origin. Reject a brief that imports the full inventory or other participants' records merely by"
+            " calling them personal notes. Identify exact observed facts or authenticated deliveries."
+        )
+        if not attested or not self._use_scoped_prompt(author_context.JOB, origin_scope):
+            origin_scope = ""
         review = self.job(author_context.JOB, "audit", {
             "intended_intervention": design.model_dump_json(),
             "audit_rules": _json(rules),
@@ -332,7 +339,7 @@ class FamilyWorkflow:
            "The participant's own act or observation may be documented in ordinary wording. Check that other "
            "people's knowledge and experimental reasoning stay out. Return on any material objection. "
            "Give one finding keyed to every Source ID."
-           + (" " + author_delivery.REVIEW_INSTRUCTION if attested else "") + delivery_scope,
+           + (" " + author_delivery.REVIEW_INSTRUCTION if attested else "") + delivery_scope + origin_scope,
            author_context.AuthorContextReview)
         if review.verdict != "accept" or review.objections or review.findings.keys() != projected.keys():
             self.reject("scientific_review", review.model_dump_json(), quarantine=True)

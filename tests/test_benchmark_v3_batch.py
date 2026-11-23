@@ -2723,6 +2723,8 @@ def test_exact_classification_retry_retains_both_failed_plans_and_uses_the_same_
     request = runner.committed_packet("design", exact, "audit")[2]
     assert request["inputs"] == original_packets[0][2]["inputs"] == original_packets[1][2]["inputs"]
     assert "Copy the current keys" in request["prompt"]
+    scope_request = runner.committed_packet("author", "author-context", "audit")[2]
+    assert "A claimed personal worksheet that reproduces the case-wide file needs separately documented local" in scope_request["prompt"]
     assert [key for _, revision, key, _ in calls if revision == "G@2" and key.startswith("author-src")] == ["author-src1"]
     with pytest.raises(ValueError, match="One fresh classification"):
         coordinator.release_exact_plan_classification(ledger, batch, family)
