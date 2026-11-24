@@ -8,6 +8,12 @@ Private Client Graph reconstructs reviewable family and trust relationships from
 A synthetic source document, complete relationship answer key, and associated fixtures used to exercise and evaluate the pipeline under controlled conditions.
 _Avoid_: Client case, production case
 
+**Benchmark Family**:
+In Benchmark v3, one independent documentary history and its natural and matched Conditions. The family is the unit of independence for evaluation.
+
+**Benchmark Condition**:
+One frozen ordered Source bundle and its admitted answer key within a Benchmark Family. Each Condition in a Benchmark v3 Run contributes one planned Observation, including when its prediction or graph is unavailable.
+
 **Relationship Candidate**:
 A raw semantic claim extracted from source evidence, consisting of two named endpoints, a supported relationship type, and exact supporting text. It has not yet passed deterministic graph construction.
 _Avoid_: Edge, canonical relationship
@@ -19,6 +25,9 @@ _Avoid_: Raw extraction, model output
 **Evidence**:
 An exact supporting quote attributable to one Source, potentially supporting multiple Relationships. Evidence is distinguished by its Source and exact text: repeated identical quotes within one Source are one Evidence item, identical quotes from different Sources are distinct, and no particular occurrence within the Source is implied.
 _Avoid_: Justification, rationale
+
+**Sufficient Evidence Alternative**:
+One approved set of exact Source and quotation pairs that suffices for a benchmark relationship when every member is attached to that same relationship. A joint-only target has multiple Sources in every approved alternative.
 
 **Entity**:
 A Person or Trust identified within one Matter's relationship state. Its name describes it but does not define its identity; matching names alone do not establish that two Entities are the same participant.
@@ -63,6 +72,9 @@ _Avoid_: Experiment, provider attempt, resolver repetition
 **Observation**:
 An individual case, sample and repetition evaluation within a Run, retaining its result or explicit unscored outcome.
 _Avoid_: Run, provider attempt
+
+**Condition-Aligned Comparison**:
+A comparison of Observations from protocol-compatible Runs by their shared Benchmark Conditions, including unavailable outcomes. Condition alignment establishes shared benchmark scope and leaves causal conclusions to the experimental design.
 
 **Aggregate Evaluation**:
 A Run-level summary of its scored Observations together with coverage of the planned Observations. Its relationship F1 pools observation counts rather than averaging individual F1 scores.

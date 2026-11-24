@@ -56,6 +56,7 @@ export function Workspace({
     const controller = new AbortController();
     let timer: ReturnType<typeof setTimeout>;
     async function load() {
+      let shouldPoll = true;
       try {
         const [detail, catalog, status] = await Promise.all([
           getWorkspace(id, controller.signal),
@@ -86,11 +87,13 @@ export function Workspace({
               : [],
           ),
         );
+        // Imported Runs are immutable and are verified again on each explicit read.
+        shouldPoll = !detail.read_only_import;
       } catch (error) {
         if (!controller.signal.aborted) setError((error as Error).message);
       }
-      // Keep status current even when another Experiment is executing.
-      if (!controller.signal.aborted) timer = setTimeout(load, 2000);
+      if (shouldPoll && !controller.signal.aborted)
+        timer = setTimeout(load, 2000);
     }
     void load();
     return () => {
@@ -98,6 +101,7 @@ export function Workspace({
       clearTimeout(timer);
     };
   }, [id, retry]);
+  const editCapabilities = workspace?.read_only_import ? null : capabilities;
   const run =
     runs.find((item) => item.id === selected) ??
     (selected ? undefined : runs.at(-1));
@@ -143,7 +147,7 @@ export function Workspace({
               </details>
             )}
           </header>
-          {capabilities ? (
+          {editCapabilities ? (
             <DraftEditor
               key={draftKey}
               id={id}
@@ -151,7 +155,7 @@ export function Workspace({
               draft={workspace.draft}
               runIds={workspace.run_ids}
               cases={cases}
-              capabilities={capabilities}
+              capabilities={editCapabilities}
               saving={(busy) => {
                 setDraftBusy(busy);
                 saving(busy);
@@ -189,7 +193,7 @@ export function Workspace({
           {selected && !run && !failures.length && (
             <p role="status">Loading selected Run…</p>
           )}
-          {executionRun && capabilities && (
+          {executionRun && editCapabilities && (
             <RunExecution
               key={`execution-${executionRun.id}`}
               run={executionRun}
@@ -215,7 +219,7 @@ export function Workspace({
                 runs={runs}
                 busy={copying || draftBusy}
                 copy={
-                  capabilities
+                  editCapabilities
                     ? async () => {
                         if (copyLock.current) return;
                         copyLock.current = true;

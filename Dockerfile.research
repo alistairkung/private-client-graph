@@ -17,6 +17,9 @@ COPY research/fixtures/ ./research/fixtures/
 COPY cases/ ./cases/
 COPY evaluation_cases/ ./evaluation_cases/
 COPY benchmark_v1/ ./benchmark_v1/
+COPY benchmark_v3/*.py ./benchmark_v3/
+COPY benchmark_v3/batch/*.py ./benchmark_v3/batch/
+COPY benchmark_v3/admissions/2026-11-24.json ./benchmark_v3/admissions/
 RUN uv sync --locked --no-dev
 COPY --from=frontend /build/web/research-dist/ ./web/research-dist/
 EXPOSE 8000

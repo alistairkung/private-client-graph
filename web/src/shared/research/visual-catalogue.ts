@@ -44,6 +44,8 @@ export const researchVisualCatalogue: Record<string, string> = {
   "Run your first configuration to begin comparing results.": "运行首个配置后即可开始比较结果。",
   "Run {run}, F1 {f1}, {state}, {scored}/{planned} scored": "运行 {run}，F1 {f1}，{state}，已评分 {scored}/{planned}",
   "Run number within this experiment": "本实验中的运行序号",
+  "Estimated provider spend · {currency} {amount}": "估算的提供商费用 · {currency} {amount}",
+  "Estimated provider spend is in {currency}. This plot uses {plotCurrency}.": "估算的提供商费用以 {currency} 计。此图使用 {plotCurrency}。",
   "Estimated provider spend incurred by Run ({currency}) · 0–{max}": "该次运行估算的提供商费用（{currency}）· 0–{max}",
   "No Runs are eligible for this chart yet. Inspect their status below.": "尚无符合此图表条件的运行。请在下方查看状态。",
   "{plotted}/{total} Runs plotted · Discrete points; no trend or improvement is implied across different scopes.": "已绘制 {plotted}/{total} 次运行 · 离散点；不表示不同范围之间存在趋势或提升。",

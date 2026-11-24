@@ -2,7 +2,7 @@
 import json
 from pathlib import Path
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request
 
 from private_client_graph.persistence.database import database_engine
 from .approval import authorize
@@ -46,8 +46,14 @@ def mount_workspace_commands(app: FastAPI, root: Path) -> None:
     def refresh():
         rebuild_workspaces(database_engine(), root)
 
+    def writable(experiment_id: str) -> WorkspaceDetail:
+        workspace = read_experiment(root, experiment_id)
+        if workspace.read_only_import:
+            raise HTTPException(405, 'Imported Benchmark workspaces are read-only.')
+        return workspace
+
     def member(experiment_id: str, identity: str):
-        if identity not in read_experiment(root, experiment_id).run_ids:
+        if identity not in writable(experiment_id).run_ids:
             raise ValueError('Run does not belong to this Experiment')
 
     @app.post(f'{PREFIX}/experiments', response_model=WorkspaceDetail)
@@ -58,6 +64,7 @@ def mount_workspace_commands(app: FastAPI, root: Path) -> None:
 
     @app.put(f'{PREFIX}/experiments/{{experiment_id}}/draft', response_model=RunDraft)
     def draft(experiment_id: str, command: DraftUpdate):
+        writable(experiment_id)
         preview_run(command.configuration, root)
         result = update_draft(root, experiment_id, command)
         refresh()
@@ -65,6 +72,7 @@ def mount_workspace_commands(app: FastAPI, root: Path) -> None:
 
     @app.post(f'{PREFIX}/experiments/{{experiment_id}}/draft/copy', response_model=RunDraft)
     def copy(experiment_id: str, command: CopyRunDraft):
+        writable(experiment_id)
         result = copy_run_draft(root, experiment_id, command)
         refresh()
         return result
@@ -75,6 +83,7 @@ def mount_workspace_commands(app: FastAPI, root: Path) -> None:
 
     @app.post(f'{PREFIX}/experiments/{{experiment_id}}/runs', response_model=FrozenPlan)
     def freeze(experiment_id: str, command: FreezeRun):
+        writable(experiment_id)
         result = freeze_run(root, experiment_id, command)
         refresh()
         return result

@@ -18,6 +18,7 @@ from .evidence import relationship_outcomes
 from .execution_contracts import FrozenPlan
 from .run_evaluation import evaluate_run, retained_attempts
 from .run_evaluation_contracts import RunEvaluation
+from .benchmark_contracts import BenchmarkCondition, BenchmarkRun
 from .workspaces import read_experiment
 
 
@@ -35,6 +36,7 @@ class RunObservation(BaseModel):
     result: ResearchResult | None = None
     langfuse_trace_ids: list[str] = Field(default_factory=list)
     relationships: list[RelationshipOutcome] = Field(default_factory=list)
+    benchmark: BenchmarkCondition | None = None
 
 
 class RunDetail(BaseModel):
@@ -44,6 +46,7 @@ class RunDetail(BaseModel):
     plan: FrozenPlan
     lifecycle: str
     evaluation: RunEvaluation
+    benchmark: BenchmarkRun | None = None
     observations: list[RunObservation]
     provenance: dict[str, Any]
     artifact_digest: str
@@ -56,6 +59,13 @@ def read_run(root: Path, experiment_id: str, identity: str) -> RunDetail:
     workspace = read_experiment(root, experiment_id)
     if identity not in workspace.run_ids:
         raise ValueError('Run does not belong to this Experiment')
+    membership_path = root / 'experiments' / experiment_id / 'runs' / f'{identity}.json'
+    if membership_path.exists():
+        from .workspaces import read_record
+        membership = read_record(membership_path)
+        if membership.get('read_only_import'):
+            from .benchmark_v3_import import read_imported_run
+            return read_imported_run(root, experiment_id, identity)
     path = root / identity
     digest = artifact_digest(path)
     bundle = Bundle.open(path)

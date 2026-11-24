@@ -115,3 +115,144 @@ it("shares input-mode filters across tabs without changing selection or renumber
   ).toHaveAttribute("aria-pressed", "true");
   expect(select).not.toHaveBeenCalled();
 });
+
+function benchmarkRun(
+  id: string,
+  {
+    cost = 0.027418308,
+    currency = "USD",
+    origin = "live",
+    reasons = [],
+    unpriced = 0,
+  }: {
+    cost?: number | null;
+    currency?: string | null;
+    origin?: "live" | "offline_fixture";
+    reasons?: string[];
+    unpriced?: number;
+  } = {},
+): RunDetail {
+  const detail = run(id, 182 / 197, cost);
+  detail.evaluation.cost = {
+    total: cost,
+    known_subtotal: 0.027418308,
+    currency,
+    attempts: 34,
+    unpriced_attempts: unpriced,
+    reasons,
+  };
+  detail.benchmark = {
+    scope: { observation_origin: origin },
+    cohort: {
+      all_condition_micro_f1: 182 / 214,
+      valid_graphs: 30,
+      planned_conditions: 34,
+      outcomes: {},
+    },
+  } as NonNullable<RunDetail["benchmark"]>;
+  return detail;
+}
+
+it("plots the imported Protocol v1 score against the verified provider estimate", () => {
+  const baseline = benchmarkRun("baseline");
+  render(
+    <RunChart
+      workspace={{ ...workspace, run_ids: [baseline.id] }}
+      runs={[baseline]}
+      selected={baseline.id}
+      select={vi.fn()}
+    />,
+  );
+  fireEvent.click(screen.getByRole("tab", { name: "F1 vs Cost" }));
+  expect(
+    screen.getByRole("button", {
+      name: /All-condition micro-F1 · Protocol v1 0.850/,
+    }),
+  ).toBeVisible();
+  expect(
+    screen.getByText(/Estimated provider spend incurred by Run \(USD\)/),
+  ).toBeVisible();
+  expect(
+    screen.getByText(/Estimated provider spend.*USD 0.027418308/),
+  ).toBeVisible();
+});
+
+it("plots Protocol v1 zero when all graphs fail and provider cost is verified", () => {
+  const failed = benchmarkRun("failed");
+  failed.evaluation.aggregate.f1 = null;
+  failed.evaluation.eligibility.f1_vs_cost = false;
+  if (!failed.benchmark) throw new Error("Expected a Benchmark fixture");
+  failed.benchmark.cohort.valid_graphs = 0;
+  failed.benchmark.cohort.all_condition_micro_f1 = 0;
+  render(
+    <RunChart
+      workspace={{ ...workspace, run_ids: [failed.id] }}
+      runs={[failed]}
+      selected={failed.id}
+      select={vi.fn()}
+    />,
+  );
+  fireEvent.click(screen.getByRole("tab", { name: "F1 vs Cost" }));
+  expect(
+    screen.getByRole("button", {
+      name: /Protocol v1 0.000.*0\/34 valid graphs/,
+    }),
+  ).toBeVisible();
+});
+
+it("excludes incomplete, unverified, simulated, and incompatible imported costs", () => {
+  const runs = [
+    benchmarkRun("verified"),
+    benchmarkRun("subtotal-only", { cost: null }),
+    benchmarkRun("unpriced", { unpriced: 1 }),
+    benchmarkRun("unverified", {
+      reasons: ["Authoritative task ledger is unavailable."],
+    }),
+    benchmarkRun("offline", { origin: "offline_fixture" }),
+    benchmarkRun("other-currency", { currency: "EUR" }),
+    benchmarkRun("no-currency", { currency: null }),
+  ];
+  const { container } = render(
+    <RunChart
+      workspace={{ ...workspace, run_ids: runs.map(({ id }) => id) }}
+      runs={runs}
+      selected="verified"
+      select={vi.fn()}
+    />,
+  );
+  fireEvent.click(screen.getByRole("tab", { name: "F1 vs Cost" }));
+  expect(container.querySelectorAll(".chart-point")).toHaveLength(1);
+  expect(
+    screen.getByText("Authoritative task ledger is unavailable."),
+  ).toBeVisible();
+  expect(screen.getByText(/EUR.*USD/)).toBeVisible();
+});
+
+it("keeps the historical cost axis and uses the visible Benchmark currency after filtering", () => {
+  const historical = run("historical", 0.72, 0.1);
+  historical.plan.preview.proposal.input_mode = "fresh";
+  const benchmark = benchmarkRun("benchmark", { currency: "EUR" });
+  benchmark.plan.preview.proposal.input_mode = "saved";
+  render(
+    <RunChart
+      workspace={{ ...workspace, run_ids: [historical.id, benchmark.id] }}
+      runs={[historical, benchmark]}
+      selected={benchmark.id}
+      select={vi.fn()}
+    />,
+  );
+  fireEvent.click(screen.getByRole("tab", { name: "F1 vs Cost" }));
+  expect(screen.getByRole("button", { name: /Run 1, F1 0.720/ })).toBeVisible();
+  expect(
+    screen.queryByRole("button", { name: /Protocol v1 0.850/ }),
+  ).not.toBeInTheDocument();
+  fireEvent.change(screen.getByLabelText("Input mode"), {
+    target: { value: "saved" },
+  });
+  expect(
+    screen.getByText(/Estimated provider spend incurred by Run \(EUR\)/),
+  ).toBeVisible();
+  expect(
+    screen.getByRole("button", { name: /Protocol v1 0.850/ }),
+  ).toBeVisible();
+});

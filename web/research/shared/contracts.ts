@@ -6,6 +6,84 @@ export type AttributionFailure = {
   supporting_text: string;
 };
 
+export type BenchmarkComparison = {
+  cohort: BenchmarkMetricDelta | null;
+  families: Array<BenchmarkFamilyDelta>;
+  conditions: Array<BenchmarkConditionDelta>;
+  family_macro_f1_delta: number | null;
+};
+
+export type BenchmarkCondition = {
+  family: string;
+  condition: string;
+  contrast: string | null;
+  role: string | null;
+  outcome: "provider_failure" | "parse_failure" | "uncertain" | "not_attempted" | "scored" | "validation_failure";
+  expected: CanonicalState;
+  expected_edges: number;
+  parsed_prediction: SourcedExtractionResult | null;
+  expected_relationships: Array<ExpectedRelationship>;
+  graph: EvaluationResult | null;
+  proof_targets: Array<ProofTarget>;
+  metrics: ConditionMetrics;
+  failure_detail: string | null;
+};
+
+export type BenchmarkConditionDelta = {
+  tp: number;
+  fp: number;
+  fn: number;
+  complete_proofs: number;
+  planned_proofs: number;
+  complete_joint_proofs: number;
+  planned_joint_proofs: number;
+  family: string;
+  condition: string;
+  left_outcome: string;
+  right_outcome: string;
+};
+
+export type BenchmarkFamilyDelta = {
+  tp: number;
+  fp: number;
+  fn: number;
+  complete_proofs: number;
+  planned_proofs: number;
+  complete_joint_proofs: number;
+  planned_joint_proofs: number;
+  all_condition_micro_f1: number;
+  planned_conditions: number;
+  valid_graphs: number;
+  exact_graphs: number;
+  family: string;
+};
+
+export type BenchmarkMetricDelta = {
+  tp: number;
+  fp: number;
+  fn: number;
+  complete_proofs: number;
+  planned_proofs: number;
+  complete_joint_proofs: number;
+  planned_joint_proofs: number;
+  all_condition_micro_f1: number;
+  planned_conditions: number;
+  valid_graphs: number;
+  exact_graphs: number;
+};
+
+export type BenchmarkRun = {
+  scope: EvaluationScope;
+  cohort: Metrics;
+  families: Record<string, Metrics>;
+  family_macro_f1: number;
+  valid_graph_only_family_macro_f1: number | null;
+  valid_graph_only_macro_family_count: number;
+  run_artifact_digest: string | null;
+  observations: Array<BenchmarkCondition>;
+  scope_identity: string;
+};
+
 export type BenchmarkScope = {
   identity: string;
   inputs: Array<ScopeInput>;
@@ -116,6 +194,29 @@ export type Comparison = {
   scored_pairs: number;
 };
 
+export type ConditionCommitment = {
+  family: string;
+  condition: string;
+  ordered_sources_sha256: string;
+  key_sha256: string;
+};
+
+export type ConditionMetrics = {
+  tp: number;
+  fp: number;
+  fn: number;
+  planned_proofs: number;
+  complete_proofs: number;
+  planned_joint_proofs: number;
+  complete_joint_proofs: number;
+  incomplete_proofs: number;
+  missed_proofs: number;
+  quote_passed: number;
+  quote_assessed: number;
+  attribution_passed: number;
+  attribution_assessed: number;
+};
+
 export type CopyRunDraft = {
   request_id: string;
   expected_revision: number;
@@ -173,6 +274,18 @@ export type EvaluationResult = {
   provenance_failures: Array<[string, "parent_of" | "sibling_of" | "spouse_of" | "settlor_of" | "trustee_of" | "beneficiary_of", string]>;
 };
 
+export type EvaluationScope = {
+  benchmark_sha256: string;
+  conditions: Array<ConditionCommitment>;
+  observation_origin: "live" | "offline_fixture";
+  protocol_version: string;
+  split: "development";
+  graph_scorer: string;
+  evidence_policy: string;
+  sufficiency_policy: string;
+  attribution_policy: string;
+};
+
 export type Evidence = {
   id: string;
   document: string;
@@ -196,6 +309,11 @@ export type ExecutionAvailability = {
   active_run_id: string | null;
   task_budget: TaskBudget | null;
   accounting_reason: string | null;
+};
+
+export type ExpectedRelationship = {
+  edge: [string, "parent_of" | "sibling_of" | "spouse_of" | "settlor_of" | "trustee_of" | "beneficiary_of", string];
+  quotes: Array<EvidenceQuote>;
 };
 
 export type ExperimentDetail = {
@@ -225,6 +343,12 @@ export type FrozenPlan = {
   task_id: string;
   preview: Preview;
   created_at: string;
+};
+
+export type GraphCounts = {
+  tp: number;
+  fp: number;
+  fn: number;
 };
 
 export type HistoryItem = {
@@ -317,6 +441,34 @@ export type LiveApproval = {
   continuation: boolean;
 };
 
+export type Metrics = {
+  planned_conditions: number;
+  valid_graphs: number;
+  exact_graphs: number;
+  construction_success_rate: number;
+  exact_graph_accuracy: number;
+  valid_graph_only_exact_accuracy: number | null;
+  all_conditions: GraphCounts;
+  all_condition_micro_f1: number;
+  valid_graph_only: GraphCounts;
+  valid_graph_only_micro_f1: number | null;
+  expected_edges_without_graph: number;
+  planned_proofs: number;
+  complete_proofs: number;
+  proof_completion_rate: number | null;
+  planned_joint_proofs: number;
+  complete_joint_proofs: number;
+  joint_proof_completion_rate: number | null;
+  incomplete_proofs: number;
+  missed_proofs: number;
+  proofs_without_graph: number;
+  quote_passed: number;
+  quote_assessed: number;
+  attribution_passed: number;
+  attribution_assessed: number;
+  outcomes: Record<string, number>;
+};
+
 export type Observation = {
   id: string;
   configuration: string;
@@ -367,6 +519,24 @@ export type Preview = {
   task_id: string | null;
   task_label: string | null;
   cost_reason: string;
+};
+
+export type ProofAlternative = {
+  members: Array<ProofMember>;
+};
+
+export type ProofMember = {
+  source_id: string;
+  text: string;
+  attached: boolean;
+  occurrences: Array<[number, number]>;
+};
+
+export type ProofTarget = {
+  edge: [string, "parent_of" | "sibling_of" | "spouse_of" | "settlor_of" | "trustee_of" | "beneficiary_of", string];
+  joint_only: boolean;
+  status: "complete" | "incomplete" | "missed" | "without_graph";
+  alternatives: Array<ProofAlternative>;
 };
 
 export type Proposal = {
@@ -467,6 +637,7 @@ export type RunComparison = {
   matched_inputs: number;
   unqualified_improvement_allowed: boolean;
   reasons: Array<string>;
+  benchmark: BenchmarkComparison | null;
 };
 
 export type RunConfiguration = {
@@ -501,6 +672,7 @@ export type RunDetail = {
   plan: FrozenPlan;
   lifecycle: string;
   evaluation: RunEvaluation;
+  benchmark: BenchmarkRun | null;
   observations: Array<RunObservation>;
   provenance: Record<string, unknown>;
   artifact_digest: string;
@@ -542,6 +714,7 @@ export type RunObservation = {
   result: ResearchResult | null;
   langfuse_trace_ids: Array<string>;
   relationships: Array<RelationshipOutcome>;
+  benchmark: BenchmarkCondition | null;
 };
 
 export type RunStatus = {
@@ -644,6 +817,7 @@ export type WorkspaceDetail = {
   draft: RunDraft;
   run_ids: Array<string>;
   metadata_available: boolean;
+  read_only_import: boolean;
 };
 
 export type WorkspaceHistory = {
@@ -661,4 +835,5 @@ export type WorkspaceHistoryItem = {
   metadata_available: boolean;
   integrity: "verified" | "missing" | "corrupt";
   reason: string | null;
+  read_only_import: boolean;
 };
