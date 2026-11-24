@@ -383,10 +383,6 @@ pre {
   outline-offset: 6px;
 }
 .benchmark-inspection { margin: 24px 0; }
-.benchmark-graphs { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr)); gap: 16px; }
-.benchmark-graph { height: 360px; min-height: 280px; border: 1px solid #d5d9d2; border-radius: 6px; overflow: hidden; }
-.benchmark-graph h4 { margin: 10px 14px 0; }
-.benchmark-graph .graph-container { min-height: 260px; }
 .benchmark-run-summary { margin: 20px 0; padding: 18px; border: 1px solid #d5d9d2; border-radius: 6px; background: #f7f8f4; }
 @media (width < 760px) {
   .review-shell > header,
@@ -404,4 +400,12 @@ pre {
   .review-summary {
     font-size: 13px;
   }
+}
+
+.imported-run-history > summary {
+  color: var(--muted);
+  width: fit-content;
+  min-height: 44px;
+  padding-block: 10px;
+  cursor: pointer;
 }

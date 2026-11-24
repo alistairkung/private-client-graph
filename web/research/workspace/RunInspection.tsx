@@ -5,10 +5,13 @@ import type {
   WorkspaceDetail,
 } from "../shared/contracts";
 import { ObservationInspection } from "./ObservationInspection";
+import { ConditionInspection } from "./ConditionInspection";
+import { BenchmarkFamilyExplorer } from "./BenchmarkFamilyExplorer";
 import { ReadState } from "../shared/presentation";
 import { useRead } from "../shared/useRead";
 import { compareRuns } from "./api";
 import { metric, money } from "./RunChart";
+import { BenchmarkRunSummary } from "./BenchmarkRunSummary";
 
 export function RunInspection({
   workspace,
@@ -428,134 +431,24 @@ function BenchmarkRunInspection({
             split ·{" "}
             {benchmark.scope.observation_origin === "live"
               ? "Verified live origin"
-              : "Offline fixture origin"}
+              : "Synthetic fixture"}
           </small>
         </div>
-        <strong>
-          All-condition F1 {metric(benchmark.cohort.all_condition_micro_f1)}
-        </strong>
       </div>
-      <section
-        className="benchmark-run-summary"
-        aria-label="Evaluation Protocol v1 results"
-      >
-        <h3>
-          Evaluation Protocol v1 · {benchmark.cohort.planned_conditions} planned
-          Conditions
-        </h3>
-        <p>
-          {benchmark.cohort.valid_graphs} valid graphs ·{" "}
-          {benchmark.cohort.exact_graphs} exact graphs · Construction success{" "}
-          {metric(benchmark.cohort.construction_success_rate)} · Exact graph
-          accuracy {metric(benchmark.cohort.exact_graph_accuracy)}
-        </p>
-        <p>
-          All-condition TP/FP/FN {benchmark.cohort.all_conditions.tp}/
-          {benchmark.cohort.all_conditions.fp}/
-          {benchmark.cohort.all_conditions.fn} · micro-F1{" "}
-          {metric(benchmark.cohort.all_condition_micro_f1)}
-        </p>
-        <p>
-          Supplemental valid-graph-only TP/FP/FN{" "}
-          {benchmark.cohort.valid_graph_only.tp}/
-          {benchmark.cohort.valid_graph_only.fp}/
-          {benchmark.cohort.valid_graph_only.fn} · micro-F1{" "}
-          {metric(benchmark.cohort.valid_graph_only_micro_f1)}
-        </p>
-        <p>
-          All-condition proof completion{" "}
-          {eligibleRatio(
-            benchmark.cohort.complete_proofs,
-            benchmark.cohort.planned_proofs,
-          )}{" "}
-          · joint-only{" "}
-          {eligibleRatio(
-            benchmark.cohort.complete_joint_proofs,
-            benchmark.cohort.planned_joint_proofs,
-          )}
-        </p>
-        <p>
-          Proof outcomes · {benchmark.cohort.complete_proofs} complete ·{" "}
-          {benchmark.cohort.incomplete_proofs} incomplete ·{" "}
-          {benchmark.cohort.missed_proofs} missed edges ·{" "}
-          {benchmark.cohort.proofs_without_graph} without a valid graph
-        </p>
-        <p>
-          Quotation{" "}
-          {eligibleRatio(
-            benchmark.cohort.quote_passed,
-            benchmark.cohort.quote_assessed,
-          )}{" "}
-          · Source attribution{" "}
-          {eligibleRatio(
-            benchmark.cohort.attribution_passed,
-            benchmark.cohort.attribution_assessed,
-          )}
-        </p>
-        <p>
-          Family macro F1 {metric(benchmark.family_macro_f1)} across{" "}
-          {Object.keys(benchmark.families).length} families · valid-graph-only
-          supplemental {metric(benchmark.valid_graph_only_family_macro_f1)}{" "}
-          across {benchmark.valid_graph_only_macro_family_count} families.
-        </p>
-        <p>
-          Condition outcomes:{" "}
-          {Object.entries(benchmark.cohort.outcomes)
-            .map(
-              ([outcome, count]) => `${outcome.replaceAll("_", " ")} ${count}`,
-            )
-            .join(" · ")}
-        </p>
-        <div className="table-scroll">
-          <table>
-            <caption>Benchmark Family protocol results</caption>
-            <thead>
-              <tr>
-                <th>Family</th>
-                <th>Planned / valid</th>
-                <th>All-condition micro-F1</th>
-                <th>Exact graphs</th>
-                <th>Proof complete</th>
-              </tr>
-            </thead>
-            <tbody>
-              {Object.entries(benchmark.families).map(([family, value]) => (
-                <tr key={family}>
-                  <th>{family}</th>
-                  <td>
-                    {value.planned_conditions} / {value.valid_graphs}
-                  </td>
-                  <td>{metric(value.all_condition_micro_f1)}</td>
-                  <td>{value.exact_graphs}</td>
-                  <td>
-                    {eligibleRatio(value.complete_proofs, value.planned_proofs)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        {benchmark.scope.observation_origin === "live" && (
-          <p>Historical baseline · reference for prospective comparison.</p>
+      <BenchmarkRunSummary run={run} benchmark={benchmark} />
+      <BenchmarkFamilyExplorer
+        key={run.id}
+        run={run}
+        renderCondition={(observation, selectedEdgeKey, onSelectedEdgeChange) => (
+          <ConditionInspection
+            key={observation.id}
+            runId={run.id}
+            observation={observation}
+            selectedEdgeKey={selectedEdgeKey}
+            onSelectedEdgeChange={onSelectedEdgeChange}
+          />
         )}
-        <details>
-          <summary>Accounting and verified provenance</summary>
-          <p>
-            Retained attempts {run.evaluation.cost.attempts} · Estimated spend{" "}
-            {money(run.evaluation.cost.total, run.evaluation.cost.currency)}
-          </p>
-          <p>
-            Run {run.id} · Archive {run.artifact_digest}
-          </p>
-          <pre>
-            {JSON.stringify(
-              { scope: benchmark.scope, provenance: run.provenance },
-              null,
-              2,
-            )}
-          </pre>
-        </details>
-      </section>
+      />
       <label>
         Compare with verified Run
         <select
@@ -579,11 +472,6 @@ function BenchmarkRunInspection({
           right={run.id}
         />
       )}
-      <ObservationInspection run={run} />
     </section>
   );
-}
-
-function eligibleRatio(count: number, planned: number) {
-  return planned ? `${count}/${planned}` : "Unavailable (0 eligible)";
 }

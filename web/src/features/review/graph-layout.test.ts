@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { graphDrawing } from "./graph-layout";
+import { alignComparisonEntities, graphDrawing, type GraphDrawingModel } from "./graph-layout";
 import type { Graph, Relationship } from "../../shared/contracts";
 import {
   nodeFootprint,
@@ -46,6 +46,97 @@ const evergreen: Graph = {
   ],
   evidence: [],
 };
+
+describe("comparison layout", () => {
+  const reference: Graph = {
+    entities: [
+      { id: "a", name: "Ada", type: "person" },
+      { id: "b", name: "Bela", type: "person" },
+      { id: "c", name: "Cam", type: "person" },
+    ],
+    relationships: [
+      { source: "a", target: "b", type: "parent_of", evidence_ids: [] },
+      { source: "b", target: "c", type: "parent_of", evidence_ids: [] },
+    ],
+    evidence: [],
+  };
+  const candidate: Graph = {
+    entities: [
+      { id: "person-a", name: "Ada", type: "person" },
+      { id: "person-b", name: "Bela", type: "person" },
+      { id: "person-c", name: "Cam", type: "person" },
+      { id: "extra", name: "Dee", type: "person" },
+    ],
+    relationships: [
+      { source: "person-a", target: "person-b", type: "parent_of", evidence_ids: [] },
+      { source: "person-b", target: "person-c", type: "parent_of", evidence_ids: [] },
+    ],
+    evidence: [],
+  };
+
+  function model(entities: Graph["entities"], positions: Array<[number, number]>) {
+    return {
+      nodes: entities.map((entity, index) => ({
+        id: entity.id,
+        position: { x: positions[index][0], y: positions[index][1] },
+        data: { name: entity.name },
+      })),
+      edges: [],
+      bounds: { x: 0, y: 0, width: 100, height: 100 },
+    } as unknown as GraphDrawingModel;
+  }
+
+  it("aligns unambiguous common edge endpoints across a partial entity overlap", () => {
+    const referenceModel = model(reference.entities, [[0, 0], [200, 0], [400, 0]]);
+    const candidateModel = model(candidate.entities, [[0, 0], [200, 0], [400, 0], [200, 400]]);
+    const positions = alignComparisonEntities(reference, candidate, referenceModel, candidateModel);
+    expect(positions).toBeDefined();
+    const alignedCandidate = graphDrawing(candidate, (key) => key, positions);
+    const candidateByName = new Map(alignedCandidate.nodes.map((node) => [node.data.name, node.position]));
+    for (const node of referenceModel.nodes) {
+      const candidatePosition = candidateByName.get(node.data.name);
+      expect(candidatePosition?.x).toBe(node.position.x);
+      expect(candidatePosition?.y).toBe(node.position.y);
+    }
+  });
+
+  it("uses independent placement when an unmatched node would overlap an aligned endpoint", () => {
+    const referenceModel = model(reference.entities, [[0, 0], [200, 0], [400, 0]]);
+    const candidateModel = model(candidate.entities, [[0, 0], [200, 0], [400, 0], [200, 0]]);
+    expect(alignComparisonEntities(reference, candidate, referenceModel, candidateModel)).toBeUndefined();
+  });
+
+  it("falls back when names are ambiguous or fewer than two endpoints can be aligned", () => {
+    const ambiguous: Graph = {
+      ...reference,
+      entities: [
+        { id: "a", name: "Ada", type: "person" },
+        { id: "b", name: "Ada", type: "person" },
+        { id: "c", name: "Cam", type: "person" },
+      ],
+    };
+    expect(alignComparisonEntities(
+      ambiguous,
+      candidate,
+      model(ambiguous.entities, [[0, 0], [200, 0], [400, 0]]),
+      model(candidate.entities, [[0, 0], [200, 0], [400, 0], [600, 0]]),
+    )).toBeUndefined();
+
+    const oneCommon: Graph = {
+      ...candidate,
+      entities: candidate.entities.map((entity) => ({
+        ...entity,
+        name: `Other ${entity.name}`,
+      })),
+    };
+    expect(alignComparisonEntities(
+      reference,
+      oneCommon,
+      model(reference.entities, [[0, 0], [200, 0], [400, 0]]),
+      model(oneCommon.entities, [[0, 0], [200, 0], [400, 0], [600, 0]]),
+    )).toBeUndefined();
+  });
+});
 type Drawing = ReturnType<typeof graphDrawing>;
 const routes = (drawing: Drawing) =>
   drawing.edges.map((edge) => edge.data!.route as RelationshipRoute);

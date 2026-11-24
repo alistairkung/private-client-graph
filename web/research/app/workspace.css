@@ -350,6 +350,10 @@
   color: white;
   padding: 12px;
 }
+.skip-workspace:not(:focus) {
+  clip-path: inset(50%);
+  pointer-events: none;
+}
 .skip-workspace:focus {
   transform: none;
 }
