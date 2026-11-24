@@ -4071,6 +4071,42 @@ def test_large_workload_requires_merits_before_participant_authoring(autonomous,
     assert [job for _, _, job, _ in calls] == ["design", clean_redesign.MERITS_JOB]
 
 
+def test_large_workload_repair_reopens_exact_scope_return_before_author_dispatch(autonomous, transport, monkeypatch):
+    from benchmark_v3.batch import author_context, clean_redesign, large_merits_repair
+    from benchmark_v3.batch.workflow import FamilyWorkflow
+
+    ledger, commission = autonomous
+    family, slot = "G", commission.portfolio.slots[0]
+    batch = commission.manifest.batch_id
+    coordinator.commission_batch(ledger, commission, BOUNDARY)
+    coordinator._activate_roadmap_slots(ledger, commission, [family])
+    monkeypatch.setattr(type(ledger), "requires_author_context", property(lambda _: True))
+    monkeypatch.setattr(type(ledger), "requires_delivery_attestation", property(lambda _: True))
+    monkeypatch.setattr(type(ledger), "requires_workload_merits", property(lambda _: True))
+    runner = commission.session_runner(ledger, family, 1)
+    workflow = FamilyWorkflow(runner, slot, commission.portfolio.admission_criteria)
+    calls, behavior, _ = transport
+    findings = {"src1": "Ordinary original.", "src2": "Ordinary acknowledgment."}
+    behavior[family, clean_redesign.MERITS_JOB] = lambda _: {
+        "verdict": "accept", "findings": findings, "objections": [],
+    }
+    objection = "src2 exposes a later name in the sender's ticket."
+    behavior[family, author_context.JOB] = lambda _: {
+        "verdict": "return", "findings": findings, "objections": [objection],
+    }
+    design = workflow.design()
+    with pytest.raises(Blocked, match="later name"):
+        workflow.author(design)
+    held, scope, commitment = large_merits_repair.returned(runner)
+    assert held == design and scope.objections == [objection]
+    assert commitment == runner.committed_result("author", author_context.JOB, "audit", type(scope))[1]["receipt_sha256"]
+    assert [job for _, _, job, _ in calls] == ["design", clean_redesign.MERITS_JOB, author_context.JOB]
+    recorded = ledger.attempts(family)
+    monkeypatch.setattr(ledger, "attempts", lambda _: [*recorded, {"revision": 1, "stage": "author", "job": "author-src1"}])
+    with pytest.raises(ValueError, match="no participant dispatch"):
+        large_merits_repair.returned(runner)
+
+
 def test_word_preserving_blind_quote_recovery_uses_the_retained_reader(autonomous, transport, monkeypatch):
     from benchmark_v3.batch import read_format_recovery
 
