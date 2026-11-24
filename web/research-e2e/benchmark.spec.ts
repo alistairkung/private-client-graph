@@ -14,10 +14,15 @@ test("read-only import exposes protocol metrics, proof, unavailable and empty gr
   await expect(
     page.getByRole("heading", { name: /Benchmark v3/, level: 2 }),
   ).toBeVisible();
+  const matrix = page.getByRole("table", {
+    name: "Relationship confusion matrix · All conditions",
+  });
+  await expect(matrix).toBeVisible();
   const family = page.getByRole("button", { name: /Family F\b/ });
   await expect(family).toContainText("Identify the current trustee");
   await expect(family).toContainText("Complete proofs");
   await family.press("Enter");
+  await expect(matrix).toHaveCount(1);
   await expect(page.getByRole("tab", { name: /F0/ })).toHaveAttribute(
     "aria-selected",
     "true",
@@ -79,7 +84,7 @@ test("read-only import exposes protocol metrics, proof, unavailable and empty gr
   if (await switchSide.isVisible()) await switchSide.click();
   await expect(
     page.getByRole("region", { name: "Predicted graph", exact: true }),
-  ).toContainText(/valid empty graph/i);
+  ).toContainText(/graph constructed · 0 relationships/i);
   expect(
     await page.evaluate(() => document.documentElement.scrollWidth),
   ).toBeLessThanOrEqual(await page.evaluate(() => window.innerWidth + 1));
@@ -96,6 +101,87 @@ test("read-only import exposes protocol metrics, proof, unavailable and empty gr
   await expect(
     page.getByRole("button", { name: "Use as next draft" }),
   ).toHaveCount(0);
+});
+
+test("graph comparison uses the available width and keeps the inspected view through reflow", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.setViewportSize({ width: 1560, height: 960 });
+  await page.goto(`/#workspace=${experiment}&run=${control}`);
+  await page.getByRole("button", { name: /Family F\b/ }).click();
+
+  const comparison = page.getByRole("region", {
+    name: "Environment Condition F0 graph comparison",
+  });
+  const expected = comparison.getByRole("region", { name: "Expected graph" });
+  const predicted = comparison.getByRole("region", { name: "Predicted graph", includeHidden: true });
+  const canvas = expected.getByRole("region", { name: "Relationship graph" });
+  const options = comparison.getByText("Graph options", { exact: true });
+  await options.click();
+  const isolated = comparison.getByRole("checkbox", { name: /Show isolated entities/ });
+  const graphNodes = canvas.locator(".react-flow__node");
+  await expect(graphNodes).toHaveCount(2);
+  await expect(isolated).not.toBeChecked();
+  await comparison.getByText(/Expected Matter roster/).click();
+  const roster = comparison.getByRole("list", { name: "Expected entities" });
+  await expect(roster).toContainText("Dakota Example");
+  const rosterBox = (await roster.boundingBox())!;
+  const graphBox = (await expected.boundingBox())!;
+  expect(rosterBox.y + rosterBox.height).toBeLessThanOrEqual(graphBox.y);
+
+  await isolated.check();
+  await expect(graphNodes).toHaveCount(3);
+  await expect(predicted.locator(".react-flow__node")).toHaveCount(2);
+  await isolated.uncheck();
+  await expect(graphNodes).toHaveCount(2);
+  await options.click();
+
+  const compositionWidth = () => comparison.evaluate((el) => el.getBoundingClientRect().width);
+  const availableWidth = () => comparison.evaluate((el) => el.parentElement!.clientWidth);
+  expect(await compositionWidth()).toBeGreaterThan(900);
+  expect(await compositionWidth()).toBeCloseTo(await availableWidth(), 0);
+  expect((await expected.boundingBox())?.width).toBeCloseTo((await predicted.boundingBox())!.width, 0);
+
+  const zoom = () => canvas.locator(".react-flow__viewport").evaluate((el) =>
+    new DOMMatrixReadOnly(getComputedStyle(el).transform).a,
+  );
+  await canvas.getByRole("button", { name: "Fit graph" }).click();
+  const fittedZoom = await zoom();
+  await canvas.getByRole("button", { name: "Zoom out" }).click();
+  await expect.poll(zoom).toBeLessThan(fittedZoom);
+  const inspectedZoom = await zoom();
+
+  const edge = canvas.getByRole("button", { name: /Morgan Example.*trustee of.*North Example Trust/i });
+  await edge.press("Enter");
+  const evidence = comparison.getByRole("region", { name: "Selected relationship evidence", exact: true });
+  await expect(evidence).toContainText("Morgan Example");
+  const list = comparison.getByRole("region", { name: "Relationship list" });
+  const selected = list.getByRole("button", { name: /Morgan Example.*trustee of/ });
+  await expect(selected).toHaveAttribute("aria-pressed", "true");
+  const label = selected.getByText("Morgan Example", { exact: true });
+  const labelColor = await label.evaluate((element) => getComputedStyle(element).color);
+  await selected.hover();
+  await expect(label).toHaveCSS("color", labelColor);
+  await list.getByRole("button", { name: /Locate Morgan Example/ }).click();
+  await expect(edge).toBeFocused();
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(comparison.getByRole("button", { name: "Predicted", exact: true })).toBeVisible();
+  await expect(predicted).toBeHidden();
+  expect((await expected.boundingBox())?.width).toBeCloseTo(await compositionWidth(), 0);
+  await expect.poll(zoom).toBeCloseTo(inspectedZoom, 3);
+  await comparison.getByRole("button", { name: /^Relationships/ }).click();
+  await expect(evidence).toContainText("Morgan Example");
+  await comparison.getByRole("button", { name: "Graphs", exact: true }).click();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth))
+    .toBeLessThanOrEqual(391);
+
+  await page.setViewportSize({ width: 1560, height: 960 });
+  await expect(predicted).toBeVisible();
+  await expect.poll(zoom).toBeCloseTo(inspectedZoom, 3);
+  await canvas.getByRole("button", { name: "Fit graph" }).click();
+  await expect.poll(zoom).toBeCloseTo(fittedZoom, 3);
 });
 
 test("compatible imports compare the full roster and changed order withholds deltas", async ({

@@ -201,11 +201,14 @@ function FamilyRow({
 }) {
   const outcomes = scores.all_conditions;
   const f1Basis = formatF1Basis(outcomes.tp, outcomes.fp, outcomes.fn);
+  const conditionRepeatsFamilyScores =
+    expanded && observations.length === 1 &&
+    activeCondition?.benchmark?.outcome === "scored";
 
   return (
     <article className={`family-row${expanded ? " is-expanded" : ""}`}>
       <button
-        className="family-row-trigger"
+        className={`family-row-trigger${conditionRepeatsFamilyScores ? " family-row-trigger-compact" : ""}`}
         type="button"
         aria-expanded={expanded}
         aria-controls={panelId}
@@ -225,7 +228,7 @@ function FamilyRow({
             </strong>
           </span>
         </span>
-        <span className="family-row-metrics">
+        {!conditionRepeatsFamilyScores && <span className="family-row-metrics">
           <span className="family-metric">
             <span>Graph F1</span>
             <strong>{metric(scores.all_condition_micro_f1)}</strong>
@@ -246,7 +249,7 @@ function FamilyRow({
                   : "Annotated relationships"}
             </small>
           </span>
-        </span>
+        </span>}
         <span
           className={`family-row-disclosure${expanded ? " is-expanded" : ""}`}
           aria-hidden="true"
@@ -265,24 +268,6 @@ function FamilyRow({
       >
         {expanded && (
           <div className="family-panel">
-            <FamilyResearchPanel
-              context={context}
-              axisDefinitions={axisDefinitions}
-            />
-            <dl className="family-expanded-metrics">
-              <div>
-                <dt>Construction coverage</dt>
-                <dd>
-                  {scores.valid_graphs} of {scores.planned_conditions} valid
-                </dd>
-              </div>
-              <div>
-                <dt>Exact graphs</dt>
-                <dd>
-                  {scores.exact_graphs} of {scores.planned_conditions}
-                </dd>
-              </div>
-            </dl>
             <EnvironmentConditionPanel
               family={family}
               observations={observations}
@@ -292,6 +277,28 @@ function FamilyRow({
               selectedEdgeKeys={selectedEdgeKeys}
               setSelectedEdgeKey={setSelectedEdgeKey}
               renderCondition={renderCondition}
+              researchDetails={
+                <>
+                  <FamilyResearchPanel
+                    context={context}
+                    axisDefinitions={axisDefinitions}
+                  />
+                  <dl className="family-expanded-metrics">
+                    <div>
+                      <dt>Construction coverage</dt>
+                      <dd>
+                        {scores.valid_graphs} of {scores.planned_conditions} valid
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>Exact graphs</dt>
+                      <dd>
+                        {scores.exact_graphs} of {scores.planned_conditions}
+                      </dd>
+                    </div>
+                  </dl>
+                </>
+              }
             />
             <button
               type="button"

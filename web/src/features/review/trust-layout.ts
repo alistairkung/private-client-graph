@@ -24,7 +24,7 @@ function crossesNode(start: Point, end: Point, center: Point, height: number) {
   return segmentCrossesBounds(start, end, nodeFootprint(center, height, 10));
 }
 
-function positionPeople(graph: RelationshipPresentation) {
+function positionPeople(graph: RelationshipPresentation, detachedGap: number) {
   const people = graph.entities
     .filter((entity) => entity.type === "person")
     .sort((first, second) => first.id.localeCompare(second.id));
@@ -76,6 +76,7 @@ function positionPeople(graph: RelationshipPresentation) {
     people.map((person) => person.id),
     positions,
     center,
+    detachedGap,
   );
   return { positions, width, center };
 }
@@ -85,6 +86,7 @@ function placeFamilyContext(
   people: string[],
   positions: Map<string, Point>,
   center: Point,
+  detachedGap: number,
 ) {
   const neighbours = new Map(people.map((id) => [id, [] as string[]]));
   graph.relationships
@@ -120,7 +122,7 @@ function placeFamilyContext(
     Math.max(
       center.y + TRUST_HEIGHT / 2,
       ...[...positions.values()].map((point) => point.y + PERSON_HEIGHT / 2),
-    ) + LEVEL_GAP;
+    ) + detachedGap;
   for (const id of people) {
     if (positions.has(id)) continue;
     const group = [id];
@@ -135,7 +137,7 @@ function placeFamilyContext(
         group.push(neighbour);
       }
     }
-    disconnectedY += LEVEL_GAP;
+    disconnectedY += detachedGap;
   }
 }
 
@@ -280,10 +282,13 @@ function routePersonRelationship(
 
 // Role positions are presentation preferences, not additional legal meaning.
 // Multiple-Trust positioning remains on the existing general graph layout.
-export function centralTrustLayout(graph: RelationshipPresentation) {
+export function centralTrustLayout(
+  graph: RelationshipPresentation,
+  detachedGap = LEVEL_GAP,
+) {
   const trusts = graph.entities.filter((entity) => entity.type === "trust");
   if (trusts.length !== 1) return null;
-  const { positions, center } = positionPeople(graph);
+  const { positions, center } = positionPeople(graph, detachedGap);
   positions.set(trusts[0].id, center);
   const trustRelationships = graph.relationships
     .map((relationship, index) => ({ relationship, index }))

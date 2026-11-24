@@ -234,7 +234,8 @@ it("shows the tested hypothesis, declared axes and Environment Condition tabs in
   );
   fireEvent.click(screen.getByRole("button", { name: /^Family E/ }));
 
-  expect(screen.getByText(/Adversarial Hypothesis/)).toBeInTheDocument();
+  fireEvent.click(screen.getByText("Research details"));
+  expect(screen.getByText(/Adversarial Hypothesis/)).toBeVisible();
   expect(screen.getByText(context.shortcuts)).toBeInTheDocument();
   expect(screen.getByText(/Primary difficulty axis/)).toBeInTheDocument();
   expect(screen.getByRole("tab", { name: /Natural/ })).toBeInTheDocument();

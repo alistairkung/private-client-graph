@@ -105,7 +105,8 @@ export function EvidenceComparison({
   return (
     <section
       className="relationship-evidence"
-      aria-label="Selected relationship Evidence"
+      aria-label="Selected relationship evidence"
+      tabIndex={-1}
     >
       <header>
         <h4>Supporting evidence</h4>
@@ -128,34 +129,36 @@ export function EvidenceComparison({
           No sufficient evidence target was annotated for this relationship.
         </p>
       )}
-      <details
-        className="ordinary-quotes"
-        open={target ? undefined : true}
-        onToggle={(event) => {
-          if (
-            !event.currentTarget.open &&
-            reader &&
-            event.currentTarget.contains(reader.trigger)
-          )
-            setReader(undefined);
-        }}
-      >
-        <summary>
-          Relationship quotations · {expected.length} approved ·{" "}
-          {predicted.length} predicted
-        </summary>
-        <div>
-          {expected.map((q) => (
-            <QuoteButton key={q.id} passage={q} label="Approved" open={open} />
-          ))}
-          {predicted.map((q) => (
-            <QuoteButton key={q.id} passage={q} label="Predicted" open={open} />
-          ))}
-          {!expected.length && !predicted.length && (
-            <p>No retained quotations for this relationship.</p>
-          )}
-        </div>
-      </details>
+      {(!target || expected.length > 0 || predicted.length > 0) && (
+        <details
+          className="ordinary-quotes"
+          open={target ? undefined : true}
+          onToggle={(event) => {
+            if (
+              !event.currentTarget.open &&
+              reader &&
+              event.currentTarget.contains(reader.trigger)
+            )
+              setReader(undefined);
+          }}
+        >
+          <summary>
+            Other relationship quotations · {expected.length} approved ·{" "}
+            {predicted.length} predicted
+          </summary>
+          <div>
+            {expected.map((q) => (
+              <QuoteButton key={q.id} passage={q} label="Approved" open={open} />
+            ))}
+            {predicted.map((q) => (
+              <QuoteButton key={q.id} passage={q} label="Predicted" open={open} />
+            ))}
+            {!expected.length && !predicted.length && (
+              <p>No retained quotations for this relationship.</p>
+            )}
+          </div>
+        </details>
+      )}
       {reader && (
         <SourceReader
           key={reader.sequence}

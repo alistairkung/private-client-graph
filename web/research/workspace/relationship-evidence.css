@@ -100,6 +100,7 @@
   overflow: hidden;
   white-space: pre-wrap;
   line-height: 1.45;
+  max-inline-size: 78ch;
 }
 .ordinary-quotes {
   margin-top: 0.75rem;
@@ -120,6 +121,9 @@
   white-space: pre-wrap;
   line-height: 1.55;
   padding: 0.55rem;
+}
+.reader-text :is(blockquote, .frozen-source) {
+  max-inline-size: 78ch;
 }
 .reader-text blockquote {
   margin: 0 0 0.8rem;

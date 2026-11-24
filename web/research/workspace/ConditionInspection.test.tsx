@@ -7,15 +7,14 @@ vi.mock("../../src/features/review/GraphDrawing", () => ({
   GraphDrawing: ({
     state,
     outcomes,
-    alignTo,
     onSelect,
   }: {
     state: CanonicalState;
     outcomes?: Array<string | undefined>;
-    alignTo?: CanonicalState;
     onSelect: (index: number, trigger?: HTMLButtonElement) => void;
   }) => (
-    <div data-testid={alignTo ? "aligned-graph" : "graph-drawing"}>
+    <div aria-label="Drawn entities">
+      {state.entities.map(({ id, name }) => <span key={id}>{name}</span>)}
       {state.relationships.map((relationship, index) => (
         <button key={index} onClick={(event) => onSelect(index, event.currentTarget)}>
           {relationship.type} · {outcomes?.[index] ?? "unlabelled"}
@@ -27,7 +26,7 @@ vi.mock("../../src/features/review/GraphDrawing", () => ({
 
 vi.mock("./RelationshipEvidence", () => ({
   RelationshipEvidence: ({ edge }: { edge: [string, string, string] }) => (
-    <p>Evidence for {edge.join(" · ")}</p>
+    <section aria-label="Selected relationship evidence">Evidence for {edge.join(" · ")}</section>
   ),
 }));
 
@@ -109,7 +108,8 @@ it("shows correct, missing, and unsupported outcomes and selects by semantic edg
 
 it("keeps an empty constructed prediction distinct from a missing relationship", () => {
   const emptyPrediction: CanonicalState = {
-    sources: [], entities: [], relationships: [], evidence: [],
+    ...predicted,
+    relationships: [],
   };
   render(
     <ConditionInspection
@@ -120,10 +120,14 @@ it("keeps an empty constructed prediction distinct from a missing relationship",
     />,
   );
   expect(within(screen.getByRole("region", { name: "Predicted graph" }))
-    .getByText("Valid empty graph")).toBeTruthy();
+    .getByText("Graph constructed · 0 relationships")).toBeTruthy();
   expect(within(screen.getByRole("group", { name: "Relationship outcomes" }))
     .getByText(/Missing/)).toBeTruthy();
   expect(screen.queryByText("Prediction unavailable")).toBeNull();
+  fireEvent.click(screen.getByText("Graph options"));
+  fireEvent.click(screen.getByRole("checkbox", { name: /Show isolated entities/ }));
+  expect(within(screen.getByRole("region", { name: "Predicted graph" }))
+    .getByLabelText("Drawn entities")).toHaveTextContent("Cam");
 });
 
 it("shows only expected relationships and preserves their inspection on construction failure", () => {
@@ -144,7 +148,7 @@ it("shows only expected relationships and preserves their inspection on construc
   const unavailable = screen.getByRole("region", { name: "Unavailable prediction" });
   expect(unavailable).toHaveTextContent("Prediction unavailable");
   expect(unavailable).toHaveTextContent("Candidate source quote failed validation.");
-  expect(screen.getByText("Expected relationships")).toBeTruthy();
+  expect(screen.getByRole("button", { name: /Expected relationships/ })).toBeVisible();
   expect(screen.getAllByText("Expected").length).toBeGreaterThan(0);
   expect(screen.queryByRole("region", { name: "Predicted graph" })).toBeNull();
   fireEvent.click(within(screen.getByRole("region", { name: "Expected graph" }))
@@ -152,7 +156,7 @@ it("shows only expected relationships and preserves their inspection on construc
   expect(screen.getByText("Evidence for Ada · parent_of · Bela")).toBeTruthy();
 });
 
-it("restores a controlled relationship selection and preserves a predicted graph trigger for Return", () => {
+it("restores a controlled relationship selection in the inspector", () => {
   const onSelectedEdgeChange = vi.fn();
   const { rerender } = render(
     <ConditionInspection
@@ -175,4 +179,52 @@ it("restores a controlled relationship selection and preserves a predicted graph
     />,
   );
   expect(screen.getByText("Evidence for Ada · spouse_of · Cam")).toBeTruthy();
+});
+
+
+it("keeps each side's isolated entities in the roster and out of its drawing until shown", () => {
+  const isolatedOnExpected = {
+    ...expected,
+    relationships: [expected.relationships[0]],
+  };
+  render(<ConditionInspection runId="run-1" observation={observation({
+    benchmark: { ...observation().benchmark, expected: isolatedOnExpected },
+    relationships: observation().relationships.filter(({ outcome }) => outcome !== "missing"),
+  })} />);
+
+  const expectedGraph = within(screen.getByRole("region", { name: "Expected graph" }));
+  const predictedGraph = within(screen.getByRole("region", { name: "Predicted graph" }));
+  fireEvent.click(screen.getByText("Graph options"));
+  const toggle = screen.getByRole("checkbox", { name: /Show isolated entities/ });
+  expect(toggle).not.toBeChecked();
+  expect(toggle.parentElement).toHaveTextContent("Expected 1 · Predicted 0");
+  expect(expectedGraph.getByLabelText("Drawn entities")).not.toHaveTextContent("Cam");
+  expect(predictedGraph.getByLabelText("Drawn entities")).toHaveTextContent("Cam");
+  fireEvent.click(screen.getByText(/Expected Matter roster/));
+  expect(screen.getByRole("list", { name: "Expected entities" })).toHaveTextContent("Cam");
+
+  fireEvent.click(toggle);
+  expect(expectedGraph.getByLabelText("Drawn entities")).toHaveTextContent("Cam");
+
+  fireEvent.click(expectedGraph.getByRole("button", { name: /parent_of · correct/ }));
+  expect(screen.getByText("Evidence for Ada · parent_of · Bela")).toBeVisible();
+  fireEvent.click(screen.getByRole("button", { name: "Graphs" }));
+  expect(expectedGraph.getByLabelText("Drawn entities")).toHaveTextContent("Cam");
+
+  fireEvent.click(screen.getByText("Graph options"));
+  fireEvent.click(screen.getByRole("checkbox", { name: /Show isolated entities/ }));
+  expect(expectedGraph.getByLabelText("Drawn entities")).not.toHaveTextContent("Cam");
+  expect(isolatedOnExpected.entities).toHaveLength(3);
+});
+
+
+it("opens the relationship inspector with the selected outcome filter", () => {
+  render(<ConditionInspection runId="run-1" observation={observation()} />);
+  const outcomes = screen.getByRole("group", { name: "Relationship outcomes" });
+  fireEvent.click(within(outcomes).getByRole("button", { name: "Missing 1" }));
+  const list = screen.getByRole("region", { name: "Relationship list" });
+  expect(within(list).getByRole("heading", { name: "Missing relationships" })).toBeVisible();
+  expect(within(list).getByRole("button", { name: /Bela spouse of Cam Missing/ })).toBeVisible();
+  expect(within(list).queryByRole("button", { name: /Ada parent of Bela/ })).toBeNull();
+  expect(screen.queryByRole("region", { name: "Expected graph" })).toBeNull();
 });

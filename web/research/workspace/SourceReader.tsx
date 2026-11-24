@@ -85,23 +85,25 @@ export function SourceReader({
         <h6>Full quotation</h6>
         <blockquote>{passage.text}</blockquote>
         <h6>Frozen Source · {passage.source_id}</h6>
-        {!source
-          ? "Source text unavailable."
-          : sourceSegments(source.text, {
-              ...passage,
-              id: passage.source_id,
-            }).map((part, index) =>
-              part.highlighted ? (
-                <mark
-                  key={index}
-                  data-current={markIndex++ === occurrence || undefined}
-                >
-                  {part.text}
-                </mark>
-              ) : (
-                part.text
-              ),
-            )}
+        <div className="frozen-source">
+          {!source
+            ? "Source text unavailable."
+            : sourceSegments(source.text, {
+                ...passage,
+                id: passage.source_id,
+              }).map((part, index) =>
+                part.highlighted ? (
+                  <mark
+                    key={index}
+                    data-current={markIndex++ === occurrence || undefined}
+                  >
+                    {part.text}
+                  </mark>
+                ) : (
+                  part.text
+                ),
+              )}
+        </div>
       </div>
     </section>
   );

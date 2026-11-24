@@ -1,6 +1,8 @@
 import type { BenchmarkRun, RunDetail } from "../shared/contracts";
 import { metric, money } from "./RunChart";
 import { formatF1Basis } from "./benchmark-metrics";
+import { RunRelationshipMatrix } from "./RunRelationshipMatrix";
+import "./run-relationship-matrix.css";
 
 export function BenchmarkRunSummary({
   run,
@@ -39,6 +41,10 @@ export function BenchmarkRunSummary({
           </strong>
           <small>Annotated relationships with a complete approved proof</small>
         </div>
+        <RunRelationshipMatrix
+          counts={benchmark.cohort.all_conditions}
+          expectedEdgesWithoutGraph={benchmark.cohort.expected_edges_without_graph}
+        />
       </div>
 
       <details className="protocol-metrics">
