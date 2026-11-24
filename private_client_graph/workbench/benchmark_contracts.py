@@ -105,7 +105,7 @@ class BenchmarkRun(BaseModel):
     run_artifact_digest: str | None = None
     observations: list[BenchmarkCondition]
 
-    @computed_field
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def scope_identity(self) -> str:
         return value_digest(asdict(self.scope))

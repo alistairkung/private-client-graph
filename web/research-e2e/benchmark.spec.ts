@@ -22,14 +22,13 @@ test("read-only import exposes protocol metrics, proof, unavailable and empty gr
   await expect(
     page.getByRole("region", { name: "Predicted graph", exact: true }),
   ).toBeVisible();
-  await expect(
-    page.getByText("Morgan is the current holder.", { exact: true }).first(),
-  ).toBeVisible();
-  await expect(
-    page
-      .getByText("The audit confirms Morgan holds the office.", { exact: true })
-      .first(),
-  ).toBeVisible();
+  const proof = page.getByRole("region", { name: "Sufficient Evidence Alternatives" });
+  await expect(proof.locator("q").filter({ hasText: "Morgan is the current holder." })).toBeVisible();
+  await expect(proof.locator("q").filter({ hasText: "The audit confirms Morgan holds the office." })).toBeVisible();
+  await expect(proof.getByText(/Wrong quotation on this relationship/)).toBeVisible();
+  await expect(proof.getByText(/Source missing from this relationship/)).toBeVisible();
+  await proof.getByText("View proof member in Source", { exact: true }).first().click();
+  await expect(proof.getByRole("article", { name: "Frozen proof Source" }).locator("mark")).toBeVisible();
 
   const picker = page
     .getByRole("combobox", { name: /Observation|Condition/ })
