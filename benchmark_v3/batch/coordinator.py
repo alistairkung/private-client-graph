@@ -716,11 +716,11 @@ def release_clean_redesign(
                   and not commission.manifest.requires_design_review)
         if (not scoped or not reason.strip() or state not in {"quarantined", "returned"}
                 or not issue or issue["code"] not in {"scientific_review", "documentary_realism"}):
-            raise ValueError("A clean redesign needs a retained scientific failure and a released non-giant hypothesis.")
+            raise ValueError("A clean redesign needs a retained scientific failure and a released hypothesis.")
         prior = [row for row in events if "documentary_redesign" in row["details"]]
         slot = next(row for row in commission.portfolio.slots if row.family_id == family)
-        if slot.tier == "giant" or slot.expected_sources >= 100:
-            raise ValueError("The giant workload is outside clean redesign authority.")
+        if (slot.tier == "giant" or slot.expected_sources >= 100) and ledger.pool.giant_phase is None:
+            raise ValueError("The giant workload needs a dedicated phase before clean redesign.")
         runner = commission.session_runner(ledger, family, revision + 1)
         audit = None
         if independent_large_assessment is None:

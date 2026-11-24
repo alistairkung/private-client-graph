@@ -3349,6 +3349,93 @@ def test_giant_phase_preserves_unused_budget_and_gates_the_exact_next_workload(a
         entered.enrol(replacement, replacement_manifest, reference="Outside the dedicated phase.")
 
 
+def test_rehearsal_preserves_ceiling_and_requires_its_own_exact_dossier(approved, tmp_path, monkeypatch):
+    import sqlite3
+    from types import SimpleNamespace
+
+    from benchmark_v3.batch.pool import GiantPhaseRelease, RehearsalRelease
+
+    ledger, commission = approved
+    coordinator.commission_batch(ledger, commission, BOUNDARY)
+    ancestor = MilestonePool(tmp_path / "closed-non-giant", PoolAuthority(
+        owner=OWNER, reference="Frozen cohort.", prior_archive_sha256="a" * 64,
+        starting_charges=300, cumulative_ceiling=1000, additional_target=1, excluded_families=("V",),
+        members=[CustodyMember(root=str(ledger.root), task_id=commission.manifest.task_id, starting_charges=0)],
+    ))
+    dossier = {"family": "G", "revision": 1, "dossier_sha256": "1" * 64, "custody": str(ledger.root)}
+    with closing(sqlite3.connect(ancestor.path)) as database, database:
+        database.execute("INSERT INTO qualified VALUES ('G', ?, ?, 1)", (dossier["dossier_sha256"], dossier["custody"]))
+    closed = {"cumulative_charges": 300, "remaining": 700, "unresolved_reservations": [], "shared_halts": []}
+    original_account = artifacts.write_json(ancestor.root / "final-accounting.json", closed | {
+        "number_qualified": 19, "added_technical_dossiers": [dossier],
+        "qualified_coverage": [{"family_id": name} for name in "ABCDEFGHIJKLMNOPQRS"],
+    })
+    original_authority = artifacts.write_json(ancestor.root / "giant-phase-authorisation.json", {
+        "predecessor_pool_sha256": ancestor.digest, "additional_sessions": 2000, "combined_cumulative_ceiling": 3000,
+    })
+    hypothesis = {"hypothesis_sha256": "d" * 64}
+    artifacts.write_json(commissioning._ROOT / "planning/development-20/portfolio.json", {"slots": [
+        {"family_id": "V", "tier": "giant", "expected_sources": 150, "hypothesis": hypothesis},
+        {"family_id": "U", "tier": "administrative", "expected_sources": 65, "hypothesis": hypothesis},
+    ]})
+    monkeypatch.setattr(type(ancestor), "isolation_guard",
+                        property(lambda _: SimpleNamespace(require_delivery_attestation=True)))
+    monkeypatch.setattr(ancestor, "_verified_workload", lambda _minimum, _maximum: True)
+    authority = PoolAuthority(
+        owner=OWNER, reference="One separate rehearsal.", prior_archive_sha256="b" * 64,
+        starting_charges=300, cumulative_ceiling=1000, additional_target=1, excluded_families=("V",),
+        members=[], predecessor_sha256=ancestor.digest,
+        rehearsal_release=RehearsalRelease(previous_database_sha256=commissioning.digest(ancestor.path.read_bytes()),
+                                           previous_accounting_sha256=original_account),
+    )
+    with pytest.raises(ValueError, match="cumulative ceiling"):
+        MilestonePool(tmp_path / "raised", authority.model_copy(update={"cumulative_ceiling": 1001}), predecessor=ancestor)
+    with pytest.raises(ValueError, match="exact closed non-giant budget"):
+        MilestonePool(tmp_path / "charges", authority.model_copy(update={"starting_charges": 299}), predecessor=ancestor)
+    rehearsal = MilestonePool(tmp_path / "rehearsal", authority, predecessor=ancestor)
+    with pytest.raises(TaskHalted, match="superseded"):
+        ancestor.check_running()
+    assert not rehearsal._verified_local_workload(65, 65)
+    assert rehearsal._verified_intermediate()
+    with pytest.raises(ValueError, match="historical author custody"):
+        rehearsal.enrol(ledger, commission.manifest, reference="Historical custody.")
+    replacement = coordinator.open_ledger(tmp_path / "unrelated-rehearsal")
+    coordinator.commission_batch(replacement, commission, BOUNDARY)
+    with pytest.raises(ValueError, match="Only the exact registered 65-Source rehearsal"):
+        rehearsal.enrol(replacement, commission.manifest, reference="Other family.")
+    rehearsal_account = artifacts.write_json(rehearsal.root / "final-accounting.json", closed | {"rehearsal_dossier": None})
+    giant_authority = PoolAuthority(
+        owner=OWNER, reference="Giant continuation.", prior_archive_sha256="c" * 64,
+        starting_charges=300, cumulative_ceiling=3000, additional_target=1, members=[],
+        predecessor_sha256=rehearsal.digest,
+        budget_extension=BudgetExtension(previous_database_sha256=commissioning.digest(rehearsal.path.read_bytes()),
+            previous_accounting_sha256=rehearsal_account, additional_sessions=2000,
+            giant_phase=GiantPhaseRelease(authorisation_sha256=original_authority, expected_sources=150, **hypothesis)),
+    )
+    with pytest.raises(ValueError, match="exact verified 65-Source rehearsal"):
+        MilestonePool(tmp_path / "giant-too-early", giant_authority, predecessor=rehearsal)
+    rehearsal_dossier = {**dossier, "family": "U", "dossier_sha256": "2" * 64}
+    with closing(sqlite3.connect(rehearsal.path)) as database, database:
+        database.execute("INSERT INTO qualified VALUES ('U', ?, ?, 1)",
+                         (rehearsal_dossier["dossier_sha256"], rehearsal_dossier["custody"]))
+    (rehearsal.root / "final-accounting.json").unlink()
+    rehearsal_account = artifacts.write_json(rehearsal.root / "final-accounting.json",
+                                             closed | {"rehearsal_dossier": rehearsal_dossier})
+    extension = giant_authority.budget_extension
+    assert extension is not None
+    giant_authority = giant_authority.model_copy(update={"budget_extension": extension.model_copy(update={
+        "previous_database_sha256": commissioning.digest(rehearsal.path.read_bytes()),
+        "previous_accounting_sha256": rehearsal_account,
+    })})
+    monkeypatch.setattr(rehearsal, "_verified_local_workload", lambda minimum, maximum: minimum <= 64 <= maximum)
+    with pytest.raises(ValueError, match="exact verified 65-Source rehearsal"):
+        MilestonePool(tmp_path / "giant-wrong-workload", giant_authority, predecessor=rehearsal)
+    monkeypatch.setattr(rehearsal, "_verified_local_workload", lambda minimum, maximum: minimum <= 65 <= maximum)
+    giant = MilestonePool(tmp_path / "giant-after-rehearsal", giant_authority, predecessor=rehearsal)
+    with closing(sqlite3.connect(giant.path)) as database:
+        assert giant.remaining(database, attached=False) == 2700
+
+
 def test_pre_author_return_repairs_only_a_committed_brief(approved, transport, monkeypatch):
     from benchmark_v3.batch import author_context, author_repair
 
@@ -3943,7 +4030,8 @@ def test_large_merits_repair_preserves_the_exact_design_outside_approved_rows():
         large_merits_repair.apply(design, moved, {row.source_id})
 
 
-def test_audited_large_replacement_requires_merits_before_participant_authoring(autonomous, transport, monkeypatch):
+@pytest.mark.parametrize("dedicated_scope", [False, True])
+def test_large_workload_requires_merits_before_participant_authoring(autonomous, transport, monkeypatch, dedicated_scope):
     from benchmark_v3.batch import clean_redesign
     from benchmark_v3.batch.workflow import FamilyWorkflow
 
@@ -3968,7 +4056,10 @@ def test_audited_large_replacement_requires_merits_before_participant_authoring(
     design = artifacts.read_contract(runner.directory / "design.json", DesignOutput)
     with pytest.raises(ValueError, match="Only the authorised audit or repair job"):
         workflow.author(design)
-    monkeypatch.setattr(clean_redesign, "recorded", lambda _: replacement)
+    if dedicated_scope:
+        monkeypatch.setattr(type(ledger), "requires_workload_merits", property(lambda _: True))
+    else:
+        monkeypatch.setattr(clean_redesign, "recorded", lambda _: replacement)
     calls, behavior, _ = transport
     behavior[family, clean_redesign.MERITS_JOB] = lambda _: {
         "verdict": "return", "findings": {"src1": "Prior delivery is not documented.", "src2": "Ordinary record."},

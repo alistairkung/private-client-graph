@@ -32,12 +32,13 @@ def requires_review(runner: "SessionRunner") -> bool:
         reopen(runner, repair)
         return True
     fresh = clean_redesign.recorded(runner)
-    return fresh is not None and fresh.audited_replacement is not None
+    return runner.ledger.requires_workload_merits or (fresh is not None and fresh.audited_replacement is not None)
 
 
 def returned(runner: "SessionRunner") -> tuple[DesignOutput, author_context.AuthorContextReview, str]:
     replacement = clean_redesign.recorded(runner)
-    if replacement is None or replacement.audited_replacement is None or any(
+    if (not runner.ledger.requires_workload_merits
+            and (replacement is None or replacement.audited_replacement is None)) or any(
         attempt["revision"] == runner.revision and attempt["stage"] == "author"
         and attempt["job"] not in {clean_redesign.MERITS_JOB, clean_redesign.MERITS_JOB + "-format-retry"}
         for attempt in runner.ledger.attempts(runner.family)

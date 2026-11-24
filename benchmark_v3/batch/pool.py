@@ -42,6 +42,7 @@ QUARANTINE_SCHEMA = """CREATE TABLE IF NOT EXISTS quarantined_runtime_custody (
     verification_sha256 TEXT NOT NULL, record_sha256 TEXT NOT NULL
 )"""
 LOCK_TIMEOUT_SECONDS = 30
+REHEARSAL_SOURCES = 65
 STAGE_ROLES = {
     "design": {"designer", "audit"}, "author": {"author", "audit"}, "realism": {"realism"},
     "blind": {"annotation"}, "adjudicate": {"adjudication"}, "audit": {"audit"}, "masks": {"masked"},
@@ -80,6 +81,11 @@ class BudgetExtension(Contract):
     giant_phase: GiantPhaseRelease | None = None
 
 
+class RehearsalRelease(Contract):
+    previous_database_sha256: Digest
+    previous_accounting_sha256: Digest
+
+
 class PoolAuthority(Contract):
     owner: Text
     reference: Text
@@ -92,6 +98,7 @@ class PoolAuthority(Contract):
     excluded_families: tuple[FamilyId, ...] = ()
     isolation_restart: IsolationRestart | None = None
     budget_extension: BudgetExtension | None = None
+    rehearsal_release: RehearsalRelease | None = None
 
 
 class MilestonePool:
@@ -101,8 +108,10 @@ class MilestonePool:
         self.authority = authority
         self.predecessor = predecessor
         if (not authority.starting_charges < authority.cumulative_ceiling
-                or (not authority.members and authority.isolation_restart is None and self.giant_phase is None)
-                or (authority.isolation_restart is not None and authority.budget_extension is not None)):
+                or (not authority.members and not any((authority.isolation_restart, self.giant_phase,
+                                                        authority.rehearsal_release)))
+                or sum(value is not None for value in (authority.isolation_restart, authority.budget_extension,
+                                                        authority.rehearsal_release)) > 1):
             raise ValueError("Milestone pool needs a bounded positive continuation and qualification target.")
         paths = [Path(member.root) for member in authority.members]
         task_ids = {member.task_id for member in authority.members}
@@ -127,14 +136,15 @@ class MilestonePool:
             row = connection.execute("SELECT digest, detail FROM authority WHERE singleton = 1").fetchone()
             if row != (self.digest, payload):
                 raise ValueError("The shared milestone budget is immutable.")
-        if authority.budget_extension is not None:
+        if authority.budget_extension is not None or authority.rehearsal_release is not None:
             self._retire_predecessor()
 
     def _verify_predecessor(self) -> None:
         previous = self.predecessor
         authority = self.authority
         if previous is None:
-            if any((authority.predecessor_sha256, authority.isolation_restart, authority.budget_extension)):
+            if any((authority.predecessor_sha256, authority.isolation_restart, authority.budget_extension,
+                    authority.rehearsal_release)):
                 raise ValueError("The exact predecessor pool is required to resume the shared ceiling.")
             return
         if (authority.predecessor_sha256 != previous.digest or authority.owner != previous.authority.owner
@@ -148,6 +158,9 @@ class MilestonePool:
             if authority.isolation_restart is not None:
                 self._verify_isolation_restart(previous, remaining)
                 return
+            if authority.rehearsal_release is not None:
+                self._verify_rehearsal(previous, remaining, count)
+                return
             if authority.budget_extension is not None:
                 self._verify_budget_extension(previous, remaining, count)
                 if self.giant_phase is not None:
@@ -156,6 +169,27 @@ class MilestonePool:
                   or count != previous.authority.additional_target):
                 raise ValueError("The predecessor must be at its verified target with its exact charges retained.")
             self._verify_member_charges(previous, connection)
+
+    def _verify_rehearsal(self, previous: "MilestonePool", remaining: int, count: int) -> None:
+        authority = self.authority
+        release = authority.rehearsal_release
+        assert release is not None
+        closed = artifacts.read_bytes(previous.root / "final-accounting.json")
+        accounting = commissioning._read_json(closed)
+        if (self._members or authority.additional_target != 1 or previous.authority.rehearsal_release is not None
+                or previous.giant_phase is not None or "V" not in authority.excluded_families
+                or authority.excluded_families != previous.authority.excluded_families
+                or authority.starting_charges != previous.authority.cumulative_ceiling - remaining
+                or commissioning.digest(closed) != release.previous_accounting_sha256
+                or commissioning.digest(artifacts.read_bytes(previous.path)) != release.previous_database_sha256
+                or accounting.get("cumulative_charges") != authority.starting_charges
+                or accounting.get("remaining") != remaining
+                or accounting.get("unresolved_reservations") != [] or accounting.get("shared_halts") != []):
+            raise ValueError("The rehearsal needs fresh custody and the exact closed non-giant budget.")
+        self._verify_non_giant_closeout(previous, accounting, count)
+        if (previous.isolation_guard is None or not previous.isolation_guard.require_delivery_attestation
+                or not previous._verified_intermediate()):
+            raise ValueError("The rehearsal needs sender attestation and a verified intermediate workload.")
 
     def _verify_budget_extension(self, previous: "MilestonePool", remaining: int, count: int) -> None:
         authority = self.authority
@@ -194,10 +228,13 @@ class MilestonePool:
                 or "V" not in previous.authority.excluded_families
                 or authority.excluded_families != tuple(f for f in previous.authority.excluded_families if f != "V")):
             raise ValueError("The giant phase requires fresh custody, one reserved slot and its exact cumulative ceiling.")
-        signed = artifacts.read_bytes(previous.root / "giant-phase-authorisation.json")
+        rehearsal = previous.authority.rehearsal_release
+        anchor = previous.predecessor if rehearsal is not None else previous
+        assert anchor is not None
+        signed = artifacts.read_bytes(anchor.root / "giant-phase-authorisation.json")
         approved = commissioning._read_json(signed)
         if (commissioning.digest(signed) != release.authorisation_sha256
-                or approved.get("predecessor_pool_sha256") != previous.digest
+                or approved.get("predecessor_pool_sha256") != anchor.digest
                 or approved.get("additional_sessions") != extension.additional_sessions
                 or approved.get("combined_cumulative_ceiling") != authority.cumulative_ceiling):
             raise ValueError("The giant phase requires its exact additional owner authorisation.")
@@ -208,6 +245,17 @@ class MilestonePool:
         if (slot["tier"] != "giant" or release.expected_sources != slot["expected_sources"]
                 or release.hypothesis_sha256 != slot["hypothesis"]["hypothesis_sha256"]):
             raise ValueError("The giant release must bind the existing registered V workload and hypothesis.")
+        if rehearsal is not None:
+            if (count != 1 or closed.get("rehearsal_dossier") != previous.qualifications()[0]
+                    or not previous._verified_local_workload(REHEARSAL_SOURCES, REHEARSAL_SOURCES)):
+                raise ValueError("The giant phase requires the exact verified 65-Source rehearsal dossier.")
+            return
+        self._verify_non_giant_closeout(previous, closed, count)
+        if not previous._verified_workload(51, 99):
+            raise ValueError("The giant phase requires a verified large development dossier before commissioning.")
+
+    @staticmethod
+    def _verify_non_giant_closeout(previous: "MilestonePool", closed: dict[str, Any], count: int) -> None:
         coverage = closed.get("qualified_coverage", [])
         families = {row["family_id"] for row in coverage}
         verified = {(row["family"], row["revision"], row["dossier_sha256"]) for row in previous.qualifications()}
@@ -217,8 +265,6 @@ class MilestonePool:
                 or len(coverage) != 19 or len(families) != 19 or "V" in families or archived != verified
                 or not {family for family, _, _ in verified} <= families):
             raise ValueError("The giant phase requires 19 distinct verified non-giant dossiers in the exact closeout.")
-        if not previous._verified_workload(51, 99):
-            raise ValueError("The giant phase requires a verified large development dossier before commissioning.")
 
     def _verify_member_charges(self, previous: "MilestonePool", connection: sqlite3.Connection) -> None:
         members = previous.members
@@ -237,15 +283,15 @@ class MilestonePool:
 
     def _retire_predecessor(self) -> None:
         previous = self.predecessor
-        extension = self.authority.budget_extension
-        assert previous is not None and extension is not None
+        release = self.authority.budget_extension or self.authority.rehearsal_release
+        assert previous is not None and release is not None
         with closing(sqlite3.connect(previous.path, timeout=LOCK_TIMEOUT_SECONDS)) as connection, connection:
             connection.execute("BEGIN IMMEDIATE")
-            if commissioning.digest(artifacts.read_bytes(previous.path)) != extension.previous_database_sha256:
-                raise ValueError("Predecessor reservations changed during budget extension.")
+            if commissioning.digest(artifacts.read_bytes(previous.path)) != release.previous_database_sha256:
+                raise ValueError("Predecessor reservations changed during release of the successor.")
             artifacts.write_json(previous.root / "budget-successor.json", {
                 "predecessor_sha256": previous.digest, "successor_sha256": self.digest,
-                "accounting_sha256": extension.previous_accounting_sha256,
+                "accounting_sha256": release.previous_accounting_sha256,
             })
 
     def _verify_isolation_restart(self, previous: "MilestonePool", remaining: int) -> None:
@@ -320,6 +366,15 @@ class MilestonePool:
         families = {allocation.family_id for allocation in manifest.families}
         slots = [slot for slot in committed["portfolio"]["slots"] if slot["family_id"] in families]
         giant = self.giant_phase
+        if self.authority.rehearsal_release is not None:
+            roadmap = commissioning._read_json(commissioning.trusted_bytes("planning/development-20/portfolio.json"))
+            rehearsal = next(slot for slot in roadmap["slots"] if slot["family_id"] == "U")
+            if (manifest.phase != "milestone" or manifest.qualification_target != 1 or families != {"U"}
+                    or len(slots) != 1 or slots[0]["tier"] != rehearsal["tier"]
+                    or slots[0]["expected_sources"] != REHEARSAL_SOURCES or rehearsal["expected_sources"] != REHEARSAL_SOURCES
+                    or slots[0]["hypothesis"] != rehearsal["hypothesis"]
+                    or manifest.families[0].hypothesis.model_dump(mode="json") != rehearsal["hypothesis"]):
+                raise ValueError("Only the exact registered 65-Source rehearsal can enter this release.")
         if giant is not None:
             if (manifest.phase != "milestone" or manifest.qualification_target != 1 or families != {"V"}
                     or len(slots) != 1 or slots[0]["tier"] != "giant" or slots[0]["expected_sources"] != giant.expected_sources
@@ -358,6 +413,12 @@ class MilestonePool:
         return self._verified_workload(21, 50)
 
     def _verified_workload(self, minimum: int, maximum: int) -> bool:
+        if self._verified_local_workload(minimum, maximum):
+            return True
+        return ((self.authority.budget_extension is not None or self.authority.rehearsal_release is not None)
+                and self.predecessor is not None and self.predecessor._verified_workload(minimum, maximum))
+
+    def _verified_local_workload(self, minimum: int, maximum: int) -> bool:
         from benchmark_v3.batch.workflow import verify_dossier
 
         for row in self.qualifications():
@@ -367,8 +428,7 @@ class MilestonePool:
             dossier = verify_dossier(ledger, batch, row["family"], row["revision"], row["dossier_sha256"])
             if any(minimum <= case["source_count"] <= maximum for case in dossier["replay"]["preview"]["inputs"]):
                 return True
-        return (self.authority.budget_extension is not None and self.predecessor is not None
-                and self.predecessor._verified_workload(minimum, maximum))
+        return False
 
     def _verify_enrolment(self, root: Path) -> None:
         if root in self._members:
@@ -515,7 +575,7 @@ class MilestonePool:
         return record_sha
 
     def serial_scientific_dispatch(self) -> bool:
-        if self.giant_phase is not None:
+        if self.giant_phase is not None or self.authority.rehearsal_release is not None:
             return True
         with closing(_read_only(self.path)) as connection:
             return (_has_runtime_quarantine(connection)
@@ -851,8 +911,12 @@ class PooledLedger(Ledger):
         return restart is not None and restart.require_delivery_attestation
 
     @property
+    def requires_workload_merits(self) -> bool:
+        return self.pool.giant_phase is not None or self.pool.authority.rehearsal_release is not None
+
+    @property
     def parallel_scientific_jobs(self) -> int:
-        return 4 if self.pool.predecessor is not None and self.pool.giant_phase is None else 1
+        return 4 if self.pool.predecessor is not None and not self.requires_workload_merits else 1
 
     def pooled_revision(self, batch: str, family: str, revision: int) -> bool:
         return any(row["name"] == self._release_name and row["kind"] == "reconcile"
@@ -942,9 +1006,11 @@ class PooledLedger(Ledger):
         batch = connection.execute("SELECT batch FROM families WHERE id = ?", (family,)).fetchone()[0]
         role = request.get("role")
         if self.requires_author_context and role == "author":
-            from benchmark_v3.batch.coordinator import load_commission
+            from benchmark_v3.batch import clean_redesign, coordinator, large_merits_repair
 
-            runner = load_commission(self, batch).session_runner(self, family, revision)
+            runner = coordinator.load_commission(self, batch).session_runner(self, family, revision)
+            if large_merits_repair.requires_review(runner):
+                clean_redesign.require_merits(runner)
             guard = author_delivery if self.requires_delivery_attestation else author_context
             guard.require_prompt(job, request["prompt"])
             guard.require_projection(runner, job, request["inputs"])

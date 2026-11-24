@@ -188,7 +188,7 @@ class FamilyWorkflow:
         cutoff_repair = design_recovery.isolated_cutoff_recovery(self.runner, self.slot)
         replacement = clean_redesign.recorded(self.runner)
         merits_repair = large_merits_repair.recorded(self.runner)
-        self.large_merits_required = (merits_repair is not None or
+        self.large_merits_required = (self.runner.ledger.requires_workload_merits or merits_repair is not None or
                                       (replacement is not None and replacement.audited_replacement is not None))
         initial_retry = design_recovery.initial_runtime_retry(self.runner)
         sender_repair = author_repair.reopen_empty_sender_repair(self.runner)

@@ -1,4 +1,4 @@
-"""Reopen a failed non-giant hypothesis using a fresh documentary lineage."""
+"""Reopen a failed hypothesis using a fresh documentary lineage."""
 
 from pathlib import Path
 
@@ -96,10 +96,10 @@ def verify_distinct(runner: SessionRunner, design: DesignOutput, record: CleanRe
     previous_names = {name.casefold() for left, _, right in parent.candidates for name in (left, right)}
     if current_names & previous_names or design.neutral_brief == parent.neutral_brief or design.cutoff == parent.cutoff:
         raise ValueError("A replacement requires a distinct documentary history and scored endpoint names.")
-    if record.audited_replacement is not None:
+    if record.audited_replacement is not None or runner.ledger.requires_workload_merits:
         prior_ids = {row.source_id for row in parent.inventory}
         if prior_ids.intersection(row.source_id for row in design.inventory):
-            raise ValueError("A replacement for a frozen large file requires fresh Source identities.")
+            raise ValueError("An independent replacement at this scale requires fresh Source identities.")
 
 
 def _design_digest(path: Path) -> str | None:

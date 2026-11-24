@@ -165,7 +165,7 @@ class SessionRunner:
         return next((row["details"] for row in self.ledger.events(self.manifest.batch_id, self.family)
                      if (row["revision"], row["kind"], row["name"]) == (self.revision, "output_selection", job)), None)
 
-    def _require_audited_replacement_merits(self) -> None:
+    def _require_large_workload_merits(self) -> None:
         if not self.ledger.requires_delivery_attestation:
             return
         from benchmark_v3.batch import clean_redesign, large_merits_repair
@@ -256,7 +256,7 @@ class SessionRunner:
                         permitted = True
             if self.ledger.requires_author_context:
                 if (stage, base_job) == ("author", author_context.JOB):
-                    self._require_audited_replacement_merits()
+                    self._require_large_workload_merits()
                     permitted = True
                 if (stage, base_job) == ("design", author_repair.JOB) and author_repair.recorded(self) is not None:
                     permitted = True

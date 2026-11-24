@@ -461,6 +461,10 @@ class Ledger:
         return False
 
     @property
+    def requires_workload_merits(self) -> bool:
+        return False
+
+    @property
     def parallel_scientific_jobs(self) -> int:
         return 1
 
