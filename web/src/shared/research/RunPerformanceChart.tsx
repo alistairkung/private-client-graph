@@ -17,6 +17,7 @@ export type PerformanceRun = {
   scoreState: string;
   coverage: { scored: number; planned: number };
   cost: { total: number | null; currency: string | null };
+  costBasis?: "verified_provider_estimate";
   scopeIdentity: string | null;
   eligibility: {
     f1_by_run: boolean;
@@ -53,11 +54,20 @@ export function RunPerformanceChart({
     (run) =>
       inputMode === "all" || run.inputMode === inputMode,
   );
-  const eligible = visible.filter((run) =>
+  const candidates = visible.filter((run) =>
     tab === "run"
       ? run.eligibility.f1_by_run
       : run.eligibility.f1_vs_cost,
   );
+  // Preserve the historical currency when those Runs are visible. With only
+  // verified estimates, the first visible estimate sets the cost axis.
+  const historicalCost = candidates.find((run) => !run.costBasis);
+  const costCurrency = (historicalCost ?? candidates[0])?.cost.currency ?? "USD";
+  const incompatibleCost = (run: PerformanceRun) =>
+    tab === "cost" &&
+    run.costBasis === "verified_provider_estimate" &&
+    run.cost.currency !== costCurrency;
+  const eligible = candidates.filter((run) => !incompatibleCost(run));
   const maxCost = Math.max(
     ...eligible.map((run) => run.cost.total ?? 0),
     0.0001,
@@ -199,7 +209,7 @@ export function RunPerformanceChart({
             <div className="plot-axis">
               {tab === "run"
                 ? t("Run number within this experiment")
-                : t("Estimated provider spend incurred by Run ({currency}) · 0–{max}", { currency: eligible[0]?.cost.currency ?? "USD", max: maxCost.toFixed(4) })}
+                : t("Estimated provider spend incurred by Run ({currency}) · 0–{max}", { currency: costCurrency, max: maxCost.toFixed(4) })}
             </div>
             {!eligible.length && (
               <p>
@@ -226,6 +236,14 @@ export function RunPerformanceChart({
                   ? `${tooltip.metricLabel}: ${t(metric(tooltip.f1))} · ${t(tooltip.scoreState)} · ${tooltip.coverage.scored}/${tooltip.coverage.planned} ${tooltip.coverageLabel ?? ""}`
                   : t("F1 {f1} · {state} · {scored}/{planned} scored", { f1: t(metric(tooltip.f1)), state: t(tooltip.scoreState), scored: tooltip.coverage.scored, planned: tooltip.coverage.planned })}
               </span>
+              {tab === "cost" && tooltip.costBasis === "verified_provider_estimate" && (
+                <span>
+                  {t("Estimated provider spend · {currency} {amount}", {
+                    currency: tooltip.cost.currency ?? "",
+                    amount: String(tooltip.cost.total),
+                  })}
+                </span>
+              )}
               <small>{tooltip.id}</small>
               <p>
                 {tooltip.recorded
@@ -256,12 +274,15 @@ export function RunPerformanceChart({
                 </button>
                 {!(tab === "run"
                   ? run.eligibility.f1_by_run
-                  : run.eligibility.f1_vs_cost) && (
+                  : run.eligibility.f1_vs_cost && !incompatibleCost(run)) && (
                     <small>
-                      {(tab === "run"
-                        ? run.eligibility.f1_reasons
-                        : run.eligibility.cost_reasons
-                      ).map(reason => t(reason)).join(" ")}
+                      {incompatibleCost(run)
+                        ? t("Estimated provider spend is in {currency}. This plot uses {plotCurrency}.", {
+                            currency: run.cost.currency ?? "",
+                            plotCurrency: costCurrency,
+                          })
+                        : (tab === "run" ? run.eligibility.f1_reasons : run.eligibility.cost_reasons)
+                          .map(reason => t(reason)).join(" ")}
                     </small>
                   )}
               </div>

@@ -80,6 +80,9 @@ def test_verified_baseline_reappears_after_index_rebuild_and_refuses_bad_custody
     assert (counts['valid_graphs'], counts['exact_graphs'], counts['planned_conditions']) == (30, 20, 34)
     assert (counts['complete_proofs'], counts['planned_proofs']) == (18, 71)
     assert (counts['complete_joint_proofs'], counts['planned_joint_proofs']) == (0, 30)
+    provider_cost = result['evaluation']['cost']
+    assert (provider_cost['currency'], provider_cost['total']) == ('USD', 0.027418308)
+    assert (provider_cost['attempts'], provider_cost['unpriced_attempts'], provider_cost['reasons']) == (34, 0, [])
     assert client.get('/health').json()['read_only'] is True
     assert client.post(f'{run_path}/start', json={}).status_code == 404
 
