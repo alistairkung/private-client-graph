@@ -3105,7 +3105,7 @@ def test_case_wide_intake_ticket_cannot_replace_an_actual_author_attachment(appr
     from dataclasses import replace
     from types import SimpleNamespace
 
-    from benchmark_v3.batch import autonomous_realism, author_delivery, science
+    from benchmark_v3.batch import autonomous_realism, author_delivery, delivery_particulars, science
     from private_client_graph.models.source import Source
 
     _, commission = approved
@@ -3133,6 +3133,22 @@ def test_case_wide_intake_ticket_cannot_replace_an_actual_author_attachment(appr
     projections = author_delivery.projection(permitted, {})
     assert projections[recipient.source_id]["received_ids"] == [sender.source_id]
     assert autonomous_realism._intake_gaps(replace(parent, prior_scope_return=None), design) == {}
+
+    particulars = delivery_particulars.IncomingParticulars(source_id=recipient.source_id,
+        recipient_author=recipient.author, recipient_on=recipient.created_on, records=[
+            delivery_particulars.ReceiptParticular(source_id=sender.source_id,
+                sender=author_delivery._participant(sender.author), sent_on=sender.created_on,
+                author_receipt_sha256="a" * 64),
+        ])
+    local_records = {sender.source_id: sources[0].model_copy(update={"text": "Sender's previously issued record."}),
+                     recipient.source_id: sources[1].model_copy(update={"text": "Recipient's earlier intake note."})}
+    restored = replace(parent, incoming_particulars=particulars, owned_records=local_records)
+    revision = autonomous_realism.Revision(restored, permitted, plan, set(local_records), {}, "fixture")
+    tickets = revision.participant_tickets()
+    assert "Copy your own original title and complete text exactly" in tickets[sender.source_id]
+    assert "Recipient's earlier intake note" not in tickets[sender.source_id]
+    assert "Recipient's earlier intake note" in tickets[recipient.source_id]
+    assert "Sender's previously issued record" not in tickets[recipient.source_id]
 
 
 def test_scoped_review_context_preserves_reserved_prompt_on_resume(approved, monkeypatch):

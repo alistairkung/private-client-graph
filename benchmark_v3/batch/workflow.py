@@ -516,6 +516,11 @@ class FamilyWorkflow:
 
         if self.runner.ledger.requires_delivery_attestation:
             expected = self.documentary_revision.parent.expected_local_source() if self.documentary_revision else None
+            if self.documentary_revision is not None:
+                parent = self.documentary_revision.parent
+                intake = parent.incoming_particulars
+                if parent.owned_records is not None and intake is not None and identity != intake.source_id:
+                    expected = parent.owned_records.get(identity)
 
             def verify_source(source: author_delivery.AttestedSource) -> None:
                 verify_literals(source)

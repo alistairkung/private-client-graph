@@ -1044,6 +1044,7 @@ def release_returned_authored_scope_plan(
     ledger: PooledLedger, batch: str, family: str, *, incoming_particulars_source: str | None = None,
     natural_provenance_restoration: bool = False,
     exact_inventory_edit: recipient_edit.ExactRecipientEdit | None = None,
+    owned_source_revisions: dict[str, int] | None = None,
 ) -> None:
     """Open one documentary replan from an independently rejected authored repair."""
     with ledger.coordinator_lock():
@@ -1070,17 +1071,36 @@ def release_returned_authored_scope_plan(
             "family_sessions_remaining": ledger.effective_budget().families[family] - len(ledger.attempts(family)),
         }
         slot = next(row for row in commission.portfolio.slots if row.family_id == family)
+        expanded = False
         if natural_provenance_restoration:
             previous_particulars = (earlier.get("incoming_particulars") or {}).get("source_id")
-            if (not incoming_particulars_source or incoming_particulars_source != previous_particulars
+            resolved_gaps = {source: ids for prior_return in autonomous_realism._pre_author_returns(earlier)
+                             for source, ids in prior_return.get("mechanically_missing_intake_attachments", {}).items()}
+            expanded = (ledger.requires_workload_merits and previous_particulars is None
+                        and owned_source_revisions is not None and incoming_particulars_source is not None
+                        and incoming_particulars_source in owned_source_revisions
+                        and incoming_particulars_source in resolved_gaps)
+            if (not incoming_particulars_source or (incoming_particulars_source != previous_particulars and not expanded)
                     or len(science.condition_ids(slot)) != 1 or (runner.directory / "family").exists()):
                 raise ValueError("One final natural-file restoration requires the same proven recipient and no key.")
             release.update(earlier_authored_scope_receipts=previous_receipts, natural_provenance_restoration=True)
+            if expanded:
+                restored = delivery_particulars.reopen(runner, incoming_particulars_source)
+                if not set(resolved_gaps[incoming_particulars_source]) <= set(restored.source_ids()):
+                    raise ValueError("The restored recipient's inputs must cover every previously missing attachment.")
+        if owned_source_revisions:
+            if not natural_provenance_restoration or not ledger.requires_workload_merits or exact_inventory_edit:
+                raise ValueError("Only the independently returned large natural file can restore exact owned records.")
+            release["owned_source_revisions"] = owned_source_revisions
         if incoming_particulars_source is not None:
             if not any(incoming_particulars_source in reason for reason in review.objections):
                 affected = commissioning._read_json(request["inputs"]["audit_rules"])["affected_sources"]
-                if (affected != [incoming_particulars_source] or incoming_particulars_source not in review.provenance
-                        or len(science.condition_ids(slot)) != 1 or (runner.directory / "family").exists()):
+                continued_intake = (natural_provenance_restoration and expanded and incoming_particulars_source in affected
+                                    and any("intake" in reason.casefold() and "author inputs" in reason.casefold()
+                                            for reason in review.objections))
+                isolated_recipient = affected == [incoming_particulars_source] and incoming_particulars_source in review.provenance
+                if (not (isolated_recipient or continued_intake) or len(science.condition_ids(slot)) != 1
+                        or (runner.directory / "family").exists()):
                     raise ValueError("The returned scope must identify the specific recipient Source.")
                 release["verified_recipient_scope_restoration"] = True
             particulars = delivery_particulars.reopen(runner, incoming_particulars_source)
