@@ -76,6 +76,21 @@ def test_offline_fixture_projection_tampering_fails_closed(tmp_path: Path) -> No
         read_run(tmp_path, original.experiment_id, original.id)
 
 
+def test_offline_fixture_projection_must_match_workspace_membership(tmp_path: Path) -> None:
+    original = _detail()
+    register_offline_fixture_for_tests(tmp_path, original)
+    membership_path = (tmp_path / 'experiments' / original.experiment_id / 'runs'
+                       / f'{original.id}.json')
+    from private_client_graph.workbench.workspaces import read_record, write_record
+    membership = read_record(membership_path)
+    membership['projection_sha256'] = '0' * 64
+    membership_path.unlink()
+    write_record(membership_path, membership)
+
+    with pytest.raises(ValueError, match='membership'):
+        read_run(tmp_path, original.experiment_id, original.id)
+
+
 def test_read_only_api_serves_imported_projection_without_mutation_routes(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:

@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { conditionFigure, familyFigure } from "./figures.mjs";
+import { readFile } from "node:fs/promises";
 
 test("poster figures show unavailable delivery and retain graph coverage", () => {
   const family = familyFigure({
@@ -29,4 +30,10 @@ test("poster figures show unavailable delivery and retain graph coverage", () =>
   assert.match(result.svg, /A &lt; B/);
   assert.match(result.svg, /Predicted graph unavailable/);
   assert.match(result.svg, /trustee of/);
+});
+
+test("poster CLI requires a predicted graph and incomplete joint proof for condition output", async () => {
+  const source = await readFile(new URL("./benchmark.mjs", import.meta.url), "utf8");
+  assert.match(source, /selected\.benchmark\.graph/);
+  assert.match(source, /target\.joint_only && target\.status !== "complete"/);
 });

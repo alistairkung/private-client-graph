@@ -61,6 +61,17 @@ async function exportBenchmark({ origin, experiment, run, condition, output }) {
     : null;
   if (condition && !selected)
     throw new Error("The selected Condition is outside the verified Run");
+  if (selected && !selected.benchmark.graph)
+    throw new Error("The selected Condition has no valid predicted graph");
+  if (
+    selected &&
+    !selected.benchmark.proof_targets.some(
+      (target) => target.joint_only && target.status !== "complete",
+    )
+  )
+    throw new Error(
+      "The selected Condition has no incomplete joint proof for the poster example",
+    );
 
   const figures = new Map([
     ["family-performance", familyFigure(detail.benchmark.families)],

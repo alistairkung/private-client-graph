@@ -41,7 +41,7 @@ node web/research/export/benchmark.mjs \
   --output /absolute/path/to/new/private/figure-directory
 ```
 
-Find the Experiment and Run identifiers in the Workbench. Omit `--condition` for cohort and family output without a condition graph. The output directory must be new. The command reads the same verified Run as Workbench and writes metric CSV, provenance JSON and SVG/PDF figures. Choose an approved condition with an incomplete joint proof for the poster example. Keep the generated materials private until the specific figures and example are approved for disclosure.
+Find the Experiment and Run identifiers in the Workbench. Omit `--condition` for cohort and family output without a condition graph. The output directory must be new. The command reads the same verified Run as Workbench and writes metric CSV, provenance JSON and SVG/PDF figures. A selected `--condition` must have a valid predicted graph and at least one incomplete joint proof; the exporter checks both before writing any files. Keep the generated materials private until the specific figures and example are approved for disclosure.
 
 ## Reproduce verification
 
