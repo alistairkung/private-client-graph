@@ -3101,6 +3101,40 @@ def test_repair_retry_retains_both_failed_plans_and_uses_the_same_file(
         release(ledger, batch, family)
 
 
+def test_case_wide_intake_ticket_cannot_replace_an_actual_author_attachment(approved):
+    from dataclasses import replace
+    from types import SimpleNamespace
+
+    from benchmark_v3.batch import autonomous_realism, author_delivery, science
+    from private_client_graph.models.source import Source
+
+    _, commission = approved
+    slot = commission.portfolio.slots[0]
+    original = DesignOutput.model_validate(_design("G"))
+    sender, recipient = original.inventory
+    recipient_name = author_delivery._participant(recipient.author)
+    sender = sender.model_copy(update={"provenance": f"Delivered {sender.created_on} to {recipient_name}"})
+    design = original.model_copy(update={"inventory": [sender, recipient]})
+    sources = [Source(id=row.source_id, title="Retained", text="Original document.") for row in design.inventory]
+    bundles, freeze = science.freeze_bundles(slot, design, sources)
+    objections = [f"Revised {recipient.source_id} lists only one arrival. The ledger establishes additional arrivals "
+                  f"to {recipient_name.split()[0]}: {sender.source_id}. The scope is unchanged."]
+    parent = autonomous_realism.ReturnedFile(design, bundles, freeze, {}, {}, {}, None, [],
+        prior_scope_return={"independent_finding": {"objections": objections}})
+    runner = SimpleNamespace(ledger=SimpleNamespace(requires_workload_merits=True))
+    plan = autonomous_realism.RepairPlan(disposition="repair", objections={}, revised_design=None,
+        tickets={recipient.source_id: "Use your intake record and include the other sender's date."},
+        progress="improved", rationale="The projection omitted an exact earlier arrival.")
+    with pytest.raises(ValueError, match="authenticated participant attachments"):
+        autonomous_realism._verify_intake_basis(runner, parent, plan)
+    assert autonomous_realism._intake_gaps(parent, design) == {recipient.source_id: [sender.source_id]}
+    permitted = design.model_copy(update={"inventory": [sender, recipient.model_copy(update={"received": [sender.source_id]})]})
+    autonomous_realism._verify_intake_basis(runner, parent, plan.model_copy(update={"revised_design": permitted}))
+    projections = author_delivery.projection(permitted, {})
+    assert projections[recipient.source_id]["received_ids"] == [sender.source_id]
+    assert autonomous_realism._intake_gaps(replace(parent, prior_scope_return=None), design) == {}
+
+
 def test_scoped_review_context_preserves_reserved_prompt_on_resume(approved, monkeypatch):
     from benchmark_v3.batch.workflow import FamilyWorkflow
 

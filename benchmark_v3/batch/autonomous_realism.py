@@ -30,6 +30,7 @@ PLAN_PROMPT = (
 ADJUDICATION_RETURN = "Adjudication has unresolved scientific objections."
 PLAN_REFERENCE_FAILURE = "Every additional classification must identify a retained earlier objection."
 PLAN_SCOPE_FAILURE = "The proposed repair changes committed targets, roster or contrast structure."
+INTAKE_ATTACHMENT_FAILURE = "The repair cites additional intake records without their authenticated participant attachments."
 LINEAGE_REOPEN_FAILURE = "The original realism inputs and receipts failed their commitments."
 PARTICIPANT_LITERAL_FAILURE = "A participant instruction exposes a condition identifier or alternate literal."
 CLASSIFICATION_LAYOUT = (
@@ -316,10 +317,14 @@ def _select_plan(
         return _select_local_plan(runner, slot, parent, inputs)
 
     def propose(job: str, prompt: str, packet_inputs: dict[str, str]) -> tuple[RepairPlan, dict[str, Any]]:
+        def validate(plan: RepairPlan) -> None:
+            _verify_classification(slot, parent, plan, attested=attested)
+            _verify_intake_basis(runner, parent, plan)
+
         result, receipt = runner.run(
             "design", job, "audit", packet_inputs,
             prompt + (" " + author_delivery.DESIGN_INSTRUCTION if attested else ""), RepairPlan,
-            validate=lambda plan: _verify_classification(slot, parent, plan, attested=attested),
+            validate=validate,
             allow_format_retry=job != repair_authority.EXACT_PLAN_JOB,
         )
         artifacts.write_json(runner.directory / f"{job}.json", result.model_dump(mode="json"))
@@ -407,6 +412,15 @@ def _select_plan(
             prompt += CLASSIFICATION_LAYOUT
         if _pre_author_returns(release) and _include_plan_instruction(runner, LOCAL_ORIGIN):
             prompt += LOCAL_ORIGIN
+        intake = _intake_attachments(parent)
+        if runner.ledger.requires_workload_merits and intake:
+            instruction = (" Add these exact earlier records to their recipient's received slice, preserving already "
+                           "authorised attachments and chronological order: " + commissioning.json_text(intake)
+                           + ". Do not substitute a case-wide reconstructed intake list in the brief or ticket. "
+                           "Ask the recipient to account for the locally available received records and preserve their "
+                           "own exact original note and annotation. If the authorised receipt path cannot be shown, return infeasible.")
+            if _include_plan_instruction(runner, instruction):
+                prompt += instruction
     plan, receipt = propose(repair_authority.PLAN_JOB, prompt, inputs)
     design, affected = _verify_plan(slot, parent, plan, attested=attested)
     original_jobs = mandatory_jobs(design, affected, verification=True)
@@ -486,6 +500,11 @@ def _select_local_plan(
     if details != repair_authority.recorded_local_retry(runner) or original_inputs != inputs:
         raise packet.PacketIsolationError("The local replan must preserve the two original review packets.")
     job = repair_authority.LOCAL_PLAN_JOB
+    def validate(local: LocalRepairPlan) -> None:
+        plan = _local_derivative(parent, local)
+        _verify_classification(slot, parent, plan, attested=True)
+        _verify_intake_basis(runner, parent, plan)
+
     result, receipt = runner.run("design", job, "audit", inputs, PLAN_PROMPT + (
         " Use exact current objection keys. Return revised_records as a map of changed author records only, keyed "
         "by their exact Source IDs. Ticket only Sources identified by the returning reviewers. Preserve the author, issue date, "
@@ -493,7 +512,7 @@ def _select_local_plan(
         "Keep observations and follow-up enquiries in rationale, outside participant instructions. If a repair needs "
         "changes outside these local records and their dependency closure, return infeasible or scope_change."
     ) + " " + author_delivery.DESIGN_INSTRUCTION, LocalRepairPlan,
-        validate=lambda local: _verify_classification(slot, parent, _local_derivative(parent, local), attested=True),
+        validate=validate,
         allow_format_retry=False)
     plan = _local_derivative(parent, result)
     design, affected = _verify_plan(slot, parent, plan, attested=True)
@@ -521,6 +540,37 @@ def _local_derivative(parent: ReturnedFile, local: LocalRepairPlan) -> RepairPla
     revised = original.model_copy(update={"inventory": [local.revised_records.get(row.source_id, row)
                                                          for row in original.inventory]})
     return RepairPlan(**local.model_dump(exclude={"revised_records"}), revised_design=revised)
+
+
+def _intake_attachments(parent: ReturnedFile) -> dict[SourceId, list[SourceId]]:
+    """Read an independent review's explicit list of missing arrivals to a named recipient."""
+    if parent.prior_scope_return is None:
+        return {}
+    documents = {row.source_id: row for row in parent.design.inventory}
+    requirements: dict[SourceId, list[SourceId]] = {}
+    for objection in parent.prior_scope_return["independent_finding"]["objections"]:
+        matched = re.search(r"\bRevised (\w+) lists only\b.*?\badditional arrivals to ([^:]+): ([^.]+)\.", objection)
+        if matched is None:
+            continue
+        target, recipient, names = matched.groups()
+        if target not in documents or author_delivery._participant(documents[target].author).split()[0] != recipient:
+            continue
+        ids = [source for source in documents if re.search(rf"(?<!\w){re.escape(source)}(?!\w)", names)]
+        if ids:
+            requirements[target] = ids
+    return requirements
+
+
+def _intake_gaps(parent: ReturnedFile, design: DesignOutput) -> dict[SourceId, list[SourceId]]:
+    received = {row.source_id: set(row.received) for row in design.inventory}
+    return {target: missing for target, expected in _intake_attachments(parent).items()
+            if (missing := sorted(set(expected) - received.get(target, set())))}
+
+
+def _verify_intake_basis(runner: SessionRunner, parent: ReturnedFile, plan: RepairPlan) -> None:
+    if (runner.ledger.requires_workload_merits and plan.disposition == "repair"
+            and _intake_gaps(parent, plan.revised_design or parent.design)):
+        raise ValueError(INTAKE_ATTACHMENT_FAILURE)
 
 
 def classification_retry_details(runner: SessionRunner) -> tuple[dict[str, Any], dict[str, str]]:
@@ -793,6 +843,15 @@ def _authored_scope_receipts(release: dict[str, Any]) -> list[str]:
     return receipts
 
 
+def _pre_author_review_jobs(runner: SessionRunner) -> set[str]:
+    from benchmark_v3.batch import clean_redesign
+
+    jobs = {author_context.JOB}
+    if runner.ledger.requires_workload_merits:
+        jobs.add(clean_redesign.MERITS_JOB)
+    return {name for job in jobs for name in (job, job + repair_authority.FORMAT_RETRY)}
+
+
 def pre_author_scope_return(runner: SessionRunner, *, slot: FamilySlot | None = None) -> tuple[dict[str, Any], RepairPlan]:
     batch, family = runner.manifest.batch_id, runner.family
     parent = release_event(runner)
@@ -800,7 +859,7 @@ def pre_author_scope_return(runner: SessionRunner, *, slot: FamilySlot | None = 
             or parent["parent_revision"] != runner.revision - 1 - len(_pre_author_returns(parent))
             - len(_authored_scope_receipts(parent))
             or any(row["revision"] == runner.revision and row["stage"] == "author"
-                   and row["job"] not in {author_context.JOB, author_context.JOB + repair_authority.FORMAT_RETRY}
+                   and row["job"] not in _pre_author_review_jobs(runner)
                    for row in runner.ledger.attempts(family))):
         raise ValueError("A new preauthor plan requires a bounded independently returned repair before any author dispatch.")
     note = retained_design_note(runner)
@@ -812,16 +871,35 @@ def pre_author_scope_return(runner: SessionRunner, *, slot: FamilySlot | None = 
             raise ValueError("The independently rejected scope must bind the exact retained plan derivative.")
         chosen = note
     else:
-        chosen = next(row["details"] for row in runner.ledger.events(batch, family)
+        history = runner.ledger.events(batch, family)
+        chosen = next(row["details"] for row in history
                       if row["revision"] == runner.revision and row["kind"] == "repair_plan_selection")
-        plan, planner, _ = runner.committed_result("design", chosen["job"], "audit", RepairPlan)
-    review, receipt, _ = runner.committed_result("author", author_context.JOB, "audit", author_context.AuthorContextReview)
-    if review.verdict != "return" or not review.objections or planner["receipt_sha256"] != chosen["receipt_sha256"]:
+        if chosen["job"] == repair_authority.LOCAL_PLAN_JOB:
+            if slot is None:
+                raise ValueError("A local record plan requires the exact approved workload.")
+            plan = _committed_prior_plan(runner, slot, parent, history)
+            _, planner, _ = runner.committed_packet("design", chosen["job"], "audit")
+        else:
+            plan, planner, _ = runner.committed_result("design", chosen["job"], "audit", RepairPlan)
+    review, receipt, request = runner.committed_result("author", author_context.JOB, "audit", author_context.AuthorContextReview)
+    objections = review.objections
+    intake: dict[SourceId, list[SourceId]] = {}
+    if (review.verdict == "accept" and not objections and runner.ledger.requires_workload_merits and slot is not None):
+        original = _read_return(runner, slot, parent)
+        design = artifacts.read_contract(runner.directory / "design.json", DesignOutput)
+        if DesignOutput.model_validate_json(request["inputs"]["intended_intervention"]) != design:
+            raise ValueError("The accepted scope review differs from the exact held design.")
+        intake = _intake_gaps(original, design)
+        objections = [f"{source}: {INTAKE_ATTACHMENT_FAILURE} Include the actual earlier correspondence for "
+                      f"{', '.join(missing)} in the participant's received slice." for source, missing in intake.items()]
+    if (not objections or (review.verdict != "return" and not intake)
+            or planner["receipt_sha256"] != chosen["receipt_sha256"]):
         raise ValueError("A new preauthor plan must bind the exact independently rejected documentary proposal.")
     return {
         "revision": runner.revision, "planner_receipt_sha256": planner["receipt_sha256"],
-        "scope_receipt_sha256": receipt["receipt_sha256"], "objections": review.objections,
+        "scope_receipt_sha256": receipt["receipt_sha256"], "objections": objections,
         "review": review.model_dump(mode="json"),
+        **({"mechanically_missing_intake_attachments": intake} if intake else {}),
     }, plan
 
 
@@ -943,7 +1021,7 @@ def empty_attachment_ticket_return(runner: SessionRunner, source_id: str) -> dic
     """Authenticate a pre-author return of the factory's boilerplate attachment wording."""
     if not runner.ledger.requires_delivery_attestation or any(
         row["revision"] == runner.revision and row["stage"] == "author"
-        and row["job"] not in {author_context.JOB, author_context.JOB + repair_authority.FORMAT_RETRY}
+        and row["job"] not in _pre_author_review_jobs(runner)
         for row in runner.ledger.attempts(runner.family)
     ):
         raise ValueError("The boilerplate correction must precede all affected author turns.")

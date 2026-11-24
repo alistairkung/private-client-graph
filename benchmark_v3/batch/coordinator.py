@@ -1225,6 +1225,30 @@ def release_returned_pre_author_plan(
         ledger.event(batch, family, revision + 1, "transition", repair_authority.REVISION, state, "design", release)
 
 
+def release_unattested_intake_repair(ledger: PooledLedger, batch: str, family: str) -> None:
+    """Reopen an exact pre-author hold when retained scope acceptance missed missing author attachments."""
+    with ledger.coordinator_lock():
+        ledger.require_running()
+        commission = load_commission(ledger, batch)
+        revision, state, _ = family_status(ledger, batch, family)
+        runner = commission.session_runner(ledger, family, revision)
+        original = autonomous_realism.release_event(runner)
+        if (not ledger.requires_workload_merits or state != "quarantined" or original is None
+                or not ledger.pooled_revision(batch, family, revision)):
+            raise ValueError("A missing-intake recovery requires the exact un-authored large-workload hold.")
+        slot = next(row for row in commission.portfolio.slots if row.family_id == family)
+        record, _ = autonomous_realism.pre_author_scope_return(runner, slot=slot)
+        if not record.get("mechanically_missing_intake_attachments"):
+            raise ValueError("The held review does not prove an exact missing-intake attachment.")
+        earlier = autonomous_realism._pre_author_returns(original)
+        release = original | {"pre_author_scope_return": record,
+                              "family_sessions_remaining": ledger.effective_budget().families[family]
+                              - len(ledger.attempts(family))}
+        if earlier:
+            release["prior_pre_author_scope_returns"] = earlier
+        ledger.event(batch, family, revision + 1, "transition", repair_authority.REVISION, state, "design", release)
+
+
 def release_exact_plan_classification(ledger: PooledLedger, batch: str, family: str) -> None:
     with ledger.coordinator_lock():
         ledger.require_running()
