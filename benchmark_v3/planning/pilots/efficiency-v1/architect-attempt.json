@@ -1,0 +1,69 @@
+{
+  "status": "rejected",
+  "reason": "proposals.0.design.success_criteria: Input should be a valid list; proposals.1.design.success_criteria: Input should be a valid list; proposals.2.design.success_criteria: Input should be a valid list",
+  "session": "0e4780d6-406c-469b-91c4-816517b09314",
+  "packet_sha256": "beff9ddbaee5bda0e7e6c4df17cefdd1d9dafe4ccbccb7b72add54378328b52a",
+  "model_requested": "gpt-6.2-sol",
+  "effort_requested": "high",
+  "submitted_at": "2026-11-22T14:26:40.835665+00:00",
+  "completed_at": "2026-11-22T14:30:14.928003+00:00",
+  "profile": "planning",
+  "receipt_sha256": "9e7639d62b18c06da09fd9bb6297170ab62024a2b738eddb9e1eef2565b71faa",
+  "handoff_sha256": "77d63bd5f0c242864db54c194c2f42d9d834f205b87938fb56dd8fb415e7ce85",
+  "input_labels": [
+    "coverage_register",
+    "development_findings",
+    "ontology",
+    "practice_references",
+    "previous_decisions",
+    "research_specification"
+  ],
+  "isolation": {
+    "approval_policy": "never",
+    "codex_cli_version": "0.166.0",
+    "disabled_features": [
+      "apps",
+      "browser_use",
+      "browser_use_external",
+      "computer_use",
+      "goals",
+      "hooks",
+      "image_generation",
+      "in_app_browser",
+      "memories",
+      "multi_agent",
+      "plugins",
+      "remote_plugin",
+      "shell_tool",
+      "unified_exec",
+      "skill_search",
+      "tool_suggest",
+      "view_image",
+      "workspace_dependencies",
+      "js_repl",
+      "code_mode_host"
+    ],
+    "effort": "high",
+    "empty_workspace": true,
+    "ephemeral": true,
+    "instruction_sources": [],
+    "model": "gpt-6.2-sol",
+    "permission_profile": {
+      "extends": null,
+      "id": "benchmark_packet"
+    },
+    "provider": "openai",
+    "runtime_workspace_roots": [],
+    "sandbox": {
+      "networkAccess": false,
+      "type": "readOnly"
+    },
+    "service_tier": "priority",
+    "thread_environments": [],
+    "disabled_connector_count": 6
+  },
+  "published_output": false,
+  "retained_token_usage": null,
+  "scientific_sessions_charged": 1,
+  "paid_pcg_extraction_calls": 0
+}

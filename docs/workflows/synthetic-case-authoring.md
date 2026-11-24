@@ -1,6 +1,9 @@
 # Synthetic Case Authoring Workflow
 
-This is the canonical case-authoring workflow for **Private Client Graph**.
+This is the graph-first case-authoring workflow for **Private Client Graph**.
+Benchmark v3 uses the [isolated packet workflow](benchmark-v3-packets.md).
+That workflow starts with an approved portfolio hypothesis and derives the key
+through independent blind reading of the locked Sources.
 
 ## Purpose
 

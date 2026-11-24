@@ -1,0 +1,10 @@
+{
+  "hypothesis_id": "named-scope-capacity",
+  "revision": 1,
+  "hypothesis_sha256": "888372b762667bab8ffd03519f92405dd246118df8806798244fb69abf6e3263",
+  "schema_version": 1,
+  "status": "approved",
+  "owner": "Alistair Kung",
+  "decided_on": "2026-11-23",
+  "decision_reference": "Explicit owner approval of the exact Q/S/X continuation releases and 290-session cumulative ceiling in the 23 November 2026 Benchmark v3 Codex handoff. Development continuation only. Exact documentary designs remain subject to the commissioned review gate."
+}

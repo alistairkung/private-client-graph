@@ -1,0 +1,409 @@
+{
+  "schema_version": 1,
+  "taxonomy": [
+    {
+      "id": "temporal-effectiveness",
+      "category": "reasoning",
+      "scope": "in_scope",
+      "description": "Establish the state at the cut-off from effective acts, chronology and operative conditions."
+    },
+    {
+      "id": "documentary-authority",
+      "category": "reasoning",
+      "scope": "in_scope",
+      "description": "Determine what a document or actor can establish, using the file’s own authority and capacity terms."
+    },
+    {
+      "id": "entity-identity",
+      "category": "reasoning",
+      "scope": "in_scope",
+      "description": "Resolve distinguishable named entities from explicit links and withhold unsupported mergers."
+    },
+    {
+      "id": "cross-source-reasoning",
+      "category": "reasoning",
+      "scope": "in_scope",
+      "description": "Combine dependent statements from different Sources into one licensed decision."
+    },
+    {
+      "id": "evidence-sufficiency",
+      "category": "reasoning",
+      "scope": "in_scope",
+      "description": "Attach every necessary member of an independently verified sufficient proof to the same edge."
+    },
+    {
+      "id": "contradictory-assertions",
+      "category": "reasoning",
+      "scope": "in_scope",
+      "description": "Reconcile or withhold competing relationship assertions according to their scope, independence and authority."
+    },
+    {
+      "id": "incomplete-information",
+      "category": "reasoning",
+      "scope": "in_scope",
+      "description": "Distinguish a supported negative or positive from an underdetermined named assertion."
+    },
+    {
+      "id": "origin-and-copies",
+      "category": "documentary",
+      "scope": "in_scope",
+      "description": "Distinguish independent origins, quoted material and copied or administratively relayed evidence."
+    },
+    {
+      "id": "versions-and-amendments",
+      "category": "documentary",
+      "scope": "in_scope",
+      "description": "Recognise the scope and provenance of co-present drafts, partial amendments, and corrections."
+    },
+    {
+      "id": "graph-completeness",
+      "category": "reasoning",
+      "scope": "in_scope",
+      "description": "Recover every supported relationship, including ordinary invariant edges across a mixed file."
+    },
+    {
+      "id": "administrative-context",
+      "category": "documentary",
+      "scope": "conditional",
+      "description": "Preserve relevant facts embedded in routine material and reject unsupported role cues. Volume is descriptive absent a matched workload control."
+    },
+    {
+      "id": "axis-interactions",
+      "category": "reasoning",
+      "scope": "conditional",
+      "description": "Test a specified interaction only when simpler contrasts explain what each axis contributes."
+    },
+    {
+      "id": "presentation-order",
+      "category": "documentary",
+      "scope": "in_scope",
+      "description": "Vary presentation order with original chronology and the document bytes held fixed."
+    },
+    {
+      "id": "custody-and-absence",
+      "category": "workflow_discovery",
+      "scope": "conditional",
+      "description": "Represent received, copied or missing artifacts in the supplied file. Score only the consequences for supported graph claims."
+    },
+    {
+      "id": "source-discovery",
+      "category": "workflow_discovery",
+      "scope": "deferred",
+      "description": "Find, retrieve or request a Source outside the supplied file."
+    },
+    {
+      "id": "physical-document-quality",
+      "category": "workflow_discovery",
+      "scope": "deferred",
+      "description": "Acquire, OCR or recover physical text. A stipulated missing field in text can test reasoning within the supplied bundle."
+    }
+  ],
+  "families": [
+    {
+      "family_id": "A",
+      "title": "Trustee handover",
+      "name": "Wrenhollow",
+      "protocol": "historical",
+      "admission_sha256": "2a39c36968f8846867070220547a2caf62691fe213e709a38337e293e5bafead",
+      "hypothesis": null,
+      "primary_axis": "temporal-effectiveness",
+      "secondary_axes": [
+        "documentary-authority",
+        "evidence-sufficiency",
+        "presentation-order"
+      ],
+      "intended_difficulty": "Reconstruct one effective transfer at a bank-meeting cut-off despite signed papers and a later administrative message.",
+      "verified_findings": [
+        {
+          "axis": "temporal-effectiveness",
+          "finding": "An affirmative hold preserves the incumbent. A registered release effects simultaneous retirement and replacement.",
+          "evidence": [
+            "family_a/review/blind-review.md"
+          ]
+        },
+        {
+          "axis": "documentary-authority",
+          "finding": "The operative instrument and custodian disposition jointly determine the changing office.",
+          "evidence": [
+            "family_a/review/necessity.md"
+          ]
+        },
+        {
+          "axis": "evidence-sufficiency",
+          "finding": "Fresh excerpt readings established the two-Source routes and rejected a proposed short alternative.",
+          "evidence": [
+            "family_a/review/necessity.md"
+          ]
+        },
+        {
+          "axis": "presentation-order",
+          "finding": "An order-only sibling preserves the key and ordinary context.",
+          "evidence": [
+            "family_a/review/matched-sources.json"
+          ]
+        }
+      ],
+      "incidental_challenges": [
+        "Administrative email and bank paperwork contain a supported kinship and non-operative details."
+      ],
+      "matched_controls": [
+        "A0/A1 reorder identical Sources.",
+        "A0/A2 replace only the release disposition with a positive hold through the cut-off."
+      ],
+      "known_shortcuts_and_limits": [
+        "A later note and the most frequent name favour the incumbent.",
+        "Draft promotion favours the successor.",
+        "One two-person office and explanatory wording limit the inference."
+      ],
+      "documentary_genres": [
+        "Bank mandate",
+        "Office-book certification",
+        "Executed instrument",
+        "Escrow disposition register",
+        "Diary, archive enquiry and expense proposal"
+      ],
+      "overlap": "Joint proof overlaps with B and C. The verified switch concerns effectiveness under one instrument."
+    },
+    {
+      "family_id": "B",
+      "title": "Estate administration",
+      "name": "Estate administration",
+      "protocol": "historical",
+      "admission_sha256": "f6fe34f01a523d9a6f63d42319617bae5a0bb407c9923552e934c3d41122f67e",
+      "hypothesis": null,
+      "primary_axis": "entity-identity",
+      "secondary_axes": [
+        "incomplete-information",
+        "origin-and-copies",
+        "evidence-sufficiency"
+      ],
+      "intended_difficulty": "Resolve the speaker of a parentage report with an independently maintained attendance field. Withhold the named edge when attribution is open.",
+      "verified_findings": [
+        {
+          "axis": "entity-identity",
+          "finding": "A separately maintained session record binds the native statement to one named speaker only with the completed field.",
+          "evidence": [
+            "family_b/review/outputs/comparison.json"
+          ]
+        },
+        {
+          "axis": "incomplete-information",
+          "finding": "Two compatible speakers remain in the incomplete condition. Both readings preserve the ordinary parent edge.",
+          "evidence": [
+            "family_b/review/agreement.json"
+          ]
+        },
+        {
+          "axis": "origin-and-copies",
+          "finding": "The forward and export share one informant. Two forward-only readings fail to fix the speaker.",
+          "evidence": [
+            "family_b/review/mask-results.json"
+          ]
+        },
+        {
+          "axis": "evidence-sufficiency",
+          "finding": "Deleting a needed identity or statement fact defeats the edge without removing unaffected kinship.",
+          "evidence": [
+            "family_b/review/proof-deletions.json"
+          ]
+        }
+      ],
+      "incidental_challenges": [
+        "A clerk’s original-document sighting supports ordinary kinship through distinct sources of information."
+      ],
+      "matched_controls": [
+        "B0/B1 complete one name field for the same dated conversation. All other Source bytes remain fixed."
+      ],
+      "known_shortcuts_and_limits": [
+        "Testing field completeness and then selecting the first contact can reproduce the edge delta.",
+        "Two distinct names and a fictional desk convention bound the result."
+      ],
+      "documentary_genres": [
+        "Executor enquiry",
+        "Family contact list",
+        "Native desk relay and inline forward",
+        "Attendance extract",
+        "Original-document sighting",
+        "Intake note"
+      ],
+      "overlap": "Like C, an incomplete identifier leaves a named edge unresolved. The link here identifies a speaker."
+    },
+    {
+      "family_id": "C",
+      "title": "Two trusts",
+      "name": "Two trusts",
+      "protocol": "historical",
+      "admission_sha256": "8f56a44e5a0a034a4000c1a8c6959cd72de0be528e8981e31e3938e049fbdd61",
+      "hypothesis": null,
+      "primary_axis": "cross-source-reasoning",
+      "secondary_axes": [
+        "evidence-sufficiency",
+        "incomplete-information",
+        "entity-identity"
+      ],
+      "intended_difficulty": "Identify which of two trusts an operative designation applies to from a separately maintained custody reference.",
+      "verified_findings": [
+        {
+          "axis": "cross-source-reasoning",
+          "finding": "The linked parent-deed reference switches the supported trust endpoint. Both mappings remain possible when it is obscured.",
+          "evidence": [
+            "family_c/review/outputs/comparison.json"
+          ]
+        },
+        {
+          "axis": "evidence-sufficiency",
+          "finding": "Independent excerpt readers verify the three-Source proof. Whole-file masks defeat the target while preserving ten ordinary edges.",
+          "evidence": [
+            "family_c/review/proof-deletions.json"
+          ]
+        },
+        {
+          "axis": "incomplete-information",
+          "finding": "Both readers withhold both trust endpoints with the partial reference.",
+          "evidence": [
+            "family_c/review/agreement.json"
+          ]
+        }
+      ],
+      "incidental_challenges": [
+        "Shared trustees and ten ordinary relationships provide a completeness check.",
+        "An expense, a wish and routine meeting details contribute context."
+      ],
+      "matched_controls": [
+        "C0/C1 swap the parent-deed reference.",
+        "C2 obscures its distinguishing character with both allocations viable."
+      ],
+      "known_shortcuts_and_limits": [
+        "First trust, fixed trust and assigning both fail across variants.",
+        "One register entry, two parallel settlements and selective deed extracts bound the decision."
+      ],
+      "documentary_genres": [
+        "Certified deed extracts",
+        "Signed designation transcript",
+        "Custody register",
+        "Meeting note",
+        "Wish letter",
+        "Expense reconciliation"
+      ],
+      "overlap": "Shares joint proof and restraint with A/B. Graph completeness and distraction are present without separate matched interventions."
+    },
+    {
+      "family_id": "D",
+      "title": "Scoped trust amendment",
+      "name": "Alder Fold Trust",
+      "protocol": "architect_v1",
+      "admission_sha256": "d84a3a09182a3311d53ff04f56fd5800731196a09237ff949f716f3b902e376e",
+      "hypothesis": {
+        "hypothesis_id": "scoped-trust-amendment",
+        "revision": 1,
+        "hypothesis_sha256": "20288d9f35aa29585353393c40d6f6e317fc9fee302b7e35a989b8306224fcb8"
+      },
+      "primary_axis": "versions-and-amendments",
+      "secondary_axes": [
+        "documentary-authority",
+        "evidence-sufficiency",
+        "graph-completeness"
+      ],
+      "intended_difficulty": "Changing only the amendment's provision locator switches which earlier beneficiary assertion survives without changing the replacement beneficiary, trust or unaffected relationships. Reject the design if either branch is ambiguous, has a wider effect, or supports the replacement without the planned cross-Source link.",
+      "verified_findings": [],
+      "incidental_challenges": [
+        "The principal instrument supplies separate office and beneficiary provisions. The signed variation has its own effective date."
+      ],
+      "matched_controls": [
+        "D0 and D1 change only the operative provision locator. The earlier survivor changes, the replacement and unaffected relationships persist, and the saved keys attach joint scope proof to each current beneficiary.",
+        "Grouped proof was independently verified in the closing audit."
+      ],
+      "known_shortcuts_and_limits": [
+        "Individual fact-level deletions remain incomplete. Reading the locator alone can reproduce the graph without demonstrating the full intended reasoning.",
+        "The invariant edges cover trust relationships. Unrelated kinship remains outside this comparison."
+      ],
+      "documentary_genres": [
+        "Principal instrument extract",
+        "Signed variation",
+        "Advice meeting brief"
+      ],
+      "overlap": "A tests whether an instrument took effect. D fixes effectiveness and varies the reach of the operative provision."
+    },
+    {
+      "family_id": "F",
+      "title": "Complete-record identity collision",
+      "name": "Park will planning",
+      "protocol": "architect_v1",
+      "admission_sha256": "e76ee677d3cb6bb980e9324c70277f3d3c4c5df84ea1a862b353efc2516d369d",
+      "hypothesis": {
+        "hypothesis_id": "complete-record-label-collision",
+        "revision": 1,
+        "hypothesis_sha256": "86c152a0d7816d83f3de38c16d265f7619ce7ccf08223d22e116b04bb98ea09c"
+      },
+      "primary_axis": "entity-identity",
+      "secondary_axes": [
+        "evidence-sufficiency",
+        "graph-completeness"
+      ],
+      "intended_difficulty": "Creating a collision in one populated display field leaves the complete named graph and valid evidence routes invariant when stable references and explicit identity links remain fixed. Reject the design if the field has authority to alter the mapping, the alternative label is not credible, or the proposed identity link is dispensable.",
+      "verified_findings": [],
+      "incidental_challenges": [
+        "The working index uses ancillary display forms for distinct people. The authoritative reconciliation gives complete identities and stable references."
+      ],
+      "matched_controls": [
+        "F0 and F1 change only one populated display label. Both complete named graphs and their separately attached proof sets remain invariant.",
+        "Withholding an exact identity entry defeated its dependent edge in the masked review."
+      ],
+      "known_shortcuts_and_limits": [
+        "Positional pairing can reproduce the graph.",
+        "The original isolated excerpt reader entered a different structured surname despite identifying the correct person in the explanation. The independent identical-packet repeat returned the correct surname.",
+        "The result is bounded to this display-label collision."
+      ],
+      "documentary_genres": [
+        "Signed relationship confirmations",
+        "Identity reconciliation note",
+        "Working index"
+      ],
+      "overlap": "B tests incomplete attribution. F retains complete, distinguishing records and varies an ancillary label."
+    }
+  ],
+  "gaps": [
+    {
+      "axes": [
+        "contradictory-assertions",
+        "origin-and-copies"
+      ],
+      "finding": "E reproduced its concordance-to-withholding contrast and was returned at the documentary-realism gate. Retainer relevance and witness reference provenance remain open. E0 and E1 are diagnostic only. B covers a single origin and its forward. [Returned candidate and owner decisions](admission_d_f/OWNER-DECISIONS.md)"
+    },
+    {
+      "axes": [
+        "versions-and-amendments",
+        "documentary-authority"
+      ],
+      "finding": "D covers one express scoped amendment. Other amendment mechanisms and full individual fact-level deletion coverage remain open."
+    },
+    {
+      "axes": [
+        "entity-identity",
+        "incomplete-information"
+      ],
+      "finding": "B covers incomplete speaker attribution and F covers a populated display-label collision with complete identity records. F permits a positional shortcut. Broader identity collisions and interacting information gaps remain open."
+    },
+    {
+      "axes": [
+        "graph-completeness",
+        "administrative-context"
+      ],
+      "finding": "C verifies a rich invariant graph under target intervention. An incidental assertion buried in plausible business correspondence has no dedicated control."
+    },
+    {
+      "axes": [
+        "axis-interactions",
+        "custody-and-absence"
+      ],
+      "finding": "Withholding on insufficient evidence is covered locally in B and C. A missing original or interacting authority paths need a separately interpretable contrast."
+    },
+    {
+      "axes": [
+        "source-discovery",
+        "physical-document-quality"
+      ],
+      "finding": "Record these workload needs outside the supplied-text graph benchmark."
+    }
+  ]
+}

@@ -1,0 +1,269 @@
+{
+  "schema_version": 1,
+  "provenance": {
+    "session": "c913d645-6900-498f-ace8-7885507dc30b",
+    "packet_sha256": "656196116c038f3d8ff251d79c6db5b1af8017c5346659f23ffe862742d51982",
+    "prompt_sha256": "c71b7e369d5f79fa6c7787e95a3354debc96ec038aa53fd881e19c3d69304f24",
+    "output_sha256": "92e38306d3af50bf858a44a4e03b232d4036ff44aea96e426837934a527b35f0",
+    "model": "gpt-6.2-sol",
+    "effort": "high",
+    "completed_at": "2026-11-22T16:34:49.995002Z"
+  },
+  "result": {
+    "schema_version": 1,
+    "portfolio_summary": "The admitted portfolio has five independent Matter histories and 12 conditions. Joint proof, identity resolution, withholding and recovery of unaffected edges recur, but their repetition is not coverage of independent disagreement or of support found only in routine correspondence. Rank W first for marginal scientific value: a genuine disagreement between independent origins is still uncovered, although W has the harder documentary-realism gate. Rank X second as the cheaper, narrower matched control. Both drafts are revised and retained as provisional proposals, not approved for construction. If both eventually pass review, the portfolio would have seven independent histories, below the planning target of ten. Review masks do not count as conditions or histories, and there is no reason to fill the remaining slots by repetition or padding.",
+    "family_assessments": [
+      {
+        "family_id": "A",
+        "assessment": "Intended challenge: reconstruct an office transfer at the bank-meeting cut-off rather than promote signed papers, a draft or a later message. Six blind readers agreed on three edges per condition. The blind review and necessity audit verify that release completes the simultaneous transfer, while an affirmative hold preserves the incumbent. Both exact two-Source routes succeeded; masking either necessary document defeated the changing edge, and a proposed shorter route failed. The matched-Sources check verifies invariance under order alone. The bank and administrative records also support ordinary kinship. Recency and name frequency favour the incumbent, and draft promotion favours the successor; each fails in at least one state. The design is bounded to one contested seat, one release mechanism and wording that can direct attention.",
+        "overlap": "Shares joint proof with B and C and operative instruments with D. A varies whether an act took effect, not the scope of an effective act. Its order-only sibling supplies a separate diagnostic control."
+      },
+      {
+        "family_id": "B",
+        "assessment": "Intended challenge: use a separately maintained attendance field to identify the speaker of the same firsthand report, and withhold the named attribution when the field is incomplete. Four independent readers agreed on the complete keys. The comparison, agreement and mask reviews distinguish the native report from its inline relay: native excerpts supported the identified claim, whereas forward-only readings did not resolve the speaker, even with the wrapper. Proof deletions of the identity link or all instances of the statement defeated the target. The original-document sighting preserves an ordinary parent edge through separate birth-entry and will origins. A completeness check followed by selecting the first contact happens to reproduce the edge change. Two distinct names and a fictional desk convention limit the inference.",
+        "overlap": "Like C, an incomplete identifier leaves a named edge open, but B resolves a speaker rather than a trust endpoint. It verifies that a relay is not a second origin; it does not test disagreement between independent accounts or a collision among complete records."
+      },
+      {
+        "family_id": "C",
+        "assessment": "Intended challenge: allocate a designation to one of two trusts through the separate custody reference. The comparison and agreement reviews verify the endpoint switch and withholding when the distinguishing character is obscured. Six blind readers retained all ten ordinary edges. Independent exact-excerpt readings verified a three-Source route, and eight whole-file masks defeated the candidate target edges while preserving the ordinary graph. Wishes, expenses and meeting details supply realistic context, not separately manipulated distractors. First-trust, fixed-trust and assign-both rules fail across siblings; the parallel deeds and shared trustees keep the task to a bounded reference allocation.",
+        "overlap": "Shares withholding with B and joint proof with A. Its ten invariant edges provide a strong completeness check, not a controlled test of correspondence placement, administrative volume or competition between origins."
+      },
+      {
+        "family_id": "D",
+        "assessment": "Intended challenge: vary the scope of an already effective amendment without changing the replacement wording, trust or cut-off. The matched-pair record and closing audit verify that the locator changes which earlier beneficiary assertion survives, while the replacement and unaffected trust relationships persist. The closing audit independently checked the grouped scope proof attached to the current beneficiary edges. The principal instrument's separate office and beneficiary provisions add context, but unrelated kinship was not tested in this comparison. Individual fact-level deletions remain incomplete, and reading the locator alone can reproduce the edge set without demonstrating sufficient attachment.",
+        "overlap": "Unlike A, D fixes effectiveness. It adds express selective displacement, but does not establish coverage of implied repeal, multigeneration carry-forward or other amendment mechanisms."
+      },
+      {
+        "family_id": "F",
+        "assessment": "Intended challenge: keep exact identities, relationships and proof fixed when one populated working-index label becomes nonunique. The matched comparison preserves both complete named graphs and their separately attached proof sets. Masking a necessary exact identity entry defeated its dependent edge. The original isolated excerpt reader identified the right person in the explanation but entered a different structured surname; an independent identical-packet repeat returned the correct surname. Stable references and the authoritative reconciliation distinguish the people in both conditions. Positional pairing can still reproduce the graph.",
+        "overlap": "B removes distinguishing speaker information; F leaves the distinguishing records complete and changes only an ancillary label. F does not cover collisions in authoritative identifiers or exact homonyms that cannot be distinguished under the naming contract."
+      }
+    ],
+    "gaps": [
+      {
+        "axes": [
+          "contradictory-assertions",
+          "origin-and-copies",
+          "documentary-authority"
+        ],
+        "finding": "W disposition: revise and retain as a one-condition proposal. Taking part in the same handover and holding the same office do not establish comparable knowledge. The draft also risks treating circulation or access as office, or making disagreement depend on a conveniently absent instrument. Require two independently necessary current-office checks, documented firsthand access to the decisive facts on both sides, and ordinary receipt of both accounts by the cut-off. Reject a logistics-only disagreement, a correction or a file that would naturally include controlling evidence. E's replay did not cure its witness-provenance and retainer defects; K was withheld on related grounds. Neither contributes admitted conflict coverage, and W does not reuse either enquiry."
+      },
+      {
+        "axes": [
+          "graph-completeness",
+          "administrative-context",
+          "evidence-sufficiency"
+        ],
+        "finding": "X disposition: revise and retain as a matched proposal. Naming two attendees is not enough to make a relationship description natural, and a family-record sighting cannot be added solely as a scoring control. Require a genuine access-coordination reason for the description and an independent intake reason for the sighting. The alternative must do the same logistical work without asking about or implying the relationship. This is a fresh valuation workflow, not G's clarification-versus-verification request. It complements H's completeness reservation and P's repetition proposal without testing placement or load."
+      },
+      {
+        "axes": [
+          "versions-and-amendments",
+          "entity-identity",
+          "incomplete-information",
+          "presentation-order"
+        ],
+        "finding": "A supplies a clean order-only control and D a single express scope change. Neither covers other amendment mechanisms. B, C and F cover different local identity and reference decisions, but authoritative identifier collisions, interacting gaps and exact homonyms remain open. If exact, distinguishable endpoints cannot be represented, redesign or defer rather than alter the ontology."
+      },
+      {
+        "axes": [
+          "axis-interactions",
+          "custody-and-absence",
+          "administrative-context"
+        ],
+        "finding": "Withholding in B and C does not establish a missing-original mechanism. W's masks diagnose dependence within one file, not a causal effect of introducing disagreement. X's edit does not manipulate placement or volume. Interacting authority paths and fixed-truth added-material comparisons would require separately interpretable controls and an appropriate protocol. The packet records no measured 21–50 Source bridge to justify proceeding to the larger workload tiers."
+      },
+      {
+        "axes": [
+          "source-discovery",
+          "physical-document-quality"
+        ],
+        "finding": "Retrieval, acquisition, OCR, handwriting, physical custody verification and external evidence collection require a scope change. Scoring remains limited to the six named Person/Trust predicates supported by the supplied readable file; legal adjudication, other offices, practitioner outcomes and prevalence are outside the study."
+      }
+    ],
+    "proposals": [
+      {
+        "schema_version": 2,
+        "hypothesis_id": "independent-documentary-disagreement",
+        "revision": 1,
+        "previous_revision_sha256": null,
+        "family_id": "W",
+        "title": "Independent handover accounts of current trustee office",
+        "status": "proposed",
+        "grounding": {
+          "legal_workflow": "Review a preliminary trust accounts and records handover using the material actually supplied by the briefing cut-off.",
+          "retainer": "Advise on reconciling two handover workstreams. The accounts lead needs to distinguish current trustees reviewing the accounts pack from factual consultees. The records lead independently needs to distinguish trustees receiving the governance handover from administrative contacts. Neither task asks the adviser to determine signature rights, access rights or office validity.",
+          "meeting_purpose": "Brief the adviser on the supported office roster at the common reference time and record any specific dispute the supplied papers do not resolve.",
+          "documentary_situation": "Separate accounts-close and records-transfer notes each have a business reason to record actual current office. The notes reach the adviser through their own workstreams before the cut-off. Each account addresses the same person, trust, office and reference time, and each writer gives an independent firsthand basis for the account rather than relying on a shared narrative or copying a roster.",
+          "confidence": "provisional",
+          "references": [
+            {
+              "title": "HMRC · Records to keep for trusts",
+              "url": "https://www.gov.uk/guidance/trust-record-keeping-for-tax-purposes",
+              "relevance": "Identifies accounts-related records, minutes and appointment deeds as trust record genres. It does not establish the proposed handover notes, the authors' knowledge, ordinary receipt or any legal effect."
+            }
+          ],
+          "assumptions": [
+            "Each workstream independently requires an actual office check, not merely a contact list. Both authors had comparably direct access to what would establish the office proposition under the supplied file's terms. Mere attendance, silence or failure to observe something does not support a contrary account.",
+            "The record dates and dates of receipt are distinct from the common office reference time. They do not imply a change of office, a correction or a priority rule.",
+            "The preliminary pack is complete for what was ordinarily received at this stage. The design must not exclude any controlling record that would naturally accompany either account, or rely on resolving a missing original."
+          ],
+          "practitioner_unknowns": [
+            "Whether both workstreams would naturally retain a separate office account, and whether both notes and their relevant context would reach the same adviser before this briefing.",
+            "Whether the records can establish comparable firsthand knowledge without special-purpose attestations, and whether an authoritative record would ordinarily already resolve the question."
+          ]
+        },
+        "objective": {
+          "primary_axis": "contradictory-assertions",
+          "secondary_axes": [
+            "origin-and-copies",
+            "documentary-authority",
+            "evidence-sufficiency"
+          ],
+          "failure_mechanism": "An extractor may union affirmative statements, treat recency or formality as documentary priority, or suppress independently supported relationships because another relationship is disputed.",
+          "falsifiable_hypothesis": "Comparable, independent accounts that genuinely disagree about the same office proposition should leave that proposition unresolved, without weakening sufficient proof for unrelated edges. Correct recovery and attachment disconfirm the predicted extraction errors on this file. The design fails if one account controls, the apparent conflict is out of scope, or the affirmative account never supplies support even in the diagnostic packet without its opponent.",
+          "coverage_gap": "Tests genuinely independent, same-scope disagreement in an office handover rather than B's shared origin, E's parallel parentage confirmations or K's proposed self-correction."
+        },
+        "design": {
+          "scenario": "Two workstreams conduct separate current-office checks for a shared handover milestone. A preliminary adviser review brings their retained accounts together without turning them into responses to one another.",
+          "genres_and_provenance": [
+            "Accounts-close note: prepared from direct knowledge by the trustee responsible for the accounts pack, retained with that workstream and supplied to the adviser.",
+            "Records-transfer note: prepared from independent direct knowledge by the trustee responsible for the governance-records handover, retained with that workstream and supplied separately.",
+            "Verified governing extract: retained by the trustees and supplied in the ordinary pack; establishes the trust context and an unaffected relationship without resolving the disputed office.",
+            "Accounts reconciliation: prepared and retained for the accounts workstream; explains the work and its contact cues, without proving current office.",
+            "Review brief with receipt inventory: prepared by the adviser from the papers actually received; fixes the purpose and cut-off without stating a verdict."
+          ],
+          "intervention": "Use one unedited natural condition. For review only, independently mask each competing account and rederive the full key after each removal. Do not author a concordant sibling or treat masks as scored conditions.",
+          "invariants": [
+            "Keep the cut-off, exact identities, office meaning, scope framing and unaffected Sources fixed across the review masks.",
+            "The unrelated graph and its sufficient proof routes remain independent of the conflict. Operational contact labels retain the same meaning."
+          ],
+          "expected_sensitivity_or_invariance": "Withhold on unresolved same-scope disagreement, not merely on absence of a formal record. The removal of the opposing account should reveal an otherwise sufficient affirmative route; removal of the affirmative account should leave no alternate positive route. No negative predicate or substitute officeholder follows from either diagnostic.",
+          "negative_controls": [
+            "An independently documented trust relationship remains supported in the full file and both masks.",
+            "Operational contacts remain unscored, and review-only reordering preserves both the graph and the origin analysis."
+          ],
+          "evidence_dependencies": [
+            "Fresh readers check exact excerpts and necessary framing for the same subject, trust, office and reference time, each author's independent firsthand basis, and any supported priority. Check the native records for dependence on a common informant or roster; independent observation of the same facts is not copying.",
+            "Verify the affirmative route in the diagnostic packet by exact excerpts, singleton checks and proper fact deletions. Accept a singleton if sufficient there. Search the complete file for controlling or alternative support, audit unaffected proofs on their own merits, and check the receipt inventory against the cut-off."
+          ],
+          "shortcut_heuristics": [
+            "Affirmative union is distinguishable in the full condition; blanket suppression of trustee relationships is distinguishable through the retained positives. A blanket rule withholding only the disputed pair can still pass this scored file. A latest-note rule may also coincide with the key; one natural condition does not identify a recency effect.",
+            "Check file order, formality and copied wording, and inspect headings, filenames and the review brief for a leaked verdict. Reject an apparent conflict that is really a difference between holding office and acting, a period mismatch, or an actual correction."
+          ],
+          "success_criteria": [
+            "Two isolated whole-file readers agree on the complete graph and distinguish disagreement from an absent proof. Fresh excerpt and mask readers confirm comparable firsthand bases, scope, provenance and the diagnostic proof behaviour.",
+            "A bidirectional audit accounts for every supported edge and apparent route to the disputed proposition. Stop if either note lacks independent business purpose or ordinary cut-off possession, if one account controls, if the affirmative route fails without its opponent, or if resolution requires outside law or suppressed records."
+          ]
+        },
+        "feasibility": {
+          "conditions": 1,
+          "documentary_complexity": "5 natural Sources: two independent handover notes, a governing extract, an accounts reconciliation and a review brief with receipt inventory.",
+          "authoring_and_review_effort": "23 working scientific sessions; estimate 7–10 for authoring and provenance, 8–11 for blind whole-file and fresh excerpt and mask review, and 5–8 for adjudication and bidirectional audit. Allow 2–3 additional owner sessions. Assumes two isolated whole-file readers and at most one provenance rewrite.",
+          "ontology_compatibility": "Use trustee_of for supported named office. Keep disputed assertions, administrative roles and open questions in the reviewers' companion register.",
+          "infrastructure_reuse": "Reuse B's origin tracing, A's office-proof checks and C's unaffected-graph and same-edge audits. Reciprocal masks are proof diagnostics, not stock siblings.",
+          "risks_and_limits": [
+            "The two notes may turn out to depend on the same source, concern different capacities or be insufficient as evidence of actual office.",
+            "A single natural condition cannot estimate the causal effect of introducing disagreement or how often such conflicts occur or are resolved in practice."
+          ]
+        }
+      },
+      {
+        "schema_version": 2,
+        "hypothesis_id": "incidental-correspondence-support",
+        "revision": 1,
+        "previous_revision_sha256": null,
+        "family_id": "X",
+        "title": "Firsthand relationship support in valuation-access correspondence",
+        "status": "proposed",
+        "grounding": {
+          "legal_workflow": "Assemble an estate asset inventory and coordinate access for a third-party valuation.",
+          "retainer": "Estate administration advice that includes arranging and tracking the valuation and reconciling the associated intake papers.",
+          "meeting_purpose": "Brief the adviser on valuation progress and explicitly supported relationships at the inventory review cut-off, without turning access arrangements into evidence of title or authority.",
+          "documentary_situation": "A valuer needs to know who will attend or meet them. In a native reply the site contact can naturally identify the other named attendee by a firsthand relationship description or coordinate the same attendance without giving a relationship. The adviser receives and keeps the thread to organise access, not to solicit or summarise family information.",
+          "confidence": "provisional",
+          "references": [
+            {
+              "title": "HMRC · Identifying estate assets and debts",
+              "url": "https://www.gov.uk/valuing-estate-of-someone-who-died/identify-assets-debts",
+              "relevance": "Supports reviewing estate papers and obtaining third-party valuations. It does not establish the proposed access wording or the practice's retention of the reply."
+            },
+            {
+              "title": "GRO · How to order civil registration records",
+              "url": "https://www.gov.uk/government/publications/how-to-order-and-pay-for-certificates/how-to-order-and-pay-for-civil-registration-records-accessible",
+              "relevance": "Distinguishes full civil records containing parentage information from short birth certificates omitting it. It grounds the unrelated record genre, not the adviser's sighting or receipt process."
+            }
+          ],
+          "assumptions": [
+            "The sender describes their own current relationship from firsthand knowledge. The valuer has a real logistical reason to identify both people, and the descriptor is a natural way to identify the attendee, not a miniature relationship summary.",
+            "The adviser participates in the access coordination and receives the native reply with its attribution before the cut-off. Both passages preserve who attends, who handles access and what the recipient needs to do.",
+            "The independent civil-record sighting is already relevant to a separate intake check involving an estate contact and is available by the review date. It is not retained simply to add an invariant edge."
+          ],
+          "practitioner_unknowns": [
+            "Whether the native thread would be retained with the inventory papers and whether both descriptions fit the same ordinary access exchange without changing its practical purpose.",
+            "Whether the separate intake sighting and its relationship to the briefing are natural in the same file at this cut-off."
+          ]
+        },
+        "objective": {
+          "primary_axis": "graph-completeness",
+          "secondary_axes": [
+            "administrative-context",
+            "evidence-sufficiency"
+          ],
+          "failure_mechanism": "An extractor may skip the thread as administrative, infer a relationship from co-attendance, or recover the relationship but attach only logistical text.",
+          "falsifiable_hypothesis": "One natural in-body edit changes whether the native reply explicitly supports the incidental relationship, without changing other edges or their sufficient routes. Exact recovery and valid same-edge attachment across both conditions disconfirm the predicted extraction errors. Reject the design if the logistical version still implies the relationship or an independent route supports it.",
+          "coverage_gap": "Unlike H's compact completeness reservation and P's repetition proposal, this changes whether support exists in routine material. It is independent of G's verification-request design: a third party needs attendance coordination, and neither version is a family enquiry."
+        },
+        "design": {
+          "scenario": "An ordinary valuation access exchange must identify the same attendees and settle the same arrangements in either version. Only the reply can provide positive support for the incidental relationship.",
+          "genres_and_provenance": [
+            "Dated inventory brief: prepared and retained by the adviser, stating the meeting purpose and cut-off without restating the target claim.",
+            "Valuation instruction: issued by the adviser to the valuer and retained on the estate file, explaining the need for the visit.",
+            "Native access query: authored by the valuer and retained in the correspondence; asks a logistical question.",
+            "Native access reply: authored by the site contact and received by the valuer and adviser for coordination; any relationship statement is the sender's own, not quoted or relayed.",
+            "Dated family-record sighting: made by the adviser from a separately received full civil record for an independent intake check and retained with those papers."
+          ],
+          "intervention": "Replace one unique body span in the native reply. Compare a firsthand relationship description with ordinary nonasserting logistical language, neither seeking verification nor implying the relationship. Keep all bytes outside the span fixed, including native attribution, dates, wrapper and order. Do not introduce downstream quotations that would need to change with the edit.",
+          "invariants": [
+            "The named participants, attendance, access responsibilities, practical outcome, file roster, cut-off and receipt path remain fixed.",
+            "The unrelated graph and its sufficient routes stay fixed. Access, correspondence and attendance cues do not acquire authority to support a relationship."
+          ],
+          "expected_sensitivity_or_invariance": "Only support supplied by the incidental assertion may change. The native reply must be indispensable and its necessary passages must be attached to the affected edge. The logistical version conveys no denial. The comparison does not identify a placement or load effect.",
+          "negative_controls": [
+            "The separately supported ordinary edge survives both conditions, the reply mask and the assertion deletion.",
+            "Joint attendance and contact responsibilities are fixed and do not license an edge on their own."
+          ],
+          "evidence_dependencies": [
+            "Have fresh readers test the exact native reply excerpts, with attribution if necessary, and the corresponding logistical excerpts. Check singleton sufficiency; do not require another Source merely because the benchmark often uses joint proof.",
+            "Mask the reply and separately delete the assertion properly. Rederive the baseline in both packets. Audit in both directions for alternative routes, copied assertions and misattribution, and require every necessary passage on the same edge rather than somewhere in the output."
+          ],
+          "shortcut_heuristics": [
+            "Ignoring administrative email and inferring a relationship from co-attendance make distinguishable errors across the pair. A detector using the explicit relationship term and nearby names may still get both edge sets right; it can also pass the proof check if the passage it selects is genuinely sufficient. Record that limit rather than distorting the message to defeat it.",
+            "Check headings, filenames, wrappers, lengths and quote chains for unintended cues. A review-only reorder may check position dependence but is not a placement condition."
+          ],
+          "success_criteria": [
+            "Two isolated blind readers per condition agree on the full keys. Fresh excerpt readers verify the positive route and the absence of a claim in the logistical alternative. Both proof diagnostics preserve the baseline.",
+            "A matched-byte and bidirectional audit confirms one permitted edit, unchanged logistics and no independent target route. Stop if either passage sounds planted, if the other's relationship is still implied, if native receipt is implausible, or if the invariant evidence has no independent reason to be in the briefing."
+          ]
+        },
+        "feasibility": {
+          "conditions": 2,
+          "documentary_complexity": "5 natural Sources: an inventory brief, a valuation instruction, two native access messages and an independently relevant family-record sighting.",
+          "authoring_and_review_effort": "21 working scientific sessions; estimate 6–8 for authoring and naturalness review, 7–10 for blind whole-file and fresh excerpt and mask review, and 4–7 for adjudication and the matched-byte and proof audit. Allow 1–3 additional owner sessions. Assumes two whole-file readers per condition and at most one wording revision.",
+          "ontology_compatibility": "Use the existing symmetric spouse_of predicate and the independently supported ordinary predicate. Do not infer marriage from shared attendance, access or children, or score title, access or estate roles.",
+          "infrastructure_reuse": "Reuse the stock unique-literal-edit check, C's invariant-graph audit, B's origin tracing and the frozen same-edge sufficiency diagnostic.",
+          "risks_and_limits": [
+            "A clean explicit statement may be lexically easy. The contribution is a support control in routine correspondence, not evidence of difficulty, burial, volume or practice prevalence.",
+            "If one natural literal edit cannot preserve the business purpose and all other support, defer rather than coordinate edits across an invented thread."
+          ]
+        }
+      }
+    ],
+    "stopping_criteria": [
+      "Require a credible purpose, author knowledge, retention and cut-off receipt for every Source. Withhold rather than manufacture equal standing, omit a naturally controlling record or plant a relationship statement.",
+      "Require independently derived complete keys, fresh exact-excerpt checks, correctly scoped masks and bidirectional audits before seeking dated owner admission. Do not credit a correct graph as sufficient when a critical edge omits necessary proof.",
+      "Do not treat additional conditions, masks or observations as more histories. Do not estimate placement, volume or crossed-mechanism effects from these designs, and do not replace independent whole-file review with stitched section keys.",
+      "Stop below ten if the remaining mechanisms cannot be isolated within the frozen ontology and protocol, or if natural inventories and review capacity do not support expansion."
+    ]
+  }
+}

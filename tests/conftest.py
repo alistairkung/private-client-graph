@@ -47,3 +47,14 @@ def tracked_upload_files(monkeypatch):
     yield files
     for file in files:
         file.close()
+
+
+
+@pytest.fixture
+def v3_legacy_custody():
+    from benchmark_v3 import commissioning
+
+    root = commissioning.legacy_custody_root()
+    if root is None:
+        pytest.skip("Set PCG_V3_LEGACY_CUSTODY to run the exact legacy development package checks")
+    return root

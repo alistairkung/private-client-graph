@@ -1,0 +1,20 @@
+# Interpretation and review method
+
+## What the portfolio can establish
+
+The 97.18% v2 micro-F1 over 18 observations on 14 conditions motivated testing more demanding supplied files. V2 used a median of two Sources and short Source bodies. V3 documents a different sample and review process. A cross-version score difference alone cannot identify a causal effect of Source volume or establish a practitioner error rate. [V3 research scope](../RESEARCH-SCOPE.md)
+
+Use the existing graph and provenance scorer for any future approved study. Pre-register the critical edges, relevant invariant graph, same-edge sufficient proof sets, expected unsupported assertions and contrast deltas before model execution. Keep descriptive full-file comparisons, matched intervention effects, within-family repeated observations and audit-only masks distinct.
+
+- Report exact graph recovery, per-relationship precision and recall, critical edge recovery and exact same-edge evidence sufficiency. Inspect false positives on unsupported named candidates and ordinary invariant-edge losses as separate diagnostic counts. Report missing graph edges separately from edges present with insufficient attachments.
+- Show per-family results and flag which conditions share a history. Alongside pooled counts, use equal family weight for descriptive cross-family summaries and display the sample size for each narrow mechanism. When intervals are useful, resample or analyze at family level. Avoid treating variants, readers or individual edges as independent replication.
+- Record workload as Source count, text length, exact serialized request size, number of origins and evidence dispersion. Track reasoning separately. An additive administrative pack may change evidence position, entity mention counts and distance. Claim only the contrast the design controls.
+- Compare intervention effects only for predeclared endpoints with verified controls. A matched one-field result establishes the property of the synthetic comparison. Legal generalization, population prevalence and comparative model claims need their own study.
+
+## Admission and quarantine
+
+An independent designer commits a plausible retainer, meeting question, cut-off, chronological custody chain, participant briefs and literal interventions. Independent Source authors see only what their author knows. Realism reviewers work on one file at a time. Two fresh blind readers independently reconstruct every scored condition. A condition-local adjudicator resolves all substantive disagreements and commits the complete provisional key before comparison. Follow the frozen provenance rules for positive and unresolved claims. [Packet protocol](../../../docs/workflows/benchmark-v3-packets.md) · [Batch workflow](../../../docs/workflows/benchmark-v3-batches.md)
+
+Precommit material deltas, ordinary invariants and plausible negative controls. Audit per-Source accounting and every Edge-to-Source proof. For critical sufficiency independently test exact sufficient subsets, credible alternate routes, proper deletions and singleton shortcuts, including all occurrences of duplicated material. Where a witness, role or source capacity is the contrast, document why both alternatives are plausible for the retainer and what the reviewer is permitted to infer from each. A permitted documentary repair requires a new Source lock and repeated dependent review.
+
+Return a candidate for weak documentary function, mixed interventions, adequate easy cues that bypass the intended mechanism, or an unresolved key. Quarantine any compromised isolation, untraceable or incomplete receipt, unverified exposure or hidden-truth contamination. Keep diagnostic material under its original lineage. A sound technical result remains a recommendation for a dated owner admission binding the exact dossier. After admission, reconcile achieved coverage under the exact original hypothesis. Record partial operationalisation, limits and deferred axes without rewriting old ground truth.
