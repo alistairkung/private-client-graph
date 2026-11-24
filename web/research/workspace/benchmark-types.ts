@@ -1,0 +1,85 @@
+import type { CanonicalState, EvidenceQuote, RunComparison, RunDetail, RunObservation } from "../shared/contracts";
+
+export type BenchmarkMetrics = {
+  planned_conditions: number;
+  valid_graphs: number;
+  exact_graphs: number;
+  construction_success_rate: number | null;
+  exact_graph_accuracy: number | null;
+  all_condition_micro_f1: number | null;
+  all_conditions: { tp: number; fp: number; fn: number };
+  valid_graph_only: { tp: number; fp: number; fn: number };
+  valid_graph_only_micro_f1: number | null;
+  planned_proofs: number;
+  complete_proofs: number;
+  proof_completion_rate: number | null;
+  planned_joint_proofs: number;
+  complete_joint_proofs: number;
+  joint_proof_completion_rate: number | null;
+  incomplete_proofs: number;
+  missed_proofs: number;
+  proofs_without_graph: number;
+  quote_passed: number;
+  quote_assessed: number;
+  attribution_passed: number;
+  attribution_assessed: number;
+  outcomes: Record<string, number>;
+};
+export type BenchmarkCondition = {
+  family: string;
+  condition: string;
+  contrast: string | null;
+  role: string | null;
+  outcome: string;
+  expected: CanonicalState;
+  expected_edges: number;
+  expected_relationships: Array<{ edge: [string, string, string]; quotes: EvidenceQuote[] }>;
+  failure_detail: string | null;
+  parsed_prediction: unknown | null;
+  metrics: {
+    tp: number;
+    fp: number;
+    fn: number;
+    planned_proofs: number;
+    complete_proofs: number;
+    planned_joint_proofs: number;
+    complete_joint_proofs: number;
+    incomplete_proofs: number;
+    missed_proofs: number;
+    quote_passed: number;
+    quote_assessed: number;
+    attribution_passed: number;
+    attribution_assessed: number;
+  };
+  proof_targets: Array<{ edge: [string, string, string]; joint_only: boolean; status: string; alternatives: Array<{ members: Array<{ source_id: string; text: string; attached: boolean }> }> }>;
+};
+export type BenchmarkRun = {
+  scope: { split: string; observation_origin: string; benchmark_sha256: string; protocol_version: string; conditions: unknown[] };
+  cohort: BenchmarkMetrics;
+  families: Record<string, BenchmarkMetrics>;
+  family_macro_f1: number | null;
+  valid_graph_only_family_macro_f1: number | null;
+  valid_graph_only_macro_family_count: number;
+};
+export type BenchmarkObservation = RunObservation & { benchmark?: BenchmarkCondition | null };
+export type BenchmarkRunDetail = RunDetail & { benchmark?: BenchmarkRun | null; observations: BenchmarkObservation[] };
+export type BenchmarkDelta = {
+  all_condition_micro_f1: number | null;
+  planned_conditions: number;
+  valid_graphs: number;
+  exact_graphs: number;
+  tp: number;
+  fp: number;
+  fn: number;
+  complete_proofs: number;
+  planned_proofs: number;
+  complete_joint_proofs: number;
+  planned_joint_proofs: number;
+};
+export type BenchmarkComparison = {
+  cohort: BenchmarkDelta | null;
+  family_macro_f1_delta: number | null;
+  families: Array<BenchmarkDelta & { family: string }>;
+  conditions: Array<{ family: string; condition: string; left_outcome: string; right_outcome: string; tp: number; fp: number; fn: number; complete_proofs: number; planned_proofs: number; complete_joint_proofs: number; planned_joint_proofs: number }>;
+};
+export type BenchmarkRunComparison = RunComparison & { benchmark?: BenchmarkComparison | null };
