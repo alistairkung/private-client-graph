@@ -13,6 +13,7 @@ from .workspace_contracts import CreateExperiment, DraftUpdate, RunDraft, Worksp
 
 @contextmanager
 def workspace_lock(root: Path) -> Iterator[None]:
+    root = root.resolve()
     root.mkdir(parents=True, exist_ok=True)
     with (root / '.workspaces.lock').open('a') as stream:
         fcntl.flock(stream, fcntl.LOCK_EX)
@@ -45,6 +46,7 @@ def create_experiment(root: Path, command: CreateExperiment) -> WorkspaceDetail:
 
 
 def read_experiment(root: Path, identity: str) -> WorkspaceDetail:
+    root = root.resolve()
     path = experiment_path(root, identity)
     value = read_record(path / 'workspace.json')
     if value['schema_version'] != 1 or value['id'] != identity:
@@ -67,7 +69,8 @@ def read_experiment(root: Path, identity: str) -> WorkspaceDetail:
     if len(runs) != len(set(runs)):
         raise ValueError('Duplicate Run membership')
     return WorkspaceDetail(id=identity, name=command.name, hypothesis=command.hypothesis,
-        description=command.description, created_at=value['created_at'], draft=draft, run_ids=runs)
+        description=command.description, created_at=value['created_at'], draft=draft, run_ids=runs,
+        read_only_import=value.get('read_only_import', False))
 
 
 def update_draft(root: Path, identity: str, command: DraftUpdate, *, copied_from: str | None = None) -> RunDraft:
