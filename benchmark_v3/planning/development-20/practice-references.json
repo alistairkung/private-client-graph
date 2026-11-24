@@ -1,0 +1,62 @@
+[
+  {
+    "title": "HMRC · Records to keep for trusts",
+    "url": "https://www.gov.uk/guidance/trust-record-keeping-for-tax-purposes",
+    "relevance": "HMRC identifies tax and administration records including expenses, investment information, payment records, meeting minutes, deeds of appointment and distribution decisions. These genres and recurring reporting duties inform bundle composition. The page does not set normal bundle sizes or prove legal effect."
+  },
+  {
+    "title": "HMRC · Manage your trust's details",
+    "url": "https://www.gov.uk/guidance/manage-your-trusts-registration-service",
+    "relevance": "HMRC describes changing registered roles and downloading proof listing information held by TRS, including named persons and beneficiary classes. Registration data is a reporting record for the benchmark, with office or beneficiary effect established in the supplied file."
+  },
+  {
+    "title": "HMRC · Report a trust discrepancy",
+    "url": "https://www.gov.uk/guidance/report-a-trust-discrepancy-to-hmrc",
+    "relevance": "Relevant persons compare proof of registration against information they hold and can report substantive discrepancies. Grounds the existence of parallel records, not any automatic resolution."
+  },
+  {
+    "title": "SRA · Drafting and preparation of wills",
+    "url": "https://www.sra.org.uk/solicitors/guidance/drafting-preparation-wills/",
+    "relevance": "SRA discusses recorded instructions, reasons for exclusions, updates and storage. Grounds an advice meeting and records of instructions; actual execution and current roles must be explicit in the fictional file."
+  },
+  {
+    "title": "SRA · Closing down your practice",
+    "url": "https://www.sra.org.uk/solicitors/guidance/closing-down-your-practice/",
+    "relevance": "SRA addresses client papers and preservation of original wills on closure. Supports custody-transfer plausibility, not a particular archive identifier or custody procedure."
+  },
+  {
+    "title": "HMCTS · Apply for probate with MyHMCTS",
+    "url": "https://www.gov.uk/government/publications/myhmcts-how-to-apply-for-probate-online/apply-for-probate-with-myhmcts",
+    "relevance": "Practitioner routes distinguish originals, court-sealed/notarial copies and evidence to support admission of a copy, draft or reconstruction. Wills and codicils are recorded; score only explicitly established Person/Trust relationships."
+  },
+  {
+    "title": "GOV.UK · Applying for probate when there is a will",
+    "url": "https://www.gov.uk/applying-for-probate/if-theres-a-will",
+    "relevance": "The public guidance discusses retaining copies of prior wills and the use of current original testamentary instruments. Public applicant guidance differs from practitioner routes."
+  },
+  {
+    "title": "GOV.UK · Distributing the estate",
+    "url": "https://www.gov.uk/probate-estate/distribute-the-estate",
+    "relevance": "Final estate accounts follow distribution; the guidance describes signature by personal representatives and main beneficiaries. Use estate administration as a retainer, not executor or estate beneficiary as scored roles."
+  },
+  {
+    "title": "HMRC · Identifying estate assets and debts",
+    "url": "https://www.gov.uk/valuing-estate-of-someone-who-died/identify-assets-debts",
+    "relevance": "Guidance describes reviewing papers and obtaining third-party valuations from different organisations. Grounds correspondence and administrative record diversity."
+  },
+  {
+    "title": "GRO · How to order civil registration records",
+    "url": "https://www.gov.uk/government/publications/how-to-order-and-pay-for-certificates/how-to-order-and-pay-for-civil-registration-records-accessible",
+    "relevance": "Short birth certificates omit parentage; full certificates reproduce the full record. The guidance distinguishes underlying records from index or informational copies and describes adoption records; avoid requiring adjudication of contested legal parentage."
+  },
+  {
+    "title": "HM Land Registry · Practice guide 24",
+    "url": "https://www.gov.uk/government/publications/private-trusts-of-land-pg24/practice-guide-24-private-trusts-of-land",
+    "relevance": "Section 7 discusses transfers, deeds of appointment/discharge and evidence of death when updating the register. Distinguish recorded title or application progress from current trustee office; use express supplied facts."
+  },
+  {
+    "title": "High Court · Morina v Scherbakova",
+    "url": "https://www.judiciary.uk/wp-content/uploads/2024/01/Morina-v-Scherbakova-judgment-FINAL.pdf",
+    "relevance": "Paragraphs 263–264 discuss lost original wills, proof of execution and contents, and previous custody. The specific dispute and its legal presumptions are illustrative and outside scoring; use no copied facts or text."
+  }
+]

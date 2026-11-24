@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "provenance": {
+    "session": "e188f8db-6b63-41a2-b7f0-2097a03f5531",
+    "packet_sha256": "28a09dd5b8b44889ea1d9626e022fb24d56bf2af4a447c90256acd27408f504c",
+    "prompt_sha256": "a3656b74ecf529ea7478b5cfc0229470fe68d4ce39ab5db8cb19f5529b363f0f",
+    "output_sha256": "0899e3419940544b2982b123d397faec1955576c673bc28224aa60e954ec7340",
+    "model": "gpt-6.2-sol",
+    "effort": "high",
+    "completed_at": "2026-11-22T13:17:21.711785Z"
+  },
+  "result": {
+    "schema_version": 1,
+    "portfolio_summary": "Commission D, E and F as three independent construction assignments, each limited to two matched conditions. This is a commissioning recommendation, not admission or credit for verified coverage. A–C currently account for three admitted Matter histories and eight conditions; if D–F are later admitted, the portfolio will total six histories and fourteen conditions. Ten histories is a planning target, not a quota for this round.\n\nThe supplied registry reference and approval decision for each assignment agree with the expected hypothesis ID, revision 1 and SHA-256 digest. The embedded hypothesis records retain their original proposed status; the separate owner decisions dated 22 November 2026 authorize construction. Assign the following exact revisions, in priority order:\n\n1. Designer D — scoped-trust-amendment@1, SHA-256 20288d9f35aa29585353393c40d6f6e317fc9fee302b7e35a989b8306224fcb8. Highest priority: tests the scope of an effective amendment, not A’s question of whether an instrument took effect or C’s question of which trust it concerns. Only the locator changes: a different earlier beneficiary provision survives, while the named trust, replacement beneficiary and unrelated relationships stay fixed. The invariant replacement edge still needs a sufficient same-edge proof. Estimated person-hours (authoring / blind review / audit / owner): 10–16 / 8–12 / 6–10 / 2–3.\n\n2. Designer E — independent-parentage-disagreement@1, SHA-256 1c6fbc49c9be191bc6dab14845e0db2afe94675f10f6634c54d897bacede2cae. Adds a primary disagreement control absent from A–C. B verifies that a native report and its relay have one origin; E keeps that duplication fixed while a second, independent account changes from agreement to explicit same-scope denial. In agreement, one eligible affirmative account plus the name mapping can suffice; in unresolved disagreement, omit the named parent edge without emitting a negative edge or inferring another parent. Estimated person-hours: 12–20 / 10–16 / 8–12 / 2–4.\n\n3. Designer F — complete-record-label-collision@1, SHA-256 86c152a0d7816d83f3de38c16d265f7619ce7ccf08223d22e116b04bb98ea09c. Shares B’s entity-identity axis but tests a different mechanism: B adds missing speaker information and changes what can be named; F changes only a populated, non-authoritative display label while complete identity links remain available. Both exact people, the entire graph and valid evidence routes must stay invariant. A correct edge carrying the other person’s evidence, or missing a necessary identity passage, fails the proof diagnostic. This is not a test of colliding official identifiers. Estimated person-hours: 8–14 / 8–12 / 6–9 / 2–3.\n\nThese are registered planning estimates, not measured workload. They assume two whole-file readers per condition, fresh excerpt review and one pre-lock revision. All three fit the existing ontology: score named beneficiary or parent relationships and other explicitly supported existing predicates; keep powers, disputes and indexing facts in the companion register. Grounding remains provisional: HMRC’s Trust record keeping for tax purposes supports retention of deeds and supporting records for D, not the form or effect of the amendment. The SRA’s Drafting and preparation of wills supports the retainer for E and F, not equal standing of informants, collection and confidentiality practices, or local indexing and identity-reconciliation conventions.\n\nNo current commissioning blocker was found. D is a no-go if either locator is implausible, scope or effect depends on outside law, or the replacement has an unintended singleton proof. E is a no-go if the sources are derivative, differ in scope, have a file-supported priority, or credible equal standing requires omitting context that would naturally be present. F is a no-go if the alternate label is implausible or authoritative, or if a necessary exact identity link is dispensable. These are gates on the approved commissions, not requests for new or revised hypotheses.",
+    "family_assessments": [
+      {
+        "family_id": "A",
+        "assessment": "Intended challenge: determine who holds one contested trustee seat at the meeting cut-off despite signed papers and a later administrative message. Six blind readers agreed on three edges per condition: registered release effects simultaneous replacement, whereas an affirmative hold preserves the incumbent. Exact excerpt and mask checks verified the two-Source routes and rejected a proposed shorter route for the hold. The order-only sibling preserved the complete key (blind-review.md, necessity.md, matched-sources.json). Kinship and routine bank and administrative detail are incidental. Recency, name frequency and draft promotion each fail somewhere, but one release mechanism, one contested seat and explanatory cues limit generalization.",
+        "overlap": "Shares joint proof with B and C. Its controlled switch is effectiveness at the cut-off, not speaker attribution, endpoint allocation or amendment scope."
+      },
+      {
+        "family_id": "B",
+        "assessment": "Intended challenge: attribute a native parentage report using a separately maintained attendance field. Four independent readers agreed on the complete keys. Completing the field identifies the speaker; with it incomplete, two speakers remain compatible and the named target is withheld. Native excerpts supported the identified route; forward-only excerpts did not fix the speaker, and the relay and export did not add an independent informant. Proof deletions defeated the target while the ordinary parent edge survived on separate birth-entry and will origins (comparison.json, agreement.json, mask-results.json, proof-deletions.json). The original-document sighting supplies incidental ordinary kinship. A completeness gate followed by first-contact selection can reproduce the target change; the fictional convention and distinctly named candidates limit generalization.",
+        "overlap": "Shares incomplete-identifier restraint with C and origin tracking with E. Unlike F, it changes information completeness and the supported graph, not a display label and the risk of a false merger or misattached citation."
+      },
+      {
+        "family_id": "C",
+        "assessment": "Intended challenge: resolve which of two trusts an operative designation concerns by linking a custody reference to a parent deed. Switching the reference switches the supported endpoint; obscuring it leaves both endpoints open. Six blind readers preserved ten ordinary edges, exact excerpt readings verified the three-Source positive proofs, and eight whole-file masks defeated the target candidates while preserving all ten ordinary edges (comparison.json, agreement.json, proof-deletions.json). Wishes, expenses and meeting details provide context, not a separate workload control. First-trust, fixed-trust and union rules fail across variants, but one register lookup across parallel settlements bounds the result.",
+        "overlap": "Shares cross-Source proof with A and B and restraint under incompleteness with B. The custody link allocates an endpoint; it does not resolve competing origins or determine which clauses survive an amendment."
+      }
+    ],
+    "gaps": [
+      {
+        "axes": [
+          "cross-source-reasoning",
+          "evidence-sufficiency",
+          "incomplete-information",
+          "presentation-order"
+        ],
+        "finding": "A–C repeatedly verify necessary linked evidence. B and C independently test withholding when a discriminator is unavailable. A alone has an admitted order-only sibling; neither repeated proof nor one order control establishes robustness to arbitrary presentation."
+      },
+      {
+        "axes": [
+          "versions-and-amendments",
+          "documentary-authority",
+          "contradictory-assertions",
+          "origin-and-copies",
+          "entity-identity"
+        ],
+        "finding": "Authority is already exercised in A, origin and copy tracking in B, and identity resolution in B and C. The missing primary controls are selective supersession with effectiveness fixed, independent same-scope disagreement with copy count fixed, and a display-label collision with complete identities fixed. D, E and F respectively target these gaps; none has verified coverage yet."
+      },
+      {
+        "axes": [
+          "graph-completeness",
+          "administrative-context"
+        ],
+        "finding": "C verifies preservation of ten ordinary edges under a different target intervention. No admitted control varies whether routine correspondence supports an incidental relationship; neither placement nor volume effects have been isolated. Document length is descriptive."
+      },
+      {
+        "axes": [
+          "axis-interactions",
+          "custody-and-absence"
+        ],
+        "finding": "No separate interpretable contrast tests a stipulated missing original or interacting authority paths. Supplied-text custody facts may be scored only through their consequences for supported graph claims; interactions need interpretable simpler contrasts first."
+      },
+      {
+        "axes": [
+          "source-discovery",
+          "physical-document-quality"
+        ],
+        "finding": "Finding or acquiring records, OCR and physical text recovery would change the study scope. They are not reasoning controls within the supplied text."
+      }
+    ],
+    "proposals": [],
+    "stopping_criteria": [
+      "Stop at the three digest-matched assignments and two conditions per family. Do not substitute an unapproved hypothesis, add an arm or revise a registered design in this commissioning check.",
+      "Before any later admission, require locked Sources to differ only by the approved edit, independently derived full keys, and a bidirectional audit for omitted edges or unsupported additions. Stop if a filename, summary, order cue, lexical shortcut or unintended proof makes the intended mechanism unnecessary.",
+      "Require fresh exact-excerpt review, singleton checks and correctly scoped passage and whole-Source masks on critical proofs. Re-derive masked keys rather than assuming they only lose edges; remove all copies when testing a fact’s necessity. Check same-edge evidence even when the correct graph is unchanged.",
+      "Defer if a credible retainer, provenance or custody path cannot be sustained within the supplied file, or if a result requires outside law, additional records or an ontology change. Require a separate dated human admission before crediting new coverage."
+    ]
+  }
+}

@@ -1,0 +1,47 @@
+[
+  {
+    "title": "HMRC · Trust record keeping for tax purposes",
+    "url": "https://www.gov.uk/guidance/trust-record-keeping-for-tax-purposes",
+    "relevance": "HMRC identifies trust deeds and supporting records that trustees may need to retain. This is documentary grounding for a trust file, with no inference about the frequency of conflicts."
+  },
+  {
+    "title": "HMRC · Trust Registration Service manual, beneficiary details",
+    "url": "https://www.gov.uk/hmrc-internal-manuals/trust-registration-service-manual/trsm32050",
+    "relevance": "HMRC distinguishes identified beneficiaries from beneficiaries defined as a class. Registration practice supports the genre, while the operative text and documented named membership would determine any in-scope edge."
+  },
+  {
+    "title": "HMRC · Manage your trust’s details",
+    "url": "https://www.gov.uk/guidance/manage-your-trusts-registration-service",
+    "relevance": "The service supports updates and downloads of proof of registration showing recorded roles. An administrative snapshot can serve as a credible Source with its own provenance and date."
+  },
+  {
+    "title": "Trustee Act 1925 · section 36",
+    "url": "https://www.legislation.gov.uk/ukpga/Geo5/15-16/19/section/36?view=plain",
+    "relevance": "The provision grounds surviving or continuing trustees, persons nominated by the instrument and written appointments as documentary concepts. The file must establish its own powers and effects."
+  },
+  {
+    "title": "HMCTS · Apply for probate with MyHMCTS",
+    "url": "https://www.gov.uk/government/publications/myhmcts-how-to-apply-for-probate-online/apply-for-probate-with-myhmcts",
+    "relevance": "The professional workflow asks about original wills and codicils and describes a paper route when originals or specified copies are unavailable. Will validity and probate entitlement are outside the graph."
+  },
+  {
+    "title": "HMCTS · Applying for probate if there is a will",
+    "url": "https://www.gov.uk/applying-for-probate/if-theres-a-will",
+    "relevance": "HMCTS distinguishes wills from updates and discusses custody of originals and retention of earlier documents. It provides a setting for filing and version questions."
+  },
+  {
+    "title": "SRA · Drafting and preparation of wills",
+    "url": "https://www.sra.org.uk/solicitors/guidance/drafting-preparation-wills/",
+    "relevance": "The regulator describes private-client instructions, individual circumstances and risks in drafting. It supports a will-planning retainer, with specific onboarding or file-sharing practices left as assumptions."
+  },
+  {
+    "title": "General Register Office · How to apply for a correction to a birth registration",
+    "url": "https://www.gov.uk/government/publications/application-form-to-correct-details-on-a-birth-registration/how-to-apply-for-a-correction-to-a-birth-registration-accessible-version",
+    "relevance": "The original registration information remains visible alongside a dated marginal correction. This documents a useful coexistence of older and corrected assertions without establishing what is typical in solicitors’ files."
+  },
+  {
+    "title": "ContractNLI · A Dataset for Document-level Natural Language Inference for Contracts",
+    "url": "https://aclanthology.org/2021.findings-emnlp.164/",
+    "relevance": "The study distinguishes entailed, contradicted and absent propositions with supporting spans. It provides a diagnostic design analogy from contracts, with no claim about private-client practice."
+  }
+]

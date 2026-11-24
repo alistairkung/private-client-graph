@@ -1,0 +1,17 @@
+{
+  "inside": {
+    "returncode": 0,
+    "denied": false,
+    "matched_inside_count": true
+  },
+  "outside": {
+    "returncode": 1,
+    "denied": true,
+    "matched_inside_count": false
+  },
+  "repository": {
+    "returncode": 1,
+    "denied": true,
+    "matched_inside_count": false
+  }
+}

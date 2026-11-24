@@ -1,0 +1,10 @@
+{
+  "hypothesis_id": "scoped-trust-amendment",
+  "revision": 1,
+  "hypothesis_sha256": "20288d9f35aa29585353393c40d6f6e317fc9fee302b7e35a989b8306224fcb8",
+  "schema_version": 1,
+  "status": "approved",
+  "owner": "Alistair Kung",
+  "decided_on": "2026-11-22",
+  "decision_reference": "Explicit project-owner decision in the 22 November 2026 Codex handoff, section 2. Authorises construction of the development fixture."
+}

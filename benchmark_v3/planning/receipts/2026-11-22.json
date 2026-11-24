@@ -1,0 +1,93 @@
+{
+  "schema_version": 1,
+  "role": "research_architect",
+  "profile": "planning",
+  "session": "42739b5c-f372-4c55-b57f-84b6164ea9b0",
+  "status": "completed",
+  "submitted_at": "2026-11-22T12:56:39.570989+00:00",
+  "completed_at": "2026-11-22T12:59:32.899663+00:00",
+  "packet_sha256": "939b922a4594914d496905e570d93f7c77350f1dcde9cb710b7be2ba827521d5",
+  "inputs": {
+    "coverage_register": {
+      "bytes": 10212,
+      "sha256": "d209444b90efc4ea8309dce217e20106f80ea29522759d81587f83e1bca1bd4f"
+    },
+    "development_findings": {
+      "bytes": 3806,
+      "sha256": "cf4fb363249bcb493f30a6470d23947603a29f3c32cbc0c7fcff37f85aca0061"
+    },
+    "ontology": {
+      "bytes": 792,
+      "sha256": "6c280a20a9c945a8b34c5b19cf8550a3ab5283e030f50a98141808170e34c6c9"
+    },
+    "practice_references": {
+      "bytes": 3541,
+      "sha256": "9967f3c2a7fa3094e13b66794fbe3ca305ba435e245bafa6c6c11fad088c0d3b"
+    },
+    "previous_decisions": {
+      "bytes": 2,
+      "sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+    },
+    "research_specification": {
+      "bytes": 2638,
+      "sha256": "6f0cfd2ec7b1af950a748dd020ce291c89ee099b7115aba7a511b8b5b4969f8a"
+    }
+  },
+  "prompt": {
+    "bytes": 9704,
+    "sha256": "a3656b74ecf529ea7478b5cfc0229470fe68d4ce39ab5db8cb19f5529b363f0f"
+  },
+  "output": {
+    "bytes": 39140,
+    "sha256": "f6ce9bb4eab705d107c6f40e30f612a90009df1c12112fd9f3679763fd7650fc"
+  },
+  "handoff_sha256": "c667c482457c1b23ce39b739613f33ebd359f1f73963e70232d009a14cd56b96",
+  "private_receipt_sha256": "8a40e22e3440b3d20bd33f01f97a27588c21564492359e2b78a66a01d94430dd",
+  "isolation": {
+    "codex_cli_version": "0.166.0",
+    "model": "gpt-6.2-sol",
+    "effort": "high",
+    "provider": "openai",
+    "ephemeral": true,
+    "empty_workspace": true,
+    "thread_environments": [],
+    "runtime_workspace_roots": [],
+    "instruction_sources": [],
+    "permission_profile": {
+      "extends": null,
+      "id": "benchmark_packet"
+    },
+    "sandbox": {
+      "networkAccess": false,
+      "type": "readOnly"
+    },
+    "approval_policy": "never"
+  },
+  "active_connectors": 0,
+  "observed_tool_actions": [],
+  "token_usage": {
+    "cacheWriteInputTokens": 0,
+    "cachedInputTokens": 3712,
+    "inputTokens": 11460,
+    "outputTokens": 10365,
+    "reasoningOutputTokens": 3015,
+    "totalTokens": 21825
+  },
+  "scientific_sessions_started": 1,
+  "paid_pcg_extraction_attempts": 0,
+  "filesystem_probe": {
+    "method": "Codex CLI sandbox with the same named filesystem and network profile, using harmless local files",
+    "inside": {
+      "returncode": 0,
+      "denied": false
+    },
+    "outside": {
+      "returncode": 1,
+      "denied": true
+    },
+    "repository": {
+      "returncode": 1,
+      "denied": true
+    }
+  }
+}

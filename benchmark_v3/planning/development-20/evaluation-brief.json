@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "namespace": "evaluation",
+  "target_families": 20,
+  "workloads": {
+    "routine": 6,
+    "moderate": 6,
+    "complex": 6,
+    "administrative": 1,
+    "giant": 1
+  },
+  "difficulty_axes": [
+    "temporal-effectiveness",
+    "documentary-authority",
+    "entity-identity",
+    "cross-source-reasoning",
+    "evidence-sufficiency",
+    "contradictory-assertions",
+    "incomplete-information",
+    "origin-and-copies",
+    "versions-and-amendments",
+    "graph-completeness",
+    "administrative-context",
+    "axis-interactions",
+    "presentation-order",
+    "custody-and-absence"
+  ],
+  "distribution": "independent_matter_families"
+}

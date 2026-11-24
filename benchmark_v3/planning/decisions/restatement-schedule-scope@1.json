@@ -1,0 +1,10 @@
+{
+  "hypothesis_id": "restatement-schedule-scope",
+  "revision": 1,
+  "hypothesis_sha256": "b5046dc1860b9735a22a323780c982ac143cb74b5284dec4d957190d8c424888",
+  "schema_version": 1,
+  "status": "approved",
+  "owner": "Alistair Kung",
+  "decided_on": "2026-11-23",
+  "decision_reference": "Explicit owner approval of the exact Q/S/X continuation releases and 290-session cumulative ceiling in the 23 November 2026 Benchmark v3 Codex handoff. Development continuation only. Exact documentary designs remain subject to the commissioned review gate."
+}

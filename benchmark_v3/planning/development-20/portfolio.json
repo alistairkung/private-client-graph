@@ -1,0 +1,455 @@
+{
+  "schema_version": 1,
+  "portfolio_id": "development-twenty-family",
+  "revision": 1,
+  "previous_revision_sha256": null,
+  "namespace": "development",
+  "target_families": 20,
+  "coverage_sha256": "d02473460c7f169eafccd75882bec41eeccc26123739b68f435ce098be65d6bd",
+  "existing": [
+    {
+      "family_id": "A",
+      "admission_sha256": "2a39c36968f8846867070220547a2caf62691fe213e709a38337e293e5bafead",
+      "primary_axis": "temporal-effectiveness",
+      "secondary_axes": [
+        "documentary-authority",
+        "evidence-sufficiency",
+        "presentation-order"
+      ],
+      "conditions": [
+        "A0",
+        "A1",
+        "A2"
+      ]
+    },
+    {
+      "family_id": "B",
+      "admission_sha256": "f6fe34f01a523d9a6f63d42319617bae5a0bb407c9923552e934c3d41122f67e",
+      "primary_axis": "entity-identity",
+      "secondary_axes": [
+        "incomplete-information",
+        "origin-and-copies",
+        "evidence-sufficiency"
+      ],
+      "conditions": [
+        "B0",
+        "B1"
+      ]
+    },
+    {
+      "family_id": "C",
+      "admission_sha256": "8f56a44e5a0a034a4000c1a8c6959cd72de0be528e8981e31e3938e049fbdd61",
+      "primary_axis": "cross-source-reasoning",
+      "secondary_axes": [
+        "evidence-sufficiency",
+        "incomplete-information",
+        "entity-identity"
+      ],
+      "conditions": [
+        "C0",
+        "C1",
+        "C2"
+      ]
+    },
+    {
+      "family_id": "D",
+      "admission_sha256": "d84a3a09182a3311d53ff04f56fd5800731196a09237ff949f716f3b902e376e",
+      "primary_axis": "versions-and-amendments",
+      "secondary_axes": [
+        "documentary-authority",
+        "evidence-sufficiency",
+        "graph-completeness"
+      ],
+      "conditions": [
+        "D0",
+        "D1"
+      ]
+    },
+    {
+      "family_id": "F",
+      "admission_sha256": "e76ee677d3cb6bb980e9324c70277f3d3c4c5df84ea1a862b353efc2516d369d",
+      "primary_axis": "entity-identity",
+      "secondary_axes": [
+        "evidence-sufficiency",
+        "graph-completeness"
+      ],
+      "conditions": [
+        "F0",
+        "F1"
+      ]
+    }
+  ],
+  "slots": [
+    {
+      "family_id": "M",
+      "hypothesis": {
+        "hypothesis_id": "former-name-explicit-link",
+        "revision": 1,
+        "hypothesis_sha256": "fa467f9804834d9382162f1e7fb16db15d8b55d08680b2ed3dab060632ecbcc0"
+      },
+      "primary_axis": "entity-identity",
+      "secondary_axes": [
+        "cross-source-reasoning",
+        "evidence-sufficiency"
+      ],
+      "tier": "moderate",
+      "expected_sources": 9,
+      "retainer": "Estate administration advice on recording and verifying family information.",
+      "workflow": "Reconcile older family records with current contacts during an estate handover.",
+      "natural_condition": "A verified historical relationship is recorded under an earlier name; separate current records include two distinguishable contacts, neither independently linked to that relationship.",
+      "matched_conditions": [
+        "Change one reconciliation field from an explicit former-to-current identity link to a natural unresolved finding; keep all names elsewhere and the Source roster fixed."
+      ],
+      "estimated_sessions": 30,
+      "estimated_cost_usd": null,
+      "independent_authoring": [
+        "Design an independent retainer, history, dated inventory and custody chain. Use the stock isolated role packets and the two complete blind readings per scored condition.",
+        "Read the historical assertion and identity bridge together. Remove each separately and rederive the key under the frozen exact-name policy.",
+        "Blind readers agree on historical and current-name treatment; fresh excerpt readers verify the joint route and the masks defeat only dependent attributions."
+      ]
+    },
+    {
+      "family_id": "P",
+      "hypothesis": {
+        "hypothesis_id": "duplicate-origin-salience",
+        "revision": 1,
+        "hypothesis_sha256": "06f97ebd0d9c651404b28ed49fa8a468ea39ba148d49bcb5c8392d97a1f723d0"
+      },
+      "primary_axis": "origin-and-copies",
+      "secondary_axes": [
+        "administrative-context",
+        "evidence-sufficiency"
+      ],
+      "tier": "moderate",
+      "expected_sources": 10,
+      "retainer": "Review of the papers supporting the handover and reporting accounts.",
+      "workflow": "Reconcile third-party correspondence during an estate and associated trust handover.",
+      "natural_condition": "An operative trust record establishes the current role. An independently retained email contains a stale statement; a working reply naturally quotes that thread.",
+      "matched_conditions": [
+        "Replace one quoted fragment with a similar-length fragment from the same origin repeating the stale role. Keep quote attribution, wrapper, placement, dates and all other bytes fixed."
+      ],
+      "estimated_sessions": 32,
+      "estimated_cost_usd": null,
+      "independent_authoring": [
+        "Design an independent retainer, history, dated inventory and custody chain. Use the stock isolated role packets and the two complete blind readings per scored condition.",
+        "Trace the quotation to the original; mask the reply and verify graph invariance. Verify the current-edge proof without the correspondence and that the thread cannot replace it.",
+        "Blind graph and proof reviews agree in both conditions; a fresh origin audit finds no second informant or new sufficient route."
+      ]
+    },
+    {
+      "family_id": "L",
+      "hypothesis": {
+        "hypothesis_id": "civil-record-information-boundary",
+        "revision": 1,
+        "hypothesis_sha256": "ec3efd9fbd411a36c75df375b63fe08aea1aa25961ce74822816beed5f76f9cb"
+      },
+      "primary_axis": "incomplete-information",
+      "secondary_axes": [
+        "evidence-sufficiency"
+      ],
+      "tier": "routine",
+      "expected_sources": 7,
+      "retainer": "Estate records review, not adjudication of disputed parentage.",
+      "workflow": "Inventory received family evidence before an estate advice meeting.",
+      "natural_condition": "Both parties are distinguishable in either file; a received civil record is sighted, not reproduced as a second proof.",
+      "matched_conditions": [
+        "Edit only the sighting's parentage field: verified named entry versus expressly unavailable from the version received."
+      ],
+      "estimated_sessions": 26,
+      "estimated_cost_usd": null,
+      "independent_authoring": [
+        "Design an independent retainer, history, dated inventory and custody chain. Use the stock isolated role packets and the two complete blind readings per scored condition.",
+        "Verify the intended exact passage with a fresh reader and check the record-to-person link. Delete the field and mask the sighting; search the remainder for duplicate parentage evidence.",
+        "Blind complete keys agree; the positive proof is sufficient and the limited condition yields withholding without loss of the ordinary graph."
+      ]
+    },
+    {
+      "family_id": "N",
+      "hypothesis": {
+        "hypothesis_id": "executed-version-record",
+        "revision": 1,
+        "hypothesis_sha256": "e6aa572b315905421af40e9b8cf5fd698dcc9ac41dbac955ffcb75476a37f9d3"
+      },
+      "primary_axis": "versions-and-amendments",
+      "secondary_axes": [
+        "documentary-authority",
+        "evidence-sufficiency"
+      ],
+      "tier": "moderate",
+      "expected_sources": 10,
+      "retainer": "Trust advice following transfer of archived papers.",
+      "workflow": "Review retained trust papers to establish current provisions.",
+      "natural_condition": "The same provision text is present in both files. The adviser receives a version inventory and separately sourced status information.",
+      "matched_conditions": [
+        "Change only the identified counterpart's execution-status field, from verified executed to affirmatively retained unexecuted."
+      ],
+      "estimated_sessions": 34,
+      "estimated_cost_usd": null,
+      "independent_authoring": [
+        "Design an independent retainer, history, dated inventory and custody chain. Use the stock isolated role packets and the two complete blind readings per scored condition.",
+        "Test the counterpart link, clause and explicit effect together; no copy, signature cue or status field alone may prove the complete edge.",
+        "Independent full and excerpt reads distinguish identical wording from verified operative status and confirm the exact joint route."
+      ]
+    },
+    {
+      "family_id": "O",
+      "hypothesis": {
+        "hypothesis_id": "land-register-lag-invariance",
+        "revision": 1,
+        "hypothesis_sha256": "e9a85561cbd07eaf097bf5bff337d61fa684a8728e5cb4f359a02ce17c2274fa"
+      },
+      "primary_axis": "documentary-authority",
+      "secondary_axes": [
+        "administrative-context",
+        "evidence-sufficiency"
+      ],
+      "tier": "routine",
+      "expected_sources": 8,
+      "retainer": "Private trust of land administration advice.",
+      "workflow": "Reconcile title-update papers with the current trust office record.",
+      "natural_condition": "A current office change and an older title snapshot coexist with a conveyancer's progress update.",
+      "matched_conditions": [
+        "Edit only the progress field between two plausible application states that do not update the supplied title snapshot."
+      ],
+      "estimated_sessions": 29,
+      "estimated_cost_usd": null,
+      "independent_authoring": [
+        "Design an independent retainer, history, dated inventory and custody chain. Use the stock isolated role packets and the two complete blind readings per scored condition.",
+        "Verify the trust act independently; mask the update for invariance and remove the office proof to show the remaining title trail cannot supply it.",
+        "Blind readers agree on both keys and fresh excerpt readers distinguish insufficient title evidence from sufficient office evidence."
+      ]
+    },
+    {
+      "family_id": "R",
+      "hypothesis": {
+        "hypothesis_id": "typed-event-chronology",
+        "revision": 1,
+        "hypothesis_sha256": "e59adeaeafe55ecc6bf6567932e8d58e6cc11faeb18f35359803818308c2548e"
+      },
+      "primary_axis": "temporal-effectiveness",
+      "secondary_axes": [
+        "cross-source-reasoning",
+        "evidence-sufficiency"
+      ],
+      "tier": "moderate",
+      "expected_sources": 12,
+      "retainer": "Trust administration advice before an accounts meeting.",
+      "workflow": "Review a dated event-dependent trust provision against supporting records.",
+      "natural_condition": "The event occurs in either file and is reported after the deadline but before the meeting. The operative provision treats timely and late events differently.",
+      "matched_conditions": [
+        "Edit one event timestamp across the deadline. Both dates precede the unchanged report and receipt, which are in the supplied file by the meeting cut-off."
+      ],
+      "estimated_sessions": 37,
+      "estimated_cost_usd": null,
+      "independent_authoring": [
+        "Design an independent retainer, history, dated inventory and custody chain. Use the stock isolated role packets and the two complete blind readings per scored condition.",
+        "Combine event identity and date with the operative deadline, consequence and named endpoint. Delete each needed element and rederive masked keys.",
+        "Readers independently recover the same typed chronology and full keys; no operative rule or report alone is sufficient."
+      ]
+    },
+    {
+      "family_id": "Q",
+      "hypothesis": {
+        "hypothesis_id": "restatement-schedule-scope",
+        "revision": 1,
+        "hypothesis_sha256": "b5046dc1860b9735a22a323780c982ac143cb74b5284dec4d957190d8c424888"
+      },
+      "primary_axis": "versions-and-amendments",
+      "secondary_axes": [
+        "documentary-authority",
+        "graph-completeness",
+        "evidence-sufficiency"
+      ],
+      "tier": "moderate",
+      "expected_sources": 17,
+      "retainer": "Advice on the roster supported by retained instruments.",
+      "workflow": "Reconcile beneficiary schedules after a trust instrument consolidation.",
+      "natural_condition": "The base schedule alone overstates the eligible group; an intervening change removes or replaces entries before consolidation.",
+      "matched_conditions": [
+        "Edit one express consolidation rule to carry forward or end a defined group of un-restated, still-current entries. Do not swap a schedule identifier."
+      ],
+      "estimated_sessions": 49,
+      "estimated_cost_usd": null,
+      "independent_authoring": [
+        "Design an independent retainer, history, dated inventory and custody chain. Use the stock isolated role packets and the two complete blind readings per scored condition.",
+        "Verify exact same-edge routes through the relevant schedule, intermediate scope and consolidation. Individually delete necessary facts, mask Sources and rederive any fallback roster.",
+        "Readers agree on affected and invariant edges across generations; fresh excerpt checks verify scope and disprove proposed short routes."
+      ]
+    },
+    {
+      "family_id": "S",
+      "hypothesis": {
+        "hypothesis_id": "named-scope-capacity",
+        "revision": 1,
+        "hypothesis_sha256": "888372b762667bab8ffd03519f92405dd246118df8806798244fb69abf6e3263"
+      },
+      "primary_axis": "cross-source-reasoning",
+      "secondary_axes": [
+        "graph-completeness",
+        "documentary-authority",
+        "evidence-sufficiency"
+      ],
+      "tier": "moderate",
+      "expected_sources": 18,
+      "retainer": "Trust administration advice on the purpose and effect of parallel records.",
+      "workflow": "Reconcile a trustee decision with a separately kept named list and reporting records.",
+      "natural_condition": "A fixed decision can use a separately held list for either an expressly operative function or an administrative one. The lead person already has a different supported role.",
+      "matched_conditions": [
+        "Change only the decision's designation of the list's function. Fix its execution, decision-maker authority, list, names and reporting basis."
+      ],
+      "estimated_sessions": 52,
+      "estimated_cost_usd": null,
+      "independent_authoring": [
+        "Design an independent retainer, history, dated inventory and custody chain. Use the stock isolated role packets and the two complete blind readings per scored condition.",
+        "Join express governing authority, scoped adoption and exact named row. Mask each, test fixed alternate routes and verify the invariant role separately.",
+        "Blind readers recover both complete graphs, including the concurrent role. Excerpt readers verify the three-part attachment and reject singleton routes."
+      ]
+    },
+    {
+      "family_id": "U",
+      "hypothesis": {
+        "hypothesis_id": "administrative-estate-load",
+        "revision": 1,
+        "hypothesis_sha256": "55e95c4e91d4a99cabbc0c03f4c9831fc0054b0df045983be5ae1af3ace18b90"
+      },
+      "primary_axis": "administrative-context",
+      "secondary_axes": [
+        "graph-completeness",
+        "evidence-sufficiency"
+      ],
+      "tier": "administrative",
+      "expected_sources": 65,
+      "retainer": "Handover review of accounts and supporting records.",
+      "workflow": "Review a late-stage estate and associated trust file before reconciliation and reporting.",
+      "natural_condition": "Routine records from several providers coexist with both salient and less prominent facts needed for the complete key.",
+      "matched_conditions": [],
+      "estimated_sessions": 125,
+      "estimated_cost_usd": null,
+      "independent_authoring": [
+        "Design an independent retainer, history, dated inventory and custody chain. Use the stock isolated role packets and the two complete blind readings per scored condition.",
+        "Audit every Source's purpose and all critical proof. Before any diagnostic, independently rederive the core and show the removed material changes neither sufficient routes nor unresolved claims.",
+        "Two isolated whole-file reads, exact proof checks and a bidirectional audit yield a defensible key within measured full-context and staffing limits."
+      ]
+    },
+    {
+      "family_id": "V",
+      "hypothesis": {
+        "hypothesis_id": "longitudinal-cross-section-reconstruction",
+        "revision": 1,
+        "hypothesis_sha256": "925b5fdd603297092c963366da245eea3f95c8d0e4a6804cceff9ae57655156d"
+      },
+      "primary_axis": "graph-completeness",
+      "secondary_axes": [
+        "cross-source-reasoning",
+        "evidence-sufficiency",
+        "temporal-effectiveness",
+        "origin-and-copies"
+      ],
+      "tier": "giant",
+      "expected_sources": 150,
+      "retainer": "Review of a coherent retained family trust history.",
+      "workflow": "Reconstruct current relationships across multiple years and settlements before an adviser handover.",
+      "natural_condition": "Several workstreams appear locally coherent but cannot jointly establish the cut-off graph without cross-section evidence.",
+      "matched_conditions": [],
+      "estimated_sessions": 260,
+      "estimated_cost_usd": null,
+      "independent_authoring": [
+        "Design an independent retainer, history, dated inventory and custody chain. Use the stock isolated role packets and the two complete blind readings per scored condition.",
+        "Two isolated review tracks each read every Source and reconstruct the entire graph. Mask cross-section links, verify exact proof and audit all sections bidirectionally before global adjudication.",
+        "Demonstrate intact dossier transport, two independent global keys, adjudication and complete audit before scoring. Retain a comparative claim only if the predeclared groups pass independent comparability review."
+      ]
+    }
+  ],
+  "admission_criteria": [
+    "Require credible purpose, author knowledge, scope and custody for every Source. Freeze the independent file, exact matched changes and invariant graph before blind review.",
+    "Require two complete independently isolated blind readings per scored condition, condition-local adjudication before any contrast disclosure, and bidirectional full-file audit.",
+    "Verify every critical evidence proof, whole-file invariant, unsupported role control and defect risk with deterministic replay and isolated semantic review. Require explicit large-file masks and section reconciliation at the large and giant tiers.",
+    "Return any scientifically underdetermined, redundant or unrealistic file. Quarantine compromised lineage, unexplained tool access and unresolved dispatch. Only a dated owner decision against exact dossier bytes admits a family."
+  ],
+  "stopping_criteria": [
+    "Keep planning distinct from authoring, approval and evaluation. Preserve the admitted keys and scores, leave D and F formal reconciliation pending, and admit nothing without a dated human decision after independent review.",
+    "Predeclare the one literal body edit or pure Source-order change, fixed roster and expected graph and proof behavior. Byte-check the match. Masks, excerpt reads, additive packs and changing-cut-off observations are separate diagnostics, not extra scored siblings or families.",
+    "Require a credible participant purpose, provenance and custody route for every Source. Return designs whose result depends on an implausible file, an external authority decision, a leaked heading, position alone or padding. Permit shortcuts only as explicitly bounded limitations, not as proof of the intended mechanism.",
+    "Require two isolated complete blind readings per scored condition, fresh exact excerpt and singleton or alternative-route checks, proper fact deletions and whole-Source masks with rederived keys. Audit passages to graph and graph to passages; do not credit necessary quotes scattered across different edges.",
+    "Use the supplied file at its stated cut-off, exact distinguishable names and the six frozen predicates. Withhold unresolved named claims, record open questions outside the scored graph, and retain all independently licensed ordinary edges.",
+    "Before U and again before V, measure authoring, independent whole-file reading, reconciliation and audit throughput; budget owner and coordination time separately. Verify the entire serialized dossier, prompt and exact-evidence response fit the extraction path without truncation. Pause, resize naturally or defer if staffing, realism, complete independent reconstruction or transport fails; do not infer capacity from H, I or J's planned counts.",
+    "Do not infer difficulty from lower scores or document length, causation from a single full file, or practitioner outcomes or prevalence from fictional contrasts. Drop or relabel any optional comparison whose invariant graph, proof routes or comparison groups fail independent verification."
+  ],
+  "gaps": [
+    {
+      "axes": [
+        "evidence-sufficiency",
+        "cross-source-reasoning",
+        "presentation-order"
+      ],
+      "finding": "Joint evidence recurs in A through D and F uses distinct relationship-plus-identity proofs. Correct graph output is not evidence of sufficient attachment. A alone supplies the admitted matched order contrast; D still lacks full individual fact-deletion coverage and F remains vulnerable to positional pairing."
+    },
+    {
+      "axes": [
+        "contradictory-assertions",
+        "origin-and-copies"
+      ],
+      "finding": "Withhold K. E reproduced its technical contrast but was returned on retainer relevance, witness-reference handoff and comparable account provenance and scope. Before reconsidering K, independently establish why this executor needs this exact sibling assertion, how each witness independently knows and identifies the same pair and assertion, and why both reports and follow-ups would be retained. An authenticated self-withdrawal and a natural unretracted follow-up must differ without recency priority, a disguised new affirmative account or a legal-status decision. P isolates derivative repetition, not equal-standing conflict; neither B nor P closes that gap."
+    },
+    {
+      "axes": [
+        "entity-identity",
+        "incomplete-information"
+      ],
+      "finding": "M is worth a compact test if the bridge is indispensable and historical-name evidence is not erased in the open condition. L tests known identities with bounded record content, not B's attribution ambiguity or C's ambiguous endpoint allocation. Collisions in authoritative identifiers and interacting identity gaps remain open."
+    },
+    {
+      "axes": [
+        "custody-and-absence",
+        "versions-and-amendments",
+        "documentary-authority"
+      ],
+      "finding": "N isolates supplied evidence of execution, not legal validity, delivery, or a lost-original presumption. J reserves a distinct authentication-fixed enclosure/delivery comparison. L is not a missing-original test. A natural supplied-file contrast for a missing original with no equally sufficient substitute remains open."
+    },
+    {
+      "axes": [
+        "versions-and-amendments",
+        "graph-completeness"
+      ],
+      "finding": "Q is conditional on a real carry-forward calculation across generations, including both survival and displacement. Defer if the same proof can be reduced to D's locator switch or if the outcome relies on implied repeal."
+    },
+    {
+      "axes": [
+        "temporal-effectiveness",
+        "documentary-authority"
+      ],
+      "finding": "R earns a slot only if an event date's relation to an express deadline matters independently of report date, receipt and meeting cut-off. If an escrow-style disposition could replace the chronology without loss, retain A alone. O is a different, invariant contrast: title-application progress must not supply or change trustee-office proof."
+    },
+    {
+      "axes": [
+        "axis-interactions",
+        "documentary-authority",
+        "cross-source-reasoning"
+      ],
+      "finding": "I publicly reserves a certified-extract/operative-versus-reporting basis contrast; S must add named-list scope and preservation of concurrently supported roles, not repeat that basis distinction. Withhold T: a positive-action edit with capacity fixed plus component masks shows dependency, not interaction, and is too close to S's scoped adoption and J's joint linkage. Reconsider only after distinct component contrasts and a separately authorized crossed comparison can distinguish recommendation uptake from signatory capacity and ordinary proof failure."
+    },
+    {
+      "axes": [
+        "graph-completeness",
+        "administrative-context"
+      ],
+      "finding": "Reserve H at five Sources and one condition for routine trust, expenses and completeness. Leave G@1 unapproved and outside allocation: its assertion-versus-request edit could test support inside correspondence, but not burial or volume. Reconsider only if H leaves a specific need for that matched speech-act control. U asks about full-file performance under accumulated administration, not merely H with more pages, and neither single file identifies a load or placement effect."
+    },
+    {
+      "axes": [
+        "administrative-context",
+        "cross-source-reasoning",
+        "graph-completeness"
+      ],
+      "finding": "U provisionally uses 65 Sources for an administrative workload; V provisionally uses 150 for indispensable links across years, trusts and sections. V is not a larger U and the primary files are not a volume pair. H (5/1), I (5/2) and J (8/2) are unadmitted routine-size plans, not scale or throughput evidence. Pilot spend and throughput are unknown. Require measured review capacity and end-to-end full-context checks at intermediate tiers before committing to either large file."
+    },
+    {
+      "axes": [
+        "source-discovery",
+        "physical-document-quality"
+      ],
+      "finding": "Defer acquisition, retrieval, OCR and physical recovery. Stipulated missing fields or enclosures can affect evidence only within the supplied text. References ground genres and workflow distinctions, not Source-count norms, legal outcomes or prevalence."
+    }
+  ],
+  "architect_session": "9b0a254b-490b-41b2-966f-56d4ffdaf6fb"
+}
