@@ -124,6 +124,9 @@ export function Workspace({
     setExecutionId(null);
     select(id);
   }
+  const runChart = workspace && (
+    <RunChart workspace={workspace} runs={runs} selected={run?.id ?? null} select={selectEvaluation} />
+  );
   return (
     <>
       {error && (
@@ -170,7 +173,7 @@ export function Workspace({
                 changed();
               }}
             />
-          ) : (
+          ) : workspace.read_only_import ? null : (
             <p>
               This workspace is read-only. Retained Runs and Evidence remain
               available.
@@ -179,12 +182,12 @@ export function Workspace({
           {availability?.active_run_id && (
             <p role="status">Active Run: {availability.active_run_id}</p>
           )}
-          <RunChart
-            workspace={workspace}
-            runs={runs}
-            selected={run?.id ?? null}
-            select={selectEvaluation}
-          />
+          {workspace.read_only_import && run?.benchmark ? (
+            <details className="imported-run-history">
+              <summary>Run history and selection</summary>
+              {runChart}
+            </details>
+          ) : runChart}
           {failures.map((failure) => (
             <p role="alert" key={failure}>
               {failure} <button onClick={refresh}>Retry read</button>
