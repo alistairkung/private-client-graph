@@ -119,6 +119,41 @@ class PairingExclusion(BaseModel):
     reason: str
 
 
+class BenchmarkCountDelta(BaseModel):
+    tp: int
+    fp: int
+    fn: int
+    complete_proofs: int
+    planned_proofs: int
+    complete_joint_proofs: int
+    planned_joint_proofs: int
+
+
+class BenchmarkMetricDelta(BenchmarkCountDelta):
+    all_condition_micro_f1: float
+    planned_conditions: int
+    valid_graphs: int
+    exact_graphs: int
+
+
+class BenchmarkFamilyDelta(BenchmarkMetricDelta):
+    family: str
+
+
+class BenchmarkConditionDelta(BenchmarkCountDelta):
+    family: str
+    condition: str
+    left_outcome: str
+    right_outcome: str
+
+
+class BenchmarkComparison(BaseModel):
+    cohort: BenchmarkMetricDelta | None = None
+    families: list[BenchmarkFamilyDelta] = Field(default_factory=list)
+    conditions: list[BenchmarkConditionDelta] = Field(default_factory=list)
+    family_macro_f1_delta: float | None = None
+
+
 class RunComparison(BaseModel):
     api_version: Literal['2'] = '2'
     left_run_id: str
@@ -131,3 +166,4 @@ class RunComparison(BaseModel):
     matched_inputs: int = 0
     unqualified_improvement_allowed: bool = False
     reasons: list[str] = Field(default_factory=list)
+    benchmark: BenchmarkComparison | None = None
