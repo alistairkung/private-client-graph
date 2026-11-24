@@ -75,6 +75,7 @@
 
 .family-row-trigger:hover {
   background: #f3f6f1;
+  color: #20372b;
 }
 
 .family-row-trigger:focus-visible,
@@ -297,6 +298,11 @@
   color: #20372b;
   text-align: left;
   cursor: pointer;
+}
+
+.condition-tabs button:hover {
+  background: #f3f6f1;
+  color: #20372b;
 }
 
 .condition-tabs button[aria-selected="true"] {

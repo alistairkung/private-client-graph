@@ -52,7 +52,10 @@
 }
 
 .condition-graph h4 { margin: 0 0 0.35rem; }
+/* The canvas sets its own height so the legend and roster remain in flow. */
+.condition-graph .graph-workspace { height: auto; }
 .condition-graph .graph-container {
+  flex: none;
   height: clamp(320px, 32cqi, 560px);
 }
 .condition-graph .graph-navigation-hint { min-height: 1.5em; }
@@ -156,7 +159,10 @@
 }
 
 .relationship-index-row:hover,
-.relationship-index-row:focus-visible { background: #f0f5f1; }
+.relationship-index-row:focus-visible {
+  background: #f0f5f1;
+  color: var(--ink);
+}
 
 .relationship-index-row[aria-pressed="true"] {
   outline: 2px solid var(--ink);

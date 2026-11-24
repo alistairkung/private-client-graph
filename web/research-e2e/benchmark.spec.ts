@@ -116,10 +116,10 @@ test("graph comparison uses the available width and keeps the inspected view thr
   const graphNodes = canvas.locator(".react-flow__node");
   await expect(graphNodes).toHaveCount(2);
   await expect(isolated).not.toBeChecked();
-  await expected.getByText(/Full Matter roster/).click();
-  await expect(expected.getByRole("list", { name: "Expected entities" }))
-    .toContainText("Dakota Example");
-  await expected.getByText(/Full Matter roster/).click();
+  const roster = expected.getByText(/Full Matter roster/);
+  const rosterEntities = expected.getByRole("list", { name: "Expected entities" });
+  await roster.click();
+  await expect(rosterEntities).toContainText("Dakota Example");
 
   await isolated.check();
   await expect(graphNodes).toHaveCount(3);
@@ -137,6 +137,26 @@ test("graph comparison uses the available width and keeps the inspected view thr
     .press("Enter");
   const evidence = comparison.getByRole("region", { name: "Selected relationship evidence" });
   await expect(evidence).toContainText("Morgan Example");
+  const jump = comparison.getByRole("button", { name: "Jump to evidence" });
+  const index = comparison.locator(".relationship-index");
+  const expectSeparateSections = async () => {
+    const rosterBox = (await rosterEntities.boundingBox())!;
+    const jumpBox = (await jump.boundingBox())!;
+    const indexBox = (await index.boundingBox())!;
+    expect(rosterBox.y + rosterBox.height).toBeLessThanOrEqual(jumpBox.y);
+    expect(jumpBox.y + jumpBox.height).toBeLessThanOrEqual(indexBox.y);
+  };
+  await expectSeparateSections();
+
+  const relationships = index.locator("summary");
+  if ((await index.getAttribute("open")) === null) {
+    await relationships.press("Enter");
+  }
+  const selected = index.getByRole("button", { name: /Morgan Example.*trustee of/ });
+  const label = selected.getByText("Morgan Example", { exact: true });
+  const labelColor = await label.evaluate((element) => getComputedStyle(element).color);
+  await selected.hover();
+  await expect(label).toHaveCSS("color", labelColor);
   const zoom = () => canvas.locator(".react-flow__viewport").evaluate((el) =>
     new DOMMatrixReadOnly(getComputedStyle(el).transform).a,
   );
@@ -154,6 +174,7 @@ test("graph comparison uses the available width and keeps the inspected view thr
   await expect(evidence).toContainText("Morgan Example");
   expect(await page.evaluate(() => document.documentElement.scrollWidth))
     .toBeLessThanOrEqual(391);
+  await expectSeparateSections();
 
   await page.setViewportSize({ width: 1560, height: 960 });
   await expect(predicted).toBeVisible();
