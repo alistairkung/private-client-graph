@@ -68,6 +68,7 @@ class WorkspaceDetail(BaseModel):
     draft: RunDraft
     run_ids: list[str] = Field(default_factory=list)
     metadata_available: bool = True
+    read_only_import: bool = False
 
 
 class WorkspaceHistoryItem(BaseModel):
@@ -80,6 +81,7 @@ class WorkspaceHistoryItem(BaseModel):
     metadata_available: bool = True
     integrity: Literal['verified', 'missing', 'corrupt'] = 'verified'
     reason: str | None = None
+    read_only_import: bool = False
 
 
 class WorkspaceHistory(BaseModel):
