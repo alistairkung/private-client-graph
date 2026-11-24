@@ -64,7 +64,8 @@ def _configured_tracing(bundle: Bundle) -> ResearchTracing | None:
 
 
 def _verified_inputs(plan: RunPlan) -> frozenset[str]:
-    catalog = {sample.sample_id: sample for sample in repository_inputs() if sample.cohort == 'authored'}
+    planned = [sample.sample_id for sample in plan.inputs]
+    catalog = {sample.sample_id: sample for sample in repository_inputs(input_ids=planned) if sample.cohort == 'authored'}
     matched = [sample for sample in plan.inputs if catalog.get(sample.sample_id) == sample]
     metadata = frozen_case_metadata(matched)
     return frozenset(sample.sample_id for sample in matched

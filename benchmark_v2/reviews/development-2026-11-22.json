@@ -1,0 +1,39 @@
+{
+  "reviewer": "Alistair Kung",
+  "review_date": "2026-11-22",
+  "disposition": "approved",
+  "attestation_as_received": "I Alistair Kung am happy to approve **D9, D10, D11, D12 and D14. Signed 22 Nov 2026, Alistair**",
+  "technical_review": "development-admission.md",
+  "conditions": [
+    {
+      "condition": "D9",
+      "input_id": "benchmark_v1_temporal_dev_7_fixture",
+      "package_sha256": "18d6bc35c0488c62296649e8241fc9b3f4df24b4da08574d1f482058c7c97551",
+      "annotation_sha256": "11a917205b57fa748521f1161b79bdc009e51db44dbc27eaf9560894e99c9381"
+    },
+    {
+      "condition": "D10",
+      "input_id": "benchmark_v1_authority_dev_2_fixture",
+      "package_sha256": "b4645029ad21cd68bee82d03941a24dc579a5e27b8a9c982a30d4b230cf76d3b",
+      "annotation_sha256": "1766ad31c8faefdef578be161f9b13ec1e8953c2a26ecf8c065aa24d1d77bff8"
+    },
+    {
+      "condition": "D11",
+      "input_id": "benchmark_v1_authority_dev_3_fixture",
+      "package_sha256": "0a8285fb209bbb0e92accedaea7877a510a2ce435322f00ad93690561d54af52",
+      "annotation_sha256": "066d50f71a1e87e174c0920d41c35a8fdbcbabe27013758deda6b7de161255e1"
+    },
+    {
+      "condition": "D12",
+      "input_id": "benchmark_v1_cross_source_dev_2_fixture",
+      "package_sha256": "de7ad37cb7f3f9250a13bb1da284cd927afd8358b49495e9258522d3f3494cdf",
+      "annotation_sha256": "bbdf8b371e9afa7d81be5069501c84f867bd35a3fb6cbb5617a3008643771af7"
+    },
+    {
+      "condition": "D14",
+      "input_id": "benchmark_v1_composite_dev_1_fixture",
+      "package_sha256": "cb770b0ab81b3e8526239c3f0dc97a59170b205e434418fd7a39016a140b294e",
+      "annotation_sha256": "d1d3b1d2d66ee452e812ad833fa4bbb05c78ad531eb9cfe6e1834a24e136a48f"
+    }
+  ]
+}

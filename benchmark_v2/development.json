@@ -1,0 +1,280 @@
+[
+  {
+    "condition": "D1",
+    "input_id": "benchmark_v1_aliases_dev_1_fixture",
+    "targets": {
+      "required": [
+        ["Daniel Wu", "beneficiary_of", "Ashford Family Trust"]
+      ],
+      "forbidden": [
+        ["Danny", "beneficiary_of", "Ashford Family Trust"]
+      ],
+      "unaffected": [],
+      "sufficiency": []
+    }
+  },
+  {
+    "condition": "D2",
+    "input_id": "benchmark_v1_authority_dev_1_fixture",
+    "targets": {
+      "required": [
+        ["Carol Wong", "beneficiary_of", "Evergreen Family Trust"]
+      ],
+      "forbidden": [
+        ["Bob Chen", "beneficiary_of", "Evergreen Family Trust"]
+      ],
+      "unaffected": [
+        ["Alice Chen", "parent_of", "Bob Chen"]
+      ],
+      "sufficiency": []
+    }
+  },
+  {
+    "condition": "D3",
+    "input_id": "benchmark_v1_cross_source_dev_1_fixture",
+    "targets": {
+      "required": [
+        ["Alice Chen", "parent_of", "Bob Chen"],
+        ["Bob Chen", "beneficiary_of", "Oakwood Trust"]
+      ],
+      "forbidden": [],
+      "unaffected": [],
+      "sufficiency": []
+    }
+  },
+  {
+    "condition": "D4",
+    "input_id": "benchmark_v1_distractors_dev_1_fixture",
+    "targets": {
+      "required": [
+        ["Chloe Park", "beneficiary_of", "Juniper Family Trust"]
+      ],
+      "forbidden": [
+        ["Peter Park", "beneficiary_of", "Juniper Family Trust"],
+        ["Rachel Lee", "beneficiary_of", "Juniper Family Trust"],
+        ["Andrew Chan", "beneficiary_of", "Juniper Family Trust"]
+      ],
+      "unaffected": [],
+      "sufficiency": []
+    }
+  },
+  {
+    "condition": "D5",
+    "input_id": "benchmark_v1_hallucination_dev_1_fixture",
+    "targets": {
+      "required": [
+        ["Gregory Ashby", "sibling_of", "Margaret Ashby"]
+      ],
+      "forbidden": [
+        ["Emma Ashby", "sibling_of", "James Ashby"],
+        ["Margaret Ashby", "trustee_of", "Ashby Family Trust"],
+        ["James Ashby", "beneficiary_of", "Ashby Family Trust"]
+      ],
+      "unaffected": [],
+      "sufficiency": []
+    }
+  },
+  {
+    "condition": "D6",
+    "input_id": "benchmark_v1_temporal_dev_1_fixture",
+    "targets": {
+      "required": [
+        ["Rachel Lim", "trustee_of", "Willow Family Trust"]
+      ],
+      "forbidden": [
+        ["David Ng", "trustee_of", "Willow Family Trust"]
+      ],
+      "unaffected": [
+        ["Sophie Ho", "beneficiary_of", "Willow Family Trust"]
+      ],
+      "sufficiency": []
+    }
+  },
+  {
+    "condition": "D7",
+    "input_id": "benchmark_v1_temporal_dev_2_fixture",
+    "targets": {
+      "required": [
+        ["Alice Tan", "spouse_of", "Benedict Tan"],
+        ["Benedict Tan", "trustee_of", "Pemberton Family Trust"]
+      ],
+      "forbidden": [],
+      "unaffected": [
+        ["Alice Tan", "settlor_of", "Pemberton Family Trust"],
+        ["Alice Tan", "parent_of", "Chloe Tan"],
+        ["Benedict Tan", "parent_of", "Chloe Tan"],
+        ["Chloe Tan", "beneficiary_of", "Pemberton Family Trust"]
+      ],
+      "sufficiency": []
+    }
+  },
+  {
+    "condition": "D8",
+    "input_id": "benchmark_v1_temporal_dev_5_fixture",
+    "targets": {
+      "required": [
+        ["Alice Tan", "trustee_of", "Pemberton Family Trust"]
+      ],
+      "forbidden": [
+        ["Alice Tan", "spouse_of", "Benedict Tan"],
+        ["Benedict Tan", "trustee_of", "Pemberton Family Trust"]
+      ],
+      "unaffected": [
+        ["Alice Tan", "settlor_of", "Pemberton Family Trust"],
+        ["Alice Tan", "parent_of", "Chloe Tan"],
+        ["Benedict Tan", "parent_of", "Chloe Tan"],
+        ["Chloe Tan", "beneficiary_of", "Pemberton Family Trust"]
+      ],
+      "sufficiency": []
+    }
+  },
+  {
+    "condition": "D9",
+    "input_id": "benchmark_v1_temporal_dev_7_fixture",
+    "targets": {
+      "required": [
+        ["Alice Tan", "trustee_of", "Pemberton Family Trust"]
+      ],
+      "forbidden": [
+        ["Alice Tan", "spouse_of", "Benedict Tan"],
+        ["Benedict Tan", "trustee_of", "Pemberton Family Trust"]
+      ],
+      "unaffected": [
+        ["Alice Tan", "settlor_of", "Pemberton Family Trust"],
+        ["Alice Tan", "parent_of", "Chloe Tan"],
+        ["Benedict Tan", "parent_of", "Chloe Tan"],
+        ["Chloe Tan", "beneficiary_of", "Pemberton Family Trust"]
+      ],
+      "sufficiency": []
+    }
+  },
+  {
+    "condition": "D10",
+    "input_id": "benchmark_v1_authority_dev_2_fixture",
+    "targets": {
+      "required": [
+        ["Nora Pike", "trustee_of", "Alderwick Trust"]
+      ],
+      "forbidden": [
+        ["Owen Rook", "trustee_of", "Alderwick Trust"]
+      ],
+      "unaffected": [
+        ["Helen Marr", "sibling_of", "Felix Marr"]
+      ],
+      "sufficiency": []
+    }
+  },
+  {
+    "condition": "D11",
+    "input_id": "benchmark_v1_authority_dev_3_fixture",
+    "targets": {
+      "required": [
+        ["Nora Pike", "trustee_of", "Alderwick Trust"]
+      ],
+      "forbidden": [
+        ["Owen Rook", "trustee_of", "Alderwick Trust"]
+      ],
+      "unaffected": [
+        ["Helen Marr", "sibling_of", "Felix Marr"]
+      ],
+      "sufficiency": []
+    }
+  },
+  {
+    "condition": "D12",
+    "input_id": "benchmark_v1_cross_source_dev_2_fixture",
+    "targets": {
+      "required": [
+        ["Anna Dale", "trustee_of", "Seaforth Trust"]
+      ],
+      "forbidden": [
+        ["Anna Dale", "trustee_of", "Hillstone Trust"]
+      ],
+      "unaffected": [
+        ["Kit Nash", "settlor_of", "Seaforth Trust"],
+        ["Rhea Barr", "settlor_of", "Hillstone Trust"]
+      ],
+      "sufficiency": [
+        {
+          "edge": ["Anna Dale", "trustee_of", "Seaforth Trust"],
+          "alternatives": [
+            [
+              {
+                "source_id": "notice",
+                "supporting_text": "Anna Dale took office today as trustee of Seaforth Trust under instrument L-29."
+              }
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "condition": "D13",
+    "input_id": "benchmark_v1_cross_source_dev_3_fixture",
+    "targets": {
+      "required": [
+        ["Anna Dale", "trustee_of", "Seaforth Trust"]
+      ],
+      "forbidden": [
+        ["Anna Dale", "trustee_of", "Hillstone Trust"]
+      ],
+      "unaffected": [
+        ["Kit Nash", "settlor_of", "Seaforth Trust"],
+        ["Rhea Barr", "settlor_of", "Hillstone Trust"]
+      ],
+      "ordinary_source_approval": {
+        "relationships": [
+          {
+            "source": "kit_nash", "type": "settlor_of", "target": "seaforth_trust",
+            "approved_evidence": [{"source_id": "letter", "supporting_text": "Kit Nash is the settlor of Seaforth Trust."}]
+          },
+          {
+            "source": "rhea_barr", "type": "settlor_of", "target": "hillstone_trust",
+            "approved_evidence": [{"source_id": "letter", "supporting_text": "Rhea Barr is the settlor of Hillstone Trust."}]
+          }
+        ]
+      },
+      "sufficiency": [
+        {
+          "edge": ["Anna Dale", "trustee_of", "Seaforth Trust"],
+          "joint_only": true,
+          "alternatives": [
+            [
+              {
+                "source_id": "notice",
+                "supporting_text": "Anna Dale took office today as trustee under instrument L-29."
+              },
+              {
+                "source_id": "index",
+                "supporting_text": "Instrument L-29 belongs to Seaforth Trust."
+              }
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "condition": "D14",
+    "input_id": "benchmark_v1_composite_dev_1_fixture",
+    "targets": {
+      "required": [
+        ["Tess Kwan", "beneficiary_of", "Orchard Lane Trust"],
+        ["Tessa Kwan", "beneficiary_of", "Fernbank Trust"],
+        ["Colin Webb", "trustee_of", "Fernbank Trust"]
+      ],
+      "forbidden": [
+        ["Tessa Kwan", "trustee_of", "Fernbank Trust"],
+        ["Tess Kwan", "beneficiary_of", "Fernbank Trust"],
+        ["Tessa Kwan", "beneficiary_of", "Orchard Lane Trust"],
+        ["Miriam Kwan", "parent_of", "Tessa Kwan"]
+      ],
+      "unaffected": [
+        ["Elin Moss", "trustee_of", "Orchard Lane Trust"],
+        ["Sidney Cross", "beneficiary_of", "Orchard Lane Trust"]
+      ],
+      "sufficiency": []
+    }
+  }
+]

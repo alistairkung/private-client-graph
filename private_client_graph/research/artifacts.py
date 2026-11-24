@@ -65,6 +65,11 @@ def dependency_versions() -> dict[str, str]:
     return {package: importlib.metadata.version(package) for package in packages}
 
 
+def dependency_lock_digest() -> str | None:
+    path = ROOT / 'uv.lock'
+    return checksum(path.read_bytes()) if path.is_file() else None
+
+
 def _provenance() -> dict[str, Any]:
     def git(*args: str) -> str | None:
         try:
@@ -75,6 +80,7 @@ def _provenance() -> dict[str, Any]:
     return {'git_sha': git('rev-parse', 'HEAD'),
             'dirty': bool(git('status', '--porcelain')),
             'dependencies': dependency_versions(),
+            'dependency_lock_sha256': dependency_lock_digest(),
             'code': code_snapshot(),
             'prompts': {'extraction': EXTRACTION_PROMPT, 'sourced_extraction': SOURCED_EXTRACTION_PROMPT, 'resolution': RESOLUTION_PROMPT},
             'prompt_hashes': {'extraction': checksum(EXTRACTION_PROMPT.encode()),

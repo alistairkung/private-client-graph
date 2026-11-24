@@ -14,7 +14,7 @@ from private_client_graph.models.canonical_state import CanonicalState
 from private_client_graph.pipeline import Pipeline, PipelineConfig, PipelineInput, PipelineExecutionError
 from private_client_graph.resolution import EndpointEdits, ResolutionRequest, ResolutionProvider
 from . import tracing as trace
-from .artifacts import Bundle, BudgetExceeded, code_snapshot, dependency_versions, utc_now, write_json_once
+from .artifacts import Bundle, BudgetExceeded, code_snapshot, dependency_lock_digest, dependency_versions, utc_now, write_json_once
 from .inputs import ResearchInput
 from .plan import FiniteExperimentPlan
 from .run_plan import RunPlan
@@ -66,6 +66,9 @@ def validate_execution(bundle: Bundle, live: bool) -> None:
 
 
 def validate_environment(bundle: Bundle) -> None:
+    lock = bundle.manifest['provenance'].get('dependency_lock_sha256')
+    if lock is not None and lock != dependency_lock_digest():
+        raise ValueError('Dependency lock changed since manifest creation')
     if bundle.manifest['provenance']['code'] != code_snapshot():
         raise ValueError('Code changed since manifest creation; do not mix configurations on resume')
     if bundle.manifest['provenance']['dependencies'] != dependency_versions():

@@ -1,0 +1,12 @@
+[
+  {
+    "id": "mail",
+    "title": "Family correspondence",
+    "path": "sources/email.txt"
+  },
+  {
+    "id": "instrument",
+    "title": "Executed instrument of appointment",
+    "path": "sources/instrument.txt"
+  }
+]

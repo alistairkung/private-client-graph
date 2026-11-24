@@ -1,0 +1,17 @@
+[
+  {
+    "id": "notice",
+    "title": "Appointment return",
+    "path": "sources/notice.txt"
+  },
+  {
+    "id": "index",
+    "title": "Index enquiry",
+    "path": "sources/index.txt"
+  },
+  {
+    "id": "letter",
+    "title": "April correspondence list",
+    "path": "sources/letter.txt"
+  }
+]

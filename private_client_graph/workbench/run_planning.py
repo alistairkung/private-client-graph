@@ -55,7 +55,7 @@ def _selected_inputs(configuration: RunConfiguration, root: Path
         if configuration.input_ids != [sample.sample_id for sample in inputs]:
             raise ValueError('Select every retained extraction in its original order')
         return inputs, metadata, lineage
-    samples = {sample.sample_id: sample for sample in repository_inputs()}
+    samples = {sample.sample_id: sample for sample in repository_inputs(input_ids=configuration.input_ids)}
     if any(identity not in samples for identity in configuration.input_ids):
         raise ValueError('Select repository-owned input identities')
     inputs = [samples[identity] for identity in configuration.input_ids]

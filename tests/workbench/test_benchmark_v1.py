@@ -22,6 +22,7 @@ from private_client_graph.workbench.workspaces import create_experiment, update_
 
 AXES = ('aliases', 'authority', 'cross_source', 'distractors', 'hallucination', 'temporal')
 SPLITS = ('dev', 'held_out')
+AUTHORITY_PAIR = ['benchmark_v1_authority_dev_2_fixture', 'benchmark_v1_authority_dev_3_fixture']
 DEFAULTS = [f'case_{index:02d}_fixture' for index in range(1, 6)]
 LEGACY_SCORES = {
     'case_01_fixture': (6, 0, 0, 6, 0),
@@ -53,7 +54,9 @@ def samples():
 def test_catalog_preserves_legacy_identities_defaults_and_requires_new_case_opt_in(samples):
     catalog = {row.id: row for row in load_case_catalog()}
     expected_new = {f'{case_id(axis, split)}_fixture' for axis in AXES for split in SPLITS}
-    assert set(samples) == set(LEGACY_SCORES) | expected_new
+    v2_development = {f'benchmark_v1_{axis}_dev_{ordinal}_fixture' for axis, ordinal in (
+        ('temporal', 2), ('temporal', 5), ('temporal', 7), ('cross_source', 2), ('cross_source', 3), ('composite', 1))}
+    assert set(samples) == set(LEGACY_SCORES) | expected_new | set(AUTHORITY_PAIR) | v2_development
     assert set(catalog) == set(samples)
     assert default_input_ids() == DEFAULTS
     assert RunConfiguration().input_ids == DEFAULTS
@@ -127,12 +130,15 @@ def forbidden_provider(request):
     pytest.fail('Saved no-resolution replay must make zero provider calls')
 
 
-def test_all_six_dev_cases_survive_normal_freeze_execute_reopen_and_source_inspection(tmp_path, samples):
-    identities = [f'{case_id(axis, "dev")}_fixture' for axis in AXES]
+@pytest.mark.parametrize('identities', [
+    [f'{case_id(axis, "dev")}_fixture' for axis in AXES],
+    AUTHORITY_PAIR,
+], ids=['six-axis', 'matched-authority'])
+def test_dev_cases_survive_normal_freeze_execute_reopen_and_source_inspection(tmp_path, samples, identities):
     workspace = create_experiment(tmp_path, CreateExperiment(request_id='benchmark-v1', name='Synthetic dev replay'))
     configuration = RunConfiguration(input_ids=identities, input_mode='saved', resolver='none', execution_mode='replay')
     preview = preview_run(configuration, tmp_path)
-    assert (preview.matrix_call_maximum, preview.planned_observations) == (0, 6)
+    assert (preview.matrix_call_maximum, preview.planned_observations) == (0, len(identities))
     update_draft(tmp_path, workspace.id, DraftUpdate(request_id='select', expected_revision=0, configuration=configuration))
     frozen = freeze_run(tmp_path, workspace.id, FreezeRun(request_id='freeze', expected_revision=1))
     bundle = Bundle.open(tmp_path / frozen.id)
@@ -141,15 +147,16 @@ def test_all_six_dev_cases_survive_normal_freeze_execute_reopen_and_source_inspe
     reopened = Bundle.open(tmp_path / frozen.id)
     execute(reopened, provider=forbidden_provider)
     assert reopened.attempt_count == 0
-    assert len(reopened.results()) == 6
+    assert len(reopened.results()) == len(identities)
     detail = read_run(tmp_path, workspace.id, frozen.id)
     aggregate = detail.evaluation.aggregate
     assert aggregate.state == 'complete'
-    assert aggregate.coverage.model_dump() == dict(planned=6, scored=6, pending=0, failed=0, uncertain=0, unavailable=0)
+    assert aggregate.coverage.model_dump() == dict(
+        planned=len(identities), scored=len(identities), pending=0, failed=0, uncertain=0, unavailable=0)
     assert (aggregate.tp, aggregate.fp, aggregate.fn, aggregate.f1) == (
         sum(len(samples[identity].truth.relationships) for identity in identities), 0, 0, 1)
     assert detail.evaluation.cost.total == 0
-    assert len(detail.observations) == 6
+    assert len(detail.observations) == len(identities)
     for observation in detail.observations:
         sample = samples[observation.sample_id]
         assert observation.metadata.id == sample.sample_id
@@ -256,3 +263,31 @@ def test_alias_dev_source_supplies_full_name_used_by_the_ideal(samples):
     parents = [item for item in sample.sourced_extraction.relationships if item.relationship_type == 'parent_of']
     assert len(parents) == 2
     assert all(item.target_name == 'Daniel Wu' and item.supporting_text == quote for item in parents)
+
+
+def test_matched_authority_pair_varies_only_mail_date_and_preserves_answer_key(samples):
+    before, after = [samples[identity] for identity in AUTHORITY_PAIR]
+    pair_root = ROOT / 'benchmark_v1' / 'authority' / 'dev'
+    for sample, directory in ((before, pair_root / 'case_2'), (after, pair_root / 'case_3')):
+        assert [source.id for source in sample.sources] == ['mail', 'instrument']
+        graph = build_graph(sample.extraction.relationships, document='source.txt', source_text=sample.source)
+        score = evaluate_graph(graph, sample.truth)
+        assert set(score.true_positive_edges) == {
+            ('Felix Marr', 'sibling_of', 'Helen Marr'),
+            ('Nora Pike', 'trustee_of', 'Alderwick Trust'),
+        }
+        assert (score.fp, score.fn, score.provenance_passed) == (0, 0, 2)
+        expected_score = json.loads((directory / 'expected_extraction.evaluation.json').read_text())
+        assert score.model_dump(mode='json') == expected_score
+        metadata = json.loads((directory / 'metadata.json').read_text())
+        assert metadata['matter_family'] == 'benchmark_v2_alderwick'
+        assert sample.source == '\n\n'.join(source.text.strip() for source in sample.sources) + '\n'
+    assert before.truth == after.truth
+    assert before.source_evidence == after.source_evidence
+    assert before.sourced_extraction == after.sourced_extraction
+    assert before.sources[1] == after.sources[1]
+    old_mail, new_mail = before.sources[0], after.sources[0]
+    assert old_mail.title == new_mail.title
+    assert old_mail.text.count('Sent: 16 April 2025') == 1
+    assert old_mail.text.replace('Sent: 16 April 2025', 'Sent: 16 June 2025') == new_mail.text
+    assert 'Executed 1 May 2025' in before.sources[1].text
