@@ -25,6 +25,7 @@ def _condition(identity: str, *, empty: bool = False) -> PlannedCondition:
     entities = [
         {'id': 'person', 'name': 'Morgan Example', 'type': 'person'},
         {'id': 'trust', 'name': 'North Example Trust', 'type': 'trust'},
+        {'id': 'observer', 'name': 'Dakota Example', 'type': 'person'},
     ]
     relationship = {'source': 'person', 'target': 'trust', 'type': 'trustee_of', 'approved_evidence': []}
     proof = {

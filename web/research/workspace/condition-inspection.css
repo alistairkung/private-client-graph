@@ -6,7 +6,6 @@
   display: grid;
   gap: 0.85rem;
   min-width: 0;
-  max-width: 900px;
 }
 
 .comparison-legend {
@@ -53,7 +52,9 @@
 }
 
 .condition-graph h4 { margin: 0 0 0.35rem; }
-.condition-graph .graph-container { height: max(320px, 20rem); }
+.condition-graph .graph-container {
+  height: clamp(320px, 32cqi, 560px);
+}
 .condition-graph .graph-navigation-hint { min-height: 1.5em; }
 
 .condition-valid-empty {
@@ -62,6 +63,33 @@
   min-height: 10rem;
   border: 1px solid var(--rule);
   color: var(--muted);
+}
+
+.isolated-entities-control {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem 0.5rem;
+  min-height: 44px;
+  width: fit-content;
+  cursor: pointer;
+}
+
+.isolated-entities-control input { margin: 0; }
+.isolated-entities-control small { color: var(--muted); }
+
+.condition-roster { margin-block-start: 0.5rem; }
+.condition-roster summary {
+  display: list-item;
+  min-height: 44px;
+  padding-block: 0.6rem;
+  cursor: pointer;
+}
+.condition-roster ul {
+  max-block-size: 11rem;
+  overflow: auto;
+  overflow-wrap: anywhere;
+  margin-block: 0;
 }
 
 .graph-side-tabs { display: none; }
@@ -173,7 +201,7 @@
   .condition-graphs[data-side="predicted"] .condition-graph-predicted { display: block; }
   .graph-side-tabs { display: flex; gap: 0.5rem; border-bottom: 1px solid var(--rule); }
   .graph-side-tabs button { min-height: 2.75rem; padding-inline: 0.75rem; }
-  .condition-graph .graph-container { height: max(260px, 16.25rem); }
+  .condition-graph .graph-container { height: clamp(260px, 65cqi, 420px); }
   .relationship-index-row { grid-template-columns: 1.35rem minmax(0, 1fr); }
   .outcome-text { grid-column: 2; }
 }

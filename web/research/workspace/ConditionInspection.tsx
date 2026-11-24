@@ -32,6 +32,15 @@ function outcomesFor(
   });
 }
 
+function hideIsolatedEntities(state: CanonicalState | undefined) {
+  if (!state) return undefined;
+  const endpoints = new Set(
+    state.relationships.flatMap(({ source, target }) => [source, target]),
+  );
+  const entities = state.entities.filter(({ id }) => endpoints.has(id));
+  return entities.length === state.entities.length ? state : { ...state, entities };
+}
+
 function combineBounds(
   first: { x: number; y: number; width: number; height: number },
   second: { x: number; y: number; width: number; height: number },
@@ -70,7 +79,7 @@ export function ConditionInspection({
   const { t } = useLocale();
   const benchmark = observation.benchmark;
   const expected = benchmark?.expected;
-  const prediction = observation.result?.state;
+  const prediction = observation.result?.state ?? undefined;
   const predictionAvailable = Boolean(
     prediction && benchmark?.outcome === "scored",
   );
@@ -91,16 +100,24 @@ export function ConditionInspection({
     () => new Map(rows.map((row) => [edgeKey(...row.edge), row])),
     [rows],
   );
+  const [showIsolatedEntities, setShowIsolatedEntities] = useState(false);
+  const connectedExpected = useMemo(() => hideIsolatedEntities(expected), [expected]);
+  const connectedPrediction = useMemo(() => hideIsolatedEntities(prediction), [prediction]);
+  const visibleExpected = showIsolatedEntities ? expected : connectedExpected;
+  const visiblePrediction = showIsolatedEntities ? prediction : connectedPrediction;
   const comparisonLayout = useMemo(() => {
-    if (!predictionAvailable || !expected || !prediction) return undefined;
+    if (!predictionAvailable || !expected || !prediction ||
+      !visibleExpected?.entities.length || !visiblePrediction?.entities.length) {
+      return undefined;
+    }
     const expectedLayout = graphDrawing(
-      expected,
+      visibleExpected,
       t,
       undefined,
-      outcomesFor(expected, "expected", rowByKey, true),
+      outcomesFor(visibleExpected, "expected", rowByKey, true),
     );
-    const predictedOutcomes = outcomesFor(prediction, "predicted", rowByKey, true);
-    const independentPrediction = graphDrawing(prediction, t, undefined, predictedOutcomes);
+    const predictedOutcomes = outcomesFor(visiblePrediction, "predicted", rowByKey, true);
+    const independentPrediction = graphDrawing(visiblePrediction, t, undefined, predictedOutcomes);
     const alignedPositions = alignComparisonEntities(
       expected,
       prediction,
@@ -115,14 +132,14 @@ export function ConditionInspection({
         bounds: undefined,
       };
     }
-    const alignedPrediction = graphDrawing(prediction, t, alignedPositions, predictedOutcomes);
+    const alignedPrediction = graphDrawing(visiblePrediction, t, alignedPositions, predictedOutcomes);
     return {
       aligned: true,
       expected: expectedLayout,
       predicted: alignedPrediction,
       bounds: combineBounds(expectedLayout.bounds, alignedPrediction.bounds),
     };
-  }, [expected, prediction, predictionAvailable, rowByKey, t]);
+  }, [expected, prediction, predictionAvailable, rowByKey, t, visibleExpected, visiblePrediction]);
   const [localSelectedKey, setLocalSelectedKey] = useState<string | null>(null);
   const selectedKey = savedEdgeKey === undefined ? localSelectedKey : savedEdgeKey;
   const [filter, setFilter] = useState<"all" | Status>("all");
@@ -156,6 +173,7 @@ export function ConditionInspection({
     invokingControl.current = null;
     if (savedEdgeKey === undefined) setLocalSelectedKey(null);
     setFilter("all");
+    setShowIsolatedEntities(false);
     setSide("expected");
     setFitScales({ expected: null, predicted: null });
     setLocateRequest(null);
@@ -168,7 +186,13 @@ export function ConditionInspection({
     }),
     [rows],
   );
-  const graphIsDense = rows.length >= 12 || (expected?.entities.length ?? 0) >= 20;
+  const expectedIsolated = (expected?.entities.length ?? 0) -
+    (connectedExpected?.entities.length ?? 0);
+  const predictedIsolated = predictionAvailable
+    ? (prediction?.entities.length ?? 0) - (connectedPrediction?.entities.length ?? 0)
+    : 0;
+  const graphIsDense = rows.length >= 12 ||
+    Math.max(visibleExpected?.entities.length ?? 0, visiblePrediction?.entities.length ?? 0) >= 20;
   const measuredFitScales = Object.values(fitScales).filter(
     (scale): scale is number => scale !== null,
   );
@@ -185,10 +209,12 @@ export function ConditionInspection({
     return outcomesFor(state, graphSide, rowByKey, predictionAvailable);
   }
 
-  function graph(state: CanonicalState, graphSide: Side) {
+  function graph(state: CanonicalState, roster: CanonicalState, graphSide: Side) {
     const keys = graphEdgeKeys(state);
     const selectedIndex = selectedKey ? keys.indexOf(selectedKey) : -1;
     const outcomes = graphOutcomes(state, graphSide);
+    const view = showIsolatedEntities ? "all-entities" : "connected";
+    const memoryKey = `benchmark:${runId}:${observation.id}:${graphSide}:${view}`;
     return (
       <section
         ref={graphSide === "expected" ? expectedGraphRef : predictedGraphRef}
@@ -198,20 +224,25 @@ export function ConditionInspection({
         data-active={side === graphSide}
       >
         <h4>{graphSide === "expected" ? "Expected" : "Predicted"}</h4>
-        {state.entities.length === 0 && state.relationships.length === 0 ? (
-          <p className="condition-valid-empty">Valid empty graph</p>
-        ) : (
+        {state.relationships.length === 0 && (
+          <p className={state.entities.length === 0 ? "condition-valid-empty" : "layout-note"}>
+            {graphSide === "expected" ? "0 expected relationships" : "Graph constructed · 0 relationships"}
+          </p>
+        )}
+        {state.entities.length > 0 && (
           <GraphDrawing
+            key={memoryKey}
             state={state}
             selected={selectedIndex < 0 ? null : selectedIndex}
             selectedEntity={null}
-            memoryKey={`benchmark:${runId}:${observation.id}:${graphSide}`}
+            memoryKey={memoryKey}
             outcomes={outcomes}
             modelOverride={graphSide === "expected"
               ? comparisonLayout?.expected
               : comparisonLayout?.predicted}
             onFitScaleChange={graphSide === "expected" ? reportExpectedFitScale : reportPredictedFitScale}
             comparisonBounds={comparisonLayout?.bounds}
+            preserveManualViewOnResize
             locateRequest={locateRequest?.side === graphSide
               ? { index: locateRequest.index, request: locateRequest.request }
               : undefined}
@@ -224,6 +255,14 @@ export function ConditionInspection({
             }}
             onEntity={() => undefined}
           />
+        )}
+        {roster.entities.length > 0 && (
+          <details className="condition-roster">
+            <summary>Full Matter roster · {roster.entities.length}</summary>
+            <ul aria-label={graphSide === "expected" ? "Expected entities" : "Predicted entities"}>
+              {roster.entities.map((entity) => <li key={entity.id}>{entity.name}</li>)}
+            </ul>
+          </details>
         )}
       </section>
     );
@@ -247,7 +286,7 @@ export function ConditionInspection({
     canvas?.scrollIntoView?.({ block: "center", behavior: "instant" });
   }
 
-  if (!benchmark || !expected) {
+  if (!benchmark || !expected || !visibleExpected) {
     return <p role="status">Expected graph unavailable for this condition.</p>;
   }
 
@@ -275,13 +314,28 @@ export function ConditionInspection({
         </p>
       )}
 
+      {expectedIsolated + predictedIsolated > 0 && (
+        <label className="isolated-entities-control">
+          <input
+            type="checkbox"
+            checked={showIsolatedEntities}
+            onChange={(event) => setShowIsolatedEntities(event.target.checked)}
+          />
+          <span>Show isolated entities</span>
+          <small>
+            Expected {expectedIsolated}
+            {predictionAvailable && ` · Predicted ${predictedIsolated}`}
+          </small>
+        </label>
+      )}
       <div className="graph-side-tabs" role="group" aria-label="Graph side">
         <button aria-pressed={side === "expected"} onClick={() => setSide("expected")}>Expected</button>
         <button aria-pressed={side === "predicted"} disabled={!predictionAvailable} onClick={() => setSide("predicted")}>Predicted</button>
       </div>
       <div className="condition-graphs" data-side={side}>
-        {graph(expected, "expected")}
-        {predictionAvailable && prediction && graph(prediction, "predicted")}
+        {graph(visibleExpected, expected, "expected")}
+        {predictionAvailable && prediction && visiblePrediction &&
+          graph(visiblePrediction, prediction, "predicted")}
       </div>
 
       {selectedEdge && <button className="secondary jump-to-evidence" onClick={() => sourceRegion.current?.focus()}>Jump to evidence</button>}

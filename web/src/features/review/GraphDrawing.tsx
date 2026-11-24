@@ -194,14 +194,16 @@ function FitDrawing({
   restored,
   onFitScaleChange,
   sharedBounds,
+  manualView,
 }: {
   graph: CanonicalState;
   bounds: DrawingBounds;
   restored: boolean;
   onFitScaleChange?: (scale: number) => void;
   sharedBounds?: DrawingBounds;
+  manualView?: { current: boolean };
 }) {
-  const { fitBounds, viewportInitialized } = useReactFlow();
+  const { fitBounds, getViewport, setViewport, viewportInitialized } = useReactFlow();
   const width = useStore((state) => state.width);
   const height = useStore((state) => state.height);
   const fittedBounds = sharedBounds ?? bounds;
@@ -215,12 +217,24 @@ function FitDrawing({
     if (!viewportInitialized || !width || !height) return;
     onFitScaleChange?.(fitScale);
     const last = previous.current;
-    if (last?.graph === graph && last.width === width && last.height === height)
-      return;
+    const sameLayout = last?.graph === graph;
+    if (sameLayout && last.width === width && last.height === height) return;
     previous.current = { graph, width, height };
     if (!last && restored) return;
+    if (sameLayout && manualView?.current) {
+      // Hold the same point at the center of the resized canvas.
+      const { x, y, zoom } = getViewport();
+      void setViewport({
+        x: x + (width - last.width) / 2,
+        y: y + (height - last.height) / 2,
+        zoom,
+      });
+      return;
+    }
+    if (manualView) manualView.current = false;
     void fitBounds(fittedBounds, { padding: 0.05 });
-  }, [graph, fittedBounds, viewportInitialized, width, height, fitBounds, restored, fitScale, onFitScaleChange]);
+  }, [graph, fittedBounds, viewportInitialized, width, height, fitBounds,
+    restored, fitScale, onFitScaleChange, manualView, getViewport, setViewport]);
   return null;
 }
 interface DrawingProps {
@@ -234,6 +248,7 @@ interface DrawingProps {
   modelOverride?: GraphDrawingModel;
   onFitScaleChange?: (scale: number) => void;
   comparisonBounds?: DrawingBounds;
+  preserveManualViewOnResize?: boolean;
   locateRequest?: { index: number; request: number };
 }
 export function GraphDrawing(props: DrawingProps) {
@@ -254,6 +269,7 @@ function Drawing({
   modelOverride,
   onFitScaleChange,
   comparisonBounds,
+  preserveManualViewOnResize = false,
   locateRequest,
 }: DrawingProps) {
   const { t } = useLocale();
@@ -263,6 +279,7 @@ function Drawing({
     import("@xyflow/react").Viewport | undefined
   >(memoryKey + ":camera", undefined);
   const restored = useRef(Boolean(viewport)).current;
+  const manualView = useRef(restored);
   const [emphasis, setEmphasis] = useState<number | null>(null);
   // Reserve the widest supported label in the initial bounds. Locale changes preserve the camera.
   const model = useMemo(
@@ -280,6 +297,7 @@ function Drawing({
       | undefined;
     if (!route) return;
     lastLocatedRequest.current = locateRequest.request;
+    manualView.current = true;
     void flow.setCenter(route.x, route.y, { zoom: flow.getZoom(), duration: 0 }).then(() => {
       requestAnimationFrame(() => {
         document.querySelector<HTMLButtonElement>(
@@ -371,6 +389,9 @@ function Drawing({
           nodeTypes={nodeTypes}
           edgeTypes={edgeTypes}
           defaultViewport={viewport}
+          onMoveStart={(event) => {
+            if (event) manualView.current = true;
+          }}
           onMoveEnd={(_, value) => setViewport(value)}
           onEdgeMouseEnter={(_, edge) => setEmphasis(Number(edge.id))}
           onEdgeMouseLeave={() => setEmphasis(null)}
@@ -402,17 +423,27 @@ function Drawing({
             restored={restored}
             onFitScaleChange={onFitScaleChange}
             sharedBounds={comparisonBounds}
+            manualView={preserveManualViewOnResize ? manualView : undefined}
           />
         </ReactFlow>
         <div className="graph-tools" aria-label={t("Graph controls")}>
-          <button onClick={() => flow.zoomOut()} aria-label={t("Zoom out")}>
+          <button onClick={() => {
+            manualView.current = true;
+            void flow.zoomOut();
+          }} aria-label={t("Zoom out")}>
             −
           </button>
-          <button onClick={() => flow.zoomIn()} aria-label={t("Zoom in")}>
+          <button onClick={() => {
+            manualView.current = true;
+            void flow.zoomIn();
+          }} aria-label={t("Zoom in")}>
             +
           </button>
           <button
-            onClick={() => flow.fitBounds(comparisonBounds ?? model.bounds, { padding: 0.05 })}
+            onClick={() => {
+              manualView.current = false;
+              void flow.fitBounds(comparisonBounds ?? model.bounds, { padding: 0.05 });
+            }}
           >
             {t("Fit graph")}
           </button>
