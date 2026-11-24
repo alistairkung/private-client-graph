@@ -333,6 +333,11 @@ class FamilyWorkflow:
         return list(sources.values())
 
     def _review_large_workload_merits(self, design: DesignOutput) -> None:
+        sequence = (" At this pre-author gate, assess whether the design can support these checks. Actual full-file "
+                    "readings, measured packet sizes and the bidirectional audit must be obtained after authorship "
+                    "and verified before qualification.")
+        if not self._use_scoped_prompt(clean_redesign.MERITS_JOB, sequence):
+            sequence = ""
         review = self.job(clean_redesign.MERITS_JOB, "audit", {
             "intended_intervention": design.model_dump_json(),
             "audit_rules": _json({"hypothesis": self.slot.hypothesis.model_dump(mode="json"),
@@ -346,7 +351,7 @@ class FamilyWorkflow:
            "Check ordinary alternative proofs, varied documentary workstreams, exact evidence scope, "
            "unscored sections and prefixes, and two complete independently reviewed lanes. Reject unsupported "
            "historical premises, padding or hidden answers. Return a distinct finding for every Source ID, "
-           "with no objections on acceptance. This review is separate from the author-scope gate.",
+           "with no objections on acceptance. This review is separate from the author-scope gate." + sequence,
            author_context.AuthorContextReview)
         if review.verdict != "accept" or review.objections or review.findings.keys() != {row.source_id for row in design.inventory}:
             self.reject("scientific_review", review.model_dump_json(), quarantine=True, disposition=clean_redesign.MERITS_JOB)

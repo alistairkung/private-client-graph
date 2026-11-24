@@ -2987,8 +2987,9 @@ def test_exact_recipient_document_repair_preserves_the_original_delivery_graph()
         edit.require_exact_omission_objections([*exact_objections, "src3 introduces a future receipt."])
 
 
-def test_exact_classification_retry_retains_both_failed_plans_and_uses_the_same_file(
-    autonomous, transport, tmp_path, monkeypatch,
+@pytest.mark.parametrize("local", [False, True])
+def test_repair_retry_retains_both_failed_plans_and_uses_the_same_file(
+    autonomous, transport, tmp_path, monkeypatch, local,
 ):
     from benchmark_v3.batch import autonomous_realism, repair_authority
     from benchmark_v3.batch.pool import PooledLedger
@@ -3004,9 +3005,15 @@ def test_exact_classification_retry_retains_both_failed_plans_and_uses_the_same_
     ))
     monkeypatch.setattr(PooledLedger, "requires_author_context", property(lambda _: True))
     monkeypatch.setattr(PooledLedger, "requires_delivery_attestation", property(lambda _: True))
+    if local:
+        monkeypatch.setattr(PooledLedger, "requires_workload_merits", property(lambda _: True))
     ledger = pool.join(original.root)
     ledger.release(batch, family, 1, "design", parent_sha256="a" * 64, reference="Original work.")
     calls, behavior, _ = transport
+    behavior[family, "clean-design-merits"] = lambda inputs: {
+        "verdict": "accept", "objections": [],
+        "findings": {row["source_id"]: "Reviewed." for row in json.loads(inputs["intended_intervention"])["inventory"]},
+    }
     behavior[family, "author-context"] = lambda inputs: {
         "verdict": "accept", "objections": [],
         "findings": {key: "Reviewed." for key in json.loads(inputs["audit_rules"])["participant_packets"]},
@@ -3016,7 +3023,7 @@ def test_exact_classification_retry_retains_both_failed_plans_and_uses_the_same_
     }
     behavior[family, "author-src2"] = lambda _: {"title": "Note", "text": "Routine note.", "deliveries": []}
     behavior[family, "realism-000"] = lambda inputs: _output("realism", family, "", inputs) | (
-        {"verdict": "repair", "objections": ["Keep the recorded date distinct from receipt."]}
+        {"verdict": "repair", "objections": ["src1: Keep the recorded date distinct from receipt."]}
         if "Clarified date" not in inputs["sources"] else {}
     )
     behavior[family, "repair-verification"] = lambda _: {
@@ -3029,39 +3036,69 @@ def test_exact_classification_retry_retains_both_failed_plans_and_uses_the_same_
 
     def ambiguous(inputs):
         output = plan(inputs)
-        output["objections"]["earlier:G000:3"] = output["objections"]["G000:1"]
+        if local:
+            output["tickets"]["non_source_note"] = "Keep this in the review."
+        else:
+            output["objections"]["earlier:G000:3"] = output["objections"]["G000:1"]
         return output
 
     job = repair_authority.PLAN_JOB
     retry = job + repair_authority.FORMAT_RETRY
-    exact = repair_authority.EXACT_PLAN_JOB
+    exact = repair_authority.LOCAL_PLAN_JOB if local else repair_authority.EXACT_PLAN_JOB
+    release = coordinator.release_local_documentary_plan if local else coordinator.release_exact_plan_classification
+    result_type = autonomous_realism.LocalRepairPlan if local else autonomous_realism.RepairPlan
+    failure = autonomous_realism.PLAN_SCOPE_FAILURE if local else autonomous_realism.PLAN_REFERENCE_FAILURE
     behavior[family, job] = behavior[family, retry] = ambiguous
-    behavior[family, exact] = plan
+    def repaired(inputs):
+        result = plan(inputs)
+        if local:
+            result.pop("revised_design", None)
+            design = json.loads(inputs["intended_intervention"])["original_design"]
+            selected = next(row for row in design["inventory"] if row["source_id"] == "src1")
+            result["revised_records"] = {"src1": selected | {
+                "participant_brief": selected["participant_brief"] + " Identify the issue date.",
+            }}
+        return result
+
+    behavior[family, exact] = repaired
     coordinator._work_family(ledger, commission, slot)
     coordinator._work_family(ledger, commission, slot)
     rev, state, issue = coordinator.family_status(ledger, batch, family)
     assert (rev, state, issue["evidence"]) == (
-        2, "quarantined", f"{retry} failed its output contract: {autonomous_realism.PLAN_REFERENCE_FAILURE}",
+        2, "quarantined", f"{retry} failed its output contract: {failure}",
     )
     runner = commission.session_runner(ledger, family, rev)
     original_packets = [runner.committed_packet("design", key, "audit") for key in (job, retry)]
     assert all(autonomous_realism.CLASSIFICATION_LAYOUT in request["prompt"] for _, _, request in original_packets)
-    coordinator.release_exact_plan_classification(ledger, batch, family)
+    release(ledger, batch, family)
     with pytest.raises(ValueError, match="Only the authorised audit or repair job"):
         runner.run("design", exact, "audit", {"audit_rules": "Different repair packet."},
-                   "Review the packet.", autonomous_realism.RepairPlan)
+                   "Review the packet.", result_type)
     coordinator._work_family(ledger, commission, slot)
     assert coordinator.family_status(ledger, batch, family) == (2, "admission_ready", None)
     assert original_packets == [runner.committed_packet("design", key, "audit") for key in (job, retry)]
     assert [key for _, _, key, _ in calls if key.startswith(job)] == [job, retry, exact]
     request = runner.committed_packet("design", exact, "audit")[2]
     assert request["inputs"] == original_packets[0][2]["inputs"] == original_packets[1][2]["inputs"]
-    assert "Copy the current keys" in request["prompt"]
+    assert ("map of changed author records only" if local else "Copy the current keys") in request["prompt"]
     scope_request = runner.committed_packet("author", "author-context", "audit")[2]
     assert "A claimed personal worksheet that reproduces the case-wide file needs separately documented local" in scope_request["prompt"]
     assert [key for _, revision, key, _ in calls if revision == "G@2" and key.startswith("author-src")] == ["author-src1"]
-    with pytest.raises(ValueError, match="One fresh classification"):
-        coordinator.release_exact_plan_classification(ledger, batch, family)
+    if local:
+        realism_release = autonomous_realism.release_event(runner)
+        assert realism_release is not None
+        repair = autonomous_realism._committed_prior_plan(
+            runner, slot, realism_release, ledger.events(batch, family),
+        )
+        assert repair.tickets == {"src1": "Clarified date."}
+        parent = autonomous_realism._read_return(runner, slot, realism_release)
+        local_plan, _, _ = runner.committed_result("design", exact, "audit", autonomous_realism.LocalRepairPlan)
+        assert repair.revised_design is not None
+        assert repair.revised_design.inventory[1] == parent.design.inventory[1]
+        with pytest.raises(ValueError, match="named by the returning reviewer"):
+            autonomous_realism._local_derivative(parent, local_plan.model_copy(update={"tickets": {"src2": "Other."}}))
+    with pytest.raises(ValueError, match="A local replan" if local else "One fresh classification"):
+        release(ledger, batch, family)
 
 
 def test_scoped_review_context_preserves_reserved_prompt_on_resume(approved, monkeypatch):

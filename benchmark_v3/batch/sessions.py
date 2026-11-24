@@ -229,6 +229,13 @@ class SessionRunner:
                 permitted = (self._pooled_documentary_repair(events) and retry is not None
                              and retry["manifest_sha256"] == authorisation.commitment(self.manifest)
                              and retry["inputs_sha256"] == commissioning.digest(commissioning.json_text(inputs).encode()))
+            if (stage, job) == ("design", repair_authority.LOCAL_PLAN_JOB):
+                events = self.ledger.events(self.manifest.batch_id, self.family)
+                local = repair_authority.recorded_local_retry(self)
+                permitted = (self.ledger.requires_workload_merits and self.ledger.requires_delivery_attestation
+                             and self._pooled_documentary_repair(events) and local is not None
+                             and local["manifest_sha256"] == authorisation.commitment(self.manifest)
+                             and local["inputs_sha256"] == commissioning.digest(commissioning.json_text(inputs).encode()))
             if recovery and (stage, base_job) in {
                 ("design", repair_authority.PLAN_JOB), ("design", repair_authority.BUDGET_PLAN_JOB),
                 ("author", repair_authority.VERIFY_JOB),

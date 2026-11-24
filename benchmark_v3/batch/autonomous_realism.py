@@ -8,7 +8,7 @@ from pydantic import TypeAdapter
 
 from benchmark_v3 import commissioning, packet
 from benchmark_v3.batch import artifacts, author_context, author_delivery, authorisation, delivery_particulars, design_review, recipient_edit, repair_authority, science
-from benchmark_v3.batch.contracts import Adjudication, DesignOutput, MatchedCondition, RealismReview, SourceId
+from benchmark_v3.batch.contracts import Adjudication, AuthorBrief, DesignOutput, MatchedCondition, RealismReview, SourceId
 from benchmark_v3.batch.ledger import BudgetExhausted
 from benchmark_v3.batch.sessions import SessionRunner
 from benchmark_v3.portfolio import FamilySlot
@@ -29,6 +29,7 @@ PLAN_PROMPT = (
 )
 ADJUDICATION_RETURN = "Adjudication has unresolved scientific objections."
 PLAN_REFERENCE_FAILURE = "Every additional classification must identify a retained earlier objection."
+PLAN_SCOPE_FAILURE = "The proposed repair changes committed targets, roster or contrast structure."
 LINEAGE_REOPEN_FAILURE = "The original realism inputs and receipts failed their commitments."
 PARTICIPANT_LITERAL_FAILURE = "A participant instruction exposes a condition identifier or alternate literal."
 CLASSIFICATION_LAYOUT = (
@@ -62,6 +63,15 @@ class RepairPlan(Contract):
     disposition: Literal["repair", "infeasible", "scope_change"]
     objections: dict[Text, Objection]
     revised_design: DesignOutput | None = None
+    tickets: dict[SourceId, Text]
+    progress: Literal["initial", "improved", "none"]
+    rationale: Text
+
+
+class LocalRepairPlan(Contract):
+    disposition: Literal["repair", "infeasible", "scope_change"]
+    objections: dict[Text, Objection]
+    revised_records: dict[SourceId, AuthorBrief]
     tickets: dict[SourceId, Text]
     progress: Literal["initial", "improved", "none"]
     rationale: Text
@@ -302,6 +312,8 @@ def _select_plan(
     runner: SessionRunner, slot: FamilySlot, parent: ReturnedFile, inputs: dict[str, str], release: dict[str, Any],
 ) -> tuple[RepairPlan, dict[str, Any], DesignOutput, set[str], str]:
     attested = runner.ledger.requires_delivery_attestation
+    if repair_authority.recorded_local_retry(runner) is not None:
+        return _select_local_plan(runner, slot, parent, inputs)
 
     def propose(job: str, prompt: str, packet_inputs: dict[str, str]) -> tuple[RepairPlan, dict[str, Any]]:
         result, receipt = runner.run(
@@ -445,6 +457,70 @@ def _include_plan_instruction(runner: SessionRunner, instruction: str) -> bool:
 def _record_plan_selection(runner: SessionRunner, job: str, receipt: dict[str, Any]) -> None:
     runner.ledger.event(runner.manifest.batch_id, runner.family, runner.revision, "repair_plan_selection",
                         "chosen", "design", "design", {"job": job, "receipt_sha256": receipt["receipt_sha256"]})
+
+
+def local_retry_details(runner: SessionRunner) -> tuple[dict[str, Any], dict[str, str]]:
+    rejected = {row["name"]: row["details"] for row in runner.ledger.events(runner.manifest.batch_id, runner.family)
+                if row["revision"] == runner.revision and row["kind"] == "rejected_output"}
+    failures = {}
+    inputs: dict[str, str] | None = None
+    for job in (repair_authority.PLAN_JOB, repair_authority.PLAN_JOB + repair_authority.FORMAT_RETRY):
+        _, receipt, request = runner.committed_packet("design", job, "audit")
+        rejection = rejected.get(job)
+        if (rejection is None or rejection.get("receipt_sha256") != receipt["receipt_sha256"]
+                or (inputs is not None and inputs != request["inputs"])):
+            raise ValueError("A local replan requires both exact rejected outputs on the same inputs.")
+        failures[job] = rejection
+        inputs = request["inputs"]
+    if not any(rejection["reason"] == PLAN_SCOPE_FAILURE for rejection in failures.values()):
+        raise ValueError("A local replan requires a demonstrated whole-design contract failure.")
+    assert inputs is not None
+    return {"prior_rejections": failures, "manifest_sha256": authorisation.commitment(runner.manifest),
+            "inputs_sha256": commissioning.digest(commissioning.json_text(inputs).encode())}, inputs
+
+
+def _select_local_plan(
+    runner: SessionRunner, slot: FamilySlot, parent: ReturnedFile, inputs: dict[str, str],
+) -> tuple[RepairPlan, dict[str, Any], DesignOutput, set[str], str]:
+    details, original_inputs = local_retry_details(runner)
+    if details != repair_authority.recorded_local_retry(runner) or original_inputs != inputs:
+        raise packet.PacketIsolationError("The local replan must preserve the two original review packets.")
+    job = repair_authority.LOCAL_PLAN_JOB
+    result, receipt = runner.run("design", job, "audit", inputs, PLAN_PROMPT + (
+        " Use exact current objection keys. Return revised_records as a map of changed author records only, keyed "
+        "by their exact Source IDs. Ticket only Sources identified by the returning reviewers. Preserve the author, issue date, "
+        "overall design, targets and contrast. Use the earliest contemporaneous local basis for each change. "
+        "Keep observations and follow-up enquiries in rationale, outside participant instructions. If a repair needs "
+        "changes outside these local records and their dependency closure, return infeasible or scope_change."
+    ) + " " + author_delivery.DESIGN_INSTRUCTION, LocalRepairPlan,
+        validate=lambda local: _verify_classification(slot, parent, _local_derivative(parent, local), attested=True),
+        allow_format_retry=False)
+    plan = _local_derivative(parent, result)
+    design, affected = _verify_plan(slot, parent, plan, attested=True)
+    runner.ledger.require_capacity(runner.family, runner.revision, mandatory_jobs(design, affected, verification=True))
+    artifacts.write_json(runner.directory / f"{job}.json", plan.model_dump(mode="json"))
+    _record_plan_selection(runner, job, receipt)
+    return plan, receipt, design, affected, job
+
+
+def _local_derivative(parent: ReturnedFile, local: LocalRepairPlan) -> RepairPlan:
+    original = parent.design
+    records = {row.source_id: row for row in original.inventory}
+    named = {source for objection in local.objections.values() for source in objection.sources}
+    permitted = {source for review in parent.reviews.values() for source in review["repair_tickets"]}
+    permitted.update(source for source in records if any(
+        re.search(rf"(?<!\w){re.escape(source)}(?!\w)", objection, re.IGNORECASE)
+        for objection in parent.objections.values()
+    ))
+    if not (local.revised_records.keys() | local.tickets.keys()) <= records.keys() & permitted & named:
+        raise ValueError("A local repair must target Sources named by the returning reviewer and the classification.")
+    for identity, current in local.revised_records.items():
+        prior = records[identity]
+        if (current.source_id, current.author, current.created_on) != (identity, prior.author, prior.created_on):
+            raise ValueError("A local repair must preserve the affected Source's identity, author and date.")
+    revised = original.model_copy(update={"inventory": [local.revised_records.get(row.source_id, row)
+                                                         for row in original.inventory]})
+    return RepairPlan(**local.model_dump(exclude={"revised_records"}), revised_design=revised)
 
 
 def classification_retry_details(runner: SessionRunner) -> tuple[dict[str, Any], dict[str, str]]:
@@ -692,7 +768,12 @@ def _committed_prior_plan(
                       and row["kind"] == "repair_plan_selection"), None)
     job = selection["job"] if selection else repair_authority.PLAN_JOB
     stored = artifacts.read_contract(planner.directory / f"{job}.json", RepairPlan)
-    committed, receipt, _ = planner.committed_result("design", job, "audit", RepairPlan)
+    if job == repair_authority.LOCAL_PLAN_JOB:
+        parent = _read_return(planner, slot, release)
+        local, receipt, _ = planner.committed_result("design", job, "audit", LocalRepairPlan)
+        committed = _local_derivative(parent, local)
+    else:
+        committed, receipt, _ = planner.committed_result("design", job, "audit", RepairPlan)
     if stored != committed or selection and receipt["receipt_sha256"] != selection["receipt_sha256"]:
         raise ValueError("The prior repair plan differs from its charged original.")
     return stored
@@ -1072,7 +1153,7 @@ def _verify_design_change(slot: FamilySlot, parent: ReturnedFile, plan: RepairPl
         or any(_control_identity(left) != _control_identity(right)
                for left, right in zip(old.matched, design.matched, strict=True))
     ):
-        raise ValueError("The proposed repair changes committed targets, roster or contrast structure.")
+        raise ValueError(PLAN_SCOPE_FAILURE)
     if _exposes_hidden_text(design, plan, parent.retained_literal_briefs):
         raise ValueError(PARTICIPANT_LITERAL_FAILURE)
     return design

@@ -472,7 +472,7 @@ def family_status(ledger: Ledger, batch_id: str, family: str) -> tuple[int, str,
         if record["kind"] in {"reconcile", "family_release"}:
             blocking = None
             if record["kind"] == "reconcile" and record["name"] in {
-                repair_authority.PLAN_RECOVERY, repair_authority.RETAINED_DESIGN_NOTE,
+                repair_authority.PLAN_RECOVERY, repair_authority.LOCAL_PLAN_RECOVERY, repair_authority.RETAINED_DESIGN_NOTE,
             }:
                 state = "design"
             if record["kind"] == "reconcile" and (
@@ -1244,6 +1244,23 @@ def release_exact_plan_classification(ledger: PooledLedger, batch: str, family: 
         ledger.event(batch, family, revision, "reconcile", repair_authority.PLAN_RECOVERY, state, "design", {
             "exact_classification": details,
         })
+
+
+def release_local_documentary_plan(ledger: PooledLedger, batch: str, family: str) -> None:
+    with ledger.coordinator_lock():
+        ledger.require_running()
+        commission = load_commission(ledger, batch)
+        revision, state, issue = family_status(ledger, batch, family)
+        runner = commission.session_runner(ledger, family, revision)
+        if (not ledger.requires_workload_merits or not ledger.requires_delivery_attestation
+                or not ledger.pooled_revision(batch, family, revision)
+                or autonomous_realism.release_event(runner) is None or state != "quarantined" or not issue
+                or (issue["stage"], issue["code"]) != ("design", "scientific_review")
+                or repair_authority.recorded_local_retry(runner) is not None
+                or any(row["revision"] == revision and row["stage"] != "design" for row in ledger.attempts(family))):
+            raise ValueError("A local replan requires a stopped large-workload repair with no participant dispatch.")
+        details, _ = autonomous_realism.local_retry_details(runner)
+        ledger.event(batch, family, revision, "reconcile", repair_authority.LOCAL_PLAN_RECOVERY, state, "design", details)
 
 
 def release_generated_attachment_ticket_recovery(ledger: PooledLedger, batch: str, family: str, source_id: str) -> None:
