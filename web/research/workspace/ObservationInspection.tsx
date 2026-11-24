@@ -258,9 +258,9 @@ export function ObservationInspection({ run }: { run: RunDetail }) {
           )}
           {observation.result?.evaluation && (
             <p>
-              Precision {metric(observation.result.evaluation.precision)} ·
+              {observation.benchmark && "Valid graph · "}Precision {metric(observation.result.evaluation.precision)} ·
               Recall {metric(observation.result.evaluation.recall)} · F1{" "}
-              {metric(observation.result.evaluation.f1)} · Provenance accuracy{" "}
+              {metric(observation.result.evaluation.f1)} · {observation.benchmark && "Legacy "}Provenance accuracy{" "}
               {metric(observation.result.evaluation.provenance_accuracy)}
             </p>
           )}

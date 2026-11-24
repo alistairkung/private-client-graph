@@ -160,9 +160,11 @@ export function RunPerformanceChart({
                       left: `${x * 100}%`,
                       top: `${(1 - (run.f1 ?? 0)) * 100}%`,
                     }}
-                    aria-label={run.displayName
-                      ? `${run.displayName}, ${run.metricLabel ?? "F1"} ${metric(run.f1)}, ${t(run.scoreState)}, ${run.coverage.scored}/${run.coverage.planned} ${run.coverageLabel ?? "scored"}`
-                      : `Run ${index + 1}, ${run.metricLabel ?? "F1"} ${metric(run.f1)}, ${t(run.scoreState)}, ${run.coverage.scored}/${run.coverage.planned} ${run.coverageLabel ?? "scored"}`}
+                    aria-label={run.metricLabel
+                      ? `${run.displayName ?? t("Run {run}", { run: index + 1 })}, ${run.metricLabel} ${metric(run.f1)}, ${t(run.scoreState)}, ${run.coverage.scored}/${run.coverage.planned} ${run.coverageLabel ?? ""}`
+                      : run.displayName
+                        ? t("{name}, F1 {f1}, {state}, {scored}/{planned} scored", { name: run.displayName, f1: metric(run.f1), state: t(run.scoreState), scored: run.coverage.scored, planned: run.coverage.planned })
+                        : t("Run {run}, F1 {f1}, {state}, {scored}/{planned} scored", { run: index + 1, f1: metric(run.f1), state: t(run.scoreState), scored: run.coverage.scored, planned: run.coverage.planned })}
                     aria-pressed={selected === run.id}
                     aria-describedby={`${chartId}-tooltip`}
                     onFocus={() => setInspected(run.id)}
@@ -220,7 +222,9 @@ export function RunPerformanceChart({
                 {experiment.name} · {tooltip.displayName ?? t("Run {run}", { run: runNumber(tooltip.id) })}
               </strong>
               <span>
-                {tooltip.metricLabel ?? t("F1")}: {t(metric(tooltip.f1))} · {t(tooltip.scoreState)} · {tooltip.coverage.scored}/{tooltip.coverage.planned} {tooltip.coverageLabel ?? t("scored")}
+                {tooltip.metricLabel
+                  ? `${tooltip.metricLabel}: ${t(metric(tooltip.f1))} · ${t(tooltip.scoreState)} · ${tooltip.coverage.scored}/${tooltip.coverage.planned} ${tooltip.coverageLabel ?? ""}`
+                  : t("F1 {f1} · {state} · {scored}/{planned} scored", { f1: t(metric(tooltip.f1)), state: t(tooltip.scoreState), scored: tooltip.coverage.scored, planned: tooltip.coverage.planned })}
               </span>
               <small>{tooltip.id}</small>
               <p>
