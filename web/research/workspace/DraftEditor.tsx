@@ -130,7 +130,7 @@ export function DraftEditor({
       const run = await getRun(id, runId);
       if (
         run.lifecycle !== "complete" ||
-        run.plan.preview.proposal.input_mode !== "fresh" ||
+        run.plan?.preview.proposal.input_mode !== "fresh" ||
         run.plan.preview.proposal.resolver !== "none"
       ) {
         throw new Error("Select a completed fresh no-resolution Run.");

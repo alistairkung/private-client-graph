@@ -5,6 +5,8 @@ from fastapi import FastAPI, HTTPException
 
 from private_client_graph.persistence.database import database_engine
 from private_client_graph.research.artifacts import Bundle
+from .benchmark_contracts import BenchmarkRun
+from .benchmark_comparison import compare_benchmark_runs
 from .case_catalog import CaseMetadata, load_case_catalog
 from .execution_state import ExecutionAvailability, execution_availability
 from .run_evaluation import compare_runs
@@ -64,9 +66,10 @@ def mount_workspace_reads(app: FastAPI, root: Path, refresh=None) -> None:
     def detail(experiment_id: str, run_id: str):
         return read_run(root, experiment_id, run_id)
 
-    @app.get(f'{PREFIX}/experiments/{{experiment_id}}/runs/{{run_id}}/aggregate', response_model=RunEvaluation)
+    @app.get(f'{PREFIX}/experiments/{{experiment_id}}/runs/{{run_id}}/aggregate', response_model=BenchmarkRun | RunEvaluation)
     def aggregate(experiment_id: str, run_id: str):
-        return read_run(root, experiment_id, run_id).evaluation
+        detail = read_run(root, experiment_id, run_id)
+        return detail.benchmark if detail.benchmark is not None else detail.evaluation
 
     @app.get(f'{PREFIX}/experiments/{{experiment_id}}/runs/{{run_id}}/observations/{{observation_id}}', response_model=RunObservation)
     def observation(experiment_id: str, run_id: str, observation_id: str):
@@ -80,8 +83,10 @@ def mount_workspace_reads(app: FastAPI, root: Path, refresh=None) -> None:
     def comparison(experiment_id: str, left: str, right: str):
         if left == right:
             raise HTTPException(422, 'Select two distinct Runs')
-        read_run(root, experiment_id, left)
-        read_run(root, experiment_id, right)
+        first = read_run(root, experiment_id, left)
+        second = read_run(root, experiment_id, right)
+        if first.benchmark is not None or second.benchmark is not None:
+            return compare_benchmark_runs(first, second)
         return compare_runs(Bundle.open(root / left), Bundle.open(root / right))
 
 

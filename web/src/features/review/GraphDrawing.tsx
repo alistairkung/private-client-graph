@@ -76,9 +76,14 @@ function RelationshipEdge({ id, selected, data, label }: EdgeProps) {
     .map((point, index) => (index ? "L " : "M ") + point.x + " " + point.y)
     .join(" ");
   const emphasized = selected || Boolean(data?.emphasized);
+  const outcome = data?.outcome as string | undefined;
   const color = emphasized
     ? "var(--accent)"
-    : data?.trust
+    : outcome === "missing" || outcome === "extra"
+      ? "#ab382c"
+      : outcome === "matched" || outcome === "provenance_failure"
+        ? "#29725c"
+        : data?.trust
       ? "var(--graph-line)"
       : "var(--graph-family-line)";
   return (
@@ -118,7 +123,7 @@ function RelationshipEdge({ id, selected, data, label }: EdgeProps) {
           strokeWidth: emphasized ? 2.8 : 1.6,
           strokeDasharray: data?.trust ? undefined : "5 5",
         }}
-        markerEnd={data?.parent ? "url(#parent-arrow)" : undefined}
+        markerEnd={data?.parent || data?.showDirection ? "url(#parent-arrow)" : undefined}
       />
       <EdgeLabelRenderer>
         <button
@@ -129,7 +134,7 @@ function RelationshipEdge({ id, selected, data, label }: EdgeProps) {
             (emphasized ? "emphasized" : "")
           }
           data-edge-id={id}
-          aria-label={String(data?.statement)}
+          aria-label={outcome ? `${String(data?.statement)} · ${outcome.replaceAll("_", " ")}` : String(data?.statement)}
           aria-pressed={Boolean(selected)}
           onClick={() => (data?.onSelect as () => void)()}
           onPointerEnter={() =>
@@ -191,6 +196,7 @@ interface DrawingProps {
   onSelect: (index: number) => void;
   onEntity: (id: string) => void;
   memoryKey?: string;
+  outcomes?: Array<string | undefined>;
 }
 export function GraphDrawing(props: DrawingProps) {
   return (
@@ -206,6 +212,7 @@ function Drawing({
   onSelect,
   onEntity,
   memoryKey = "review:graph",
+  outcomes,
 }: DrawingProps) {
   const { t, locale } = useLocale();
   const flow = useReactFlow();
@@ -252,9 +259,11 @@ function Drawing({
           ...edge.data,
           ...handlers[index],
           emphasized: emphasis === index,
+          outcome: outcomes?.[index],
+          showDirection: Boolean(outcomes) && !["sibling_of", "spouse_of"].includes(state.relationships[index].type),
         },
       })),
-    [model, handlers, selected, emphasis],
+    [model, handlers, selected, emphasis, outcomes, state],
   );
   return (
     <section className="graph-workspace" aria-label={t("Relationship graph")}>

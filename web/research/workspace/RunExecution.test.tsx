@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, expect, it, vi } from "vitest";
 import { RunExecution } from "./RunExecution";
-import type { ExecutionAvailability, RunDetail } from "../shared/contracts";
+import type { ExecutionAvailability, FrozenPlan, RunDetail } from "../shared/contracts";
 import * as api from "./api";
 vi.mock("./api", () => ({ authorizeRun: vi.fn(), controlRun: vi.fn() }));
 vi.mock("../configuration/PlanSummary", () => ({
@@ -18,7 +18,7 @@ const run = {
       invocation_cap: 2,
     },
   },
-} as unknown as RunDetail;
+} as unknown as RunDetail & { plan: FrozenPlan };
 const availability: ExecutionAvailability = {
   active_run_id: null,
   accounting_reason: null,

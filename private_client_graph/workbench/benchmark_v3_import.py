@@ -165,7 +165,7 @@ def _detail(experiment_id, run_id, verified, benchmark, archive: Path) -> RunDet
     bundle = Bundle.open(archive / run_id)
     frozen = FrozenPlan.model_validate_json((bundle.path / 'execution.json').read_text())
     lifecycle_records = [json.loads(path.read_text()) for path in (bundle.path / 'lifecycle').glob('*.json')]
-    lifecycle = max(lifecycle_records, key=lambda item: item['at'])['state'] if lifecycle_records else 'frozen'
+    lifecycle = max(lifecycle_records, key=lambda item: item['at'])['state'] if lifecycle_records else 'complete'
     compact_attempts = []
     for attempt in bundle.attempts():
         response = attempt.get('response', {})

@@ -6,6 +6,13 @@ export type AttributionFailure = {
   supporting_text: string;
 };
 
+export type BenchmarkComparison = {
+  cohort: BenchmarkMetricDelta | null;
+  families: Array<BenchmarkFamilyDelta>;
+  conditions: Array<BenchmarkConditionDelta>;
+  family_macro_f1_delta: number | null;
+};
+
 export type BenchmarkCondition = {
   family: string;
   condition: string;
@@ -22,6 +29,49 @@ export type BenchmarkCondition = {
   failure_detail: string | null;
 };
 
+export type BenchmarkConditionDelta = {
+  tp: number;
+  fp: number;
+  fn: number;
+  complete_proofs: number;
+  planned_proofs: number;
+  complete_joint_proofs: number;
+  planned_joint_proofs: number;
+  family: string;
+  condition: string;
+  left_outcome: string;
+  right_outcome: string;
+};
+
+export type BenchmarkFamilyDelta = {
+  tp: number;
+  fp: number;
+  fn: number;
+  complete_proofs: number;
+  planned_proofs: number;
+  complete_joint_proofs: number;
+  planned_joint_proofs: number;
+  all_condition_micro_f1: number;
+  planned_conditions: number;
+  valid_graphs: number;
+  exact_graphs: number;
+  family: string;
+};
+
+export type BenchmarkMetricDelta = {
+  tp: number;
+  fp: number;
+  fn: number;
+  complete_proofs: number;
+  planned_proofs: number;
+  complete_joint_proofs: number;
+  planned_joint_proofs: number;
+  all_condition_micro_f1: number;
+  planned_conditions: number;
+  valid_graphs: number;
+  exact_graphs: number;
+};
+
 export type BenchmarkRun = {
   scope: EvaluationScope;
   cohort: Metrics;
@@ -31,6 +81,7 @@ export type BenchmarkRun = {
   valid_graph_only_macro_family_count: number;
   run_artifact_digest: string | null;
   observations: Array<BenchmarkCondition>;
+  scope_identity: string;
 };
 
 export type BenchmarkScope = {
@@ -586,6 +637,7 @@ export type RunComparison = {
   matched_inputs: number;
   unqualified_improvement_allowed: boolean;
   reasons: Array<string>;
+  benchmark: BenchmarkComparison | null;
 };
 
 export type RunConfiguration = {

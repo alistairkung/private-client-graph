@@ -4,13 +4,7 @@ import { EvidenceInspector } from "../results/EvidenceInspector";
 import { metric } from "./RunChart";
 import { GraphDrawing } from "../../src/features/review/GraphDrawing";
 import type { CanonicalState } from "../shared/contracts";
-import type { BenchmarkObservation } from "./benchmark-types";
-
-const symmetric = new Set(["spouse_of", "sibling_of"]);
-function edgeKey(source: string, type: string, target: string) {
-  const [left, right] = symmetric.has(type) && source.localeCompare(target) > 0 ? [target, source] : [source, target];
-  return JSON.stringify([left, type, right]);
-}
+import { BenchmarkProofs, edgeKey, graphEdgeKeys } from "./BenchmarkProofs";
 
 export function ObservationInspection({ run }: { run: RunDetail }) {
   const evidence = useRef<HTMLDivElement>(null);
@@ -30,72 +24,75 @@ export function ObservationInspection({ run }: { run: RunDetail }) {
   const [observationId, setObservationId] = useState(run.observations[0]?.id);
   const [outcome, setOutcome] = useState("all");
   const [relationshipId, setRelationshipId] = useState<string | null>(null);
-  const [expectedEdge, setExpectedEdge] = useState<readonly [string, string, string] | null>(null);
+  const [expectedEdge, setExpectedEdge] = useState<
+    readonly [string, string, string] | null
+  >(null);
   const observation =
     run.observations.find((item) => item.id === observationId) ??
     run.observations[0];
-  const benchmarkObservation = observation as BenchmarkObservation | undefined;
   const relationship = observation?.relationships.find(
     (item) => item.id === relationshipId,
   );
-  const expected = benchmarkObservation?.benchmark?.expected;
-  const expectedEvidence = expectedEdge && benchmarkObservation?.benchmark?.expected_relationships.find(item => edgeKey(...item.edge) === edgeKey(...expectedEdge));
-  const evidenceRelationship = relationship ?? (expectedEvidence ? {
-    id: `expected:${expectedEvidence.edge.join(":")}`,
-    edge: expectedEvidence.edge,
-    outcome: "missing" as const,
-    expected: expectedEvidence.quotes,
-    predicted: [],
-  } : undefined);
-  const predicted = observation?.result?.state;
-  const memberStatus = (sourceId: string, quote: string, edge: readonly [string, string, string]) => {
-    if (!predicted?.sources.some(source => source.id === sourceId)) return "Source missing";
-    const targetKey = edgeKey(...edge);
-    const relation = predicted.relationships.find(item => edgeKey(
-      predicted.entities.find(entity => entity.id === item.source)?.name ?? item.source,
-      item.type,
-      predicted.entities.find(entity => entity.id === item.target)?.name ?? item.target,
-    ) === targetKey);
-    if (!relation) return "Source present but relationship not attached";
-    const evidence = predicted.evidence.filter(item => relation.evidence_ids.includes(item.id) && item.source_id === sourceId);
-    return evidence.some(item => item.supporting_text === quote)
-      ? "Attached to this relationship"
-      : evidence.length ? "Wrong quotation on this relationship" : "Source present but relationship not attached";
-  };
-  const relationshipIndices = (state: CanonicalState | null | undefined) =>
-    state?.relationships.flatMap((edge, index) => {
-      const source = state.entities.find(entity => entity.id === edge.source)?.name ?? edge.source;
-      const target = state.entities.find(entity => entity.id === edge.target)?.name ?? edge.target;
-      const match = benchmarkObservation?.relationships.find((item) => edgeKey(...item.edge) === edgeKey(source, edge.type, target));
-      return match ? [{ index, outcome: match.outcome, relationshipId: match.id }] : [];
-    }) ?? [];
-  const graph = (state: CanonicalState, label: string, side: "expected" | "predicted") => {
-    const statuses = relationshipIndices(state);
-    const selectedIndex = relationship
-      ? statuses.find(item => item.relationshipId === relationship.id)?.index ?? null
-      : expectedEdge ? state.relationships.findIndex(edge => edgeKey(
-          state.entities.find(entity => entity.id === edge.source)?.name ?? edge.source,
-          edge.type,
-          state.entities.find(entity => entity.id === edge.target)?.name ?? edge.target,
-        ) === edgeKey(...expectedEdge)) : null;
-    return <section className="benchmark-graph graph-workspace" aria-label={label} key={side}>
-      <h4>{label}</h4>
-      <GraphDrawing state={state} selected={selectedIndex} selectedEntity={null} memoryKey={`benchmark:${observation?.id}:${side}`} onSelect={(index) => {
-        const status = statuses.find(item => item.index === index);
-        const item = status && observation?.relationships.find(value => value.id === status.relationshipId);
-        if (item) { setRelationshipId(item.id); setExpectedEdge(null); }
-        else {
-          const edge = state.relationships[index];
-          setExpectedEdge([
-            state.entities.find(entity => entity.id === edge.source)?.name ?? edge.source,
-            edge.type,
-            state.entities.find(entity => entity.id === edge.target)?.name ?? edge.target,
-          ]);
-          setRelationshipId(null);
+  const expected = observation?.benchmark?.expected;
+  const expectedEvidence =
+    expectedEdge &&
+    observation?.benchmark?.expected_relationships.find(
+      (item) => edgeKey(...item.edge) === edgeKey(...expectedEdge),
+    );
+  const evidenceRelationship =
+    relationship ??
+    (expectedEvidence
+      ? {
+          id: `expected:${expectedEvidence.edge.join(":")}`,
+          edge: expectedEvidence.edge,
+          outcome: "missing" as const,
+          expected: expectedEvidence.quotes,
+          predicted: [],
         }
-      }} onEntity={() => undefined} />
-    </section>;
-  };
+      : undefined);
+  const predicted = observation?.result?.state;
+  const comparisonEdges = new Map(
+    observation?.relationships.map((row) => [edgeKey(...row.edge), row]),
+  );
+  function graph(
+    state: CanonicalState,
+    label: string,
+    side: "expected" | "predicted",
+  ) {
+    const keys = graphEdgeKeys(state);
+    const selectedEdge = relationship?.edge ?? expectedEdge;
+    const index = selectedEdge ? keys.indexOf(edgeKey(...selectedEdge)) : -1;
+    return (
+      <section
+        className="benchmark-graph graph-workspace"
+        aria-label={label}
+        key={side}
+      >
+        <h4>{label}</h4>
+        {state.relationships.length === 0 && <p>Valid empty graph</p>}
+        {state.entities.length > 0 && (
+          <GraphDrawing
+            key={`${observation?.id}:${side}`}
+            state={state}
+            selected={index < 0 ? null : index}
+            selectedEntity={null}
+            memoryKey={`benchmark:${run.id}:${observation?.id}:${side}`}
+            outcomes={keys.map((key) => comparisonEdges.get(key)?.outcome)}
+            onSelect={(edgeIndex) => {
+              const selected = comparisonEdges.get(keys[edgeIndex]);
+              setRelationshipId(selected?.id ?? null);
+              const expected =
+                observation?.benchmark?.expected_relationships.find(
+                  (row) => edgeKey(...row.edge) === keys[edgeIndex],
+                );
+              setExpectedEdge(selected ? null : (expected?.edge ?? null));
+            }}
+            onEntity={() => undefined}
+          />
+        )}
+      </section>
+    );
+  }
   return (
     <details className="observation-inspection">
       <summary>Observations &amp; Evidence</summary>
@@ -110,12 +107,27 @@ export function ObservationInspection({ run }: { run: RunDetail }) {
             setOutcome("all");
           }}
         >
-            {run.observations.map((raw) => {
-              const item = raw as BenchmarkObservation;
-              return <option key={item.id} value={item.id}>
-                {item.benchmark ? `${item.benchmark.family} · ${item.benchmark.condition}${item.benchmark.role ? ` · ${item.benchmark.role}` : ""} · ${item.benchmark.outcome}` : `${item.metadata?.name ?? item.case_id} · ${item.metadata?.fixture_name ?? "Fixture name unavailable"} · ${item.sample_id} · repetition ${item.repetition} · ${item.status}`}
-              </option>;
-            })}
+          {run.benchmark
+            ? Object.keys(run.benchmark.families).map((family) => (
+                <optgroup key={family} label={`Family ${family}`}>
+                  {run.observations
+                    .filter((item) => item.benchmark?.family === family)
+                    .map((item) => (
+                      <option key={item.id} value={item.id}>
+                        {item.benchmark?.condition} · {item.benchmark?.role} ·{" "}
+                        {item.status.replaceAll("_", " ")}
+                      </option>
+                    ))}
+                </optgroup>
+              ))
+            : run.observations.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.metadata?.name ?? item.case_id} ·{" "}
+                  {item.metadata?.fixture_name ?? "Fixture name unavailable"} ·{" "}
+                  {item.sample_id} · repetition {item.repetition} ·{" "}
+                  {item.status}
+                </option>
+              ))}
         </select>
       </label>
       {observation && (
@@ -140,20 +152,104 @@ export function ObservationInspection({ run }: { run: RunDetail }) {
               {observation.repetition} · {observation.status}
             </small>
             {observation.reason && <p>{observation.reason}</p>}
-            {benchmarkObservation?.benchmark && <p><strong>{benchmarkObservation?.benchmark.family}</strong> · {benchmarkObservation?.benchmark.condition}{benchmarkObservation?.benchmark.role ? ` · ${benchmarkObservation?.benchmark.role}` : ""}{benchmarkObservation?.benchmark.contrast ? ` · ${benchmarkObservation?.benchmark.contrast}` : ""}</p>}
-            {benchmarkObservation?.benchmark && <p>Outcome: {benchmarkObservation?.benchmark.outcome.replaceAll("_", " ")}{benchmarkObservation?.benchmark.failure_detail ? ` · ${benchmarkObservation?.benchmark.failure_detail}` : ""}</p>}
+            {observation?.benchmark && (
+              <p>
+                <strong>{observation?.benchmark.family}</strong> ·{" "}
+                {observation?.benchmark.condition}
+                {observation?.benchmark.role
+                  ? ` · ${observation?.benchmark.role}`
+                  : ""}
+                {observation?.benchmark.contrast
+                  ? ` · ${observation?.benchmark.contrast}`
+                  : ""}
+              </p>
+            )}
+            {observation?.benchmark && (
+              <p>
+                Outcome: {observation?.benchmark.outcome.replaceAll("_", " ")}
+                {observation?.benchmark.failure_detail
+                  ? ` · ${observation?.benchmark.failure_detail}`
+                  : ""}
+              </p>
+            )}
           </div>
-          {benchmarkObservation?.benchmark && <div className="benchmark-inspection">
-            <h3>Expected and predicted canonical graphs</h3>
-            {!predicted && <p role="status">Predicted canonical graph unavailable · {benchmarkObservation?.benchmark.failure_detail ?? benchmarkObservation?.benchmark.outcome}</p>}
-            {!predicted && Boolean(benchmarkObservation?.benchmark.parsed_prediction) && <details><summary>Retained parsed prediction</summary><pre>{JSON.stringify(benchmarkObservation?.benchmark.parsed_prediction, null, 2)}</pre></details>}
-            <details><summary>Frozen Sources in order</summary><ol>{observation.sources?.map(source => <li key={source.id}><h4>{source.title} · {source.id}</h4><pre>{source.text}</pre></li>)}</ol></details>
-            <div className="benchmark-graphs">{expected && graph(expected, "Expected graph", "expected")}{predicted && graph(predicted, predicted.relationships.length ? "Predicted graph" : "Predicted graph · valid empty graph", "predicted")}</div>
-            <p>Matched · TP {benchmarkObservation?.benchmark.metrics.tp} · Extra · FP {benchmarkObservation?.benchmark.metrics.fp} · Missing · FN {benchmarkObservation?.benchmark.metrics.fn}</p>
-            <p>Proof {benchmarkObservation?.benchmark.metrics.complete_proofs}/{benchmarkObservation?.benchmark.metrics.planned_proofs} · Joint {benchmarkObservation?.benchmark.metrics.complete_joint_proofs}/{benchmarkObservation?.benchmark.metrics.planned_joint_proofs}</p>
-            <p>Quotation {ratio(benchmarkObservation?.benchmark.metrics.quote_passed, benchmarkObservation?.benchmark.metrics.quote_assessed)} · Source attribution {ratio(benchmarkObservation?.benchmark.metrics.attribution_passed, benchmarkObservation?.benchmark.metrics.attribution_assessed)}</p>
-            <ul aria-label="Proof outcomes">{benchmarkObservation?.benchmark.proof_targets.map((target, index) => <li key={`${target.edge.join(":")}:${index}`}>{target.edge.join(" · ")} · {target.status.replaceAll("_", " ")}{target.alternatives.map((alternative, alternativeIndex) => <ul key={alternativeIndex} aria-label={`Evidence alternative ${alternativeIndex + 1}`}><li><strong>Alternative {alternativeIndex + 1}</strong></li>{alternative.members.map((member, memberIndex) => <li key={`${member.source_id}:${memberIndex}`}><code>{member.source_id}</code> · <q>{member.text}</q> · {member.attached ? "Attached to this relationship" : `Not attached · ${memberStatus(member.source_id, member.text, target.edge)}`}</li>)}</ul>)}</li>)}</ul>
-          </div>}
+          {observation?.benchmark && (
+            <div className="benchmark-inspection">
+              <h3>Expected and predicted canonical graphs</h3>
+              {!predicted && (
+                <p role="status">
+                  Predicted canonical graph unavailable ·{" "}
+                  {observation?.benchmark.failure_detail ??
+                    observation?.benchmark.outcome}
+                </p>
+              )}
+              {!predicted &&
+                Boolean(observation?.benchmark.parsed_prediction) && (
+                  <details>
+                    <summary>Retained parsed prediction</summary>
+                    <pre>
+                      {JSON.stringify(
+                        observation?.benchmark.parsed_prediction,
+                        null,
+                        2,
+                      )}
+                    </pre>
+                  </details>
+                )}
+              <details>
+                <summary>Frozen Sources in order</summary>
+                <ol>
+                  {observation.sources?.map((source) => (
+                    <li key={source.id}>
+                      <h4>
+                        {source.title} · {source.id}
+                      </h4>
+                      <pre>{source.text}</pre>
+                    </li>
+                  ))}
+                </ol>
+              </details>
+              <div className="benchmark-graphs">
+                {expected && graph(expected, "Expected graph", "expected")}
+                {predicted &&
+                  graph(
+                    predicted,
+                    predicted.relationships.length
+                      ? "Predicted graph"
+                      : "Predicted graph · valid empty graph",
+                    "predicted",
+                  )}
+              </div>
+              <p>
+                Matched · TP {observation?.benchmark.metrics.tp} · Extra · FP{" "}
+                {observation?.benchmark.metrics.fp} · Missing · FN{" "}
+                {observation?.benchmark.metrics.fn}
+              </p>
+              <p>
+                Proof {observation?.benchmark.metrics.complete_proofs}/
+                {observation?.benchmark.metrics.planned_proofs} · Joint{" "}
+                {observation?.benchmark.metrics.complete_joint_proofs}/
+                {observation?.benchmark.metrics.planned_joint_proofs}
+              </p>
+              <p>
+                Quotation{" "}
+                {ratio(
+                  observation?.benchmark.metrics.quote_passed,
+                  observation?.benchmark.metrics.quote_assessed,
+                )}{" "}
+                · Source attribution{" "}
+                {ratio(
+                  observation?.benchmark.metrics.attribution_passed,
+                  observation?.benchmark.metrics.attribution_assessed,
+                )}
+              </p>
+              <BenchmarkProofs
+                targets={observation.benchmark.proof_targets}
+                predicted={predicted}
+                sources={observation.sources ?? []}
+              />
+            </div>
+          )}
           {observation.result?.evaluation && (
             <p>
               Precision {metric(observation.result.evaluation.precision)} ·
@@ -171,12 +267,19 @@ export function ObservationInspection({ run }: { run: RunDetail }) {
               </p>
               {observation.result.source_attribution.failures.length > 0 && (
                 <ul aria-label="Unapproved Source/quote associations">
-                  {observation.result.source_attribution.failures.map((failure) => (
-                    <li key={JSON.stringify([failure.edge, failure.evidence_id])}>
-                      {failure.edge.join(" · ")} — {failure.source_id}:{" "}
-                      <q>{failure.supporting_text}</q>
-                    </li>
-                  ))}
+                  {observation.result.source_attribution.failures.map(
+                    (failure) => (
+                      <li
+                        key={JSON.stringify([
+                          failure.edge,
+                          failure.evidence_id,
+                        ])}
+                      >
+                        {failure.edge.join(" · ")} — {failure.source_id}:{" "}
+                        <q>{failure.supporting_text}</q>
+                      </li>
+                    ),
+                  )}
                 </ul>
               )}
             </div>
@@ -257,4 +360,7 @@ export function ObservationInspection({ run }: { run: RunDetail }) {
     </details>
   );
 }
-const ratio = (passed: number, eligible: number) => eligible ? `${passed}/${eligible} (${(passed / eligible * 100).toFixed(1)}%)` : "Unavailable (0 eligible)";
+const ratio = (passed: number, eligible: number) =>
+  eligible
+    ? `${passed}/${eligible} (${((passed / eligible) * 100).toFixed(1)}%)`
+    : "Unavailable (0 eligible)";

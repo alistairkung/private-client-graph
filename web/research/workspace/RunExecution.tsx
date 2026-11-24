@@ -27,14 +27,16 @@ export function RunExecution({
   const [authorized, setAuthorized] = useState<string | null>(null);
   const command = useRef<string | null>(null);
   const lock = useRef(false);
-  const live = run.plan.preview.proposal.execution_mode === "live";
+  const plan = run.plan;
+  if (!plan || run.benchmark) return null;
+  const live = plan.preview.proposal.execution_mode === "live";
   const continuing = ["stopped", "interrupted", "failed"].includes(
     run.lifecycle,
   );
   const active = availability?.active_run_id;
   const ready = run.lifecycle === "frozen" || continuing;
   const budget = availability?.task_budget;
-  async function act(action: "authorize" | "start" | "continue" | "stop") {
+  const act = async (action: "authorize" | "start" | "continue" | "stop") => {
     if (lock.current) return;
     lock.current = true;
     setBusy(true);
@@ -50,19 +52,19 @@ export function RunExecution({
           throw new Error("Task accounting unavailable. Refresh status.");
         const approval = await authorizeRun(run.experiment_id, run.id, {
           request_id,
-          plan_digest: run.plan.digest,
+          plan_digest: plan.digest,
           approved: true,
           continuation: continuing,
           task_id: budget.task_id,
           expected_task_usage: budget.used,
           expected_task_cap: budget.cap,
-          task_cap: run.plan.preview.proposal.task_call_cap,
+          task_cap: plan.preview.proposal.task_call_cap,
         });
         setAuthorized(approval.invocation_id);
       } else {
         await controlRun(run.experiment_id, run.id, action, {
           request_id,
-          plan_digest: run.plan.digest,
+          plan_digest: plan.digest,
         });
         command.current = null;
         setAuthorized(null);
@@ -76,7 +78,7 @@ export function RunExecution({
       lock.current = false;
       setBusy(false);
     }
-  }
+  };
   const title = continuing
     ? `Review continuation for Run ${number}`
     : live && !authorized
@@ -160,7 +162,7 @@ export function RunExecution({
           }
         >
           <p className="frozen-notice">Configuration frozen · Run {number}</p>
-          <ReviewSummary preview={run.plan.preview} frozen />
+          <ReviewSummary preview={plan.preview} frozen />
           {continuing && (
             <p>
               Existing results are retained. Uncertain attempts remain counted
@@ -181,7 +183,7 @@ export function RunExecution({
                     <dt>Remaining allowance</dt>
                     <dd>{budget.remaining}</dd>
                     <dt>Proposed total task cap</dt>
-                    <dd>{run.plan.preview.proposal.task_call_cap}</dd>
+                    <dd>{plan.preview.proposal.task_call_cap}</dd>
                   </dl>
                   <p>A call cap is not a guaranteed dollar cap.</p>
                   <label className="approval-choice">

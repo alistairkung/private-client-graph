@@ -121,7 +121,9 @@ def _scope_differences(left: EvaluationScope, right: EvaluationScope) -> list[st
 
 def _provenance_differences(left: "RunDetail", right: "RunDetail") -> list[str]:
     reasons = []
-    if left.plan.preview.proposal != right.plan.preview.proposal:
+    left_configuration = left.plan.preview.proposal if left.plan else None
+    right_configuration = right.plan.preview.proposal if right.plan else None
+    if left_configuration != right_configuration:
         reasons.append('Retained pipeline configuration differs.')
     if left.provenance != right.provenance:
         reasons.append('Retained execution provenance differs.')

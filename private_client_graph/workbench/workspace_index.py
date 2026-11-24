@@ -38,8 +38,18 @@ def workspace_history(engine: Engine, root: Path) -> WorkspaceHistory:
 def _history_item(root: Path, identity: str) -> WorkspaceHistoryItem:
     try:
         workspace = read_experiment(root, identity)
-        return WorkspaceHistoryItem.model_validate(workspace.model_dump())
     except (OSError, ValueError, KeyError, TypeError) as error:
         return WorkspaceHistoryItem(id=identity, name=f'Experiment {identity} (metadata unavailable)',
             metadata_available=False, integrity='missing' if isinstance(error, FileNotFoundError) else 'corrupt',
             reason='Authoritative workspace artifacts are missing or invalid; restore retained records.')
+    item = WorkspaceHistoryItem.model_validate(workspace.model_dump())
+    if workspace.read_only_import:
+        from .benchmark_v3_import import read_imported_run
+
+        try:
+            for run_id in workspace.run_ids:
+                read_imported_run(root, identity, run_id)
+        except (OSError, ValueError, KeyError, TypeError) as error:
+            item.integrity = 'missing' if isinstance(error, FileNotFoundError) else 'corrupt'
+            item.reason = 'Imported Benchmark custody is unavailable or failed verification.'
+    return item

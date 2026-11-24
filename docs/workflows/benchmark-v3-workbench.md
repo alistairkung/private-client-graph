@@ -24,7 +24,7 @@ npm run build:research --prefix web
 uv run uvicorn private_client_graph.workbench.api:app --host 127.0.0.1 --port 8080
 ```
 
-Open `http://127.0.0.1:8080` and choose **Benchmark v3 first live baseline** in the sidebar. The service should report `read_only: true` at `/health`. Use the dedicated artifact root and database only with the read-only app. The generic Research Docker entry point defaults to the execution app, so an equivalent container deployment must explicitly select the read-only app and make the original custody and its referenced paths available.
+Open `http://127.0.0.1:8080` and choose **Benchmark v3 Research** in the sidebar. The service should report `read_only: true` at `/health`. Use the dedicated artifact root and database only with the read-only app. The generic Research Docker entry point defaults to the execution app, so an equivalent container deployment must explicitly select the read-only app and make the original custody and its referenced paths available.
 
 Run the same import again to verify that it is unchanged. After recreating the dedicated database, apply the existing migrations and rerun bootstrap to rebuild the indexes. Keep the private Workbench artifact root alongside the separately retained original archive and admissions.
 

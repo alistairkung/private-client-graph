@@ -24,6 +24,10 @@ with tempfile.TemporaryDirectory(prefix='pcg-research-browser-') as directory:
     (root / 'incomplete-history/results/case_03_fixture-resolve-3.json').unlink()
     (root / 'corrupt-history').mkdir()
     (root / 'corrupt-history/manifest.json').write_text('{invalid')
+    if os.getenv('PCG_BROWSER_LIVE') != '1' and os.getenv('PCG_BROWSER_EXECUTION') != '1':
+        from benchmark_workbench_fixture import register_benchmark_browser_fixture
+
+        register_benchmark_browser_fixture(root)
     os.environ['PCG_RESEARCH_ARTIFACTS'] = str(root)
     rebuild_index(database_engine(), root)
     from private_client_graph.workbench.api import create_app

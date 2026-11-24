@@ -1,10 +1,11 @@
 """Read-only, typed projection of Benchmark v3 protocol results."""
 
+from dataclasses import asdict
 from typing import Literal
 from hashlib import sha256
 import hashlib
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, computed_field
 
 from benchmark_v3.evaluation_protocol import (
     ConditionResult, EvaluationScope, Metrics, Outcome, ProtocolResult,
@@ -15,6 +16,7 @@ from private_client_graph.models.evaluation_result import SemanticEdge
 from private_client_graph.models.relationship import Relationship
 from private_client_graph.models.sourced_evidence import SourcedEvidence
 from private_client_graph.models.source import Source
+from private_client_graph.research.retained_inputs import value_digest
 from .contracts import EvidenceQuote
 from .contracts import RelationshipOutcome
 from private_client_graph.evaluation import _edge
@@ -103,6 +105,11 @@ class BenchmarkRun(BaseModel):
     run_artifact_digest: str | None = None
     observations: list[BenchmarkCondition]
 
+    @computed_field
+    @property
+    def scope_identity(self) -> str:
+        return value_digest(asdict(self.scope))
+
     @classmethod
     def from_verified(cls, verified: VerifiedBaseline) -> 'BenchmarkRun':
         return cls(
@@ -174,12 +181,15 @@ def condition_relationship_outcomes(condition: BenchmarkCondition,
                                     result: EvaluationResult | None,
                                     state: CanonicalState | None) -> list[RelationshipOutcome]:
     if result is None:
-        return []
+        return [RelationshipOutcome(
+            id=hashlib.sha256(repr(row.edge).encode()).hexdigest(), edge=row.edge,
+            outcome='missing', expected=row.quotes, predicted=[],
+        ) for row in condition.expected_relationships]
     expected = {row.edge: row.quotes for row in condition.expected_relationships}
     predicted = _predicted_quotes(state) if state else {}
     failures = set(result.provenance_failures)
     matched = set(result.true_positive_edges)
-    outcomes = [
+    outcomes: list[tuple[Literal['missing', 'extra', 'matched', 'provenance_failure'], SemanticEdge]] = [
         ('missing', edge) for edge in result.false_negative_edges
     ] + [
         ('extra', edge) for edge in result.false_positive_edges
