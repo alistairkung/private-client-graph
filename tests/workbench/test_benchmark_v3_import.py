@@ -105,5 +105,7 @@ def test_read_only_api_serves_imported_projection_without_mutation_routes(
 
     assert response.status_code == 200
     assert response.json()['benchmark']['scope']['observation_origin'] == 'offline_fixture'
+    # This fixture reuses admitted Family A without sharing its admission.
+    assert response.json()['family_context'] is None
     assert not any(route.path.endswith('/authorize') or route.path.endswith('/start')
                    for route in app.routes)

@@ -1,0 +1,134 @@
+{
+  "benchmark_sha256": "c864f58786d21fd3f5b9735023c93df62256e537133f15fa602d3cf3d8d13b70",
+  "families": {
+    "A": {
+      "description": "Determine which trustee holds office at the meeting cutoff.",
+      "condition_intents": {
+        "A0": "A release establishes the effective handover at the cutoff.",
+        "A1": "The same Sources are reordered. The effective handover is unchanged.",
+        "A2": "A hold replaces the release, changing the effective holder at the cutoff."
+      }
+    },
+    "B": {
+      "description": "Identify who made a relayed family statement.",
+      "condition_intents": {
+        "B0": "Two possible speakers remain because the attendance field is incomplete.",
+        "B1": "The completed attendance field links the relayed statement to one speaker."
+      }
+    },
+    "C": {
+      "description": "Trace a designation to the right one of two similar trusts.",
+      "condition_intents": {
+        "C0": "The custody reference links the designation to one deed.",
+        "C1": "A changed reference links the designation to the other deed.",
+        "C2": "The distinguishing part of the reference is obscured. Both mappings remain possible."
+      }
+    },
+    "D": {
+      "description": "Determine which earlier provision a trust amendment displaces.",
+      "condition_intents": {
+        "D0": "The provision locator identifies the earlier clause displaced by the amendment.",
+        "D1": "Changing only the locator switches the displaced clause while the replacement and unaffected relationships persist."
+      }
+    },
+    "E": {
+      "description": "Reconcile two firsthand accounts of a reported parent relationship.",
+      "condition_intents": {
+        "E000": "Two independent accounts agree about the same birth.",
+        "E001": "One account changes to a denial. The disputed relationship becomes unresolved."
+      }
+    },
+    "F": {
+      "description": "Resolve separate people whose display names can coincide.",
+      "condition_intents": {
+        "F0": "Stable references and explicit links identify the people in the file.",
+        "F1": "One populated display label collides with another. Stable identity links and relationships persist."
+      }
+    },
+    "X": {
+      "description": "Find a firsthand kinship assertion in routine access correspondence.",
+      "condition_intents": {
+        "X000": "The logistical reply includes a firsthand kinship assertion.",
+        "X001": "The reply retains the logistics but removes the kinship assertion. The other relationships persist."
+      }
+    },
+    "T": {
+      "description": "Determine what a limited custody inspection actually established.",
+      "condition_intents": {
+        "T000": "T000 is one 25-Source handover. Link the proposed comparison, intake membership and signed observation to distinguish checked and unresolved propositions."
+      }
+    },
+    "N": {
+      "description": "Distinguish an executed counterpart from a retained draft.",
+      "condition_intents": {
+        "N000": "Execution of the identified counterpart is verified.",
+        "N001": "The counterpart is retained as unexecuted, changing which provision supports a relationship."
+      }
+    },
+    "W": {
+      "description": "Assess conflicting accounts of the current trustee.",
+      "condition_intents": {
+        "W000": "W000 tests one natural file. Attribute each account to its origin and retain the unresolved office alongside supported offices."
+      }
+    },
+    "O": {
+      "description": "Separate trust office from administrative filing progress.",
+      "condition_intents": {
+        "O000": "The filing awaits initial examination. The governing instrument establishes the trust offices.",
+        "O001": "Examination is under way. The governing instrument and trust offices stay fixed."
+      }
+    },
+    "L": {
+      "description": "Determine which parent field an adviser could verify.",
+      "condition_intents": {
+        "L000": "The adviser reports a named parent field from the dated inspection.",
+        "L001": "The field is unavailable to report. Independent family evidence remains."
+      }
+    },
+    "AH": {
+      "description": "Identify which field a practitioner actually checked.",
+      "condition_intents": {
+        "AH000": "The practitioner attests to the parent field among the checked particulars.",
+        "AH001": "The narrower attestation leaves the copied parent field outside its scope."
+      }
+    },
+    "AG": {
+      "description": "Decide what an empty receipt register establishes by the deadline.",
+      "condition_intents": {
+        "AG000": "The receipt register covers the full decision window.",
+        "AG001": "Coverage ends early. Silence in the shorter window leaves receipt unresolved."
+      }
+    },
+    "AZ": {
+      "description": "Separate a will’s defined group from factual kinship.",
+      "condition_intents": {
+        "AZ000": "AZ000 tests the executed group definition and independently supported family relationships in one file."
+      }
+    },
+    "R": {
+      "description": "Locate the operative event relative to the deadline.",
+      "condition_intents": {
+        "R000": "The authenticated event falls within the prescribed time window.",
+        "R001": "The event moves across the cutoff. Report and filing dates retain their separate roles."
+      }
+    },
+    "CM": {
+      "description": "Trace separate completed contributions to one continuing trust.",
+      "condition_intents": {
+        "CM000": "CM000 tests the founding declaration and independently evidenced additions in one file."
+      }
+    },
+    "DA": {
+      "description": "Distinguish a trust-activating receipt from an outright distribution.",
+      "condition_intents": {
+        "DA000": "DA000 tests two dispositions. Join the instruction to cleared receipt for the trust and assess the outright transfer on its own authority."
+      }
+    },
+    "DB": {
+      "description": "Determine parentage direction across speakers’ perspectives.",
+      "condition_intents": {
+        "DB000": "DB000 tests two directed assertions in one file. Resolve the speaker and the person being described before assigning each direction."
+      }
+    }
+  }
+}
