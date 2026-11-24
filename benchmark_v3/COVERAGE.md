@@ -1,10 +1,12 @@
 # Benchmark v3 coverage register
 
 Generated with `uv run python -m benchmark_v3.architect coverage`.
-Each row counts one admitted Matter family. Matched conditions share its history.
+The [admission register](admissions/2026-11-24.md) covers all 19 admitted development families.
+The [research catalogue](RESEARCH-CATALOGUE.md) describes their reasoning tests and limits.
+Each family counts once. Matched conditions share its history.
 Keep this register outside the blind packets.
 
-## Admitted development families
+## Original five admissions and coverage reconciliations
 
 | Family | Primary axis | Secondary axes | Intended difficulty |
 | --- | --- | --- | --- |
@@ -113,7 +115,7 @@ No verified findings recorded.
 | source discovery | workflow discovery | deferred | Find, retrieve or request a Source outside the supplied file. |
 | physical document quality | workflow discovery | deferred | Acquire, OCR or recover physical text. A stipulated missing field in text can test reasoning within the supplied bundle. |
 
-## Remaining research gaps
+## Earlier coverage gaps
 
 - **contradictory assertions, origin and copies.** E reproduced its concordance-to-withholding contrast and was returned at the documentary-realism gate. Retainer relevance and witness reference provenance remain open. E0 and E1 are diagnostic only. B covers a single origin and its forward. [Returned candidate and owner decisions](admission_d_f/OWNER-DECISIONS.md)
 - **versions and amendments, documentary authority.** D covers one express scoped amendment. Other amendment mechanisms and full individual fact-level deletion coverage remain open.
@@ -126,22 +128,50 @@ No verified findings recorded.
 
 | Hypothesis | Family | Status | Revision digest |
 | --- | --- | --- | --- |
-| `routine-trust-records-completeness@1` · P1: Routine trust records review | H | proposed | `06ef87b2ff166f92519c45234f36ffe6c63bcbe614eba22a92c0a966bbf7a670` |
-| `certified-extract-record-basis@1` · P2: Record authority with issue status held fixed | I | proposed | `c85fc859ea1e432e456a3debe241432e44b94467d0d0b754243ab52801ccf737` |
-| `authenticated-copy-and-delivery@1` · P3: An authenticated copy linked to timely delivery | J | proposed | `ae0b12a8394582bbeaab5b0280c1da93390b4e35cb249c743001bdfd454e89d5` |
+| `routine-trust-records-completeness@1` · P1: Routine trust records review | H | approved | `06ef87b2ff166f92519c45234f36ffe6c63bcbe614eba22a92c0a966bbf7a670` |
+| `certified-extract-record-basis@1` · P2: Record authority with issue status held fixed | I | approved | `c85fc859ea1e432e456a3debe241432e44b94467d0d0b754243ab52801ccf737` |
+| `authenticated-copy-and-delivery@1` · P3: An authenticated copy linked to timely delivery | J | approved | `ae0b12a8394582bbeaab5b0280c1da93390b4e35cb249c743001bdfd454e89d5` |
 | `scoped-trust-amendment@1` · Scoped replacement within one trust instrument | D | approved | `20288d9f35aa29585353393c40d6f6e317fc9fee302b7e35a989b8306224fcb8` |
 | `independent-parentage-disagreement@1` · Independent reports about the same relationship | E | approved | `1c6fbc49c9be191bc6dab14845e0db2afe94675f10f6634c54d897bacede2cae` |
 | `complete-record-label-collision@1` · A shared display label across complete records | F | approved | `86c152a0d7816d83f3de38c16d265f7619ce7ccf08223d22e116b04bb98ea09c` |
 | `incidental-kinship-in-correspondence@1` · Ordinary kinship in routine correspondence | G | proposed | `18ac2949770a2beb57602a12d705c08ae482c443c7f2991c225e2158c644cd01` |
-| `former-name-explicit-link@1` · Former-name reconciliation | M | proposed | `fa467f9804834d9382162f1e7fb16db15d8b55d08680b2ed3dab060632ecbcc0` |
-| `duplicate-origin-salience@1` · Repeated quotation from one origin | P | proposed | `06f97ebd0d9c651404b28ed49fa8a468ea39ba148d49bcb5c8392d97a1f723d0` |
+| `former-name-explicit-link@1` · Former-name reconciliation | M | approved | `fa467f9804834d9382162f1e7fb16db15d8b55d08680b2ed3dab060632ecbcc0` |
+| `duplicate-origin-salience@1` · Repeated quotation from one origin | P | approved | `06f97ebd0d9c651404b28ed49fa8a468ea39ba148d49bcb5c8392d97a1f723d0` |
 | `civil-record-information-boundary@1` · Limits of a civil-record sighting | L | approved | `ec3efd9fbd411a36c75df375b63fe08aea1aa25961ce74822816beed5f76f9cb` |
 | `executed-version-record@1` · Execution status among retained counterparts | N | approved | `e6aa572b315905421af40e9b8cf5fd698dcc9ac41dbac955ffcb75476a37f9d3` |
 | `land-register-lag-invariance@1` · Title-application progress with trustee office fixed | O | approved | `e9a85561cbd07eaf097bf5bff337d61fa684a8728e5cb4f359a02ce17c2274fa` |
 | `typed-event-chronology@1` · Event date versus report date | R | approved | `e59adeaeafe55ecc6bf6567932e8d58e6cc11faeb18f35359803818308c2548e` |
 | `restatement-schedule-scope@1` · Carry-forward across instrument generations | Q | approved | `b5046dc1860b9735a22a323780c982ac143cb74b5284dec4d957190d8c424888` |
 | `named-scope-capacity@1` · Scoped adoption and concurrent roles | S | approved | `888372b762667bab8ffd03519f92405dd246118df8806798244fb69abf6e3263` |
-| `administrative-estate-load@1` · Completeness in an administrative handover | U | proposed | `55e95c4e91d4a99cabbc0c03f4c9831fc0054b0df045983be5ae1af3ace18b90` |
+| `administrative-estate-load@1` · Completeness in an administrative handover | U | approved | `55e95c4e91d4a99cabbc0c03f4c9831fc0054b0df045983be5ae1af3ace18b90` |
 | `longitudinal-cross-section-reconstruction@1` · Longitudinal cross-section reconstruction | V | proposed | `925b5fdd603297092c963366da245eea3f95c8d0e4a6804cceff9ae57655156d` |
-| `independent-documentary-disagreement@1` · Independent handover accounts of current trustee office | W | proposed | `ac18d1c2ef9f3f72b0544a4ddf1d62e7af230be3375dab180f28306bc06352ed` |
+| `testamentary-trust-versus-outright-distribution@1` · Two completed testamentary dispositions, only one a trust provision | DA | approved | `1894d78619d67f766332fd298f019c41bece57ed4c238eeb2fb924fb8245ec62` |
+| `parentage-direction-across-record-frames@1` · The same person is a child in one record and a parent in another | DB | approved | `dc04dbb3e78408f58f216be291627a8e882d682846add8e067f6fd67f1cb7973` |
+| `continuing-office-reference-follows-holder@1` · A companion trust follows one continuing office, not the whole trustee roster | DC | proposed | `9f2ae38c277b4a5516cc712a54c82c49db0bf4117ead2b5954f3257af64ea20e` |
+| `bounded-negative-receipt-coverage@1` · A default provision requires complete negative receipt coverage | AG | approved | `aa9daf7b4f40611a569bc456466e5f3ab3cc54ddd74f93e1e9803c33d58344c8` |
+| `mixed-origin-field-attestation@1` · A signed check vouches only for the fields it covers | AH | approved | `675663a370b5acb848e500fc799f042b1ded8e0e3121c331fd9f029a814e58db` |
+| `fixed-versus-rolling-incorporation@1` · A later issue matters only under rolling incorporation | AJ | proposed | `7e65cd45da7a876ff28d23046307bc5296b44be293f28ff645a03b67b6fcda6f` |
+| `selective-ending-of-parallel-benefit-bases@1` · One beneficiary edge, a different surviving provision | AP | approved | `a89b748456f1c32487795600ff6bdbd88114314e54540d9e34646f6e048b8f37` |
+| `representative-signature-without-personal-office@1` · A named signatory is not necessarily a named trustee | AQ | proposed | `fb5530db9f86ba9e6b38b63c718e3966d7dc1146f244d1db3de281ad4fc4aecb` |
+| `authority-at-exercise-before-deferred-effect@1` · A decision survives the end of its maker's office | AR | approved | `c009d18694f204128719997fddba0759c43293d52e3a32d55da33d030db81d9f` |
+| `separate-or-joint-commencement-of-appointments@1` · One acceptance, separate or joint commencement | AX | proposed | `f816be9e56b0c0a7f7a2191b74686c71ec81b2aed98f8dd9512e34c01f154324` |
+| `named-benefit-with-or-without-continuing-spousal-condition@1` · A named designation need not depend on continuing marriage | AY | approved | `d119f024401d75371a224354169a4dfbb246ff464001dc4d77a026e08e60b4e0` |
+| `testamentary-group-definition-versus-factual-kinship@1` · A will's defined group is not a family assertion | AZ | approved | `b158525daad26a7f8aa30d52e18a9a9784157b78305646f7bce6125c96f6506c` |
+| `settlement-contribution-versus-remittance@1` · The person remitting the closing funds is not necessarily the settlor | BF | proposed | `ad60c7de71790bbaf57f24680c99815e0f6c0a3304a366e95ca2cdc209cd42bc` |
+| `asset-transfer-without-relationship-migration@1` · Moving assets does not move the named relationships | BG | approved | `29d8aaa32033487f69f4eec69ef821877b066f65d10402d173a9f700f6557e63` |
+| `bounded-age-proof-of-named-commencement@1` · An age check can establish commencement without an exact birth date | BN | approved | `1a4cc06acbd0b4aeb614632439fdc522f46f7e232f67a86b1c12875bc3585b41` |
+| `cumulative-benefit-cap-versus-posted-debits@1` · Posted debits do not necessarily exhaust a capped named benefit | BO | approved | `d55453096200efc2ff0db3cb3b2b64f988876f4e618b6f1182b9a9a746d6bd67` |
+| `late-notice-with-separate-operative-cure@1` · An acknowledged late notice is not an accepted late notice | BV | approved | `c34ed48b67b88ea08cb8fc1936a3a8775dde0ef8016400e0e2321f73924c7497` |
+| `derivative-correction-with-historical-scope@1` · A corrected founding record does not reset the current roster | BW | approved | `e1cd810853a60fa9a80df9b6b671997a8c002135341c75e2d4401ef63238f233` |
+| `trust-specific-live-register-cutover@1` · Authority to make an entry transfers trust by trust | BX | proposed | `6949a545a1f33e7a39367b7779b10e1d00e03fb167e42d00f20a17feee0f1dd5` |
+| `personal-benefit-surrender-with-continuing-office@1` · A trustee gives up a named benefit without leaving office | CD | proposed | `46137c30e9f82fddbd876a265c8e88ccbb7bf57ef9ce88d9a72699eeabb32600` |
+| `withdrawn-drafting-instruction-retains-factual-identification@1` · Dropping a proposed gift does not retract its factual identification | CE | approved | `5d790f2f4443d3b394793211f9691462d41e7bf5e4f8d23041cc1accb221af66` |
+| `dual-capacity-decision-and-personal-consent@1` · A trustee's vote does not supply their separately required personal consent | CL | proposed | `9840b092e7ff0d60433bb71bf7fbba33779f69491f059edf887e13226076b9fc` |
+| `cumulative-settlors-declaration-and-addition@1` · One continuing trust, two independently established settlors | CM | approved | `983c09573510e09c3c58e4c28f6b34738a9ad8e7a3214e70074f01467647b7d5` |
+| `concurrent-assent-to-one-decision@1` · Separate assents must concern the same decision | AA | proposed | `4156635b4a723dd63ab71c9919f574e6cfe882ed2a8d74d463399d7663528c3b` |
+| `shared-parent-without-sibling-assertion@1` · Supported common parentage does not supply a sibling edge | AB | approved | `9dd22215c301d0855fa3660b14caa92651730dbf325c2928eb7a9d7ff20994df` |
+| `automatic-reversion-after-temporary-substitution@1` · A suspended provision resumes without a new act | AC | proposed | `11735f0da17407c28981c349d865eaed29adc508305e3a19eef40edccd8b4d1b` |
+| `independent-alternative-sufficient-proofs@1` · One valid route is enough when a second route also exists | AD | approved | `c5d4db92b6a4ec98f6b23c2bc76a1e8e261470e35f5870755b5367375d824324` |
+| `independent-documentary-disagreement@1` · Independent handover accounts of current trustee office | W | approved | `ac18d1c2ef9f3f72b0544a4ddf1d62e7af230be3375dab180f28306bc06352ed` |
 | `incidental-correspondence-support@1` · Firsthand relationship support in valuation-access correspondence | X | proposed | `194a1ec56fa6374aa71cfe426dcb6738915ea611b11c3cd767dfe17a1142758d` |
+| `bounded-inspection-scope-reconciliation@1` · Which received records did the verification actually cover? | T | approved | `c8c529dfe55f59bf78ae08ce5c7a901b7d8c1ccc16f1b029338dd00bc0e366d4` |

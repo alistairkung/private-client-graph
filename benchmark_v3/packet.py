@@ -31,7 +31,7 @@ _INPUTS = {
         commissioning.PLANNING_LABELS | commissioning.RECONCILIATION_LABELS | commissioning.PORTFOLIO_LABELS
     ),
     "designer": {"hypothesis_revision", "portfolio_slot"},
-    "author": {"author_brief", "genre_references", "received_correspondence", "revision_ticket"},
+    "author": {"author_brief", "received_correspondence", "revision_ticket"},
     "realism": {"sources", "neutral_brief", "cutoff", "possession_ledger", "genre_references"},
     "annotation": {"sources", "neutral_brief", "ontology", "annotation_rules", "section_readings"},
     "adjudication": {

@@ -249,7 +249,7 @@ def test_rejects_exposure_and_nonfinal_results(monkeypatch, packet_directory, mo
 @pytest.mark.parametrize(
     ("role", "labels"),
     [
-        ("author", "author_brief genre_references received_correspondence revision_ticket"),
+        ("author", "author_brief received_correspondence revision_ticket"),
         ("realism", "sources neutral_brief cutoff possession_ledger genre_references"),
         ("annotation", "sources neutral_brief ontology annotation_rules"),
         ("adjudication", "sources annotation_a annotation_b neutral_brief ontology annotation_rules"),
@@ -277,6 +277,24 @@ def test_accepts_each_roles_scope_and_rejects_extra_history(
 
     turn = json.loads(capture.read_bytes())[-1]
     assert json.loads(turn["params"]["input"][0]["text"])["inputs"] == inputs
+
+
+
+def test_author_scope_rejects_full_file_genre_references_before_dispatch(monkeypatch, packet_directory):
+    capture = _fake_codex(monkeypatch, packet_directory, "normal")
+    request = _read_json(packet_directory, "request.json")
+    request.update(role="author", inputs={
+        "author_brief": "Write your dated note.",
+        "received_correspondence": "[]",
+        "genre_references": '["A later independent record proves the focal relationship."]',
+    })
+    _write_request(packet_directory, request)
+
+    with pytest.raises(packet.PacketError, match="allowlist"):
+        packet.run_packet(packet_directory)
+
+    assert not capture.exists()
+    assert not (packet_directory / "handoff.json").exists()
 
 
 @pytest.mark.parametrize(

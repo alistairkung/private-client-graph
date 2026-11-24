@@ -155,6 +155,10 @@ class Ledger:
         with closing(self.connect()) as connection:
             self.check_halt(connection)
 
+    @contextmanager
+    def scientific_dispatch(self) -> Iterator[bool]:
+        yield False
+
     def record_construction_repair(self, manifest: BatchManifest, decision: ConstructionRepairDecision) -> None:
         """Append the owner's single repair decision and start the second revision atomically."""
         payload = decision.model_dump(mode="json")
@@ -436,11 +440,29 @@ class Ledger:
     def _check_reservation_halt(self, connection: sqlite3.Connection) -> None:
         self.check_halt(connection)
 
+    def has_reservation(self, family: str, revision: int, job: str) -> bool:
+        with closing(self.connect()) as connection:
+            return connection.execute(
+                "SELECT 1 FROM attempts WHERE family = ? AND revision = ? AND job = ?", (family, revision, job),
+            ).fetchone() is not None
+
     def reservation_transaction(self) -> AbstractContextManager[sqlite3.Connection]:
         return self.transaction()
 
     def pooled_revision(self, batch: str, family: str, revision: int) -> bool:
         return False
+
+    @property
+    def requires_author_context(self) -> bool:
+        return False
+
+    @property
+    def requires_delivery_attestation(self) -> bool:
+        return False
+
+    @property
+    def parallel_scientific_jobs(self) -> int:
+        return 1
 
     def _authorize_reservation(
         self, connection: sqlite3.Connection, family: str, revision: int, job: str, stage: Stage,

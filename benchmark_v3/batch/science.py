@@ -125,21 +125,29 @@ def verify_adjudication(
         raise ValueError("Adjudication must resolve every graph or attached-evidence disagreement.")
     if review.unresolved:
         raise ValueError("Adjudication has unresolved scientific objections.")
+    ordinary_failed, incomplete = adjudication_replay_defects(review, sources)
+    if ordinary_failed or incomplete:
+        raise ValueError("Provisional key fails canonical replay or the existing evidence policies.")
+
+
+def adjudication_replay_defects(review: Adjudication, sources: list[Source]) -> tuple[bool, bool]:
     saved = review.key
     truth_edges(saved.truth)
     state = build_canonical_state(saved.ideal.relationships, sources=sources)
     score = evaluate_graph(reconstruct_graph(state), saved.truth)
     evidence = assess_evidence(state, saved)
-    if (score.fp or score.fn or evidence["quotation"]["failed"] or evidence["source_attribution"]["failed"]
-            or evidence["sufficiency"]["incomplete"] or evidence["sufficiency"]["missed"]):
-        raise ValueError("Provisional key fails canonical replay or the existing evidence policies.")
+    return (
+        bool(score.fp or score.fn or evidence["quotation"]["failed"] or evidence["source_attribution"]["failed"]
+             or evidence["sufficiency"]["missed"]),
+        bool(evidence["sufficiency"]["incomplete"]),
+    )
 
 
 def audit_risks(
     slot: FamilySlot, adjudications: dict[str, Adjudication], agreements: dict[str, dict[str, Any]],
 ) -> set[Risk]:
     risks: set[Risk] = set()
-    if slot.tier in {"complex", "giant"}:
+    if slot.tier in {"complex", "giant"} or (slot.tier == "administrative" and slot.expected_sources >= 51):
         risks.add("large_or_complex")
     if any(row["disagreements"] for row in agreements.values()):
         risks.add("reader_disagreement")
@@ -153,6 +161,9 @@ def audit_risks(
     return risks
 
 
+AUDIT_COVERAGE_ERROR = "Audit must cover all conditions and all standard checks."
+
+
 def verify_audit(
     review: AuditReview, bundles: dict[str, list[Source]], freeze: BatchSourceFreeze,
     required_risks: set[Risk], adjudications: dict[str, Adjudication],
@@ -161,7 +172,7 @@ def verify_audit(
     if any(index.keys() != conditions for index in (
         review.completeness, review.sufficiency, review.negative_controls, review.shortcuts, review.matched_controls,
     )):
-        raise ValueError("Audit must cover all conditions and all standard checks.")
+        raise ValueError(AUDIT_COVERAGE_ERROR)
     for condition, sources in bundles.items():
         if review.completeness[condition].keys() != {source.id for source in sources}:
             raise ValueError("Audit must account for every Source independently of the adjudication.")

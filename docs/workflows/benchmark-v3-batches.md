@@ -149,12 +149,55 @@ receipt. A worker checks shared stops and the technical qualification
 target before admitting any fresh reservation. Verification of a dossier
 is a prerequisite for counting it toward the pooled target.
 
+A successor phase can bind a qualified predecessor at the exact closing
+balance. The owner scope carries the same cumulative ceiling, the predecessor
+pool digest and its closing archive. Each retained custody records a new
+binding alongside the original. Its starting balance includes every original
+and pooled charge. Prior pool handles cannot reserve fresh work after the
+successor takes effect. A new independent development commission can enrol
+at zero charges after its exact manifest and task identity are committed.
+
+The pre-giant phase excludes Family V and prohibited workloads at enrolment
+and reservation. A 51–99 Source commission requires a verified 21–50 Source
+technical dossier. A large administrative case requires the large-file
+scientific audit. Individual author jobs can run concurrently after their
+recorded deliveries are available. The workflow commits their outputs in
+the declared inventory order and keeps two independent blind reading lanes.
+
+When an exact documentary repair was infeasible only under a former
+allocation, a fresh capacity review can bind the original decision at the
+same revision. A scope return can instead commission a new revision from
+the last realism-assessed file after verifying the intervening comparison
+receipt, revised design, both Source bundles and the independent objections.
+Each path retains the earlier output and requires fresh dependent gates.
+
 Earlier ceilings and reservations remain available as historical records.
 An ordinary ledger cannot start new work outside the pool after it is
 bound. A legacy packet implementation mismatch stops the pool until a
 successor binds the exact old bytes and stop, the reviewed implementation
 change and fresh zero-turn boundary evidence. The original stop remains
 in custody. This recovery does not resolve a live isolation failure.
+
+Author packets contain the dated participant brief, declared prior
+correspondence and any participant-safe revision ticket. The transport
+and coordinator reject the case-wide documentary reference field for
+this role. A live role-projection exposure triggers the shared halt.
+Retain the original handoffs and independently reviewed results. Review
+the affected author lineages before reusing Sources or requesting a new
+execution release, and verify the corrected runtime with zero turns.
+
+A release after a verified shared author exposure binds the exact
+halted predecessor ledger and the new projection verification. It opens
+fresh author custody, with the same cumulative ceiling and the earlier
+charges retained. Before each new or repaired family revision starts
+writing Sources, an independent reviewer assesses the precise participant
+brief and earlier delivery list. The runner verifies this receipt at
+reservation and again before dispatch. Each earlier delivery must be
+backed by the exact authored output in the fresh custody. If the initial
+review returns a brief before any author turn, a new isolated planner may
+revise only the affected wording. The revised inventory requires a fresh
+review before authoring. The historical halt remains recorded in the predecessor, and a halt in the new pool
+stops other active families.
 
 A SQLite transaction reserves one session before packet dispatch. Every
 reservation uses one family slot and one task slot. Failed, interrupted,
@@ -439,3 +482,57 @@ If a valid plan cannot fund all mandatory work before masks, one fresh
 capacity replan may determine whether a smaller repair preserves the
 scientific scope. The independent scope review still gates progression
 and the runner retains both plans and their exact receipt commitments.
+
+### Recovery from an author delivery failure
+
+The delivery-attested isolation release requires the originating record to
+declare its own named same-day recipient. An independent context reviewer
+checks the exact origin, participant and date before any author runs. The
+sender records its transmissions in a separate output field under the same
+immutable receipt as the Source. The transport verifies the sender receipt
+and the exact delivered bytes against the reviewed request before every
+affected reservation and again at dispatch. A signature, copied workstream
+label or incoming ID alone cannot supply authority.
+
+Sender attestations are custody metadata. The frozen Sources and every
+blind, adjudication and scoring input use documentary text alone. Later
+forwarding can be represented by its own dated cover record. Revisions
+rebuild the dependency closure when the sender projection changes.
+
+The stopped pool and its compromised design and downstream artifacts stay
+immutable. Under delegated recovery authority, the active successor must
+bind the halted ledger and its exact closed charges, the independent
+zero-turn boundary evidence and the corrected implementation. Only fresh
+custody can enter that successor. The hard cumulative ceiling and family
+qualification gates continue to apply.
+
+Delivery-attested production can repeat a blind representation error
+once with an independent reader on the identical frozen inputs after
+both retained attempts failed exact quotation or inventory checks. The
+fresh packet only clarifies the representation of attached evidence.
+An adjudicated approval may translate a unique canonical name to its
+existing local entity ID. The derivative names the exact receipt and
+changed fields. The original evidence, relationships and protected
+validation still determine whether a key can lock.
+
+A first unresolved adjudication before any key locks can return for one
+independently planned documentary revision. It preserves the approved
+hypothesis and reruns every dependent gate if Sources change. A returned
+factory instruction mentioning absent correspondence can reopen its
+unchanged plan in a new revision. A separate scope review must clear the
+corrected participant projection before authoring.
+
+The audit packet reports the immutable earlier gate commitments. Exact
+controls and zero-provider replay still determine technical readiness.
+A bounded independent recheck uses the same frozen conditions and keys,
+retains previous valid control expectations, and can precommit exact
+quotation-only views when needed. Each excerpt comes from a single
+contiguous span of its named immutable Source. Delivery metadata stays
+outside those views. Masked observations run in bounded independent
+pairs and stop scheduling when a required control fails.
+
+Draft-only scope reviews distinguish fictional correspondence from
+actual transfers between author packets. A mistaken request to attest
+an unused transfer can receive a fresh review of the unchanged design.
+Every actual incoming attachment still requires its sender's exact
+receipt.

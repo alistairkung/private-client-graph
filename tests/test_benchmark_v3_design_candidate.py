@@ -8,7 +8,11 @@ from benchmark_v3.portfolio import Portfolio
 
 
 @pytest.fixture
-def candidate_slot():
+def candidate_slot(monkeypatch):
+    proposals = commissioning.proposal_history()
+    hypothesis, reference, _ = proposals["former-name-explicit-link@1"]
+    pending = proposals | {"former-name-explicit-link@1": (hypothesis, reference, None)}
+    monkeypatch.setattr(commissioning, "proposal_history", lambda: pending)
     portfolio = Portfolio.model_validate_json(commissioning.trusted_bytes(
         "planning/development-20/portfolio.json",
     ))

@@ -1,0 +1,514 @@
+{
+  "schema_version": 1,
+  "split": "development",
+  "owner_decision": {
+    "owner": "Alistair Kung",
+    "role": "project owner",
+    "decision": "accept",
+    "decision_date": "2026-11-24",
+    "timezone": "Asia/Hong_Kong",
+    "source": "Explicit owner instruction in Codex",
+    "verbatim": "Owner decision: ACCEPT all 19 technically qualified non-giant development families into Benchmark v3.",
+    "technical_baseline_commit": "601a373eb956b44da0a6b18cd93d3a608f54dcbc",
+    "final_technical_accounting_sha256": "4dfa5ed4ebe958fbe90645251e35275ed04724a08c829d27b53b9a485e3d5000"
+  },
+  "private_register_sha256": "c864f58786d21fd3f5b9735023c93df62256e537133f15fa602d3cf3d8d13b70",
+  "verification_exceptions": [],
+  "families": [
+    {
+      "family": "A",
+      "revision": "historical",
+      "conditions": [
+        "A0",
+        "A1",
+        "A2"
+      ],
+      "source_counts": [
+        7,
+        7,
+        7
+      ],
+      "primary_axis": "temporal-effectiveness",
+      "secondary_axes": [
+        "documentary-authority",
+        "evidence-sufficiency",
+        "presentation-order"
+      ],
+      "admission_date": "2026-11-22",
+      "owner_decision": "accept",
+      "decision_kind": "preserved",
+      "technical_dossier_format": "legacy Markdown",
+      "technical_dossier_sha256": "3273f96660638f56b0ffa91cec0a257fefbfba97753d1eef9c6f2d8d6dcf3540",
+      "manifest_sha256": "b81002b2547ebb80c77bde6fd67191578eceeb558fcd2fb125746573db2538d4",
+      "freeze_sha256": "1d0e11cec8cb6227eada03543f95c3f73aad8e2093f84d296e4bb76e2e928489",
+      "preserved_admission_sha256": "2a39c36968f8846867070220547a2caf62691fe213e709a38337e293e5bafead"
+    },
+    {
+      "family": "B",
+      "revision": "historical",
+      "conditions": [
+        "B0",
+        "B1"
+      ],
+      "source_counts": [
+        7,
+        7
+      ],
+      "primary_axis": "entity-identity",
+      "secondary_axes": [
+        "incomplete-information",
+        "origin-and-copies",
+        "evidence-sufficiency"
+      ],
+      "admission_date": "2026-11-22",
+      "owner_decision": "accept",
+      "decision_kind": "preserved",
+      "technical_dossier_format": "legacy Markdown",
+      "technical_dossier_sha256": "276bcea8b4ee1a94bd6383ceb2dced9c3bd9ca9c863df02ed5478267c24e7004",
+      "manifest_sha256": "ba9bad4f1c2dad88473daa24c5866697db16d2160f1c09c3b50bdd8a485fba0b",
+      "freeze_sha256": "61c04f2633929fae579d14b96c81b96d61b667f1273d6bd20280cf75519509d5",
+      "preserved_admission_sha256": "f6fe34f01a523d9a6f63d42319617bae5a0bb407c9923552e934c3d41122f67e"
+    },
+    {
+      "family": "C",
+      "revision": "historical",
+      "conditions": [
+        "C0",
+        "C1",
+        "C2"
+      ],
+      "source_counts": [
+        7,
+        7,
+        7
+      ],
+      "primary_axis": "cross-source-reasoning",
+      "secondary_axes": [
+        "evidence-sufficiency",
+        "incomplete-information",
+        "entity-identity"
+      ],
+      "admission_date": "2026-11-22",
+      "owner_decision": "accept",
+      "decision_kind": "preserved",
+      "technical_dossier_format": "legacy Markdown",
+      "technical_dossier_sha256": "cae6662f48a3c2c3593ed7a8cbe9a4ef00da7fcbce44c74d979d9e4d91fb9fe2",
+      "manifest_sha256": "03d8c25c36767fda54ab3f8430eb0f2d9c31845d55a27b68d02ab2d43dcb2868",
+      "freeze_sha256": "26768473a68e3bdf4c324f30be4e2b0b7b316bde3f5605fcfabcdb12049eeebd",
+      "preserved_admission_sha256": "8f56a44e5a0a034a4000c1a8c6959cd72de0be528e8981e31e3938e049fbdd61"
+    },
+    {
+      "family": "D",
+      "revision": "r0",
+      "conditions": [
+        "D0",
+        "D1"
+      ],
+      "source_counts": [
+        3,
+        3
+      ],
+      "primary_axis": "versions-and-amendments",
+      "secondary_axes": [
+        "documentary-authority",
+        "evidence-sufficiency",
+        "graph-completeness"
+      ],
+      "admission_date": "2026-11-22",
+      "owner_decision": "accept",
+      "decision_kind": "preserved",
+      "technical_dossier_format": "legacy Markdown",
+      "technical_dossier_sha256": "06488a7f07ee82b42849ca7225f7a77b1ad66eb66a1fb002e37ba03f170d094c",
+      "manifest_sha256": "646d877db58fb26f460fb69f3f2197467f1fb1930d4176b80c52b43a9af4e75f",
+      "freeze_sha256": "b9295043726610f0f9483be6bf4498d1801ab0871e89472323592c0aecc94bee",
+      "preserved_admission_sha256": "d84a3a09182a3311d53ff04f56fd5800731196a09237ff949f716f3b902e376e"
+    },
+    {
+      "family": "F",
+      "revision": "r1",
+      "conditions": [
+        "F0",
+        "F1"
+      ],
+      "source_counts": [
+        5,
+        5
+      ],
+      "primary_axis": "entity-identity",
+      "secondary_axes": [
+        "evidence-sufficiency",
+        "graph-completeness"
+      ],
+      "admission_date": "2026-11-22",
+      "owner_decision": "accept",
+      "decision_kind": "preserved",
+      "technical_dossier_format": "legacy Markdown",
+      "technical_dossier_sha256": "d950a5725c040611a0554c1bbc0ab5d38375dfc26ecd7061aaa506c990bbbe44",
+      "manifest_sha256": "9539cf4957b5a2f5f9fd93d511c7ff0fa1a158cfe999b7b6b9748875c6636ee2",
+      "freeze_sha256": "6336e4473730c39a0524ae71990ca45276cb05785d66a958d63663bded0ee8a9",
+      "preserved_admission_sha256": "e76ee677d3cb6bb980e9324c70277f3d3c4c5df84ea1a862b353efc2516d369d"
+    },
+    {
+      "family": "X",
+      "revision": 3,
+      "conditions": [
+        "X000",
+        "X001"
+      ],
+      "source_counts": [
+        5,
+        5
+      ],
+      "primary_axis": "graph-completeness",
+      "secondary_axes": [],
+      "admission_date": "2026-11-24",
+      "owner_decision": "accept",
+      "decision_kind": "new",
+      "technical_dossier_format": "JSON",
+      "technical_dossier_sha256": "2d06a6cc667fd7775b4bc9526c1bbb3c6f1658ab6a715c458857102309326598",
+      "manifest_sha256": "819f34d5fe2106f97f19c1436eb645040bed509a8c7017973aac86795f3f3b3f",
+      "freeze_sha256": "f212760c3a2347765efb5ce15d6df833317278bc620477cc3878d1a36f85fd89"
+    },
+    {
+      "family": "T",
+      "revision": 4,
+      "conditions": [
+        "T000"
+      ],
+      "source_counts": [
+        25
+      ],
+      "primary_axis": "custody-and-absence",
+      "secondary_axes": [
+        "cross-source-reasoning",
+        "evidence-sufficiency",
+        "incomplete-information",
+        "graph-completeness"
+      ],
+      "admission_date": "2026-11-24",
+      "owner_decision": "accept",
+      "decision_kind": "new",
+      "technical_dossier_format": "JSON",
+      "technical_dossier_sha256": "23e33572163f94639a5adbfebb5d646abf16aa394db074ee68cec773d20bf847",
+      "manifest_sha256": "dc405037b859a1e5838ba96955ff3c7b534492cd93f06a21140010b7ce517bfc",
+      "freeze_sha256": "4ad9be7c20c24ff26038822a32ca2790e9059169375c5eda2800c209f977924c"
+    },
+    {
+      "family": "N",
+      "revision": 3,
+      "conditions": [
+        "N000",
+        "N001"
+      ],
+      "source_counts": [
+        10,
+        10
+      ],
+      "primary_axis": "versions-and-amendments",
+      "secondary_axes": [
+        "documentary-authority",
+        "evidence-sufficiency"
+      ],
+      "admission_date": "2026-11-24",
+      "owner_decision": "accept",
+      "decision_kind": "new",
+      "technical_dossier_format": "JSON",
+      "technical_dossier_sha256": "3aab2c4c905c95fef1290fc5fbd876ec604393286b1117386be5ba89cd96a026",
+      "manifest_sha256": "849f9215a96e327e0bf53ef64e8a998ee3d6b6c788f718e46de13fc07f2880a3",
+      "freeze_sha256": "6d3602f55ee2d064ea0a16a8b5578e69c8c61ebf591a5b88a2e9727c3ad41853"
+    },
+    {
+      "family": "E",
+      "revision": 3,
+      "conditions": [
+        "E000",
+        "E001"
+      ],
+      "source_counts": [
+        7,
+        7
+      ],
+      "primary_axis": "contradictory-assertions",
+      "secondary_axes": [
+        "origin-and-copies",
+        "evidence-sufficiency"
+      ],
+      "admission_date": "2026-11-24",
+      "owner_decision": "accept",
+      "decision_kind": "new",
+      "technical_dossier_format": "JSON",
+      "technical_dossier_sha256": "aae4ef05a2e640ee624ebd46a574d59731fa5b5f952924ead1b6a9e8b5471ea4",
+      "manifest_sha256": "291d4bf86e79c8791711b13b1aa42d26b00fb8c912a8de9a4eaf0cbcad03b91f",
+      "freeze_sha256": "4393fa8110db4c7542c83fc5a039f78e02618530dde831e569ecacc9cd63b7e2"
+    },
+    {
+      "family": "W",
+      "revision": 2,
+      "conditions": [
+        "W000"
+      ],
+      "source_counts": [
+        8
+      ],
+      "primary_axis": "contradictory-assertions",
+      "secondary_axes": [
+        "origin-and-copies",
+        "documentary-authority",
+        "evidence-sufficiency"
+      ],
+      "admission_date": "2026-11-24",
+      "owner_decision": "accept",
+      "decision_kind": "new",
+      "technical_dossier_format": "JSON",
+      "technical_dossier_sha256": "697a21d6c06a19ebd6972814622d43599b8fe641f311261420dc29ec13d37b2f",
+      "manifest_sha256": "8ec68fadd66ae5ca7aa64fcb68e92f8f2cfee577bd70e686683c4f2c832c0b84",
+      "freeze_sha256": "e5293fac11ddd7fa8420ab40e1de5eaa2193c1f24542283bd843615f8c0f49a0"
+    },
+    {
+      "family": "O",
+      "revision": 7,
+      "conditions": [
+        "O000",
+        "O001"
+      ],
+      "source_counts": [
+        8,
+        8
+      ],
+      "primary_axis": "documentary-authority",
+      "secondary_axes": [
+        "administrative-context",
+        "evidence-sufficiency"
+      ],
+      "admission_date": "2026-11-24",
+      "owner_decision": "accept",
+      "decision_kind": "new",
+      "technical_dossier_format": "JSON",
+      "technical_dossier_sha256": "63e1b9a8ac05f14457174d0caae7ca53681986e34099b54b960757151c70bf82",
+      "manifest_sha256": "fc5df6f07e4cd18104f8252ccb14837f2e4dab283e3875d125bcd7b47b1e5a89",
+      "freeze_sha256": "4fac45e77d4381bbf23275b99ca689edcfaaa32545bca6f52afafe419d457f38"
+    },
+    {
+      "family": "L",
+      "revision": 9,
+      "conditions": [
+        "L000",
+        "L001"
+      ],
+      "source_counts": [
+        7,
+        7
+      ],
+      "primary_axis": "incomplete-information",
+      "secondary_axes": [
+        "evidence-sufficiency"
+      ],
+      "admission_date": "2026-11-24",
+      "owner_decision": "accept",
+      "decision_kind": "new",
+      "technical_dossier_format": "JSON",
+      "technical_dossier_sha256": "88e1e784a0ab025cc132b5abd7859dcf6b1aed950e122facabae02d3a5f962a2",
+      "manifest_sha256": "bfe09d12bbeb124eded616f8dbb5863f0e7cb7a816b0f172dfe49bd5b104d4e4",
+      "freeze_sha256": "e7b9d21a450fcb8b3f3b8e2c77258e35d8cd4483d9a0969d215b164f2ae93640"
+    },
+    {
+      "family": "AH",
+      "revision": 3,
+      "conditions": [
+        "AH000",
+        "AH001"
+      ],
+      "source_counts": [
+        5,
+        5
+      ],
+      "primary_axis": "documentary-authority",
+      "secondary_axes": [
+        "origin-and-copies",
+        "evidence-sufficiency",
+        "incomplete-information"
+      ],
+      "admission_date": "2026-11-24",
+      "owner_decision": "accept",
+      "decision_kind": "new",
+      "technical_dossier_format": "JSON",
+      "technical_dossier_sha256": "1f372940d07ff3ad777b40340cc4db9aac35ef6d712d0fef7958838584822500",
+      "manifest_sha256": "10eb753f67a8ab20d1082150d8bd4d763ab90f6bd21eb703d31903229e0dd1cb",
+      "freeze_sha256": "a492366d401a9edc6fd54b413249fb1cc80172976e1f1ef66e7912e3a87af3e9"
+    },
+    {
+      "family": "AG",
+      "revision": 2,
+      "conditions": [
+        "AG000",
+        "AG001"
+      ],
+      "source_counts": [
+        5,
+        5
+      ],
+      "primary_axis": "incomplete-information",
+      "secondary_axes": [
+        "custody-and-absence",
+        "documentary-authority",
+        "temporal-effectiveness",
+        "evidence-sufficiency"
+      ],
+      "admission_date": "2026-11-24",
+      "owner_decision": "accept",
+      "decision_kind": "new",
+      "technical_dossier_format": "JSON",
+      "technical_dossier_sha256": "8b47f7db7e086b1823663baad9e25cca20be911b152e9f5d9fed6899f901f873",
+      "manifest_sha256": "4d15e1bae1316464b20250b247e89111c7ed251d26390febd085f9e347be01ce",
+      "freeze_sha256": "044ff97039a1a56a0cd2bf629af41d1def0df7379859014fec0d122bb3ed82d7"
+    },
+    {
+      "family": "AZ",
+      "revision": 1,
+      "conditions": [
+        "AZ000"
+      ],
+      "source_counts": [
+        5
+      ],
+      "primary_axis": "graph-completeness",
+      "secondary_axes": [
+        "documentary-authority",
+        "evidence-sufficiency"
+      ],
+      "admission_date": "2026-11-24",
+      "owner_decision": "accept",
+      "decision_kind": "new",
+      "technical_dossier_format": "JSON",
+      "technical_dossier_sha256": "ce84f2b9bf4a7b7269b277e1110a3162d7c7bc600a8af1af77e273a8b58d199a",
+      "manifest_sha256": "81d2e71cdcf256062d694dcec181c8b1616e0ea6660dccbcf936ba4c94cbf4d5",
+      "freeze_sha256": "3373de9ccdd6996be68f30a909b44c909ff5767c11301b3e23372acd063089b3"
+    },
+    {
+      "family": "R",
+      "revision": 4,
+      "conditions": [
+        "R000",
+        "R001"
+      ],
+      "source_counts": [
+        12,
+        12
+      ],
+      "primary_axis": "temporal-effectiveness",
+      "secondary_axes": [
+        "cross-source-reasoning",
+        "evidence-sufficiency"
+      ],
+      "admission_date": "2026-11-24",
+      "owner_decision": "accept",
+      "decision_kind": "new",
+      "technical_dossier_format": "JSON",
+      "technical_dossier_sha256": "b13f6eb977507dbc678f25ca38d9a764ab8a36943b85891e02451f85d0300490",
+      "manifest_sha256": "00f4ece1de184d10ac3ddcad7ef4b737704379e78505c33dd665204658d20da8",
+      "freeze_sha256": "d411cc32a57bb25f00d871d97bf32f868b0dd1ebd8a519c8653781dbef82f427"
+    },
+    {
+      "family": "CM",
+      "revision": 2,
+      "conditions": [
+        "CM000"
+      ],
+      "source_counts": [
+        10
+      ],
+      "primary_axis": "graph-completeness",
+      "secondary_axes": [
+        "documentary-authority",
+        "evidence-sufficiency"
+      ],
+      "admission_date": "2026-11-24",
+      "owner_decision": "accept",
+      "decision_kind": "new",
+      "technical_dossier_format": "JSON",
+      "technical_dossier_sha256": "646a4ea8186f1fd7635d5b41e34587fc844b078b7523bf4e69242c8f3617eb98",
+      "manifest_sha256": "cc93957bed8090927b887a074a5f6daee5f960eddbd4becdb611bd524de30767",
+      "freeze_sha256": "71338eb230756a70f31367f2bb0c572d5adfc4ad046b4260eea817ee2e842f1e"
+    },
+    {
+      "family": "DA",
+      "revision": 4,
+      "conditions": [
+        "DA000"
+      ],
+      "source_counts": [
+        11
+      ],
+      "primary_axis": "documentary-authority",
+      "secondary_axes": [
+        "graph-completeness",
+        "cross-source-reasoning",
+        "evidence-sufficiency"
+      ],
+      "admission_date": "2026-11-24",
+      "owner_decision": "accept",
+      "decision_kind": "new",
+      "technical_dossier_format": "JSON",
+      "technical_dossier_sha256": "29dbfbbd6a981722e24595892611175bab98013a9c8a1d858c1ffa19c75f8d04",
+      "manifest_sha256": "1cb5edc7614f01e0b2ee21e9815317e7f165dd3663116cdbc8fca6c3303736ee",
+      "freeze_sha256": "def96a7940133257c930f69b663e4e06de0344248442d348eeb6347310a59167"
+    },
+    {
+      "family": "DB",
+      "revision": 5,
+      "conditions": [
+        "DB000"
+      ],
+      "source_counts": [
+        9
+      ],
+      "primary_axis": "evidence-sufficiency",
+      "secondary_axes": [
+        "graph-completeness",
+        "cross-source-reasoning"
+      ],
+      "admission_date": "2026-11-24",
+      "owner_decision": "accept",
+      "decision_kind": "new",
+      "technical_dossier_format": "JSON",
+      "technical_dossier_sha256": "52c42e5fb8b059e83e0d5af912e3caba475610ba39d26d8a6f93ac99326bfb49",
+      "manifest_sha256": "ada80078285bb561b244fe2ba22df3f6cd45b357acbdc9e6872686377dbded37",
+      "freeze_sha256": "43b775fc964fc6813d8e45c076382b84c7b2d8a222ff4cbc83f6540a915da8fc"
+    }
+  ],
+  "source_counts_are_per_condition": true,
+  "coverage": {
+    "conditions": 34,
+    "source_instances": 258,
+    "condition_edge_instances": 113,
+    "families": 19,
+    "new_admissions": 14,
+    "preserved_admissions": 5,
+    "single_natural_condition_families": 6,
+    "multi_condition_families": 13,
+    "source_count_min": 3,
+    "source_count_max": 25,
+    "new_admission_control_assignments": 253
+  },
+  "primary_axis_counts": {
+    "temporal-effectiveness": 2,
+    "entity-identity": 2,
+    "cross-source-reasoning": 1,
+    "versions-and-amendments": 2,
+    "graph-completeness": 3,
+    "custody-and-absence": 1,
+    "contradictory-assertions": 2,
+    "documentary-authority": 3,
+    "incomplete-information": 2,
+    "evidence-sufficiency": 1
+  },
+  "relationship_type_counts": {
+    "sibling_of": 8,
+    "trustee_of": 37,
+    "parent_of": 20,
+    "settlor_of": 15,
+    "beneficiary_of": 30,
+    "spouse_of": 3
+  },
+  "family_v": "deferred"
+}
