@@ -1,5 +1,12 @@
 # Benchmark v3 pre-giant budget extension
 
+**Owner admission recorded 24 November 2026.** The 19 verified non-giant
+families are admitted. The checkpoints below describe the technical state
+when each was written. The final register binds only the qualified revisions.
+Earlier returned and quarantined lineages remain excluded. The 51–99 Source
+readiness gate remains open and Family V stays deferred.
+[Admission register](../../admissions/2026-11-24.md) · [Research catalogue](../../RESEARCH-CATALOGUE.md)
+
 The owner authorised 2,000 additional scientific-agent sessions. The
 new pool starts at the verified 984 charged sessions and has a cumulative
 ceiling of 2,984. It retires the preceding pool's 16 unused sessions.
