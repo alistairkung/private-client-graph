@@ -16,6 +16,8 @@ import {
   type RelationshipRoute,
 } from "./node-geometry";
 
+const COMPARISON_DETACHED_GAP = 110;
+
 export interface DrawingBounds {
   x: number;
   y: number;
@@ -179,7 +181,10 @@ export function graphDrawing(
     ),
   );
   dagre.layout(layout);
-  const anchored = centralTrustLayout(presentation);
+  const anchored = centralTrustLayout(
+    presentation,
+    outcomes ? COMPARISON_DETACHED_GAP : undefined,
+  );
   const layoutPositions =
     anchored?.positions ??
     new Map(

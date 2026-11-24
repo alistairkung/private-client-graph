@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type {
   CanonicalState,
   RelationshipOutcome,
@@ -11,6 +11,7 @@ import { edgeKey, graphEdgeKeys } from "./benchmarkEdges";
 import { RelationshipEvidence } from "./RelationshipEvidence";
 import { UnavailablePrediction } from "./UnavailablePrediction";
 import "./condition-inspection.css";
+import "./condition-workbench.css";
 
 type Status = "correct" | "missing" | "unsupported" | "expected";
 type Side = "expected" | "predicted";
@@ -143,6 +144,8 @@ export function ConditionInspection({
   const [localSelectedKey, setLocalSelectedKey] = useState<string | null>(null);
   const selectedKey = savedEdgeKey === undefined ? localSelectedKey : savedEdgeKey;
   const [filter, setFilter] = useState<"all" | Status>("all");
+  const [view, setView] = useState<"graphs" | "relationships">("graphs");
+  const relationshipList = useRef<HTMLElement>(null);
   const [side, setSide] = useState<Side>("expected");
   const [locateRequest, setLocateRequest] = useState<{
     side: Side;
@@ -150,24 +153,10 @@ export function ConditionInspection({
     request: number;
   } | null>(null);
   const locateSequence = useRef(0);
-  const [fitScales, setFitScales] = useState<Record<Side, number | null>>({
-    expected: null,
-    predicted: null,
-  });
   const invokingControl = useRef<HTMLButtonElement | null>(null);
-  const sourceRegion = useRef<HTMLElement>(null);
+  const sourceRegion = useRef<HTMLDivElement>(null);
   const expectedGraphRef = useRef<HTMLElement>(null);
   const predictedGraphRef = useRef<HTMLElement>(null);
-  const reportExpectedFitScale = useCallback((scale: number) => {
-    setFitScales((current) => current.expected === scale
-      ? current
-      : { ...current, expected: scale });
-  }, []);
-  const reportPredictedFitScale = useCallback((scale: number) => {
-    setFitScales((current) => current.predicted === scale
-      ? current
-      : { ...current, predicted: scale });
-  }, []);
 
   useEffect(() => {
     invokingControl.current = null;
@@ -175,29 +164,40 @@ export function ConditionInspection({
     setFilter("all");
     setShowIsolatedEntities(false);
     setSide("expected");
-    setFitScales({ expected: null, predicted: null });
+    setView("graphs");
     setLocateRequest(null);
   }, [observation.id]);
 
   const selectedEdge = selectedKey ? rowByKey.get(selectedKey)?.edge : undefined;
-  const counts = useMemo(
-    () => rows.reduce((count, row) => ({ ...count, [row.status]: count[row.status] + 1 }), {
-      correct: 0, missing: 0, unsupported: 0, expected: 0,
-    }),
-    [rows],
-  );
+  const counts = rows.reduce((total, row) => {
+    total[row.status] += 1;
+    return total;
+  }, { correct: 0, missing: 0, unsupported: 0, expected: 0 });
   const expectedIsolated = (expected?.entities.length ?? 0) -
     (connectedExpected?.entities.length ?? 0);
   const predictedIsolated = predictionAvailable
     ? (prediction?.entities.length ?? 0) - (connectedPrediction?.entities.length ?? 0)
     : 0;
-  const graphIsDense = rows.length >= 12 ||
-    Math.max(visibleExpected?.entities.length ?? 0, visiblePrediction?.entities.length ?? 0) >= 20;
-  const measuredFitScales = Object.values(fitScales).filter(
-    (scale): scale is number => scale !== null,
-  );
-  const indexOpensByFit =
-    measuredFitScales.length > 0 && Math.min(...measuredFitScales) < 0.75;
+  const proofStates = useMemo(() => new Map(
+    benchmark?.proof_targets.map((target) => [
+      edgeKey(...target.edge),
+      { complete: "Proof complete", incomplete: "Proof incomplete", missed: "Proof missed", without_graph: "No valid graph" }[target.status],
+    ]),
+  ), [benchmark?.proof_targets]);
+
+  function focusRelationshipEvidence() {
+    sourceRegion.current?.querySelector<HTMLElement>(".relationship-evidence")?.focus();
+  }
+
+  function inspectRelationships(nextFilter: "all" | Status, focusEvidence = false) {
+    setFilter(nextFilter);
+    setView("relationships");
+    requestAnimationFrame(() => {
+      if (focusEvidence) focusRelationshipEvidence();
+      else relationshipList.current?.focus();
+    });
+  }
+
   function selectEdge(edge: Relationship, control?: HTMLButtonElement) {
     if (control) invokingControl.current = control;
     const key = edgeKey(...edge);
@@ -209,7 +209,7 @@ export function ConditionInspection({
     return outcomesFor(state, graphSide, rowByKey, predictionAvailable);
   }
 
-  function graph(state: CanonicalState, roster: CanonicalState, graphSide: Side) {
+  function graph(state: CanonicalState, graphSide: Side) {
     const keys = graphEdgeKeys(state);
     const selectedIndex = selectedKey ? keys.indexOf(selectedKey) : -1;
     const outcomes = graphOutcomes(state, graphSide);
@@ -240,7 +240,6 @@ export function ConditionInspection({
             modelOverride={graphSide === "expected"
               ? comparisonLayout?.expected
               : comparisonLayout?.predicted}
-            onFitScaleChange={graphSide === "expected" ? reportExpectedFitScale : reportPredictedFitScale}
             comparisonBounds={comparisonLayout?.bounds}
             preserveManualViewOnResize
             locateRequest={locateRequest?.side === graphSide
@@ -251,19 +250,13 @@ export function ConditionInspection({
               if (row) {
                 setSide(graphSide);
                 selectEdge(row.edge, trigger);
+                inspectRelationships("all", true);
               }
             }}
             onEntity={() => undefined}
           />
         )}
-        {roster.entities.length > 0 && (
-          <details className="condition-roster">
-            <summary>Full Matter roster · {roster.entities.length}</summary>
-            <ul aria-label={graphSide === "expected" ? "Expected entities" : "Predicted entities"}>
-              {roster.entities.map((entity) => <li key={entity.id}>{entity.name}</li>)}
-            </ul>
-          </details>
-        )}
+
       </section>
     );
   }
@@ -277,13 +270,14 @@ export function ConditionInspection({
     const state = targetSide === "expected" ? expected : prediction;
     invokingControl.current = control;
     setSide(targetSide);
+    setView("graphs");
     selectEdge(edge);
     if (!state) return;
     const index = graphEdgeKeys(state).indexOf(edgeKey(...edge));
     if (index < 0) return;
     setLocateRequest({ side: targetSide, index, request: ++locateSequence.current });
     const canvas = targetSide === "expected" ? expectedGraphRef.current : predictedGraphRef.current;
-    canvas?.scrollIntoView?.({ block: "center", behavior: "instant" });
+    requestAnimationFrame(() => canvas?.scrollIntoView?.({ block: "nearest", behavior: "instant" }));
   }
 
   if (!benchmark || !expected || !visibleExpected) {
@@ -291,139 +285,161 @@ export function ConditionInspection({
   }
 
   const filteredRows = rows.filter((row) => filter === "all" || row.status === filter);
+  const inspectedEdge = filteredRows.some((row) => edgeKey(...row.edge) === selectedKey)
+    ? selectedEdge
+    : undefined;
   return (
-    <section className="condition-inspection" aria-label={`Environment Condition ${benchmark.condition} graph comparison`}>
-      <div className="comparison-legend" role="group" aria-label="Relationship outcomes">
-        {predictionAvailable ? (Object.keys(counts) as Status[]).filter((status) => status !== "expected").map((status) => (
-          <span className={`outcome outcome-${status}`} key={status}>
-            <span aria-hidden="true">{presentation[status].mark}</span>
-            {presentation[status].label} <strong>{counts[status]}</strong>
-          </span>
-        )) : (
-          <span className="outcome outcome-expected">Expected relationships <strong>{counts.expected}</strong></span>
+    <section className="condition-inspection condition-graph-first" aria-label={`Environment Condition ${benchmark.condition} graph comparison`}>
+      <div className="comparison-toolbar">
+        <div className="comparison-views" role="group" aria-label="Comparison view">
+          <button type="button" aria-pressed={view === "graphs"} onClick={() => setView("graphs")}>Graphs</button>
+          <button type="button" aria-pressed={view === "relationships"} onClick={() => inspectRelationships("all")}>
+            Relationships <span>{rows.length}</span>
+          </button>
+        </div>
+        <div className="comparison-legend" role="group" aria-label="Relationship outcomes">
+          {(predictionAvailable ? (["correct", "missing", "unsupported"] as const) : (["expected"] as const)).map((status) => (
+            <button
+              type="button"
+              className={`outcome outcome-${status}`}
+              key={status}
+              aria-pressed={view === "relationships" && filter === status}
+              onClick={() => inspectRelationships(status)}
+            >
+              <span aria-hidden="true">{presentation[status].mark}</span>
+              {status === "expected" ? "Expected relationships" : presentation[status].label} <strong>{counts[status]}</strong>
+            </button>
+          ))}
+        </div>
+        {view === "graphs" && (
+          <details className="comparison-options">
+            <summary>Graph options</summary>
+            {expectedIsolated + predictedIsolated > 0 && (
+              <label className="isolated-entities-control">
+                <input
+                  type="checkbox"
+                  checked={showIsolatedEntities}
+                  onChange={(event) => setShowIsolatedEntities(event.target.checked)}
+                />
+                <span>Show isolated entities</span>
+                <small>
+                  Expected {expectedIsolated}{predictionAvailable && ` · Predicted ${predictedIsolated}`}
+                </small>
+              </label>
+            )}
+            {comparisonLayout && (
+              <p className="layout-note">
+                {comparisonLayout.aligned
+                  ? "Shared entities are aligned between the graphs."
+                  : "Graphs use independent layouts because shared entities are ambiguous or would overlap."}
+              </p>
+            )}
+            <div className="comparison-rosters">
+              {matterRoster(expected, "Expected")}
+              {predictionAvailable && prediction && matterRoster(prediction, "Predicted")}
+            </div>
+          </details>
         )}
       </div>
 
-      {!predictionAvailable && <UnavailablePrediction observation={observation} />}
+      <div hidden={view !== "graphs"} className="comparison-graph-view">
+        <div className="comparison-graph-settings">
+          <div className="graph-side-tabs" role="group" aria-label="Graph side">
+            <button aria-pressed={side === "expected"} onClick={() => setSide("expected")}>Expected</button>
+            <button aria-pressed={side === "predicted"} disabled={!predictionAvailable} onClick={() => setSide("predicted")}>Predicted</button>
+          </div>
 
-      {predictionAvailable && prediction && comparisonLayout && (
-        <p className="layout-note" role="status">
-          {comparisonLayout.aligned
-            ? "Shared entities are aligned between the graphs."
-            : "The graphs are placed independently because shared entities are ambiguous or would overlap."}
-        </p>
-      )}
-
-      {expectedIsolated + predictedIsolated > 0 && (
-        <label className="isolated-entities-control">
-          <input
-            type="checkbox"
-            checked={showIsolatedEntities}
-            onChange={(event) => setShowIsolatedEntities(event.target.checked)}
-          />
-          <span>Show isolated entities</span>
-          <small>
-            Expected {expectedIsolated}
-            {predictionAvailable && ` · Predicted ${predictedIsolated}`}
-          </small>
-        </label>
-      )}
-      <div className="graph-side-tabs" role="group" aria-label="Graph side">
-        <button aria-pressed={side === "expected"} onClick={() => setSide("expected")}>Expected</button>
-        <button aria-pressed={side === "predicted"} disabled={!predictionAvailable} onClick={() => setSide("predicted")}>Predicted</button>
-      </div>
-      <div className="condition-graphs" data-side={side}>
-        {graph(visibleExpected, expected, "expected")}
-        {predictionAvailable && prediction && visiblePrediction &&
-          graph(visiblePrediction, prediction, "predicted")}
-      </div>
-
-      {selectedEdge && <button className="secondary jump-to-evidence" onClick={() => sourceRegion.current?.focus()}>Jump to evidence</button>}
-      <details className="relationship-index" open={graphIsDense || indexOpensByFit}>
-        <summary>Relationships <span>{rows.length}</span></summary>
-        <div className="relationship-index-controls">
-          <label htmlFor={`relationship-filter-${observation.id}`}>Show</label>
-          <select
-            id={`relationship-filter-${observation.id}`}
-            aria-label="Filter relationships"
-            value={filter}
-            onChange={(event) => setFilter(event.target.value as "all" | Status)}
-          >
-            <option value="all">All relationships</option>
-            <option value="correct" disabled={!predictionAvailable}>Correct</option>
-            <option value="missing" disabled={!predictionAvailable}>Missing</option>
-            <option value="unsupported" disabled={!predictionAvailable}>Unsupported</option>
-          </select>
+          {comparisonLayout && !comparisonLayout.aligned && (
+            <span className="layout-note">Independent layouts</span>
+          )}
         </div>
-        <ul aria-label="Relationship outcomes">
-          {filteredRows.map((row) => {
-            const key = edgeKey(...row.edge);
-            return (
-              <li key={key}>
-                <button
-                  type="button"
-                  className="relationship-index-row"
-                  data-relationship-key={key}
-                  aria-pressed={selectedKey === key}
-                  onClick={(event) => {
-                    setSide(row.status === "unsupported" ? "predicted" : "expected");
-                    selectEdge(row.edge, event.currentTarget);
-                  }}
-                >
-                  <span aria-hidden="true" className={`outcome-mark outcome-${row.status}`}>
-                    {presentation[row.status].mark}
-                  </span>
-                  <span className="relationship-index-edge">
-                    <strong>{row.edge[0]}</strong><span>{row.edge[1].replaceAll("_", " ")}</span><strong>{row.edge[2]}</strong>
-                  </span>
-                  <span className={`outcome-text outcome-${row.status}`}>{presentation[row.status].label}</span>
-                </button>
-                <button
-                  type="button"
-                  className="locate-relationship"
-                  onClick={(event) => locateRelationship(row.edge, row.status, event.currentTarget)}
-                  aria-label={`Locate ${row.edge.join(" ")} in graph`}
-                  hidden={selectedKey !== key}
-                >Locate in graph</button>
-              </li>
-            );
-          })}
-        </ul>
-        {!filteredRows.length && <p>No relationships match this filter.</p>}
-      </details>
+        <div className="condition-graphs" data-side={side}>
+          {graph(visibleExpected, "expected")}
+          {predictionAvailable && visiblePrediction && graph(visiblePrediction, "predicted")}
+          {!predictionAvailable && <UnavailablePrediction observation={observation} />}
+        </div>
+      </div>
 
-      {selectedEdge && (
-        <section
-          ref={sourceRegion}
-          tabIndex={-1}
-          className="selected-relationship-evidence"
-          role="region"
-          aria-label="Selected relationship evidence"
-        >
-          <RelationshipEvidence
-            key={`${observation.id}-${selectedKey}`}
-            observation={observation}
-            edge={selectedEdge}
-          onBack={() => {
-              const target = invokingControl.current?.isConnected &&
-                invokingControl.current.getClientRects().length > 0
-                ? invokingControl.current
-                : selectedKey
-                  ? document.querySelector<HTMLButtonElement>(
-                      `[data-relationship-key="${CSS.escape(selectedKey)}"]`,
-                    )
-                  : null;
-              if (target) {
-                const index = target.closest("details");
-                if (index) index.open = true;
-                target.focus();
-              } else {
-                expectedGraphRef.current?.focus();
-              }
-            }}
-          />
+      <div className="comparison-inspector" hidden={view !== "relationships"}>
+        <section ref={relationshipList} tabIndex={-1} className="relationship-index" aria-label="Relationship list">
+          <div className="inspector-list-heading">
+            <h4>{filter === "all" ? "Relationships" : `${presentation[filter].label} relationships`}</h4>
+            <span>{filteredRows.length} of {rows.length}</span>
+          </div>
+          <ul aria-label="Relationship outcomes">
+            {filteredRows.map((row) => {
+              const key = edgeKey(...row.edge);
+              return (
+                <li key={key}>
+                  <button
+                    type="button"
+                    className="relationship-index-row"
+                    aria-pressed={selectedKey === key}
+                    onClick={(event) => {
+                      setSide(row.status === "unsupported" ? "predicted" : "expected");
+                      selectEdge(row.edge, event.currentTarget);
+                      requestAnimationFrame(focusRelationshipEvidence);
+                    }}
+                  >
+                    <span aria-hidden="true" className={`outcome-mark outcome-${row.status}`}>
+                      {presentation[row.status].mark}
+                    </span>
+                    <span className="relationship-index-edge">
+                      <strong>{row.edge[0]}</strong><span>{row.edge[1].replaceAll("_", " ")}</span><strong>{row.edge[2]}</strong>
+                    </span>
+                    <span className={`outcome-text outcome-${row.status}`}>{presentation[row.status].label}</span>
+                    {proofStates.has(key) && <small className="relationship-row-proof">{proofStates.get(key)}</small>}
+                  </button>
+                  <button
+                    type="button"
+                    className="locate-relationship"
+                    onClick={(event) => locateRelationship(row.edge, row.status, event.currentTarget)}
+                    aria-label={`Locate ${row.edge.join(" ")} in graph`}
+                    hidden={selectedKey !== key}
+                  >Locate in graph</button>
+                </li>
+              );
+            })}
+          </ul>
+          {!filteredRows.length && <p>No relationships match this outcome.</p>}
         </section>
-      )}
+
+        {inspectedEdge ? (
+          <div ref={sourceRegion} className="selected-relationship-evidence">
+            <RelationshipEvidence
+              key={`${observation.id}-${selectedKey}`}
+              observation={observation}
+              edge={inspectedEdge}
+              onBack={() => {
+                const target = invokingControl.current?.isConnected &&
+                  invokingControl.current.getClientRects().length > 0
+                  ? invokingControl.current
+                  : relationshipList.current?.querySelector<HTMLButtonElement>(
+                      ".relationship-index-row[aria-pressed='true']",
+                    );
+                target?.focus();
+              }}
+            />
+          </div>
+        ) : (
+          <section className="comparison-evidence-empty">
+            <h4>Supporting evidence</h4>
+            <p>Select a relationship to inspect its proof and Sources.</p>
+          </section>
+        )}
+      </div>
     </section>
+  );
+}
+
+function matterRoster(state: CanonicalState, side: "Expected" | "Predicted") {
+  if (!state.entities.length) return null;
+  return (
+    <details className="condition-roster">
+      <summary>{side} Matter roster · {state.entities.length}</summary>
+      <ul aria-label={`${side} entities`}>
+        {state.entities.map((entity) => <li key={entity.id}>{entity.name}</li>)}
+      </ul>
+    </details>
   );
 }
