@@ -12,6 +12,8 @@ export type PerformanceRun = {
   model: string | null;
   recorded: boolean;
   f1: number | null;
+  metricLabel?: string;
+  coverageLabel?: string;
   scoreState: string;
   coverage: { scored: number; planned: number };
   cost: { total: number | null; currency: string | null };
@@ -125,7 +127,7 @@ export function RunPerformanceChart({
           </select>
         </label>
         <div className="chart-legend">
-          <span>{t("F1 · 0–1")}</span>
+          <span>{eligible.find(run => run.metricLabel)?.metricLabel ?? t("F1 · 0–1")}</span>
           <span>◇ {t("No resolver")}　● {t("Generative resolver")}　○ {t("Provisional")}</span>
         </div>
         {!runs.length ? (
@@ -159,8 +161,8 @@ export function RunPerformanceChart({
                       top: `${(1 - (run.f1 ?? 0)) * 100}%`,
                     }}
                     aria-label={run.displayName
-                      ? t("{name}, F1 {f1}, {state}, {scored}/{planned} scored", { name: run.displayName, f1: metric(run.f1), state: t(run.scoreState), scored: run.coverage.scored, planned: run.coverage.planned })
-                      : t("Run {run}, F1 {f1}, {state}, {scored}/{planned} scored", { run: index + 1, f1: metric(run.f1), state: t(run.scoreState), scored: run.coverage.scored, planned: run.coverage.planned })}
+                      ? `${run.displayName}, ${run.metricLabel ?? "F1"} ${metric(run.f1)}, ${t(run.scoreState)}, ${run.coverage.scored}/${run.coverage.planned} ${run.coverageLabel ?? "scored"}`
+                      : `Run ${index + 1}, ${run.metricLabel ?? "F1"} ${metric(run.f1)}, ${t(run.scoreState)}, ${run.coverage.scored}/${run.coverage.planned} ${run.coverageLabel ?? "scored"}`}
                     aria-pressed={selected === run.id}
                     aria-describedby={`${chartId}-tooltip`}
                     onFocus={() => setInspected(run.id)}
@@ -218,7 +220,7 @@ export function RunPerformanceChart({
                 {experiment.name} · {tooltip.displayName ?? t("Run {run}", { run: runNumber(tooltip.id) })}
               </strong>
               <span>
-                {t("F1 {f1} · {state} · {scored}/{planned} scored", { f1: t(metric(tooltip.f1)), state: t(tooltip.scoreState), scored: tooltip.coverage.scored, planned: tooltip.coverage.planned })}
+                {tooltip.metricLabel ?? t("F1")}: {t(metric(tooltip.f1))} · {t(tooltip.scoreState)} · {tooltip.coverage.scored}/{tooltip.coverage.planned} {tooltip.coverageLabel ?? t("scored")}
               </span>
               <small>{tooltip.id}</small>
               <p>

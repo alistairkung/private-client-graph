@@ -2,6 +2,15 @@ import { useRef, useState } from "react";
 import type { RunDetail } from "../shared/contracts";
 import { EvidenceInspector } from "../results/EvidenceInspector";
 import { metric } from "./RunChart";
+import { GraphDrawing } from "../../src/features/review/GraphDrawing";
+import type { CanonicalState } from "../shared/contracts";
+import type { BenchmarkObservation } from "./benchmark-types";
+
+const symmetric = new Set(["spouse_of", "sibling_of"]);
+function edgeKey(source: string, type: string, target: string) {
+  const [left, right] = symmetric.has(type) && source.localeCompare(target) > 0 ? [target, source] : [source, target];
+  return JSON.stringify([left, type, right]);
+}
 
 export function ObservationInspection({ run }: { run: RunDetail }) {
   const evidence = useRef<HTMLDivElement>(null);
@@ -21,12 +30,72 @@ export function ObservationInspection({ run }: { run: RunDetail }) {
   const [observationId, setObservationId] = useState(run.observations[0]?.id);
   const [outcome, setOutcome] = useState("all");
   const [relationshipId, setRelationshipId] = useState<string | null>(null);
+  const [expectedEdge, setExpectedEdge] = useState<readonly [string, string, string] | null>(null);
   const observation =
     run.observations.find((item) => item.id === observationId) ??
     run.observations[0];
+  const benchmarkObservation = observation as BenchmarkObservation | undefined;
   const relationship = observation?.relationships.find(
     (item) => item.id === relationshipId,
   );
+  const expected = benchmarkObservation?.benchmark?.expected;
+  const expectedEvidence = expectedEdge && benchmarkObservation?.benchmark?.expected_relationships.find(item => edgeKey(...item.edge) === edgeKey(...expectedEdge));
+  const evidenceRelationship = relationship ?? (expectedEvidence ? {
+    id: `expected:${expectedEvidence.edge.join(":")}`,
+    edge: expectedEvidence.edge,
+    outcome: "missing" as const,
+    expected: expectedEvidence.quotes,
+    predicted: [],
+  } : undefined);
+  const predicted = observation?.result?.state;
+  const memberStatus = (sourceId: string, quote: string, edge: readonly [string, string, string]) => {
+    if (!predicted?.sources.some(source => source.id === sourceId)) return "Source missing";
+    const targetKey = edgeKey(...edge);
+    const relation = predicted.relationships.find(item => edgeKey(
+      predicted.entities.find(entity => entity.id === item.source)?.name ?? item.source,
+      item.type,
+      predicted.entities.find(entity => entity.id === item.target)?.name ?? item.target,
+    ) === targetKey);
+    if (!relation) return "Source present but relationship not attached";
+    const evidence = predicted.evidence.filter(item => relation.evidence_ids.includes(item.id) && item.source_id === sourceId);
+    return evidence.some(item => item.supporting_text === quote)
+      ? "Attached to this relationship"
+      : evidence.length ? "Wrong quotation on this relationship" : "Source present but relationship not attached";
+  };
+  const relationshipIndices = (state: CanonicalState | null | undefined) =>
+    state?.relationships.flatMap((edge, index) => {
+      const source = state.entities.find(entity => entity.id === edge.source)?.name ?? edge.source;
+      const target = state.entities.find(entity => entity.id === edge.target)?.name ?? edge.target;
+      const match = benchmarkObservation?.relationships.find((item) => edgeKey(...item.edge) === edgeKey(source, edge.type, target));
+      return match ? [{ index, outcome: match.outcome, relationshipId: match.id }] : [];
+    }) ?? [];
+  const graph = (state: CanonicalState, label: string, side: "expected" | "predicted") => {
+    const statuses = relationshipIndices(state);
+    const selectedIndex = relationship
+      ? statuses.find(item => item.relationshipId === relationship.id)?.index ?? null
+      : expectedEdge ? state.relationships.findIndex(edge => edgeKey(
+          state.entities.find(entity => entity.id === edge.source)?.name ?? edge.source,
+          edge.type,
+          state.entities.find(entity => entity.id === edge.target)?.name ?? edge.target,
+        ) === edgeKey(...expectedEdge)) : null;
+    return <section className="benchmark-graph graph-workspace" aria-label={label} key={side}>
+      <h4>{label}</h4>
+      <GraphDrawing state={state} selected={selectedIndex} selectedEntity={null} memoryKey={`benchmark:${observation?.id}:${side}`} onSelect={(index) => {
+        const status = statuses.find(item => item.index === index);
+        const item = status && observation?.relationships.find(value => value.id === status.relationshipId);
+        if (item) { setRelationshipId(item.id); setExpectedEdge(null); }
+        else {
+          const edge = state.relationships[index];
+          setExpectedEdge([
+            state.entities.find(entity => entity.id === edge.source)?.name ?? edge.source,
+            edge.type,
+            state.entities.find(entity => entity.id === edge.target)?.name ?? edge.target,
+          ]);
+          setRelationshipId(null);
+        }
+      }} onEntity={() => undefined} />
+    </section>;
+  };
   return (
     <details className="observation-inspection">
       <summary>Observations &amp; Evidence</summary>
@@ -37,16 +106,16 @@ export function ObservationInspection({ run }: { run: RunDetail }) {
           onChange={(e) => {
             setObservationId(e.target.value);
             setRelationshipId(null);
+            setExpectedEdge(null);
             setOutcome("all");
           }}
         >
-          {run.observations.map((item) => (
-            <option key={item.id} value={item.id}>
-              {item.metadata?.name ?? item.case_id} ·{" "}
-              {item.metadata?.fixture_name ?? "Fixture name unavailable"} ·{" "}
-              {item.sample_id} · repetition {item.repetition} · {item.status}
-            </option>
-          ))}
+            {run.observations.map((raw) => {
+              const item = raw as BenchmarkObservation;
+              return <option key={item.id} value={item.id}>
+                {item.benchmark ? `${item.benchmark.family} · ${item.benchmark.condition}${item.benchmark.role ? ` · ${item.benchmark.role}` : ""} · ${item.benchmark.outcome}` : `${item.metadata?.name ?? item.case_id} · ${item.metadata?.fixture_name ?? "Fixture name unavailable"} · ${item.sample_id} · repetition ${item.repetition} · ${item.status}`}
+              </option>;
+            })}
         </select>
       </label>
       {observation && (
@@ -71,7 +140,20 @@ export function ObservationInspection({ run }: { run: RunDetail }) {
               {observation.repetition} · {observation.status}
             </small>
             {observation.reason && <p>{observation.reason}</p>}
+            {benchmarkObservation?.benchmark && <p><strong>{benchmarkObservation?.benchmark.family}</strong> · {benchmarkObservation?.benchmark.condition}{benchmarkObservation?.benchmark.role ? ` · ${benchmarkObservation?.benchmark.role}` : ""}{benchmarkObservation?.benchmark.contrast ? ` · ${benchmarkObservation?.benchmark.contrast}` : ""}</p>}
+            {benchmarkObservation?.benchmark && <p>Outcome: {benchmarkObservation?.benchmark.outcome.replaceAll("_", " ")}{benchmarkObservation?.benchmark.failure_detail ? ` · ${benchmarkObservation?.benchmark.failure_detail}` : ""}</p>}
           </div>
+          {benchmarkObservation?.benchmark && <div className="benchmark-inspection">
+            <h3>Expected and predicted canonical graphs</h3>
+            {!predicted && <p role="status">Predicted canonical graph unavailable · {benchmarkObservation?.benchmark.failure_detail ?? benchmarkObservation?.benchmark.outcome}</p>}
+            {!predicted && Boolean(benchmarkObservation?.benchmark.parsed_prediction) && <details><summary>Retained parsed prediction</summary><pre>{JSON.stringify(benchmarkObservation?.benchmark.parsed_prediction, null, 2)}</pre></details>}
+            <details><summary>Frozen Sources in order</summary><ol>{observation.sources?.map(source => <li key={source.id}><h4>{source.title} · {source.id}</h4><pre>{source.text}</pre></li>)}</ol></details>
+            <div className="benchmark-graphs">{expected && graph(expected, "Expected graph", "expected")}{predicted && graph(predicted, predicted.relationships.length ? "Predicted graph" : "Predicted graph · valid empty graph", "predicted")}</div>
+            <p>Matched · TP {benchmarkObservation?.benchmark.metrics.tp} · Extra · FP {benchmarkObservation?.benchmark.metrics.fp} · Missing · FN {benchmarkObservation?.benchmark.metrics.fn}</p>
+            <p>Proof {benchmarkObservation?.benchmark.metrics.complete_proofs}/{benchmarkObservation?.benchmark.metrics.planned_proofs} · Joint {benchmarkObservation?.benchmark.metrics.complete_joint_proofs}/{benchmarkObservation?.benchmark.metrics.planned_joint_proofs}</p>
+            <p>Quotation {ratio(benchmarkObservation?.benchmark.metrics.quote_passed, benchmarkObservation?.benchmark.metrics.quote_assessed)} · Source attribution {ratio(benchmarkObservation?.benchmark.metrics.attribution_passed, benchmarkObservation?.benchmark.metrics.attribution_assessed)}</p>
+            <ul aria-label="Proof outcomes">{benchmarkObservation?.benchmark.proof_targets.map((target, index) => <li key={`${target.edge.join(":")}:${index}`}>{target.edge.join(" · ")} · {target.status.replaceAll("_", " ")}{target.alternatives.map((alternative, alternativeIndex) => <ul key={alternativeIndex} aria-label={`Evidence alternative ${alternativeIndex + 1}`}><li><strong>Alternative {alternativeIndex + 1}</strong></li>{alternative.members.map((member, memberIndex) => <li key={`${member.source_id}:${memberIndex}`}><code>{member.source_id}</code> · <q>{member.text}</q> · {member.attached ? "Attached to this relationship" : `Not attached · ${memberStatus(member.source_id, member.text, target.edge)}`}</li>)}</ul>)}</li>)}</ul>
+          </div>}
           {observation.result?.evaluation && (
             <p>
               Precision {metric(observation.result.evaluation.precision)} ·
@@ -108,6 +190,7 @@ export function ObservationInspection({ run }: { run: RunDetail }) {
                   onChange={(e) => {
                     setOutcome(e.target.value);
                     setRelationshipId(null);
+                    setExpectedEdge(null);
                   }}
                 >
                   <option value="all">All relationships</option>
@@ -162,8 +245,8 @@ export function ObservationInspection({ run }: { run: RunDetail }) {
                     behavior: "instant",
                   });
                 }}
-                key={`${observation.id}-${relationship?.id ?? ""}`}
-                relationship={relationship}
+                key={`${observation.id}-${evidenceRelationship?.id ?? ""}`}
+                relationship={evidenceRelationship}
                 source={observation.source}
                 sources={observation.sources}
               />
@@ -174,3 +257,4 @@ export function ObservationInspection({ run }: { run: RunDetail }) {
     </details>
   );
 }
+const ratio = (passed: number, eligible: number) => eligible ? `${passed}/${eligible} (${(passed / eligible * 100).toFixed(1)}%)` : "Unavailable (0 eligible)";
