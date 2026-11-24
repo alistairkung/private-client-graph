@@ -10,10 +10,12 @@ def render_coverage() -> str:
         "# Benchmark v3 coverage register",
         "",
         "Generated with `uv run python -m benchmark_v3.architect coverage`.",
-        "Each row counts one admitted Matter family. Matched conditions share its history.",
+        "The [admission register](admissions/2026-11-24.md) covers all 19 admitted development families.",
+        "The [research catalogue](RESEARCH-CATALOGUE.md) describes their reasoning tests and limits.",
+        "Each family counts once. Matched conditions share its history.",
         "Keep this register outside the blind packets.",
         "",
-        "## Admitted development families",
+        "## Original five admissions and coverage reconciliations",
         "",
         "| Family | Primary axis | Secondary axes | Intended difficulty |",
         "| --- | --- | --- | --- |",
@@ -39,7 +41,7 @@ def render_coverage() -> str:
             f"| {_axis(axis.id)} | {_axis(axis.category)} | {_axis(axis.scope)} | "
             f"{_cell(axis.description)} |"
         )
-    lines.extend(["", "## Remaining research gaps", ""])
+    lines.extend(["", "## Earlier coverage gaps", ""])
     for gap in register.gaps:
         lines.append(f"- **{', '.join(map(_axis, gap.axes))}.** {gap.finding}")
     lines.extend(_proposal_statuses())

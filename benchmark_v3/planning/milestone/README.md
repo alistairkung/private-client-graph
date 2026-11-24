@@ -6,10 +6,15 @@
 
 [Continuation scope and budget](CONTINUATION.md) · [Autonomous realism amendment outcome](AUTONOMOUS-REALISM.md) · [Original execution outcome](RESULTS.md)
 
-The milestone target is eight independent development Matter histories.
-A, B, C, D and F have recorded human admissions and account for 12 conditions.
-The execution target is three additional independently verified technical
-dossiers. Each dossier remains for the owner to admit or return. [Admitted coverage](../../COVERAGE.md)
+The pre-giant construction phase closed on 24 November 2026 with 19
+independent owner-admitted development Matter families across 34 conditions.
+The dated decision preserves the five original admissions and binds 14 new
+admissions to exact verified technical dossiers. Family V remains deferred.
+[Admission register](../../admissions/2026-11-24.md) · [Research catalogue](../../RESEARCH-CATALOGUE.md)
+
+The planning and accounting below describe the earlier eight-family milestone.
+The qualification and quarantine checkpoints retain their original dates and dispositions.
+[Admitted coverage](../../COVERAGE.md)
 
 The integration combines the efficiency pilot, Architect roadmap, candidate
 recovery and construction commissioning. The original commits and retained
