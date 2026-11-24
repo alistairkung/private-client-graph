@@ -13,6 +13,7 @@ from private_client_graph.research.results import ResearchResult
 from private_client_graph.research.run_plan import RunPlan
 from private_client_graph.research.tracing import trace_id
 from .artifacts import artifact_digest, _verify_execution_binding
+from .family_context import RunFamilyContext
 from .contracts import RelationshipOutcome
 from .evidence import relationship_outcomes
 from .execution_contracts import FrozenPlan
@@ -46,6 +47,7 @@ class RunDetail(BaseModel):
     plan: FrozenPlan
     lifecycle: str
     evaluation: RunEvaluation
+    family_context: RunFamilyContext | None = None
     benchmark: BenchmarkRun | None = None
     observations: list[RunObservation]
     provenance: dict[str, Any]

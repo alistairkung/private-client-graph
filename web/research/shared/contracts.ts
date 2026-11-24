@@ -332,6 +332,22 @@ export type ExtractionResult = {
   relationships: Array<RelationshipCandidate>;
 };
 
+export type FamilyResearchContext = {
+  revision: string | number;
+  dossier_sha256: string;
+  description: string;
+  shortcuts: string;
+  hypothesis_text: string;
+  hypothesis_basis: "historical_admission" | "versioned_hypothesis";
+  hypothesis: HypothesisRef | null;
+  primary_axis: string;
+  secondary_axes: Array<string> | null;
+  condition_intents: Record<string, string>;
+  verified_findings: Array<VerifiedFinding>;
+  incidental_challenges: Array<string>;
+  scope_limits: string;
+};
+
 export type FreezeRun = {
   request_id: string;
   expected_revision: number;
@@ -378,6 +394,12 @@ export type HistoryPage = {
   total: number;
   offset: number;
   limit: number;
+};
+
+export type HypothesisRef = {
+  hypothesis_id: string;
+  revision: number;
+  hypothesis_sha256: string;
 };
 
 export type IdentityDiagnostics = {
@@ -672,6 +694,7 @@ export type RunDetail = {
   plan: FrozenPlan;
   lifecycle: string;
   evaluation: RunEvaluation;
+  family_context: RunFamilyContext | null;
   benchmark: BenchmarkRun | null;
   observations: Array<RunObservation>;
   provenance: Record<string, unknown>;
@@ -698,6 +721,13 @@ export type RunEvaluation = {
   full_pipeline_cost: number | null;
   full_pipeline_cost_reason: string;
   reasons: Array<string>;
+};
+
+export type RunFamilyContext = {
+  schema_version: 1;
+  benchmark_sha256: string;
+  axis_definitions: Record<string, string>;
+  families: Record<string, FamilyResearchContext>;
 };
 
 export type RunObservation = {
@@ -805,6 +835,12 @@ export type TokenUsage = {
   input_tokens: number | null;
   output_tokens: number | null;
   cached_tokens: number | null;
+};
+
+export type VerifiedFinding = {
+  axis: string;
+  finding: string;
+  evidence: Array<string>;
 };
 
 export type WorkspaceDetail = {

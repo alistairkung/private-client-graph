@@ -1,5 +1,6 @@
 """Opt-in verification of the private first-live archive; never runs in CI by default."""
 
+import json
 import os
 from pathlib import Path
 from uuid import NAMESPACE_URL, uuid5
@@ -23,6 +24,9 @@ def test_private_baseline_import_is_idempotent_and_readable(tmp_path: Path, monk
     root = tmp_path / 'artifacts'
     archive, admissions = Path(ARCHIVE), Path(ADMISSIONS)
     run_id = import_first_live_baseline(root, archive, admissions)
+    projection = root / 'benchmark_v3' / 'imports' / run_id / 'projection.json'
+    frozen_projection = projection.read_bytes()
+    assert 'family_context' not in json.loads(frozen_projection)
     assert import_first_live_baseline(root, archive, admissions) == run_id
     experiment_id = uuid5(NAMESPACE_URL, f'{EXPERIMENT_NAMESPACE}:{run_id}').hex
     monkeypatch.setenv('PCG_RESEARCH_ARTIFACTS', str(root))
@@ -41,3 +45,20 @@ def test_private_baseline_import_is_idempotent_and_readable(tmp_path: Path, monk
     assert [benchmark['cohort']['all_conditions'][key] for key in ('tp', 'fp', 'fn')] == [91, 10, 22]
     assert [benchmark['cohort'][key] for key in ('complete_proofs', 'planned_proofs',
             'complete_joint_proofs', 'planned_joint_proofs')] == [18, 71, 0, 30]
+
+    context = detail['family_context']
+    assert context['schema_version'] == 1
+    assert context['benchmark_sha256'] == benchmark['scope']['benchmark_sha256']
+    assert context['families'].keys() == benchmark['families'].keys()
+    intents = {condition for family in context['families'].values()
+               for condition in family['condition_intents']}
+    assert intents == {row['id'] for row in detail['observations']}
+    assert context['families']['E']['hypothesis']['hypothesis_id'] == 'independent-parentage-disagreement'
+    assert context['families']['X']['secondary_axes'] == []
+    assert context['families']['C']['hypothesis'] is None
+    assert context['families']['C']['hypothesis_basis'] == 'historical_admission'
+    assert context['families']['D']['hypothesis_basis'] == 'versioned_hypothesis'
+    assert 'entity-identity' in context['families']['C']['secondary_axes']
+    assert 'entity-identity' not in {row['axis'] for row in context['families']['C']['verified_findings']}
+    assert str(admissions.parent) not in response.text
+    assert projection.read_bytes() == frozen_projection

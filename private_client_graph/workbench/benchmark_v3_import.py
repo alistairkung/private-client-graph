@@ -13,6 +13,7 @@ from private_client_graph.research.artifacts import checksum, utc_now
 from .benchmark_contracts import BenchmarkRun
 from .benchmark_contracts import condition_relationship_outcomes
 from .execution_contracts import FrozenPlan
+from .family_context import read_family_context
 from .run_evaluation import evaluate_run
 from .run_inspection import RunDetail, RunObservation
 from .workspaces import read_record, read_experiment, write_record, workspace_lock
@@ -32,7 +33,7 @@ def import_first_live_baseline(root: Path, archive: Path, admissions: Path) -> s
     record_path = _record_path(root, run_id)
     detail = _detail(experiment_id, run_id, verified, benchmark, archive)
     projection_path = _projection_path(root, run_id)
-    projection_json = _json_bytes(detail.model_dump(mode='json'))
+    projection_json = _json_bytes(detail.model_dump(mode='json', exclude={'family_context'}))
     record = {
         'schema_version': IMPORT_SCHEMA_VERSION,
         'run_id': run_id,
@@ -109,9 +110,11 @@ def read_imported_run(root: Path, experiment_id: str, run_id: str) -> RunDetail:
     if record.get('origin') == 'offline_fixture':
         return detail
     archive, admissions = Path(record['archive_path']), Path(record['admissions_path'])
-    if checksum(admissions.read_bytes()) != record['admissions_sha256']:
+    admission_bytes = read_bytes(admissions)
+    if checksum(admission_bytes) != record['admissions_sha256']:
         raise ValueError('Imported admissions register commitment changed')
     verify_first_live_custody(archive, admissions)
+    detail.family_context = read_family_context(detail.benchmark.scope, admission_bytes)
     return detail
 
 
@@ -123,7 +126,8 @@ def register_offline_fixture_for_tests(root: Path, detail: RunDetail) -> None:
         raise ValueError('Test fixture requires stable Run and Experiment identities')
     root = root.resolve()
     projection_path = _projection_path(root, detail.id)
-    content = _json_bytes(detail.model_dump(mode='json'))
+    excluded = {'family_context'} if detail.family_context is None else set()
+    content = _json_bytes(detail.model_dump(mode='json', exclude=excluded))
     record = {
         'schema_version': IMPORT_SCHEMA_VERSION,
         'origin': 'offline_fixture',
