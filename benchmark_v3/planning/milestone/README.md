@@ -11,6 +11,7 @@ independent owner-admitted development Matter families across 34 conditions.
 The dated decision preserves the five original admissions and binds 14 new
 admissions to exact verified technical dossiers. Family V remains deferred.
 [Admission register](../../admissions/2026-11-24.md) · [Research catalogue](../../RESEARCH-CATALOGUE.md)
+[Evaluation Protocol v1](../../EVALUATION-PROTOCOL-v1.md) governs development scoring and the preregistered comparison.
 
 The planning and accounting below describe the earlier eight-family milestone.
 The qualification and quarantine checkpoints retain their original dates and dispositions.
