@@ -43,24 +43,25 @@ def import_first_live_baseline(root: Path, archive: Path, admissions: Path) -> s
         'inventory_sha256': BASELINE_INVENTORY_SHA256,
         'projection_path': projection_path.relative_to(root).as_posix(),
         'projection_sha256': checksum(projection_json),
+        'artifact_digest': BASELINE_INVENTORY_SHA256,
         'imported_at': utc_now(),
         'source_created_at': _source_created_at(archive, run_id),
     }
-    if projection_path.exists() and checksum(read_bytes(projection_path)) != record['projection_sha256']:
-        raise ValueError('Imported Run projection already exists with different contents')
-    if record_path.exists():
-        previous = read_record(record_path)
-        if {key: value for key, value in previous.items() if key != 'imported_at'} != {
-            key: value for key, value in record.items() if key != 'imported_at'
-        }:
-            raise ValueError('Imported Run identity already has different custody or commitments')
-        record = previous
-    else:
-        _write_projection(projection_path, projection_json)
-        write_record(record_path, record)
-    # Recheck all original bytes and receipt bindings immediately before publishing membership.
-    verify_first_live_custody(archive, admissions)
     with workspace_lock(root):
+        if projection_path.exists() and checksum(read_bytes(projection_path)) != record['projection_sha256']:
+            raise ValueError('Imported Run projection already exists with different contents')
+        if record_path.exists():
+            previous = read_record(record_path)
+            if {key: value for key, value in previous.items() if key != 'imported_at'} != {
+                key: value for key, value in record.items() if key != 'imported_at'
+            }:
+                raise ValueError('Imported Run identity already has different custody or commitments')
+            record = previous
+        else:
+            _write_projection(projection_path, projection_json)
+            write_record(record_path, record)
+        # Recheck custody while holding the lock, then publish record membership atomically.
+        verify_first_live_custody(archive, admissions)
         _publish_workspace(root, experiment_id, run_id, record)
     return run_id
 
@@ -83,25 +84,35 @@ def read_imported_run(root: Path, experiment_id: str, run_id: str) -> RunDetail:
             or record.get('run_id') != run_id or record.get('experiment_id') != experiment_id
             or membership.get('read_only_import') is not True):
         raise ValueError('Imported Run membership is invalid')
+    if record.get('origin') not in (None, 'live', 'offline_fixture'):
+        raise ValueError('Imported Run origin is invalid')
+    projection_path = root / record.get('projection_path', '')
+    projection_bytes = read_bytes(projection_path)
+    if (record.get('projection_path') != _projection_path(root, run_id).relative_to(root).as_posix()
+            or checksum(projection_bytes) != record.get('projection_sha256')):
+        raise ValueError('Imported Run inspection projection changed')
+    detail = RunDetail.model_validate_json(projection_bytes)
+    if (detail.id != run_id or detail.experiment_id != experiment_id or detail.benchmark is None
+            or detail.benchmark.scope.observation_origin != ('offline_fixture' if record.get('origin') == 'offline_fixture' else 'live')):
+        raise ValueError('Imported Run projection identity or origin is invalid')
+    # Bind the actual bytes to both authorities: the import record itself and the
+    # independently published workspace membership. This catches adjacent record edits.
+    expected_projection = checksum(projection_bytes)
+    if record.get('projection_sha256') != expected_projection:
+        raise ValueError('Imported Run projection is not bound to its import record')
+    if membership.get('projection_sha256') != expected_projection:
+        raise ValueError('Imported Run projection is not bound to workspace membership')
+    if membership.get('artifact_digest') != detail.artifact_digest:
+        raise ValueError('Imported Run artifact digest differs from workspace membership')
+    if record.get('artifact_digest') != detail.artifact_digest:
+        raise ValueError('Imported Run artifact digest differs from its import record')
     if record.get('origin') == 'offline_fixture':
-        projection_path = root / record['projection_path']
-        if (record['projection_path'] != _projection_path(root, run_id).relative_to(root).as_posix()
-                or checksum(read_bytes(projection_path)) != record['projection_sha256']):
-            raise ValueError('Offline fixture projection changed')
-        detail = RunDetail.model_validate_json(read_bytes(projection_path))
-        if (detail.id != run_id or detail.experiment_id != experiment_id or detail.benchmark is None
-                or detail.benchmark.scope.observation_origin != 'offline_fixture'):
-            raise ValueError('Offline fixture projection identity or origin is invalid')
         return detail
     archive, admissions = Path(record['archive_path']), Path(record['admissions_path'])
     if checksum(admissions.read_bytes()) != record['admissions_sha256']:
         raise ValueError('Imported admissions register commitment changed')
     verify_first_live_custody(archive, admissions)
-    projection_path = root / record.get('projection_path', '')
-    if (record.get('projection_path') != _projection_path(root, run_id).relative_to(root).as_posix()
-            or checksum(read_bytes(projection_path)) != record['projection_sha256']):
-        raise ValueError('Imported Run inspection projection changed')
-    return RunDetail.model_validate_json(read_bytes(projection_path))
+    return detail
 
 
 def register_offline_fixture_for_tests(root: Path, detail: RunDetail) -> None:
@@ -120,6 +131,7 @@ def register_offline_fixture_for_tests(root: Path, detail: RunDetail) -> None:
         'experiment_id': detail.experiment_id,
         'projection_path': projection_path.relative_to(root).as_posix(),
         'projection_sha256': checksum(content),
+        'artifact_digest': detail.artifact_digest,
         'imported_at': utc_now(),
         'source_created_at': detail.plan.created_at if detail.plan else '2026-11-24T00:00:00+00:00',
     }
@@ -137,6 +149,7 @@ def register_offline_fixture_for_tests(root: Path, detail: RunDetail) -> None:
         record = previous
     else:
         write_record(record_path, record)
+    record['artifact_digest'] = detail.artifact_digest
     with workspace_lock(root):
         _publish_workspace(root, detail.experiment_id, detail.id, record)
 
@@ -217,6 +230,8 @@ def _publish_workspace(root: Path, experiment_id: str, run_id: str, import_recor
         'created_at': import_record['source_created_at'],
         'import_record': _record_path(root, run_id).relative_to(root).as_posix(),
         'read_only_import': True,
+        'projection_sha256': import_record['projection_sha256'],
+        'artifact_digest': import_record.get('artifact_digest', BASELINE_INVENTORY_SHA256),
     }
     if membership_path.exists():
         if read_record(membership_path) != membership:
