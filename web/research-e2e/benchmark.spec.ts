@@ -16,22 +16,56 @@ test("read-only import exposes protocol metrics, proof, unavailable and empty gr
   ).toBeVisible();
   await expect(page.getByText(/All-condition F1 0.667/)).toBeVisible();
   await page.getByText("Observations & Evidence", { exact: true }).click();
-  const predicted = page.getByRole("region", { name: "Predicted graph", exact: true });
-  await predicted.getByRole("button", { name: /Morgan Example.*North Example Trust.*trustee of/ }).click();
+  const predicted = page.getByRole("region", {
+    name: "Predicted graph",
+    exact: true,
+  });
+  await predicted
+    .getByRole("button", {
+      name: /Morgan Example.*trustee of.*North Example Trust/,
+    })
+    .click();
   await expect(
     page.getByRole("region", { name: "Expected graph", exact: true }),
   ).toBeVisible();
   await expect(predicted).toBeVisible();
-  const proof = page.getByRole("region", { name: "Sufficient Evidence Alternatives" });
-  await expect(proof.locator("q").filter({ hasText: "Morgan is the current holder." })).toBeVisible();
-  await expect(proof.locator("q").filter({ hasText: "The audit confirms Morgan holds the office." })).toBeVisible();
-  await expect(proof.getByText(/Wrong quotation on this relationship/)).toBeVisible();
-  await expect(proof.getByText(/Source missing from this relationship/)).toBeVisible();
-  const proofMember = proof.locator("li").filter({
-    has: proof.getByText("Morgan is the current holder.", { exact: true }),
+  const proof = page.getByRole("region", {
+    name: "Sufficient Evidence Alternatives",
   });
-  await proofMember.getByText("View proof member in Source", { exact: true }).click();
-  await expect(proofMember.getByRole("article", { name: "Frozen proof Source" }).locator("mark")).toHaveText("Morgan is the current holder.");
+  await expect(
+    proof.locator("q").filter({ hasText: "Morgan is the current holder." }),
+  ).toBeVisible();
+  await expect(
+    proof
+      .locator("q")
+      .filter({ hasText: "The audit confirms Morgan holds the office." }),
+  ).toBeVisible();
+  await expect(
+    proof.getByText(/Wrong quotation on this relationship/),
+  ).toBeVisible();
+  await expect(
+    proof.getByText(/Source missing from this relationship/),
+  ).toBeVisible();
+  const selectedEvidence = page.getByRole("region", {
+    name: "Selected relationship Evidence",
+  });
+  await expect(
+    selectedEvidence.getByText("Morgan was nominated earlier.", {
+      exact: true,
+    }),
+  ).toBeVisible();
+  const proofMember = proof
+    .locator("q")
+    .filter({ hasText: "Morgan is the current holder." })
+    .locator("..");
+  await proofMember
+    .getByText("View proof member in Source", { exact: true })
+    .click();
+  await expect(
+    proofMember
+      .getByRole("article", { name: "Frozen proof Source" })
+      .locator("mark"),
+  ).toHaveText("Morgan is the current holder.");
 
   const picker = page
     .getByRole("combobox", { name: /Observation|Condition/ })
