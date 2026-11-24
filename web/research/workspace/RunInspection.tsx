@@ -5,6 +5,7 @@ import type {
   WorkspaceDetail,
 } from "../shared/contracts";
 import { ObservationInspection } from "./ObservationInspection";
+import { ConditionInspection } from "./ConditionInspection";
 import { BenchmarkFamilyExplorer } from "./BenchmarkFamilyExplorer";
 import { ReadState } from "../shared/presentation";
 import { useRead } from "../shared/useRead";
@@ -438,15 +439,10 @@ function BenchmarkRunInspection({
         className="benchmark-run-summary"
         aria-label="Evaluation Protocol v1 results"
       >
+        <p className="overview-population">
+          Evaluation Protocol v1 · {benchmark.cohort.planned_conditions} Environment Conditions
+        </p>
         <div className="benchmark-overview-line">
-          <div>
-            <span>Evaluation Protocol</span>
-            <strong>Version 1</strong>
-          </div>
-          <div>
-            <span>Environment Conditions</span>
-            <strong>{benchmark.cohort.planned_conditions}</strong>
-          </div>
           <div>
             <span>All-condition graph F1</span>
             <strong>{metric(benchmark.cohort.all_condition_micro_f1)}</strong>
@@ -465,6 +461,7 @@ function BenchmarkRunInspection({
                 ? `${benchmark.cohort.complete_proofs} of ${benchmark.cohort.planned_proofs} complete`
                 : "Unavailable · 0 eligible"}
             </strong>
+            <small>Annotated relationships with a complete approved proof</small>
           </div>
         </div>
 
@@ -589,8 +586,14 @@ function BenchmarkRunInspection({
       <BenchmarkFamilyExplorer
         key={run.id}
         run={run}
-        renderCondition={(observation) => (
-          <ObservationInspection key={observation.id} run={{ ...run, observations: [observation] }} />
+        renderCondition={(observation, selectedEdgeKey, onSelectedEdgeChange) => (
+          <ConditionInspection
+            key={observation.id}
+            runId={run.id}
+            observation={observation}
+            selectedEdgeKey={selectedEdgeKey}
+            onSelectedEdgeChange={onSelectedEdgeChange}
+          />
         )}
       />
       <label>

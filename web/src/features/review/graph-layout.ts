@@ -28,6 +28,65 @@ export interface GraphDrawingModel {
   bounds: DrawingBounds;
 }
 
+export function alignComparisonEntities(
+  reference: Graph,
+  candidate: Graph,
+  referenceModel: GraphDrawingModel,
+  candidateModel: GraphDrawingModel,
+): Readonly<Record<string, Point>> | undefined {
+  const referenceEntities = new Map<string, (typeof reference.entities)[number]>();
+  for (const entity of reference.entities) {
+    if (referenceEntities.has(entity.name)) return undefined;
+    referenceEntities.set(entity.name, entity);
+  }
+  const candidateEntities = new Map<string, (typeof candidate.entities)[number]>();
+  for (const entity of candidate.entities) {
+    if (candidateEntities.has(entity.name)) return undefined;
+    candidateEntities.set(entity.name, entity);
+  }
+  const referenceNodes = new Map(referenceModel.nodes.map((node) => [node.id, node]));
+  const candidateNodes = new Map(candidateModel.nodes.map((node) => [node.id, node]));
+  const candidateById = new Map(candidate.entities.map((entity) => [entity.id, entity]));
+  const height = (type: string) => type === "trust" ? TRUST_HEIGHT : PERSON_HEIGHT;
+  const referenceEndpoints = new Set(reference.relationships.flatMap(({ source, target }) => [source, target]));
+  const candidateEndpoints = new Set(candidate.relationships.flatMap(({ source, target }) => [source, target]));
+  const aligned = new Map<string, Point>();
+  const commonNames = new Set<string>();
+  for (const entity of candidate.entities) {
+    const match = referenceEntities.get(entity.name);
+    if (!match || match.type !== entity.type ||
+      !referenceEndpoints.has(match.id) || !candidateEndpoints.has(entity.id)) continue;
+    const position = referenceNodes.get(match.id)?.position;
+    if (!position) continue;
+    aligned.set(entity.id, {
+      x: position.x + NODE_WIDTH / 2,
+      y: position.y + height(entity.type) / 2,
+    });
+    commonNames.add(entity.name);
+  }
+  if (aligned.size < 2) return undefined;
+
+  for (const entity of candidate.entities) {
+    if (commonNames.has(entity.name)) continue;
+    const node = candidateNodes.get(entity.id);
+    if (!node) continue;
+    const candidateCenter = {
+      x: node.position.x + NODE_WIDTH / 2,
+      y: node.position.y + height(entity.type) / 2,
+    };
+    for (const alignedId of aligned.keys()) {
+      const alignedEntity = candidateById.get(alignedId)!;
+      const position = aligned.get(alignedId)!;
+      const overlaps =
+        Math.abs(candidateCenter.x - position.x) < NODE_WIDTH + 24 &&
+        Math.abs(candidateCenter.y - position.y) <
+          (height(entity.type) + height(alignedEntity.type)) / 2 + 24;
+      if (overlaps) return undefined;
+    }
+  }
+  return Object.fromEntries(aligned);
+}
+
 function completeBounds(
   graph: Graph,
   positions: Map<string, Point>,
@@ -61,8 +120,28 @@ function completeBounds(
   };
 }
 
-export function graphDrawing(graph: Graph, t: Translate): GraphDrawingModel {
+export function graphDrawing(
+  graph: Graph,
+  t: Translate,
+  alignedPositions?: Readonly<Record<string, Point>>,
+  outcomes?: ReadonlyArray<string | undefined>,
+): GraphDrawingModel {
   const presentation = presentRelationships(graph, t);
+  const comparisonLabels: Record<string, string> = {
+    correct: "✓ Correct",
+    missing: "− Missing",
+    unsupported: "+ Unsupported",
+    expected: "Expected",
+  };
+  const relationships = presentation.relationships.map((edge, index) => {
+    const outcome = outcomes?.[index];
+    const status = outcome ? comparisonLabels[outcome] : undefined;
+    return {
+      ...edge,
+      label: status ? `${status} · ${edge.label}` : edge.label,
+      outcome,
+    };
+  });
   const layout = new dagre.graphlib.Graph({ multigraph: true });
   layout.setGraph({
     rankdir: "TB",
@@ -76,7 +155,7 @@ export function graphDrawing(graph: Graph, t: Translate): GraphDrawingModel {
     graph.entities.find((entity) => entity.id === id)?.type === "trust"
       ? TRUST_HEIGHT
       : PERSON_HEIGHT;
-  const orderedEdges = presentation.relationships
+  const orderedEdges = relationships
     .map((edge, index) => ({ edge, index }))
     .sort((a, b) =>
       (a.edge.source + ":" + a.edge.type + ":" + a.edge.target).localeCompare(
@@ -101,7 +180,7 @@ export function graphDrawing(graph: Graph, t: Translate): GraphDrawingModel {
   );
   dagre.layout(layout);
   const anchored = centralTrustLayout(presentation);
-  const positions =
+  const layoutPositions =
     anchored?.positions ??
     new Map(
       graph.entities.map((entity) => [
@@ -109,6 +188,12 @@ export function graphDrawing(graph: Graph, t: Translate): GraphDrawingModel {
         { x: layout.node(entity.id).x, y: layout.node(entity.id).y },
       ]),
     );
+  const positions = new Map(
+    graph.entities.map((entity) => [
+      entity.id,
+      alignedPositions?.[entity.id] ?? layoutPositions.get(entity.id)!,
+    ]),
+  );
   const paths: Point[][] = anchored?.routes ?? [];
   if (!anchored) {
     orderedEdges.forEach(({ edge, index }) => {
@@ -182,7 +267,7 @@ export function graphDrawing(graph: Graph, t: Translate): GraphDrawingModel {
       sourcePosition: Position.Bottom,
       targetPosition: Position.Top,
     })),
-    edges: presentation.relationships.map((edge, index) => ({
+    edges: relationships.map((edge, index) => ({
       id: String(index),
       source: edge.source,
       target: edge.target,
@@ -193,6 +278,8 @@ export function graphDrawing(graph: Graph, t: Translate): GraphDrawingModel {
         route: routes[index],
         parent: edge.arrow,
         trust: edge.kind === "trust-role",
+        comparison: Boolean(outcomes),
+        outcome: edge.outcome,
         statement: relationshipStatement(graph, graph.relationships[index], t),
       },
       interactionWidth: 28,
