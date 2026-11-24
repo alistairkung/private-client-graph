@@ -133,44 +133,44 @@ export function ObservationInspection({ run }: { run: RunDetail }) {
       {observation && (
         <>
           <div className="observation-metadata">
-            <strong>
-              {observation.metadata?.name ??
-                `Case ${observation.case_id} (name unavailable)`}
-            </strong>
-            <p>
-              {observation.metadata?.description ??
-                "Case description unavailable"}
-            </p>
-            <p>
-              {observation.metadata?.fixture_name ?? "Fixture name unavailable"}{" "}
-              —{" "}
-              {observation.metadata?.fixture_description ??
-                "Fixture description unavailable"}
-            </p>
-            <small>
-              {observation.case_id} · {observation.sample_id} · repetition{" "}
-              {observation.repetition} · {observation.status}
-            </small>
-            {observation.reason && <p>{observation.reason}</p>}
-            {observation?.benchmark && (
-              <p>
-                <strong>{observation?.benchmark.family}</strong> ·{" "}
-                {observation?.benchmark.condition}
-                {observation?.benchmark.role
-                  ? ` · ${observation?.benchmark.role}`
-                  : ""}
-                {observation?.benchmark.contrast
-                  ? ` · ${observation?.benchmark.contrast}`
-                  : ""}
-              </p>
-            )}
-            {observation?.benchmark && (
-              <p>
-                Outcome: {observation?.benchmark.outcome.replaceAll("_", " ")}
-                {observation?.benchmark.failure_detail
-                  ? ` · ${observation?.benchmark.failure_detail}`
-                  : ""}
-              </p>
+            {observation.benchmark ? (
+              <>
+                <strong>
+                  Family {observation.benchmark.family} · Condition{" "}
+                  {observation.benchmark.condition}
+                </strong>
+                <p>
+                  {observation.benchmark.role}
+                  {observation.benchmark.contrast &&
+                    ` · ${observation.benchmark.contrast}`}
+                </p>
+                <p>
+                  Outcome: {observation.benchmark.outcome.replaceAll("_", " ")}
+                </p>
+              </>
+            ) : (
+              <>
+                <strong>
+                  {observation.metadata?.name ??
+                    `Case ${observation.case_id} (name unavailable)`}
+                </strong>
+                <p>
+                  {observation.metadata?.description ??
+                    "Case description unavailable"}
+                </p>
+                <p>
+                  {observation.metadata?.fixture_name ??
+                    "Fixture name unavailable"}{" "}
+                  —{" "}
+                  {observation.metadata?.fixture_description ??
+                    "Fixture description unavailable"}
+                </p>
+                <small>
+                  {observation.case_id} · {observation.sample_id} · repetition{" "}
+                  {observation.repetition} · {observation.status}
+                </small>
+                {observation.reason && <p>{observation.reason}</p>}
+              </>
             )}
           </div>
           {observation?.benchmark && (
@@ -220,6 +220,12 @@ export function ObservationInspection({ run }: { run: RunDetail }) {
                     "predicted",
                   )}
               </div>
+              {predicted && (
+                <p className="muted">
+                  Green relationships matched. Red relationships were missing or
+                  extra.
+                </p>
+              )}
               <p>
                 Matched · TP {observation?.benchmark.metrics.tp} · Extra · FP{" "}
                 {observation?.benchmark.metrics.fp} · Missing · FN{" "}

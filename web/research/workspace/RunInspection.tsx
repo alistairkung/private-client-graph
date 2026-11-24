@@ -475,7 +475,10 @@ function BenchmarkRunInspection({
           )}
         </p>
         <p>
-          Proof outcomes · {benchmark.cohort.complete_proofs} complete · {benchmark.cohort.incomplete_proofs} incomplete · {benchmark.cohort.missed_proofs} missed edges · {benchmark.cohort.proofs_without_graph} without a valid graph
+          Proof outcomes · {benchmark.cohort.complete_proofs} complete ·{" "}
+          {benchmark.cohort.incomplete_proofs} incomplete ·{" "}
+          {benchmark.cohort.missed_proofs} missed edges ·{" "}
+          {benchmark.cohort.proofs_without_graph} without a valid graph
         </p>
         <p>
           Quotation{" "}
@@ -536,8 +539,21 @@ function BenchmarkRunInspection({
           <p>Historical baseline · reference for prospective comparison.</p>
         )}
         <details>
-          <summary>Verified protocol scope</summary>
-          <pre>{JSON.stringify(benchmark.scope, null, 2)}</pre>
+          <summary>Accounting and verified provenance</summary>
+          <p>
+            Retained attempts {run.evaluation.cost.attempts} · Estimated spend{" "}
+            {money(run.evaluation.cost.total, run.evaluation.cost.currency)}
+          </p>
+          <p>
+            Run {run.id} · Archive {run.artifact_digest}
+          </p>
+          <pre>
+            {JSON.stringify(
+              { scope: benchmark.scope, provenance: run.provenance },
+              null,
+              2,
+            )}
+          </pre>
         </details>
       </section>
       <label>

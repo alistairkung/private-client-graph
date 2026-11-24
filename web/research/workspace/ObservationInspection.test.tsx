@@ -171,9 +171,7 @@ it("shows every proof alternative and distinguishes a missing Source from a quot
     />,
   );
   fireEvent.click(screen.getByText("Observations & Evidence"));
-  expect(
-    screen.getByText(/natural · natural · matched contrast/),
-  ).toBeInTheDocument();
+  expect(screen.getByText(/natural · matched contrast/)).toBeInTheDocument();
   expect(
     screen.getByRole("list", { name: "Proof outcomes" }),
   ).toHaveTextContent("without graph");
