@@ -131,7 +131,8 @@ function makeRun(
 const context: FamilyResearchContext = {
   revision: 1,
   dossier_sha256: "c".repeat(64),
-  description: "Reconcile two firsthand accounts of a reported parent relationship.",
+  description:
+    "Reconcile two firsthand accounts of a reported parent relationship.",
   shortcuts: "Counting a forwarded statement as an independent witness.",
   hypothesis_text: "Two independent accounts agree about the same birth.",
   hypothesis_basis: "versioned_hypothesis",
@@ -159,15 +160,13 @@ it("keeps all families concise and pairs graph score with proof completion", () 
     />,
   );
 
-  expect(
-    screen.getByText(context.description),
-  ).toBeInTheDocument();
-  expect(screen.getAllByText("0 of 3 complete")).toHaveLength(2);
+  expect(screen.getByText(context.description)).toBeInTheDocument();
+  expect(screen.getAllByText("0/3")).toHaveLength(2);
   expect(screen.getAllByText("Graph F1")).toHaveLength(2);
   expect(screen.getAllByText("6/7 basis")).toHaveLength(2);
   expect(screen.getAllByText("Complete proofs")).toHaveLength(2);
   expect(screen.getByText("Contradictory Assertions")).toBeInTheDocument();
-  expect(screen.getByRole("button", { name: /Family E/ })).toHaveAttribute(
+  expect(screen.getByRole("button", { name: /^Family E/ })).toHaveAttribute(
     "aria-expanded",
     "false",
   );
@@ -188,12 +187,12 @@ it("finds a family from its Environment Condition identifier", () => {
     { target: { value: "E001" } },
   );
 
-  expect(screen.getByRole("button", { name: /Family E/ })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: /^Family E/ })).toBeInTheDocument();
   expect(
-    screen.queryByRole("button", { name: /Family F/ }),
+    screen.queryByRole("button", { name: /^Family F/ }),
   ).not.toBeInTheDocument();
 
-  fireEvent.click(screen.getByRole("button", { name: /Family E/ }));
+  fireEvent.click(screen.getByRole("button", { name: /^Family E/ }));
   expect(screen.getByRole("tab", { name: /E001/ })).toHaveAttribute(
     "aria-selected",
     "true",
@@ -221,7 +220,7 @@ it("finds a family from its Environment Condition identifier", () => {
     }),
     { target: { value: "Contradictory Assertions" } },
   );
-  expect(screen.getByRole("button", { name: /Family E/ })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: /^Family E/ })).toBeInTheDocument();
 });
 
 it("shows the tested hypothesis, declared axes and Environment Condition tabs in place", () => {
@@ -233,7 +232,7 @@ it("shows the tested hypothesis, declared axes and Environment Condition tabs in
       )}
     />,
   );
-  fireEvent.click(screen.getByRole("button", { name: /Family E/ }));
+  fireEvent.click(screen.getByRole("button", { name: /^Family E/ }));
 
   expect(screen.getByText(/Adversarial Hypothesis/)).toBeInTheDocument();
   expect(screen.getByText(context.shortcuts)).toBeInTheDocument();
@@ -256,26 +255,32 @@ it("shows the tested hypothesis, declared axes and Environment Condition tabs in
     "One account changes to a denial",
   );
   expect(screen.getByText("Selected E001")).toBeInTheDocument();
-  fireEvent.click(screen.getByRole("button", { name: /Family F/ }));
-  expect(screen.getByRole("button", { name: /Family F/ })).toHaveAttribute(
+  fireEvent.click(screen.getByRole("button", { name: /^Family F/ }));
+  expect(screen.getByRole("button", { name: /^Family F/ })).toHaveAttribute(
     "aria-expanded",
     "true",
   );
-  expect(screen.getByRole("button", { name: /Family E/ })).toHaveAttribute(
+  expect(screen.getByRole("button", { name: /^Family E/ })).toHaveAttribute(
     "aria-expanded",
     "false",
   );
 });
 
+it("returns keyboard focus to the family header when closing from below the evidence", () => {
+  render(
+    <BenchmarkFamilyExplorer run={makeRun()} renderCondition={() => null} />,
+  );
+  const header = screen.getByRole("button", { name: /^Family E/ });
+  fireEvent.click(header);
+  fireEvent.click(screen.getByRole("button", { name: "Close Family E" }));
+  expect(header).toHaveFocus();
+  expect(header).toHaveAttribute("aria-expanded", "false");
+});
+
 it("keeps research context unavailable when the Run does not carry a verified context", () => {
   render(
-    <BenchmarkFamilyExplorer
-      run={makeRun()}
-      renderCondition={() => null}
-    />,
+    <BenchmarkFamilyExplorer run={makeRun()} renderCondition={() => null} />,
   );
-  fireEvent.click(screen.getByRole("button", { name: /Family E/ }));
-  expect(
-    screen.getByRole("status"),
-  ).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: /^Family E/ }));
+  expect(screen.getByRole("status")).toBeInTheDocument();
 });

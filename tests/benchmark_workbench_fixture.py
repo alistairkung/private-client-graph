@@ -97,11 +97,37 @@ FIXTURE_EXPERIMENT = 'e' * 32
 FIXTURE_RUNS = {'control': '1' * 32, 'treatment': '2' * 32, 'reordered': '3' * 32}
 
 
+def _fixture_context(benchmark):
+    """Research context authored only for the synthetic demonstration records."""
+    from private_client_graph.workbench.family_context import FamilyResearchContext, RunFamilyContext
+
+    families = {}
+    for family, description, intent, conditions in [
+        ('F', 'Identify the current trustee from the office records.',
+         'An earlier nomination can be mistaken for evidence of current office.',
+         {'F0': 'Read the register alongside the terms that define the office.',
+          'F1': 'Check whether the office record and its defining terms support the same relationship.'}),
+        ('G', 'Determine whether the file establishes any relationship.',
+         'A mention of an office can be mistaken for an established relationship.',
+         {'G0': 'Inspect a constructed graph with no relationships.'}),
+    ]:
+        families[family] = FamilyResearchContext(
+            revision='synthetic-demo', dossier_sha256=value_digest(family),
+            description=description, shortcuts=intent, hypothesis_text=intent,
+            hypothesis_basis='historical_admission', hypothesis=None,
+            primary_axis='evidence-sufficiency', secondary_axes=[],
+            condition_intents=conditions, verified_findings=[], incidental_challenges=[],
+            scope_limits='Synthetic demonstration file.',
+        )
+    return RunFamilyContext(
+        benchmark_sha256=benchmark.scope.benchmark_sha256, families=families,
+        axis_definitions={'evidence-sufficiency': 'Whether the cited records jointly establish the relationship.'},
+    )
+
+
 def register_benchmark_browser_fixture(root):
-    from private_client_graph.research.inputs import ResearchInput
-    from private_client_graph.workbench.benchmark_contracts import BenchmarkRun
+    from private_client_graph.workbench.benchmark_contracts import BenchmarkRun, condition_relationship_outcomes
     from private_client_graph.workbench.benchmark_v3_import import register_offline_fixture_for_tests
-    from private_client_graph.workbench.evidence import relationship_outcomes
     from private_client_graph.workbench.execution_contracts import FrozenPlan, Preview, Proposal
     from private_client_graph.workbench.run_evaluation_contracts import RunAggregate, RunCost, RunEvaluation
     from private_client_graph.workbench.run_inspection import RunDetail, RunObservation
@@ -112,17 +138,12 @@ def register_benchmark_browser_fixture(root):
         observations = []
         for condition, planned in zip(benchmark.observations, verified.planned, strict=True):
             frozen = planned.frozen
-            saved = frozen.saved
             result = verified.original_results[condition.condition]
-            sample = ResearchInput(
-                sample_id=frozen.sample_id, case_id=condition.family, cohort='authored', source='',
-                sources=frozen.sources, truth=saved.truth,
-            )
             observations.append(RunObservation(
                 id=condition.condition, sample_id=frozen.sample_id, case_id=condition.family,
                 configuration='noop', repetition=1, status=condition.outcome, reason=condition.failure_detail,
                 sources=frozen.sources, result=result, benchmark=condition,
-                relationships=relationship_outcomes(sample, result),
+                relationships=condition_relationship_outcomes(condition, result.evaluation, result.state),
             ))
         plan = FrozenPlan(
             id=identity, digest=value_digest(arm), task_id='synthetic',
@@ -135,6 +156,6 @@ def register_benchmark_browser_fixture(root):
             id=identity, experiment_id=FIXTURE_EXPERIMENT, plan=plan,
             lifecycle='incomplete' if arm == 'treatment' else 'complete',
             evaluation=RunEvaluation(run_id=identity, aggregate=RunAggregate(), cost=RunCost()), benchmark=benchmark, observations=observations,
-            provenance={'fixture_arm': arm}, artifact_digest=value_digest(arm),
+            family_context=_fixture_context(benchmark), provenance={'fixture_arm': arm}, artifact_digest=value_digest(arm),
             authorized_invocations=[], attempts=[],
         ))

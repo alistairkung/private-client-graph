@@ -62,8 +62,7 @@ export function EnvironmentConditionPanel({
       >
         {observations.map((item, index) => {
           const condition = item.benchmark?.condition ?? "";
-          const selected =
-            condition === activeCondition?.benchmark?.condition;
+          const selected = condition === activeCondition?.benchmark?.condition;
           return (
             <button
               key={condition}
@@ -103,10 +102,7 @@ export function EnvironmentConditionPanel({
             activeCondition,
             selectedEdgeKeys[activeCondition.benchmark.condition] ?? null,
             (edgeKey) =>
-              setSelectedEdgeKey(
-                activeCondition.benchmark!.condition,
-                edgeKey,
-              ),
+              setSelectedEdgeKey(activeCondition.benchmark!.condition, edgeKey),
           )}
         </div>
       )}
@@ -118,7 +114,11 @@ function ConditionFacts({ observation }: { observation: RunObservation }) {
   const condition = observation.benchmark;
   if (!condition) return null;
   const graphCounts = condition.metrics;
-  const graphBasis = formatF1Basis(graphCounts.tp, graphCounts.fp, graphCounts.fn);
+  const graphBasis = formatF1Basis(
+    graphCounts.tp,
+    graphCounts.fp,
+    graphCounts.fn,
+  );
 
   return (
     <dl className="condition-facts">
@@ -144,7 +144,9 @@ function ConditionFacts({ observation }: { observation: RunObservation }) {
 }
 
 export function proofCount(complete: number, planned: number) {
-  return planned ? `${complete} of ${planned} complete` : "Unavailable · 0 eligible";
+  return planned
+    ? `${complete} of ${planned} complete`
+    : "Unavailable · 0 eligible";
 }
 
 function conditionRole(observation: RunObservation) {

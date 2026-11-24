@@ -186,3 +186,5 @@
     animation-iteration-count: 1 !important;
   }
 }
+
+.jump-to-evidence { justify-self: start; }

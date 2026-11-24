@@ -107,9 +107,19 @@ export function ConditionInspection({
       expectedLayout,
       independentPrediction,
     );
-    if (!alignedPositions) return undefined;
+    if (!alignedPositions) {
+      return {
+        aligned: false,
+        expected: expectedLayout,
+        predicted: independentPrediction,
+        bounds: undefined,
+      };
+    }
     const alignedPrediction = graphDrawing(prediction, t, alignedPositions, predictedOutcomes);
     return {
+      aligned: true,
+      expected: expectedLayout,
+      predicted: alignedPrediction,
       bounds: combineBounds(expectedLayout.bounds, alignedPrediction.bounds),
     };
   }, [expected, prediction, predictionAvailable, rowByKey, t]);
@@ -117,7 +127,6 @@ export function ConditionInspection({
   const selectedKey = savedEdgeKey === undefined ? localSelectedKey : savedEdgeKey;
   const [filter, setFilter] = useState<"all" | Status>("all");
   const [side, setSide] = useState<Side>("expected");
-  const [alignment, setAlignment] = useState<boolean | null>(null);
   const [locateRequest, setLocateRequest] = useState<{
     side: Side;
     index: number;
@@ -132,7 +141,6 @@ export function ConditionInspection({
   const sourceRegion = useRef<HTMLElement>(null);
   const expectedGraphRef = useRef<HTMLElement>(null);
   const predictedGraphRef = useRef<HTMLElement>(null);
-  const reportAlignment = useCallback((value: boolean) => setAlignment(value), []);
   const reportExpectedFitScale = useCallback((scale: number) => {
     setFitScales((current) => current.expected === scale
       ? current
@@ -149,7 +157,6 @@ export function ConditionInspection({
     if (savedEdgeKey === undefined) setLocalSelectedKey(null);
     setFilter("all");
     setSide("expected");
-    setAlignment(null);
     setFitScales({ expected: null, predicted: null });
     setLocateRequest(null);
   }, [observation.id]);
@@ -167,11 +174,6 @@ export function ConditionInspection({
   );
   const indexOpensByFit =
     measuredFitScales.length > 0 && Math.min(...measuredFitScales) < 0.75;
-  const reason = benchmark?.failure_detail ?? observation.reason ??
-    (benchmark?.outcome === "validation_failure"
-      ? "Graph construction did not produce a valid prediction."
-      : "No valid prediction is available for this condition.");
-
   function selectEdge(edge: Relationship, control?: HTMLButtonElement) {
     if (control) invokingControl.current = control;
     const key = edgeKey(...edge);
@@ -205,8 +207,9 @@ export function ConditionInspection({
             selectedEntity={null}
             memoryKey={`benchmark:${runId}:${observation.id}:${graphSide}`}
             outcomes={outcomes}
-            alignTo={graphSide === "predicted" ? expected : undefined}
-            onAlignmentChange={graphSide === "predicted" ? reportAlignment : undefined}
+            modelOverride={graphSide === "expected"
+              ? comparisonLayout?.expected
+              : comparisonLayout?.predicted}
             onFitScaleChange={graphSide === "expected" ? reportExpectedFitScale : reportPredictedFitScale}
             comparisonBounds={comparisonLayout?.bounds}
             locateRequest={locateRequest?.side === graphSide
@@ -262,22 +265,11 @@ export function ConditionInspection({
         )}
       </div>
 
-      {benchmark.outcome === "validation_failure" ? (
-        <UnavailablePrediction observation={observation} />
-      ) : !predictionAvailable && (
-        <div className="prediction-unavailable" role="status">
-          <strong>
-            {benchmark.outcome === "scored"
-              ? "Graph result unavailable for this Run"
-              : "Prediction unavailable"}
-          </strong>
-          <p>{reason}</p>
-        </div>
-      )}
+      {!predictionAvailable && <UnavailablePrediction observation={observation} />}
 
-      {predictionAvailable && prediction && expected && alignment !== null && (
+      {predictionAvailable && prediction && comparisonLayout && (
         <p className="layout-note" role="status">
-          {alignment
+          {comparisonLayout.aligned
             ? "Shared entities are aligned between the graphs."
             : "The graphs are placed independently because shared entities are ambiguous or would overlap."}
         </p>
@@ -292,6 +284,7 @@ export function ConditionInspection({
         {predictionAvailable && prediction && graph(prediction, "predicted")}
       </div>
 
+      {selectedEdge && <button className="secondary jump-to-evidence" onClick={() => sourceRegion.current?.focus()}>Jump to evidence</button>}
       <details className="relationship-index" open={graphIsDense || indexOpensByFit}>
         <summary>Relationships <span>{rows.length}</span></summary>
         <div className="relationship-index-controls">
@@ -336,7 +329,6 @@ export function ConditionInspection({
                   className="locate-relationship"
                   onClick={(event) => locateRelationship(row.edge, row.status, event.currentTarget)}
                   aria-label={`Locate ${row.edge.join(" ")} in graph`}
-                  disabled={row.status === "expected"}
                   hidden={selectedKey !== key}
                 >Locate in graph</button>
               </li>
@@ -367,8 +359,13 @@ export function ConditionInspection({
                       `[data-relationship-key="${CSS.escape(selectedKey)}"]`,
                     )
                   : null;
-              target?.focus({ preventScroll: true });
-              if (!target) sourceRegion.current?.blur();
+              if (target) {
+                const index = target.closest("details");
+                if (index) index.open = true;
+                target.focus();
+              } else {
+                expectedGraphRef.current?.focus();
+              }
             }}
           />
         </section>

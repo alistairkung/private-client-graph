@@ -4,7 +4,6 @@ import { metric } from "./RunChart";
 import { formatF1Basis } from "./benchmark-metrics";
 import {
   EnvironmentConditionPanel,
-  proofCount,
   type RenderCondition,
 } from "./EnvironmentConditionPanel";
 import { FamilyResearchPanel } from "./FamilyResearchPanel";
@@ -131,10 +130,11 @@ export function BenchmarkFamilyExplorer({
             observations.find(
               (observation) => observation.benchmark?.role === "natural",
             ) ?? observations[0];
-          const activeCondition = observations.find(
-            (observation) =>
-              observation.benchmark?.condition === activeConditions[family],
-          ) ?? firstNatural;
+          const activeCondition =
+            observations.find(
+              (observation) =>
+                observation.benchmark?.condition === activeConditions[family],
+            ) ?? firstNatural;
           const expanded = openFamily === family;
           const panelId = `family-panel-${family}`;
 
@@ -186,7 +186,8 @@ function FamilyRow({
 }: {
   family: string;
   scores: NonNullable<RunDetail["benchmark"]>["families"][string];
-  context: NonNullable<RunDetail["family_context"]>["families"][string] | undefined;
+  context:
+    NonNullable<RunDetail["family_context"]>["families"][string] | undefined;
   axisDefinitions: Record<string, string>;
   observations: RunObservation[];
   activeCondition: RunObservation | undefined;
@@ -214,11 +215,14 @@ function FamilyRow({
         <span className="family-row-main">
           <span className="family-row-id">Family {family}</span>
           <span className="family-row-description">
-            {context?.description ?? "Family description unavailable for this Run."}
+            {context?.description ??
+              "Family description unavailable for this Run."}
           </span>
           <span className="family-row-axis">
             <span>Primary difficulty</span>
-            <strong>{context ? axisLabel(context.primary_axis) : "Unavailable"}</strong>
+            <strong>
+              {context ? axisLabel(context.primary_axis) : "Unavailable"}
+            </strong>
           </span>
         </span>
         <span className="family-row-metrics">
@@ -229,7 +233,18 @@ function FamilyRow({
           </span>
           <span className="family-metric">
             <span>Complete proofs</span>
-            <strong>{proofCount(scores.complete_proofs, scores.planned_proofs)}</strong>
+            <strong>
+              {scores.planned_proofs
+                ? `${scores.complete_proofs}/${scores.planned_proofs}`
+                : "Unavailable"}
+            </strong>
+            <small>
+              {!scores.planned_proofs
+                ? "0 eligible"
+                : scores.complete_proofs === 0
+                  ? "None complete"
+                  : "Annotated relationships"}
+            </small>
           </span>
         </span>
         <span
@@ -278,6 +293,16 @@ function FamilyRow({
               setSelectedEdgeKey={setSelectedEdgeKey}
               renderCondition={renderCondition}
             />
+            <button
+              type="button"
+              className="secondary close-family"
+              onClick={() => {
+                toggle();
+                document.getElementById(`family-trigger-${family}`)?.focus();
+              }}
+            >
+              Close Family {family}
+            </button>
           </div>
         )}
       </div>
@@ -287,7 +312,8 @@ function FamilyRow({
 
 function familyMatchesSearch(
   family: string,
-  context: NonNullable<RunDetail["family_context"]>["families"][string] | undefined,
+  context:
+    NonNullable<RunDetail["family_context"]>["families"][string] | undefined,
   observations: RunObservation[],
   axisDefinitions: Record<string, string>,
   query: string,
