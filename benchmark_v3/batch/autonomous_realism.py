@@ -8,6 +8,7 @@ from pydantic import TypeAdapter
 
 from benchmark_v3 import commissioning, packet
 from benchmark_v3.batch import artifacts, audit_boundary, author_context, author_delivery, author_repair, authorisation, clean_redesign, delivery_particulars, design_review, recipient_edit, repair_authority, science, ticket_authority
+from benchmark_v3.batch import delivery_audience
 from benchmark_v3.batch.contracts import Adjudication, AuthorBrief, DesignOutput, MatchedCondition, MilestoneAudit, RealismReview, SourceId
 from benchmark_v3.batch.ledger import BudgetExhausted
 from benchmark_v3.batch.sessions import SessionRunner
@@ -271,7 +272,12 @@ def plan_revision(
     note_recovery = retained_design_note(runner)
     omission = release.get("scope_ticket_omission")
     generated = release.get("generated_attachment_ticket")
-    if generated is not None:
+    packet_return = release.get("partial_packet_return")
+    if packet_return is not None and packet_return["revision"] == runner.revision - 1:
+        plan, receipt, job = _verify_partial_packet_plan(runner, slot, parent, packet_return)
+        design, affected = _verify_plan(slot, parent, plan, attested=True)
+        runner.ledger.require_capacity(runner.family, runner.revision, mandatory_jobs(design, affected, verification=True))
+    elif generated is not None:
         prior = replace(runner, revision=runner.revision - 1, directory=runner.directory.with_name(str(runner.revision - 1)))
         actual, plan, receipt = generated_attachment_ticket(prior, slot, generated["source_id"])
         if actual != generated:
@@ -317,6 +323,8 @@ def plan_revision(
         lineage["scoped_ticket_omission"] = omission
     if generated is not None:
         lineage["retired_automatic_ticket"] = generated
+    if packet_return is not None:
+        lineage["partial_packet_return"] = packet_return
     if parent.prior_scope_return is not None:
         lineage["last_realism_revision"] = release["parent_revision"]
         lineage["parent_revision"] = parent.prior_scope_return["revision"]
@@ -763,14 +771,16 @@ def _read_return(runner: SessionRunner, slot: FamilySlot, release: dict[str, Any
     skipped_ticket = bool(release.get("empty_ticket_return") or release.get("audit_sender_return"))
     issued_restoration = (release.get("audit_sender_return") or {}).get("issued_source_sha256")
     earlier_issued = release.get("previous_issued_sender_recovery")
-    if (revision != runner.revision - 1 - len(authored_receipts) - int(skipped_ticket) - int(bool(earlier_issued)) - len(preauthor_returns)
+    partial = release.get("partial_packet_return")
+    if (revision != runner.revision - 1 - len(authored_receipts) - int(skipped_ticket) - int(bool(earlier_issued))
+            - int(bool(partial)) - len(preauthor_returns)
             or (skipped_ticket and (authored_receipts or preauthor_returns) and not issued_restoration)
             or (earlier_issued and skipped_ticket)
             or (len(authored_receipts) > 1 and not any(release.get(key) for key in (
                 "natural_provenance_restoration", "baseline_owned_restoration", "narrowed_scope_source",
                 "distinct_scope_sources",
             )))
-            or ((authored_receipts or preauthor_returns or skipped_ticket)
+            or ((authored_receipts or preauthor_returns or skipped_ticket or partial)
                 and not ledger.historical_pooled_revision(batch, family, runner.revision))):
         raise ValueError("A repair must bind each of its verified intervening scope returns.")
     previous = SessionRunner(ledger, runner.manifest, family, revision, runner.directory.parent / str(revision), runner.owner)
@@ -844,6 +854,14 @@ def _read_return(runner: SessionRunner, slot: FamilySlot, release: dict[str, Any
     authored_returns, preauthor = _scope_returns_by_revision(history, authored_receipts, preauthor_returns)
     last_scoped = runner.revision - int(bool(issued_restoration))
     known = set(authored_returns) | set(preauthor)
+    if partial is not None:
+        stopped = partial["revision"]
+        successor = next((event["details"] for event in history if
+                          (event["revision"], event["kind"], event["name"]) == (stopped + 1, "transition", repair_authority.REVISION)), None)
+        if (not revision < stopped < runner.revision or stopped in known or skipped_ticket or earlier_issued
+                or (stopped + 1 < runner.revision and (successor is None or successor.get("partial_packet_return") != partial))):
+            raise ValueError("An unfinished authoring stage requires its authenticated predispatch return.")
+        known.add(stopped)
     if earlier_issued:
         skipped_revision = verify_previous_issued_recovery(runner, result, earlier_issued)
         if skipped_revision in known:
@@ -1008,6 +1026,8 @@ def _retained_literal_briefs(
 def _committed_prior_plan(
     previous: SessionRunner, slot: FamilySlot, release: dict[str, Any], history: list[dict[str, Any]],
 ) -> RepairPlan:
+    if (partial := release.get("partial_packet_return")) and partial["revision"] == previous.revision - 1:
+        return _verify_partial_packet_plan(previous, slot, _read_return(previous, slot, release), partial)[0]
     if sender_return := release.get("audit_sender_return"):
         plan, _, _, _, _ = _retained_audit_sender_plan(previous, slot, _read_return(previous, slot, release), sender_return)
         return plan
@@ -1047,6 +1067,81 @@ def _committed_prior_plan(
     if stored != committed or selection and receipt["receipt_sha256"] != selection["receipt_sha256"]:
         raise ValueError("The prior repair plan differs from its charged original.")
     return stored
+
+
+def partial_packet_plan(
+    previous: SessionRunner, slot: FamilySlot, parent: ReturnedFile, blocked_job: str, attachment: SourceId,
+) -> tuple[dict[str, Any], RepairPlan, dict[str, Any], str]:
+    release = release_event(previous)
+    attempts = [row for row in previous.ledger.attempts(previous.family) if row["revision"] == previous.revision]
+    history = previous.ledger.events(previous.manifest.batch_id, previous.family)
+    issues = [row["details"] for row in history if row["revision"] == previous.revision and row["kind"] == "exception"]
+    if (release is None or release.get("partial_packet_return") or not previous.ledger.requires_workload_merits
+            or parent.design.matched or not blocked_job.startswith("author-") or not issues
+            or (issues[-1]["stage"], issues[-1]["code"], issues[-1]["job"]) != ("author", "scientific_review", blocked_job)
+            or any(row["job"] == blocked_job for row in attempts)
+            or (previous.directory / "family").exists()):
+        raise ValueError("A partial packet recovery requires an exact unfinished predispatch hold.")
+    design = artifacts.read_contract(previous.directory / "design.json", DesignOutput)
+    recipient = next((row for row in design.inventory if row.source_id == blocked_job.removeprefix("author-")), None)
+    if recipient is None or attachment not in recipient.received:
+        raise ValueError("The stopped participant must have been assigned the exact held attachment.")
+    source_job = f"author-{attachment}"
+    source, source_receipt, request = previous.committed_result("author", source_job, "author", author_delivery.AttestedSource)
+    author_delivery.require_projection(previous, source_job, request["inputs"])
+    author_delivery.verify_attestation(source, request["inputs"]["author_brief"])
+    document = Source(id=attachment, title=source.title, text=source.text)
+    try:
+        delivery_audience.verify_packet({"received_correspondence": commissioning.json_text([document.model_dump(mode="json")])})
+    except delivery_audience.AudienceError as error:
+        if issues[-1]["evidence"] != str(error):
+            raise ValueError("The current audience guard must reproduce the exact predispatch exception.") from error
+    else:
+        raise ValueError("The current audience guard must reject the retained attachment.")
+    scope, scope_receipt, _ = previous.committed_result("author", author_context.JOB, "audit", author_context.AuthorContextReview)
+    if scope.verdict != "accept" or scope.objections:
+        raise ValueError("The original plan must have passed its independent author review before the predispatch stop.")
+    selection = next(row["details"] for row in history if row["revision"] == previous.revision
+                     and row["kind"] == "repair_plan_selection")
+    job = selection["job"]
+    original, receipt, _ = previous.committed_result("design", job, "audit", RepairPlan)
+    if receipt["receipt_sha256"] != selection["receipt_sha256"] or original.revised_design != design:
+        raise ValueError("The stopped authoring design must match its exact independent plan.")
+    plan = _without_unapproved_design_edits(parent.design, original)
+    _, affected = _verify_plan(slot, parent, plan, attested=True)
+    if attachment in affected or blocked_job.removeprefix("author-") in affected:
+        raise ValueError("An exact derivative must preserve both unaffected prior records.")
+    return {
+        "revision": previous.revision, "blocked_job": blocked_job, "attachment": attachment,
+        "original_plan_sha256": authorisation.commitment(original), "derivative_sha256": authorisation.commitment(plan),
+        "scope_receipt_sha256": scope_receipt["receipt_sha256"], "attachment_receipt_sha256": source_receipt["receipt_sha256"],
+    }, plan, receipt, job
+
+
+def _without_unapproved_design_edits(old: DesignOutput, plan: RepairPlan) -> RepairPlan:
+    new = plan.revised_design
+    if plan.disposition != "repair" or new is None or not plan.tickets:
+        raise ValueError("The stopped plan must contain exact participant-local repairs.")
+    requested = {row.source_id: row.participant_brief for row in new.inventory if row.source_id in plan.tickets}
+    if not requested.keys() <= {row.source_id for row in old.inventory} or requested.keys() != plan.tickets.keys():
+        raise ValueError("Keep only the original plan's exact participant-local ticketed records.")
+    revised = old.model_copy(update={"inventory": [
+        row.model_copy(update={"participant_brief": requested[row.source_id]}) if row.source_id in requested else row
+        for row in old.inventory
+    ]})
+    if revised == new:
+        raise ValueError("A stopped plan derivative must remove an unrelated design change.")
+    return plan.model_copy(update={"revised_design": revised})
+
+
+def _verify_partial_packet_plan(
+    runner: SessionRunner, slot: FamilySlot, parent: ReturnedFile, record: dict[str, Any],
+) -> tuple[RepairPlan, dict[str, Any], str]:
+    previous = replace(runner, revision=runner.revision - 1, directory=runner.directory.with_name(str(runner.revision - 1)))
+    actual, plan, receipt, job = partial_packet_plan(previous, slot, parent, record["blocked_job"], record["attachment"])
+    if actual != record:
+        raise ValueError("The exact unfinished packet return and derived plan changed.")
+    return plan, receipt, job
 
 
 def _pre_author_returns(release: dict[str, Any]) -> list[dict[str, Any]]:
@@ -1102,7 +1197,7 @@ def pre_author_scope_return(runner: SessionRunner, *, slot: FamilySlot | None = 
     if (not runner.ledger.requires_delivery_attestation or parent is None
             or (not runner.ledger.requires_workload_merits and len(_pre_author_returns(parent)) > 2)
             or parent["parent_revision"] != runner.revision - 1 - len(_pre_author_returns(parent))
-            - len(_authored_scope_receipts(parent))
+            - len(_authored_scope_receipts(parent)) - int(bool(parent.get("partial_packet_return")))
             or any(row["revision"] == runner.revision and row["stage"] == "author"
                    and row["job"] not in _pre_author_review_jobs(runner)
                    for row in runner.ledger.attempts(family))):
@@ -1115,6 +1210,13 @@ def pre_author_scope_return(runner: SessionRunner, *, slot: FamilySlot | None = 
         if actual != note:
             raise ValueError("The independently rejected scope must bind the exact retained plan derivative.")
         chosen = note
+    elif (partial := parent.get("partial_packet_return")) and partial["revision"] == runner.revision - 1:
+        if slot is None:
+            raise ValueError("A retained predispatch plan requires the exact approved workload.")
+        plan, planner, _ = _verify_partial_packet_plan(runner, slot, _read_return(runner, slot, parent), partial)
+        if plan.revised_design != artifacts.read_contract(runner.directory / "design.json", DesignOutput):
+            raise ValueError("The independently returned predispatch derivative differs from its exact design.")
+        chosen = planner
     else:
         history = runner.ledger.events(batch, family)
         chosen = next(row["details"] for row in history

@@ -1175,7 +1175,7 @@ def release_returned_authored_scope_plan(
             expected = len(previous_receipts) == int(natural_provenance_restoration)
         if (not ledger.requires_delivery_attestation or earlier is None
                 or earlier.get("parent_revision") != revision - 1 - len(autonomous_realism._pre_author_returns(earlier))
-                - len(previous_receipts) - int(bool(earlier_issued or settled_sender))
+                - len(previous_receipts) - int(bool(earlier_issued or settled_sender)) - int(bool(earlier.get("partial_packet_return")))
                 or not expected or (earlier_issued and settled_sender)
                 or state != "quarantined" or not issue or (issue["stage"], issue["code"]) != ("author", "scientific_review")
                 or not ledger.pooled_revision(batch, family, revision)):
@@ -1410,6 +1410,35 @@ def release_returned_pre_author_plan(
                 "source_id": particulars.source_id, "record_sha256": authorisation.commitment(particulars),
                 "reviewed_source_revision": parent.revision,
             }
+        ledger.event(batch, family, revision + 1, "transition", repair_authority.REVISION, state, "design", release)
+
+
+def release_partial_author_packet_repair(
+    ledger: PooledLedger, batch: str, family: str, attachment: str,
+) -> None:
+    """Retain an unfinished revision and repeat only its planned participant-local edits."""
+    with ledger.coordinator_lock():
+        ledger.require_running()
+        commission = load_commission(ledger, batch)
+        revision, state, issue = family_status(ledger, batch, family)
+        runner = commission.session_runner(ledger, family, revision)
+        original = autonomous_realism.release_event(runner)
+        if (original is None or state != "author" or not issue or not issue.get("job")
+                or not ledger.pool.shared_scale or not ledger.pooled_revision(batch, family, revision)
+                or any(original.get(key) for key in (
+                    "audit_sender_return", "scope_ticket_omission", "generated_attachment_ticket",
+                    "incoming_particulars", "owned_source_revisions", "exact_recipient_edit",
+                ))):
+            raise ValueError("A partial packet repair requires the exact stopped pooled authoring revision.")
+        slot = next(row for row in commission.portfolio.slots if row.family_id == family)
+        parent = autonomous_realism._read_return(runner, slot, original)
+        record, _, _, _ = autonomous_realism.partial_packet_plan(runner, slot, parent, issue["job"], attachment)
+        release = original | {
+            "partial_packet_return": record,
+            "family_sessions_remaining": ledger.effective_budget().families[family] - len(ledger.attempts(family)),
+        }
+        successor = commission.session_runner(ledger, family, revision + 1)
+        autonomous_realism._read_return(successor, slot, release)
         ledger.event(batch, family, revision + 1, "transition", repair_authority.REVISION, state, "design", release)
 
 

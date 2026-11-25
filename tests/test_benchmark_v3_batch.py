@@ -3676,6 +3676,29 @@ def test_authored_scope_replan_requires_a_strictly_narrower_local_change(approve
         ))
 
 
+def test_partial_author_repair_retains_only_ticketed_brief_changes():
+    from benchmark_v3.batch import autonomous_realism
+
+    design = DesignOutput.model_validate(_design("G"))
+    first, second = design.inventory
+    locale = first.model_copy(update={"participant_brief": "Ask for the two reports separately.",
+                                     "provenance": "Changed issue narrative."})
+    unrelated = second.model_copy(update={"participant_brief": "Unrelated wording.",
+                                         "provenance": "Unrelated transport change."})
+    drifted = design.model_copy(update={"inventory": [locale, unrelated], "private_history": "Revised history."})
+    earlier = autonomous_realism.RepairPlan(
+        disposition="repair", progress="improved", rationale="Local timing clarification.",
+        revised_design=drifted, tickets={first.source_id: "Ask for the two reports separately."}, objections={},
+    )
+    derived = autonomous_realism._without_unapproved_design_edits(design, earlier)
+    assert derived.tickets == earlier.tickets
+    assert derived.revised_design == design.model_copy(update={"inventory": [
+        first.model_copy(update={"participant_brief": locale.participant_brief}), second,
+    ]})
+    with pytest.raises(ValueError, match="must remove an unrelated design change"):
+        autonomous_realism._without_unapproved_design_edits(design, derived)
+
+
 def test_quoted_ticket_omission_keeps_every_other_instruction():
     from benchmark_v3.batch import autonomous_realism
 
