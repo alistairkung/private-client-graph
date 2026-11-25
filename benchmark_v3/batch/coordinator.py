@@ -1552,6 +1552,26 @@ def release_audit_documentary_repair(ledger: PooledLedger, batch: str, family: s
         })
 
 
+def release_audit_sender_retry(ledger: PooledLedger, batch: str, family: str, source_id: str) -> None:
+    """Send the exact documentary repair to a new author with a documented delivery clarification."""
+    with ledger.coordinator_lock():
+        ledger.require_running()
+        commission = load_commission(ledger, batch)
+        revision, state, issue = family_status(ledger, batch, family)
+        expected = f"author-{source_id}-format-retry failed its output contract: {author_repair.ATTESTATION_ERROR}"
+        if (not ledger.pool.shared_scale or state != "quarantined" or not issue
+                or (issue["stage"], issue["code"], issue["evidence"]) != ("author", "scientific_review", expected)):
+            raise ValueError("A fresh sender requires the exact omitted attestation failure.")
+        runner = commission.session_runner(ledger, family, revision)
+        reviewed = autonomous_realism.document_audit_sender_return(runner, source_id)
+        release = autonomous_realism.release_event(runner)
+        assert release is not None
+        ledger.release(batch, family, revision + 1, "design", parent_sha256=reviewed["receipt_sha256"],
+                       reference="Fresh participant turn for an omitted historic delivery attestation.")
+        ledger.event(batch, family, revision + 1, "transition", repair_authority.REVISION, "design", "design",
+                     release | {"audit_sender_return": reviewed})
+
+
 def release_adjudication_documentary_repair(ledger: Ledger, batch: str, family: str) -> None:
     with ledger.coordinator_lock():
         ledger.require_running()

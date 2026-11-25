@@ -7,7 +7,7 @@ from typing import Any, Literal
 from pydantic import TypeAdapter
 
 from benchmark_v3 import commissioning, packet
-from benchmark_v3.batch import artifacts, audit_boundary, author_context, author_delivery, authorisation, delivery_particulars, design_review, recipient_edit, repair_authority, science
+from benchmark_v3.batch import artifacts, audit_boundary, author_context, author_delivery, author_repair, authorisation, delivery_particulars, design_review, recipient_edit, repair_authority, science
 from benchmark_v3.batch.contracts import Adjudication, AuthorBrief, DesignOutput, MatchedCondition, MilestoneAudit, RealismReview, SourceId
 from benchmark_v3.batch.ledger import BudgetExhausted
 from benchmark_v3.batch.sessions import SessionRunner
@@ -187,6 +187,7 @@ def plan_revision(
     except (OSError, ValueError, KeyError, TypeError, StopIteration) as error:
         raise packet.PacketIsolationError(LINEAGE_REOPEN_FAILURE) from error
     ticket_return = release.get("empty_ticket_return")
+    sender_return = release.get("audit_sender_return")
     note_recovery = retained_design_note(runner)
     omission = release.get("scope_ticket_omission")
     generated = release.get("generated_attachment_ticket")
@@ -213,6 +214,9 @@ def plan_revision(
         design, affected = _verify_plan(slot, parent, plan, attested=True)
         runner.ledger.require_capacity(runner.family, runner.revision, mandatory_jobs(design, affected, verification=True))
         job = repair_authority.PLAN_JOB
+    elif sender_return is not None:
+        plan, receipt, design, affected, job = _retained_audit_sender_plan(runner, slot, parent, sender_return)
+        runner.ledger.require_capacity(runner.family, runner.revision, mandatory_jobs(design, affected, verification=True))
     elif ticket_return is None:
         plan, receipt, design, affected, job = _plan_from_objections(runner, slot, parent, release)
     else:
@@ -244,6 +248,8 @@ def plan_revision(
         lineage["owned_source_revisions"] = release["owned_source_revisions"]
     if parent.audit_repair_sources:
         lineage["documentary_audit_return"] = release["documentary_audit_return"]
+    if sender_return is not None:
+        lineage["audit_sender_return"] = sender_return
     if release.get("natural_provenance_restoration"):
         lineage["natural_provenance_restoration"] = True
     if release.get("verified_recipient_scope_restoration"):
@@ -626,11 +632,11 @@ def _read_return(runner: SessionRunner, slot: FamilySlot, release: dict[str, Any
     ledger, batch, family = runner.ledger, runner.manifest.batch_id, runner.family
     authored_receipts = _authored_scope_receipts(release)
     preauthor_returns = _pre_author_returns(release)
-    empty_ticket = bool(release.get("empty_ticket_return"))
-    if (revision != runner.revision - 1 - len(authored_receipts) - int(empty_ticket) - len(preauthor_returns)
-            or (empty_ticket and (authored_receipts or preauthor_returns))
+    skipped_ticket = bool(release.get("empty_ticket_return") or release.get("audit_sender_return"))
+    if (revision != runner.revision - 1 - len(authored_receipts) - int(skipped_ticket) - len(preauthor_returns)
+            or (skipped_ticket and (authored_receipts or preauthor_returns))
             or (len(authored_receipts) > 1 and not release.get("natural_provenance_restoration"))
-            or ((authored_receipts or preauthor_returns or empty_ticket)
+            or ((authored_receipts or preauthor_returns or skipped_ticket)
                 and not ledger.historical_pooled_revision(batch, family, runner.revision))):
         raise ValueError("A repair must bind each of its verified intervening scope returns.")
     previous = SessionRunner(ledger, runner.manifest, family, revision, runner.directory.parent / str(revision), runner.owner)
@@ -702,7 +708,7 @@ def _read_return(runner: SessionRunner, slot: FamilySlot, release: dict[str, Any
                           audit_repair_sources=frozenset(audit["source_ids"]) if audit is not None else frozenset(),
                           retained_literal_briefs=_retained_literal_briefs(previous, design, natural, events))
     authored_returns, preauthor = _scope_returns_by_revision(history, authored_receipts, preauthor_returns)
-    if not empty_ticket and sorted((*authored_returns, *preauthor)) != list(range(revision + 1, runner.revision)):
+    if not skipped_ticket and sorted((*authored_returns, *preauthor)) != list(range(revision + 1, runner.revision)):
         raise ValueError("Each intervening revision needs its own authenticated scope return.")
     if release.get("natural_provenance_restoration") and (len(authored_returns) != 2 or design.matched):
         raise ValueError("Provenance restoration requires one natural condition and two authenticated scope returns.")
@@ -844,6 +850,9 @@ def _retained_literal_briefs(
 def _committed_prior_plan(
     previous: SessionRunner, slot: FamilySlot, release: dict[str, Any], history: list[dict[str, Any]],
 ) -> RepairPlan:
+    if sender_return := release.get("audit_sender_return"):
+        plan, _, _, _, _ = _retained_audit_sender_plan(previous, slot, _read_return(previous, slot, release), sender_return)
+        return plan
     note = retained_design_note(previous)
     if note is not None:
         parent = _read_return(previous, slot, release)
@@ -1105,6 +1114,45 @@ def _retained_plan_for_empty_ticket(
     if design != artifacts.read_contract(previous.directory / "design.json", DesignOutput):
         raise ValueError("The retained un-authored revision has a different design.")
     return plan, receipt, design, affected, job
+
+
+def document_audit_sender_return(runner: SessionRunner, source_id: str) -> dict[str, Any]:
+    release = release_event(runner)
+    if (release is None or release["parent_revision"] != runner.revision - 1
+            or source_id not in release.get("documentary_audit_return", {}).get("source_ids", [])
+            or not runner.ledger.requires_delivery_attestation or (runner.directory / "family").exists()):
+        raise ValueError("A retained sender retry requires an exact un-frozen audit documentary revision.")
+    events = [row for row in runner.ledger.events(runner.manifest.batch_id, runner.family) if row["revision"] == runner.revision]
+    failures = author_repair._missing_sender_receipts(runner, source_id, events)
+    _, _, request = runner.committed_packet("author", f"author-{source_id}", "author")
+    _, receipt, retry = runner.committed_packet("author", f"author-{source_id}-format-retry", "author")
+    grants = commissioning._read_json(request["inputs"]["author_brief"])["outgoing_deliveries"]
+    if request["inputs"] != retry["inputs"] or not grants or not request["inputs"].get("revision_ticket"):
+        raise ValueError("A retained sender retry requires the same approved local ticket and existing transmissions.")
+    return {"source_id": source_id, "failures": failures, "grants": grants, "receipt_sha256": receipt["receipt_sha256"]}
+
+
+def _retained_audit_sender_plan(
+    runner: SessionRunner, slot: FamilySlot, parent: ReturnedFile, details: dict[str, Any],
+) -> tuple[RepairPlan, dict[str, Any], DesignOutput, set[str], str]:
+    previous = replace(runner, revision=runner.revision - 1, directory=runner.directory.with_name(str(runner.revision - 1)))
+    identity = details["source_id"]
+    if details != document_audit_sender_return(previous, identity):
+        raise ValueError("The two independently omitted sender attestations changed.")
+    history = runner.ledger.events(runner.manifest.batch_id, runner.family)
+    choice = next(row["details"] for row in history if row["revision"] == previous.revision and row["kind"] == "repair_plan_selection")
+    job = choice["job"]
+    plan, receipt, _ = previous.committed_result("design", job, "audit", RepairPlan)
+    design, affected = _verify_plan(slot, parent, plan, attested=True)
+    _, _, request = previous.committed_packet("author", f"author-{identity}", "author")
+    if (receipt["receipt_sha256"] != choice["receipt_sha256"] or plan.tickets.get(identity) != request["inputs"]["revision_ticket"]
+            or design != artifacts.read_contract(previous.directory / "design.json", DesignOutput)):
+        raise ValueError("The retained sender ticket differs from the accepted documentary plan.")
+    declared = " and ".join(f"{grant['recipient']} on {grant['sent_on']}" for grant in details["grants"])
+    clarification = (f" Record the original documented delivery to {declared} in the deliveries field. "
+                     "This is an attestation of the original sending act. Do not make a new delivery.")
+    revised = plan.model_copy(update={"tickets": plan.tickets | {identity: plan.tickets[identity] + clarification}})
+    return revised, receipt, design, affected, job
 
 
 def document_audit_return(runner: SessionRunner, source_ids: set[str]) -> dict[str, Any]:

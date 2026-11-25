@@ -3174,6 +3174,40 @@ def test_audit_origin_documentary_repair_preserves_design_and_limits_local_chang
         autonomous_realism._verify_plan(slot, parent, plan.model_copy(update={"revised_design": modified_design}))
 
 
+def test_audit_sender_retry_only_clarifies_the_committed_delivery(approved, monkeypatch):
+    from benchmark_v3.batch import autonomous_realism
+    from benchmark_v3.batch.sessions import SessionRunner
+
+    ledger, commission = approved
+    slot = commission.portfolio.slots[0]
+    design = DesignOutput.model_validate(_design("G"))
+    sources = [Source(id=row.source_id, title="Record", text="Ordinary retained body.") for row in design.inventory]
+    bundles, freeze = science.freeze_bundles(slot, design, sources)
+    parent = autonomous_realism.ReturnedFile(design, bundles, freeze, {}, {}, {}, None, [],
+        audit_repair_sources=frozenset({"src1"}))
+    original = "Clarify the matter in your own record. Do not make a new delivery."
+    plan = autonomous_realism.RepairPlan(disposition="repair", objections={},
+        tickets={"src1": original}, progress="initial", rationale="Local repair.")
+    proof = {"source_id": "src1", "grants": [{"recipient": "Documented Recipient", "sent_on": "2028-06-02"}]}
+    receipt = {"receipt_sha256": "a" * 64}
+    runner = commission.session_runner(ledger, "G", 3)
+    artifacts.write_json(runner.directory.with_name("2") / "design.json", design.model_dump(mode="json"))
+    monkeypatch.setattr(autonomous_realism, "document_audit_sender_return", lambda *_: proof)
+    monkeypatch.setattr(ledger, "events", lambda *_: [
+        {"revision": 2, "kind": "repair_plan_selection", "details": receipt | {"job": "repair-plan"}},
+    ])
+    monkeypatch.setattr(SessionRunner, "committed_result", lambda *_: (plan, receipt, {}))
+    monkeypatch.setattr(SessionRunner, "committed_packet", lambda *_: ("", receipt, {"inputs": {"revision_ticket": original}}))
+
+    revised, original_receipt, selected_design, affected, _ = autonomous_realism._retained_audit_sender_plan(runner, slot, parent, proof)
+
+    assert original_receipt == receipt and selected_design == design and affected == {"src1"}
+    assert revised.tickets == {"src1": original + " Record the original documented delivery to Documented Recipient on "
+        "2028-06-02 in the deliveries field. This is an attestation of the original sending act. Do not make a new delivery."}
+    with pytest.raises(ValueError, match="attestations changed"):
+        autonomous_realism._retained_audit_sender_plan(runner, slot, parent, proof | {"grants": []})
+
+
 def test_scoped_review_context_preserves_reserved_prompt_on_resume(approved, monkeypatch):
     from benchmark_v3.batch.workflow import FamilyWorkflow
 
