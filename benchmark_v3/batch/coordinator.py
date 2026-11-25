@@ -750,11 +750,15 @@ def release_large_merits_repair(ledger: PooledLedger, batch: str, family: str, s
         commission = load_commission(ledger, batch)
         revision, state, _ = family_status(ledger, batch, family)
         events = ledger.events(batch, family)
+        repeated = any(row["name"] == large_merits_repair.RELEASE and (
+            not ledger.pool.shared_scale or set(row["details"]["source_ids"]) == source_ids
+        ) for row in events)
         if (state != "quarantined" or not ledger.requires_delivery_attestation
-                or not ledger.pooled_revision(batch, family, revision)
-                or any(row["name"] == large_merits_repair.RELEASE for row in events)):
-            raise ValueError("One bounded large design merits repair may follow the retained pre-author return.")
+                or not ledger.pooled_revision(batch, family, revision) or repeated):
+            raise ValueError("A large design merits repair requires a distinct retained pre-author return and repair scope.")
         runner = commission.session_runner(ledger, family, revision)
+        if ledger.pool.shared_scale and autonomous_realism.release_event(runner) is not None:
+            raise ValueError("A documentary repair must preserve its original scoped repair and dependent review lineage.")
         design, review, receipt = large_merits_repair.returned(runner)
         if not source_ids or not source_ids <= review.findings.keys():
             raise ValueError("A merits repair must target specific Sources from the independent review.")

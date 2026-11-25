@@ -4251,6 +4251,8 @@ def test_large_workload_requires_merits_before_participant_authoring(autonomous,
 
 
 def test_large_workload_repair_reopens_exact_scope_return_before_author_dispatch(autonomous, transport, monkeypatch):
+    from types import SimpleNamespace
+
     from benchmark_v3.batch import author_context, clean_redesign, large_merits_repair
     from benchmark_v3.batch.workflow import FamilyWorkflow
 
@@ -4280,6 +4282,21 @@ def test_large_workload_repair_reopens_exact_scope_return_before_author_dispatch
     assert held == design and scope.objections == [objection]
     assert commitment == runner.committed_result("author", author_context.JOB, "audit", type(scope))[1]["receipt_sha256"]
     assert [job for _, _, job, _ in calls] == ["design", clean_redesign.MERITS_JOB, author_context.JOB]
+    with monkeypatch.context() as release:
+        original_events = ledger.events
+        earlier = {"revision": 0, "kind": "transition", "name": large_merits_repair.RELEASE, "next": "design",
+                   "details": {"source_ids": ["src1"]}}
+        release.setattr(ledger, "events", lambda *args: [earlier, *original_events(*args)])
+        release.setattr(ledger, "pooled_revision", lambda *_: True)
+        pool = SimpleNamespace(shared_scale=False)
+        release.setattr(ledger, "pool", pool, raising=False)
+        with pytest.raises(ValueError, match="distinct retained pre-author return"):
+            coordinator.release_large_merits_repair(ledger, batch, family, {"src2"})
+        pool.shared_scale = True
+        with pytest.raises(ValueError, match="distinct retained pre-author return"):
+            coordinator.release_large_merits_repair(ledger, batch, family, {"src1"})
+        coordinator.release_large_merits_repair(ledger, batch, family, {"src2"})
+        assert large_merits_repair.recorded(commission.session_runner(ledger, family, 2))["source_ids"] == ["src2"]
     recorded = ledger.attempts(family)
     monkeypatch.setattr(ledger, "attempts", lambda _: [*recorded, {"revision": 1, "stage": "author", "job": "author-src1"}])
     with pytest.raises(ValueError, match="no participant dispatch"):
@@ -4506,14 +4523,25 @@ def test_pre_author_cover_clarification_preserves_the_participant_projection(app
         author_repair.cover_clarification(runner, "src1", "src3", "src2")
 
 
-def test_new_pre_author_plan_binds_the_rejected_scope_and_precedes_authoring(autonomous, monkeypatch):
-    from benchmark_v3.batch import author_context, autonomous_realism, repair_authority
+@pytest.mark.parametrize("merits", [False, True])
+def test_new_pre_author_plan_binds_the_rejected_scope_and_precedes_authoring(autonomous, monkeypatch, merits):
+    from benchmark_v3.batch import author_context, autonomous_realism, clean_redesign, repair_authority
     from benchmark_v3.batch.sessions import SessionRunner
 
     ledger, commission = autonomous
     batch, family = commission.manifest.batch_id, "G"
     coordinator.commission_batch(ledger, commission, BOUNDARY)
     monkeypatch.setattr(type(ledger), "requires_delivery_attestation", property(lambda _: True))
+    review_job = clean_redesign.MERITS_JOB if merits else author_context.JOB
+    design = DesignOutput.model_validate(_design(family))
+    if merits:
+        monkeypatch.setattr(type(ledger), "requires_workload_merits", property(lambda _: True))
+        monkeypatch.setattr(ledger, "attempts", lambda _: [
+            {"revision": revision, "stage": "author", "job": review_job} for revision in (2, 3)
+        ])
+        for revision in (2, 3):
+            runner = commission.session_runner(ledger, family, revision)
+            artifacts.write_json(runner.directory / "design.json", design.model_dump(mode="json"))
     ledger.event(batch, family, 2, "transition", repair_authority.REVISION, "returned", "design",
                  {"parent_revision": 1})
     ledger.event(batch, family, 2, "repair_plan_selection", "chosen", "design", "design", {
@@ -4522,21 +4550,25 @@ def test_new_pre_author_plan_binds_the_rejected_scope_and_precedes_authoring(aut
     plan = autonomous_realism.RepairPlan(disposition="repair", objections={}, revised_design=None,
                                         tickets={"src1": "Clarify the received letter."}, progress="initial",
                                         rationale="Address the earlier documentary return.")
-    review = author_context.AuthorContextReview(verdict="return", findings={"src1": "Wrong attachment version."},
-                                                objections=["The letter came from a different issuing counterpart."])
+    findings = {"src1": "Wrong attachment version.", "src2": "Unchanged local document."}
+    if merits:
+        findings["_design"] = "One documentary transmission remains unverified."
+    review = author_context.AuthorContextReview(verdict="return", findings=findings,
+        objections=["The letter came from a different issuing counterpart."])
 
     def retained(self, stage, job, role, result_type):
         assert self.revision in (2, 3) and role == "audit"
         if job == repair_authority.PLAN_JOB:
             return plan, {"receipt_sha256": "a" * 64}, {}
-        assert job == author_context.JOB and stage == "author"
-        return review, {"receipt_sha256": "b" * 64}, {}
+        assert job == review_job and stage == "author"
+        return review, {"receipt_sha256": "b" * 64}, {"inputs": {"intended_intervention": design.model_dump_json()}}
 
     monkeypatch.setattr(SessionRunner, "committed_result", retained)
     runner = commission.session_runner(ledger, family, 2)
     details, original = autonomous_realism.pre_author_scope_return(runner)
     assert original == plan and details["scope_receipt_sha256"] == "b" * 64
     assert details["objections"] == review.objections
+    assert details.get("review_job") == (review_job if merits else None)
     ledger.event(batch, family, 3, "transition", repair_authority.REVISION, "quarantined", "design",
                  {"parent_revision": 1, "pre_author_scope_return": details})
     assert autonomous_realism._earlier_pre_author_references(runner, ledger.events(batch, family), 3) == ((2, "pre-author:1"),)
@@ -4546,7 +4578,7 @@ def test_new_pre_author_plan_binds_the_rejected_scope_and_precedes_authoring(aut
     successor = commission.session_runner(ledger, family, 3)
     second, _ = autonomous_realism.pre_author_scope_return(successor)
     assert second["revision"] == 3
-    monkeypatch.setattr(type(ledger), "attempts", lambda *_: [{"revision": 2, "stage": "author", "job": "author-src1"}])
+    monkeypatch.setattr(ledger, "attempts", lambda *_: [{"revision": 2, "stage": "author", "job": "author-src1"}])
     with pytest.raises(ValueError, match="before any author dispatch"):
         autonomous_realism.pre_author_scope_return(runner)
 

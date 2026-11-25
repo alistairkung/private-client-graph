@@ -49,14 +49,16 @@ def returned(runner: "SessionRunner") -> tuple[DesignOutput, author_context.Auth
         raise ValueError("A large merits repair requires one independently returned design with no participant dispatch.")
     review, receipt, request = runner.committed_result("author", clean_redesign.MERITS_JOB, "audit",
                                                       author_context.AuthorContextReview)
+    permitted_labels = {"_design"}
     if runner.ledger.requires_workload_merits and review.verdict == "accept" and not review.objections:
         clean_redesign.require_merits(runner)
         review, receipt, request = runner.committed_result("author", author_context.JOB, "audit",
                                                           author_context.AuthorContextReview)
+        permitted_labels = set()
     design = artifacts.read_contract(runner.directory / "design.json", DesignOutput)
     if (review.verdict != "return" or not review.objections
             or DesignOutput.model_validate_json(request["inputs"]["intended_intervention"]) != design
-            or review.findings.keys() != {row.source_id for row in design.inventory}):
+            or review.findings.keys() - permitted_labels != {row.source_id for row in design.inventory}):
         raise ValueError("A merits repair requires the exact independently returned complete design.")
     return design, review, str(receipt["receipt_sha256"])
 

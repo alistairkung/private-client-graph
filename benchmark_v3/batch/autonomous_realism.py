@@ -7,7 +7,7 @@ from typing import Any, Literal
 from pydantic import TypeAdapter
 
 from benchmark_v3 import commissioning, packet
-from benchmark_v3.batch import artifacts, audit_boundary, author_context, author_delivery, author_repair, authorisation, delivery_particulars, design_review, recipient_edit, repair_authority, science
+from benchmark_v3.batch import artifacts, audit_boundary, author_context, author_delivery, author_repair, authorisation, clean_redesign, delivery_particulars, design_review, recipient_edit, repair_authority, science
 from benchmark_v3.batch.contracts import Adjudication, AuthorBrief, DesignOutput, MatchedCondition, MilestoneAudit, RealismReview, SourceId
 from benchmark_v3.batch.ledger import BudgetExhausted
 from benchmark_v3.batch.sessions import SessionRunner
@@ -943,7 +943,19 @@ def pre_author_scope_return(runner: SessionRunner, *, slot: FamilySlot | None = 
             _, planner, _ = runner.committed_packet("design", chosen["job"], "audit")
         else:
             plan, planner, _ = runner.committed_result("design", chosen["job"], "audit", RepairPlan)
-    review, receipt, request = runner.committed_result("author", author_context.JOB, "audit", author_context.AuthorContextReview)
+    review_job = author_context.JOB
+    merits_job = clean_redesign.MERITS_JOB
+    if runner.ledger.requires_workload_merits and any(
+        row["revision"] == runner.revision and row["job"] == merits_job for row in runner.ledger.attempts(family)
+    ):
+        merits, receipt, request = runner.committed_result("author", merits_job, "audit", author_context.AuthorContextReview)
+        if merits.verdict == "return":
+            design = artifacts.read_contract(runner.directory / "design.json", DesignOutput)
+            if (DesignOutput.model_validate_json(request["inputs"]["intended_intervention"]) != design
+                    or merits.findings.keys() - {"_design"} != {row.source_id for row in design.inventory}):
+                raise ValueError("The independent merits return differs from the exact held design.")
+            review_job = merits_job
+    review, receipt, request = runner.committed_result("author", review_job, "audit", author_context.AuthorContextReview)
     objections = review.objections
     intake: dict[SourceId, list[SourceId]] = {}
     if (review.verdict == "accept" and not objections and runner.ledger.requires_workload_merits and slot is not None):
@@ -961,6 +973,7 @@ def pre_author_scope_return(runner: SessionRunner, *, slot: FamilySlot | None = 
         "revision": runner.revision, "planner_receipt_sha256": planner["receipt_sha256"],
         "scope_receipt_sha256": receipt["receipt_sha256"], "objections": objections,
         "review": review.model_dump(mode="json"),
+        **({"review_job": review_job} if review_job == merits_job else {}),
         **({"mechanically_missing_intake_attachments": intake} if intake else {}),
     }, plan
 
