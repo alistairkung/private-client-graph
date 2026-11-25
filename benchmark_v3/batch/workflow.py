@@ -284,7 +284,9 @@ class FamilyWorkflow:
         return design
 
     def _verify_fresh_design(self, design: DesignOutput) -> None:
-        science.verify_design(self.slot, design_recovery._without_full_file_snapshot(design))
+        science.verify_design(self.slot, design_recovery.fresh_design_representation(
+            design, workload=self.runner.ledger.requires_workload_merits,
+        ))
         self._project_authors(design, {})
 
     def _reviewed_design(self, design: DesignOutput) -> DesignOutput:

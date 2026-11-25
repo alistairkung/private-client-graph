@@ -3174,6 +3174,29 @@ def test_audit_origin_documentary_repair_preserves_design_and_limits_local_chang
         autonomous_realism._verify_plan(slot, parent, plan.model_copy(update={"revised_design": modified_design}))
 
 
+def test_scale_design_recovers_symmetric_order_without_removing_any_claim(approved):
+    from benchmark_v3.batch import design_recovery
+
+    _, commission = approved
+    slot = commission.portfolio.slots[0]
+    reversed_edge = ("Zoe Vale", "spouse_of", "Ada Vale")
+    canonical_edge = ("Ada Vale", "spouse_of", "Zoe Vale")
+    directed_edge = ("Zoe Vale", "parent_of", "Ada Vale")
+    design = DesignOutput.model_validate(_design("G") | {
+        "candidates": [reversed_edge, directed_edge], "required": {"G000": [reversed_edge]},
+    })
+    with pytest.raises(ValueError, match="canonical critical candidates"):
+        science.verify_design(slot, design)
+    derived = design_recovery.fresh_design_representation(design, workload=True)
+    science.verify_design(slot, derived)
+    assert derived.candidates == [canonical_edge, directed_edge]
+    assert derived.required == {"G000": [canonical_edge]}
+    assert derived.inventory == design.inventory and design.candidates == [reversed_edge, directed_edge]
+    duplicate = design.model_copy(update={"candidates": [reversed_edge, canonical_edge]})
+    with pytest.raises(ValueError, match="distinct canonical critical candidates"):
+        science.verify_design(slot, design_recovery.fresh_design_representation(duplicate, workload=True))
+
+
 def test_audit_sender_retry_only_clarifies_the_committed_delivery(approved, monkeypatch):
     from benchmark_v3.batch import autonomous_realism
     from benchmark_v3.batch.sessions import SessionRunner
