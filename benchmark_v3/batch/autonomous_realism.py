@@ -320,6 +320,8 @@ def plan_revision(
         lineage["documentary_audit_return"] = release["documentary_audit_return"]
     if sender_return is not None:
         lineage["audit_sender_return"] = sender_return
+    if "previous_issued_sender_recovery" in release:
+        lineage["previous_issued_sender_recovery"] = release["previous_issued_sender_recovery"]
     if release.get("natural_provenance_restoration"):
         lineage["natural_provenance_restoration"] = True
     if release.get("baseline_owned_restoration"):
@@ -712,8 +714,10 @@ def _read_return(runner: SessionRunner, slot: FamilySlot, release: dict[str, Any
     preauthor_returns = _pre_author_returns(release)
     skipped_ticket = bool(release.get("empty_ticket_return") or release.get("audit_sender_return"))
     issued_restoration = (release.get("audit_sender_return") or {}).get("issued_source_sha256")
-    if (revision != runner.revision - 1 - len(authored_receipts) - int(skipped_ticket) - len(preauthor_returns)
+    earlier_issued = release.get("previous_issued_sender_recovery")
+    if (revision != runner.revision - 1 - len(authored_receipts) - int(skipped_ticket) - int(bool(earlier_issued)) - len(preauthor_returns)
             or (skipped_ticket and (authored_receipts or preauthor_returns) and not issued_restoration)
+            or (earlier_issued and skipped_ticket)
             or (len(authored_receipts) > 1 and not any(release.get(key) for key in (
                 "natural_provenance_restoration", "baseline_owned_restoration",
             )))
@@ -790,12 +794,18 @@ def _read_return(runner: SessionRunner, slot: FamilySlot, release: dict[str, Any
                           retained_literal_briefs=_retained_literal_briefs(previous, design, natural, events))
     authored_returns, preauthor = _scope_returns_by_revision(history, authored_receipts, preauthor_returns)
     last_scoped = runner.revision - int(bool(issued_restoration))
-    if (not skipped_ticket or issued_restoration) and sorted((*authored_returns, *preauthor)) != list(range(revision + 1, last_scoped)):
+    known = set(authored_returns) | set(preauthor)
+    if earlier_issued:
+        skipped_revision = verify_previous_issued_recovery(runner, result, earlier_issued)
+        if skipped_revision in known:
+            raise ValueError("A stopped sender draft cannot also count as an independently reviewed authored file.")
+        known.add(skipped_revision)
+    if (not skipped_ticket or issued_restoration) and known != set(range(revision + 1, last_scoped)):
         raise ValueError("Each intervening revision needs its own authenticated scope return.")
-    if (release.get("natural_provenance_restoration") or release.get("baseline_owned_restoration")) and (
-        len(authored_returns) != 2 or design.matched
-    ):
+    if release.get("natural_provenance_restoration") and (len(authored_returns) != 2 or design.matched):
         raise ValueError("Provenance restoration requires one natural condition and two authenticated scope returns.")
+    if release.get("baseline_owned_restoration") and (not 1 <= len(authored_returns) <= 2 or design.matched):
+        raise ValueError("Original record restoration requires authenticated authored returns on one natural condition.")
     for rejected_revision in sorted((*authored_returns, *preauthor)):
         if rejected_revision in authored_returns:
             result = _scope_repair_parent(runner, slot, result, authored_returns[rejected_revision],
@@ -1345,6 +1355,27 @@ def _retained_audit_sender_plan(
     local = "Retain the exact issued version of your own earlier record." if issued is not None else plan.tickets[identity]
     revised = plan.model_copy(update={"tickets": plan.tickets | {identity: local + clarification}})
     return revised, receipt, design, affected, job
+
+
+def verify_previous_issued_recovery(runner: SessionRunner, case: ReturnedFile, recorded: dict[str, Any]) -> int:
+    revision = recorded["recovery_revision"]
+    recovered = replace(runner, revision=revision, directory=runner.directory.with_name(str(revision)))
+    release = release_event(recovered)
+    proof = recorded["sender_return"]
+    if release is None or release.get("audit_sender_return") != proof or not proof.get("issued_source_sha256"):
+        raise ValueError("The prior issued-record recovery differs from its immutable release.")
+    identity = proof["source_id"]
+    source = next(row for row in case.bundles[case.freeze.natural] if row.id == identity)
+    failed = replace(runner, revision=revision - 1, directory=runner.directory.with_name(str(revision - 1)))
+    if document_audit_sender_return(failed, identity, issued=source) != proof:
+        raise ValueError("The original failed sender attempts differ from their authenticated recovery.")
+    job = f"author-{identity}"
+    restored, _, request = recovered.committed_result("author", job, "author", author_delivery.AttestedSource)
+    author_delivery.require_projection(recovered, job, request["inputs"])
+    author_delivery.verify_attestation(restored, request["inputs"]["author_brief"])
+    if (restored.title, restored.text) != (source.title, source.text):
+        raise ValueError("The recovered participant did not preserve the exact independently authored issued record.")
+    return revision - 1
 
 
 def document_audit_return(runner: SessionRunner, source_ids: set[str]) -> dict[str, Any]:

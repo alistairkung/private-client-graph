@@ -1156,10 +1156,15 @@ def release_returned_authored_scope_plan(
         runner = commission.session_runner(ledger, family, revision)
         earlier = autonomous_realism.release_event(runner)
         previous_receipts = autonomous_realism._authored_scope_receipts(earlier or {})
+        issued = (earlier or {}).get("audit_sender_return", {})
+        earlier_issued = (earlier or {}).get("previous_issued_sender_recovery")
+        settled_sender = bool(issued.get("issued_source_sha256"))
+        expected = (len(previous_receipts) <= 1 if baseline_owned_restoration
+                    else len(previous_receipts) == int(natural_provenance_restoration))
         if (not ledger.requires_delivery_attestation or earlier is None
                 or earlier.get("parent_revision") != revision - 1 - len(autonomous_realism._pre_author_returns(earlier))
-                - len(previous_receipts)
-                or (len(previous_receipts) != int(natural_provenance_restoration or baseline_owned_restoration))
+                - len(previous_receipts) - int(bool(earlier_issued or settled_sender))
+                or not expected or (earlier_issued and settled_sender)
                 or state != "quarantined" or not issue or (issue["stage"], issue["code"]) != ("author", "scientific_review")
                 or not ledger.pooled_revision(batch, family, revision)):
             raise ValueError("An authored-scope replan requires an independently returned documentary revision.")
@@ -1172,6 +1177,9 @@ def release_returned_authored_scope_plan(
             "scope_return_receipt_sha256": receipt["receipt_sha256"],
             "family_sessions_remaining": ledger.effective_budget().families[family] - len(ledger.attempts(family)),
         }
+        if settled_sender:
+            release.pop("audit_sender_return")
+            release["previous_issued_sender_recovery"] = {"recovery_revision": revision, "sender_return": issued}
         slot = next(row for row in commission.portfolio.slots if row.family_id == family)
         if baseline_owned_restoration:
             if (not ledger.pool.shared_scale or not ledger.requires_workload_merits or not owned_source_revisions

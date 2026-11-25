@@ -3565,6 +3565,52 @@ def test_audit_sender_retry_only_clarifies_the_committed_delivery(approved, monk
         autonomous_realism._retained_audit_sender_plan(runner, slot, parent, proof | {"grants": []})
 
 
+def test_prior_issued_recovery_requires_exact_retained_receipts_and_body(approved, monkeypatch):
+    from benchmark_v3.batch import autonomous_realism
+
+    ledger, commission = approved
+    slot = commission.portfolio.slots[0]
+    design = DesignOutput.model_validate(_design("G"))
+    sources = [Source(id=row.source_id, title="Issued record", text="Ordinary issued body.")
+               for row in design.inventory]
+    bundles, freeze = science.freeze_bundles(slot, design, sources)
+    parent = autonomous_realism.ReturnedFile(design, bundles, freeze, {}, {}, {}, None, [])
+    runner = commission.session_runner(ledger, "G", 4)
+    proof = {"source_id": "src1", "issued_source_sha256": authorisation.commitment(sources[0])}
+    recorded = {"recovery_revision": 3, "sender_return": proof}
+    delivery = autonomous_realism.author_delivery
+    restored = delivery.AttestedSource(title=sources[0].title, text=sources[0].text, deliveries=[])
+    calls = []
+
+    def prior_release(recovered):
+        assert recovered.revision == 3
+        return {"audit_sender_return": proof}
+
+    def failed_receipts(failed, source_id, *, issued):
+        assert (failed.revision, source_id, issued) == (2, "src1", sources[0])
+        return proof
+
+    def result(recovered, stage, job, role, contract):
+        assert (recovered.revision, stage, job, role, contract) == (3, "author", "author-src1", "author", delivery.AttestedSource)
+        return restored, {}, {"inputs": {"author_brief": "retained brief"}}
+
+    monkeypatch.setattr(autonomous_realism, "release_event", prior_release)
+    monkeypatch.setattr(autonomous_realism, "document_audit_sender_return", failed_receipts)
+    monkeypatch.setattr(type(runner), "committed_result", result)
+    monkeypatch.setattr(delivery, "require_projection", lambda *args: calls.append("projection"))
+    monkeypatch.setattr(delivery, "verify_attestation", lambda *args: calls.append("attestation"))
+
+    assert autonomous_realism.verify_previous_issued_recovery(runner, parent, recorded) == 2
+    assert calls == ["projection", "attestation"]
+    with pytest.raises(ValueError, match="immutable release"):
+        autonomous_realism.verify_previous_issued_recovery(
+            runner, parent, recorded | {"sender_return": proof | {"issued_source_sha256": "0" * 64}},
+        )
+    restored = restored.model_copy(update={"text": "A newly composed draft."})
+    with pytest.raises(ValueError, match="exact independently authored issued record"):
+        autonomous_realism.verify_previous_issued_recovery(runner, parent, recorded)
+
+
 def test_scoped_review_context_preserves_reserved_prompt_on_resume(approved, monkeypatch):
     from benchmark_v3.batch.workflow import FamilyWorkflow
 
