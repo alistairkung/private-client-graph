@@ -977,7 +977,13 @@ def pre_author_progress(previous: list[dict[str, Any]], current: dict[str, Any],
 
     def leading_sources(record: dict[str, Any]) -> set[SourceId]:
         names = {objection.split(maxsplit=1)[0].rstrip(":") for objection in record["objections"] if objection.strip()}
-        return names if names <= identities else set()
+        if names <= identities:
+            return names
+        if record.get("review_job") == clean_redesign.MERITS_JOB:
+            citations = [set(re.findall(r"[\w-]+", objection)) & identities for objection in record["objections"]]
+            if citations and all(citations):
+                return set().union(*citations)
+        return set()
 
     current_sources = leading_sources(current)
     previous_sources = [leading_sources(record) for record in previous]

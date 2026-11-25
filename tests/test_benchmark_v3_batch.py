@@ -3032,7 +3032,7 @@ def test_scope_replay_preserves_a_preauthor_return_after_an_authored_return():
 
 
 def test_scale_preauthor_progress_distinguishes_new_scope_from_a_reworded_return():
-    from benchmark_v3.batch import autonomous_realism
+    from benchmark_v3.batch import autonomous_realism, clean_redesign
 
     def findings(*objections):
         return {"objections": list(objections)}
@@ -3045,6 +3045,10 @@ def test_scale_preauthor_progress_distinguishes_new_scope_from_a_reworded_return
     assert not autonomous_realism.pre_author_progress(previously, previously[0], ids)
     reduced = [findings("src1: Premature issue reference.", "src2: Missing referenced input.")]
     assert autonomous_realism.pre_author_progress(reduced, findings("src2: Missing referenced input."), ids)
+    merits = {"review_job": clean_redesign.MERITS_JOB}
+    assert autonomous_realism.pre_author_progress(previously, findings("Check the authority stated in src3.") | merits, ids)
+    assert not autonomous_realism.pre_author_progress(previously, findings("Check the authority in src3 and src2.") | merits, ids)
+    assert not autonomous_realism.pre_author_progress(previously, findings("Check the authority stated in src30.") | merits, ids)
 
 
 def test_exact_recipient_document_repair_preserves_the_original_delivery_graph():
