@@ -12,7 +12,7 @@ from pydantic import BaseModel
 from benchmark_v3 import commissioning, packet
 from benchmark_v3.batch import (
     adjudication_contract, adjudication_recovery, annotation_recovery, artifacts, audit_boundary, audit_recovery, author_context,
-    author_delivery, author_repair, authorisation, construction, continuation, design_review, joint_control_plan, mask_dispute, repair_authority,
+    author_delivery, author_repair, authorisation, construction, continuation, delivery_audience, design_review, joint_control_plan, mask_dispute, repair_authority,
     ticket_authority,
 )
 from benchmark_v3.batch.contracts import BatchManifest, Code, ExceptionRecord, Role, Stage
@@ -197,6 +197,11 @@ class SessionRunner:
                 ticket_authority.require_cleared(self)
             except (ValueError, OSError, KeyError, TypeError, packet.PacketError) as error:
                 raise Blocked(stage, "isolation", str(error), job=job) from error
+            if self.ledger.requires_workload_merits and not self.ledger.has_reservation(self.family, self.revision, job):
+                try:
+                    delivery_audience.verify_packet(inputs)
+                except delivery_audience.AudienceError as error:
+                    raise Blocked(stage, "scientific_review", str(error), job=job) from error
         allocation = self.manifest.models[role]
         prompt = instructions if role == "designer" else (
             f"{instructions}\nReturn one JSON object. Output schema: "

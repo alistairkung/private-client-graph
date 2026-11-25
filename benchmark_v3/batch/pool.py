@@ -575,6 +575,11 @@ class MilestonePool:
         record = artifacts.read_bytes(directory / f"{recovered[4]}.json")
         if commissioning.digest(evidence) != recovered[3] or commissioning.digest(record) != recovered[4]:
             raise TaskHalted("The successor packet boundary evidence changed.")
+        if guard := commissioning._read_json(record).get("audience_guard_sha256"):
+            from benchmark_v3.batch import delivery_audience
+
+            if commissioning.digest(Path(delivery_audience.__file__).read_bytes()) != guard:
+                raise TaskHalted("The verified attachment-audience guard has changed.")
 
     def runtime_quarantine(self, root: Path) -> tuple[int, str, str, str] | None:
         with closing(_read_only(self.path)) as connection:
@@ -775,15 +780,7 @@ class MilestonePool:
                 or any(row["revision"] >= revision for row in ledger.attempts(family))):
             raise ValueError("Only the exact predispatch documentary lineage stop is eligible for recovery.")
         ledger.verify_commission_boundary(commission)
-        runtime = proof.get("runtime", {})
-        filesystem = proof.get("filesystem", {})
-        if (proof.get("submitted_turns") != 0 or proof.get("packet_sha256") != packet_sha
-                or proof.get("author_delivery_sha256") != delivery_sha
-                or filesystem.get("inside") != {"allowed": True, "denied": False}
-                or any(filesystem.get(key) != {"allowed": False, "denied": True} for key in ("outside", "repository"))
-                or any(not _isolated_runtime(runtime.get(effort, {}), effort) for effort in ("medium", "high"))
-                or len({runtime[effort].get("thread_id") for effort in ("medium", "high")
-                        if runtime[effort].get("thread_id")}) != 2):
+        if not _verified_zero_turn_boundary(proof, packet_sha, delivery_sha):
             raise ValueError("Documentary lineage recovery requires fresh independent zero-turn verification.")
         runner = commission.session_runner(ledger, family, revision)
         release = autonomous_realism.release_event(runner)
@@ -820,6 +817,69 @@ class MilestonePool:
         digest = self._install_boundary_successor(ledger.root, evidence, record, undispatched_revision=revision)
         ledger.event(batch, family, revision, "reconcile", "verified_documentary_lineage", state, state,
                      {"boundary_sha256": digest, "parent_freeze_sha256": record["parent_freeze_sha256"]})
+        return digest
+
+    def reconcile_delivery_audience(self, ledger: "PooledLedger", family: str, proof: dict[str, Any]) -> str:
+        """Quarantine the affected documentary lineage before releasing the corrected shared boundary."""
+        from benchmark_v3.batch import coordinator, delivery_audience
+        from benchmark_v3.batch.contracts import ExceptionRecord
+
+        if ledger.pool is not self or not self.shared_scale or not ledger.requires_delivery_attestation:
+            raise ValueError("An audience recovery requires active isolated scale custody.")
+        self._verify_restart_runtime()
+        batch, = ledger.batch_ids()
+        commission = coordinator.load_commission(ledger, batch)
+        revision, state, issue = coordinator.family_status(ledger, batch, family)
+        events = ledger.events(batch, family)
+        records = self.boundary_records(ledger.root)
+        with closing(_read_only(ledger.path)) as database:
+            halts = database.execute("SELECT sequence, family, revision, details FROM events WHERE kind = 'task_halt'").fetchall()
+        unresolved = []
+        for row in halts:
+            if row[0] in records:
+                self._verify_boundary_record(records[row[0]], row[3])
+            else:
+                unresolved.append(row)
+        if (len(unresolved) != 1 or unresolved[0][1:3] != (family, revision) or state != "quarantined"
+                or not issue or (issue["stage"], issue["code"], issue["evidence"]) != ("author", "isolation", delivery_audience.HALT)
+                or commissioning._read_json(unresolved[0][3]) != issue or not issue["job"]):
+            raise ValueError("Only the exact dispatched attachment-audience stop is eligible for recovery.")
+        packet_sha = commissioning.digest(Path(packet.__file__).read_bytes())
+        delivery_sha = commissioning.digest(Path(author_delivery.__file__).read_bytes())
+        guard_sha = commissioning.digest(Path(delivery_audience.__file__).read_bytes())
+        if (not _verified_zero_turn_boundary(proof, packet_sha, delivery_sha)
+                or proof.get("audience_guard_sha256") != guard_sha):
+            raise ValueError("Audience recovery requires exact independent zero-turn and current guard verification.")
+        ledger.verify_commission_boundary(commission)
+        runner = commission.session_runner(ledger, family, revision)
+        _, receipt, request = runner.committed_packet("author", issue["job"], "author")
+        try:
+            delivery_audience.verify_packet(request["inputs"])
+        except delivery_audience.AudienceError:
+            pass
+        else:
+            raise ValueError("The new guard must reject the actual previously submitted attachment.")
+        if proof.get("reproduced_rejection_receipt_sha256") != receipt["receipt_sha256"]:
+            raise ValueError("The independent proof must bind the exact affected dispatch.")
+        first = max((row["revision"] for row in events if row["revision"] <= revision
+                     and "documentary_redesign" in row["details"]), default=1)
+        affected = list(range(first, revision + 1))
+        _require_settled_audience_custody(ledger, batch, family, affected)
+        payload = (commissioning.json_text(proof) + "\n").encode()
+        sequence, _, _, raw_halt = unresolved[0]
+        record = {
+            "recovery": "verified_delivery_audience", "pool_sha256": self.digest, "family": family, "revision": revision,
+            "packet_sha256": packet_sha, "audience_guard_sha256": guard_sha, "evidence_sha256": commissioning.digest(payload),
+            "halt_sequence": sequence, "halt_sha256": commissioning.digest(raw_halt.encode()),
+            "retained_observation_sha256": receipt["receipt_sha256"], "quarantined_revisions": affected,
+        }
+        digest = self._install_boundary_successor(ledger.root, payload, record, undispatched_revision=revision + 1)
+        ledger.event(batch, family, revision, "reconcile", "verified_delivery_audience", state, state,
+                     {"boundary_sha256": digest, "quarantined_revisions": affected})
+        ledger.block(batch, revision, ExceptionRecord(stage="author", family_id=family, code="scientific_review",
+                     evidence="The affected documentary lineage is quarantined after verified recipient-audience exposure.",
+                     job=issue["job"], repair_permitted=False, human_action="Use a clean independent documentary lineage.",
+                     remaining_work="family_halted"), qualifier="audience-assembly")
         return digest
 
     def _install_boundary_successor(
@@ -902,6 +962,32 @@ def _has_runtime_quarantine(connection: sqlite3.Connection) -> bool:
     return connection.execute(
         "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'quarantined_runtime_custody'",
     ).fetchone() is not None
+
+
+def _verified_zero_turn_boundary(proof: dict[str, Any], packet_sha: str, delivery_sha: str) -> bool:
+    runtime = proof.get("runtime", {})
+    filesystem = proof.get("filesystem", {})
+    if (proof.get("submitted_turns") != 0 or proof.get("packet_sha256") != packet_sha
+            or proof.get("author_delivery_sha256") != delivery_sha
+            or filesystem.get("inside") != {"allowed": True, "denied": False}
+            or any(filesystem.get(key) != {"allowed": False, "denied": True} for key in ("outside", "repository"))
+            or any(not _isolated_runtime(runtime.get(effort, {}), effort) for effort in ("medium", "high"))):
+        return False
+    return bool(runtime["medium"].get("thread_id") and runtime["high"].get("thread_id")
+                and runtime["medium"]["thread_id"] != runtime["high"]["thread_id"])
+
+
+def _require_settled_audience_custody(ledger: "PooledLedger", batch: str, family: str, revisions: list[int]) -> None:
+    receipts = {(row["revision"], row["name"]): row["details"]["receipt_sha256"]
+                for row in ledger.events(batch, family) if row["kind"] == "session" and row["revision"] in revisions}
+    for attempt in ledger.attempts(family):
+        revision, job = attempt["revision"], attempt["job"]
+        if revision > revisions[-1]:
+            raise ValueError("No dispatch may follow an unresolved audience stop.")
+        if revision in revisions:
+            receipt = ledger.root / "batches" / batch / family / str(revision) / "packets" / job / "receipt.json"
+            if commissioning.digest(artifacts.read_bytes(receipt)) != receipts.get((revision, job)):
+                raise ValueError("Each quarantined reservation must have its exact terminal receipt.")
 
 
 def _isolated_runtime(data: dict[str, Any], effort: str) -> bool:
@@ -1128,7 +1214,7 @@ class PooledLedger(Ledger):
         batch = connection.execute("SELECT batch FROM families WHERE id = ?", (family,)).fetchone()[0]
         role = request.get("role")
         if self.requires_author_context and role == "author":
-            from benchmark_v3.batch import clean_redesign, coordinator, large_merits_repair
+            from benchmark_v3.batch import clean_redesign, coordinator, delivery_audience, large_merits_repair
 
             runner = coordinator.load_commission(self, batch).session_runner(self, family, revision)
             if large_merits_repair.requires_review(runner):
@@ -1136,6 +1222,8 @@ class PooledLedger(Ledger):
             guard = author_delivery if self.requires_delivery_attestation else author_context
             guard.require_prompt(job, request["prompt"])
             guard.require_projection(runner, job, request["inputs"])
+            if self.requires_workload_merits:
+                delivery_audience.verify_packet(request["inputs"])
         planning = (self.pool.predecessor is not None and stage == "design" and role == "research_architect"
                     and job in {"portfolio-supplement", "portfolio-supplement-format-retry",
                                 "portfolio-supplement-review"})

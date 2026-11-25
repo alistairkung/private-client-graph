@@ -14,7 +14,7 @@ from benchmark_v3 import commissioning, packet, replay
 from benchmark_v3.batch import (
     adjudication_contract, adjudication_recovery, annotation_recovery, artifacts, audit_boundary, audit_contract, audit_recovery,
     author_context, author_delivery, author_repair, authorisation, autonomous_realism, clean_redesign, construction, continuation,
-    design_recovery,
+    delivery_audience, design_recovery,
     design_review, evidence_recovery, frozen_rekey, joint_control_plan, mask_dispute, milestone_repair, read_format_recovery, repair_authority, science,
 )
 from benchmark_v3.batch.contracts import (
@@ -370,6 +370,13 @@ class FamilyWorkflow:
 
     def _project_authors(self, design: DesignOutput, tickets: dict[str, str]) -> dict[str, Any]:
         guard = author_delivery if self.runner.ledger.requires_delivery_attestation else author_context
+        if self.runner.ledger.requires_delivery_attestation and self.runner.ledger.requires_workload_merits:
+            reserved = any(row["revision"] == self.runner.revision and row["stage"] == "author"
+                           and row["job"].startswith("author-") and row["job"] not in {
+                               author_context.JOB, author_context.JOB + repair_authority.FORMAT_RETRY,
+                           } for row in self.runner.ledger.attempts(self.runner.family))
+            if not reserved:
+                delivery_audience.verify_design(design)
         return guard.projection(design, tickets)
 
     def _review_author_context(self, design: DesignOutput, tickets: dict[str, str]) -> dict[str, Any]:

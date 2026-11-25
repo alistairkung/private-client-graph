@@ -3115,6 +3115,84 @@ def test_owned_scope_restoration_supplies_only_the_authenticated_original_to_its
         autonomous_realism._restore_baseline_records(runner, parent, 3, {original.id: 2}, history)
 
 
+def test_attachment_audience_rejects_restricted_versions_at_design_and_dispatch():
+    from benchmark_v3.batch import delivery_audience
+
+    raw = _design("G")
+    raw["inventory"][0]["provenance"] = (
+        "Issued in separate messages. Each recipient received only their own message. My file has both copies."
+    )
+    raw["inventory"][1]["received"] = [raw["inventory"][0]["source_id"]]
+    with pytest.raises(delivery_audience.AudienceError, match="packages separately issued messages"):
+        delivery_audience.verify_design(DesignOutput.model_validate(raw))
+    raw["inventory"][1]["received"] = []
+    delivery_audience.verify_design(DesignOutput.model_validate(raw))
+
+    def packet(text):
+        source = Source(id="src1", title="Sent file", text=text)
+        return {"received_correspondence": commissioning.json_text([source.model_dump(mode="json")])}
+
+    confined = "To: Alice Example\nHere is your copy.\n\n> **Draft to: Bryn Example**\nFor your file alone."
+    with pytest.raises(delivery_audience.AudienceError, match="different recipient headings"):
+        delivery_audience.verify_packet(packet(confined))
+    with pytest.raises(delivery_audience.AudienceError, match="declared separate audiences"):
+        delivery_audience.verify_packet(packet("Two differently addressed bodies. Each recipient only saw their own message."))
+    delivery_audience.verify_packet(packet("To: Alice Example and Bryn Example\nCc: Records\nThe same notice goes to both."))
+    delivery_audience.verify_packet(packet("To: Alice Example\nThe quoted cover also says:\n> To: Alice Example"))
+
+
+def test_audience_recovery_binds_the_submitted_packet_and_quarantines_its_entire_lineage(approved, tmp_path, monkeypatch):
+    from benchmark_v3.batch import author_delivery, delivery_audience
+    from benchmark_v3.batch.contracts import ExceptionRecord
+    from benchmark_v3.batch.pool import PooledLedger
+    from benchmark_v3.batch.sessions import SessionRunner
+
+    original, commission = approved
+    manifest = commission.manifest
+    coordinator.commission_batch(original, commission, BOUNDARY)
+    pool = MilestonePool(tmp_path / "audience-recovery", PoolAuthority(
+        owner=OWNER, reference="Test audience restoration.", prior_archive_sha256="c" * 64,
+        starting_charges=199, cumulative_ceiling=202, additional_target=1,
+        members=[CustodyMember(root=str(original.root), task_id=manifest.task_id, starting_charges=0)],
+    ))
+    monkeypatch.setattr(PooledLedger, "requires_delivery_attestation", property(lambda _: True))
+    monkeypatch.setattr(MilestonePool, "shared_scale", property(lambda _: True))
+    active = pool.join(original.root)
+    batch, family = manifest.batch_id, "G"
+    active.event(batch, family, 2, "reconcile", "pooled-release", "design", "design", {"documentary_redesign": {}})
+    active.event(batch, family, 3, "operator_close", "prior-science-stop", "author", "quarantined", {})
+    active.block(batch, 3, ExceptionRecord(stage="author", family_id=family, code="isolation", job="author-src2",
+                 evidence=delivery_audience.HALT, repair_permitted=False, human_action="Verify the boundary.",
+                 remaining_work="task_halted"), qualifier="audience-assembly")
+    attestation = {"receipt_sha256": "a" * 64}
+    source = Source(id="src1", title="Two messages", text="To: Author One\nFirst.\nDraft to: Author Two\nSecond.")
+    monkeypatch.setattr(SessionRunner, "committed_packet", lambda *_: (
+        b"", attestation, {"inputs": {"received_correspondence": commissioning.json_text([source.model_dump(mode="json")])}},
+    ))
+    proof = {
+        "submitted_turns": 0, "packet_sha256": commissioning.digest(Path(packet.__file__).read_bytes()),
+        "author_delivery_sha256": commissioning.digest(Path(author_delivery.__file__).read_bytes()),
+        "audience_guard_sha256": commissioning.digest(Path(delivery_audience.__file__).read_bytes()),
+        "reproduced_rejection_receipt_sha256": attestation["receipt_sha256"],
+        "filesystem": {key: {"allowed": key == "inside", "denied": key != "inside"}
+                       for key in ("inside", "outside", "repository")},
+        "runtime": {effort: {"effort": effort, "thread_id": effort, "ephemeral": True, "empty_workspace": True,
+                             "approval_policy": "never", "sandbox": {"type": "readOnly", "networkAccess": False},
+                             "permission_profile": {"id": "benchmark_packet", "extends": None}, "instruction_sources": [],
+                             "thread_environments": [], "runtime_workspace_roots": []} for effort in ("medium", "high")},
+    }
+    with pytest.raises(TaskHalted, match="unresolved shared integrity"):
+        pool.check_running()
+    with pytest.raises(ValueError, match="exact affected dispatch"):
+        pool.reconcile_delivery_audience(active, family, proof | {"reproduced_rejection_receipt_sha256": "b" * 64})
+    digest = pool.reconcile_delivery_audience(active, family, proof)
+    pool.check_running()
+    retained = commissioning._read_json((pool.root / "boundary" / f"{digest}.json").read_bytes())
+    assert retained["quarantined_revisions"] == [2, 3]
+    assert coordinator.family_status(active, batch, family)[:2] == (3, "quarantined")
+    assert coordinator.family_status(active, batch, family)[2]["code"] == "scientific_review"
+
+
 def test_exact_recipient_document_repair_preserves_the_original_delivery_graph():
     from benchmark_v3.batch.recipient_edit import ExactRecipientEdit
 
