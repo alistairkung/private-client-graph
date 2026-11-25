@@ -1146,6 +1146,7 @@ def release_returned_authored_scope_plan(
     natural_provenance_restoration: bool = False,
     exact_inventory_edit: recipient_edit.ExactRecipientEdit | None = None,
     owned_source_revisions: dict[str, int] | None = None,
+    baseline_owned_restoration: bool = False,
 ) -> None:
     """Open one documentary replan from an independently rejected authored repair."""
     with ledger.coordinator_lock():
@@ -1158,7 +1159,7 @@ def release_returned_authored_scope_plan(
         if (not ledger.requires_delivery_attestation or earlier is None
                 or earlier.get("parent_revision") != revision - 1 - len(autonomous_realism._pre_author_returns(earlier))
                 - len(previous_receipts)
-                or (len(previous_receipts) != int(natural_provenance_restoration))
+                or (len(previous_receipts) != int(natural_provenance_restoration or baseline_owned_restoration))
                 or state != "quarantined" or not issue or (issue["stage"], issue["code"]) != ("author", "scientific_review")
                 or not ledger.pooled_revision(batch, family, revision)):
             raise ValueError("An authored-scope replan requires an independently returned documentary revision.")
@@ -1172,6 +1173,12 @@ def release_returned_authored_scope_plan(
             "family_sessions_remaining": ledger.effective_budget().families[family] - len(ledger.attempts(family)),
         }
         slot = next(row for row in commission.portfolio.slots if row.family_id == family)
+        if baseline_owned_restoration:
+            if (not ledger.pool.shared_scale or not ledger.requires_workload_merits or not owned_source_revisions
+                    or len(science.condition_ids(slot)) != 1 or (runner.directory / "family").exists()
+                    or any((natural_provenance_restoration, exact_inventory_edit, incoming_particulars_source))):
+                raise ValueError("Original owned records may restore only the exact returned natural comparison.")
+            release.update(earlier_authored_scope_receipts=previous_receipts, baseline_owned_restoration=True)
         expanded = False
         if natural_provenance_restoration:
             previous_particulars = (earlier.get("incoming_particulars") or {}).get("source_id")
@@ -1190,7 +1197,8 @@ def release_returned_authored_scope_plan(
                 if not set(resolved_gaps[incoming_particulars_source]) <= set(restored.source_ids()):
                     raise ValueError("The restored recipient's inputs must cover every previously missing attachment.")
         if owned_source_revisions:
-            if not natural_provenance_restoration or not ledger.requires_workload_merits or exact_inventory_edit:
+            if (not (natural_provenance_restoration or baseline_owned_restoration)
+                    or not ledger.requires_workload_merits or exact_inventory_edit):
                 raise ValueError("Only the independently returned large natural file can restore exact owned records.")
             release["owned_source_revisions"] = owned_source_revisions
         if incoming_particulars_source is not None:

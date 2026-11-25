@@ -542,7 +542,7 @@ class FamilyWorkflow:
             if self.documentary_revision is not None:
                 parent = self.documentary_revision.parent
                 intake = parent.incoming_particulars
-                if parent.owned_records is not None and intake is not None and identity != intake.source_id:
+                if parent.owned_records is not None and (intake is None or identity != intake.source_id):
                     expected = parent.owned_records.get(identity)
 
             def verify_source(source: author_delivery.AttestedSource) -> None:

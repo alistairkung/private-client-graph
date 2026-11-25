@@ -115,6 +115,7 @@ class ReturnedFile:
     exact_recipient_edit: recipient_edit.ExactRecipientEdit | None = None
     prior_owned_source: Source | None = None
     owned_records: dict[SourceId, Source] | None = None
+    baseline_owned_grants: dict[SourceId, list[dict[str, str]]] | None = None
     audit_repair_sources: frozenset[SourceId] = frozenset()
 
     def expected_local_source(self) -> Source | None:
@@ -155,12 +156,12 @@ class Revision:
                 "record are unchanged.\nTitle: " + expected.title + "\n\n" + expected.text
             )}
         particulars = self.parent.incoming_particulars
-        if particulars is None:
-            return self.plan.tickets
-        source_id = particulars.source_id
-        basis = self.plan.tickets.get(source_id)
-        ticket = particulars.local_ticket()
-        tickets = self.plan.tickets | {source_id: f"{basis}\n\n{ticket}" if basis else ticket}
+        source_id = particulars.source_id if particulars else None
+        tickets = dict(self.plan.tickets)
+        if particulars is not None:
+            basis = tickets.get(particulars.source_id)
+            ticket = particulars.local_ticket()
+            tickets[particulars.source_id] = f"{basis}\n\n{ticket}" if basis else ticket
         for identity, record in (self.parent.owned_records or {}).items():
             direction = (
                 "Use your own exact previous retained record below when preserving its original wording and annotation."
@@ -320,6 +321,8 @@ def plan_revision(
         lineage["audit_sender_return"] = sender_return
     if release.get("natural_provenance_restoration"):
         lineage["natural_provenance_restoration"] = True
+    if release.get("baseline_owned_restoration"):
+        lineage["baseline_owned_restoration"] = True
     if release.get("verified_recipient_scope_restoration"):
         lineage["verified_recipient_scope_restoration"] = True
     if parent.exact_recipient_edit is not None:
@@ -456,7 +459,13 @@ def _select_plan(
                    " will be appended in full, in attachment order, after your local instructions. Do not embed"
                    " lists of delivery facts, quote the review, or single out a relationship proof. Preserve the exact"
                    " set of incoming attachments and every one of their original sending acts and Sources.")
-    if parent.owned_records is not None:
+    if parent.baseline_owned_grants is not None:
+        prompt += (" The following originating participants will receive their own exact authenticated baseline records: "
+                   + commissioning.json_text(sorted(parent.baseline_owned_grants))
+                   + ". Give each a generic preserve-original ticket without copying facts or proof rationale into the ticket. "
+                     "Keep their previously attested sending acts. Independently repair other material documentary defects "
+                     "only where necessary. Do not disclose a record to anyone who did not actually receive it.")
+    elif parent.owned_records is not None:
         prompt += (" The following affected participants will receive their own exact earlier authored record only: "
                    + commissioning.json_text(sorted(parent.owned_records))
                    + ". Issue a separate safe repair ticket for each. The inventory-note author will use that record's "
@@ -703,7 +712,9 @@ def _read_return(runner: SessionRunner, slot: FamilySlot, release: dict[str, Any
     skipped_ticket = bool(release.get("empty_ticket_return") or release.get("audit_sender_return"))
     if (revision != runner.revision - 1 - len(authored_receipts) - int(skipped_ticket) - len(preauthor_returns)
             or (skipped_ticket and (authored_receipts or preauthor_returns))
-            or (len(authored_receipts) > 1 and not release.get("natural_provenance_restoration"))
+            or (len(authored_receipts) > 1 and not any(release.get(key) for key in (
+                "natural_provenance_restoration", "baseline_owned_restoration",
+            )))
             or ((authored_receipts or preauthor_returns or skipped_ticket)
                 and not ledger.historical_pooled_revision(batch, family, runner.revision))):
         raise ValueError("A repair must bind each of its verified intervening scope returns.")
@@ -778,7 +789,9 @@ def _read_return(runner: SessionRunner, slot: FamilySlot, release: dict[str, Any
     authored_returns, preauthor = _scope_returns_by_revision(history, authored_receipts, preauthor_returns)
     if not skipped_ticket and sorted((*authored_returns, *preauthor)) != list(range(revision + 1, runner.revision)):
         raise ValueError("Each intervening revision needs its own authenticated scope return.")
-    if release.get("natural_provenance_restoration") and (len(authored_returns) != 2 or design.matched):
+    if (release.get("natural_provenance_restoration") or release.get("baseline_owned_restoration")) and (
+        len(authored_returns) != 2 or design.matched
+    ):
         raise ValueError("Provenance restoration requires one natural condition and two authenticated scope returns.")
     for rejected_revision in sorted((*authored_returns, *preauthor)):
         if rejected_revision in authored_returns:
@@ -801,22 +814,13 @@ def _read_return(runner: SessionRunner, slot: FamilySlot, release: dict[str, Any
             raise ValueError("The participant's original delivery particulars changed.")
         result = replace(result, incoming_particulars=particulars)
     if owned := release.get("owned_source_revisions"):
-        if result.incoming_particulars is None or not release.get("natural_provenance_restoration"):
+        if release.get("baseline_owned_restoration"):
+            result = _restore_baseline_records(runner, result, revision, owned, history)
+        elif result.incoming_particulars is None or not release.get("natural_provenance_restoration"):
             raise ValueError("Earlier participant records require an exact natural-file provenance restoration.")
-        current = {row.source_id: row for row in result.design.inventory}
-        retained = {}
-        for identity, original_revision in owned.items():
-            if not revision <= original_revision < max(authored_returns) or identity not in current:
-                raise ValueError("An owned record must precede the exact returned repair and stay in its roster.")
-            origin = replace(runner, revision=original_revision,
-                             directory=runner.directory.with_name(str(original_revision)))
-            document, _, request = origin.committed_result("author", f"author-{identity}", "author", author_delivery.AttestedSource)
-            local = commissioning._read_json(request["inputs"]["author_brief"])
-            if (local["participant"], local["date"]) != (current[identity].author, current[identity].created_on.isoformat()):
-                raise ValueError("An earlier owned record must have the same author and issue date.")
-            author_delivery.require_projection(origin, f"author-{identity}", request["inputs"])
-            retained[identity] = Source(id=identity, title=document.title, text=document.text)
-        result = replace(result, owned_records=retained)
+        else:
+            records = _verified_owned_records(runner, result, owned, revision, max(authored_returns) - 1)
+            result = replace(result, owned_records={identity: record for identity, (record, _) in records.items()})
     if edit := release.get("exact_recipient_edit"):
         exact = recipient_edit.ExactRecipientEdit.model_validate(edit)
         if "exact_omission_assessment" in release:
@@ -1085,6 +1089,45 @@ def pre_author_scope_return(runner: SessionRunner, *, slot: FamilySlot | None = 
         **({"mechanically_missing_intake_attachments": intake} if intake else {}),
         **({"mechanically_unsupported_ticket_literals": unsupported} if unsupported else {}),
     }, plan
+
+
+def _verified_owned_records(
+    runner: SessionRunner, case: ReturnedFile, requested: dict[str, int], first: int, last: int, *, verify_grants: bool = False,
+) -> dict[str, tuple[Source, list[dict[str, str]]]]:
+    current = {row.source_id: row for row in case.design.inventory}
+    records = {}
+    for identity, revision in requested.items():
+        if not first <= revision <= last or identity not in current:
+            raise ValueError("An owned record must precede the exact returned repair and stay in its roster.")
+        origin = replace(runner, revision=revision, directory=runner.directory.with_name(str(revision)))
+        document, _, request = origin.committed_result("author", f"author-{identity}", "author", author_delivery.AttestedSource)
+        brief = request["inputs"]["author_brief"]
+        local = commissioning._read_json(brief)
+        if (local["participant"], local["date"]) != (current[identity].author, current[identity].created_on.isoformat()):
+            raise ValueError("An earlier owned record must have the same author and issue date.")
+        author_delivery.require_projection(origin, f"author-{identity}", request["inputs"])
+        if verify_grants:
+            author_delivery.verify_attestation(document, brief)
+        records[identity] = (Source(id=identity, title=document.title, text=document.text), local["outgoing_deliveries"])
+    return records
+
+
+def _restore_baseline_records(
+    runner: SessionRunner, case: ReturnedFile, original_revision: int,
+    requested: dict[str, int], history: list[dict[str, Any]],
+) -> ReturnedFile:
+    baseline = _scope_realism_baseline(runner, case)
+    if not requested or not baseline or case.incoming_particulars is not None:
+        raise ValueError("Owned baseline recovery requires the exact first natural comparison and no unrelated intake.")
+    first = max((event["revision"] for event in history if event["revision"] <= original_revision
+                 and "documentary_redesign" in event["details"]), default=1)
+    originals = {source.id: source for source in TypeAdapter(list[Source]).validate_python(baseline[case.freeze.natural])}
+    current = {source.id: source for source in case.bundles[case.freeze.natural]}
+    records = _verified_owned_records(runner, case, requested, first, original_revision, verify_grants=True)
+    if any(originals.get(identity) != record or current[identity] == record for identity, (record, _) in records.items()):
+        raise ValueError("Each restored record must match the exact original comparison and differ from the returned draft.")
+    return replace(case, owned_records={identity: record for identity, (record, _) in records.items()},
+                   baseline_owned_grants={identity: grants for identity, (_, grants) in records.items()})
 
 
 def _earlier_pre_author_references(
@@ -1448,6 +1491,11 @@ def _verify_plan(
         parent.incoming_particulars.require_preserved_deliveries(old, design, affected)
     if parent.owned_records is not None and not parent.owned_records.keys() <= plan.tickets.keys():
         raise ValueError("Every independently designated owned Source needs its own localized repair ticket.")
+    if parent.baseline_owned_grants is not None:
+        projected = author_delivery.projection(design, {})
+        if any(commissioning._read_json(projected[identity]["author_brief"])["outgoing_deliveries"] != grants
+               for identity, grants in parent.baseline_owned_grants.items()):
+            raise ValueError("Restored baseline records must preserve their original attested sending acts.")
     if parent.exact_recipient_edit is not None and affected != {parent.exact_recipient_edit.source_id}:
         raise ValueError("An exact recipient edit cannot alter another document or require a descendant repair.")
     return design, affected

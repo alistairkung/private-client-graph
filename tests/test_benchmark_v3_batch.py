@@ -3076,6 +3076,45 @@ def test_scope_review_keeps_the_authenticated_original_separate_from_a_returned_
     assert autonomous_realism._scope_realism_baseline(runner, parent) is None
 
 
+def test_owned_scope_restoration_supplies_only_the_authenticated_original_to_its_author(monkeypatch):
+    from types import SimpleNamespace
+    from benchmark_v3.batch import autonomous_realism
+    from benchmark_v3.replay_manifest import BatchSourceFreeze, source_commitments
+
+    original = Source(id="src1", title="Retained original", text="I recorded hand delivery of the signed original.")
+    returned = original.model_copy(update={"text": "I looked for a note about delivery."})
+    freeze = BatchSourceFreeze(order={"G000": [original.id]}, sources_sha256={}, source_commitments={},
+                               natural="G000", variants={}, candidates=[], required={"G000": []})
+    design = DesignOutput.model_validate(_design("G"))
+    parent = autonomous_realism.ReturnedFile(design, {"G000": [returned]}, freeze, {}, {}, {}, None, [], prior_scope_return={
+        "original_realism_sources": {"G000": [original.model_dump(mode="json")]},
+        "original_realism_source_commitments": {"G000": source_commitments([original])},
+    })
+    runner = SimpleNamespace(revision=6, family="G", ledger=SimpleNamespace(requires_workload_merits=True,
+                                                                          attempts=lambda _: []))
+    grants = [{"recipient": "Recipient", "sent_on": "2025-01-03"}]
+    response = {original.id: (original, grants)}
+
+    def records(_runner, _case, requested, first, last, *, verify_grants):
+        assert (requested, first, last, verify_grants) == ({original.id: 2}, 2, 3, True)
+        return response
+
+    monkeypatch.setattr(autonomous_realism, "_verified_owned_records", records)
+    history = [{"revision": 2, "details": {"documentary_redesign": {}}}]
+    restored = autonomous_realism._restore_baseline_records(runner, parent, 3, {original.id: 2}, history)
+    assert restored.baseline_owned_grants == {original.id: grants}
+    plan = autonomous_realism.RepairPlan(disposition="repair", objections={}, tickets={"src1": "Retain the original.",
+                                                                                           "src2": "Repair your cover."},
+                                         progress="improved", rationale="Preserve the original comparison.")
+    revision = autonomous_realism.Revision(restored, design, plan, {"src1", "src2"}, {}, "repair-plan")
+    tickets = revision.participant_tickets()
+    assert f"Title: {original.title}\n\n{original.text}" in tickets["src1"]
+    assert tickets["src2"] == plan.tickets["src2"]
+    response[original.id] = (returned, grants)
+    with pytest.raises(ValueError, match="match the exact original comparison"):
+        autonomous_realism._restore_baseline_records(runner, parent, 3, {original.id: 2}, history)
+
+
 def test_exact_recipient_document_repair_preserves_the_original_delivery_graph():
     from benchmark_v3.batch.recipient_edit import ExactRecipientEdit
 
