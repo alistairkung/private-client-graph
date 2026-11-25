@@ -5140,6 +5140,44 @@ def test_joint_audit_repairs_only_a_unique_whitespace_excerpt():
         joint_control_plan._recover_exact_excerpt_format(audit, ambiguous)
 
 
+@pytest.mark.parametrize("retained", [False, True])
+def test_joint_control_plan_preserves_a_separate_exact_whole_file_confirmation(retained):
+    from benchmark_v3.batch import audit_boundary, joint_control_plan
+    from benchmark_v3.batch.contracts import Adjudication, MaskAssignment
+    from benchmark_v3.replay_manifest import BatchSourceFreeze
+
+    condition = "G000"
+    sources = [Source(id=f"src{i + 1}", title=f"Record {i + 1}", text=f"Evidence {i + 1}.") for i in range(21)]
+    source_ids = [source.id for source in sources]
+    bundles = {condition: sources}
+    freeze = BatchSourceFreeze(order={condition: source_ids}, sources_sha256={}, source_commitments={},
+                               natural=condition, variants={}, candidates=[EDGE], required={condition: [EDGE]})
+    proof = {"edge": EDGE, "alternatives": [[{"source_id": source.id, "supporting_text": source.text}
+                                              for source in sources[:2]]]}
+    key = _output("adjudication", "G", "", {})
+    key["key"]["sufficient_evidence"] = [proof]
+    adjudications = {condition: Adjudication.model_validate(key)}
+    whole = MaskAssignment(condition=condition, risk="large_or_complex", reason="Reconstruct from the entire file.",
+                           question="What is established across the complete file?", included=source_ids,
+                           present=[EDGE], absent=[])
+    targeted = whole.model_copy(update={"included": source_ids[:2], "question": "What does the selected pair establish?"})
+    audit = audit_boundary.RecheckedAudit.model_validate(_output("audit", "G", "", {}) | {
+        "completeness": {condition: dict.fromkeys(source_ids, "Independently reviewed.")},
+        "masks": [targeted], "risks": ["joint_proof", "large_or_complex"], "excerpt_controls": [],
+    })
+    full_review = audit.model_copy(update={"masks": [targeted, whole]})
+    plan = joint_control_plan.build_plan(audit if retained else full_review, [full_review] if retained else [],
+                                         bundles, freeze, {"joint_proof", "large_or_complex"}, adjudications)
+    assert plan.audit.masks.count(whole) == 1
+    assert [view for view in plan.audit.masks if view != whole] == [targeted, *plan.proposed]
+    assert len(plan.proposed) == 3
+    with pytest.raises(ValueError, match="retained whole-file objective"):
+        joint_control_plan.build_plan(
+            audit.model_copy(update={"masks": [targeted, whole.model_copy(update={"risk": "shortcut"})]}),
+            [], bundles, freeze, {"joint_proof", "large_or_complex"}, adjudications,
+        )
+
+
 def test_review_note_recovery_retains_the_prior_independent_un_authored_design():
     from types import SimpleNamespace
     from benchmark_v3.batch import autonomous_realism

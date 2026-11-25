@@ -98,13 +98,13 @@ def build_plan(
 ) -> Plan:
     accepted, derivatives = _recover_exact_excerpt_format(accepted, bundles)
     valid, whole = audit_boundary.original_views(accepted, bundles)
-    carried = {authorisation.commitment(view): view for view in valid.masks}
+    carried = _carried_controls(valid, whole, bundles)
     excerpts = {authorisation.commitment(view): view for view in accepted.excerpt_controls}
     previous_views = []
     for audit in earlier:
         previous, pending = audit_boundary.original_views(audit, bundles)
         previous_views.append((previous, pending))
-        carried.update({authorisation.commitment(view): view for view in previous.masks})
+        carried.update(_carried_controls(previous, pending, bundles))
         for excerpt in getattr(audit, "excerpt_controls", ()):
             excerpts[authorisation.commitment(excerpt)] = excerpt
 
@@ -124,6 +124,13 @@ def build_plan(
     for previous, pending in previous_views:
         audit_boundary.verify_recheck(plan, previous, pending, [], bundles)
     return Plan(plan, proposed, derivatives)
+
+
+def _carried_controls(
+    targeted: MilestoneAudit, whole: list[MaskAssignment], bundles: dict[str, list[Source]],
+) -> dict[str, MaskAssignment]:
+    confirmations = (view for view in whole if audit_boundary.large_confirmation(view, bundles[view.condition]))
+    return {authorisation.commitment(view): view for view in [*targeted.masks, *confirmations]}
 
 
 def _recover_exact_excerpt_format(
