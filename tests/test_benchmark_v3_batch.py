@@ -5178,6 +5178,88 @@ def test_joint_control_plan_preserves_a_separate_exact_whole_file_confirmation(r
         )
 
 
+def test_executed_control_clarification_requires_unchanged_views_and_independent_scope(approved, monkeypatch):
+    from benchmark_v3.batch import audit_boundary, joint_control_plan, mask_dispute
+    from benchmark_v3.batch.contracts import MaskAssignment, Reading
+    from benchmark_v3.batch.sessions import SessionRunner
+    from benchmark_v3.replay_manifest import BatchSourceFreeze, source_commitments
+    from private_client_graph.research.retained_inputs import value_digest
+
+    ledger, commission = approved
+    coordinator.commission_batch(ledger, commission, BOUNDARY)
+    batch, family, condition = commission.manifest.batch_id, "G", "G000"
+    runner = commission.session_runner(ledger, family, 1)
+    sources = [Source(id="src1", title="Record", text=QUOTE), Source(id="src2", title="Receipt", text="Received individually."),
+               Source(id="src3", title="Note", text="Ordinary note.")]
+    by_condition = {condition: [source.model_dump(mode="json") for source in sources]}
+    artifacts.write_json(runner.directory / "family" / "sources" / f"{condition}.json", by_condition[condition])
+    freeze = BatchSourceFreeze(order={condition: [source.id for source in sources]},
+                               sources_sha256={condition: value_digest(by_condition[condition])},
+                               source_commitments={condition: source_commitments(sources)},
+                               natural=condition, variants={}, candidates=[EDGE], required={condition: [EDGE]})
+    artifacts.write_json(runner.directory / "family" / "freeze.json", freeze.model_dump(mode="json"))
+    whole = MaskAssignment(condition=condition, risk="joint_proof", reason="Check both records.",
+                           question="What does this file establish?", included=["src1", "src2"], present=[EDGE], absent=[])
+    missing = whole.model_copy(update={"included": ["src1"], "present": [], "absent": whole.present})
+    result = audit_boundary.RecheckedAudit.model_validate(_output("audit", family, "", {}) | {
+        "masks": [whole, missing], "excerpt_controls": [],
+    })
+    ledger.event(batch, family, 1, "transition", "audit", "audit", "masks", {
+        "outputs": {"audit": authorisation.commitment(result)},
+    })
+    packet_inputs = {"paired_bundles": commissioning.json_text(by_condition), "neutral_brief": "Review at cutoff.",
+                     "audit_rules": commissioning.json_text({"full_control_plan": result.model_dump(mode="json"),
+                                                             "additional_proposed_views_by_commitment": {}})}
+    proposal_records = {}
+
+    def committed(_, stage, job, role, model):
+        if job == joint_control_plan.JOB:
+            return joint_control_plan.Confirmation(verdict="accept", confirmed_views=[], findings="Accepted.",
+                                                   objections=[], limitations=[]), {}, {"inputs": packet_inputs}
+        if role == "masked":
+            viewed = sources[:1] if job == "mask-001" else sources[:2]
+            inputs = {"sources": commissioning.json_text([source.model_dump(mode="json") for source in viewed]),
+                      "neutral_brief": packet_inputs["neutral_brief"] + f"\n\nReviewer question: {whole.question}"}
+            reading = Reading.model_validate(_output("masked", family, "", inputs))
+            return reading, {"receipt_sha256": "b" * 64}, {"inputs": inputs}
+        return proposal_records[job]
+
+    monkeypatch.setattr(SessionRunner, "committed_result", committed)
+    with pytest.raises(ValueError, match="conforming observation"):
+        mask_dispute.reopen(runner, "mask-000")
+    dispute = mask_dispute.reopen(runner, "mask-001")
+    assert dispute.assignments == {0: whole, 1: missing}
+    assert not mask_dispute.permits(runner, dispute.inputs)
+    ledger.event(batch, family, 1, "reconcile", mask_dispute.RELEASE, "masks", "audit", dispute.release.model_dump(mode="json"))
+    assert mask_dispute.permits(runner, dispute.inputs)
+    assert not mask_dispute.permits(runner, dispute.inputs | {"audit_rules": "{}"})
+    review = mask_dispute.DisputeReview(verdict="scope_clarification", reasoning="The threshold was ambiguous.",
+                                       objections=[], limitations=[], clarified_question="Separate assertions and proof.")
+    proposal_records[mask_dispute.JOB] = review, {"receipt_sha256": "c" * 64}, {"inputs": dispute.inputs}
+    release, packet_inputs_for_scope, question, _ = mask_dispute.scope_packet(runner)
+    ledger.event(batch, family, 1, "reconcile", mask_dispute.SCOPE_RELEASE, "audit", "audit", release.model_dump(mode="json"))
+    scope = mask_dispute.ScopeReview(verdict="accept", question_sha256="d" * 64,
+                                    reasoning="Compatible.", objections=[], limitations=[])
+    proposal_records[mask_dispute.SCOPE_JOB] = scope, {"receipt_sha256": "e" * 64}, {"inputs": packet_inputs_for_scope}
+    with pytest.raises(ValueError, match="confirm the exact clarified question"):
+        mask_dispute.make_clarification(runner)
+    proposal_records[mask_dispute.SCOPE_JOB] = scope.model_copy(update={"question_sha256": commissioning.digest(question.encode())}), {
+        "receipt_sha256": "e" * 64,
+    }, {"inputs": packet_inputs_for_scope}
+    exact, _, _ = mask_dispute.make_clarification(runner)
+    assert exact.view_sha256s == {0: authorisation.commitment(whole), 1: authorisation.commitment(missing)}
+    ledger.event(batch, family, 1, "reconcile", mask_dispute.CLARIFY, "audit", "masks", exact.model_dump(mode="json"))
+    observed = {"sources": commissioning.json_text(by_condition[condition][:1]),
+                "neutral_brief": packet_inputs["neutral_brief"] + f"\n\nReviewer question: {question}",
+                "ontology": commissioning.trusted_bytes("instructions/ontology.md").decode(),
+                "annotation_rules": commissioning.trusted_bytes("instructions/annotation.md").decode()}
+    mask_dispute.require_observation_inputs(runner, "mask-001-clarified", observed)
+    with pytest.raises(ValueError, match="exact Source view"):
+        mask_dispute.require_observation_inputs(runner, "mask-001-clarified", observed | {
+            "sources": commissioning.json_text(by_condition[condition][:2]),
+        })
+
+
 def test_review_note_recovery_retains_the_prior_independent_un_authored_design():
     from types import SimpleNamespace
     from benchmark_v3.batch import autonomous_realism

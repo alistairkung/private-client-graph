@@ -12,7 +12,7 @@ from pydantic import BaseModel
 from benchmark_v3 import commissioning, packet
 from benchmark_v3.batch import (
     adjudication_contract, adjudication_recovery, annotation_recovery, artifacts, audit_boundary, audit_recovery, author_context,
-    author_delivery, author_repair, authorisation, construction, continuation, design_review, joint_control_plan, repair_authority,
+    author_delivery, author_repair, authorisation, construction, continuation, design_review, joint_control_plan, mask_dispute, repair_authority,
     ticket_authority,
 )
 from benchmark_v3.batch.contracts import BatchManifest, Code, ExceptionRecord, Role, Stage
@@ -225,6 +225,12 @@ class SessionRunner:
                 permitted = joint_control_plan.released(self) is not None
             if self.ledger.requires_delivery_attestation and stage == "audit" and base_job == joint_control_plan.FOLLOWUP_JOB:
                 permitted = joint_control_plan.followup(self) is not None
+            if self.ledger.requires_delivery_attestation and stage == "audit" and job == mask_dispute.JOB:
+                permitted = (instructions == mask_dispute.INSTRUCTIONS and result_type is mask_dispute.DisputeReview
+                             and mask_dispute.permits(self, inputs))
+            if self.ledger.requires_delivery_attestation and stage == "audit" and job == mask_dispute.SCOPE_JOB:
+                permitted = (instructions == mask_dispute.SCOPE_PROMPT and result_type is mask_dispute.ScopeReview
+                             and mask_dispute.permits_scope(self, inputs))
             if self.ledger.requires_delivery_attestation and (stage, job) == ("design", repair_authority.EXACT_PLAN_JOB):
                 events = self.ledger.events(self.manifest.batch_id, self.family)
                 retry = repair_authority.recorded_classification_retry(self)
@@ -278,6 +284,8 @@ class SessionRunner:
             authorised_jobs = {f"mask-{index:03}" for index in range(len(audit_release.views))}
             if job not in authorised_jobs:
                 raise ValueError("The mask job is outside the authorised audit recovery plan.")
+        if role == "masked" and mask_dispute.CLARIFIED_JOB.fullmatch(job):
+            mask_dispute.require_observation_inputs(self, job, inputs)
         active_only = (release is not None or self.manifest.phase == "milestone" or followup is not None
                        or self.ledger.pooled_revision(self.manifest.batch_id, self.family, self.revision))
         reuse_only = (role in {"designer", "author", "realism", "annotation"}

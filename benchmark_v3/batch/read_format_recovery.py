@@ -30,7 +30,7 @@ INSTRUCTIONS = (
     "Use open_questions for unsupported propositions or caveats."
 )
 _JOB = re.compile(r"reading-[0-9]{3}-[ab]-(?:full|part-[0-9]{3})")
-_MASK_JOB = re.compile(r"mask-[0-9]{3}")
+_MASK_JOB = re.compile(r"mask-[0-9]{3}(?:-clarified)?")
 
 
 def _stage(role: ReadingRole) -> Literal["blind", "masks"]:

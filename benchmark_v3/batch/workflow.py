@@ -15,7 +15,7 @@ from benchmark_v3.batch import (
     adjudication_contract, adjudication_recovery, annotation_recovery, artifacts, audit_boundary, audit_contract, audit_recovery,
     author_context, author_delivery, author_repair, authorisation, autonomous_realism, clean_redesign, construction, continuation,
     design_recovery,
-    design_review, evidence_recovery, frozen_rekey, joint_control_plan, milestone_repair, read_format_recovery, repair_authority, science,
+    design_review, evidence_recovery, frozen_rekey, joint_control_plan, mask_dispute, milestone_repair, read_format_recovery, repair_authority, science,
 )
 from benchmark_v3.batch.contracts import (
     Adjudication, AuditReview, AuthorBrief, AuthoredSource, Code, DesignOutput, MaskAssignment, Reading, RealismReview,
@@ -1116,6 +1116,14 @@ class FamilyWorkflow:
     ) -> list[dict[str, Any]]:
         assignments = []
         first_jobs: dict[str, str] = {}
+        supported = mask_dispute.clarification(self.runner)
+        clarified: dict[str, dict[str, Any]] = {}
+        if supported is not None:
+            scope, dispute, receipt = supported
+            if dispute.release.audit_sha256 != authorisation.commitment(audit):
+                raise ValueError("The clarified views must retain the same original accepted audit.")
+            self.sessions.append(receipt)
+            self.transition_inputs["executed_control_clarification"] = authorisation.commitment(scope)
         excerpts = audit.excerpt_controls if isinstance(audit, audit_boundary.RecheckedAudit) else []
         for index, mask in enumerate([*audit.masks, *excerpts]):
             if any(condition.casefold() in mask.question.casefold() for condition in bundles):
@@ -1129,7 +1137,15 @@ class FamilyWorkflow:
                 sources = science.mask_sources(mask, condition_sources)
             signature = evidence_recovery.observation_key(mask, sources)
             job = f"mask-{index:03}"
-            if audit.equivalent_views_reusable:
+            if supported is not None and index in supported[1].assignments:
+                scope, dispute, _ = supported
+                if mask != dispute.assignments[index]:
+                    raise ValueError("A clarified observation cannot change the original precommitted assignment.")
+                job += "-clarified"
+                clarified[job] = {"original_assignment_sha256": scope.view_sha256s[index],
+                                  "scope": scope.model_dump(mode="json")}
+                mask = mask.model_copy(update={"question": scope.question})
+            elif audit.equivalent_views_reusable:
                 job = first_jobs.setdefault(signature, job)
             assignments.append((job, mask, sources))
         self.runner.ledger.require_capacity(
@@ -1139,6 +1155,7 @@ class FamilyWorkflow:
         results = [
             {"assignment": mask.model_dump(mode="json"), "observation_job": job,
              "observed_edges": sorted(observations[job]),
+             **({"clarification": clarified[job]} if job in clarified else {}),
              **({"observation_kind": "isolated_whole_file_confirmation"}
                 if (self.runner.ledger.requires_delivery_attestation
                     and not isinstance(mask, audit_boundary.ExactExcerpt)
