@@ -4541,6 +4541,34 @@ def test_word_preserving_blind_quote_recovery_uses_the_retained_reader(autonomou
         read_format_recovery.exact_whitespace_span("a  a", "a a a")
 
 
+def test_frozen_mask_disposition_requires_the_same_view_and_preserves_every_other_expectation():
+    from benchmark_v3.batch import frozen_rekey
+    from benchmark_v3.batch.contracts import MaskAssignment, MilestoneAudit
+
+    supported = ("Mia Reed", "parent_of", "Ada Reed")
+    unsupported = ("Mia Reed", "trustee_of", "River Trust")
+    prior = MaskAssignment(condition="G000", risk="shortcut", reason="Returned positive.",
+        question="Which relationships are supported by this copy?", included=["src1"], present=[supported, unsupported], absent=[])
+    original = MilestoneAudit(verdict="return", summary="Unavailable scope binding.", completeness={}, sufficiency={},
+        negative_controls={}, shortcuts={}, matched_controls={}, risks=["shortcut"], masks=[prior],
+        objections=["The named trust cannot be established in the rendered Source."], limitations=[])
+    digest = authorisation.commitment(prior)
+    corrections = {digest: [unsupported]}
+    nominated = frozen_rekey.candidate_control_corrections(original, corrections)
+    assert original.masks == [prior] and frozen_rekey.unsuperseded_controls(original, nominated).masks == []
+    new = prior.model_copy(update={"present": [supported], "absent": [unsupported], "reason": "Test the missing identity."})
+    accepted = original.model_copy(update={"verdict": "accept", "objections": [], "masks": [new]})
+    frozen_rekey.verify_mask_corrections(accepted, nominated, corrections)
+    drops_unaffected_positive = new.model_copy(update={"present": [], "absent": [supported, unsupported]})
+    with pytest.raises(ValueError, match="exact corrected expectations"):
+        frozen_rekey.verify_mask_corrections(accepted.model_copy(update={"masks": [drops_unaffected_positive]}), nominated, corrections)
+    moving = new.model_copy(update={"included": ["src1", "src2"]})
+    with pytest.raises(ValueError, match="identical|same view"):
+        frozen_rekey.verify_mask_corrections(accepted.model_copy(update={"masks": [moving]}), nominated, corrections)
+    with pytest.raises(ValueError, match="superseded positive"):
+        frozen_rekey.verify_mask_corrections(accepted.model_copy(update={"masks": [prior, new]}), nominated, corrections)
+
+
 @pytest.mark.parametrize("disposition", ["repair", "return", "quarantine", "followup", "returned_layout",
                                         "accepted_layout", "missing_critical"])
 def test_frozen_evidence_review_reuses_sources_and_blind_receipts_without_cueing_the_new_key(

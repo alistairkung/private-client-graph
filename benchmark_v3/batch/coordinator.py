@@ -27,6 +27,7 @@ from benchmark_v3.batch.sessions import Blocked, InvalidRoleOutput, SessionRunne
 from benchmark_v3.batch.workflow import FamilyWorkflow, verify_dossier
 from benchmark_v3.portfolio import FamilySlot, Portfolio
 from benchmark_v3.research_contracts import Digest
+from private_client_graph.models.evaluation_result import SemanticEdge
 from private_client_graph.models.source import Source
 
 
@@ -768,7 +769,10 @@ def release_large_merits_repair(ledger: PooledLedger, batch: str, family: str, s
         })
 
 
-def release_frozen_evidence_review(ledger: PooledLedger, batch: str, family: str, rationale: str) -> None:
+def release_frozen_evidence_review(
+    ledger: PooledLedger, batch: str, family: str, rationale: str,
+    *, mask_corrections: dict[str, list[SemanticEdge]] | None = None,
+) -> None:
     """Preserve documentary and blind commitments before a fresh condition-local rekey."""
     with ledger.coordinator_lock():
         ledger.require_running()
@@ -786,7 +790,10 @@ def release_frozen_evidence_review(ledger: PooledLedger, batch: str, family: str
         slot = next(row for row in commission.portfolio.slots if row.family_id == family)
         if commission.manifest.phase != "milestone" or slot.tier == "giant" or slot.expected_sources >= 100:
             raise ValueError("Frozen evidence review is scoped to non-giant milestone candidates.")
-        record = frozen_rekey.make_release(commission.session_runner(ledger, family, revision), slot, rationale.strip())
+        if mask_corrections and (not ledger.pool.shared_scale or state != "returned"):
+            raise ValueError("Returned, unexecuted control corrections require the shared scale release.")
+        record = frozen_rekey.make_release(commission.session_runner(ledger, family, revision), slot, rationale.strip(),
+                                           mask_corrections=mask_corrections)
         ledger.release(batch, family, revision + 1, "adjudicate", parent_sha256=authorisation.commitment(record),
                        reference="Independent condition-local evidence re-adjudication on the retained freeze.",
                        frozen_evidence_review=record.model_dump(mode="json"))

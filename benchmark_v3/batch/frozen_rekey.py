@@ -3,15 +3,16 @@
 from dataclasses import dataclass, replace
 from typing import Any
 
-from pydantic import TypeAdapter
+from pydantic import Field, TypeAdapter
 
 from benchmark_v3 import commissioning
 from benchmark_v3.batch import annotation_recovery, artifacts, audit_boundary, authorisation, read_format_recovery, science
-from benchmark_v3.batch.contracts import Adjudication, DesignOutput, MilestoneAudit, Reading, RealismReview
+from benchmark_v3.batch.contracts import Adjudication, DesignOutput, MaskAssignment, MilestoneAudit, Reading, RealismReview
 from benchmark_v3.batch.sessions import SessionRunner
 from benchmark_v3.portfolio import FamilySlot
 from benchmark_v3.replay_manifest import BatchSourceFreeze, SavedIdeal, truth_edges
 from benchmark_v3.research_contracts import Contract, Digest, Text
+from private_client_graph.models.evaluation_result import SemanticEdge
 from private_client_graph.models.source import Source
 
 POLICY = (
@@ -29,6 +30,7 @@ class FrozenEvidenceReview(Contract):
     audit_receipt_sha256: Digest
     freeze_sha256: Digest
     rationale: Text
+    mask_corrections: dict[Digest, list[SemanticEdge]] = Field(default_factory=dict, exclude_if=lambda value: not value)
 
 
 @dataclass(frozen=True)
@@ -60,15 +62,18 @@ def recorded(runner: SessionRunner) -> FrozenEvidenceReview | None:
     return record
 
 
-def make_release(runner: SessionRunner, slot: FamilySlot, rationale: str) -> FrozenEvidenceReview:
+def make_release(
+    runner: SessionRunner, slot: FamilySlot, rationale: str, *, mask_corrections: dict[str, list[SemanticEdge]] | None = None,
+) -> FrozenEvidenceReview:
     _, receipt, _ = _read_audit(runner)
     freeze_path = runner.directory / "family" / "freeze.json"
     record = FrozenEvidenceReview(
         parent_revision=runner.revision, manifest_sha256=authorisation.commitment(runner.manifest),
-        audit_receipt_sha256=receipt["receipt_sha256"],
-        freeze_sha256=commissioning.digest(artifacts.read_bytes(freeze_path)), rationale=rationale,
+        audit_receipt_sha256=receipt["receipt_sha256"], freeze_sha256=commissioning.digest(artifacts.read_bytes(freeze_path)),
+        rationale=rationale, mask_corrections=mask_corrections or {},
     )
-    _reopen(runner, slot, record)
+    case = _reopen(runner, slot, record)
+    candidate_control_corrections(case.audit, record.mask_corrections)
     return record
 
 
@@ -202,3 +207,35 @@ def verify_same_semantics(new: Adjudication, original: Adjudication) -> None:
     prior = {(item.name, item.type) for item in right.entities}
     if truth_edges(left).keys() != truth_edges(right).keys() or current != prior:
         raise ValueError("Independent evidence review disagreed with the frozen graph or identified roster.")
+
+
+def candidate_control_corrections(
+    review: MilestoneAudit, corrections: dict[str, list[SemanticEdge]],
+) -> dict[str, MaskAssignment]:
+    """Nominate only exact, still unexecuted positive precommitments for reassessment."""
+    masks = {authorisation.commitment(mask): mask for mask in review.masks}
+    if any(mask not in masks or not edges or len(edges) != len(set(edges)) or not set(edges) <= set(masks[mask].present)
+           for mask, edges in corrections.items()):
+        raise ValueError("A precommitment correction must bind its exact retained positive expectations.")
+    return {digest: masks[digest] for digest in corrections}
+
+
+def unsuperseded_controls(review: MilestoneAudit, nominated: dict[str, MaskAssignment]) -> MilestoneAudit:
+    return review.model_copy(update={"masks": [mask for mask in review.masks if authorisation.commitment(mask) not in nominated]})
+
+
+def verify_mask_corrections(
+    review: MilestoneAudit, original: dict[str, MaskAssignment], corrections: dict[str, list[SemanticEdge]],
+) -> None:
+    """Keep each old view and require an independently checked negative for its unsupported edges."""
+    for digest, previous in original.items():
+        changed = set(corrections[digest])
+        target = previous.model_dump(exclude={"reason", "present", "absent"})
+        if not any(candidate.model_dump(exclude={"reason", "present", "absent"}) == target
+                   and set(candidate.present) == set(previous.present) - changed
+                   and set(candidate.absent) == set(previous.absent) | changed
+                   for candidate in review.masks):
+            raise ValueError("The independent audit must precommit the same view with the exact corrected expectations.")
+        if any(candidate.model_dump(exclude={"reason", "present", "absent"}) == target and changed & set(candidate.present)
+               for candidate in review.masks):
+            raise ValueError("An independently superseded positive may not remain in the new control plan.")

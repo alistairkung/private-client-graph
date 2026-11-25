@@ -773,6 +773,11 @@ class FamilyWorkflow:
             prompt += adjudication_contract.COMPLETE_EVIDENCE_INSTRUCTIONS
         if self.frozen_case is not None:
             prompt += frozen_rekey.POLICY
+            if self.frozen_release is not None and self.frozen_release.mask_corrections:
+                prompt += (" Test whether coded-office statements bind the named trust within each exact evidence "
+                           "alternative. A name inferred from the full file needs its own body evidence in the "
+                           "alternative. Treat substantive status, signatory capacity, salutations and effective start "
+                           "dates as separate propositions, and apply one continuity standard throughout.")
         proof_retry = adjudication_contract.proof_retry(self.runner, job)
         if proof_retry is not None:
             _, receipt, previous = self.runner.committed_packet("adjudicate", job, "adjudication")
@@ -879,6 +884,8 @@ class FamilyWorkflow:
         valid = None
         requested: list[audit_boundary.ExactExcerpt] = []
         whole: list[MaskAssignment] = []
+        corrections = self.frozen_release.mask_corrections if self.frozen_release is not None else {}
+        nominated: dict[str, MaskAssignment] = {}
         if recheck is not None or self.frozen_case is not None:
             if recheck is not None:
                 original = audit_boundary.returned_audit(self.runner, recheck)
@@ -891,6 +898,18 @@ class FamilyWorkflow:
                 if isinstance(original, audit_boundary.RecheckedAudit):
                     requested = original.excerpt_controls
                 prompt += " Independently audit the fresh condition-local evidence keys on the exact retained freeze."
+            if corrections:
+                assert self.frozen_case is not None
+                nominated = frozen_rekey.candidate_control_corrections(self.frozen_case.audit, corrections)
+                original = frozen_rekey.unsuperseded_controls(original, nominated)
+                rules["nominated_unsupported_controls"] = {digest: {
+                    "original": mask.model_dump(mode="json"), "questioned_present_edges": corrections[digest],
+                } for digest, mask in nominated.items()}
+                prompt += (" Independently assess the specifically nominated, unexecuted controls from the returned "
+                           "audit. For acceptance, precommit the identical Source selection, deletions and question "
+                           "with the unsupported canonical positives as explicit absences, keeping every other "
+                           "expectation. Preserve the old commitments in the lineage. Test the positive proofs "
+                           "separately in renderings with sufficient local evidence. Return on scientific disagreement.")
             if recheck is not None and recheck.get("incomplete_joint_control_plan") is True:
                 assert self.frozen_case is not None
                 previous = self.frozen_case.audit
@@ -953,6 +972,8 @@ class FamilyWorkflow:
             if value.verdict == "accept":
                 if value.objections:
                     raise ValueError(audit_boundary.ACCEPTANCE_FORMAT_ERROR)
+                if corrections:
+                    frozen_rekey.verify_mask_corrections(MilestoneAudit.model_validate(value), nominated, corrections)
                 if valid is not None:
                     science.verify_audit(science_audit(value), bundles, freeze, required, reviews)
                     audit_boundary.verify_recheck(audit_boundary.RecheckedAudit.model_validate(value), valid, whole,
@@ -989,6 +1010,12 @@ class FamilyWorkflow:
     ) -> AuditReview:
         original = joint_control_plan.retained_audit(self.runner, release)
         earlier: list[MilestoneAudit] = [self.frozen_case.audit] if self.frozen_case is not None else []
+        corrections = self.frozen_release.mask_corrections if self.frozen_release is not None else {}
+        if corrections:
+            assert self.frozen_case is not None
+            nominated = frozen_rekey.candidate_control_corrections(self.frozen_case.audit, corrections)
+            frozen_rekey.verify_mask_corrections(original, nominated, corrections)
+            earlier = [frozen_rekey.unsuperseded_controls(self.frozen_case.audit, nominated)]
         recheck = audit_boundary.release(self.runner)
         if recheck is not None:
             earlier.append(audit_boundary.returned_audit(self.runner, recheck))
