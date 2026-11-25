@@ -118,6 +118,7 @@ class ReturnedFile:
     owned_records: dict[SourceId, Source] | None = None
     baseline_owned_grants: dict[SourceId, list[dict[str, str]]] | None = None
     audit_repair_sources: frozenset[SourceId] = frozenset()
+    narrowed_scope_source: SourceId | None = None
 
     def expected_local_source(self) -> Source | None:
         if self.exact_recipient_edit is None:
@@ -326,6 +327,8 @@ def plan_revision(
         lineage["natural_provenance_restoration"] = True
     if release.get("baseline_owned_restoration"):
         lineage["baseline_owned_restoration"] = True
+    if parent.narrowed_scope_source is not None:
+        lineage["narrowed_scope_source"] = parent.narrowed_scope_source
     if release.get("verified_recipient_scope_restoration"):
         lineage["verified_recipient_scope_restoration"] = True
     if parent.exact_recipient_edit is not None:
@@ -457,6 +460,13 @@ def _select_plan(
         prompt += (" The exact scoped return is the immediate documentary draft. Address the new scope objections "
                    "and preserve all unaffected records. Retain prior documentary objections for context and arrange "
                    "fresh independent realism on the revised full conditions.")
+    if parent.narrowed_scope_source is not None:
+        prompt += (
+            f" The latest independent scope review narrowed its objection to {parent.narrowed_scope_source}."
+            " Retain the current design and all other records. Provide a single local ticket to correct the exact"
+            " objection using the participant's authorized knowledge and original brief. Do not instruct the"
+            " participant to reproduce an unsupplied form. Return infeasible if the change requires any other record."
+        )
     if parent.incoming_particulars is not None:
         prompt += (f" The original authorised direct-transmission particulars for {parent.incoming_particulars.source_id}"
                    " will be appended in full, in attachment order, after your local instructions. Do not embed"
@@ -719,7 +729,7 @@ def _read_return(runner: SessionRunner, slot: FamilySlot, release: dict[str, Any
             or (skipped_ticket and (authored_receipts or preauthor_returns) and not issued_restoration)
             or (earlier_issued and skipped_ticket)
             or (len(authored_receipts) > 1 and not any(release.get(key) for key in (
-                "natural_provenance_restoration", "baseline_owned_restoration",
+                "natural_provenance_restoration", "baseline_owned_restoration", "narrowed_scope_source",
             )))
             or ((authored_receipts or preauthor_returns or skipped_ticket)
                 and not ledger.historical_pooled_revision(batch, family, runner.revision))):
@@ -806,12 +816,24 @@ def _read_return(runner: SessionRunner, slot: FamilySlot, release: dict[str, Any
         raise ValueError("Provenance restoration requires one natural condition and two authenticated scope returns.")
     if release.get("baseline_owned_restoration") and (not 1 <= len(authored_returns) <= 2 or design.matched):
         raise ValueError("Original record restoration requires authenticated authored returns on one natural condition.")
+    narrowed = release.get("narrowed_scope_source")
+    if narrowed is not None and (
+        design.matched or len(authored_returns) < 2
+        or any(release.get(key) for key in (
+            "natural_provenance_restoration", "baseline_owned_restoration", "owned_source_revisions",
+            "incoming_particulars", "exact_recipient_edit",
+        ))
+    ):
+        raise ValueError("A narrowed authored-scope repair requires only the authenticated natural-file comparison.")
     for rejected_revision in sorted((*authored_returns, *preauthor)):
         if rejected_revision in authored_returns:
             result = _scope_repair_parent(runner, slot, result, authored_returns[rejected_revision],
                                           rejected_revision=rejected_revision, original_revision=revision)
         else:
             result = _append_pre_author_return(runner, slot, result, rejected_revision, preauthor[rejected_revision])
+    if narrowed is not None:
+        _require_narrowed_scope(result, narrowed)
+        result = replace(result, narrowed_scope_source=narrowed)
     if details := release.get("incoming_particulars"):
         source_revision = details.get("reviewed_source_revision", runner.revision - 1)
         retained_natural = (not authored_returns and source_revision == revision and not design.matched
@@ -1448,6 +1470,20 @@ def _scope_repair_parent(
                    earlier_objections=earlier_objections, earlier_scope_references=references, prior_scope_return=scope_record)
 
 
+def _require_narrowed_scope(parent: ReturnedFile, identity: SourceId) -> None:
+    review = parent.prior_scope_return or {}
+    latest = review.get("independent_finding", {}).get("objections", [])
+    earlier = review.get("earlier_authored_scope", {}).get("objections", [])
+    roster = set(parent.freeze.order[parent.freeze.natural])
+    current_sources = [set(re.findall(r"[\w-]+", objection)) & roster for objection in latest]
+    earlier_sources = [set(re.findall(r"[\w-]+", objection)) & roster for objection in earlier]
+    if (not current_sources or any(sources != {identity} for sources in current_sources)
+            or not earlier_sources or not all(earlier_sources)
+            or not {identity} < set().union(*earlier_sources)
+            or any(identity in row.received for row in parent.design.inventory)):
+        raise ValueError("The independent scope findings must narrow to a single Source without dependent records.")
+
+
 def _verify_classification(
     slot: FamilySlot, parent: ReturnedFile, plan: RepairPlan, *, attested: bool = False,
 ) -> None:
@@ -1556,11 +1592,18 @@ def _verify_plan(
             raise ValueError("Restored baseline records must preserve their original attested sending acts.")
     if parent.exact_recipient_edit is not None and affected != {parent.exact_recipient_edit.source_id}:
         raise ValueError("An exact recipient edit cannot alter another document or require a descendant repair.")
+    if parent.narrowed_scope_source is not None and affected != {parent.narrowed_scope_source}:
+        raise ValueError("A narrowed scope repair can regenerate only the independently identified Source.")
     return design, affected
 
 
 def _verify_design_change(slot: FamilySlot, parent: ReturnedFile, plan: RepairPlan) -> DesignOutput:
     old = parent.design
+    if parent.narrowed_scope_source is not None and (
+        (plan.revised_design is not None and plan.revised_design != old)
+        or set(plan.tickets) != {parent.narrowed_scope_source}
+    ):
+        raise ValueError("A narrowed scope repair must retain the design and issue exactly one local ticket.")
     edit = parent.exact_recipient_edit
     if edit is not None:
         if plan.revised_design is not None or set(plan.tickets) != {edit.source_id}:

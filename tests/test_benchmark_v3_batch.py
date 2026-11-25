@@ -3611,6 +3611,45 @@ def test_prior_issued_recovery_requires_exact_retained_receipts_and_body(approve
         autonomous_realism.verify_previous_issued_recovery(runner, parent, recorded)
 
 
+def test_authored_scope_replan_requires_a_strictly_narrower_local_change(approved):
+    from dataclasses import replace
+
+    from benchmark_v3.batch import autonomous_realism
+
+    _, commission = approved
+    slot = commission.portfolio.slots[0]
+    design = DesignOutput.model_validate(_design("G"))
+    sources = [Source(id=row.source_id, title="Record", text="Retained body.") for row in design.inventory]
+    bundles, freeze = science.freeze_bundles(slot, design, sources)
+    parent = autonomous_realism.ReturnedFile(
+        design, bundles, freeze, {}, {}, {}, None, [],
+        prior_scope_return={
+            "independent_finding": {"objections": ["The record src2 has one remaining concern."]},
+            "earlier_authored_scope": {"objections": ["src1 changed scope.", "src2 understated its purpose."]},
+        },
+    )
+    autonomous_realism._require_narrowed_scope(parent, "src2")
+    with pytest.raises(ValueError, match="narrow to a single Source"):
+        autonomous_realism._require_narrowed_scope(parent, "src1")
+    same_scope = replace(parent, prior_scope_return={
+        "independent_finding": {"objections": ["src2 remains incomplete."]},
+        "earlier_authored_scope": {"objections": ["src2 understated its purpose."]},
+    })
+    with pytest.raises(ValueError, match="narrow to a single Source"):
+        autonomous_realism._require_narrowed_scope(same_scope, "src2")
+
+    narrowed = replace(parent, narrowed_scope_source="src2")
+    plan = autonomous_realism.RepairPlan(
+        disposition="repair", progress="improved", rationale="Restore a firsthand observation.",
+        objections={}, tickets={"src2": "Record your original first-person observation."},
+    )
+    assert autonomous_realism._verify_plan(slot, narrowed, plan) == (design, {"src2"})
+    with pytest.raises(ValueError, match="exactly one local ticket"):
+        autonomous_realism._verify_plan(slot, narrowed, plan.model_copy(
+            update={"tickets": plan.tickets | {"src1": "Rewrite this record too."}},
+        ))
+
+
 def test_scoped_review_context_preserves_reserved_prompt_on_resume(approved, monkeypatch):
     from benchmark_v3.batch.workflow import FamilyWorkflow
 
