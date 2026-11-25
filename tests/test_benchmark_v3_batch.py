@@ -3284,6 +3284,57 @@ def test_scale_repair_reuses_only_the_affected_participants_own_draft(approved, 
         autonomous_realism.retained_draft_tickets(runner, revision, plan.tickets)
 
 
+def test_nested_scale_ticket_cannot_supply_undocumented_names_and_periods(approved, monkeypatch):
+    from benchmark_v3.batch import author_context, autonomous_realism, ticket_authority
+    from benchmark_v3.batch.sessions import SessionRunner
+    from benchmark_v3.batch.workflow import FamilyWorkflow
+
+    ledger, commission = approved
+    slot = commission.portfolio.slots[0]
+    data = _design("G")
+    data["inventory"][0].update(author="Morgan Wright, file clerk", participant_brief="Use the inspection reference LP-01.",
+                                created_on="2026-09-10")
+    data["inventory"][1].update(author="Dara Moore, estate reviewer", participant_brief="Retain ordinary correspondence.")
+    design = DesignOutput.model_validate(data)
+    sources = [Source(id="src1", title="Inspection note", text="The inspection reference is LP-01."),
+               Source(id="src2", title="Undelivered", text="Dara noted copies in October and November.")]
+    bundles, freeze = science.freeze_bundles(slot, design, sources)
+    parent = autonomous_realism.ReturnedFile(design, bundles, freeze, {}, {}, {}, None, [])
+    unsafe = "Use LP-01. Say that Dara received the copies in October and November."
+    plan = autonomous_realism.RepairPlan(disposition="repair", progress="initial", rationale="Layout.",
+        tickets={"src1": unsafe}, objections={})
+    revision = autonomous_realism.Revision(parent, design, plan, {"src1"}, {"parent_revision": 1}, "repair-plan")
+    runner = commission.session_runner(ledger, "G", 2)
+    workflow = FamilyWorkflow(runner, slot, commission.portfolio.admission_criteria)
+    workflow.documentary_revision = revision
+    workflow.repair_tickets = plan.tickets
+    workflow.stage = "author"
+    monkeypatch.setattr(type(ledger), "requires_workload_merits", property(lambda _: True))
+    monkeypatch.setattr(type(ledger), "requires_delivery_attestation", property(lambda _: True))
+    monkeypatch.setattr(type(ledger), "requires_author_context", property(lambda _: True))
+    accepted = author_context.AuthorContextReview(verdict="accept", findings={"src1": "Clear", "src2": "Clear"}, objections=[])
+    captured = {}
+
+    def accept(_job, _role, inputs, *_args):
+        captured.update(inputs)
+        return accepted
+
+    def reject(code, evidence, **_kwargs):
+        raise Blocked("author", code, evidence)
+
+    monkeypatch.setattr(workflow, "job", accept)
+    monkeypatch.setattr(workflow, "reject", reject)
+    monkeypatch.setattr(workflow, "_author_record", lambda *_: pytest.fail("A participant must not be dispatched"))
+    with pytest.raises(Blocked):
+        workflow.author(design)
+    rules = json.loads(captured["audit_rules"])
+    assert rules["unavailable_ticket_literals"] == {"src1": ["Dara", "November", "October"]}
+    monkeypatch.setattr(SessionRunner, "committed_result", lambda *_: (accepted, {}, {"inputs": captured}))
+    with pytest.raises(packet.PacketIsolationError, match="did not clear"):
+        ticket_authority.require_cleared(runner)
+    assert ticket_authority.unsupported_literals(design, unsafe, sources[1].text) == []
+
+
 def test_audit_sender_retry_only_clarifies_the_committed_delivery(approved, monkeypatch):
     from benchmark_v3.batch import autonomous_realism
     from benchmark_v3.batch.sessions import SessionRunner

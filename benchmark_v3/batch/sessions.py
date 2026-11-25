@@ -13,6 +13,7 @@ from benchmark_v3 import commissioning, packet
 from benchmark_v3.batch import (
     adjudication_contract, adjudication_recovery, annotation_recovery, artifacts, audit_boundary, audit_recovery, author_context,
     author_delivery, author_repair, authorisation, construction, continuation, design_review, joint_control_plan, repair_authority,
+    ticket_authority,
 )
 from benchmark_v3.batch.contracts import BatchManifest, Code, ExceptionRecord, Role, Stage
 from benchmark_v3.batch.ledger import Ledger, TaskHalted
@@ -193,6 +194,7 @@ class SessionRunner:
         if role == "author" and self.ledger.requires_author_context:
             try:
                 self._author_guard().require_projection(self, job, inputs)
+                ticket_authority.require_cleared(self)
             except (ValueError, OSError, KeyError, TypeError, packet.PacketError) as error:
                 raise Blocked(stage, "isolation", str(error), job=job) from error
         allocation = self.manifest.models[role]
@@ -340,6 +342,7 @@ class SessionRunner:
             guard = self._author_guard()
             guard.require_prompt(directory.name, request["prompt"])
             guard.require_projection(self, directory.name, request["inputs"])
+            ticket_authority.require_cleared(self)
             message = commissioning.json_text({"inputs": request["inputs"], "prompt": request["prompt"]})
             handoff = commissioning._read_json(artifacts.read_bytes(directory / "handoff.json"))
             if handoff["packet_sha256"] != commissioning.digest(message.encode()):

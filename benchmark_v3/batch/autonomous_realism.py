@@ -7,7 +7,7 @@ from typing import Any, Literal
 from pydantic import TypeAdapter
 
 from benchmark_v3 import commissioning, packet
-from benchmark_v3.batch import artifacts, audit_boundary, author_context, author_delivery, author_repair, authorisation, clean_redesign, delivery_particulars, design_review, recipient_edit, repair_authority, science
+from benchmark_v3.batch import artifacts, audit_boundary, author_context, author_delivery, author_repair, authorisation, clean_redesign, delivery_particulars, design_review, recipient_edit, repair_authority, science, ticket_authority
 from benchmark_v3.batch.contracts import Adjudication, AuthorBrief, DesignOutput, MatchedCondition, MilestoneAudit, RealismReview, SourceId
 from benchmark_v3.batch.ledger import BudgetExhausted
 from benchmark_v3.batch.sessions import SessionRunner
@@ -225,6 +225,26 @@ def retained_draft_tickets(runner: SessionRunner, revision: Revision, tickets: d
     if commitments or path.exists():
         artifacts.write_json(path, {"parent_revision": index, "author_receipts": commitments})
     return augmented
+
+
+def unavailable_ticket_literals(revision: Revision, projected: dict[str, Any]) -> dict[SourceId, list[str]]:
+    """Check new instructions against the participant brief and already selected earlier records."""
+    parent = revision.parent
+    prior = {brief.source_id: brief for brief in parent.design.inventory}
+    documents = {document.id: document for document in parent.bundles[parent.freeze.natural]}
+    unsupported = {}
+    for row in revision.design.inventory:
+        identity = row.source_id
+        ticket = revision.plan.tickets.get(identity)
+        if not ticket:
+            continue
+        earlier = prior[identity]
+        approved = {anchor for anchor in row.received if anchor in earlier.received} if earlier.author == row.author else set()
+        evidence = [projected[identity]["author_brief"], row.created_on.strftime("%B")]
+        evidence.extend(f"{documents[anchor].title}\n{documents[anchor].text}" for anchor in sorted(approved))
+        if missing := ticket_authority.unsupported_literals(revision.design, ticket, "\n".join(evidence)):
+            unsupported[identity] = missing
+    return unsupported
 
 
 def plan_revision(
@@ -1025,15 +1045,30 @@ def pre_author_scope_return(runner: SessionRunner, *, slot: FamilySlot | None = 
     review, receipt, request = runner.committed_result("author", review_job, "audit", author_context.AuthorContextReview)
     objections = review.objections
     intake: dict[SourceId, list[SourceId]] = {}
+    unsupported: dict[SourceId, list[str]] = {}
     if (review.verdict == "accept" and not objections and runner.ledger.requires_workload_merits and slot is not None):
         original = _read_return(runner, slot, parent)
         design = artifacts.read_contract(runner.directory / "design.json", DesignOutput)
         if DesignOutput.model_validate_json(request["inputs"]["intended_intervention"]) != design:
             raise ValueError("The accepted scope review differs from the exact held design.")
-        intake = _intake_gaps(original, design)
-        objections = [f"{source}: {INTAKE_ATTACHMENT_FAILURE} Include the actual earlier correspondence for "
-                      f"{', '.join(missing)} in the participant's received slice." for source, missing in intake.items()]
-    if (not objections or (review.verdict != "return" and not intake)
+        rules = commissioning._read_json(request["inputs"]["audit_rules"])
+        if rules.get("ticket_basis_version") == 1:
+            revised, affected = _verify_plan(slot, original, plan, attested=True)
+            if revised != design:
+                raise ValueError("A ticket-basis return must match the independently reviewed scoped design.")
+            check = Revision(original, revised, plan, affected, {}, repair_authority.PLAN_JOB)
+            unsupported = unavailable_ticket_literals(check, rules["participant_packets"])
+            if unsupported != rules.get("unavailable_ticket_literals"):
+                raise ValueError("The retained local ticket authority check changed.")
+        if unsupported:
+            objections = [f"{source}: Repair instructions add names or periods without a local documentary basis. "
+                          f"Remove or authorise the exact facts about {', '.join(terms)}."
+                          for source, terms in unsupported.items()]
+        else:
+            intake = _intake_gaps(original, design)
+            objections = [f"{source}: {INTAKE_ATTACHMENT_FAILURE} Include the actual earlier correspondence for "
+                          f"{', '.join(missing)} in the participant's received slice." for source, missing in intake.items()]
+    if (not objections or (review.verdict != "return" and not intake and not unsupported)
             or planner["receipt_sha256"] != chosen["receipt_sha256"]):
         raise ValueError("A new preauthor plan must bind the exact independently rejected documentary proposal.")
     return {
@@ -1042,6 +1077,7 @@ def pre_author_scope_return(runner: SessionRunner, *, slot: FamilySlot | None = 
         "review": review.model_dump(mode="json"),
         **({"review_job": review_job} if review_job == merits_job else {}),
         **({"mechanically_missing_intake_attachments": intake} if intake else {}),
+        **({"mechanically_unsupported_ticket_literals": unsupported} if unsupported else {}),
     }, plan
 
 

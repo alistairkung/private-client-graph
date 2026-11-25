@@ -376,6 +376,13 @@ class FamilyWorkflow:
         projected = self._project_authors(design, tickets)
         attested = self.runner.ledger.requires_delivery_attestation
         rules = {"participant_packets": projected, **({"delivery_attestation": 1} if attested else {})}
+        policy = " Any flagged local ticket names or periods require actual participant authority before dispatch."
+        needs_basis = (attested and self.runner.ledger.requires_workload_merits and self.documentary_revision is not None
+                       and self._use_scoped_prompt(author_context.JOB, policy))
+        if needs_basis:
+            revision = self.documentary_revision
+            assert revision is not None
+            rules.update(ticket_basis_version=1, unavailable_ticket_literals=autonomous_realism.unavailable_ticket_literals(revision, projected))
         exact_context = ""
         if self.documentary_revision is not None and self.documentary_revision.parent.exact_recipient_edit is not None:
             exact = self.documentary_revision.parent.exact_recipient_edit
@@ -419,9 +426,11 @@ class FamilyWorkflow:
            "The participant's own act or observation may be documented in ordinary wording. Check that other "
            "people's knowledge and experimental reasoning stay out. Return on any material objection. "
            "Give one finding keyed to every Source ID."
-           + (" " + author_delivery.REVIEW_INSTRUCTION if attested else "") + delivery_scope + origin_scope + exact_context,
+           + (" " + author_delivery.REVIEW_INSTRUCTION if attested else "") + delivery_scope + origin_scope + exact_context
+           + (policy if needs_basis else ""),
            author_context.AuthorContextReview)
-        if review.verdict != "accept" or review.objections or review.findings.keys() != projected.keys():
+        if (review.verdict != "accept" or review.objections or rules.get("unavailable_ticket_literals")
+                or review.findings.keys() != projected.keys()):
             self.reject("scientific_review", review.model_dump_json(), quarantine=True)
         return projected
 
