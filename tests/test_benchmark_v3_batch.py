@@ -3227,6 +3227,47 @@ def test_scale_design_recovers_symmetric_order_without_removing_any_claim(approv
         science.verify_design(slot, design_recovery.fresh_design_representation(duplicate, workload=True))
 
 
+def test_scale_repair_reuses_only_the_affected_participants_own_draft(approved, monkeypatch):
+    from benchmark_v3.batch import author_delivery, autonomous_realism
+    from benchmark_v3.batch.sessions import SessionRunner
+
+    ledger, commission = approved
+    slot = commission.portfolio.slots[0]
+    design = DesignOutput.model_validate(_design("G"))
+    first, second = design.inventory
+    sources = [Source(id=first.source_id, title="Original", text="Writer one's original owned text."),
+               Source(id=second.source_id, title="Separate", text="Another participant's original text.")]
+    bundles, freeze = science.freeze_bundles(slot, design, sources)
+    parent = autonomous_realism.ReturnedFile(design, bundles, freeze, {}, {}, {}, None, [])
+    plan = autonomous_realism.RepairPlan(disposition="repair", progress="initial", rationale="Local wording.",
+        tickets={first.source_id: "Fix the displayed locator.", second.source_id: "Fix the knowledge boundary."},
+        objections={"1": {"cause": "documentary", "sources": [first.source_id], "diagnosis": "Local label."},
+                    "2": {"cause": "participant_knowledge", "sources": [second.source_id], "diagnosis": "Scope."}})
+    revision = autonomous_realism.Revision(parent, design, plan, set(plan.tickets), {"parent_revision": 1}, "repair-plan")
+    runner = commission.session_runner(ledger, "G", 2)
+    monkeypatch.setattr(type(ledger), "requires_workload_merits", property(lambda _: True))
+    monkeypatch.setattr(type(ledger), "requires_delivery_attestation", property(lambda _: True))
+    monkeypatch.setattr(ledger, "attempts", lambda _: [
+        {"revision": 1, "job": f"author-{first.source_id}"}, {"revision": 2, "job": f"author-{first.source_id}"},
+    ])
+    approved_brief = author_delivery.projection(design, {})[first.source_id]["author_brief"]
+    document = author_delivery.AttestedSource(title=sources[0].title, text=sources[0].text, deliveries=[])
+
+    def authenticate(origin, stage, job, role, contract):
+        assert (origin.revision, job, role) == (1, f"author-{first.source_id}", "author")
+        return document, {"receipt_sha256": "a" * 64}, {"inputs": {"author_brief": approved_brief}}
+
+    monkeypatch.setattr(SessionRunner, "committed_result", authenticate)
+    monkeypatch.setattr(author_delivery, "require_projection", lambda *_: None)
+    tickets = autonomous_realism.retained_draft_tickets(runner, revision, plan.tickets)
+    assert sources[0].text in tickets[first.source_id] and sources[1].text not in tickets[first.source_id]
+    assert tickets[second.source_id] == plan.tickets[second.source_id]
+    assert autonomous_realism.retained_draft_tickets(runner, revision, plan.tickets) == tickets
+    document = document.model_copy(update={"text": "Different retained material."})
+    with pytest.raises(packet.PacketIsolationError, match="own retained author receipt"):
+        autonomous_realism.retained_draft_tickets(runner, revision, plan.tickets)
+
+
 def test_audit_sender_retry_only_clarifies_the_committed_delivery(approved, monkeypatch):
     from benchmark_v3.batch import autonomous_realism
     from benchmark_v3.batch.sessions import SessionRunner

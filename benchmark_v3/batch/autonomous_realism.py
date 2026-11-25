@@ -179,6 +179,54 @@ def release_event(runner: SessionRunner) -> dict[str, Any] | None:
     ), None)
 
 
+def retained_draft_tickets(runner: SessionRunner, revision: Revision, tickets: dict[SourceId, str]) -> dict[SourceId, str]:
+    """Give a participant their own verified draft for a strictly local documentary edit."""
+    parent = revision.parent
+    if (not runner.ledger.requires_workload_merits or not runner.ledger.requires_delivery_attestation
+            or revision.design.matched or parent.audit_repair_sources or parent.owned_records is not None
+            or parent.prior_scope_return is not None or parent.incoming_particulars is not None
+            or parent.exact_recipient_edit is not None):
+        return tickets
+    path = runner.directory / "own-draft-author-lineage.json"
+    attempts = runner.ledger.attempts(runner.family)
+    if not path.exists() and any(row["revision"] == runner.revision and row["job"] == author_context.JOB for row in attempts):
+        return tickets
+    index = revision.lineage["parent_revision"]
+    old = {brief.source_id: brief for brief in parent.design.inventory}
+    drafts = {source.id: source for source in parent.bundles[parent.freeze.natural]}
+    local = {identity for item in revision.plan.objections.values() if item.cause == "documentary" for identity in item.sources}
+    other = {identity for item in revision.plan.objections.values() if item.cause != "documentary" for identity in item.sources}
+    augmented = dict(tickets)
+    commitments = {}
+    for brief in revision.design.inventory:
+        identity = brief.source_id
+        previous = old[identity]
+        if (identity not in tickets or identity not in local or identity in other
+                or revision.affected.intersection(previous.received)
+                or previous.model_dump(exclude={"participant_brief"}) != brief.model_dump(exclude={"participant_brief"})):
+            continue
+        job = f"author-{identity}"
+        authored = max((row["revision"] for row in attempts if row["job"] == job and row["revision"] <= index), default=0)
+        if authored == 0:
+            continue
+        origin = replace(runner, revision=authored, directory=runner.directory.with_name(str(authored)))
+        document, receipt, request = origin.committed_result("author", job, "author", author_delivery.AttestedSource)
+        source = drafts[identity]
+        owned = commissioning._read_json(request["inputs"]["author_brief"])
+        if ((owned["participant"], owned["date"]) != (brief.author, brief.created_on.isoformat())
+                or (document.title, document.text) != (source.title, source.text)):
+            raise packet.PacketIsolationError("The local draft differs from the participant's own retained author receipt.")
+        author_delivery.require_projection(origin, job, request["inputs"])
+        author_delivery.verify_attestation(document, request["inputs"]["author_brief"])
+        commitments[identity] = receipt["receipt_sha256"]
+        augmented[identity] += ("\n\nBelow is your own earlier draft of this record. Preserve the existing document and its known "
+            "facts outside the specific repair. Use only your approved earlier attachments and own knowledge. "
+            "Retain the original record type, purpose and issue date.\nTitle: " + source.title + "\n\n" + source.text)
+    if commitments or path.exists():
+        artifacts.write_json(path, {"parent_revision": index, "author_receipts": commitments})
+    return augmented
+
+
 def plan_revision(
     runner: SessionRunner, slot: FamilySlot, release: dict[str, Any],
 ) -> tuple[Revision, dict[str, Any]]:

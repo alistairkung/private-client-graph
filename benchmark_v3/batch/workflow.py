@@ -433,6 +433,8 @@ class FamilyWorkflow:
             raise ValueError("Repair tickets must identify known Sources.")
         revision = self.documentary_revision
         scoped = revision is not None and self.runner.ledger.requires_delivery_attestation
+        if revision is not None and scoped:
+            tickets = autonomous_realism.retained_draft_tickets(self.runner, revision, tickets)
         retained_tickets = self._retained_generated_tickets() if scoped else {}
         prior_sources = ({source.id: source for source in revision.parent.bundles[revision.parent.freeze.natural]}
                          if revision is not None else {})
