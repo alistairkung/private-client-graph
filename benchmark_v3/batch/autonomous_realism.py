@@ -187,7 +187,8 @@ def retained_draft_tickets(runner: SessionRunner, revision: Revision, tickets: d
     parent = revision.parent
     if (not runner.ledger.requires_workload_merits or not runner.ledger.requires_delivery_attestation
             or revision.design.matched or parent.audit_repair_sources or parent.owned_records is not None
-            or parent.prior_scope_return is not None or parent.incoming_particulars is not None
+            or (parent.prior_scope_return is not None and parent.narrowed_scope_source is None)
+            or parent.incoming_particulars is not None
             or parent.exact_recipient_edit is not None):
         return tickets
     path = runner.directory / "own-draft-author-lineage.json"
@@ -204,7 +205,8 @@ def retained_draft_tickets(runner: SessionRunner, revision: Revision, tickets: d
     for brief in revision.design.inventory:
         identity = brief.source_id
         previous = old[identity]
-        if (identity not in tickets or identity not in local or identity in other
+        ordinary_local_edit = identity in local and identity not in other
+        if (identity not in tickets or not (ordinary_local_edit or identity == parent.narrowed_scope_source)
                 or revision.affected.intersection(previous.received)
                 or previous.model_dump(exclude={"participant_brief"}) != brief.model_dump(exclude={"participant_brief"})):
             continue

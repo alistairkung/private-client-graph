@@ -3431,7 +3431,8 @@ def test_scale_design_recovers_symmetric_order_without_removing_any_claim(approv
         science.verify_design(slot, design_recovery.fresh_design_representation(duplicate, workload=True))
 
 
-def test_scale_repair_reuses_only_the_affected_participants_own_draft(approved, monkeypatch):
+@pytest.mark.parametrize("narrowed", [False, True])
+def test_scale_repair_reuses_only_the_affected_participants_own_draft(approved, monkeypatch, narrowed):
     from benchmark_v3.batch import author_delivery, autonomous_realism
     from benchmark_v3.batch.sessions import SessionRunner
 
@@ -3442,11 +3443,20 @@ def test_scale_repair_reuses_only_the_affected_participants_own_draft(approved, 
     sources = [Source(id=first.source_id, title="Original", text="Writer one's original owned text."),
                Source(id=second.source_id, title="Separate", text="Another participant's original text.")]
     bundles, freeze = science.freeze_bundles(slot, design, sources)
-    parent = autonomous_realism.ReturnedFile(design, bundles, freeze, {}, {}, {}, None, [])
+    parent = autonomous_realism.ReturnedFile(
+        design, bundles, freeze, {}, {}, {}, None, [],
+        prior_scope_return={"revision": 1} if narrowed else None,
+        narrowed_scope_source=first.source_id if narrowed else None,
+    )
     plan = autonomous_realism.RepairPlan(disposition="repair", progress="initial", rationale="Local wording.",
         tickets={first.source_id: "Fix the displayed locator.", second.source_id: "Fix the knowledge boundary."},
         objections={"1": {"cause": "documentary", "sources": [first.source_id], "diagnosis": "Local label."},
                     "2": {"cause": "participant_knowledge", "sources": [second.source_id], "diagnosis": "Scope."}})
+    if narrowed:
+        plan = plan.model_copy(update={"tickets": {first.source_id: "Restore your firsthand attestation."},
+                                     "objections": {"1": autonomous_realism.Objection(
+                                         cause="provenance", sources=[first.source_id], diagnosis="Restore attribution.",
+                                     )}})
     revision = autonomous_realism.Revision(parent, design, plan, set(plan.tickets), {"parent_revision": 1}, "repair-plan")
     runner = commission.session_runner(ledger, "G", 2)
     monkeypatch.setattr(type(ledger), "requires_workload_merits", property(lambda _: True))
@@ -3465,7 +3475,7 @@ def test_scale_repair_reuses_only_the_affected_participants_own_draft(approved, 
     monkeypatch.setattr(author_delivery, "require_projection", lambda *_: None)
     tickets = autonomous_realism.retained_draft_tickets(runner, revision, plan.tickets)
     assert sources[0].text in tickets[first.source_id] and sources[1].text not in tickets[first.source_id]
-    assert tickets[second.source_id] == plan.tickets[second.source_id]
+    assert tickets.get(second.source_id) == plan.tickets.get(second.source_id)
     assert autonomous_realism.retained_draft_tickets(runner, revision, plan.tickets) == tickets
     document = document.model_copy(update={"text": "Different retained material."})
     with pytest.raises(packet.PacketIsolationError, match="own retained author receipt"):
