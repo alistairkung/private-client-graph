@@ -1232,7 +1232,41 @@ def _reopen_scope_omission(
 ) -> tuple[dict[str, Any], RepairPlan, dict[str, Any]]:
     if "future_reference" in record:
         return remove_future_reference(runner, slot, FutureReferenceOmission.model_validate(record["future_reference"]))
+    if record.get("quoted_ticket_instruction"):
+        return remove_quoted_ticket_instruction(runner, slot)
     return remove_separate_reply_ticket(runner, slot, record["source_id"])
+
+
+def remove_quoted_ticket_instruction(
+    runner: SessionRunner, slot: FamilySlot,
+) -> tuple[dict[str, Any], RepairPlan, dict[str, Any]]:
+    retained, prior = pre_author_scope_return(runner, slot=slot)
+    review, receipt, request = runner.committed_result("author", author_context.JOB, "audit", author_context.AuthorContextReview)
+    objection = review.objections[0] if len(review.objections) == 1 else ""
+    match = re.match(r"^([\w-]+) revision_ticket: Remove '(.*?)' before dispatch\.", objection)
+    if match is None or receipt["receipt_sha256"] != retained["scope_receipt_sha256"]:
+        raise ValueError("An exact independent review must quote one instruction to remove before dispatch.")
+    identity, instruction = match.groups()
+    packet = commissioning._read_json(request["inputs"]["audit_rules"])["participant_packets"].get(identity, {})
+    ticket = prior.tickets.get(identity)
+    if ticket is None or packet.get("revision_ticket") != ticket:
+        raise ValueError("The independently reviewed ticket must match its exact retained plan.")
+    updated = _omit_quoted_ticket_sentence(ticket, instruction)
+    plan = prior.model_copy(update={"tickets": prior.tickets | {identity: updated}, "progress": "improved"})
+    return {
+        "quoted_ticket_instruction": True, "source_id": identity, "scope_receipt_sha256": receipt["receipt_sha256"],
+        "reviewed_pre_author_return": retained, "removed_sentence": instruction,
+        "prior_plan_sha256": authorisation.commitment(prior), "derivative_sha256": authorisation.commitment(plan),
+    }, plan, receipt
+
+
+def _omit_quoted_ticket_sentence(ticket: str, instruction: str) -> str:
+    sentence = instruction.removesuffix(".") + "."
+    surrounded = " " + sentence + " "
+    if (not instruction or any(char in sentence[:-1] for char in ".\r\n")
+            or ticket.count(sentence) != 1 or re.search(r"(?<=[.!?])" + re.escape(surrounded), ticket) is None):
+        raise ValueError("Only one exact interior ticket sentence can be omitted.")
+    return ticket.replace(surrounded, " ", 1)
 
 
 def remove_future_reference(

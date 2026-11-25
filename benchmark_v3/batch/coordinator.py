@@ -1319,6 +1319,7 @@ def release_returned_pre_author_plan(
     omit_reply_for: str | None = None, omit_future_reference: autonomous_realism.FutureReferenceOmission | None = None,
     incoming_particulars_source: str | None = None, exact_omission_assessment: str | None = None,
     keep_documentary_limits: bool = False,
+    omit_quoted_instruction: bool = False,
 ) -> None:
     with ledger.coordinator_lock():
         ledger.require_running()
@@ -1337,7 +1338,8 @@ def release_returned_pre_author_plan(
         if keep_documentary_limits and (
             not ledger.pool.shared_scale or not ledger.requires_workload_merits
             or len(science.condition_ids(slot)) != 1 or original.get("keep_documentary_limits")
-            or any((omit_reply_for, omit_future_reference, incoming_particulars_source, exact_omission_assessment))
+            or any((omit_reply_for, omit_future_reference, incoming_particulars_source, exact_omission_assessment,
+                    omit_quoted_instruction))
         ):
             raise ValueError("A limits-focused replan requires one independently returned natural-file proposal.")
         earlier = autonomous_realism._pre_author_returns(original)
@@ -1345,13 +1347,19 @@ def release_returned_pre_author_plan(
             raise ValueError("An exact recipient scope return requires an independent omission assessment.")
         if exact_omission_assessment is not None:
             if (earlier or "exact_recipient_edit" not in original or "exact_omission_assessment" in original
-                    or any((omit_reply_for, omit_future_reference, incoming_particulars_source))):
+                    or any((omit_reply_for, omit_future_reference, incoming_particulars_source, omit_quoted_instruction))):
                 raise ValueError("One independent omission assessment may reopen only an exact recipient repair.")
             edit = recipient_edit.ExactRecipientEdit.model_validate(original["exact_recipient_edit"])
             edit.require_exact_omission_objections(record["objections"])
             TypeAdapter(Digest).validate_python(exact_omission_assessment)
         omission: dict[str, Any] | None
-        if omit_future_reference is not None:
+        if omit_quoted_instruction:
+            if (not ledger.pool.shared_scale or not ledger.requires_workload_merits
+                    or len(science.condition_ids(slot)) != 1 or "scope_ticket_omission" in original
+                    or any((omit_reply_for, omit_future_reference, incoming_particulars_source))):
+                raise ValueError("Quoted ticket omission requires one exact independently returned natural-file proposal.")
+            omission = autonomous_realism.remove_quoted_ticket_instruction(runner, slot)[0]
+        elif omit_future_reference is not None:
             if omit_reply_for is not None or len(earlier) > 2 or "scope_ticket_omission" in original:
                 raise ValueError("Use only one exact unavailable-document omission in an un-authored repair chain.")
             omission = autonomous_realism.remove_future_reference(runner, slot, omit_future_reference)[0]

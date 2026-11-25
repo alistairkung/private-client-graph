@@ -3663,6 +3663,21 @@ def test_authored_scope_replan_requires_a_strictly_narrower_local_change(approve
         ))
 
 
+def test_quoted_ticket_omission_keeps_every_other_instruction():
+    from benchmark_v3.batch import autonomous_realism
+
+    ticket = "Preserve the actual register. Do not mention the restricted memo. Retain the issue date."
+    expected = "Preserve the actual register. Retain the issue date."
+    assert autonomous_realism._omit_quoted_ticket_sentence(ticket, "Do not mention the restricted memo") == expected
+    assert autonomous_realism._omit_quoted_ticket_sentence(ticket, "Do not mention the restricted memo.") == expected
+    for partial in ("mention the restricted memo", "Preserve the actual register", "Retain the issue date"):
+        with pytest.raises(ValueError, match="one exact interior ticket sentence"):
+            autonomous_realism._omit_quoted_ticket_sentence(ticket, partial)
+    repeated = ticket.replace(" Retain", " Do not mention the restricted memo. Retain")
+    with pytest.raises(ValueError, match="one exact interior ticket sentence"):
+        autonomous_realism._omit_quoted_ticket_sentence(repeated, "Do not mention the restricted memo")
+
+
 def test_scoped_review_context_preserves_reserved_prompt_on_resume(approved, monkeypatch):
     from benchmark_v3.batch.workflow import FamilyWorkflow
 
