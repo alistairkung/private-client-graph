@@ -3051,6 +3051,31 @@ def test_scale_preauthor_progress_distinguishes_new_scope_from_a_reworded_return
     assert not autonomous_realism.pre_author_progress(previously, findings("Check the authority stated in src30.") | merits, ids)
 
 
+def test_scope_review_keeps_the_authenticated_original_separate_from_a_returned_draft():
+    from types import SimpleNamespace
+    from benchmark_v3.batch import autonomous_realism, repair_authority
+    from benchmark_v3.replay_manifest import source_commitments
+
+    original = Source(id="source-01", title="Receipt", text="I received the original by hand at the office.")
+    returned = original.model_copy(update={"text": "I checked my correspondence for any referral."})
+    record = {"original_realism_sources": {"G000": [original.model_dump(mode="json")]},
+              "original_realism_source_commitments": {"G000": source_commitments([original])}}
+    parent = SimpleNamespace(prior_scope_return=record, bundles={"G000": [returned]})
+    attempts = []
+    runner = SimpleNamespace(revision=3, family="G", ledger=SimpleNamespace(requires_workload_merits=True,
+                                                                          attempts=lambda _: attempts))
+    baseline = autonomous_realism._scope_realism_baseline(runner, parent)
+    assert baseline == record["original_realism_sources"]
+    assert baseline["G000"][0]["text"] != returned.text
+    record["original_realism_sources"]["G000"][0]["text"] = "I was told the original might have been received."
+    with pytest.raises(ValueError, match="exact initially reviewed Sources"):
+        autonomous_realism._scope_realism_baseline(runner, parent)
+    attempts.append({"revision": 3, "job": repair_authority.VERIFY_JOB, "request": commissioning.json_text({
+        "inputs": {"paired_bundles": commissioning.json_text({"original": {}, "revised": {}})},
+    })})
+    assert autonomous_realism._scope_realism_baseline(runner, parent) is None
+
+
 def test_exact_recipient_document_repair_preserves_the_original_delivery_graph():
     from benchmark_v3.batch.recipient_edit import ExactRecipientEdit
 

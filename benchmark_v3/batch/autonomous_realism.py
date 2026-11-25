@@ -12,7 +12,7 @@ from benchmark_v3.batch.contracts import Adjudication, AuthorBrief, DesignOutput
 from benchmark_v3.batch.ledger import BudgetExhausted
 from benchmark_v3.batch.sessions import SessionRunner
 from benchmark_v3.portfolio import FamilySlot
-from benchmark_v3.replay_manifest import BatchSourceFreeze
+from benchmark_v3.replay_manifest import BatchSourceFreeze, source_commitments
 from benchmark_v3.research_contracts import Contract, Text
 from private_client_graph.models.source import Source
 
@@ -1540,14 +1540,27 @@ def verify_revision(
     if bundles == revision.parent.bundles and revision.design == revision.parent.design:
         raise RepairStopped("The regenerated family has identical Source bytes and design.")
     inputs = revision.parent.inputs(slot)
-    inputs["paired_bundles"] = commissioning.json_text({
+    comparison = {
         "original": commissioning._read_json(inputs["paired_bundles"]),
         "revised": commissioning._read_json(_bundles(bundles)),
-    })
+    }
     rules: dict[str, Any] = {
         "revised_design": revision.design.model_dump(mode="json"), "affected_sources": sorted(revision.affected),
     }
     prompt = VERIFY_PROMPT
+    baseline = _scope_realism_baseline(runner, revision.parent)
+    if baseline is not None:
+        comparison["original_realism_baseline"] = baseline
+        prompt += (
+            " The paired comparison also includes an independently authenticated original realism baseline. "
+            "The file labelled original is the immediate draft that failed the previous scope review. "
+            "Compare the revised file with original_realism_baseline to decide whether it preserves the initial "
+            "scientific question, exact evidence conditions and operative documentary facts. Use the intervening "
+            "draft to account for each retained objection. A restoration of the original proof may be a change "
+            "from the failed draft. Return any unsupported new fact, altered proof requirement, unverified delivery "
+            "or other remaining scientific objection."
+        )
+    inputs["paired_bundles"] = commissioning.json_text(comparison)
     if (revision.lineage.get("natural_provenance_restoration")
             or revision.lineage.get("verified_recipient_scope_restoration")):
         rules["retained_scope_return"] = revision.parent.prior_scope_return
@@ -1579,6 +1592,25 @@ def verify_revision(
     if result.verdict != "preserved" or result.objections:
         raise RepairStopped(scope_failure(result))
     return receipt
+
+
+def _scope_realism_baseline(runner: SessionRunner, parent: ReturnedFile) -> dict[str, Any] | None:
+    retained = parent.prior_scope_return
+    if retained is None or len(parent.bundles) != 1 or not runner.ledger.requires_workload_merits:
+        return None
+    pending = next((row for row in runner.ledger.attempts(runner.family)
+                    if (row["revision"], row["job"]) == (runner.revision, repair_authority.VERIFY_JOB)), None)
+    if pending is not None:
+        requested = commissioning._read_json(pending["request"])["inputs"]["paired_bundles"]
+        if "original_realism_baseline" not in commissioning._read_json(requested):
+            return None
+    baseline = TypeAdapter(dict[str, list[Source]]).validate_python(retained["original_realism_sources"])
+    if baseline.keys() != parent.bundles.keys() or (
+        {condition: source_commitments(sources) for condition, sources in baseline.items()}
+        != retained["original_realism_source_commitments"]
+    ):
+        raise ValueError("A scientific scope baseline must reconstruct the exact initially reviewed Sources.")
+    return commissioning._read_json(_bundles(baseline))
 
 
 def scope_failure(result: ScopeReview) -> str:
