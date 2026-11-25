@@ -709,6 +709,7 @@ def recover_scope_review_representation(ledger: Ledger, batch: str, family: str)
 
 def release_clean_redesign(
     ledger: PooledLedger, batch: str, family: str, reason: str, *, independent_large_assessment: str | None = None,
+    retained_design_revision: int | None = None,
 ) -> None:
     """Retain a failed lineage and commission one fresh independent replacement."""
     with ledger.coordinator_lock():
@@ -742,7 +743,9 @@ def release_clean_redesign(
                 audit_receipt_sha256=clean_redesign.reviewed_audit_receipt(runner, revision),
                 independent_assessment_sha256=independent_large_assessment,
             )
-        record = clean_redesign.details(runner, revision, reason.strip(), audit)
+        record = clean_redesign.details(
+            runner, revision, reason.strip(), audit, retained_design_revision=retained_design_revision,
+        )
         ledger.release(batch, family, revision + 1, "design", parent_sha256=authorisation.commitment(record),
                        reference="Fresh documentary design after a retained scientific failure.",
                        documentary_redesign=record.model_dump(mode="json"))

@@ -7,6 +7,7 @@ from pydantic import Field
 from benchmark_v3 import commissioning
 from benchmark_v3.batch import artifacts, authorisation
 from benchmark_v3.batch.contracts import DesignOutput, MilestoneAudit
+from benchmark_v3.batch.repair_authority import REVISION
 from benchmark_v3.batch.sessions import SessionRunner
 from benchmark_v3.portfolio import FamilySlot
 from benchmark_v3.research_contracts import Contract, Digest, Text
@@ -26,15 +27,18 @@ class CleanRedesign(Contract):
     parent_design_sha256: Digest | None
     reason: Text
     audited_replacement: AuditedReplacement | None = Field(default=None, exclude_if=lambda value: value is None)
+    retained_design_revision: int | None = Field(default=None, exclude_if=lambda value: value is None)
 
 
 def details(
     runner: SessionRunner, prior: int, reason: str, audit: AuditedReplacement | None = None,
+    *, retained_design_revision: int | None = None,
 ) -> CleanRedesign:
-    design = runner.directory.parent / str(prior) / "design.json"
+    design = _prior_design(runner, prior, retained_design_revision)
     return CleanRedesign(
         parent_revision=prior, manifest_sha256=authorisation.commitment(runner.manifest),
         parent_design_sha256=_design_digest(design), reason=reason, audited_replacement=audit,
+        retained_design_revision=retained_design_revision,
     )
 
 
@@ -48,7 +52,8 @@ def recorded(runner: SessionRunner) -> CleanRedesign | None:
     prior = runner.revision - 1
     record = CleanRedesign.model_validate(event["details"]["documentary_redesign"])
     if (not runner.ledger.requires_delivery_attestation or prior < 1
-            or record != details(runner, prior, record.reason, record.audited_replacement)
+            or record != details(runner, prior, record.reason, record.audited_replacement,
+                                 retained_design_revision=record.retained_design_revision)
             or event["details"]["parent_sha256"] != authorisation.commitment(record)
             or not runner.ledger.historical_pooled_revision(batch, family, runner.revision)):
         raise ValueError("Fresh documentary design requires the exact reviewed replacement lineage.")
@@ -91,7 +96,10 @@ def fresh_slot(slot: FamilySlot, record: CleanRedesign) -> FamilySlot:
 def verify_distinct(runner: SessionRunner, design: DesignOutput, record: CleanRedesign) -> None:
     if record.parent_design_sha256 is None:
         return
-    parent = artifacts.read_contract(runner.directory.parent / str(record.parent_revision) / "design.json", DesignOutput)
+    path = _prior_design(runner, record.parent_revision, record.retained_design_revision)
+    if _design_digest(path) != record.parent_design_sha256:
+        raise ValueError("The replacement's distinctness reference differs from its commitment.")
+    parent = artifacts.read_contract(path, DesignOutput)
     current_names = {name.casefold() for left, _, right in design.candidates for name in (left, right)}
     previous_names = {name.casefold() for left, _, right in parent.candidates for name in (left, right)}
     if current_names & previous_names or design.neutral_brief == parent.neutral_brief or design.cutoff == parent.cutoff:
@@ -104,3 +112,18 @@ def verify_distinct(runner: SessionRunner, design: DesignOutput, record: CleanRe
 
 def _design_digest(path: Path) -> str | None:
     return commissioning.digest(artifacts.read_bytes(path)) if path.exists() else None
+
+
+def _prior_design(runner: SessionRunner, prior: int, retained: int | None) -> Path:
+    path = runner.directory.parent / str(prior) / "design.json"
+    if retained is None:
+        return path
+    batch, family = runner.manifest.batch_id, runner.family
+    release = next((row["details"] for row in runner.ledger.events(batch, family)
+                    if (row["revision"], row["kind"], row["name"]) == (prior, "transition", REVISION)), None)
+    anchor = runner.directory.parent / str(retained) / "design.json"
+    if (not runner.ledger.requires_workload_merits or not 0 < retained < prior or path.exists()
+            or release is None or release.get("parent_revision") != retained or not anchor.is_file()
+            or any(row["revision"] == prior for row in runner.ledger.attempts(family))):
+        raise ValueError("A skipped unstarted repair must retain its exact reviewed predecessor design.")
+    return anchor

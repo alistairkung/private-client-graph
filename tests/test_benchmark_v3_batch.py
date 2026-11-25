@@ -4672,6 +4672,32 @@ def test_clean_redesign_retains_a_failed_lineage_and_rejects_relabelled_design(a
                and "distinct documentary history" in row["details"]["reason"] for row in active.events(batch, family))
 
 
+def test_clean_redesign_after_unstarted_repair_retains_exact_case_reference(approved, monkeypatch):
+    from benchmark_v3.batch import clean_redesign, repair_authority
+
+    ledger, commission = approved
+    runner = commission.session_runner(ledger, "G", 3)
+    design = DesignOutput.model_validate(_design("G"))
+    anchor = runner.directory.with_name("1") / "design.json"
+    artifacts.write_json(anchor, design.model_dump(mode="json"))
+    monkeypatch.setattr(type(ledger), "requires_workload_merits", property(lambda _: True))
+    events = [{"revision": 2, "kind": "transition", "name": repair_authority.REVISION,
+               "details": {"parent_revision": 1}}]
+    monkeypatch.setattr(ledger, "events", lambda *_: events)
+    reservations = []
+    monkeypatch.setattr(ledger, "attempts", lambda *_: reservations)
+
+    retained = clean_redesign.details(runner, 2, "Replace the returned case.", retained_design_revision=1)
+    assert retained.parent_design_sha256 == commissioning.digest(anchor.read_bytes())
+    with pytest.raises(ValueError, match="distinct documentary history"):
+        clean_redesign.verify_distinct(runner, design, retained)
+    with pytest.raises(ValueError, match="exact reviewed predecessor"):
+        clean_redesign.details(runner, 2, "Wrong parent.", retained_design_revision=2)
+    reservations.append({"revision": 2, "job": "repair-plan"})
+    with pytest.raises(ValueError, match="unstarted repair"):
+        clean_redesign.verify_distinct(runner, design, retained)
+
+
 def test_large_merits_repair_preserves_the_exact_design_outside_approved_rows():
     from benchmark_v3.batch import large_merits_repair
 
