@@ -403,6 +403,7 @@ def _plan_from_objections(
             "earlier_documentary_objections": parent.earlier_objections,
             **({"prior_scope_return": parent.prior_scope_return} if parent.prior_scope_return is not None else {}),
             **({"keep_documentary_limits": True} if release.get("keep_documentary_limits") else {}),
+            **({"local_repair_option": release["local_repair_option"]} if release.get("local_repair_option") else {}),
             **({"exact_recipient_edit": release["exact_recipient_edit"]} if parent.exact_recipient_edit is not None else {}),
             "capacity": {
                 "family_sessions_before_planning": release["family_sessions_remaining"],
@@ -521,6 +522,13 @@ def _select_plan(
                 " authorization periods and later documented acts. An exhaustive as-of register can report its"
                 " actual entries without suggesting an outside query. Do not embed a later clarification in"
                 " an earlier record or make a new operative event to explain an existing document."
+            )
+        if release.get("local_repair_option"):
+            prompt += (
+                " The optional repair proposal is from the coordinator and is visible only to this planning review."
+                " Evaluate it independently against the original evidence and scope. Return infeasible if it would"
+                " require unavailable facts or alter the hypothesis. Derive isolated participant tickets without"
+                " quoting the review or proposal, and retain all independent checks."
             )
     if parent.exact_recipient_edit is not None:
         if parent.exact_recipient_edit.brief_omission is None:

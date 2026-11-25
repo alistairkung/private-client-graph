@@ -1332,6 +1332,7 @@ def release_returned_pre_author_plan(
     incoming_particulars_source: str | None = None, exact_omission_assessment: str | None = None,
     keep_documentary_limits: bool = False,
     omit_quoted_instruction: bool = False,
+    local_repair_option: str | None = None,
 ) -> None:
     with ledger.coordinator_lock():
         ledger.require_running()
@@ -1347,6 +1348,8 @@ def release_returned_pre_author_plan(
         record, _ = autonomous_realism.pre_author_scope_return(runner, slot=slot)
         if commissioning._read_json(issue["evidence"]) != record["review"]:
             raise ValueError("The retained independent scope review differs from the current exception.")
+        if local_repair_option is not None and (not keep_documentary_limits or not local_repair_option.strip()):
+            raise ValueError("An independent planning option requires an exact evidence-limits scope return.")
         if keep_documentary_limits and (
             not ledger.pool.shared_scale or not ledger.requires_workload_merits
             or len(science.condition_ids(slot)) != 1 or original.get("keep_documentary_limits")
@@ -1387,6 +1390,7 @@ def release_returned_pre_author_plan(
         release = original | {
             "pre_author_scope_return": record,
             **({"keep_documentary_limits": True, "narrow_originating_records": True} if keep_documentary_limits else {}),
+            **({"local_repair_option": local_repair_option.strip()} if local_repair_option is not None else {}),
             **({"prior_pre_author_scope_returns": earlier} if earlier else {}),
             **({"scope_ticket_omission": omission} if omission is not None else {}),
             **({"exact_omission_assessment": exact_omission_assessment} if exact_omission_assessment is not None else {}),
