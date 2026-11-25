@@ -4727,6 +4727,22 @@ def test_clean_redesign_after_unstarted_repair_retains_exact_case_reference(appr
         clean_redesign.verify_distinct(runner, design, retained)
 
 
+def test_predispatch_attachment_recovery_rejects_a_reserved_author(approved, monkeypatch):
+    from benchmark_v3.batch import autonomous_realism, predispatch_lineage
+
+    ledger, commission = approved
+    runner = commission.session_runner(ledger, "G", 5)
+    monkeypatch.setattr(autonomous_realism, "release_event", lambda *_: {"partial_packet_return": {"revision": 3}})
+    monkeypatch.setattr(autonomous_realism, "_read_return", lambda *_: pytest.fail("A reserved packet cannot be recovered here."))
+    monkeypatch.setattr(ledger, "attempts", lambda *_: [{"revision": 5, "job": "author-src2"}])
+    with pytest.raises(ValueError, match="precede any reservation"):
+        predispatch_lineage.verify_return(runner, commission.portfolio.slots[0], "author-src2")
+    monkeypatch.setattr(ledger, "attempts", lambda *_: [])
+    (runner.directory / "packets" / "author-src2").mkdir(parents=True)
+    with pytest.raises(ValueError, match="precede any reservation"):
+        predispatch_lineage.verify_return(runner, commission.portfolio.slots[0], "author-src2")
+
+
 def test_large_merits_repair_preserves_the_exact_design_outside_approved_rows():
     from benchmark_v3.batch import large_merits_repair
 

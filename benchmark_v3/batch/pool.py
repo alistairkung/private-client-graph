@@ -882,6 +882,67 @@ class MilestonePool:
                      remaining_work="family_halted"), qualifier="audience-assembly")
         return digest
 
+    def reconcile_predispatch_attachment(self, ledger: "PooledLedger", family: str, proof: dict[str, Any]) -> str:
+        """Quarantine a stopped lineage after confirming the unchanged guard rejected it before dispatch."""
+        from benchmark_v3.batch import coordinator, delivery_audience, predispatch_lineage
+        from benchmark_v3.batch.contracts import ExceptionRecord
+
+        if ledger.pool is not self or not self.shared_scale or not ledger.requires_delivery_attestation:
+            raise ValueError("The stopped attachment must be in the active isolated scale custody.")
+        self._verify_restart_runtime()
+        batch, = ledger.batch_ids()
+        commission = coordinator.load_commission(ledger, batch)
+        revision, state, issue = coordinator.family_status(ledger, batch, family)
+        known = self.boundary_records(ledger.root)
+        with closing(_read_only(ledger.path)) as database:
+            halts = database.execute("SELECT sequence, family, revision, details FROM events WHERE kind = 'task_halt'").fetchall()
+        for seq, _, _, raw in halts:
+            if seq in known:
+                self._verify_boundary_record(known[seq], raw)
+        unresolved = [row for row in halts if row[0] not in known]
+        if (len(unresolved) != 1 or unresolved[0][1:3] != (family, revision) or state != "author"
+                or not issue or not issue["job"]
+                or (issue["stage"], issue["code"], issue["evidence"]) != ("author", "isolation", predispatch_lineage.MISMATCH)
+                or commissioning._read_json(unresolved[0][3]) != issue):
+            raise ValueError("Only the exact undispatched stale attachment lookup is eligible for recovery.")
+        packet_sha = commissioning.digest(Path(packet.__file__).read_bytes())
+        delivery_sha = commissioning.digest(Path(author_delivery.__file__).read_bytes())
+        audience_sha = commissioning.digest(Path(delivery_audience.__file__).read_bytes())
+        if (not _verified_zero_turn_boundary(proof, packet_sha, delivery_sha)
+                or proof.get("audience_guard_sha256") != audience_sha):
+            raise ValueError("The stopped attachment requires fresh independent zero-turn boundary verification.")
+        ledger.verify_commission_boundary(commission)
+        runner = commission.session_runner(ledger, family, revision)
+        slot = next(row for row in commission.portfolio.slots if row.family_id == family)
+        trace = predispatch_lineage.verify_return(runner, slot, issue["job"])
+        if proof.get("verified_rejection") != trace:
+            raise ValueError("The independent evidence must match the exact current withheld packet.")
+        _require_settled_audience_custody(ledger, batch, family, [revision])
+        evidence = (commissioning.json_text(proof) + "\n").encode()
+        sequence, _, _, raw = unresolved[0]
+        record = {
+            "recovery": "verified_predispatch_attachment_rejection", "pool_sha256": self.digest,
+            "family": family, "revision": revision, "halt_sequence": sequence,
+            "halt_sha256": commissioning.digest(raw.encode()), "packet_sha256": packet_sha,
+            "audience_guard_sha256": audience_sha, "evidence_sha256": commissioning.digest(evidence),
+            "verified_rejection": trace,
+        }
+        digest = self._install_boundary_successor(ledger.root, evidence, record, undispatched_revision=revision + 1)
+        ledger.event(batch, family, revision, "reconcile", "verified_predispatch_attachment_rejection", state, state,
+                     {"boundary_sha256": digest, "withheld_job": issue["job"]})
+        terminal = ExceptionRecord(
+            stage="author", family_id=family, code="scientific_review",
+            evidence="The stale intermediate attachment lookup was rejected before dispatch; the lineage remains returned.",
+            job=issue["job"], repair_permitted=False, human_action="Use a clean independent documentary lineage.",
+            remaining_work="family_halted",
+        )
+        ledger.block(batch, revision, terminal, qualifier="predispatch-lineage")
+        ledger.event(batch, family, revision, "operator_close", "quarantine", state, "quarantined", {
+            "reference": "Preserve the withheld attempt and start a clean documentary lineage.",
+            "exception": terminal.model_dump(mode="json"), "role": "custodian",
+        })
+        return digest
+
     def _install_boundary_successor(
         self, root: Path, evidence: bytes, record: dict[str, Any], *, undispatched_revision: int | None = None,
     ) -> str:
