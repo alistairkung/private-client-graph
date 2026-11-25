@@ -1360,7 +1360,9 @@ def release_returned_pre_author_plan(
             raise ValueError("An independent planning option requires an exact evidence-limits scope return.")
         if keep_documentary_limits and (
             not ledger.pool.shared_scale or not ledger.requires_workload_merits
-            or len(science.condition_ids(slot)) != 1 or original.get("keep_documentary_limits")
+            or len(science.condition_ids(slot)) != 1
+            or (original.get("keep_documentary_limits")
+                and (local_repair_option is None or local_repair_option.strip() == original.get("local_repair_option")))
             or any((omit_reply_for, omit_future_reference, incoming_particulars_source, exact_omission_assessment,
                     omit_quoted_instruction))
         ):
