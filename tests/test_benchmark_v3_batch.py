@@ -3558,11 +3558,13 @@ def test_audit_sender_retry_only_clarifies_the_committed_delivery(approved, monk
     proof = {"source_id": "src1", "grants": [{"recipient": "Documented Recipient", "sent_on": "2028-06-02"}]}
     if restore_issued:
         proof["issued_source_sha256"] = authorisation.commitment(sources[0])
+        proof["issued_revision"] = 1
     receipt = {"receipt_sha256": "a" * 64}
     runner = commission.session_runner(ledger, "G", 3)
     artifacts.write_json(runner.directory.with_name("2") / "design.json", design.model_dump(mode="json"))
-    def retained(_, source, *, issued):
+    def retained(_, source, *, issued, issued_revision=None):
         assert source == "src1" and issued == (sources[0] if restore_issued else None)
+        assert issued_revision == (1 if restore_issued else None)
         return proof
 
     monkeypatch.setattr(autonomous_realism, "document_audit_sender_return", retained)

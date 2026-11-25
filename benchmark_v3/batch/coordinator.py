@@ -1758,6 +1758,7 @@ def release_audit_documentary_repair(ledger: PooledLedger, batch: str, family: s
 
 def release_audit_sender_retry(
     ledger: PooledLedger, batch: str, family: str, source_id: str, *, restore_issued: bool = False,
+    issued_revision: int | None = None,
 ) -> None:
     """Send the exact documentary repair to a new author with a documented delivery clarification."""
     with ledger.coordinator_lock():
@@ -1772,6 +1773,8 @@ def release_audit_sender_retry(
         release = autonomous_realism.release_event(runner)
         if release is None:
             raise ValueError("A sender recovery requires the exact independently proposed documentary revision.")
+        if issued_revision is not None and not restore_issued:
+            raise ValueError("An earlier lineage can establish only an exact original issued record.")
         issued = None
         if restore_issued:
             slot = next(row for row in commission.portfolio.slots if row.family_id == family)
@@ -1783,7 +1786,9 @@ def release_audit_sender_retry(
             issued = next((source for source in parent.bundles[parent.freeze.natural] if source.id == source_id), None)
             if issued is None:
                 raise ValueError("The original independent review did not include the requested issued record.")
-        reviewed = autonomous_realism.document_audit_sender_return(runner, source_id, issued=issued)
+        reviewed = autonomous_realism.document_audit_sender_return(
+            runner, source_id, issued=issued, issued_revision=issued_revision,
+        )
         ledger.release(batch, family, revision + 1, "design", parent_sha256=reviewed["receipt_sha256"],
                        reference="Fresh participant turn for an omitted historic delivery attestation.")
         ledger.event(batch, family, revision + 1, "transition", repair_authority.REVISION, "design", "design",

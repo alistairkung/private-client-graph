@@ -858,7 +858,7 @@ def _read_return(runner: SessionRunner, slot: FamilySlot, release: dict[str, Any
         stopped = partial["revision"]
         successor = next((event["details"] for event in history if
                           (event["revision"], event["kind"], event["name"]) == (stopped + 1, "transition", repair_authority.REVISION)), None)
-        if (not revision < stopped < runner.revision or stopped in known or skipped_ticket or earlier_issued
+        if (not revision < stopped < runner.revision or stopped in known or (skipped_ticket and not issued_restoration)
                 or (stopped + 1 < runner.revision and (successor is None or successor.get("partial_packet_return") != partial))):
             raise ValueError("An unfinished authoring stage requires its authenticated predispatch return.")
         known.add(stopped)
@@ -1503,11 +1503,14 @@ def _retained_plan_for_empty_ticket(
     return plan, receipt, design, affected, job
 
 
-def document_audit_sender_return(runner: SessionRunner, source_id: str, *, issued: Source | None = None) -> dict[str, Any]:
+def document_audit_sender_return(
+    runner: SessionRunner, source_id: str, *, issued: Source | None = None, issued_revision: int | None = None,
+) -> dict[str, Any]:
     release = release_event(runner)
     if (release is None or release.get("audit_sender_return")
             or (issued is None and (release["parent_revision"] != runner.revision - 1
                                     or source_id not in release.get("documentary_audit_return", {}).get("source_ids", [])))
+            or (issued_revision is not None and (issued is None or not 0 < issued_revision <= release["parent_revision"]))
             or not runner.ledger.requires_delivery_attestation or (runner.directory / "family").exists()):
         raise ValueError("A retained sender retry requires an exact un-frozen audit documentary revision.")
     events = [row for row in runner.ledger.events(runner.manifest.batch_id, runner.family) if row["revision"] == runner.revision]
@@ -1519,7 +1522,7 @@ def document_audit_sender_return(runner: SessionRunner, source_id: str, *, issue
         raise ValueError("A retained sender retry requires the same approved local ticket and existing transmissions.")
     record = {"source_id": source_id, "failures": failures, "grants": grants, "receipt_sha256": receipt["receipt_sha256"]}
     if issued is not None:
-        original_revision = release["parent_revision"]
+        original_revision = issued_revision or release["parent_revision"]
         origin = replace(runner, revision=original_revision, directory=runner.directory.with_name(str(original_revision)))
         job = f"author-{source_id}"
         answer, original_receipt, original_request = origin.committed_result("author", job, "author", author_delivery.AttestedSource)
@@ -1531,6 +1534,8 @@ def document_audit_sender_return(runner: SessionRunner, source_id: str, *, issue
             raise ValueError("The independent original must bind the exact issued record, participant, date and sending acts.")
         record.update(issued_source_sha256=value_digest(issued.model_dump(mode="json")),
                       issued_receipt_sha256=original_receipt["receipt_sha256"])
+        if issued_revision is not None:
+            record["issued_revision"] = issued_revision
     return record
 
 
@@ -1540,7 +1545,8 @@ def _retained_audit_sender_plan(
     previous = replace(runner, revision=runner.revision - 1, directory=runner.directory.with_name(str(runner.revision - 1)))
     identity = details["source_id"]
     issued = (parent.owned_records or {}).get(identity) if details.get("issued_source_sha256") else None
-    if details != document_audit_sender_return(previous, identity, issued=issued):
+    basis = {"issued_revision": details["issued_revision"]} if "issued_revision" in details else {}
+    if details != document_audit_sender_return(previous, identity, issued=issued, **basis):
         raise ValueError("The two independently omitted sender attestations changed.")
     history = runner.ledger.events(runner.manifest.batch_id, runner.family)
     choice = next(row["details"] for row in history if row["revision"] == previous.revision and row["kind"] == "repair_plan_selection")
@@ -1569,7 +1575,8 @@ def verify_previous_issued_recovery(runner: SessionRunner, case: ReturnedFile, r
     identity = proof["source_id"]
     source = next(row for row in case.bundles[case.freeze.natural] if row.id == identity)
     failed = replace(runner, revision=revision - 1, directory=runner.directory.with_name(str(revision - 1)))
-    if document_audit_sender_return(failed, identity, issued=source) != proof:
+    basis = {"issued_revision": proof["issued_revision"]} if "issued_revision" in proof else {}
+    if document_audit_sender_return(failed, identity, issued=source, **basis) != proof:
         raise ValueError("The original failed sender attempts differ from their authenticated recovery.")
     job = f"author-{identity}"
     restored, _, request = recovered.committed_result("author", job, "author", author_delivery.AttestedSource)
