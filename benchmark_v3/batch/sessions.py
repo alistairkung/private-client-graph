@@ -225,12 +225,12 @@ class SessionRunner:
                 permitted = joint_control_plan.released(self) is not None
             if self.ledger.requires_delivery_attestation and stage == "audit" and base_job == joint_control_plan.FOLLOWUP_JOB:
                 permitted = joint_control_plan.followup(self) is not None
-            if self.ledger.requires_delivery_attestation and stage == "audit" and job == mask_dispute.JOB:
+            if self.ledger.requires_delivery_attestation and stage == "audit" and job.startswith(mask_dispute.JOB):
                 permitted = (instructions == mask_dispute.INSTRUCTIONS and result_type is mask_dispute.DisputeReview
-                             and mask_dispute.permits(self, inputs))
-            if self.ledger.requires_delivery_attestation and stage == "audit" and job == mask_dispute.SCOPE_JOB:
+                             and mask_dispute.permits(self, inputs, job=job))
+            if self.ledger.requires_delivery_attestation and stage == "audit" and job.startswith(mask_dispute.SCOPE_JOB):
                 permitted = (instructions == mask_dispute.SCOPE_PROMPT and result_type is mask_dispute.ScopeReview
-                             and mask_dispute.permits_scope(self, inputs))
+                             and mask_dispute.permits_scope(self, inputs, job=job))
             if self.ledger.requires_delivery_attestation and (stage, job) == ("design", repair_authority.EXACT_PLAN_JOB):
                 events = self.ledger.events(self.manifest.batch_id, self.family)
                 retry = repair_authority.recorded_classification_retry(self)

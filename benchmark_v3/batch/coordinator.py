@@ -478,12 +478,12 @@ def family_status(ledger: Ledger, batch_id: str, family: str) -> tuple[int, str,
                 state = "design"
             if record["kind"] == "reconcile" and (
                 record["name"].startswith(("construction-followup", "pooled-release", read_format_recovery.RELEASE,
-                                           read_format_recovery.MASK_RELEASE))
+                                           read_format_recovery.MASK_RELEASE, mask_dispute.RELEASE, mask_dispute.SCOPE_RELEASE,
+                                           mask_dispute.CLARIFY))
                 or record["name"] in {audit_boundary.RECHECK, audit_boundary.FORMAT_RETRY,
                                       audit_boundary.LARGE_CONFIRMATION, author_repair.UNUSED_ATTESTATION,
                                       repair_authority.SCOPE_REVIEW_RETRY, joint_control_plan.RELEASE,
-                                      joint_control_plan.FOLLOWUP_RELEASE, mask_dispute.RELEASE, mask_dispute.SCOPE_RELEASE,
-                                      mask_dispute.CLARIFY}
+                                      joint_control_plan.FOLLOWUP_RELEASE}
             ):
                 state = record["next"] or state
     return revision, state, blocking
@@ -646,6 +646,8 @@ def _block(
         qualifier = next((row["name"] for row in reversed(ledger.events(batch, family))
                           if row["revision"] == revision and row["kind"] == "reconcile"
                           and row["name"].startswith(reading_release_prefix)), qualifier)
+    if workflow.stage == "masks" and code == "scientific_review" and job is not None and job.startswith("mask-"):
+        qualifier = f"observation-{job}"
     ledger.block(batch, revision, ExceptionRecord(
         stage=workflow.stage, family_id=family, code=code, evidence=evidence, job=job,
         repair_permitted=repair,
@@ -992,10 +994,14 @@ def release_executed_control_dispute(ledger: PooledLedger, batch: str, family: s
         match = mask_dispute.FAILURE.fullmatch(issue["evidence"]) if issue else None
         if (not ledger.pool.shared_scale or not ledger.requires_delivery_attestation or state != "quarantined"
                 or not issue or (issue["stage"], issue["code"]) != ("masks", "scientific_review") or match is None
-                or mask_dispute.recorded(runner) is not None):
-            raise ValueError("An executed control dispute requires the first exact retained scientific disagreement.")
+                or mask_dispute.recorded(runner, match[1]) is not None):
+            raise ValueError("Each executed control dispute requires a distinct exact retained scientific disagreement.")
         dispute = mask_dispute.reopen(runner, match[1])
-        ledger.event(batch, family, revision, "reconcile", mask_dispute.RELEASE, state, "audit",
+        existing = {index for _, prior, _ in mask_dispute.clarifications(runner) for index in prior.assignments}
+        if existing & dispute.assignments.keys():
+            raise ValueError("A previously clarified control cannot receive another modified question.")
+        event = mask_dispute.lineage_name(runner, mask_dispute.RELEASE, match[1])
+        ledger.event(batch, family, revision, "reconcile", event, state, "audit",
                      dispute.release.model_dump(mode="json"))
 
 
@@ -1008,11 +1014,11 @@ def release_executed_control_clarification(ledger: PooledLedger, batch: str, fam
         if not ledger.pool.shared_scale or not ledger.requires_delivery_attestation or state != "audit" or issue:
             raise ValueError("Clarified views require the active held control-dispute audit.")
         clarification, dispute, _ = mask_dispute.make_clarification(runner)
-        if any(mask_dispute.CLARIFIED_JOB.fullmatch(row["job"])
-               for row in ledger.attempts(family) if row["revision"] == revision):
+        if any((found := mask_dispute.CLARIFIED_JOB.fullmatch(row["job"])) is not None
+               and int(found[1]) in dispute.assignments for row in ledger.attempts(family) if row["revision"] == revision):
             raise ValueError("An executed dispute may release only one independent paired clarification.")
         ledger.require_capacity(family, revision, {f"mask-{index:03}-clarified" for index in dispute.assignments})
-        ledger.event(batch, family, revision, "reconcile", mask_dispute.CLARIFY, state, "masks",
+        ledger.event(batch, family, revision, "reconcile", mask_dispute.lineage_name(runner, mask_dispute.CLARIFY), state, "masks",
                      clarification.model_dump(mode="json"))
 
 
@@ -1025,7 +1031,7 @@ def release_executed_control_scope_confirmation(ledger: PooledLedger, batch: str
         if not ledger.pool.shared_scale or not ledger.requires_delivery_attestation or state != "audit" or issue:
             raise ValueError("An independent scope test requires the active control-dispute return.")
         release, _, _, _ = mask_dispute.scope_packet(runner)
-        ledger.event(batch, family, revision, "reconcile", mask_dispute.SCOPE_RELEASE, state, "audit",
+        ledger.event(batch, family, revision, "reconcile", mask_dispute.lineage_name(runner, mask_dispute.SCOPE_RELEASE), state, "audit",
                      release.model_dump(mode="json"))
 
 

@@ -5201,8 +5201,12 @@ def test_executed_control_clarification_requires_unchanged_views_and_independent
     whole = MaskAssignment(condition=condition, risk="joint_proof", reason="Check both records.",
                            question="What does this file establish?", included=["src1", "src2"], present=[EDGE], absent=[])
     missing = whole.model_copy(update={"included": ["src1"], "present": [], "absent": whole.present})
+    second_question = "What do these selected records establish at the cutoff?"
+    second_positive = whole.model_copy(update={"risk": "ambiguous_identity_or_dates", "question": second_question})
+    second_negative = missing.model_copy(update={"risk": "shortcut", "question": second_question})
+    masks = [whole, missing, second_positive, second_negative]
     result = audit_boundary.RecheckedAudit.model_validate(_output("audit", family, "", {}) | {
-        "masks": [whole, missing], "excerpt_controls": [],
+        "masks": masks, "excerpt_controls": [],
     })
     ledger.event(batch, family, 1, "transition", "audit", "audit", "masks", {
         "outputs": {"audit": authorisation.commitment(result)},
@@ -5217,9 +5221,10 @@ def test_executed_control_clarification_requires_unchanged_views_and_independent
             return joint_control_plan.Confirmation(verdict="accept", confirmed_views=[], findings="Accepted.",
                                                    objections=[], limitations=[]), {}, {"inputs": packet_inputs}
         if role == "masked":
-            viewed = sources[:1] if job == "mask-001" else sources[:2]
+            mask = masks[int(job.removeprefix("mask-"))]
+            viewed = [source for source in sources if source.id in mask.included]
             inputs = {"sources": commissioning.json_text([source.model_dump(mode="json") for source in viewed]),
-                      "neutral_brief": packet_inputs["neutral_brief"] + f"\n\nReviewer question: {whole.question}"}
+                      "neutral_brief": packet_inputs["neutral_brief"] + f"\n\nReviewer question: {mask.question}"}
             reading = Reading.model_validate(_output("masked", family, "", inputs))
             return reading, {"receipt_sha256": "b" * 64}, {"inputs": inputs}
         return proposal_records[job]
@@ -5258,6 +5263,29 @@ def test_executed_control_clarification_requires_unchanged_views_and_independent
         mask_dispute.require_observation_inputs(runner, "mask-001-clarified", observed | {
             "sources": commissioning.json_text(by_condition[condition][:2]),
         })
+    second_job = "mask-003"
+    second = mask_dispute.reopen(runner, second_job)
+    assert second.assignments == {2: second_positive, 3: second_negative}
+    ledger.event(batch, family, 1, "reconcile", mask_dispute.lineage_name(runner, mask_dispute.RELEASE, second_job),
+                 "masks", "audit", second.release.model_dump(mode="json"))
+    other_audit_job = mask_dispute.lineage_name(runner, mask_dispute.JOB)
+    assert not mask_dispute.permits(runner, second.inputs)
+    assert mask_dispute.permits(runner, second.inputs, job=other_audit_job)
+    proposal_records[other_audit_job] = review, {"receipt_sha256": "f" * 64}, {"inputs": second.inputs}
+    newer, other_packet, other_question, _ = mask_dispute.scope_packet(runner)
+    ledger.event(batch, family, 1, "reconcile", mask_dispute.lineage_name(runner, mask_dispute.SCOPE_RELEASE),
+                 "audit", "audit", newer.model_dump(mode="json"))
+    proposal_records[mask_dispute.lineage_name(runner, mask_dispute.SCOPE_JOB)] = (
+        scope.model_copy(update={"question_sha256": commissioning.digest(other_question.encode())}),
+        {"receipt_sha256": "1" * 64}, {"inputs": other_packet},
+    )
+    newer_clarification, _, _ = mask_dispute.make_clarification(runner)
+    ledger.event(batch, family, 1, "reconcile", mask_dispute.lineage_name(runner, mask_dispute.CLARIFY),
+                 "audit", "masks", newer_clarification.model_dump(mode="json"))
+    assert [record for record, _, _ in mask_dispute.clarifications(runner)] == [exact, newer_clarification]
+    mask_dispute.require_observation_inputs(runner, "mask-001-clarified", observed)
+    with pytest.raises(ValueError, match="approved wording"):
+        mask_dispute.require_observation_inputs(runner, "mask-003-clarified", observed)
 
 
 def test_review_note_recovery_retains_the_prior_independent_un_authored_design():

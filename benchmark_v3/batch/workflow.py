@@ -1116,14 +1116,16 @@ class FamilyWorkflow:
     ) -> list[dict[str, Any]]:
         assignments = []
         first_jobs: dict[str, str] = {}
-        supported = mask_dispute.clarification(self.runner)
+        supported: dict[int, tuple[mask_dispute.Clarification, MaskAssignment]] = {}
         clarified: dict[str, dict[str, Any]] = {}
-        if supported is not None:
-            scope, dispute, receipt = supported
+        for scope, dispute, receipt in mask_dispute.clarifications(self.runner):
             if dispute.release.audit_sha256 != authorisation.commitment(audit):
                 raise ValueError("The clarified views must retain the same original accepted audit.")
+            if supported.keys() & dispute.assignments.keys():
+                raise ValueError("A precommitted test can have only one clarified comparison.")
             self.sessions.append(receipt)
-            self.transition_inputs["executed_control_clarification"] = authorisation.commitment(scope)
+            self.transition_inputs[f"executed_control_clarification_{dispute.release.observation_job}"] = authorisation.commitment(scope)
+            supported.update({index: (scope, mask) for index, mask in dispute.assignments.items()})
         excerpts = audit.excerpt_controls if isinstance(audit, audit_boundary.RecheckedAudit) else []
         for index, mask in enumerate([*audit.masks, *excerpts]):
             if any(condition.casefold() in mask.question.casefold() for condition in bundles):
@@ -1137,9 +1139,9 @@ class FamilyWorkflow:
                 sources = science.mask_sources(mask, condition_sources)
             signature = evidence_recovery.observation_key(mask, sources)
             job = f"mask-{index:03}"
-            if supported is not None and index in supported[1].assignments:
-                scope, dispute, _ = supported
-                if mask != dispute.assignments[index]:
+            if index in supported:
+                scope, original = supported[index]
+                if mask != original:
                     raise ValueError("A clarified observation cannot change the original precommitted assignment.")
                 job += "-clarified"
                 clarified[job] = {"original_assignment_sha256": scope.view_sha256s[index],
@@ -1191,7 +1193,7 @@ class FamilyWorkflow:
                 for (job, mask, _), (edges, _) in zip(batch, completed, strict=True):
                     if not set(mask.present) <= edges or set(mask.absent) & edges:
                         self.reject("scientific_review", f"Independent observation {job} failed a required control.",
-                                    quarantine=True)
+                                    quarantine=True, disposition=f"mask-observation-{job}", job=job)
                     observations[job] = edges
         return observations
 
@@ -1255,7 +1257,7 @@ class FamilyWorkflow:
 
     def reject(
         self, code: Code, evidence: str, *, repair_tickets: dict[str, str] | None = None,
-        quarantine: bool = False, disposition: str | None = None,
+        quarantine: bool = False, disposition: str | None = None, job: str | None = None,
     ) -> None:
         autonomous = code == "documentary_realism" and repair_authority.enabled(
             self.runner.ledger, self.runner.manifest,
@@ -1268,7 +1270,7 @@ class FamilyWorkflow:
             "evidence": evidence, "role": "batch_coordinator",
             "inputs": self.transition_inputs, "sessions": self.sessions,
         })
-        raise Blocked(self.stage, code, evidence)
+        raise Blocked(self.stage, code, evidence, job=job)
 
 
 def review_commitments(root: Path, manifest: BatchFamilyManifest) -> dict[str, str]:

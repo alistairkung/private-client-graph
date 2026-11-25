@@ -93,10 +93,38 @@ class Dispute:
     assignments: dict[int, MaskAssignment]
 
 
-def recorded(runner: "SessionRunner") -> DisputeRelease | None:
-    return next((DisputeRelease.model_validate(row["details"])
-                 for row in runner.ledger.events(runner.manifest.batch_id, runner.family)
-                 if (row["revision"], row["kind"], row["name"]) == (runner.revision, "reconcile", RELEASE)), None)
+def _released(runner: "SessionRunner") -> dict[str, tuple[str, DisputeRelease]]:
+    records: dict[str, tuple[str, DisputeRelease]] = {}
+    for row in runner.ledger.events(runner.manifest.batch_id, runner.family):
+        name = row["name"]
+        if (row["revision"], row["kind"]) != (runner.revision, "reconcile") or not (
+            name == RELEASE or name.startswith(RELEASE + "-mask-")
+        ):
+            continue
+        release = DisputeRelease.model_validate(row["details"])
+        suffix = "" if not records else f"-{release.observation_job}"
+        if name != RELEASE + suffix or release.observation_job in records:
+            raise ValueError("Each executed-control finding must have its own exact immutable lineage.")
+        records[release.observation_job] = (suffix, release)
+    return records
+
+
+def recorded(runner: "SessionRunner", observation_job: str | None = None) -> DisputeRelease | None:
+    records = _released(runner)
+    if not records:
+        return None
+    found = records.get(observation_job or next(reversed(records)))
+    return found[1] if found is not None else None
+
+
+def lineage_name(runner: "SessionRunner", stem: str, observation_job: str | None = None) -> str:
+    records = _released(runner)
+    if not records:
+        return stem
+    job = observation_job or next(reversed(records))
+    if job in records:
+        return stem + records[job][0]
+    return f"{stem}-{job}"
 
 
 def reopen(runner: "SessionRunner", job: str) -> Dispute:
@@ -130,11 +158,12 @@ def reopen(runner: "SessionRunner", job: str) -> Dispute:
     if not disagreement:
         raise ValueError("A conforming observation cannot open an executed control dispute.")
     assignments = {i: mask for i, mask in enumerate(audit.masks)
-                   if (mask.condition, mask.risk, mask.question) == (target.condition, target.risk, target.question)}
+                   if (mask.condition, mask.question) == (target.condition, target.question)
+                   and (target.risk != "joint_proof" or mask.risk == target.risk)}
     positives = {edge for mask in assignments.values() for edge in mask.present}
     negatives = {edge for mask in assignments.values() for edge in mask.absent}
-    if target.risk != "joint_proof" or not disagreement <= positives & negatives:
-        raise ValueError("A scope clarification requires a precommitted joint-proof comparison.")
+    if not disagreement <= (positives & negatives):
+        raise ValueError("A scope clarification requires a precommitted positive and negative comparison for every disputed edge.")
     roles = dict(request["inputs"])
     roles["audit_rules"] = commissioning.json_text({
         "original_control": target.model_dump(mode="json"),
@@ -146,23 +175,25 @@ def reopen(runner: "SessionRunner", job: str) -> Dispute:
     return Dispute(release, roles, assignments)
 
 
-def permits(runner: "SessionRunner", inputs: dict[str, str]) -> bool:
+def permits(runner: "SessionRunner", inputs: dict[str, str], *, job: str = JOB) -> bool:
     release = recorded(runner)
-    return release is not None and release.inputs_sha256 == _inputs_sha(inputs)
+    return (release is not None and job == lineage_name(runner, JOB)
+            and release.inputs_sha256 == _inputs_sha(inputs))
 
 
-def scope_release(runner: "SessionRunner") -> ScopeRelease | None:
+def scope_release(runner: "SessionRunner", observation_job: str | None = None) -> ScopeRelease | None:
+    name = lineage_name(runner, SCOPE_RELEASE, observation_job)
     return next((ScopeRelease.model_validate(row["details"])
                  for row in runner.ledger.events(runner.manifest.batch_id, runner.family)
-                 if (row["revision"], row["kind"], row["name"]) == (runner.revision, "reconcile", SCOPE_RELEASE)), None)
+                 if (row["revision"], row["kind"], row["name"]) == (runner.revision, "reconcile", name)), None)
 
 
-def scope_packet(runner: "SessionRunner") -> tuple[ScopeRelease, dict[str, str], str, Dispute]:
-    release = recorded(runner)
+def scope_packet(runner: "SessionRunner", observation_job: str | None = None) -> tuple[ScopeRelease, dict[str, str], str, Dispute]:
+    release = recorded(runner, observation_job)
     if release is None:
         raise ValueError("A clarification requires a prior exact executed-control audit release.")
     dispute = reopen(runner, release.observation_job)
-    review, receipt, request = runner.committed_result("audit", JOB, "audit", DisputeReview)
+    review, receipt, request = runner.committed_result("audit", lineage_name(runner, JOB, observation_job), "audit", DisputeReview)
     if (release != dispute.release or request["inputs"] != dispute.inputs or review.verdict != "scope_clarification"
             or not review.clarified_question):
         raise ValueError("The independent reviewer has not identified an ambiguous reading scope.")
@@ -176,15 +207,17 @@ def scope_packet(runner: "SessionRunner") -> tuple[ScopeRelease, dict[str, str],
     return ScopeRelease(dispute_receipt_sha256=receipt["receipt_sha256"], inputs_sha256=_inputs_sha(inputs)), inputs, question, dispute
 
 
-def permits_scope(runner: "SessionRunner", inputs: dict[str, str]) -> bool:
+def permits_scope(runner: "SessionRunner", inputs: dict[str, str], *, job: str = SCOPE_JOB) -> bool:
     release = scope_release(runner)
-    return release is not None and release.inputs_sha256 == _inputs_sha(inputs)
+    return (release is not None and job == lineage_name(runner, SCOPE_JOB)
+            and release.inputs_sha256 == _inputs_sha(inputs))
 
 
-def make_clarification(runner: "SessionRunner") -> tuple[Clarification, Dispute, dict[str, Any]]:
-    expected, inputs, question, dispute = scope_packet(runner)
-    review, receipt, request = runner.committed_result("audit", SCOPE_JOB, "audit", ScopeReview)
-    if (scope_release(runner) != expected or request["inputs"] != inputs or review.verdict != "accept"
+def make_clarification(runner: "SessionRunner", observation_job: str | None = None) -> tuple[Clarification, Dispute, dict[str, Any]]:
+    expected, inputs, question, dispute = scope_packet(runner, observation_job)
+    stage_job = lineage_name(runner, SCOPE_JOB, observation_job)
+    review, receipt, request = runner.committed_result("audit", stage_job, "audit", ScopeReview)
+    if (scope_release(runner, observation_job) != expected or request["inputs"] != inputs or review.verdict != "accept"
             or review.objections or review.question_sha256 != commissioning.digest(question.encode())):
         raise ValueError("A fresh independent reviewer must confirm the exact clarified question and all expected comparisons.")
     return Clarification(question=question, dispute_receipt_sha256=expected.dispute_receipt_sha256,
@@ -193,24 +226,32 @@ def make_clarification(runner: "SessionRunner") -> tuple[Clarification, Dispute,
                          view_sha256s={i: authorisation.commitment(mask) for i, mask in dispute.assignments.items()}), dispute, receipt
 
 
-def clarification(runner: "SessionRunner") -> tuple[Clarification, Dispute, dict[str, Any]] | None:
+def clarification(runner: "SessionRunner", observation_job: str | None = None) -> tuple[Clarification, Dispute, dict[str, Any]] | None:
+    name = lineage_name(runner, CLARIFY, observation_job)
     row = next((row for row in runner.ledger.events(runner.manifest.batch_id, runner.family)
-                if (row["revision"], row["kind"], row["name"]) == (runner.revision, "reconcile", CLARIFY)), None)
+                if (row["revision"], row["kind"], row["name"]) == (runner.revision, "reconcile", name)), None)
     if row is None:
         return None
-    result = make_clarification(runner)
+    result = make_clarification(runner, observation_job)
     if Clarification.model_validate(row["details"]) != result[0]:
         raise ValueError("The clarification differs from the exact independent response or committed original tests.")
     return result
 
 
+def clarifications(runner: "SessionRunner") -> list[tuple[Clarification, Dispute, dict[str, Any]]]:
+    return [review for job in _released(runner) if (review := clarification(runner, job)) is not None]
+
+
 def require_observation_inputs(runner: "SessionRunner", job: str, inputs: dict[str, str]) -> None:
     matched = CLARIFIED_JOB.fullmatch(job)
-    review = clarification(runner)
-    if matched is None or review is None or int(matched[1]) not in review[1].assignments:
+    if matched is None:
         raise ValueError("A clarified observation requires an independently approved view.")
-    scope, dispute, _ = review
-    view = dispute.assignments[int(matched[1])]
+    index = int(matched[1])
+    reviews = [review for review in clarifications(runner) if index in review[1].assignments]
+    if len(reviews) != 1:
+        raise ValueError("A clarified observation requires an independently approved view.")
+    scope, dispute, _ = reviews[0]
+    view = dispute.assignments[index]
     bundles = TypeAdapter(dict[str, list[Source]]).validate_json(dispute.inputs["paired_bundles"])
     sources = science.mask_sources(view, bundles[view.condition])
     expected = {
