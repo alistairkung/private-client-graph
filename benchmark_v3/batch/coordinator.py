@@ -807,20 +807,35 @@ def recover_unused_attestation(ledger: Ledger, batch: str, family: str, source_i
         ledger.event(batch, family, revision, "reconcile", author_repair.UNUSED_ATTESTATION, state, "author", details)
 
 
-def release_empty_sender_repair(ledger: PooledLedger, batch: str, family: str, source_id: str) -> None:
+def release_empty_sender_repair(
+    ledger: PooledLedger, batch: str, family: str, source_id: str, *, defer_clean_design: bool = False,
+) -> None:
     """Reopen only the documented local sending act and its dependent authoring."""
     with ledger.coordinator_lock():
         ledger.require_running()
         commission = load_commission(ledger, batch)
         revision, state, issue = family_status(ledger, batch, family)
-        expected = f"author-{source_id}-format-retry failed its output contract: {author_repair.ATTESTATION_ERROR}"
-        if (state != "quarantined" or not issue or (issue["stage"], issue["code"], issue["evidence"])
-                != ("author", "scientific_review", expected)
-                or not ledger.pooled_revision(batch, family, revision)
-                or any(row["name"] == author_repair.EMPTY_ATTESTATION_REPAIR for row in ledger.events(batch, family))):
-            raise ValueError("Only one exactly retained missing sender attestation can receive a local remedy.")
         runner = commission.session_runner(ledger, family, revision)
+        deferred = None
+        history = ledger.events(batch, family)
+        if defer_clean_design:
+            if not ledger.pool.shared_scale or state not in {"design", "author"} or issue is not None:
+                raise ValueError("Only a design-only replacement in the shared scale pool may be deferred.")
+            deferred = author_repair.deferred_sender_redesign(runner)
+            runner = commission.session_runner(ledger, family, revision - 1)
+            issue = next((row["details"] for row in reversed(history)
+                          if row["revision"] == runner.revision and row["kind"] == "exception"), None)
+        expected = f"author-{source_id}-format-retry failed its output contract: {author_repair.ATTESTATION_ERROR}"
+        repeated = any(row["name"] == author_repair.EMPTY_ATTESTATION_REPAIR and (
+            not ledger.pool.shared_scale or row["details"]["source_id"] == source_id
+        ) for row in history)
+        if ((state != "quarantined" and deferred is None) or not issue or (issue["stage"], issue["code"], issue["evidence"])
+                != ("author", "scientific_review", expected)
+                or not ledger.pooled_revision(batch, family, runner.revision) or repeated):
+            raise ValueError("A missing sender attestation requires a distinct retained omission for local repair.")
         record, _, _ = author_repair.empty_sender_repair(runner, source_id)
+        if deferred is not None:
+            record["deferred_redesign"] = deferred
         ledger.event(batch, family, revision + 1, "transition", author_repair.EMPTY_ATTESTATION_REPAIR, state, "design", record)
 
 

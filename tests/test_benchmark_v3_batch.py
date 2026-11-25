@@ -2891,12 +2891,14 @@ def test_authored_scope_repair_reuses_checked_delivery_after_preauthor_return(
     assert {revision for _, revision, job, _ in calls if job.startswith("reading")} == {f"G@{qualified_revision}"}
 
 
-def test_missing_sender_repair_retains_unaffected_author_receipts(autonomous, transport, tmp_path, monkeypatch):
-    from benchmark_v3.batch import author_repair
+@pytest.mark.parametrize(("partial", "defer"), [(False, False), (True, False), (True, True)])
+def test_missing_sender_repair_retains_unaffected_author_receipts(autonomous, transport, tmp_path, monkeypatch, partial, defer):
+    from benchmark_v3.batch import author_repair, clean_redesign
     from benchmark_v3.batch.pool import PooledLedger
 
     original, base = autonomous
-    slot = base.portfolio.slots[0].model_copy(update={"expected_sources": 3})
+    count = 4 if partial else 3
+    slot = base.portfolio.slots[0].model_copy(update={"expected_sources": count})
     portfolio = base.portfolio.model_copy(update={"slots": [slot]})
     manifest = base.manifest.model_copy(update={"portfolio_sha256": authorisation.commitment(portfolio)})
     commission = coordinator.Commission(portfolio, manifest, _approval(portfolio, manifest))
@@ -2909,12 +2911,22 @@ def test_missing_sender_repair_retains_unaffected_author_receipts(autonomous, tr
     ))
     monkeypatch.setattr(PooledLedger, "requires_author_context", property(lambda _: True))
     monkeypatch.setattr(PooledLedger, "requires_delivery_attestation", property(lambda _: True))
+    monkeypatch.setattr(PooledLedger, "requires_workload_merits", property(lambda _: partial))
+    if defer:
+        monkeypatch.setattr(MilestonePool, "shared_scale", property(lambda _: True))
     ledger = pool.join(original.root)
     ledger.release(batch, family, 1, "design", parent_sha256="a" * 64, reference="Original work.")
     calls, behavior, _ = transport
-    design = _design(family, count=3)
+    design = _design(family, count=count)
     design["inventory"][1]["provenance"] = f"The writer sends this record personally.\nDelivered {TODAY} to Writer 3"
     design["inventory"][2]["received"] = ["src2"]
+    if partial:
+        design["inventory"][1]["provenance"] += f"\nDelivered {TODAY} to Writer 4"
+        design["inventory"][3]["received"] = ["src2"]
+        behavior[family, clean_redesign.MERITS_JOB] = lambda _: {
+            "verdict": "accept", "objections": [],
+            "findings": {row["source_id"]: "Verified local." for row in design["inventory"]},
+        }
     behavior[family, "design"] = lambda _: design
     behavior[family, "author-context"] = lambda inputs: {
         "verdict": "accept", "objections": [],
@@ -2922,27 +2934,45 @@ def test_missing_sender_repair_retains_unaffected_author_receipts(autonomous, tr
     }
     behavior[family, "author-src1"] = lambda _: {"title": "Independent record", "text": QUOTE, "deliveries": []}
     behavior[family, "author-src3"] = lambda _: {"title": "Received note", "text": "I retained the incoming note.", "deliveries": []}
+    behavior[family, "author-src4"] = behavior[family, "author-src3"]
 
     def sender(inputs):
         brief = json.loads(inputs["author_brief"])
-        deliveries = brief["outgoing_deliveries"] if "Personally send this record" in brief["brief"] else []
+        grants = brief["outgoing_deliveries"]
+        deliveries = grants if "Personally send this record" in brief["brief"] else (grants[1:] if partial else [])
         return {"title": "Sent note", "text": "The sender retained an ordinary counterpart.", "deliveries": deliveries}
 
     behavior[family, "author-src2"] = behavior[family, "author-src2-format-retry"] = sender
     coordinator._work_family(ledger, commission, slot)
     assert coordinator.family_status(ledger, batch, family)[:2] == (1, "quarantined")
-    with pytest.raises(ValueError, match="exactly retained missing sender attestation"):
+    with pytest.raises(ValueError, match="distinct retained omission"):
         coordinator.release_empty_sender_repair(ledger, batch, family, "src1")
-    coordinator.release_empty_sender_repair(ledger, batch, family, "src2")
+    if defer:
+        coordinator.release_clean_redesign(ledger, batch, family, "Consider an independent replacement.")
+        replacement = _design(family, count=count)
+        replacement.update(neutral_brief="A separate file.", cutoff=(TODAY + timedelta(days=1)).isoformat(),
+                           candidates=[["Ada Reed", "parent_of", "Mia Reed"]],
+                           required={"G000": [["Ada Reed", "parent_of", "Mia Reed"]]})
+        for number, row in enumerate(replacement["inventory"], 1):
+            row["source_id"] = f"new{number}"
+        behavior[family, "design"] = lambda _: replacement
+        coordinator._work_family(ledger, commission, slot, design_only=True)
+        assert coordinator.family_status(ledger, batch, family)[:2] == (2, "author")
+    coordinator.release_empty_sender_repair(ledger, batch, family, "src2", defer_clean_design=defer)
     coordinator._work_family(ledger, commission, slot)
 
-    assert any(row["revision"] == 2 and row["name"] == "author" and row["kind"] == "transition"
+    successor = 3 if defer else 2
+    assert any(row["revision"] == successor and row["name"] == "author" and row["kind"] == "transition"
                for row in ledger.events(batch, family))
     retained = next(row["details"] for row in ledger.events(batch, family) if row["name"] == author_repair.EMPTY_ATTESTATION_REPAIR)
     assert retained["retained_sources"].keys() == {"src1"}
+    assert ("deferred_redesign" in retained) is defer
     actors = [(rev, job) for _, rev, job, _ in calls if job.startswith("author-src")]
-    assert actors == [(f"{family}@1", "author-src1"), (f"{family}@1", "author-src2"), (f"{family}@1", "author-src2-format-retry"),
-                      (f"{family}@2", "author-src2"), (f"{family}@2", "author-src3")]
+    expected = [(f"{family}@1", "author-src1"), (f"{family}@1", "author-src2"), (f"{family}@1", "author-src2-format-retry"),
+                (f"{family}@{successor}", "author-src2"), (f"{family}@{successor}", "author-src3")]
+    if partial:
+        expected.append((f"{family}@{successor}", "author-src4"))
+    assert actors == expected
 
 
 def test_scope_replay_preserves_a_preauthor_return_after_an_authored_return():
