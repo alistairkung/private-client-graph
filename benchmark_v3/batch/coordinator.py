@@ -799,6 +799,24 @@ def release_frozen_evidence_review(
                        frozen_evidence_review=record.model_dump(mode="json"))
 
 
+def release_frozen_evidence_format_retry(ledger: PooledLedger, batch: str, family: str) -> None:
+    """Commission a fresh adjudicator after restoring a halted, undispatched documentary transition."""
+    with ledger.coordinator_lock():
+        ledger.require_running()
+        commission = load_commission(ledger, batch)
+        revision, state, issue = family_status(ledger, batch, family)
+        restored = [row for row in ledger.events(batch, family) if row["revision"] == revision
+                    and row["name"] == "verified_documentary_lineage" and row["kind"] == "reconcile"]
+        if not ledger.pool.shared_scale or state != "design" or issue or len(restored) != 1:
+            raise ValueError("This retry requires a restored, undispatched documentary transition in the shared scale phase.")
+        slot = next(row for row in commission.portfolio.slots if row.family_id == family)
+        runner = commission.session_runner(ledger, family, revision + 1)
+        record = frozen_rekey.make_format_retry(runner, slot, restored[0]["details"]["boundary_sha256"])
+        ledger.release(batch, family, runner.revision, "adjudicate", parent_sha256=authorisation.commitment(record),
+                       reference="Fresh independent evidence adjudication after a preserved response-format return.",
+                       frozen_evidence_review=record.model_dump(mode="json"))
+
+
 def recover_unused_attestation(ledger: Ledger, batch: str, family: str, source_id: str) -> None:
     with ledger.coordinator_lock():
         ledger.require_running()
@@ -1614,6 +1632,8 @@ def release_adjudication_documentary_repair(ledger: Ledger, batch: str, family: 
                        for event in ledger.events(batch, family))):
             raise ValueError("Only one bounded documentary repair can follow the first unlocked adjudication return.")
         runner = commission.session_runner(ledger, family, revision)
+        if frozen_rekey.recorded(runner) is not None:
+            raise ValueError("A returned evidence review inherits realism and cannot authorize documentary repair directly.")
         if not repair_authority.enabled(ledger, commission.manifest):
             raise ValueError("This family has no autonomous documentary repair authority.")
         adjudication = autonomous_realism.document_adjudication_return(runner)

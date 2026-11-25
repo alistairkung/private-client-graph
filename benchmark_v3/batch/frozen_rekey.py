@@ -24,6 +24,12 @@ POLICY = (
 )
 
 
+class ReturnedRekeyRetry(Contract):
+    boundary_sha256: Digest
+    previous_release_sha256: Digest
+    returned_adjudication_sha256: Digest
+
+
 class FrozenEvidenceReview(Contract):
     parent_revision: int
     manifest_sha256: Digest
@@ -31,6 +37,7 @@ class FrozenEvidenceReview(Contract):
     freeze_sha256: Digest
     rationale: Text
     mask_corrections: dict[Digest, list[SemanticEdge]] = Field(default_factory=dict, exclude_if=lambda value: not value)
+    retry: ReturnedRekeyRetry | None = Field(default=None, exclude_if=lambda value: value is None)
 
 
 @dataclass(frozen=True)
@@ -55,11 +62,51 @@ def recorded(runner: SessionRunner) -> FrozenEvidenceReview | None:
         return None
     record = FrozenEvidenceReview.model_validate(event["details"]["frozen_evidence_review"])
     if (not runner.ledger.requires_delivery_attestation or not runner.ledger.pooled_revision(batch, family, runner.revision)
-            or record.parent_revision != runner.revision - 1 or record.parent_revision < 1
+            or record.parent_revision != runner.revision - (3 if record.retry else 1) or record.parent_revision < 1
             or record.manifest_sha256 != authorisation.commitment(runner.manifest)
             or event["details"]["parent_sha256"] != authorisation.commitment(record)):
         raise ValueError("Evidence review requires its exact immutable pooled lineage.")
+    if record.retry is not None and _retry_record(runner, record.retry.boundary_sha256) != record:
+        raise ValueError("Independent evidence retry differs from its exact retained release and return.")
     return record
+
+
+def _retry_record(runner: SessionRunner, boundary_sha256: str) -> FrozenEvidenceReview:
+    from benchmark_v3.batch import autonomous_realism
+
+    held_revision = runner.revision - 1
+    events = runner.ledger.events(runner.manifest.batch_id, runner.family)
+    restored = [row for row in events if row["revision"] == held_revision and row["kind"] == "reconcile"
+                and row["name"] == "verified_documentary_lineage"]
+    previous = replace(runner, revision=held_revision - 1, directory=runner.directory.with_name(str(held_revision - 1)))
+    record = recorded(previous)
+    if (record is None or record.retry is not None or len(restored) != 1
+            or restored[0]["details"]["boundary_sha256"] != boundary_sha256
+            or restored[0]["details"]["parent_freeze_sha256"] != record.freeze_sha256
+            or any(row["revision"] == held_revision for row in runner.ledger.attempts(runner.family))):
+        raise ValueError("The exact restored evidence lineage is required for one independent retry.")
+    returned = autonomous_realism.document_adjudication_return(previous)
+    return record.model_copy(update={"retry": ReturnedRekeyRetry(
+        boundary_sha256=boundary_sha256, previous_release_sha256=authorisation.commitment(record),
+        returned_adjudication_sha256=returned["receipt_sha256"],
+    )})
+
+
+def make_format_retry(runner: SessionRunner, slot: FamilySlot, boundary_sha256: str) -> FrozenEvidenceReview:
+    record = _retry_record(runner, boundary_sha256)
+    reopen(runner, slot, record)
+    return record
+
+
+def verify_returned_inputs(runner: SessionRunner, slot: FamilySlot, record: FrozenEvidenceReview) -> None:
+    case = reopen(runner, slot, record)
+    condition = science.condition_ids(slot)[0]
+    _, _, request = runner.committed_result("adjudicate", "adjudicate-000", "adjudication", Adjudication)
+    inputs = request["inputs"]
+    if (TypeAdapter(list[Source]).validate_json(inputs["sources"]) != case.bundles[condition]
+            or tuple(Reading.model_validate_json(inputs[f"annotation_{name}"]) for name in ("a", "b"))
+            != case.readings[condition]):
+        raise ValueError("The adjudication return must bind the exact frozen documentary file and independent readings.")
 
 
 def make_release(

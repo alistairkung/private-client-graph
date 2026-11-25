@@ -41,6 +41,11 @@ QUARANTINE_SCHEMA = """CREATE TABLE IF NOT EXISTS quarantined_runtime_custody (
     custody TEXT PRIMARY KEY, halt_sequence INTEGER NOT NULL, halt_sha256 TEXT NOT NULL,
     verification_sha256 TEXT NOT NULL, record_sha256 TEXT NOT NULL
 )"""
+BOUNDARY_HISTORY = """CREATE TABLE IF NOT EXISTS boundary_recovery_history (
+    custody TEXT NOT NULL, halt_sequence INTEGER NOT NULL, halt_sha256 TEXT NOT NULL,
+    packet_sha256 TEXT NOT NULL, evidence_sha256 TEXT NOT NULL, record_sha256 TEXT NOT NULL,
+    PRIMARY KEY(custody, halt_sequence)
+)"""
 LOCK_TIMEOUT_SECONDS = 30
 REHEARSAL_SOURCES = 65
 STAGE_ROLES = {
@@ -508,14 +513,22 @@ class MilestonePool:
             raise TaskHalted("The custody enrolment failed its immutable authority commitment.")
 
     def _boundary_record(self, root: Path) -> tuple[Path, tuple[Any, ...]] | None:
+        records = self.boundary_records(root)
+        return records[max(records)] if records else None
+
+    def boundary_records(self, root: Path) -> dict[int, tuple[Path, tuple[Any, ...]]]:
+        history = self.predecessor.boundary_records(root) if self.predecessor is not None else {}
+        fields = "halt_sequence, halt_sha256, packet_sha256, evidence_sha256, record_sha256"
         with closing(_read_only(self.path)) as database:
-            record = database.execute(
-                "SELECT halt_sequence, halt_sha256, packet_sha256, evidence_sha256, record_sha256"
-                " FROM boundary_successors WHERE custody = ?", (str(root),),
-            ).fetchone()
-        if record is not None:
-            return self.root / "boundary", record
-        return self.predecessor._boundary_record(root) if self.predecessor is not None else None
+            records = database.execute(f"SELECT {fields} FROM boundary_successors WHERE custody = ?", (str(root),)).fetchall()
+            if database.execute("SELECT 1 FROM sqlite_master WHERE name='boundary_recovery_history'").fetchone():
+                records += database.execute(f"SELECT {fields} FROM boundary_recovery_history WHERE custody = ?",
+                                            (str(root),)).fetchall()
+        for record in records:
+            if record[0] in history and history[record[0]][1] != record:
+                raise TaskHalted("Repeated boundary recovery records disagree at the same halt.")
+            history[record[0]] = self.root / "boundary", record
+        return history
 
     def join(self, root: Path) -> "PooledLedger":
         if root not in self.members:
@@ -546,12 +559,16 @@ class MilestonePool:
             return
         if not halts:
             return
-        boundary = self._boundary_record(root)
-        if boundary is None:
+        records = self.boundary_records(root)
+        if set(records) != {sequence for sequence, _ in halts}:
             raise TaskHalted("A custody member has an unresolved shared integrity stop.")
+        for sequence, raw_halt in halts:
+            self._verify_boundary_record(records[sequence], raw_halt)
+
+    @staticmethod
+    def _verify_boundary_record(boundary: tuple[Path, tuple[Any, ...]], raw_halt: str) -> None:
         directory, recovered = boundary
-        if (len(halts) != 1 or recovered[0] != halts[0][0]
-                or recovered[1] != commissioning.digest(halts[0][1].encode())
+        if (recovered[1] != commissioning.digest(raw_halt.encode())
                 or recovered[2] != commissioning.digest(Path(packet.__file__).read_bytes())):
             raise TaskHalted("A custody member has an unresolved shared integrity stop.")
         evidence = artifacts.read_bytes(directory / f"{recovered[3]}.json")
@@ -733,7 +750,7 @@ class MilestonePool:
 
     def reconcile_documentary_lineage(self, ledger: "PooledLedger", family: str, proof: dict[str, Any]) -> str:
         """Release a predispatch lineage reconstruction stop after exact replay and zero-turn verification."""
-        from benchmark_v3.batch import autonomous_realism, coordinator
+        from benchmark_v3.batch import autonomous_realism, coordinator, frozen_rekey
 
         if ledger.pool is not self or not ledger.requires_delivery_attestation:
             raise ValueError("A documentary lineage recovery requires the active isolated custody.")
@@ -745,6 +762,11 @@ class MilestonePool:
         delivery_sha = commissioning.digest(Path(author_delivery.__file__).read_bytes())
         with closing(_read_only(ledger.path)) as db:
             halts = db.execute("SELECT sequence, family, revision, details FROM events WHERE kind = 'task_halt'").fetchall()
+        recovered = self.boundary_records(ledger.root)
+        for sequence, _, _, raw_halt in halts:
+            if sequence in recovered:
+                self._verify_boundary_record(recovered[sequence], raw_halt)
+        halts = [row for row in halts if row[0] not in recovered]
         if (len(halts) != 1 or halts[0][1:3] != (family, revision) or state != "design"
                 or not issue or (issue["stage"], issue["code"], issue["evidence"])
                 != ("design", "isolation", autonomous_realism.LINEAGE_REOPEN_FAILURE)
@@ -768,7 +790,21 @@ class MilestonePool:
         if release is None or not ledger.pooled_revision(batch, family, revision):
             raise ValueError("Documentary lineage recovery requires the original pooled repair release.")
         slot = next(row for row in commission.portfolio.slots if row.family_id == family)
-        parent = autonomous_realism._read_return(runner, slot, release)
+        previous = commission.session_runner(ledger, family, revision - 1)
+        prior_review = frozen_rekey.recorded(previous) if self.shared_scale and release.get("adjudication_return") else None
+        if prior_review is None:
+            parent = autonomous_realism._read_return(runner, slot, release)
+            freeze_sha = commissioning.digest(commissioning.json_text(parent.freeze.model_dump(mode="json")).encode())
+            review_receipts = parent.review_commitments
+        else:
+            returned = autonomous_realism.document_adjudication_return(previous)
+            if (release["parent_revision"] != previous.revision or prior_review.retry is not None
+                    or release["manifest_sha256"] != authorisation.commitment(commission.manifest)
+                    or release["adjudication_return"] != returned):
+                raise ValueError("The halted documentary dispatch must bind the original independent evidence return.")
+            frozen_rekey.verify_returned_inputs(previous, slot, prior_review)
+            freeze_sha = prior_review.freeze_sha256
+            review_receipts = {"audit": prior_review.audit_receipt_sha256, "adjudication": returned["receipt_sha256"]}
         evidence = (commissioning.json_text(proof) + "\n").encode()
         sequence, _, _, raw_halt = halts[0]
         record = {
@@ -776,8 +812,8 @@ class MilestonePool:
             "packet_sha256": packet_sha, "evidence_sha256": commissioning.digest(evidence),
             "halt_sequence": sequence, "halt_sha256": commissioning.digest(raw_halt.encode()),
             "manifest_sha256": authorisation.commitment(commission.manifest),
-            "parent_freeze_sha256": commissioning.digest(commissioning.json_text(parent.freeze.model_dump(mode="json")).encode()),
-            "parent_review_receipts": parent.review_commitments,
+            "parent_freeze_sha256": freeze_sha,
+            "parent_review_receipts": review_receipts,
             "repair_authority_sha256": commissioning.digest(commissioning.json_text(release).encode()),
             "lineage_verifier_sha256": commissioning.digest(Path(autonomous_realism.__file__).read_bytes()),
         }
@@ -800,6 +836,14 @@ class MilestonePool:
             existing = connection.execute(
                 "SELECT * FROM boundary_successors WHERE custody = ?", (str(root),),
             ).fetchone()
+            table = "boundary_successors"
+            if existing is not None and existing[1] != stored[1] and self.shared_scale:
+                if stored[1] <= existing[1]:
+                    raise ValueError("A second boundary recovery must follow the original reconciliation.")
+                table = "boundary_recovery_history"
+                connection.execute(BOUNDARY_HISTORY)
+                existing = connection.execute("SELECT * FROM boundary_recovery_history WHERE custody = ? AND halt_sequence = ?",
+                                              stored[:2]).fetchone()
             if existing is not None:
                 if existing != stored:
                     raise ValueError("The successor boundary reconciliation is immutable.")
@@ -807,7 +851,7 @@ class MilestonePool:
             if connection.execute("SELECT 1 FROM reservations WHERE custody = ? AND revision >= ?",
                                   (str(root), undispatched_revision or 0)).fetchone():
                 raise ValueError("The integrity stop must precede any new dispatch in the affected revision.")
-            connection.execute("INSERT INTO boundary_successors VALUES (?, ?, ?, ?, ?, ?)", stored)
+            connection.execute(f"INSERT INTO {table} VALUES (?, ?, ?, ?, ?, ?)", stored)
         return record_sha
 
     def remaining(self, connection: sqlite3.Connection, *, attached: bool = True) -> int:

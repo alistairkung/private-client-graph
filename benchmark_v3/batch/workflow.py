@@ -773,6 +773,10 @@ class FamilyWorkflow:
             prompt += adjudication_contract.COMPLETE_EVIDENCE_INSTRUCTIONS
         if self.frozen_case is not None:
             prompt += frozen_rekey.POLICY
+            if self.frozen_release is not None and self.frozen_release.retry is not None:
+                prompt += (" Record limitations on what evidence cannot establish in the relevant source_audit. "
+                           "Use unresolved only for remaining uncertainty that affects an actual graph "
+                           "proposition or an approved evidence alternative in this key. Decide each independently.")
             if self.frozen_release is not None and self.frozen_release.mask_corrections:
                 prompt += (" Test whether coded-office statements bind the named trust within each exact evidence "
                            "alternative. A name inferred from the full file needs its own body evidence in the "

@@ -1228,6 +1228,48 @@ def test_shared_pool_reconciles_only_a_pre_dispatch_runner_version_mismatch(appr
         pooled.require_running()
 
 
+def test_shared_scale_keeps_each_verified_halt_and_blocks_unreconciled_halts(approved, tmp_path, monkeypatch):
+    from contextlib import closing
+
+    ledger, commission = approved
+    manifest = commission.manifest
+    coordinator.commission_batch(ledger, commission, BOUNDARY)
+    pool = MilestonePool(tmp_path / "shared", PoolAuthority(
+        owner=OWNER, reference="Test multiple recoveries.", prior_archive_sha256="c" * 64,
+        starting_charges=199, cumulative_ceiling=202, additional_target=1,
+        members=[CustodyMember(root=str(ledger.root), task_id=manifest.task_id, starting_charges=0)],
+    ))
+    monkeypatch.setattr(MilestonePool, "shared_scale", property(lambda _: True))
+    batch = manifest.batch_id
+    packet_sha = commissioning.digest(Path(packet.__file__).read_bytes())
+
+    def reconcile(revision: int) -> tuple[int, str]:
+        ledger.event(batch, "G", revision, "task_halt", "design-isolation", "design", None,
+                     {"stage": "design", "code": "isolation", "evidence": f"Boundary at revision {revision}."})
+        with pytest.raises(TaskHalted, match="unresolved shared integrity"):
+            pool.check_running()
+        with closing(ledger.connect()) as database:
+            sequence, raw_halt = database.execute(
+                "SELECT sequence, details FROM events WHERE kind = 'task_halt' AND revision = ?", (revision,),
+            ).fetchone()
+        evidence = f"Verified boundary at revision {revision}.".encode()
+        digest = pool._install_boundary_successor(ledger.root, evidence, {
+            "halt_sequence": sequence, "halt_sha256": commissioning.digest(raw_halt.encode()),
+            "packet_sha256": packet_sha, "evidence_sha256": commissioning.digest(evidence),
+        }, undispatched_revision=revision)
+        pool.check_running()
+        return sequence, digest
+
+    first, second = reconcile(1), reconcile(2)
+    assert {sequence: row[4] for sequence, (_, row) in pool.boundary_records(ledger.root).items()} == dict([first, second])
+    directory, _ = pool.boundary_records(ledger.root)[first[0]]
+    first_record = directory / f"{first[1]}.json"
+    first_record.chmod(0o600)
+    first_record.write_bytes(b"Changed first reconciliation")
+    with pytest.raises(TaskHalted, match="boundary evidence changed"):
+        pool.check_running()
+
+
 def test_shared_pool_counts_verified_dossiers_and_stops_new_reservations(approved, transport, tmp_path):
     original, commission = approved
     coordinator.commission_batch(original, commission, BOUNDARY)
@@ -4569,12 +4611,12 @@ def test_frozen_mask_disposition_requires_the_same_view_and_preserves_every_othe
         frozen_rekey.verify_mask_corrections(accepted.model_copy(update={"masks": [prior, new]}), nominated, corrections)
 
 
-@pytest.mark.parametrize("disposition", ["repair", "return", "quarantine", "followup", "returned_layout",
+@pytest.mark.parametrize("disposition", ["repair", "return", "quarantine", "followup", "inherited_format_retry", "returned_layout",
                                         "accepted_layout", "missing_critical"])
 def test_frozen_evidence_review_reuses_sources_and_blind_receipts_without_cueing_the_new_key(
     approved, transport, tmp_path, monkeypatch, disposition,
 ):
-    from benchmark_v3.batch import audit_boundary, frozen_rekey, science
+    from benchmark_v3.batch import audit_boundary, author_delivery, autonomous_realism, frozen_rekey, repair_authority, science
     from benchmark_v3.batch.pool import PooledLedger
 
     original, fixture = approved
@@ -4672,6 +4714,45 @@ def test_frozen_evidence_review_reuses_sources_and_blind_receipts_without_cueing
 
     coordinator.release_frozen_evidence_review(active, batch, family, "Reassess exact local context.")
     behavior[family, "audit"] = lambda inputs: _output("audit", family, "", inputs) | {"excerpt_controls": []}
+    qualified = 2
+    if disposition == "inherited_format_retry":
+        monkeypatch.setattr(MilestonePool, "shared_scale", property(lambda _: True))
+        job = "adjudicate-000"
+        behavior[family, job] = lambda inputs: _output("adjudication", family, "", inputs) | {
+            "unresolved": ["This evidence leaves the administrator's later practice outside the filing period."],
+        }
+        coordinator._work_family(active, commission, slot)
+        second = commission.session_runner(active, family, 2)
+        assert coordinator.family_status(active, batch, family)[:2] == (2, "adjudicate")
+        with pytest.raises(ValueError, match="inherits realism"):
+            coordinator.release_adjudication_documentary_repair(active, batch, family)
+        returned = autonomous_realism.document_adjudication_return(second)
+        active.event(batch, family, 3, "transition", repair_authority.REVISION, "adjudicate", "design", {
+            "parent_revision": 2, "adjudication_return": returned, "manifest_sha256": authorisation.commitment(manifest),
+        })
+        active.event(batch, family, 3, "task_halt", "design-isolation", "design", None, {
+            "stage": "design", "code": "isolation", "evidence": autonomous_realism.LINEAGE_REOPEN_FAILURE,
+        })
+        with pytest.raises(TaskHalted, match="unresolved shared integrity"):
+            coordinator.release_frozen_evidence_format_retry(active, batch, family)
+        proof = {
+            "submitted_turns": 0, "packet_sha256": commissioning.digest(Path(packet.__file__).read_bytes()),
+            "author_delivery_sha256": commissioning.digest(Path(author_delivery.__file__).read_bytes()),
+            "filesystem": {key: {"allowed": key == "inside", "denied": key != "inside"}
+                           for key in ("inside", "outside", "repository")},
+            "runtime": {effort: {"effort": effort, "thread_id": effort, "ephemeral": True, "empty_workspace": True,
+                                 "approval_policy": "never", "sandbox": {"type": "readOnly", "networkAccess": False},
+                                 "permission_profile": {"id": "benchmark_packet", "extends": None}, "instruction_sources": [],
+                                 "thread_environments": [], "runtime_workspace_roots": []} for effort in ("medium", "high")},
+        }
+        pool.reconcile_documentary_lineage(active, family, proof)
+        coordinator.release_frozen_evidence_format_retry(active, batch, family)
+        assert not any(item["revision"] == 3 for item in active.attempts(family))
+        del behavior[family, job]
+        qualified = 4
+        retry = frozen_rekey.recorded(commission.session_runner(active, family, qualified))
+        assert retry is not None and retry.retry is not None and retry.parent_revision == 1
+        assert retry.retry.returned_adjudication_sha256 == returned["receipt_sha256"]
     if disposition == "followup":
         behavior[family, "adjudicate-000"] = lambda inputs: json.loads(
             json.dumps(_output("adjudication", family, "", inputs)).replace(QUOTE, longer_quote),
@@ -4691,11 +4772,11 @@ def test_frozen_evidence_review_reuses_sources_and_blind_receipts_without_cueing
         assert [job for _, parent, job, _ in calls if parent == "G@3"] == ["adjudicate-000", "audit"]
         return
     coordinator._work_family(active, commission, slot)
-    assert coordinator.family_status(active, batch, family) == (2, "admission_ready", None)
-    work = commission.session_runner(active, family, 2).directory / "family"
+    assert coordinator.family_status(active, batch, family) == (qualified, "admission_ready", None)
+    work = commission.session_runner(active, family, qualified).directory / "family"
     assert (work / "freeze.json").read_bytes() == frozen_bytes == (prior / "freeze.json").read_bytes()
     assert (prior / "G000.json").read_bytes() == original_saved
-    new_calls = [(job, inputs) for _, parent, job, inputs in calls if parent == "G@2"]
+    new_calls = [(job, inputs) for _, parent, job, inputs in calls if parent == f"G@{qualified}"]
     assert [job for job, _ in new_calls] == ["adjudicate-000", "audit"]
     assert "provisional_keys" not in new_calls[0][1] and "intended_intervention" not in new_calls[0][1]
     result = json.loads((work / "dossier.json").read_bytes())
