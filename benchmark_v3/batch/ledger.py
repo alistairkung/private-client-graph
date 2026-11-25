@@ -452,6 +452,9 @@ class Ledger:
     def pooled_revision(self, batch: str, family: str, revision: int) -> bool:
         return False
 
+    def historical_pooled_revision(self, batch: str, family: str, revision: int) -> bool:
+        return self.pooled_revision(batch, family, revision)
+
     @property
     def requires_author_context(self) -> bool:
         return False

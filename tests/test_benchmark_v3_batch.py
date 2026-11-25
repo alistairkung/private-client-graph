@@ -3151,6 +3151,29 @@ def test_case_wide_intake_ticket_cannot_replace_an_actual_author_attachment(appr
     assert "Sender's previously issued record" not in tickets[recipient.source_id]
 
 
+def test_audit_origin_documentary_repair_preserves_design_and_limits_local_changes(approved):
+    from benchmark_v3.batch import autonomous_realism, science
+    from private_client_graph.models.source import Source
+
+    _, commission = approved
+    slot = commission.portfolio.slots[0]
+    design = DesignOutput.model_validate(_design("G"))
+    sources = [Source(id=row.source_id, title="Record", text="Ordinary retained body.") for row in design.inventory]
+    bundles, freeze = science.freeze_bundles(slot, design, sources)
+    parent = autonomous_realism.ReturnedFile(design, bundles, freeze, {}, {}, {}, None, [],
+        audit_repair_sources=frozenset({"src1"}))
+    plan = autonomous_realism.RepairPlan(disposition="repair", objections={},
+        tickets={"src1": "Identify the matter in your record body."}, progress="initial", rationale="Local repair.")
+    revised, affected = autonomous_realism._verify_plan(slot, parent, plan)
+    assert revised == design and affected == {"src1"}
+    unrelated = plan.model_copy(update={"tickets": {"src2": "Change another record."}})
+    with pytest.raises(ValueError, match="outside its exact local briefs"):
+        autonomous_realism._verify_plan(slot, parent, unrelated)
+    modified_design = design.model_copy(update={"private_history": "An undeclared change."})
+    with pytest.raises(ValueError, match="outside its exact local briefs"):
+        autonomous_realism._verify_plan(slot, parent, plan.model_copy(update={"revised_design": modified_design}))
+
+
 def test_scoped_review_context_preserves_reserved_prompt_on_resume(approved, monkeypatch):
     from benchmark_v3.batch.workflow import FamilyWorkflow
 
@@ -3351,6 +3374,8 @@ def test_shared_isolation_restart_carries_closed_charges_into_fresh_custody(appr
     assert active.requires_author_context
     assert active.requires_delivery_attestation == attachment_stop
     assert active.attempts("G") == after.attempts("G")
+    assert active.historical_pooled_revision(new_manifest.batch_id, "G", 1)
+    assert not active.pooled_revision(new_manifest.batch_id, "G", 1)
     active.release(new_manifest.batch_id, "G", 1, "design", parent_sha256=closed, reference="Exact budget extension.")
     with active.reservation_transaction() as db:
         assert expanded.remaining(db) == 2
@@ -3436,7 +3461,8 @@ def test_giant_phase_preserves_unused_budget_and_gates_the_exact_next_workload(a
         entered.enrol(replacement, replacement_manifest, reference="Outside the dedicated phase.")
 
 
-def test_rehearsal_preserves_ceiling_and_requires_its_own_exact_dossier(approved, tmp_path, monkeypatch):
+@pytest.mark.parametrize("shared", [False, True])
+def test_rehearsal_preserves_ceiling_and_requires_its_own_exact_dossier(approved, tmp_path, monkeypatch, shared):
     import sqlite3
     from types import SimpleNamespace
 
@@ -3491,6 +3517,30 @@ def test_rehearsal_preserves_ceiling_and_requires_its_own_exact_dossier(approved
     with pytest.raises(ValueError, match="Only the exact registered 65-Source rehearsal"):
         rehearsal.enrol(replacement, commission.manifest, reference="Other family.")
     rehearsal_account = artifacts.write_json(rehearsal.root / "final-accounting.json", closed | {"rehearsal_dossier": None})
+    if shared:
+        with closing(sqlite3.connect(rehearsal.path)) as database, database:
+            database.execute("INSERT INTO enrolments VALUES (?, ?, ?, ?, ?)", (
+                str(ledger.root), commission.manifest.task_id, commission.manifest.batch_id, "c" * 64, "d" * 64,
+            ))
+        shared_root = tmp_path / "shared-scale"
+        mandate = artifacts.write_json(shared_root / "scale-reallocation.json", {
+            "owner": OWNER, "previous_pool_sha256": rehearsal.digest, "previous_accounting_sha256": rehearsal_account,
+            "original_giant_authorisation_sha256": original_authority, "remaining_sessions": 2000,
+        })
+        shared_authority = PoolAuthority(owner=OWNER, reference="Reallocate the existing reserve.",
+            prior_archive_sha256="e" * 64, starting_charges=300, cumulative_ceiling=2300,
+            additional_target=1, excluded_families=("V",), predecessor_sha256=rehearsal.digest,
+            members=list(rehearsal.members.values()), budget_extension=BudgetExtension(
+                previous_database_sha256=commissioning.digest(rehearsal.path.read_bytes()),
+                previous_accounting_sha256=rehearsal_account, additional_sessions=2000, reallocation_sha256=mandate,
+            ))
+        with pytest.raises(ValueError, match="exact closeout, exclusions, charges and outstanding target"):
+            MilestonePool(shared_root, shared_authority.model_copy(update={"cumulative_ceiling": 2301}), predecessor=rehearsal)
+        rehearsal = MilestonePool(shared_root, shared_authority, predecessor=rehearsal)
+        with closing(sqlite3.connect(rehearsal.path)) as database, database:
+            database.execute("INSERT INTO reservations VALUES (?, 'U', 1, 'design', 'design', ?)", (str(ledger.root), "f" * 64))
+        closed |= {"cumulative_charges": 301, "remaining": 1999}
+        rehearsal_account = artifacts.write_json(rehearsal.root / "final-accounting.json", closed | {"rehearsal_dossier": None})
     giant_authority = PoolAuthority(
         owner=OWNER, reference="Giant continuation.", prior_archive_sha256="c" * 64,
         starting_charges=300, cumulative_ceiling=3000, additional_target=1, members=[],
@@ -3499,6 +3549,13 @@ def test_rehearsal_preserves_ceiling_and_requires_its_own_exact_dossier(approved
             previous_accounting_sha256=rehearsal_account, additional_sessions=2000,
             giant_phase=GiantPhaseRelease(authorisation_sha256=original_authority, expected_sources=150, **hypothesis)),
     )
+    if shared:
+        giant_authority = giant_authority.model_copy(update={
+            "starting_charges": 301, "cumulative_ceiling": 2300, "budget_extension": None,
+            "shared_giant_release": GiantPhaseRelease(authorisation_sha256=mandate, expected_sources=150, **hypothesis),
+            "shared_giant_closeout": RehearsalRelease(previous_database_sha256=commissioning.digest(rehearsal.path.read_bytes()),
+                                                        previous_accounting_sha256=rehearsal_account),
+        })
     with pytest.raises(ValueError, match="exact verified 65-Source rehearsal"):
         MilestonePool(tmp_path / "giant-too-early", giant_authority, predecessor=rehearsal)
     rehearsal_dossier = {**dossier, "family": "U", "dossier_sha256": "2" * 64}
@@ -3508,9 +3565,10 @@ def test_rehearsal_preserves_ceiling_and_requires_its_own_exact_dossier(approved
     (rehearsal.root / "final-accounting.json").unlink()
     rehearsal_account = artifacts.write_json(rehearsal.root / "final-accounting.json",
                                              closed | {"rehearsal_dossier": rehearsal_dossier})
-    extension = giant_authority.budget_extension
+    field = "shared_giant_closeout" if shared else "budget_extension"
+    extension = giant_authority.shared_giant_closeout if shared else giant_authority.budget_extension
     assert extension is not None
-    giant_authority = giant_authority.model_copy(update={"budget_extension": extension.model_copy(update={
+    giant_authority = giant_authority.model_copy(update={field: extension.model_copy(update={
         "previous_database_sha256": commissioning.digest(rehearsal.path.read_bytes()),
         "previous_accounting_sha256": rehearsal_account,
     })})
@@ -3520,7 +3578,7 @@ def test_rehearsal_preserves_ceiling_and_requires_its_own_exact_dossier(approved
     monkeypatch.setattr(rehearsal, "_verified_local_workload", lambda minimum, maximum: minimum <= 65 <= maximum)
     giant = MilestonePool(tmp_path / "giant-after-rehearsal", giant_authority, predecessor=rehearsal)
     with closing(sqlite3.connect(giant.path)) as database:
-        assert giant.remaining(database, attached=False) == 2700
+        assert giant.remaining(database, attached=False) == (1999 if shared else 2700)
 
 
 def test_pre_author_return_repairs_only_a_committed_brief(approved, transport, monkeypatch):

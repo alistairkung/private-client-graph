@@ -50,7 +50,7 @@ def recorded(runner: SessionRunner) -> CleanRedesign | None:
     if (not runner.ledger.requires_delivery_attestation or prior < 1
             or record != details(runner, prior, record.reason, record.audited_replacement)
             or event["details"]["parent_sha256"] != authorisation.commitment(record)
-            or not runner.ledger.pooled_revision(batch, family, runner.revision)):
+            or not runner.ledger.historical_pooled_revision(batch, family, runner.revision)):
         raise ValueError("Fresh documentary design requires the exact reviewed replacement lineage.")
     if record.audited_replacement is not None:
         if reviewed_audit_receipt(runner, prior) != record.audited_replacement.audit_receipt_sha256:

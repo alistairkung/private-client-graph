@@ -714,8 +714,11 @@ def release_clean_redesign(
         events = ledger.events(batch, family)
         scoped = (commission.manifest.phase == "milestone" and ledger.requires_delivery_attestation
                   and not commission.manifest.requires_design_review)
+        eligible = {"scientific_review", "documentary_realism"}
+        if ledger.pool.shared_scale:
+            eligible.add("failed_dispatch")
         if (not scoped or not reason.strip() or state not in {"quarantined", "returned"}
-                or not issue or issue["code"] not in {"scientific_review", "documentary_realism"}):
+                or not issue or issue["code"] not in eligible):
             raise ValueError("A clean redesign needs a retained scientific failure and a released hypothesis.")
         prior = [row for row in events if "documentary_redesign" in row["details"]]
         slot = next(row for row in commission.portfolio.slots if row.family_id == family)
@@ -724,7 +727,7 @@ def release_clean_redesign(
         runner = commission.session_runner(ledger, family, revision + 1)
         audit = None
         if independent_large_assessment is None:
-            if prior:
+            if prior and not ledger.pool.shared_scale:
                 raise ValueError("The ordinary clean redesign has already been used.")
         else:
             if (len(prior) != 1 or not 51 <= slot.expected_sources <= 99 or slot.tier != "administrative"
@@ -1524,6 +1527,28 @@ def recover_adjudication_whitespace(ledger: PooledLedger, batch: str, family: st
         science.verify_adjudication(condition, locked, sources, agreement)
         ledger.event(batch, family, revision, "reconcile", adjudication_contract.QUOTE_RECOVERY + job, state, state, {
             "receipt_sha256": receipt["receipt_sha256"], "derivative_sha256": authorisation.commitment(derivative), "edits": edits,
+        })
+
+
+def release_audit_documentary_repair(ledger: PooledLedger, batch: str, family: str, source_ids: set[str]) -> None:
+    """Commission a new design revision while preserving the returned freeze and key."""
+    with ledger.coordinator_lock():
+        ledger.require_running()
+        commission = load_commission(ledger, batch)
+        revision, state, issue = family_status(ledger, batch, family)
+        if (not ledger.pool.shared_scale or state != "returned" or not issue
+                or (issue["stage"], issue["code"]) != ("audit", "scientific_review")
+                or not repair_authority.enabled(ledger, commission.manifest)):
+            raise ValueError("An audit-origin documentary repair requires an independently returned scale file.")
+        runner = commission.session_runner(ledger, family, revision)
+        reviewed = autonomous_realism.document_audit_return(runner, source_ids)
+        next_revision = revision + 1
+        ledger.release(batch, family, next_revision, "design", parent_sha256=reviewed["receipt_sha256"],
+                       reference="Scoped documentary revision after independent audit return.")
+        ledger.event(batch, family, next_revision, "transition", repair_authority.REVISION, "design", "design", {
+            "role": "batch_coordinator", "parent_revision": revision, "documentary_audit_return": reviewed,
+            "manifest_sha256": authorisation.commitment(commission.manifest),
+            "family_sessions_remaining": ledger.effective_budget().families[family] - len(ledger.attempts(family)),
         })
 
 

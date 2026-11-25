@@ -7,8 +7,8 @@ from typing import Any, Literal
 from pydantic import TypeAdapter
 
 from benchmark_v3 import commissioning, packet
-from benchmark_v3.batch import artifacts, author_context, author_delivery, authorisation, delivery_particulars, design_review, recipient_edit, repair_authority, science
-from benchmark_v3.batch.contracts import Adjudication, AuthorBrief, DesignOutput, MatchedCondition, RealismReview, SourceId
+from benchmark_v3.batch import artifacts, audit_boundary, author_context, author_delivery, authorisation, delivery_particulars, design_review, recipient_edit, repair_authority, science
+from benchmark_v3.batch.contracts import Adjudication, AuthorBrief, DesignOutput, MatchedCondition, MilestoneAudit, RealismReview, SourceId
 from benchmark_v3.batch.ledger import BudgetExhausted
 from benchmark_v3.batch.sessions import SessionRunner
 from benchmark_v3.portfolio import FamilySlot
@@ -115,6 +115,7 @@ class ReturnedFile:
     exact_recipient_edit: recipient_edit.ExactRecipientEdit | None = None
     prior_owned_source: Source | None = None
     owned_records: dict[SourceId, Source] | None = None
+    audit_repair_sources: frozenset[SourceId] = frozenset()
 
     def expected_local_source(self) -> Source | None:
         if self.exact_recipient_edit is None:
@@ -241,6 +242,8 @@ def plan_revision(
         lineage["incoming_particulars"] = release["incoming_particulars"]
     if parent.owned_records is not None:
         lineage["owned_source_revisions"] = release["owned_source_revisions"]
+    if parent.audit_repair_sources:
+        lineage["documentary_audit_return"] = release["documentary_audit_return"]
     if release.get("natural_provenance_restoration"):
         lineage["natural_provenance_restoration"] = True
     if release.get("verified_recipient_scope_restoration"):
@@ -362,6 +365,14 @@ def _select_plan(
         _record_plan_selection(runner, job, receipt)
         return plan, receipt, design, affected, job
     prompt = PLAN_PROMPT
+    if parent.audit_repair_sources:
+        prompt += (" The scope is a new documentary revision after an independent audit return. Only change the "
+                   "participant briefs or add repair tickets for these exact originating Sources: "
+                   + commissioning.json_text(sorted(parent.audit_repair_sources))
+                   + ". Review whether the existing trust identity or operative fact can ordinarily be made explicit "
+                     "in the record body without changing who knew it or its business purpose. Do not rely on titles "
+                     "as proof members, withdraw an authentic evidence route, or change the graph or a frozen artifact. "
+                     "Fresh realism, both blind lanes, adjudication and controls are required. Return infeasible if necessary.")
     if parent.prior_scope_return is not None:
         prompt += (" The exact scoped return is the immediate documentary draft. Address the new scope objections "
                    "and preserve all unaffected records. Retain prior documentary objections for context and arrange "
@@ -620,15 +631,16 @@ def _read_return(runner: SessionRunner, slot: FamilySlot, release: dict[str, Any
             or (empty_ticket and (authored_receipts or preauthor_returns))
             or (len(authored_receipts) > 1 and not release.get("natural_provenance_restoration"))
             or ((authored_receipts or preauthor_returns or empty_ticket)
-                and not ledger.pooled_revision(batch, family, runner.revision))):
+                and not ledger.historical_pooled_revision(batch, family, runner.revision))):
         raise ValueError("A repair must bind each of its verified intervening scope returns.")
     previous = SessionRunner(ledger, runner.manifest, family, revision, runner.directory.parent / str(revision), runner.owner)
     history = ledger.events(batch, family)
     events = [row for row in history if row["revision"] == revision]
     disposition = next((row for row in events if row["kind"] == "disposition" and row["name"] == "realism"), None)
     adjudication = release.get("adjudication_return")
+    audit = release.get("documentary_audit_return")
     if (release["manifest_sha256"] != authorisation.commitment(runner.manifest)
-            or (adjudication is None and (
+            or (adjudication is None and audit is None and (
                 disposition is None or release["disposition_sequence"] != disposition["sequence"]
             ))):
         raise ValueError("The repair must bind the exact previous realism disposition and approved manifest.")
@@ -657,6 +669,10 @@ def _read_return(runner: SessionRunner, slot: FamilySlot, release: dict[str, Any
             raise ValueError("The adjudication did not receive the reviewed documentary file.")
         objections = {f"adjudication:{index}": reason
                       for index, reason in enumerate(adjudication["objections"], 1)}
+    elif audit is not None:
+        if objections or disposition is not None or audit != document_audit_return(previous, set(audit["source_ids"])):
+            raise ValueError("An audit repair must retain passing realism and the exact returned audit.")
+        objections = {f"audit:{i}": reason for i, reason in enumerate(audit["objections"], 1)}
     elif disposition is None or reviews != commissioning._read_json(disposition["details"]["evidence"]) or not objections:
         raise ValueError("The realism responses differ from the returned disposition.")
     natural = supplied[science.condition_ids(slot)[0]]
@@ -665,6 +681,8 @@ def _read_return(runner: SessionRunner, slot: FamilySlot, release: dict[str, Any
     if reviewed_design is not None:
         design = design_review.verified_authoring_design(previous, design, reviewed_design)
     bundles, freeze = science.freeze_bundles(slot, design, natural)
+    if audit is not None and artifacts.read_contract(previous.directory / "family" / "freeze.json", BatchSourceFreeze) != freeze:
+        raise ValueError("The passed documentary review differs from the audit's frozen Sources.")
     expected = commissioning.digest(commissioning.json_text(
         [source.model_dump(mode="json") for source in natural],
     ).encode())
@@ -681,6 +699,7 @@ def _read_return(runner: SessionRunner, slot: FamilySlot, release: dict[str, Any
     scope_references = _earlier_pre_author_references(runner, history, revision, slot=slot)
     result = ReturnedFile(design, bundles, freeze, objections, reviews, receipts, prior, earlier,
                           earlier_scope_references=scope_references,
+                          audit_repair_sources=frozenset(audit["source_ids"]) if audit is not None else frozenset(),
                           retained_literal_briefs=_retained_literal_briefs(previous, design, natural, events))
     authored_returns, preauthor = _scope_returns_by_revision(history, authored_receipts, preauthor_returns)
     if not empty_ticket and sorted((*authored_returns, *preauthor)) != list(range(revision + 1, runner.revision)):
@@ -696,7 +715,7 @@ def _read_return(runner: SessionRunner, slot: FamilySlot, release: dict[str, Any
     if details := release.get("incoming_particulars"):
         source_revision = details.get("reviewed_source_revision", runner.revision - 1)
         retained_natural = (not authored_returns and source_revision == revision and not design.matched
-                            and ledger.pooled_revision(batch, family, runner.revision))
+                            and ledger.historical_pooled_revision(batch, family, runner.revision))
         if not (retained_natural or (authored_returns and source_revision == max(authored_returns))):
             raise ValueError("Delivery particulars require the exact reviewed draft revision.")
         previous_draft = replace(runner, revision=source_revision,
@@ -1088,6 +1107,22 @@ def _retained_plan_for_empty_ticket(
     return plan, receipt, design, affected, job
 
 
+def document_audit_return(runner: SessionRunner, source_ids: set[str]) -> dict[str, Any]:
+    recheck = audit_boundary.release(runner) is not None
+    job = audit_boundary.RECHECK if recheck else "audit"
+    contract = audit_boundary.RecheckedAudit if recheck else MilestoneAudit
+    review, receipt, _ = runner.committed_result("audit", job, "audit", contract)
+    design = artifacts.read_contract(runner.directory / "design.json", DesignOutput)
+    if (review.verdict not in {"return", "repair"} or not review.objections or not source_ids
+            or not source_ids <= {row.source_id for row in design.inventory}
+            or any(not any(re.search(rf"(?<!\w){re.escape(source)}(?!\w)", reason) for reason in review.objections)
+                   for source in source_ids)):
+        raise ValueError("A documentary release requires named Sources in an independent audit return.")
+    return {"job": job, "receipt_sha256": receipt["receipt_sha256"], "source_ids": sorted(source_ids),
+            "objections": review.objections,
+            "freeze_sha256": commissioning.digest(artifacts.read_bytes(runner.directory / "family" / "freeze.json"))}
+
+
 def document_adjudication_return(runner: SessionRunner) -> dict[str, Any]:
     if not runner.ledger.requires_delivery_attestation:
         raise ValueError("Documentary adjudication repair requires the attested isolation release.")
@@ -1258,6 +1293,13 @@ def _verify_design_change(slot: FamilySlot, parent: ReturnedFile, plan: RepairPl
     else:
         design = plan.revised_design or old
     science.verify_design(slot, design)
+    if parent.audit_repair_sources:
+        if (not plan.tickets.keys() <= parent.audit_repair_sources or any(
+            revised != original and (original.source_id not in parent.audit_repair_sources
+                or revised.model_dump(exclude={"participant_brief"}) != original.model_dump(exclude={"participant_brief"}))
+            for original, revised in zip(old.inventory, design.inventory, strict=True)
+        ) or design.model_dump(exclude={"inventory"}) != old.model_dump(exclude={"inventory"})):
+            raise ValueError("An audit-origin repair must preserve the documentary design outside its exact local briefs.")
     roster = {brief.source_id for brief in old.inventory}
     if (
         design.candidates != old.candidates or design.required != old.required
