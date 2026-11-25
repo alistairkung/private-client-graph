@@ -2800,6 +2800,9 @@ def test_authored_scope_repair_reuses_checked_delivery_after_preauthor_return(
     coordinator._work_family(ledger, commission, slot)
     coordinator._work_family(ledger, commission, slot)
     assert coordinator.family_status(ledger, batch, family)[:2] == (2, "quarantined")
+    with pytest.raises(ValueError, match="limits-focused replan"):
+        coordinator.release_returned_pre_author_plan(ledger, batch, family, keep_documentary_limits=True)
+    assert coordinator.family_status(ledger, batch, family)[:2] == (2, "quarantined")
     coordinator.release_returned_pre_author_plan(ledger, batch, family)
     coordinator._work_family(ledger, commission, slot)
     assert coordinator.family_status(ledger, batch, family)[:2] == (3, "quarantined")

@@ -494,6 +494,14 @@ def _select_plan(
             " Repair ambiguous terminology using only documented local facts. Treat any suggested future"
             " enquiry as practitioner follow-up, not as an author instruction to supply new evidence."
         )
+        if release.get("narrow_originating_records"):
+            prompt += (
+                " Where an unverified time or named enquiry has no authorized basis, consider narrowing the"
+                " originating record itself to facts the participant can attest. Distinguish proposed schedules,"
+                " authorization periods and later documented acts. An exhaustive as-of register can report its"
+                " actual entries without suggesting an outside query. Do not embed a later clarification in"
+                " an earlier record or make a new operative event to explain an existing document."
+            )
     if parent.exact_recipient_edit is not None:
         if parent.exact_recipient_edit.brief_omission is None:
             prompt += (

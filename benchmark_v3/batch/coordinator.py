@@ -1318,6 +1318,7 @@ def release_returned_pre_author_plan(
     ledger: PooledLedger, batch: str, family: str, *,
     omit_reply_for: str | None = None, omit_future_reference: autonomous_realism.FutureReferenceOmission | None = None,
     incoming_particulars_source: str | None = None, exact_omission_assessment: str | None = None,
+    keep_documentary_limits: bool = False,
 ) -> None:
     with ledger.coordinator_lock():
         ledger.require_running()
@@ -1333,6 +1334,12 @@ def release_returned_pre_author_plan(
         record, _ = autonomous_realism.pre_author_scope_return(runner, slot=slot)
         if commissioning._read_json(issue["evidence"]) != record["review"]:
             raise ValueError("The retained independent scope review differs from the current exception.")
+        if keep_documentary_limits and (
+            not ledger.pool.shared_scale or not ledger.requires_workload_merits
+            or len(science.condition_ids(slot)) != 1 or original.get("keep_documentary_limits")
+            or any((omit_reply_for, omit_future_reference, incoming_particulars_source, exact_omission_assessment))
+        ):
+            raise ValueError("A limits-focused replan requires one independently returned natural-file proposal.")
         earlier = autonomous_realism._pre_author_returns(original)
         if "exact_recipient_edit" in original and exact_omission_assessment is None:
             raise ValueError("An exact recipient scope return requires an independent omission assessment.")
@@ -1359,6 +1366,7 @@ def release_returned_pre_author_plan(
             omission = autonomous_realism.remove_separate_reply_ticket(runner, slot, omit_reply_for)[0] if omit_reply_for else None
         release = original | {
             "pre_author_scope_return": record,
+            **({"keep_documentary_limits": True, "narrow_originating_records": True} if keep_documentary_limits else {}),
             **({"prior_pre_author_scope_returns": earlier} if earlier else {}),
             **({"scope_ticket_omission": omission} if omission is not None else {}),
             **({"exact_omission_assessment": exact_omission_assessment} if exact_omission_assessment is not None else {}),
