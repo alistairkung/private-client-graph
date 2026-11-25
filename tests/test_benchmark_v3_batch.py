@@ -2989,6 +2989,22 @@ def test_scope_replay_preserves_a_preauthor_return_after_an_authored_return():
         autonomous_realism._scope_returns_by_revision([authored], ["b" * 64], [preauthor])
 
 
+def test_scale_preauthor_progress_distinguishes_new_scope_from_a_reworded_return():
+    from benchmark_v3.batch import autonomous_realism
+
+    def findings(*objections):
+        return {"objections": list(objections)}
+
+    previously = [findings("src1: Premature issue reference."), findings("src2: Missing referenced input.")]
+    ids = {"src1", "src2", "src3"}
+    assert autonomous_realism.pre_author_progress(previously, findings("src3 / src2: Wrong originating version."), ids)
+    assert not autonomous_realism.pre_author_progress(previously, findings("src2: The same local input remains missing."), ids)
+    assert not autonomous_realism.pre_author_progress(previously, findings("src9: Unrecorded ID."), ids)
+    assert not autonomous_realism.pre_author_progress(previously, previously[0], ids)
+    reduced = [findings("src1: Premature issue reference.", "src2: Missing referenced input.")]
+    assert autonomous_realism.pre_author_progress(reduced, findings("src2: Missing referenced input."), ids)
+
+
 def test_exact_recipient_document_repair_preserves_the_original_delivery_graph():
     from benchmark_v3.batch.recipient_edit import ExactRecipientEdit
 

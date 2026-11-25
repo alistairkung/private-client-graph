@@ -946,6 +946,24 @@ def _pre_author_returns(release: dict[str, Any]) -> list[dict[str, Any]]:
     return records
 
 
+def pre_author_progress(previous: list[dict[str, Any]], current: dict[str, Any], identities: set[SourceId]) -> bool:
+    """Recognize a new exact scope objection after earlier objects cleared."""
+    if not previous:
+        return True
+    if any(set(record["objections"]) == set(current["objections"]) for record in previous):
+        return False
+    if len(current["objections"]) < len(previous[-1]["objections"]):
+        return True
+
+    def leading_sources(record: dict[str, Any]) -> set[SourceId]:
+        names = {objection.split(maxsplit=1)[0].rstrip(":") for objection in record["objections"] if objection.strip()}
+        return names if names <= identities else set()
+
+    current_sources = leading_sources(current)
+    previous_sources = [leading_sources(record) for record in previous]
+    return bool(current_sources and all(previous_sources) and current_sources.isdisjoint(set().union(*previous_sources)))
+
+
 def _authored_scope_receipts(release: dict[str, Any]) -> list[str]:
     receipts = list(release.get("earlier_authored_scope_receipts", []))
     if "scope_return_receipt_sha256" in release:
@@ -965,7 +983,8 @@ def _pre_author_review_jobs(runner: SessionRunner) -> set[str]:
 def pre_author_scope_return(runner: SessionRunner, *, slot: FamilySlot | None = None) -> tuple[dict[str, Any], RepairPlan]:
     batch, family = runner.manifest.batch_id, runner.family
     parent = release_event(runner)
-    if (not runner.ledger.requires_delivery_attestation or parent is None or len(_pre_author_returns(parent)) > 2
+    if (not runner.ledger.requires_delivery_attestation or parent is None
+            or (not runner.ledger.requires_workload_merits and len(_pre_author_returns(parent)) > 2)
             or parent["parent_revision"] != runner.revision - 1 - len(_pre_author_returns(parent))
             - len(_authored_scope_receipts(parent))
             or any(row["revision"] == runner.revision and row["stage"] == "author"

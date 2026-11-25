@@ -1239,9 +1239,14 @@ def release_returned_pre_author_plan(
             if omit_reply_for is not None or len(earlier) > 2 or "scope_ticket_omission" in original:
                 raise ValueError("Use only one exact unavailable-document omission in an un-authored repair chain.")
             omission = autonomous_realism.remove_future_reference(runner, slot, omit_future_reference)[0]
-        elif len(earlier) >= 2 or (earlier and len(record["objections"]) >= len(earlier[-1]["objections"])):
-            raise ValueError("A repeated un-authored scope repair requires tangible progress on earlier objections.")
         else:
+            if ledger.pool.shared_scale:
+                design = artifacts.read_contract(runner.directory / "design.json", DesignOutput)
+                progress = autonomous_realism.pre_author_progress(earlier, record, {row.source_id for row in design.inventory})
+            else:
+                progress = len(earlier) < 2 and (not earlier or len(record["objections"]) < len(earlier[-1]["objections"]))
+            if not progress:
+                raise ValueError("A repeated un-authored scope repair requires tangible progress on earlier objections.")
             omission = autonomous_realism.remove_separate_reply_ticket(runner, slot, omit_reply_for)[0] if omit_reply_for else None
         release = original | {
             "pre_author_scope_return": record,
