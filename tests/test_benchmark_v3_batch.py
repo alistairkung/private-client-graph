@@ -4326,6 +4326,36 @@ def test_large_workload_repair_reopens_exact_scope_return_before_author_dispatch
         large_merits_repair.returned(runner)
 
 
+def test_large_merits_retries_extra_findings_before_the_author_scope_gate(autonomous, transport, monkeypatch):
+    from benchmark_v3.batch import author_context, clean_redesign
+    from benchmark_v3.batch.workflow import FamilyWorkflow
+
+    ledger, commission = autonomous
+    family, slot = "G", commission.portfolio.slots[0]
+    batch = commission.manifest.batch_id
+    coordinator.commission_batch(ledger, commission, BOUNDARY)
+    coordinator._activate_roadmap_slots(ledger, commission, [family])
+    monkeypatch.setattr(type(ledger), "requires_author_context", property(lambda _: True))
+    monkeypatch.setattr(type(ledger), "requires_delivery_attestation", property(lambda _: True))
+    monkeypatch.setattr(type(ledger), "requires_workload_merits", property(lambda _: True))
+    runner = commission.session_runner(ledger, family, 1)
+    workflow = FamilyWorkflow(runner, slot, commission.portfolio.admission_criteria)
+    calls, behavior, _ = transport
+    findings = {"src1": "Ordinary original.", "src2": "Ordinary acknowledgment."}
+    accepted = {"verdict": "accept", "findings": findings, "objections": []}
+    merits = clean_redesign.MERITS_JOB
+    behavior[family, merits] = lambda _: accepted | {"findings": findings | {"global_summary": "Review synthesis."}}
+    behavior[family, merits + "-format-retry"] = lambda _: accepted
+    behavior[family, author_context.JOB] = lambda _: accepted | {
+        "verdict": "return", "objections": ["Hold before the participant reservation."],
+    }
+    design = workflow.design()
+    with pytest.raises(Blocked, match="Hold before the participant reservation"):
+        workflow.author(design)
+    assert [job for _, _, job, _ in calls] == ["design", merits, merits + "-format-retry", author_context.JOB]
+    clean_redesign.require_merits(runner)
+
+
 def test_word_preserving_blind_quote_recovery_uses_the_retained_reader(autonomous, transport, monkeypatch):
     from benchmark_v3.batch import read_format_recovery
 
