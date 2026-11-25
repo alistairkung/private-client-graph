@@ -1148,6 +1148,7 @@ def release_returned_authored_scope_plan(
     owned_source_revisions: dict[str, int] | None = None,
     baseline_owned_restoration: bool = False,
     narrowed_scope_source: str | None = None,
+    distinct_scope_sources: set[str] | None = None,
 ) -> None:
     """Open one documentary replan from an independently rejected authored repair."""
     with ledger.coordinator_lock():
@@ -1160,8 +1161,11 @@ def release_returned_authored_scope_plan(
         issued = (earlier or {}).get("audit_sender_return", {})
         earlier_issued = (earlier or {}).get("previous_issued_sender_recovery")
         settled_sender = bool(issued.get("issued_source_sha256"))
-        if narrowed_scope_source is not None:
-            expected = bool(previous_receipts) and (earlier or {}).get("narrowed_scope_source") is None
+        local_scope = narrowed_scope_source is not None or distinct_scope_sources is not None
+        if local_scope:
+            expected = bool(previous_receipts) and not any((earlier or {}).get(key) for key in (
+                "narrowed_scope_source", "distinct_scope_sources",
+            ))
         elif baseline_owned_restoration:
             expected = len(previous_receipts) <= 1
         else:
@@ -1192,15 +1196,20 @@ def release_returned_authored_scope_plan(
                     or any((natural_provenance_restoration, exact_inventory_edit, incoming_particulars_source))):
                 raise ValueError("Original owned records may restore only the exact returned natural comparison.")
             release.update(earlier_authored_scope_receipts=previous_receipts, baseline_owned_restoration=True)
-        if narrowed_scope_source is not None:
+        if local_scope:
             if (not ledger.pool.shared_scale or not ledger.requires_workload_merits
                     or len(science.condition_ids(slot)) != 1 or (runner.directory / "family").exists()
+                    or (distinct_scope_sources is not None and (not distinct_scope_sources or narrowed_scope_source is not None))
                     or any((baseline_owned_restoration, natural_provenance_restoration, exact_inventory_edit,
                             incoming_particulars_source, owned_source_revisions))):
-                raise ValueError("A narrowed scope repair requires the original natural condition before key construction.")
+                raise ValueError("A Source-scoped repair requires the original natural condition before key construction.")
             release.pop("baseline_owned_restoration", None)
             release.pop("owned_source_revisions", None)
-            release.update(earlier_authored_scope_receipts=previous_receipts, narrowed_scope_source=narrowed_scope_source)
+            release["earlier_authored_scope_receipts"] = previous_receipts
+            if distinct_scope_sources is not None:
+                release["distinct_scope_sources"] = sorted(distinct_scope_sources)
+            else:
+                release["narrowed_scope_source"] = narrowed_scope_source
         expanded = False
         if natural_provenance_restoration:
             previous_particulars = (earlier.get("incoming_particulars") or {}).get("source_id")

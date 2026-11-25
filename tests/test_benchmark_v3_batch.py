@@ -3650,6 +3650,17 @@ def test_authored_scope_replan_requires_a_strictly_narrower_local_change(approve
     })
     with pytest.raises(ValueError, match="narrow to a single Source"):
         autonomous_realism._require_narrowed_scope(same_scope, "src2")
+    distinct = replace(parent, prior_scope_return=(parent.prior_scope_return or {}) | {
+        "earlier_authored_scope": {"objections": ["src1 changed scope."]},
+    })
+    autonomous_realism._require_distinct_scope(distinct, frozenset({"src2"}))
+    with pytest.raises(ValueError, match="distinct Sources"):
+        autonomous_realism._require_distinct_scope(parent, frozenset({"src2"}))
+    dependent = design.model_copy(update={"inventory": [
+        design.inventory[1], design.inventory[0].model_copy(update={"received": ["src2"]}),
+    ]})
+    with pytest.raises(ValueError, match="full dependency closure"):
+        autonomous_realism._require_distinct_scope(replace(distinct, design=dependent), frozenset({"src2"}))
 
     narrowed = replace(parent, narrowed_scope_source="src2")
     plan = autonomous_realism.RepairPlan(
