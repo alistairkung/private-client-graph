@@ -1152,6 +1152,7 @@ def release_returned_authored_scope_plan(
     baseline_owned_restoration: bool = False,
     narrowed_scope_source: str | None = None,
     distinct_scope_sources: set[str] | None = None,
+    local_repair_option: str | None = None,
 ) -> None:
     """Open one documentary replan from an independently rejected authored repair."""
     with ledger.coordinator_lock():
@@ -1185,7 +1186,8 @@ def release_returned_authored_scope_plan(
         if review.verdict != "changed" or not review.objections or issue["evidence"] != autonomous_realism.scope_failure(review):
             raise ValueError("The exact retained scope review must establish the documentary objection.")
         release = {key: value for key, value in earlier.items()
-                   if key not in {"scope_ticket_omission", "generated_attachment_ticket", "incoming_particulars"}} | {
+                   if key not in {"scope_ticket_omission", "generated_attachment_ticket", "incoming_particulars",
+                                  "local_repair_option"}} | {
             "scope_return_receipt_sha256": receipt["receipt_sha256"],
             "family_sessions_remaining": ledger.effective_budget().families[family] - len(ledger.attempts(family)),
         }
@@ -1193,6 +1195,12 @@ def release_returned_authored_scope_plan(
             release.pop("audit_sender_return")
             release["previous_issued_sender_recovery"] = {"recovery_revision": revision, "sender_return": issued}
         slot = next(row for row in commission.portfolio.slots if row.family_id == family)
+        if local_repair_option is not None:
+            if (not ledger.pool.shared_scale or not ledger.requires_workload_merits
+                    or len(science.condition_ids(slot)) != 1 or not local_repair_option.strip()
+                    or (runner.directory / "family").exists()):
+                raise ValueError("An independent planning option requires an exact returned natural file before key construction.")
+            release.update(local_repair_option=local_repair_option.strip(), keep_documentary_limits=True)
         if baseline_owned_restoration:
             if (not ledger.pool.shared_scale or not ledger.requires_workload_merits or not owned_source_revisions
                     or len(science.condition_ids(slot)) != 1 or (runner.directory / "family").exists()

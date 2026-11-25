@@ -2819,6 +2819,8 @@ def test_authored_scope_repair_reuses_checked_delivery_after_preauthor_return(
         particulars.model_copy(update={"recipient_author": "Another participant"}).require_preserved_deliveries(
             locked_design, locked_design, {"src2"},
         )
+    with pytest.raises(ValueError, match="independent planning option"):
+        coordinator.release_returned_authored_scope_plan(ledger, batch, family, local_repair_option="Consider a form field.")
     with pytest.raises(ValueError, match="specific recipient Source"):
         coordinator.release_returned_authored_scope_plan(ledger, batch, family, incoming_particulars_source="src1")
     coordinator.release_returned_authored_scope_plan(ledger, batch, family, incoming_particulars_source="src2")
