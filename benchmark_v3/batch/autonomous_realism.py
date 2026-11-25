@@ -15,6 +15,7 @@ from benchmark_v3.portfolio import FamilySlot
 from benchmark_v3.replay_manifest import BatchSourceFreeze, source_commitments
 from benchmark_v3.research_contracts import Contract, Text
 from private_client_graph.models.source import Source
+from private_client_graph.research.retained_inputs import value_digest
 
 PLAN_PROMPT = (
     "Independently diagnose the returned fictional Matter before it has a key. Classify each supplied objection "
@@ -313,7 +314,7 @@ def plan_revision(
         lineage["last_realism_source_commitments"] = parent.prior_scope_return["original_realism_source_commitments"]
     if parent.incoming_particulars is not None:
         lineage["incoming_particulars"] = release["incoming_particulars"]
-    if parent.owned_records is not None:
+    if "owned_source_revisions" in release:
         lineage["owned_source_revisions"] = release["owned_source_revisions"]
     if parent.audit_repair_sources:
         lineage["documentary_audit_return"] = release["documentary_audit_return"]
@@ -710,8 +711,9 @@ def _read_return(runner: SessionRunner, slot: FamilySlot, release: dict[str, Any
     authored_receipts = _authored_scope_receipts(release)
     preauthor_returns = _pre_author_returns(release)
     skipped_ticket = bool(release.get("empty_ticket_return") or release.get("audit_sender_return"))
+    issued_restoration = (release.get("audit_sender_return") or {}).get("issued_source_sha256")
     if (revision != runner.revision - 1 - len(authored_receipts) - int(skipped_ticket) - len(preauthor_returns)
-            or (skipped_ticket and (authored_receipts or preauthor_returns))
+            or (skipped_ticket and (authored_receipts or preauthor_returns) and not issued_restoration)
             or (len(authored_receipts) > 1 and not any(release.get(key) for key in (
                 "natural_provenance_restoration", "baseline_owned_restoration",
             )))
@@ -787,7 +789,8 @@ def _read_return(runner: SessionRunner, slot: FamilySlot, release: dict[str, Any
                           audit_repair_sources=frozenset(audit["source_ids"]) if audit is not None else frozenset(),
                           retained_literal_briefs=_retained_literal_briefs(previous, design, natural, events))
     authored_returns, preauthor = _scope_returns_by_revision(history, authored_receipts, preauthor_returns)
-    if not skipped_ticket and sorted((*authored_returns, *preauthor)) != list(range(revision + 1, runner.revision)):
+    last_scoped = runner.revision - int(bool(issued_restoration))
+    if (not skipped_ticket or issued_restoration) and sorted((*authored_returns, *preauthor)) != list(range(revision + 1, last_scoped)):
         raise ValueError("Each intervening revision needs its own authenticated scope return.")
     if (release.get("natural_provenance_restoration") or release.get("baseline_owned_restoration")) and (
         len(authored_returns) != 2 or design.matched
@@ -821,6 +824,13 @@ def _read_return(runner: SessionRunner, slot: FamilySlot, release: dict[str, Any
         else:
             records = _verified_owned_records(runner, result, owned, revision, max(authored_returns) - 1)
             result = replace(result, owned_records={identity: record for identity, (record, _) in records.items()})
+    if issued_restoration:
+        sender_return = release["audit_sender_return"]
+        identity = sender_return["source_id"]
+        source = next(row for row in result.bundles[result.freeze.natural] if row.id == identity)
+        if value_digest(source.model_dump(mode="json")) != issued_restoration or result.owned_records is not None or design.matched:
+            raise ValueError("An issued-record recovery must preserve its exact original natural-file Source.")
+        result = replace(result, owned_records={identity: source}, baseline_owned_grants={identity: sender_return["grants"]})
     if edit := release.get("exact_recipient_edit"):
         exact = recipient_edit.ExactRecipientEdit.model_validate(edit)
         if "exact_omission_assessment" in release:
@@ -1281,10 +1291,11 @@ def _retained_plan_for_empty_ticket(
     return plan, receipt, design, affected, job
 
 
-def document_audit_sender_return(runner: SessionRunner, source_id: str) -> dict[str, Any]:
+def document_audit_sender_return(runner: SessionRunner, source_id: str, *, issued: Source | None = None) -> dict[str, Any]:
     release = release_event(runner)
-    if (release is None or release["parent_revision"] != runner.revision - 1
-            or source_id not in release.get("documentary_audit_return", {}).get("source_ids", [])
+    if (release is None or release.get("audit_sender_return")
+            or (issued is None and (release["parent_revision"] != runner.revision - 1
+                                    or source_id not in release.get("documentary_audit_return", {}).get("source_ids", [])))
             or not runner.ledger.requires_delivery_attestation or (runner.directory / "family").exists()):
         raise ValueError("A retained sender retry requires an exact un-frozen audit documentary revision.")
     events = [row for row in runner.ledger.events(runner.manifest.batch_id, runner.family) if row["revision"] == runner.revision]
@@ -1294,7 +1305,21 @@ def document_audit_sender_return(runner: SessionRunner, source_id: str) -> dict[
     grants = commissioning._read_json(request["inputs"]["author_brief"])["outgoing_deliveries"]
     if request["inputs"] != retry["inputs"] or not grants or not request["inputs"].get("revision_ticket"):
         raise ValueError("A retained sender retry requires the same approved local ticket and existing transmissions.")
-    return {"source_id": source_id, "failures": failures, "grants": grants, "receipt_sha256": receipt["receipt_sha256"]}
+    record = {"source_id": source_id, "failures": failures, "grants": grants, "receipt_sha256": receipt["receipt_sha256"]}
+    if issued is not None:
+        original_revision = release["parent_revision"]
+        origin = replace(runner, revision=original_revision, directory=runner.directory.with_name(str(original_revision)))
+        job = f"author-{source_id}"
+        answer, original_receipt, original_request = origin.committed_result("author", job, "author", author_delivery.AttestedSource)
+        author_delivery.require_projection(origin, job, original_request["inputs"])
+        author_delivery.verify_attestation(answer, original_request["inputs"]["author_brief"])
+        if (issued.id, issued.title, issued.text) != (source_id, answer.title, answer.text) or (
+            original_request["inputs"]["author_brief"] != request["inputs"]["author_brief"]
+        ):
+            raise ValueError("The independent original must bind the exact issued record, participant, date and sending acts.")
+        record.update(issued_source_sha256=value_digest(issued.model_dump(mode="json")),
+                      issued_receipt_sha256=original_receipt["receipt_sha256"])
+    return record
 
 
 def _retained_audit_sender_plan(
@@ -1302,7 +1327,8 @@ def _retained_audit_sender_plan(
 ) -> tuple[RepairPlan, dict[str, Any], DesignOutput, set[str], str]:
     previous = replace(runner, revision=runner.revision - 1, directory=runner.directory.with_name(str(runner.revision - 1)))
     identity = details["source_id"]
-    if details != document_audit_sender_return(previous, identity):
+    issued = (parent.owned_records or {}).get(identity) if details.get("issued_source_sha256") else None
+    if details != document_audit_sender_return(previous, identity, issued=issued):
         raise ValueError("The two independently omitted sender attestations changed.")
     history = runner.ledger.events(runner.manifest.batch_id, runner.family)
     choice = next(row["details"] for row in history if row["revision"] == previous.revision and row["kind"] == "repair_plan_selection")
@@ -1316,7 +1342,8 @@ def _retained_audit_sender_plan(
     declared = " and ".join(f"{grant['recipient']} on {grant['sent_on']}" for grant in details["grants"])
     clarification = (f" Record the original documented delivery to {declared} in the deliveries field. "
                      "This is an attestation of the original sending act. Do not make a new delivery.")
-    revised = plan.model_copy(update={"tickets": plan.tickets | {identity: plan.tickets[identity] + clarification}})
+    local = "Retain the exact issued version of your own earlier record." if issued is not None else plan.tickets[identity]
+    revised = plan.model_copy(update={"tickets": plan.tickets | {identity: local + clarification}})
     return revised, receipt, design, affected, job
 
 

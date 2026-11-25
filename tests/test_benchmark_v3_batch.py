@@ -3523,7 +3523,8 @@ def test_nested_scale_ticket_cannot_supply_undocumented_names_and_periods(approv
     assert ticket_authority.unsupported_literals(design, unsafe, sources[1].text) == []
 
 
-def test_audit_sender_retry_only_clarifies_the_committed_delivery(approved, monkeypatch):
+@pytest.mark.parametrize("restore_issued", [False, True])
+def test_audit_sender_retry_only_clarifies_the_committed_delivery(approved, monkeypatch, restore_issued):
     from benchmark_v3.batch import autonomous_realism
     from benchmark_v3.batch.sessions import SessionRunner
 
@@ -3533,15 +3534,21 @@ def test_audit_sender_retry_only_clarifies_the_committed_delivery(approved, monk
     sources = [Source(id=row.source_id, title="Record", text="Ordinary retained body.") for row in design.inventory]
     bundles, freeze = science.freeze_bundles(slot, design, sources)
     parent = autonomous_realism.ReturnedFile(design, bundles, freeze, {}, {}, {}, None, [],
-        audit_repair_sources=frozenset({"src1"}))
+        audit_repair_sources=frozenset({"src1"}), owned_records={"src1": sources[0]} if restore_issued else None)
     original = "Clarify the matter in your own record. Do not make a new delivery."
     plan = autonomous_realism.RepairPlan(disposition="repair", objections={},
         tickets={"src1": original}, progress="initial", rationale="Local repair.")
     proof = {"source_id": "src1", "grants": [{"recipient": "Documented Recipient", "sent_on": "2028-06-02"}]}
+    if restore_issued:
+        proof["issued_source_sha256"] = authorisation.commitment(sources[0])
     receipt = {"receipt_sha256": "a" * 64}
     runner = commission.session_runner(ledger, "G", 3)
     artifacts.write_json(runner.directory.with_name("2") / "design.json", design.model_dump(mode="json"))
-    monkeypatch.setattr(autonomous_realism, "document_audit_sender_return", lambda *_: proof)
+    def retained(_, source, *, issued):
+        assert source == "src1" and issued == (sources[0] if restore_issued else None)
+        return proof
+
+    monkeypatch.setattr(autonomous_realism, "document_audit_sender_return", retained)
     monkeypatch.setattr(ledger, "events", lambda *_: [
         {"revision": 2, "kind": "repair_plan_selection", "details": receipt | {"job": "repair-plan"}},
     ])
@@ -3551,7 +3558,8 @@ def test_audit_sender_retry_only_clarifies_the_committed_delivery(approved, monk
     revised, original_receipt, selected_design, affected, _ = autonomous_realism._retained_audit_sender_plan(runner, slot, parent, proof)
 
     assert original_receipt == receipt and selected_design == design and affected == {"src1"}
-    assert revised.tickets == {"src1": original + " Record the original documented delivery to Documented Recipient on "
+    local = "Retain the exact issued version of your own earlier record." if restore_issued else original
+    assert revised.tickets == {"src1": local + " Record the original documented delivery to Documented Recipient on "
         "2028-06-02 in the deliveries field. This is an attestation of the original sending act. Do not make a new delivery."}
     with pytest.raises(ValueError, match="attestations changed"):
         autonomous_realism._retained_audit_sender_plan(runner, slot, parent, proof | {"grants": []})

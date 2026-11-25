@@ -1663,7 +1663,9 @@ def release_audit_documentary_repair(ledger: PooledLedger, batch: str, family: s
         })
 
 
-def release_audit_sender_retry(ledger: PooledLedger, batch: str, family: str, source_id: str) -> None:
+def release_audit_sender_retry(
+    ledger: PooledLedger, batch: str, family: str, source_id: str, *, restore_issued: bool = False,
+) -> None:
     """Send the exact documentary repair to a new author with a documented delivery clarification."""
     with ledger.coordinator_lock():
         ledger.require_running()
@@ -1674,9 +1676,21 @@ def release_audit_sender_retry(ledger: PooledLedger, batch: str, family: str, so
                 or (issue["stage"], issue["code"], issue["evidence"]) != ("author", "scientific_review", expected)):
             raise ValueError("A fresh sender requires the exact omitted attestation failure.")
         runner = commission.session_runner(ledger, family, revision)
-        reviewed = autonomous_realism.document_audit_sender_return(runner, source_id)
         release = autonomous_realism.release_event(runner)
-        assert release is not None
+        if release is None:
+            raise ValueError("A sender recovery requires the exact independently proposed documentary revision.")
+        issued = None
+        if restore_issued:
+            slot = next(row for row in commission.portfolio.slots if row.family_id == family)
+            if len(science.condition_ids(slot)) != 1 or any(key in release for key in (
+                "scope_ticket_omission", "owned_source_revisions", "incoming_particulars", "exact_recipient_edit",
+            )):
+                raise ValueError("The exact issued record may reopen only in the same natural documentary lineage.")
+            parent = autonomous_realism._read_return(runner, slot, release)
+            issued = next((source for source in parent.bundles[parent.freeze.natural] if source.id == source_id), None)
+            if issued is None:
+                raise ValueError("The original independent review did not include the requested issued record.")
+        reviewed = autonomous_realism.document_audit_sender_return(runner, source_id, issued=issued)
         ledger.release(batch, family, revision + 1, "design", parent_sha256=reviewed["receipt_sha256"],
                        reference="Fresh participant turn for an omitted historic delivery attestation.")
         ledger.event(batch, family, revision + 1, "transition", repair_authority.REVISION, "design", "design",
