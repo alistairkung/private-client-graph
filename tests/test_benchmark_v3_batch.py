@@ -3703,6 +3703,38 @@ def test_partial_author_repair_retains_only_ticketed_brief_changes():
         autonomous_realism._without_unapproved_design_edits(design, derived)
 
 
+def test_misaddressed_ticket_omission_requires_exact_reviewed_author(approved, monkeypatch):
+    from benchmark_v3.batch import author_context, autonomous_realism
+
+    ledger, commission = approved
+    runner = commission.session_runner(ledger, "G", 2)
+    design = DesignOutput.model_validate(_design("G"))
+    actor = design.inventory[0].author.split(",", 1)[0]
+    artifacts.write_json(runner.directory / "design.json", design.model_dump(mode="json"))
+    prior = autonomous_realism.RepairPlan(
+        disposition="repair", progress="initial", rationale="Ordinary repair.", objections={},
+        tickets={"src1": "Different: Retain your native file.", "src2": "Keep your other Source."},
+    )
+    report = author_context.AuthorContextReview(
+        verdict="return", findings={}, objections=[f"src1 — Remove the Different revision ticket from {actor}'s cover packet."],
+    )
+    receipt = {"receipt_sha256": "a" * 64}
+    packet = {"participant_packets": {"src1": {"revision_ticket": prior.tickets["src1"]}}}
+    monkeypatch.setattr(autonomous_realism, "pre_author_scope_return", lambda *args, **kwargs: (
+        {"scope_receipt_sha256": receipt["receipt_sha256"]}, prior,
+    ))
+    monkeypatch.setattr(type(runner), "committed_result", lambda *_: (
+        report, receipt, {"inputs": {"audit_rules": json.dumps(packet)}},
+    ))
+    slot = commission.portfolio.slots[0]
+    commitment, derived, _ = autonomous_realism.remove_misaddressed_ticket(runner, slot)
+    assert commitment["source_id"] == "src1"
+    assert derived.tickets == {"src2": prior.tickets["src2"]}
+    packet["participant_packets"]["src1"]["revision_ticket"] = "Different: A different instruction."
+    with pytest.raises(ValueError, match="exact different author"):
+        autonomous_realism.remove_misaddressed_ticket(runner, slot)
+
+
 def test_quoted_ticket_omission_keeps_every_other_instruction():
     from benchmark_v3.batch import autonomous_realism
 

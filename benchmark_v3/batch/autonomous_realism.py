@@ -1370,7 +1370,35 @@ def _reopen_scope_omission(
         return remove_future_reference(runner, slot, FutureReferenceOmission.model_validate(record["future_reference"]))
     if record.get("quoted_ticket_instruction"):
         return remove_quoted_ticket_instruction(runner, slot)
+    if record.get("misaddressed_ticket"):
+        return remove_misaddressed_ticket(runner, slot)
     return remove_separate_reply_ticket(runner, slot, record["source_id"])
+
+
+def remove_misaddressed_ticket(
+    runner: SessionRunner, slot: FamilySlot,
+) -> tuple[dict[str, Any], RepairPlan, dict[str, Any]]:
+    retained, prior = pre_author_scope_return(runner, slot=slot)
+    review, receipt, request = runner.committed_result("author", author_context.JOB, "audit", author_context.AuthorContextReview)
+    objection = review.objections[0] if len(review.objections) == 1 else ""
+    match = re.match(r"^([\w-]+)\s*[:—-]\s*Remove the (\w+) revision ticket from ([^.]+)'s [^.]+ packet\.", objection)
+    if match is None or receipt["receipt_sha256"] != retained["scope_receipt_sha256"]:
+        raise ValueError("The independent review must explicitly identify the whole misaddressed ticket.")
+    identity, intended, actor = match.groups()
+    reviewed = commissioning._read_json(request["inputs"]["audit_rules"])["participant_packets"].get(identity, {})
+    design = artifacts.read_contract(runner.directory / "design.json", DesignOutput)
+    participant = next(row for row in design.inventory if row.source_id == identity)
+    ticket = prior.tickets.get(identity)
+    if (ticket is None or reviewed.get("revision_ticket") != ticket or not ticket.startswith(intended + ":")
+            or participant.author.split(",", 1)[0] != actor or participant.author.split(maxsplit=1)[0] == intended):
+        raise ValueError("The reviewed ticket must match its exact different author and retained plan.")
+    plan = prior.model_copy(update={"tickets": {key: value for key, value in prior.tickets.items() if key != identity},
+                                    "progress": "improved"})
+    return {
+        "misaddressed_ticket": True, "source_id": identity, "scope_receipt_sha256": receipt["receipt_sha256"],
+        "reviewed_pre_author_return": retained, "removed_ticket_sha256": commissioning.digest(ticket.encode()),
+        "prior_plan_sha256": authorisation.commitment(prior), "derivative_sha256": authorisation.commitment(plan),
+    }, plan, receipt
 
 
 def remove_quoted_ticket_instruction(
