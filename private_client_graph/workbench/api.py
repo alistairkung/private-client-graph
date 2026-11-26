@@ -13,12 +13,13 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 from private_client_graph.persistence.database import database_engine
 from .comparison import compare_experiments
 from .contracts import Comparison, ExperimentDetail, HistoryPage
+from .exploratory_workload import mount_exploratory_workload
 from .index import experiment_detail, history_page
 
 PREFIX = '/api/research/v1'
 
 
-def create_app(*, refresh: Callable[[], None] | None = None) -> FastAPI:
+def create_app(*, refresh: Callable[[], None] | None = None, show_exploratory: bool = True) -> FastAPI:
     app = FastAPI(title='PCG Research read-only API', version='1')
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=['localhost', '127.0.0.1', '[::1]', 'testserver'])
     root = Path(os.getenv('PCG_RESEARCH_ARTIFACTS', 'runs/research'))
@@ -86,6 +87,8 @@ def create_app(*, refresh: Callable[[], None] | None = None) -> FastAPI:
 
     from .workspace_api import mount_workspace_reads
     mount_workspace_reads(app, root, refresh)
+    if show_exploratory:
+        mount_exploratory_workload(app, PREFIX)
     return app
 
 

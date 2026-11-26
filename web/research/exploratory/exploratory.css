@@ -1,0 +1,35 @@
+.exploratory-workload {
+  max-inline-size: 78ch;
+}
+
+.exploratory-workload header {
+  margin-block-end: 1.5rem;
+}
+
+.exploratory-source-picker {
+  display: grid;
+  gap: 0.375rem;
+  max-inline-size: 100%;
+}
+
+.exploratory-source-picker select {
+  inline-size: 100%;
+}
+
+.exploratory-workload article {
+  margin-block: 1.5rem;
+}
+
+.exploratory-source-text {
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.exploratory-workload dd {
+  margin-inline-start: 0;
+  overflow-wrap: anywhere;
+}
+
+.exploratory-sidebar-link {
+  margin-block-start: 0.75rem;
+}
