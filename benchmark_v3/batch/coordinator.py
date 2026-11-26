@@ -1402,7 +1402,7 @@ def release_returned_pre_author_plan(
             if not progress:
                 raise ValueError("A repeated un-authored scope repair requires tangible progress on earlier objections.")
             omission = autonomous_realism.remove_separate_reply_ticket(runner, slot, omit_reply_for)[0] if omit_reply_for else None
-        release = original | {
+        release = {key: value for key, value in original.items() if key != "scope_ticket_omission"} | {
             "pre_author_scope_return": record,
             **({"keep_documentary_limits": True, "narrow_originating_records": True} if keep_documentary_limits else {}),
             **({"local_repair_option": local_repair_option.strip()} if local_repair_option is not None else {}),

@@ -1172,7 +1172,7 @@ def pre_author_progress(previous: list[dict[str, Any]], current: dict[str, Any],
 
     current_sources = leading_sources(current)
     previous_sources = [leading_sources(record) for record in previous]
-    return bool(current_sources and all(previous_sources) and current_sources.isdisjoint(set().union(*previous_sources)))
+    return bool(current_sources and previous_sources[-1] and current_sources.isdisjoint(set().union(*previous_sources)))
 
 
 def _authored_scope_receipts(release: dict[str, Any]) -> list[str]:
@@ -1216,6 +1216,16 @@ def pre_author_scope_return(runner: SessionRunner, *, slot: FamilySlot | None = 
         plan, planner, _ = _verify_partial_packet_plan(runner, slot, _read_return(runner, slot, parent), partial)
         if plan.revised_design != artifacts.read_contract(runner.directory / "design.json", DesignOutput):
             raise ValueError("The independently returned predispatch derivative differs from its exact design.")
+        chosen = planner
+    elif omission := parent.get("scope_ticket_omission"):
+        if slot is None:
+            raise ValueError("An exact omitted ticket requires the approved documentary workload.")
+        preceding = replace(runner, revision=runner.revision - 1, directory=runner.directory.with_name(str(runner.revision - 1)))
+        actual, plan, planner = _reopen_scope_omission(preceding, slot, omission)
+        retained = _read_return(runner, slot, parent)
+        revised, _ = _verify_plan(slot, retained, plan, attested=True)
+        if actual != omission or revised != artifacts.read_contract(runner.directory / "design.json", DesignOutput):
+            raise ValueError("The returned ticket derivative differs from its exact reviewed scope.")
         chosen = planner
     else:
         history = runner.ledger.events(batch, family)

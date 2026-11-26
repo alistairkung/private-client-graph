@@ -3056,6 +3056,13 @@ def test_scale_preauthor_progress_distinguishes_new_scope_from_a_reworded_return
     assert autonomous_realism.pre_author_progress(previously, findings("Check the authority stated in src3.") | merits, ids)
     assert not autonomous_realism.pre_author_progress(previously, findings("Check the authority in src3 and src2.") | merits, ids)
     assert not autonomous_realism.pre_author_progress(previously, findings("Check the authority stated in src30.") | merits, ids)
+    prior_unlinked = [findings("The operative signing rule is unresolved.") | merits, findings("src1: Misaddressed instruction.")]
+    assert autonomous_realism.pre_author_progress(
+        prior_unlinked, findings("src2: Unavailable earlier issue.", "src3: Unavailable date."), ids,
+    )
+    assert not autonomous_realism.pre_author_progress(
+        prior_unlinked, findings("src1: Still misaddressed.", "src3: Unavailable date."), ids,
+    )
 
 
 def test_scope_review_keeps_the_authenticated_original_separate_from_a_returned_draft():
