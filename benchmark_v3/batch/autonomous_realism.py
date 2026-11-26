@@ -459,9 +459,22 @@ def _select_plan(
         rules = commissioning._read_json(inputs["audit_rules"])
         rules["superseded_capacity_return"] = prior.model_dump(mode="json")
         rules["capacity"]["family_sessions_before_planning"] = resumed["available_sessions"]
+        capacity_instruction = (" Reassess feasibility under the recorded new shared capacity. "
+                                "Independently confirm the documentary repair or retain the scientific return.")
+        if retained := resumed.get("retained_file_sha256"):
+            if retained != authorisation.commitment(parent.freeze):
+                raise ValueError("The authenticated retained file differs from the capacity assessment.")
+            capacity_instruction = (
+                " Reassess the exact retained file under the existing ceiling. The factory preserves verified"
+                " unaffected Sources byte for byte and regenerates only the independently approved changes and"
+                " their actual participant dependency closure. Do not assume every existing Source needs reauthoring."
+                " Check that any changed authority and all dependent judgments are fresh. Keep both whole-file"
+                " lanes, all applicable sectional reads, adjudication, exact audit and required controls. The"
+                " updated available count is calculated after the previous planner. Return infeasible if a"
+                " defensible source-local revision and all scientific gates cannot fit."
+            )
         job = repair_authority.BUDGET_PLAN_JOB
-        plan, receipt = propose(job, PLAN_PROMPT + " Reassess feasibility under the recorded new shared capacity. "
-                                "Independently confirm the documentary repair or retain the scientific return.",
+        plan, receipt = propose(job, PLAN_PROMPT + capacity_instruction,
                                 inputs | {"audit_rules": commissioning.json_text(rules)})
         design, affected = _verify_plan(slot, parent, plan, attested=attested)
         runner.ledger.require_capacity(runner.family, runner.revision, mandatory_jobs(design, affected, verification=True))
@@ -636,6 +649,11 @@ def _include_plan_instruction(runner: SessionRunner, instruction: str) -> bool:
     attempt = next((row for row in runner.ledger.attempts(runner.family)
                     if row["revision"] == runner.revision and row["job"] == repair_authority.PLAN_JOB), None)
     return attempt is None or instruction in commissioning._read_json(attempt["request"])["prompt"]
+
+
+def assumes_whole_file_reauthoring(rationale: str, sources: int) -> bool:
+    return bool(re.search(rf"(?:calls for|requires) fresh isolated authoring for (?:all )?{sources} Sources\b", rationale, re.I)
+                and re.search(r"\bsessions? (?:is|are) available\b", rationale, re.I))
 
 
 def _record_plan_selection(runner: SessionRunner, job: str, receipt: dict[str, Any]) -> None:

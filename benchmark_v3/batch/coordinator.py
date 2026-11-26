@@ -474,6 +474,7 @@ def family_status(ledger: Ledger, batch_id: str, family: str) -> tuple[int, str,
             blocking = None
             if record["kind"] == "reconcile" and record["name"] in {
                 repair_authority.PLAN_RECOVERY, repair_authority.LOCAL_PLAN_RECOVERY, repair_authority.RETAINED_DESIGN_NOTE,
+                repair_authority.CAPACITY_SUCCESSOR,
             }:
                 state = "design"
             if record["kind"] == "reconcile" and (
@@ -1499,6 +1500,40 @@ def release_exact_plan_classification(ledger: PooledLedger, batch: str, family: 
         details, _ = autonomous_realism.classification_retry_details(runner)
         ledger.event(batch, family, revision, "reconcile", repair_authority.PLAN_RECOVERY, state, "design", {
             "exact_classification": details,
+        })
+
+
+def release_retained_file_capacity_review(ledger: PooledLedger, batch: str, family: str) -> None:
+    """Reassess one explicit whole-file reauthoring assumption with the existing local repair authority."""
+    with ledger.coordinator_lock():
+        ledger.require_running()
+        commission = load_commission(ledger, batch)
+        revision, state, issue = family_status(ledger, batch, family)
+        runner = commission.session_runner(ledger, family, revision)
+        release = autonomous_realism.release_event(runner)
+        events = ledger.events(batch, family)
+        if (not ledger.pool.shared_scale or not ledger.requires_workload_merits or release is None
+                or not ledger.pooled_revision(batch, family, revision) or state != "quarantined" or not issue
+                or (issue["stage"], issue["code"]) != ("design", "scientific_review")
+                or any(row["revision"] == revision and row["name"] == repair_authority.CAPACITY_SUCCESSOR for row in events)
+                or any(row["revision"] == revision and row["stage"] != "design" for row in ledger.attempts(family))):
+            raise ValueError("A retained-file capacity review requires the exact preauthor planning return.")
+        prior, receipt, _ = runner.committed_result("design", repair_authority.PLAN_JOB, "audit", autonomous_realism.RepairPlan)
+        slot = next(row for row in commission.portfolio.slots if row.family_id == family)
+        parent = autonomous_realism._read_return(runner, slot, release)
+        total = len(parent.design.inventory)
+        if (prior.disposition != "infeasible" or not prior.tickets
+                or issue["evidence"] != f"Independent repair planning returned infeasible: {prior.rationale}"
+                or not autonomous_realism.assumes_whole_file_reauthoring(prior.rationale, total)):
+            raise ValueError("The exact prior planning return must assume full reauthoring despite identifying local repairs.")
+        ledger.require_capacity(family, revision, {
+            repair_authority.BUDGET_PLAN_JOB,
+            *autonomous_realism.mandatory_jobs(parent.design, set(prior.tickets), verification=True),
+        })
+        ledger.event(batch, family, revision, "reconcile", repair_authority.CAPACITY_SUCCESSOR, state, "design", {
+            "prior_receipt_sha256": receipt["receipt_sha256"],
+            "available_sessions": ledger.effective_budget().families[family] - len(ledger.attempts(family)),
+            "retained_file_sha256": authorisation.commitment(parent.freeze),
         })
 
 

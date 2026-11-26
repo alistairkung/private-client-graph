@@ -4770,6 +4770,20 @@ def test_clean_redesign_after_unstarted_repair_retains_exact_case_reference(appr
         clean_redesign.verify_distinct(runner, design, retained)
 
 
+def test_capacity_reassessment_recognizes_only_the_explicit_full_file_assumption():
+    from benchmark_v3.batch import autonomous_realism
+
+    reason = "The plan calls for fresh isolated authoring for all 65 Sources. Only 70 sessions are available."
+    assert autonomous_realism.assumes_whole_file_reauthoring(reason, 65)
+    assert not autonomous_realism.assumes_whole_file_reauthoring(reason, 64)
+    assert not autonomous_realism.assumes_whole_file_reauthoring(
+        "The plan does not require fresh isolated authoring for all 65 Sources. Only 70 sessions are available.", 65,
+    )
+    assert not autonomous_realism.assumes_whole_file_reauthoring(
+        "The alteration would change the approved scientific contrast. Only 70 sessions are available.", 65,
+    )
+
+
 def test_predispatch_attachment_recovery_rejects_a_reserved_author(approved, monkeypatch):
     from benchmark_v3.batch import autonomous_realism, predispatch_lineage
 

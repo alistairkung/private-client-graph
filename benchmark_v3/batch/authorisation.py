@@ -3,14 +3,16 @@
 from pathlib import Path
 from typing import Any
 
+from pydantic import BaseModel
+
 from benchmark_v3 import commissioning, packet
 from benchmark_v3.batch.contracts import BatchDecision, BatchManifest
 from benchmark_v3.portfolio import ExistingFamily, Portfolio, PortfolioProposal
 from benchmark_v3.replay_manifest import load_family
-from benchmark_v3.research_contracts import Contract, HypothesisRef, OwnerDecision
+from benchmark_v3.research_contracts import HypothesisRef, OwnerDecision
 
 
-def commitment(value: Contract) -> str:
+def commitment(value: BaseModel) -> str:
     return commissioning.digest(commissioning.json_text(value.model_dump(mode="json")).encode())
 
 
