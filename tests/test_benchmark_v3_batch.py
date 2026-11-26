@@ -3710,7 +3710,11 @@ def test_partial_author_repair_retains_only_ticketed_brief_changes():
         autonomous_realism._without_unapproved_design_edits(design, derived)
 
 
-def test_misaddressed_ticket_omission_requires_exact_reviewed_author(approved, monkeypatch):
+@pytest.mark.parametrize("wording", [
+    "Remove the Different revision ticket from {actor}'s cover packet.",
+    "Remove the Different-directed ticket from {actor}’s packet.",
+])
+def test_misaddressed_ticket_omission_requires_exact_reviewed_author(approved, monkeypatch, wording):
     from benchmark_v3.batch import author_context, autonomous_realism
 
     ledger, commission = approved
@@ -3723,7 +3727,7 @@ def test_misaddressed_ticket_omission_requires_exact_reviewed_author(approved, m
         tickets={"src1": "Different: Retain your native file.", "src2": "Keep your other Source."},
     )
     report = author_context.AuthorContextReview(
-        verdict="return", findings={}, objections=[f"src1 — Remove the Different revision ticket from {actor}'s cover packet."],
+        verdict="return", findings={}, objections=["src1 — " + wording.format(actor=actor)],
     )
     receipt = {"receipt_sha256": "a" * 64}
     packet = {"participant_packets": {"src1": {"revision_ticket": prior.tickets["src1"]}}}

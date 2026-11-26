@@ -1391,7 +1391,10 @@ def remove_misaddressed_ticket(
     retained, prior = pre_author_scope_return(runner, slot=slot)
     review, receipt, request = runner.committed_result("author", author_context.JOB, "audit", author_context.AuthorContextReview)
     objection = review.objections[0] if len(review.objections) == 1 else ""
-    match = re.match(r"^([\w-]+)\s*[:—-]\s*Remove the (\w+) revision ticket from ([^.]+)'s [^.]+ packet\.", objection)
+    match = re.match(
+        r"^([\w-]+)\s*[:—-]\s*Remove the (\w+)(?: revision ticket|-directed ticket)"
+        r" from ([^.\n]+)['’]s (?:[^.\n]+ )?packet\.", objection,
+    )
     if match is None or receipt["receipt_sha256"] != retained["scope_receipt_sha256"]:
         raise ValueError("The independent review must explicitly identify the whole misaddressed ticket.")
     identity, intended, actor = match.groups()
