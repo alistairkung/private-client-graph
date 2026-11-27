@@ -46,9 +46,14 @@
   font-size: 11px;
 }
 .research-reference-links {
+  display: grid;
+  gap: 4px;
   margin-block-start: 16px;
   padding-block-start: 8px;
   border-block-start: 1px solid #cbd4c6;
+}
+.experiment-sidebar .research-reference-links a {
+  margin-bottom: 0;
 }
 .research-reference-links small {
   display: block;

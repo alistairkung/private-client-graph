@@ -97,7 +97,7 @@ export function RunExecution({
   const failure = error && (
     <p role="alert">
       {error}{" "}
-      {ready && <button
+      {ready && live && <button
         disabled={busy}
         onClick={() => {
           command.current = null;
@@ -121,7 +121,9 @@ export function RunExecution({
         <div className="run-actions">
           {ready && (
             <button disabled={busy} onClick={() => setReview(true)}>
-              {continuing ? "Review continuation" : error ? "Review and retry start" : "Review frozen Run"}
+              {continuing ? "Review continuation" : error
+                ? live && !authorized ? "Review authorization" : "Review and retry start"
+                : "Review frozen Run"}
             </button>
           )}
           {ready && copy && (
