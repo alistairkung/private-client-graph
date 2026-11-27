@@ -4,8 +4,7 @@ import {
   type PerformanceMetricOptions,
 } from "../../src/shared/research/RunPerformanceChart";
 import type { BenchmarkStageUsage, RunDetail, WorkspaceDetail } from "../shared/contracts";
-import { evidenceMetricLabels, multiSourceEvidenceCoverageDescription } from "./benchmark-metrics";
-import { evidenceMetrics, qualityScope, qualityValue } from "./RunQuality";
+import { evidenceMetricLabels } from "./benchmark-metrics";
 export { metric } from "../../src/shared/research/RunPerformanceChart";
 export const money = (value: number | null, currency: string | null) =>
   value === null
@@ -154,34 +153,40 @@ function verifiedFullPipelineCost(usage: BenchmarkStageUsage | undefined) {
   return { total: usage.estimated_cost, currency: usage.currency };
 }
 
+const graphMetrics = ["qualified_graph", "combined_graph"] as const;
+type GraphScope = typeof graphMetrics[number];
+type RunQuality = NonNullable<RunDetail["quality"]>;
+
+function qualityScope(quality: RunQuality, key: GraphScope) {
+  if (key === "qualified_graph") return `${quality.qualified_inputs} qualified Conditions`;
+  return quality.planned_inputs === quality.qualified_inputs
+    ? `${quality.planned_inputs} evaluation inputs`
+    : `${quality.planned_inputs} evaluation inputs · mixed references`;
+}
+
 function metricOptions(runs: RunDetail[]): PerformanceMetricOptions | undefined {
   const reports = runs.flatMap((run) => run.quality ? [run.quality] : []);
   if (!reports.length) return undefined;
-  return Object.fromEntries(evidenceMetrics.map((key) => {
+  return Object.fromEntries(graphMetrics.map((key) => {
     const scopes = new Set(reports.map((quality) => qualityScope(quality, key)));
     return [key, {
       label: evidenceMetricLabels[key],
       scope: scopes.size === 1 ? [...scopes][0] : "Scope varies by Run",
-      description: key === "joint_only_coverage" ? multiSourceEvidenceCoverageDescription : undefined,
     }];
   }));
 }
 
-function qualityMeasures(quality: NonNullable<RunDetail["quality"]>): PerformanceRun["measures"] {
+function qualityMeasures(quality: RunQuality): PerformanceRun["measures"] {
   const coverage = {
     combined_graph: { scored: quality.observed_inputs, planned: quality.planned_inputs },
     qualified_graph: { scored: quality.observed_qualified_inputs, planned: quality.qualified_inputs },
-    complete_proof: { scored: quality.complete_proof.complete, planned: quality.complete_proof.targets },
-    joint_only_coverage: { scored: quality.observed_joint_targets, planned: quality.joint_only_coverage.targets },
   };
   const coverageLabels = {
     combined_graph: "observed evaluation inputs",
     qualified_graph: "observed qualified Conditions",
-    complete_proof: "complete formal proof targets",
-    joint_only_coverage: "observed multi-Source proof targets",
   };
-  return Object.fromEntries(evidenceMetrics.map((key) => [key, {
-    value: qualityValue(quality, key),
+  return Object.fromEntries(graphMetrics.map((key) => [key, {
+    value: quality[key]?.f1 ?? null,
     label: `${evidenceMetricLabels[key]} · ${qualityScope(quality, key)}`,
     coverage: coverage[key],
     coverageLabel: coverageLabels[key],

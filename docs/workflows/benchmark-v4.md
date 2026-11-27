@@ -161,12 +161,12 @@ paired Run directories. Run
 `uv run pytest tests/research/test_benchmark_v4.py tests/research/test_v3_evaluation_protocol.py`.
 CI uses synthetic fixtures and substituted provider responses.
 
-## Optional Semantic Evidence assessment
+## PCG Evaluation
 
-The owner Workbench can show an AI-assessed, unverified evidence comparison
-for completed Runs. The standalone stage reuses retained quotations and
-requires separate approval for any new DeepSeek calls. See the
-[Semantic Evidence v1 workflow](semantic-evidence-diagnostic-v1.md).
+The owner Workbench shows qualified Graph F1 and approved evidence recovery
+in one section for each completed Run. Optional equivalence matching reuses
+retained quotations and requires separate approval for any DeepSeek calls. See the
+[Ground-Truth-Aligned Evidence Evaluation](semantic-evidence-diagnostic-v1.md).
 
 ## Later retrieval experiment
 

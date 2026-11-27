@@ -1,4 +1,4 @@
-"""Plan, execute and report an independent DeepSeek Semantic Evidence stage."""
+"""Plan, execute and report ground-truth-aligned Semantic Evidence."""
 import argparse
 import json
 import os
@@ -7,9 +7,9 @@ from decimal import Decimal
 from pathlib import Path
 
 from .assessment import MAX_USD, PRICING, execute, open_plan, prepare, upper_cost, frozen_rates
-from .comparison import compare
-from .reporting import report
-from .store import entry, initialize, register_baseline, require, task_root
+from .comparison import compare_reports
+from .reporting import report, report_run
+from .store import entry, initialize, require, task_root
 
 
 def main() -> None:
@@ -24,15 +24,14 @@ def main() -> None:
     plan.add_argument('--task-call-ceiling', type=int, required=True)
     commands.add_parser('initialize-task', help='Provision the shared Semantic Evidence ledger with zero authority'
                         ).add_argument('artifact_root', type=Path)
-    baseline = commands.add_parser('register-baseline', help='Link the retained Extractor v1 diagnostic')
-    baseline.add_argument('artifact_root', type=Path)
-    baseline.add_argument('original_directory', type=Path)
     run = commands.add_parser('run', help='Dispatch only the explicitly approved assessment')
     run.add_argument('directory', type=Path)
     run.add_argument('--approve-plan-sha256', required=True)
     run.add_argument('--approval-reference', required=True)
     run.add_argument('--verified-peak-rates', type=Decimal, nargs=2, metavar=('INPUT', 'OUTPUT'), required=True)
-    commands.add_parser('report', help='Regenerate the private assessment report offline').add_argument('directory', type=Path)
+    read = commands.add_parser('report', help='Regenerate a PCG Evaluation report offline')
+    read.add_argument('directory', type=Path)
+    read.add_argument('--run-id', help='Read a Benchmark v4 Run using the given artifact root')
     comparison = commands.add_parser('compare', help='Compare two Workbench Run assessments offline')
     comparison.add_argument('artifact_root', type=Path)
     comparison.add_argument('left')
@@ -43,15 +42,15 @@ def main() -> None:
         _plan(args)
     elif args.command == 'initialize-task':
         print(initialize(args.artifact_root)['task_id'])
-    elif args.command == 'register-baseline':
-        print(register_baseline(args.artifact_root, args.original_directory))
     elif args.command == 'run':
         input_rate, output_rate = args.verified_peak_rates
         execute(args.directory, approved_digest=args.approve_plan_sha256, approval_reference=args.approval_reference,
                 verified_rates=(input_rate, output_rate), api_key=os.getenv('DEEPSEEK_API_KEY', ''))
     else:
-        result = (compare(require(args.artifact_root, args.left), require(args.artifact_root, args.right))
-                  if args.command == 'compare' else report(args.directory))
+        if args.command == 'compare':
+            result = compare_reports(report_run(args.artifact_root, args.left), report_run(args.artifact_root, args.right))
+        else:
+            result = report_run(args.directory, args.run_id) if args.run_id else report(args.directory)
         print(json.dumps(result, indent=2, ensure_ascii=False, allow_nan=False))
 
 

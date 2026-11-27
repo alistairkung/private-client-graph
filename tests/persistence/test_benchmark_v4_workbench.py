@@ -152,9 +152,16 @@ def test_exact_v4_owner_workbench_freezes_authorizes_starts_and_indexes(database
 
         ledger = store.initialize(root)
         for run_id in (plan['id'], paired['id']):
+            url = f'/api/research/v2/semantic-evidence/runs/{run_id}'
+            exact = client.get(url).raise_for_status().json()
+            assert exact['state'] == 'exact_only'
+            assert exact['graph_f1'] == resolved['benchmark_v4']['qualified']
+            assert exact['target_summary']['evidence_support']['targets'] == 71
+            assert exact['target_summary']['multi_source_evidence_coverage']['targets'] == 30
             assessment.prepare(root / run_id, store.entry(root, run_id),
                                task_root=Path(ledger['root']), task_call_ceiling=73)
             view = client.get(f'/api/research/v2/semantic-evidence/runs/{run_id}').raise_for_status().json()
+            assert view['state'] == 'complete'
             assert len(view['targets']) == 71
             assert all(target['status'] == 'deterministic_delivery_failure' for target in view['targets'])
             assert view['operations']['reserved_attempts'] == 0
@@ -162,6 +169,7 @@ def test_exact_v4_owner_workbench_freezes_authorizes_starts_and_indexes(database
             params={'left': plan['id'], 'right': paired['id']}).raise_for_status().json()
         assert semantic_comparison['formal_targets'] == 71
         assert semantic_comparison['paired_valid_targets'] == 0
+        assert semantic_comparison['comparable']
         assert client.get('/api/research/v2/status').json()['task_budget']['used'] == 70
 
         assert resolved['pipeline_usage']['incremental']['estimated_cost'] == pytest.approx(0.000385)

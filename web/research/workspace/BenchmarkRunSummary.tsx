@@ -2,8 +2,8 @@ import type { BenchmarkRun, RunDetail } from "../shared/contracts";
 import { metric, money } from "./RunChart";
 import { evidenceMetricLabels, formatF1Basis, multiSourceProofCompletionLabel } from "./benchmark-metrics";
 import { RunRelationshipMatrix } from "./RunRelationshipMatrix";
-import { RunQuality } from "./RunQuality";
-import { SemanticEvidencePanel } from "./SemanticEvidence";
+import { BenchmarkV4Summary } from "./BenchmarkV4Summary";
+import { PCGEvaluation } from "./PCGEvaluation";
 import "./run-relationship-matrix.css";
 
 export function BenchmarkRunSummary({
@@ -13,52 +13,80 @@ export function BenchmarkRunSummary({
   run: RunDetail;
   benchmark: BenchmarkRun;
 }) {
-  const semantic = run.benchmark_v4?.state === "complete"
-    ? <SemanticEvidencePanel key={run.id} run={run.id} />
-    : null;
+  const mixed = run.benchmark_v4;
+  const qualifiedGraph = run.quality ? run.quality.qualified_graph : mixed?.qualified;
   return (
     <section
       className="benchmark-run-summary"
-      aria-label="Evaluation Protocol v1 results"
+      aria-label={mixed ? "PCG Evaluation" : "Evaluation Protocol v1 results"}
     >
-      <p className="overview-population">
-        Evaluation Protocol v1 · {benchmark.cohort.planned_conditions}{" "}
-        Environment Conditions
-      </p>
-      {run.quality ? (
-        <RunQuality quality={run.quality} inline>{semantic}</RunQuality>
-      ) : <>
-        <div className={semantic ? "benchmark-overview-line benchmark-overview-line-metrics" : "benchmark-overview-line"}>
-          <div>
-            <span>All-condition Graph F1</span>
-            <strong>{metric(benchmark.cohort.all_condition_micro_f1)}</strong>
-            <small>
-              {formatF1Basis(
-                benchmark.cohort.all_conditions.tp,
-                benchmark.cohort.all_conditions.fp,
-                benchmark.cohort.all_conditions.fn,
-              )}
-            </small>
-          </div>
-          <div>
-            <span>{evidenceMetricLabels.complete_proof}</span>
-            <strong>
-              {benchmark.cohort.planned_proofs
-                ? `${benchmark.cohort.complete_proofs} of ${benchmark.cohort.planned_proofs} complete`
-                : "Unavailable · 0 eligible"}
-            </strong>
-            <small>Annotated relationships with a complete approved proof</small>
-          </div>
-          {!semantic && <RelationshipMatrix benchmark={benchmark} />}
-        </div>
-        {semantic}
-      </>}
-      {(run.quality || semantic) && (
-        <div className="protocol-results-matrix">
-          <RelationshipMatrix benchmark={benchmark} />
-        </div>
-      )}
+      {mixed ? (
+        <>
+          <PCGEvaluation key={run.id} run={run}>
+            {qualifiedGraph && <div className="protocol-results-matrix">
+              <RunRelationshipMatrix
+                counts={qualifiedGraph.counts}
+                expectedEdgesWithoutGraph={benchmark.cohort.expected_edges_without_graph}
+                scope={`${qualifiedGraph.inputs} qualified Conditions`}
+              />
+            </div>}
+          </PCGEvaluation>
+          <details>
+            <summary>Additional Benchmark v4 diagnostics</summary>
+            <BenchmarkV4Summary run={run} />
+          </details>
+        </>
+      ) : <LegacyEvaluation benchmark={benchmark} />}
+      <details>
+        <summary>Accounting and verified provenance</summary>
+        <p>
+          Retained attempts {run.evaluation.cost.attempts} · Estimated spend{" "}
+          {money(run.evaluation.cost.total, run.evaluation.cost.currency)}
+        </p>
+        <p>
+          Run {run.id} · {run.benchmark_v4 ? "Artifact" : "Archive"} {run.artifact_digest}
+        </p>
+        <pre>
+          {JSON.stringify(
+            { scope: benchmark.scope, provenance: run.provenance },
+            null,
+            2,
+          )}
+        </pre>
+      </details>
+    </section>
+  );
+}
 
+function LegacyEvaluation({ benchmark }: { benchmark: BenchmarkRun }) {
+  return (
+    <>
+      <p className="overview-population">
+        Evaluation Protocol v1 · {benchmark.cohort.planned_conditions} Environment Conditions
+      </p>
+      <div className="benchmark-overview-line">
+        <div>
+          <span>All-condition Graph F1</span>
+          <strong>{metric(benchmark.cohort.all_condition_micro_f1)}</strong>
+          <small>
+            {formatF1Basis(
+              benchmark.cohort.all_conditions.tp,
+              benchmark.cohort.all_conditions.fp,
+              benchmark.cohort.all_conditions.fn,
+            )}
+          </small>
+        </div>
+        <div>
+          <span>{evidenceMetricLabels.complete_proof}</span>
+          <strong>
+            {benchmark.cohort.planned_proofs
+              ? `${benchmark.cohort.complete_proofs} of ${benchmark.cohort.planned_proofs} complete`
+              : "Unavailable · 0 eligible"}
+          </strong>
+          <small>Annotated relationships with a complete approved proof</small>
+        </div>
+        <RelationshipMatrix benchmark={benchmark} />
+      </div>
       <details className="protocol-metrics">
         <summary>Protocol metrics and denominators</summary>
         <p>
@@ -176,27 +204,10 @@ export function BenchmarkRunSummary({
           </table>
         </div>
       </details>
-      {!run.benchmark_v4 && benchmark.scope.observation_origin === "live" && (
+      {benchmark.scope.observation_origin === "live" && (
         <p>Historical baseline · reference for prospective comparison.</p>
       )}
-      <details>
-        <summary>Accounting and verified provenance</summary>
-        <p>
-          Retained attempts {run.evaluation.cost.attempts} · Estimated spend{" "}
-          {money(run.evaluation.cost.total, run.evaluation.cost.currency)}
-        </p>
-        <p>
-          Run {run.id} · {run.benchmark_v4 ? "Artifact" : "Archive"} {run.artifact_digest}
-        </p>
-        <pre>
-          {JSON.stringify(
-            { scope: benchmark.scope, provenance: run.provenance },
-            null,
-            2,
-          )}
-        </pre>
-      </details>
-    </section>
+    </>
   );
 }
 

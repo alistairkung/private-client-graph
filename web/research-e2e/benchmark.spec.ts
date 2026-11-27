@@ -226,10 +226,10 @@ test("compatible imports compare the full roster and changed order withholds del
   await expect(page.getByText(/deltas withheld/i)).toBeVisible();
 });
 
-test("evidence quality controls and comparison fit the viewport and retain keyboard selection", async ({ page }, testInfo) => {
+test("unified evaluation shows both F1 scores and compares completed evidence assessments", async ({ page }, testInfo) => {
   const graph = (inputs: number) => ({
     inputs, valid_graphs: inputs, without_graph: 0, exact_graphs: 0,
-    precision: 1, recall: 0.5, f1: 2 / 3, counts: { tp: 2, fp: 0, fn: 2 }, outcomes: {},
+    precision: 105 / 115, recall: 105 / 113, f1: 210 / 228, counts: { tp: 105, fp: 10, fn: 8 }, outcomes: {},
   });
   const quality: EvidenceQuality = {
     version: "deterministic_evidence_quality_v1", state: "complete",
@@ -270,152 +270,202 @@ test("evidence quality controls and comparison fit the viewport and retain keybo
     await route.fulfill({ response, json: { ...await response.json(), benchmark_v4: comparison } });
   });
 
+  const exactAdjustment = {
+    f1: 0.7979152656355077, incomplete_recovered_proofs: 56,
+    weight_numerator: 71, weight_denominator: 113, proofs_completed_by_equivalence: 0,
+  };
   const assessment: SemanticEvidenceReport = {
-    status: "Exploratory and unverified", run_id: control, plan_sha256: "fixture",
-    temporal_limitation: "Benchmark v4 targets have no explicit assessment cutoff. Temporal correctness at that cutoff remains unverified.",
-    evaluator: { version: "pcg-semantic-evidence-v1", prompt_sha256: "prompt", model: "deepseek-v4-pro",
+    methodology: "Ground-Truth-Aligned Evidence Evaluation", state: "complete", run_id: control, plan_sha256: "fixture", graph_f1: graph(34),
+    evidence_adjusted_f1: {
+      ...exactAdjustment, f1: 0.7998247328861775, incomplete_recovered_proofs: 55, proofs_completed_by_equivalence: 1,
+    },
+    scope_note: "Approved members define the comparison. Preserve stated dates, timing and authority.",
+    evaluator: { version: "pcg-semantic-evidence-equivalence", prompt_sha256: "prompt", model: "deepseek-v4-pro",
       observation_origin: "offline_fixture",
       settings: { model: "deepseek-v4-pro", temperature: 0, timeout_seconds: 90, max_retries: 0, thinking: "disabled" } },
-    target_summary: { formal_targets: 71, recovered_targets: 67,
-      verdicts: { Supported: 6, "Partially Supported": 29, Unsupported: 15 },
-      semantic_outcomes: { judged: 50, invalid_judgment: 17, deterministic_delivery_failure: 4 },
-      flags: { potentially_sufficient_overlooked_by_exact_matching: 1 },
-      evidence_support: { count: 35, targets: 71, rate: 35 / 71 },
-      proof_completion: { count: 6, targets: 71, rate: 6 / 71 },
-      multi_source_evidence_coverage: { targets: 30, judged: 19, mean: 0.2 },
-      potential_partial_support_beyond_exact_matching: { count: 22, targets: 51, rate: 22 / 51 },
-      potentially_sufficient_overlooked_by_exact_matching: { count: 1, formal_target_denominator: 71,
-        recovered_exact_incomplete_denominator: 56, recovered_exact_incomplete_judged: 42 } },
-    operations: { planned_attempts: 69, reserved_attempts: 2, reused_judgments: 0,
+    target_summary: { formal_targets: 71, pair_verdicts: { Equivalent: 1, "Partially Equivalent": 1 },
+      semantic_outcomes: { judged: 1, invalid_judgment: 1, deterministic_delivery_failure: 4, no_eligible_comparison: 65 },
+      candidate_pairs: 3,
+      evidence_support: { count: 21, targets: 71, rate: 21 / 71 },
+      proof_completion: { count: 12, targets: 71, rate: 12 / 71 },
+      multi_source_evidence_coverage: { targets: 30, matched_target_equivalents: 13, mean: 13 / 30 },
+      exact_matched_members: 25, unmatched_required_members: 100, targets_with_added_matches: 1, additional_matched_members: 1, newly_completed_proofs: 1 },
+    operations: { planned_attempts: 2, reserved_attempts: 2, reused_judgments: 0,
       known_estimated_peak_usd: 0.013, reserved_attempts_without_usage: 0, mean_latency_seconds: 2.5 },
-    controls: [],
     targets: [
       { id: "first", condition: "F0", edge: ["Morgan Example", "trustee_of", "North Example Trust"],
-        status: "judged", flags: ["potentially_sufficient_overlooked_by_exact_matching", "joint_only_supported_with_one_cited_source"], control: null,
-        deterministic: { exact_outcome: "incomplete", joint_only: true, best_exact_pair_coverage: 0.5,
-          matches_any_approved_pair: [], approved_route_source_set_present: false },
-        quotations: [{ id: "Q1", source: "S1", source_id: "register", text: "Morgan is the current holder." }],
-        judgment: { verdict: "Supported", facts: [
-          { fact: "relationship", status: "satisfied", quotation_ids: ["Q1"], reason: "The register identifies the current holder." },
-          { fact: "timing", status: "satisfied", quotation_ids: ["Q1"], reason: "The register identifies the holder as current." },
-        ] }, error: null, invalid_response: null, provider: null, reuse: null },
+        status: "judged", deterministic: { exact_outcome: "incomplete", joint_only: true, best_exact_pair_coverage: 0.5 },
+        members: [
+          { id: "M1", source: "S1", source_id: "register", text: "Morgan is the current holder." },
+          { id: "M2", source: "S2", source_id: "deed", text: "The appointment took effect on 1 June." },
+        ],
+        quotations: [
+          { id: "Q1", source: "S1", source_id: "register", text: "Morgan is the current holder." },
+          { id: "Q2", source: "S2", source_id: "deed", text: "The appointment had effect from the first of June." },
+          { id: "Q3", source: "S2", source_id: "deed", text: "The appointment took effect." },
+          { id: "Q4", source: "S3", source_id: "memo", text: "An unrelated memorandum mentions Morgan." },
+        ],
+        exact_matches: { M1: "Q1" }, semantic_members: ["M2"],
+        routes: [{ members: ["M1", "M2"], matched_members: ["M1", "M2"], complete: true }],
+        candidate_pairs: [{ member_id: "M2", quotation_id: "Q2" }, { member_id: "M2", quotation_id: "Q3" }],
+        decisions: [
+          { member_id: "M2", quotation_id: "Q2", verdict: "Equivalent", reason: "Same operative date.", material_differences: [] },
+          { member_id: "M2", quotation_id: "Q3", verdict: "Partially Equivalent", reason: "The date is missing.", material_differences: ["No effective date in the quoted text."] },
+        ], error: null, invalid_response: null, provider: null, reuse: null },
       { id: "invalid", condition: "F1", edge: ["Dana Example", "trustee_of", "North Example Trust"],
-        status: "invalid_judgment", flags: [], control: null, deterministic: null, quotations: [],
-        judgment: null, error: "Invalid judgment schema", invalid_response: '{"verdict":"unsupported"}',
-        provider: null, reuse: null },
+        status: "invalid_judgment", deterministic: { exact_outcome: "incomplete", joint_only: false, best_exact_pair_coverage: 0 },
+        members: [{ id: "M1", source: "S1", source_id: "register", text: "Dana is the current holder." }],
+        quotations: [{ id: "Q1", source: "S1", source_id: "register", text: "Dana is listed as holder." }],
+        exact_matches: {}, semantic_members: [], routes: [{ members: ["M1"], matched_members: [], complete: false }],
+        candidate_pairs: [{ member_id: "M1", quotation_id: "Q1" }], decisions: [],
+        error: "Invalid equivalence judgment schema", invalid_response: '{"verdict":"Supported"}', provider: null, reuse: null },
     ],
   };
-  let semanticReads = 0;
-  await page.route(`**/semantic-evidence/runs/${control}`, async (route) => {
-    semanticReads += 1;
-    await route.fulfill({ json: assessment });
+  let evaluationReads = 0;
+  let selectedState: SemanticEvidenceReport["state"] = "exact_only";
+  function selectedReport(): SemanticEvidenceReport {
+    if (selectedState === "complete") return {
+      ...assessment,
+      targets: [assessment.targets[0]],
+      target_summary: { ...assessment.target_summary, candidate_pairs: 2,
+        semantic_outcomes: { judged: 1, deterministic_delivery_failure: 4, no_eligible_comparison: 66 },
+      },
+    };
+    const exact = selectedState === "exact_only";
+    return {
+      ...assessment, state: selectedState, plan_sha256: exact ? null : assessment.plan_sha256,
+      evidence_adjusted_f1: exactAdjustment,
+      operations: exact ? null : assessment.operations,
+      target_summary: {
+        ...assessment.target_summary,
+        evidence_support: { count: 16, targets: 71, rate: 16 / 71 },
+        proof_completion: { count: 11, targets: 71, rate: 11 / 71 },
+        multi_source_evidence_coverage: { targets: 30, matched_target_equivalents: 12, mean: 0.4 },
+      },
+    };
+  }
+
+  await page.route(`**/semantic-evidence/runs/${control}`, (route) => {
+    evaluationReads += 1;
+    return route.fulfill({ json: selectedReport() });
   });
-  const semantic: SemanticComparison = {
-    status: assessment.status, temporal_limitation: assessment.temporal_limitation,
-    evaluator: assessment.evaluator, formal_targets: 71, paired_valid_targets: 1,
-    left: { ...assessment, run_id: treatment, target_summary: {
-      ...assessment.target_summary, evidence_support: { count: 34, targets: 71, rate: 34 / 71 },
-    } }, right: assessment,
-    transitions: [{ id: "first", condition: "F0", edge: assessment.targets[0].edge,
-      left: { status: "judged", verdict: "Partially Supported", exact_outcome: "incomplete",
-        potentially_sufficient: false, reused: false },
-      right: { status: "judged", verdict: "Supported", exact_outcome: "incomplete",
-        potentially_sufficient: true, reused: false },
-      facts_comparable: true, changed_facts: [
-        { fact: "relationship", left: "missing", right: "satisfied" },
-        { fact: "timing", left: "missing", right: "satisfied" },
-      ],
-    }],
-  };
-  await page.route("**/semantic-evidence/comparison?*", (route) => route.fulfill({ json: semantic }));
+  await page.route("**/semantic-evidence/comparison?*", (route) => {
+    const comparable = selectedState === "complete";
+    const semantic: SemanticComparison = {
+      methodology: assessment.methodology, scope_note: assessment.scope_note, comparable,
+      evaluator: assessment.evaluator, formal_targets: 71, paired_valid_targets: 1,
+      left: { ...assessment, run_id: treatment, evidence_adjusted_f1: exactAdjustment, target_summary: {
+        ...assessment.target_summary, evidence_support: { count: 20, targets: 71, rate: 20 / 71 },
+        proof_completion: { count: 11, targets: 71, rate: 11 / 71 }, newly_completed_proofs: 0,
+      } }, right: selectedReport(),
+      transitions: comparable ? [{ id: "first", condition: "F0", edge: assessment.targets[0].edge,
+        left: { status: "judged", exact_outcome: "incomplete", complete: false, reused: false },
+        right: { status: "judged", exact_outcome: "incomplete", complete: true, reused: false },
+        changed_members: [{ member_id: "M2", source_id: "deed", quotation: "The appointment took effect on 1 June.",
+          left: "unmatched", right: "semantic" }],
+      }] : [],
+    };
+    return route.fulfill({ json: semantic });
+  });
 
   await page.goto(`/#workspace=${experiment}&run=${control}`);
   await page.getByText("Run history and selection", { exact: true }).click();
   const metric = page.getByRole("combobox", { name: "Performance metric" });
-  await metric.selectOption("joint_only_coverage");
-  const coveragePoint = page.getByRole("tabpanel", { name: "By Run" }).getByRole("button", {
-    name: /^Run \d+, Multi-Source Evidence Coverage/,
-    pressed: true,
+  await metric.selectOption("qualified_graph");
+  const graphPoint = page.getByRole("tabpanel", { name: "By Run" }).getByRole("button", {
+    name: /^Run \d+, Qualified Graph F1/, pressed: true,
   });
-  await coveragePoint.focus();
-  await expect(coveragePoint).toBeFocused();
-  await expect(coveragePoint).toHaveAccessibleDescription(/Average percentage of required evidence recovered for relationships that need multiple Sources\. Uses the best-matching approved proof route\./);
-
-  const runTab = page.getByRole("tab", { name: "By Run" });
-  await runTab.press("ArrowRight");
+  await graphPoint.focus();
+  await expect(graphPoint).toBeFocused();
+  await page.getByRole("tab", { name: "By Run" }).press("ArrowRight");
   await expect(page.getByRole("tab", { name: "Vs Cost" })).toBeFocused();
-  await expect(metric).toHaveValue("joint_only_coverage");
-  await expect(metric).toHaveAccessibleDescription("30 multi-Source proof targets · qualified cohort");
-  await expect(page.getByRole("heading", { name: "Multi-Source Evidence Coverage vs Cost" })).toBeVisible();
+  await expect(metric).toHaveValue("qualified_graph");
+  await expect(page.getByRole("heading", { name: "Qualified Graph F1 vs Cost" })).toBeVisible();
   await expect(page).toHaveURL(new RegExp(control + "$"));
 
-  await page.getByRole("combobox", { name: "Compare with verified Run" }).selectOption(treatment);
-  const table = page.getByRole("table", { name: "Evidence quality comparison" });
-  await expect(table.getByRole("row", { name: /Proof Completion.*qualified cohort/ })).toBeVisible();
-  await expect(table.getByRole("row", { name: /Multi-Source Evidence Coverage/ })).toBeVisible();
-  for (const element of [metric, table]) {
-    expect(await element.evaluate((node) => {
-      const { left, right } = node.getBoundingClientRect();
-      return left >= 0 && right <= window.innerWidth + 1;
-    })).toBe(true);
-  }
+  const evaluation = page.getByRole("region", { name: "PCG Evaluation", exact: true });
+  await expect(evaluation.getByRole("heading", { name: "PCG Evaluation" })).toBeVisible();
+  await expect(evaluation.getByText("Exact-only baseline · combined evaluation pending", { exact: true })).toBeVisible();
+  const performance = evaluation.locator("dl[aria-label='Performance metrics']");
+  const evidence = evaluation.locator("dl[aria-label='Supporting evidence metrics']");
+  await expect(performance.locator("dt")).toHaveText(["Graph F1", "Evidence-Adjusted F1"]);
+  await expect(evidence.locator("dt")).toHaveText(["Evidence Support", "Proof Completion", "Multi-Source Evidence Coverage"]);
+  await expect(performance.getByText("92.11%", { exact: true })).toBeVisible();
+  await expect(performance.getByText("79.79%", { exact: true })).toBeVisible();
+  await expect(performance.getByText("56 incomplete recovered proofs · Exact-only")).toBeVisible();
+  await expect(evidence.getByText("22.54%", { exact: true })).toBeVisible();
+  await expect(evidence.getByText("15.49%", { exact: true })).toBeVisible();
+  await expect(evidence.getByText("40.00%", { exact: true })).toBeVisible();
+  const matrix = evaluation.getByRole("table", { name: "Relationship confusion matrix · 34 qualified Conditions" });
+  await expect(matrix.getByRole("cell", { name: /105 TP/ })).toBeVisible();
+  await expect(matrix.getByRole("cell", { name: /10 FP/ })).toBeVisible();
+  await expect(matrix.getByRole("cell", { name: /8 FN/ })).toBeVisible();
 
-  const protocol = page.getByRole("region", { name: "Evaluation Protocol v1 results" });
-  await expect(protocol.getByText("15.49%", { exact: true })).toBeVisible();
-  await expect(protocol.getByText("11 of 71 formal targets", { exact: false })).toBeVisible();
-  await expect(protocol.getByText("1 / 30", { exact: true })).toBeVisible();
-  await expect(protocol.getByText("40.00%", { exact: true })).toBeVisible();
-  const semanticSummary = protocol.getByRole("region", { name: "Semantic Evidence — AI-assessed, unverified" });
-  await expect(semanticSummary.getByText("Evidence Support", { exact: true })).toBeVisible();
-  await expect(semanticSummary.getByText("49.30%", { exact: true })).toBeVisible();
-  await expect(semanticSummary.getByText("35/71 formal targets", { exact: true })).toBeVisible();
-  await expect(semanticSummary.getByText("8.45%", { exact: true })).toBeVisible();
-  await expect(semanticSummary.getByText("20.00%", { exact: true })).toBeVisible();
-  await expect(semanticSummary.getByText("19/30 targets with valid judgments")).toBeVisible();
-  await expect(semanticSummary.getByText("Judgment Coverage", { exact: true })).toBeVisible();
-  await expect(semanticSummary.getByText("50/71 valid judgments · 17 invalid responses · 4 delivery failures")).toBeVisible();
-  await expect(semanticSummary.getByText("Potential Partial Support Beyond Exact Matching", { exact: true })).toBeVisible();
-  await expect(semanticSummary.getByText("22/51 (43.14%) of recovered targets with zero exact matches")).toBeVisible();
-  await expect(semanticSummary.getByText(/2.5s mean latency/)).toBeVisible();
-  await expect(semanticSummary.getByText("Multi-Source Proof Completion", { exact: true })).toHaveCount(0);
-  await expect(semanticSummary.getByText("Timing unverified.")).toBeVisible();
-  await expect(semanticSummary.getByText("Inspect formal targets (2)")).not.toBeVisible();
-  expect(semanticReads).toBe(1);
-  const exactCoverage = (await protocol.getByText("40.00%", { exact: true }).boundingBox())!;
-  const semanticCoverage = (await semanticSummary.getByText("20.00%", { exact: true }).boundingBox())!;
-  expect(semanticCoverage.y).toBeGreaterThan(exactCoverage.y + exactCoverage.height);
-  if (testInfo.project.name === "research-desktop") {
-    expect(Math.abs(semanticCoverage.x - exactCoverage.x)).toBeLessThan(1);
-  }
+  const comparator = page.getByRole("combobox", { name: "Compare with verified Run" });
+  await comparator.selectOption(treatment);
+  const table = page.getByRole("table", { name: "PCG Evaluation comparison" });
+  await expect(table.getByRole("row", { name: /Evidence Support/ })).toContainText("22.54%");
+  await expect(table.getByRole("columnheader", { name: /Selected Run.*Exact-only baseline/ })).toBeVisible();
+  const graphRow = table.getByRole("row", { name: /^Graph F1/ });
+  const adjustedRow = table.getByRole("row", { name: /^Evidence-Adjusted F1/ });
+  await expect(graphRow.getByRole("cell").last()).toHaveText("0.00 pp");
+  await expect(adjustedRow.getByRole("cell").last()).toHaveText("Unavailable");
 
-  await semanticSummary.getByText("Inspect semantic assessment", { exact: true }).press("Enter");
-  await expect(semanticSummary.getByText(assessment.temporal_limitation)).toBeVisible();
-  await expect(semanticSummary.getByText(/1 potentially sufficient missed proofs/)).toBeVisible();
-  await semanticSummary.getByText("Inspect formal targets (2)").press("Enter");
-  expect(semanticReads).toBe(1);
-  const filter = page.getByRole("combobox", { name: "Filter formal targets" });
-  await filter.selectOption("Supported");
-  await page.getByText(/F0 · Morgan Example.*Supported/).press("Enter");
-  await expect(page.getByText("Morgan is the current holder.", { exact: true })).toBeVisible();
-  await expect(page.getByText("The register identifies the current holder.", { exact: false })).toBeVisible();
-  await expect(page.getByText("timing (assessment cutoff unavailable) · satisfied", { exact: true })).toBeVisible();
-  await expect(page.getByText(/Multi-Source Evidence Coverage 50.0%/)).toBeVisible();
-  await expect(page.getByText("Multi-Source target · Supported using one cited Source")).toBeVisible();
+  selectedState = "pending";
+  await evaluation.getByText("Evidence diagnostics", { exact: true }).press("Enter");
+  await evaluation.getByRole("button", { name: "Refresh evaluation" }).click();
+  await expect(evaluation.getByText("Exact-only baseline · combined evaluation pending or interrupted")).toBeVisible();
+  await expect(performance.getByText("79.79%", { exact: true })).toBeVisible();
+  await expect(evidence.getByText("15.49%", { exact: true })).toBeVisible();
+  await expect(evidence.getByText("16.90%", { exact: true })).toHaveCount(0);
+
+  await evaluation.getByText("Evidence diagnostics", { exact: true }).press("Enter");
+  const adjustment = evaluation.locator("dl").filter({ hasText: "Evidence penalty weight (α)" });
+  await expect(adjustment.locator("dd")).toHaveText(["71/113", "56", "0", "Exact-only"]);
+  await expect(evaluation.getByText(/2\/3 eligible pairs judged · 1 partially equivalent.*1 invalid judgment.*4 delivery failures/)).toBeVisible();
+  await expect(evaluation.getByText(/25 exact · 1 equivalent added · 100 unmatched/)).toBeVisible();
+  await expect(evaluation.getByText(/2.5s mean latency/)).toBeVisible();
+  await evaluation.getByText("Inspect formal targets (2)").press("Enter");
+  const filter = evaluation.getByRole("combobox", { name: "Filter formal targets" });
+  await filter.selectOption("added");
+  await evaluation.getByText(/F0 · Morgan Example.*Complete proof/).press("Enter");
+  await expect(evaluation.getByText("The appointment took effect on 1 June.", { exact: true })).toBeVisible();
+  await expect(evaluation.getByText("The appointment had effect from the first of June.", { exact: true })).toBeVisible();
+  await expect(evaluation.getByText("Exact match · actual PCG quotation · Q1")).toBeVisible();
+  await expect(evaluation.getByText("No effective date in the quoted text.")).toBeVisible();
+  await expect(evaluation.getByText(/Complete · 2\/2 members matched/)).toBeVisible();
+  await evaluation.getByText("Other attached quotations (1)").press("Enter");
+  await expect(evaluation.getByText("An unrelated memorandum mentions Morgan.")).toBeVisible();
   await filter.selectOption("invalid_judgment");
-  await page.getByText(/F1 · Dana Example.*Invalid judgment/).press("Enter");
-  await page.getByText("Retained invalid response", { exact: true }).press("Enter");
-  await expect(page.getByText('{"verdict":"unsupported"}', { exact: true })).toBeVisible();
+  await evaluation.getByText(/F1 · Dana Example.*Incomplete proof/).press("Enter");
+  await evaluation.getByText("Retained invalid response", { exact: true }).press("Enter");
+  await expect(evaluation.getByText('{"verdict":"Supported"}', { exact: true })).toBeVisible();
 
-  await page.getByText("Semantic Evidence comparison", { exact: true }).press("Enter");
-  const semanticTable = page.getByRole("table", { name: "Semantic Evidence metrics" });
-  const supportRow = semanticTable.getByRole("row", { name: /Evidence Support/ });
-  await expect(supportRow.getByRole("cell").nth(0)).toContainText("47.89%");
-  await expect(supportRow.getByRole("cell").nth(1)).toContainText("49.30%");
-  await expect(semanticTable.getByRole("row", { name: /Multi-Source Evidence Coverage/ })).toContainText("20.00%");
-  await expect(page.getByText("1/71 formal targets have two valid judgments.")).toBeVisible();
+  selectedState = "complete";
+  await evaluation.getByRole("button", { name: "Refresh evaluation" }).click();
+  await expect(evaluation.getByText("Combined evaluation complete", { exact: true })).toBeVisible();
+  await expect(performance.getByText("92.11%", { exact: true })).toBeVisible();
+  await expect(performance.getByText("79.98%", { exact: true })).toBeVisible();
+  await evaluation.getByText("Evidence diagnostics", { exact: true }).press("Enter");
+  await expect(adjustment.locator("dd")).toHaveText(["71/113", "55", "1", "Exact and equivalent"]);
+  await expect(evidence.getByText("29.58%", { exact: true })).toBeVisible();
+  await expect(evidence.getByText("16.90%", { exact: true })).toBeVisible();
+  await expect(evidence.getByText("43.33%", { exact: true })).toBeVisible();
+  expect(evaluationReads).toBe(3);
+  if (testInfo.project.name === "research-desktop") {
+    const tops = await performance.locator("dt").evaluateAll((items) => items.map((item) => item.getBoundingClientRect().top));
+    expect(new Set(tops).size).toBe(1);
+  }
+
+  await page.getByRole("button", { name: "Refresh comparison" }).click();
+  const supportRow = table.getByRole("row", { name: /Evidence Support/ });
+  await expect(graphRow.getByRole("cell").last()).toHaveText("0.00 pp");
+  await expect(adjustedRow.getByRole("cell").last()).toHaveText("+0.19 pp");
+  await expect(supportRow.getByRole("cell").nth(0)).toContainText("28.17%");
+  await expect(supportRow.getByRole("cell").nth(1)).toContainText("29.58%");
+  await expect(supportRow.getByRole("cell").nth(2)).toContainText("+1.41 pp");
+  await page.getByText("Evidence comparison diagnostics").press("Enter");
   await page.getByText("F0 · Morgan Example · trustee of · North Example Trust", { exact: true }).press("Enter");
-  await expect(page.getByText("relationship · missing → satisfied")).toBeVisible();
-  await expect(page.getByText("timing (assessment cutoff unavailable) · missing → satisfied")).toBeVisible();
-  await expect(page.getByText(assessment.temporal_limitation)).toHaveCount(2);
+  await expect(page.getByText("M2 · unmatched → semantic")).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
 });

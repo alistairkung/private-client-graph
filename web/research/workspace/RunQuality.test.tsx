@@ -1,9 +1,9 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { expect, it, vi } from "vitest";
-import type { BenchmarkV4Summary, BenchmarkV4Comparison, DeliveredGraphMetrics, EvidenceQuality, RunDetail, WorkspaceDetail } from "../shared/contracts";
+import type { BenchmarkV4Summary, DeliveredGraphMetrics, EvidenceQuality, RunDetail, WorkspaceDetail } from "../shared/contracts";
 import { GraphMetrics } from "./BenchmarkV4Summary";
 import { RunChart } from "./RunChart";
-import { RunQuality, RunQualityComparison } from "./RunQuality";
+import { PCGEvaluation } from "./PCGEvaluation";
 
 const graph = (inputs: number, f1: number): DeliveredGraphMetrics => ({
   inputs, valid_graphs: inputs, without_graph: 0, exact_graphs: 0,
@@ -68,11 +68,11 @@ it("plots reference-rate estimates with the selected quality metric and original
     />,
   );
   fireEvent.change(screen.getByRole("combobox", { name: "Performance metric" }), {
-    target: { value: "joint_only_coverage" },
+    target: { value: "qualified_graph" },
   });
   fireEvent.click(screen.getByRole("tab", { name: "Vs Cost" }));
   expect(screen.getByRole("button", {
-    name: /Run 3, Multi-Source Evidence Coverage.*45\.00%/,
+    name: /Run 3, Qualified Graph F1.*75\.00%/,
   })).toHaveAttribute("aria-pressed", "true");
   expect(screen.getByText("Reference-rate estimate · USD 0.0400")).toBeVisible();
 });
@@ -93,57 +93,33 @@ it("shares the selected quality metric across plots and leaves missing scores an
   );
   const metric = screen.getByRole("combobox", { name: "Performance metric" });
   expect(within(metric).getAllByRole("option").map((option) => option.textContent)).toEqual([
-    "Combined Graph F1", "Qualified Graph F1", "Proof Completion", "Multi-Source Evidence Coverage",
+    "Qualified Graph F1", "Combined Graph F1",
   ]);
+  fireEvent.change(metric, { target: { value: "combined_graph" } });
   expect(screen.getByRole("button", { name: /Run 2, Combined Graph F1 · 35 evaluation inputs.*provisional/ })).toHaveAttribute("aria-pressed", "true");
   fireEvent.change(metric, { target: { value: "qualified_graph" } });
   expect(screen.getByRole("heading", { name: "Qualified Graph F1 by Run" })).toBeVisible();
   expect(screen.getByText("Qualified Graph F1 (%)", { exact: true })).toBeVisible();
   expect(container.querySelectorAll(".chart-point")).toHaveLength(3);
   expect(screen.getByRole("button", { name: /Run 2 · No resolver/ })).toHaveAttribute("aria-pressed", "true");
-  fireEvent.change(metric, { target: { value: "joint_only_coverage" } });
-  expect(screen.getByRole("button", { name: /Run 4, Multi-Source Evidence Coverage · 30 multi-Source proof targets · qualified cohort 0.00%/ })).toBeVisible();
   fireEvent.keyDown(screen.getByRole("tab", { name: "By Run" }), { key: "ArrowRight" });
   expect(screen.getByRole("tab", { name: "Vs Cost" })).toHaveFocus();
-  expect(metric).toHaveValue("joint_only_coverage");
-  expect(screen.getByText("Average percentage of required evidence recovered for relationships that need multiple Sources. Uses the best-matching approved proof route.")).toBeVisible();
-  expect(screen.getByRole("heading", { name: "Multi-Source Evidence Coverage vs Cost" })).toBeVisible();
+  expect(metric).toHaveValue("qualified_graph");
+  expect(screen.getByRole("heading", { name: "Qualified Graph F1 vs Cost" })).toBeVisible();
   expect(screen.getByText(/Estimated full pipeline cost \(USD\)/)).toBeVisible();
   expect(container.querySelectorAll(".chart-point")).toHaveLength(1);
-  expect(screen.getByRole("button", { name: /Run 1, Multi-Source Evidence Coverage.*45.00%/ })).toBeVisible();
+  expect(screen.getByRole("button", { name: /Run 1, Qualified Graph F1.*75.00%/ })).toBeVisible();
   expect(select).not.toHaveBeenCalled();
 });
 
-it("keeps unavailable provisional proof scores distinct from zero and exposes fixed denominator counts", () => {
-  render(<RunQuality quality={provisional} />);
-  expect(screen.getByRole("status")).toHaveTextContent("1 of 35 inputs observed");
-  expect(screen.getAllByText("Unavailable", { exact: true })[0]).toBeVisible();
-  expect(screen.getByText("80.00%", { exact: true })).toBeVisible();
-  expect(screen.getByText(/71 formal proof targets · qualified cohort/)).toBeVisible();
-  fireEvent.click(screen.getByText("Evidence metrics and counts"));
-  expect(screen.getByText("0 / 71 · 0 targets observed")).toBeVisible();
-  expect(screen.getByText("Multi-Source Proof Completion")).toBeVisible();
-  expect(screen.getByText("Unavailable · 0 / 30 targets observed")).toBeVisible();
-  expect(screen.getByText(/synthetic benchmark measures do not assess legal sufficiency/)).toBeVisible();
-});
-
-it("shows scope and both graph metrics in comparisons, with change only when provided", () => {
-  const comparison = {
-    left_quality: quality, right_quality: provisional, quality_delta: null,
-  } as BenchmarkV4Comparison;
-  const { rerender } = render(<RunQualityComparison comparison={comparison} />);
-  const table = screen.getByRole("table", { name: "Evidence quality comparison" });
-  expect(within(table).getByRole("row", { name: /Qualified Graph F1.*75.00%.*34 qualified Conditions.*Unavailable/ })).toBeVisible();
-  expect(within(table).getByRole("row", { name: /Combined Graph F1.*35 evaluation inputs · mixed references/ })).toBeVisible();
-  expect(within(table).queryByRole("columnheader", { name: "Change" })).not.toBeInTheDocument();
-  expect(screen.getByText(/Changes are unavailable/)).toBeVisible();
-  rerender(<RunQualityComparison comparison={{
-    ...comparison, right_quality: quality,
-    quality_delta: { combined_graph: 0, qualified_graph: 0.01, complete_proof: 0, joint_only_coverage: -0.02 },
-  }} />);
-  expect(within(table).getByRole("columnheader", { name: "Change" })).toBeVisible();
-  expect(within(table).getByText("+1.00 pp")).toBeVisible();
-  expect(within(table).getByText("-2.00 pp")).toBeVisible();
+it("shows one provisional evaluation with five unavailable values before qualified observations", () => {
+  render(<PCGEvaluation run={qualityRun("provisional", provisional)}>{null}</PCGEvaluation>);
+  expect(screen.getByRole("heading", { name: "PCG Evaluation" })).toBeVisible();
+  expect(screen.getByRole("status")).toHaveTextContent("Evaluation is provisional");
+  for (const label of ["Graph F1", "Evidence-Adjusted F1", "Evidence Support", "Proof Completion", "Multi-Source Evidence Coverage"]) {
+    expect(screen.getByText(label, { exact: true })).toBeVisible();
+  }
+  expect(screen.getAllByText("Unavailable", { exact: true })).toHaveLength(5);
 });
 
 it("uses unavailable qualified scope from quality even if the raw graph projection has zero", () => {

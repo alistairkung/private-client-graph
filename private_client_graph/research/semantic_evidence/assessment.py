@@ -6,6 +6,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from collections import Counter
 from decimal import Decimal
+from math import isclose
 from collections.abc import Iterator, Sequence
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -23,15 +24,13 @@ from private_client_graph.research.live_accounting import (
 from private_client_graph.research.plan import Pricing
 from private_client_graph.research.provider import ModelResponse, ModelSettings, invoke_deepseek_json
 
-from .inputs import CONTROL_COUNT, EXPECTED_RECOVERED, EXPECTED_TARGETS, VERSION, AssessmentInputs, Item, extract_inputs
-from .judging import Contract, Judgment, SYSTEM_PROMPT, make_packet, parse_judgment
+from .inputs import EXPECTED_MULTI_SOURCE, EXPECTED_TARGETS, VERSION, AssessmentInputs, Item, extract_inputs
+from .judging import Contract, Judgment, SYSTEM_PROMPT, parse_judgment
 
 MODEL = 'deepseek-v4-pro'
 BASE_URL: Literal['https://api.deepseek.com'] = 'https://api.deepseek.com'
-MAX_CALLS = EXPECTED_RECOVERED + CONTROL_COUNT
+MAX_CALLS = EXPECTED_TARGETS
 MAX_USD = Decimal('2.50')
-BASELINE_PLAN_SHA256 = '91bde86dd59b68a121fd14569552d16ae8325455183a98b6aba2195fb20c3857'
-BASELINE_RECEIPTS_SHA256 = '8a58d24d5d4a72dfcee38a3c252af554f6abd02560694b7557eb01a16fe8caaf'
 MAX_INPUT_TOKENS = 12_000
 MAX_OUTPUT_TOKENS = 4_000
 MESSAGE_FRAMING_ALLOWANCE = 1024
@@ -57,12 +56,11 @@ class ReusedJudgment(Contract):
 
 
 class Plan(Contract):
-    version: Literal['pcg-semantic-evidence-v1'] = VERSION
+    version: Literal['pcg-semantic-evidence-equivalence'] = VERSION
     directory: str
     task_id: str
-    task_root: str | None = None
-    task_call_ceiling: int | None = None
-    seal_receipts: bool = False
+    task_root: str
+    task_call_ceiling: int
     inputs: AssessmentInputs
     system_prompt: str
     request_sha256: dict[str, str]
@@ -79,11 +77,11 @@ class Plan(Contract):
 
     @property
     def ledger_root(self) -> Path:
-        return Path(self.task_root or self.directory)
+        return Path(self.task_root)
 
     @property
     def task_limit(self) -> int:
-        return self.task_call_ceiling if self.task_call_ceiling is not None else self.max_calls
+        return self.task_call_ceiling
 
     @property
     def payable(self) -> tuple[Item, ...]:
@@ -107,7 +105,8 @@ def freeze(directory: Path, inputs: AssessmentInputs, *, task_root: Path, task_c
         raise ValueError('A frozen request exceeds the input-token envelope')
     task = read_task(task_root.resolve())
     plan = Plan(directory=str(directory), task_id=task['task_id'], task_root=task['root'],
-        task_call_ceiling=task_call_ceiling, seal_receipts=True, inputs=inputs, system_prompt=SYSTEM_PROMPT, request_sha256={}, dependencies=dependency_versions(),
+        task_call_ceiling=task_call_ceiling, inputs=inputs, system_prompt=SYSTEM_PROMPT,
+        request_sha256={}, dependencies=dependency_versions(),
         settings=SETTINGS, pricing=pricing, max_usd=max_usd)
     plan = plan.model_copy(update={'request_sha256': {
         item.id: _request_digest(plan, item) for item in inputs.dispatchable}})
@@ -150,39 +149,26 @@ def open_plan(directory: Path) -> tuple[Plan, str, dict[str, Any]]:
     task = read_task(plan.ledger_root)
     if plan.directory != str(directory) or plan.task_id != task['task_id'] or directory.stat().st_mode & 0o077:
         raise ValueError('Assessment plan requires its original private directory and task')
-    if not plan.seal_receipts:
-        _verify_baseline_receipts(directory, digest)
     _validate_plan(plan)
     return plan, digest, task
 
 
-def _verify_baseline_receipts(directory: Path, digest: str) -> None:
-    if digest != BASELINE_PLAN_SHA256:
-        raise ValueError('Only the retained Extractor v1 assessment has unsealed receipts')
-    inventory = [(path.name, checksum(path.read_bytes()))
-                 for path in sorted((directory / 'receipts').glob('*.json'))]
-    if checksum(json.dumps(inventory, separators=(',', ':')).encode()) != BASELINE_RECEIPTS_SHA256:
-        raise ValueError('Retained Extractor v1 receipts differ from their frozen inventory')
-
-
 def _validate_plan(plan: Plan) -> None:
-    outcomes = Counter(item.baseline.exact_outcome for item in plan.inputs.targets if item.baseline)
-    items = (*plan.inputs.targets, *plan.inputs.controls)
+    items = plan.inputs.targets
+    outcomes = Counter(item.baseline.exact_outcome for item in items)
+    multi_source = [item for item in items if item.baseline.joint_only]
     quality = plan.inputs.evidence_quality
-    if (sum(outcomes.values()) != EXPECTED_TARGETS or len(plan.inputs.targets) != EXPECTED_TARGETS
+    if (len(items) != EXPECTED_TARGETS or len({item.id for item in items}) != len(items)
+            or len({(item.condition, item.edge) for item in items}) != len(items)
             or outcomes['complete'] != quality.complete_proof.complete
-            or quality.complete_proof.targets != EXPECTED_TARGETS
-            or quality.state != 'complete'
-            or len(plan.inputs.controls) != CONTROL_COUNT
-            or any(item.control is None or item.baseline is not None or item.packet is None
-                   for item in plan.inputs.controls)
-            or len({item.id for item in items}) != len(items)
-            or any((item.packet is not None) != (item.baseline.exact_outcome in ('complete', 'incomplete'))
-                   for item in plan.inputs.targets if item.baseline)):
-        raise ValueError('Assessment roster differs from the fixed formal-target scope')
+            or quality.complete_proof.targets != EXPECTED_TARGETS or quality.state != 'complete'
+            or len(multi_source) != EXPECTED_MULTI_SOURCE or quality.joint_only_coverage.targets != EXPECTED_MULTI_SOURCE
+            or quality.joint_only_coverage.mean is None
+            or not isclose(sum(item.baseline.best_exact_pair_coverage for item in multi_source) / EXPECTED_MULTI_SOURCE,
+                           quality.joint_only_coverage.mean, abs_tol=1e-12)):
+        raise ValueError('Assessment roster differs from the fixed formal-target scope or deterministic baseline')
     if (plan.settings != SETTINGS or plan.system_prompt != SYSTEM_PROMPT
             or plan.pricing.model != MODEL or plan.pricing.currency != 'USD'
-            or (plan.seal_receipts and (plan.task_root is None or plan.task_call_ceiling is None))
             or not plan.max_calls <= plan.task_limit <= 10000
             or plan.max_calls != len(plan.payable) or not plan.reused.keys() <= plan.request_sha256.keys()
             or plan.max_input_tokens != MAX_INPUT_TOKENS or plan.max_output_tokens != MAX_OUTPUT_TOKENS):
@@ -192,13 +178,6 @@ def _validate_plan(plan: Plan) -> None:
             or plan.max_usd <= 0 or upper_cost(plan, rates) > plan.max_usd):
         raise ValueError('The estimated maximum cost exceeds the proposed USD ceiling or pricing is invalid')
     for item in plan.inputs.dispatchable:
-        packet = item.packet
-        assert packet is not None
-        cutoff = packet.assertion.cutoff if item.control else None
-        if packet != make_packet(item.edge, packet.quotations, cutoff=cutoff):
-            raise ValueError('Packet differs from the versioned neutral documentary requirements')
-        if {quote.source for quote in packet.quotations} != item.source_ids.keys():
-            raise ValueError('Quotation Source mapping is incomplete')
         if _input_envelope(plan.system_prompt, item) > plan.max_input_tokens:
             raise ValueError('A frozen request exceeds the input-token envelope')
         reused = plan.reused.get(item.id)
@@ -209,8 +188,9 @@ def _validate_plan(plan: Plan) -> None:
 
 
 def _user_prompt(item: Item) -> str:
-    assert item.packet is not None
-    return item.packet.model_dump_json(exclude_none=True)
+    packet = item.packet
+    assert packet is not None
+    return packet.model_dump_json()
 
 
 def _input_envelope(system_prompt: str, item: Item) -> int:
@@ -248,8 +228,6 @@ def execute(directory: Path, *, approved_digest: str, approval_reference: str,
         raise ValueError('The frozen plan needs its exact approved digest and approval reference')
     if not plan.payable:
         return
-    if not plan.seal_receipts:
-        raise ValueError('The retained v1 assessment is read-only')
     if not api_key.strip():
         raise ValueError('The approved plan needs a DeepSeek key')
     if (verified_rates != frozen_rates(plan) or upper_cost(plan, verified_rates) > plan.max_usd
@@ -327,14 +305,13 @@ def reservation_snapshot(plan: Plan, digest: str, task: dict[str, Any]) -> Reser
         used = task_state(ledger)['used']
         authority = _recorded_authority(task, plan, digest)
         if authority is None:
-            if not plan.seal_receipts or _has_retained_attempt(plan, digest, ledger):
+            if _has_retained_attempt(plan, digest, ledger):
                 raise ValueError('Semantic Evidence attempts are missing their retained authorization')
             return ReservationSnapshot(None, frozenset())
         prefix = authority['authorization']
         paths = (ledger / 'reservations').glob(f'{prefix}-*.json')
         ids = frozenset(path.stem.removeprefix(f'{prefix}-') for path in paths)
-        if (len(ids) > used or not ids <= {item.id for item in plan.payable}
-                or (not plan.seal_receipts and len(ids) != plan.max_calls)):
+        if len(ids) > used or not ids <= {item.id for item in plan.payable}:
             raise ValueError('Assessment ledger differs from the retained reservations')
         return ReservationSnapshot(prefix, ids)
 
@@ -408,16 +385,13 @@ def read_receipt(directory: Path, plan: Plan, item: Item, snapshot: ReservationS
     if item.id not in snapshot.ids:
         return None
     path = _receipt_path(directory, item)
-    if plan.seal_receipts:
-        sealed = (plan.ledger_root / 'external-invocations' / str(snapshot.authorization)
-                  / 'attempts' / f'{item.id}.finished.json')
-        if not sealed.is_file():
-            return None
-        raw = path.read_bytes()
-        if json.loads(sealed.read_text()).get('artifact_sha256') != checksum(raw):
-            raise ValueError('Provider receipt differs from the sealed completion record')
-    else:
-        raw = path.read_bytes()
+    sealed = (plan.ledger_root / 'external-invocations' / str(snapshot.authorization)
+              / 'attempts' / f'{item.id}.finished.json')
+    if not sealed.is_file():
+        return None
+    raw = path.read_bytes()
+    if json.loads(sealed.read_text()).get('artifact_sha256') != checksum(raw):
+        raise ValueError('Provider receipt differs from the sealed completion record')
     receipt = Receipt.model_validate_json(raw)
     if receipt.request_sha256 != plan.request_sha256[item.id]:
         raise ValueError('Provider receipt differs from the frozen request commitment')
@@ -431,8 +405,9 @@ def validate_judge_response(plan: Plan, item: Item, response: ModelResponse) -> 
         raise ValueError('Provider did not return the frozen judge model')
     if exceeded_envelope(plan, response):
         raise ValueError('Reported token usage exceeded the approved envelope')
-    assert item.packet is not None
-    return parse_judgment(item.packet, response)
+    packet = item.packet
+    assert packet is not None
+    return parse_judgment(packet, response)
 
 
 def _require_within_envelope(directory: Path, plan: Plan, reservations: ReservationSnapshot) -> None:

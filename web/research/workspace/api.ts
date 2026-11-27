@@ -117,11 +117,11 @@ export async function benchmarkV4Roster(signal: AbortSignal) {
 export const benchmarkV4Input = (id: string, signal: AbortSignal) =>
   request<RunObservation>(`/benchmark-v4/inputs/${encodeURIComponent(id)}`, undefined, undefined, signal);
 
-export const getSemanticEvidence = (run: string, signal?: AbortSignal) =>
-  request<SemanticEvidenceReport | null>(
+export const getEvaluation = (run: string, signal?: AbortSignal) =>
+  request<SemanticEvidenceReport>(
     `/semantic-evidence/runs/${encodeURIComponent(run)}`, undefined, undefined, signal,
   );
-export const compareSemanticEvidence = (left: string, right: string, signal?: AbortSignal) =>
-  request<SemanticComparison | null>(
+export const compareEvaluations = (left: string, right: string, signal?: AbortSignal) =>
+  request<SemanticComparison>(
     `/semantic-evidence/comparison?${new URLSearchParams({ left, right })}`, undefined, undefined, signal,
   );
