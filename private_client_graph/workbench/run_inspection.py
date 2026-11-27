@@ -22,8 +22,7 @@ from .evidence import relationship_outcomes
 from .execution_contracts import FrozenPlan
 from .run_evaluation import evaluate_run, retained_attempts
 from .run_evaluation_contracts import RunEvaluation
-from .run_archive import can_archive
-from .supervisor import latest_event
+from .run_lifecycle import can_archive, latest_event
 from .benchmark_contracts import BenchmarkCondition, BenchmarkRun
 from .workspaces import read_experiment
 
@@ -105,7 +104,7 @@ def read_run(root: Path, experiment_id: str, identity: str) -> RunDetail:
     provenance['code_digest'] = checksum(json.dumps(bundle.manifest['provenance']['code'], sort_keys=True).encode())
     evaluation = evaluate_run(bundle)
     result = RunDetail(id=identity, experiment_id=experiment_id, plan=frozen,
-        lifecycle=state, execution_message=event['message'], can_archive=can_archive(bundle, state),
+        lifecycle=state, execution_message=event.get('message'), can_archive=can_archive(bundle, state),
         evaluation=evaluation, observations=_observations(bundle, evaluation),
         provenance=provenance, artifact_digest=digest,
         authorized_invocations=[p.stem for p in sorted((path / 'authorizations').glob('*.json'))],
