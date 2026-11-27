@@ -120,3 +120,50 @@ def test_export_shape_is_enforced_separately_from_digests(bundle, problem):
         original.symlink_to(target)
     client = TestClient(create_app(), client=_LOCAL)
     assert client.get(f'{_ROUTE}/sources', auth=_AUTH).status_code == 409
+
+
+def test_reference_uses_same_private_context_and_stays_outside_runs(bundle, monkeypatch, tmp_path):
+    _, sources, write = bundle
+    release = write(sources)
+    directory = tmp_path / 'private-reference'
+    directory.mkdir(mode=0o700)
+    path = directory / 'reference.json'
+    relationship = {
+        'source': 'Alice', 'predicate': 'spouse_of', 'target': 'Bob',
+        'counts': {'support': 6, 'reject': 1, 'uncertain': 1, 'omitted': 2},
+        'evidence_decision': 'supported',
+        'evidence_reason': 'One exact submitted route establishes the relationship.',
+        'routes': [{'approved': True, 'members': [{'source_id': 'doc-0', 'quote': 'Example body 0.'}]}],
+    }
+    reference = {
+        'schema_version': 1, 'kind': 'exploratory_ai_consensus', 'cutoff': '2030-01-01 17:00',
+        'workload_id': release['workload_id'], 'source_file_sha256': release['source_file_sha256'],
+        'reviewer_count': 10, 'majority': 6, 'official_benchmark_eligible': False,
+        'relationships': [relationship], 'limitations': ['Synthetic test fixture'],
+        'reviewer_open_questions': ['Synthetic open timing question.'],
+    }
+    endpoint = f'{_ROUTE}/reference'
+    assert TestClient(create_app(), client=_LOCAL).get(endpoint, auth=_AUTH).status_code == 404
+
+    def configured():
+        path.write_bytes(json.dumps(reference).encode())
+        path.chmod(0o600)
+        monkeypatch.setenv('PCG_EXPLORATORY_REFERENCE_FILE', str(path))
+        monkeypatch.setenv('PCG_EXPLORATORY_REFERENCE_SHA256', checksum(path.read_bytes()))
+        return TestClient(create_app(), client=_LOCAL)
+
+    client = configured()
+    assert client.get(endpoint).status_code == 401
+    assert client.get(endpoint, auth=_AUTH).json() == reference
+    assert TestClient(create_app(show_exploratory=False)).get(endpoint).status_code == 404
+    path.write_bytes(path.read_bytes() + b' ')
+    assert client.get(endpoint, auth=_AUTH).status_code == 409
+
+    relationship['routes'][0]['members'][0]['quote'] = 'Document 0'  # The title is ineligible.
+    assert configured().get(endpoint, auth=_AUTH).status_code == 409
+    relationship['routes'][0]['members'][0]['quote'] = 'Example body 0.'
+    reference['official_benchmark_eligible'] = True
+    assert configured().get(endpoint, auth=_AUTH).status_code == 409
+    reference['official_benchmark_eligible'] = False
+    relationship['counts']['omitted'] = 1
+    assert configured().get(endpoint, auth=_AUTH).status_code == 409

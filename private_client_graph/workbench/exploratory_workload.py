@@ -18,6 +18,7 @@ from starlette.responses import Response
 from private_client_graph.models.source import Source
 from private_client_graph.research.artifacts import checksum
 from private_client_graph.research.retained_inputs import value_digest
+from .exploratory_reference import ConsensusReference, read_reference
 
 
 Digest = Annotated[str, StringConstraints(pattern=r'^[a-f0-9]{64}$')]
@@ -89,10 +90,14 @@ def mount_exploratory_workload(app: FastAPI, prefix: str) -> None:
     directory = os.getenv('PCG_EXPLORATORY_WORKLOAD_DIR')
     digest = os.getenv('PCG_EXPLORATORY_MANIFEST_SHA256')
     token = os.getenv('PCG_EXPLORATORY_ACCESS_TOKEN')
-    if directory is None and digest is None and token is None:
+    reference = os.getenv('PCG_EXPLORATORY_REFERENCE_FILE')
+    reference_digest = os.getenv('PCG_EXPLORATORY_REFERENCE_SHA256')
+    if all(value is None for value in (directory, digest, token, reference, reference_digest)):
         return
     if not directory or not digest or not token or not re.fullmatch(r'[A-Za-z0-9_-]{32,}', token):
         raise ValueError('Exploratory Workbench requires a directory, manifest digest and private access token.')
+    if (reference is None) != (reference_digest is None):
+        raise ValueError('The exploratory reference requires both its file and exact commitment.')
     release = ExploratoryRelease(Path(directory), _DIGEST.validate_python(digest))
     expected_credentials = base64.b64encode(f'owner:{token}'.encode())
 
@@ -117,6 +122,21 @@ def mount_exploratory_workload(app: FastAPI, prefix: str) -> None:
     @app.get(f'{prefix}/exploratory-workload/sources', response_model=ExploratoryWorkload)
     def sources() -> ExploratoryWorkload:
         return _read_released_workload(release)
+
+    if reference is not None and reference_digest is not None:
+        _mount_reference(app, prefix, release, Path(reference), _DIGEST.validate_python(reference_digest))
+
+
+def _mount_reference(app: FastAPI, prefix: str, release: ExploratoryRelease, path: Path, digest: str) -> None:
+    @app.get(f'{prefix}/exploratory-workload/reference', response_model=ConsensusReference)
+    def reference() -> ConsensusReference:
+        workload = _read_released_workload(release)
+        try:
+            return read_reference(path, digest, workload_id=workload.manifest.workload_id,
+                                  source_file_sha256=workload.manifest.source_file_sha256,
+                                  sources=list(workload.sources))
+        except (ValueError, OSError):
+            raise HTTPException(409, 'The exploratory reference could not be verified.') from None
 
 
 def _read_released_workload(release: ExploratoryRelease) -> ExploratoryWorkload:

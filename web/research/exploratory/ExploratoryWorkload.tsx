@@ -1,30 +1,44 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { ReadState } from "../shared/presentation";
 import { useRead } from "../shared/useRead";
-import { exploratorySources } from "./api";
+import { exploratoryReference, exploratorySources } from "./api";
+import { ConsensusInspection } from "./ConsensusInspection";
 import "./exploratory.css";
 
 export function ExploratoryWorkload() {
   const { data, error, retry } = useRead(exploratorySources);
   const [selectedId, setSelectedId] = useState<string>();
+  const picker = useRef<HTMLSelectElement>(null);
+  const reference = useRead(exploratoryReference);
   const source =
     data?.sources.find((item) => item.id === selectedId) ?? data?.sources[0];
 
   return (
     <section className="exploratory-workload">
       <header>
-        <h1>Exploratory Scale Workload</h1>
+        <h1>{reference.data ? "U revision 8 — Exploratory 65-Source Matter" : "Exploratory Scale Workload"}</h1>
         <p>65 Sources · Unqualified · Unscored · Read-only</p>
         <p className="muted">
           This rehearsal is separate from the admitted Benchmark v3 cohort.
           Inspect the documents in their original order.
         </p>
       </header>
+      {reference.data && (
+        <ConsensusInspection
+          reference={reference.data}
+          chooseSource={(id) => {
+            setSelectedId(id);
+            picker.current?.focus();
+          }}
+        />
+      )}
+      {reference.error && <ReadState error={reference.error} retry={reference.retry} />}
       {data && source ? (
         <>
           <label className="exploratory-source-picker">
             Frozen Source
             <select
+              ref={picker}
               value={source.id}
               onChange={(event) => setSelectedId(event.target.value)}
             >

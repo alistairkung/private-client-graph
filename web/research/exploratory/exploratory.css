@@ -33,3 +33,26 @@
 .exploratory-sidebar-link {
   margin-block-start: 0.75rem;
 }
+
+.consensus-reference {
+  margin-block-end: 1.5rem;
+}
+
+.consensus-proposition {
+  padding-block: 0.625rem;
+  border-block-start: 1px solid var(--line, #c9c8be);
+}
+
+.consensus-proposition summary {
+  cursor: pointer;
+}
+
+.consensus-proposition summary small {
+  display: block;
+  margin-inline-start: 1em;
+}
+
+.consensus-proposition blockquote {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

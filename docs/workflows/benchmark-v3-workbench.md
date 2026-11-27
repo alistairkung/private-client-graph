@@ -76,3 +76,20 @@ directly on loopback. The Workbench verifies the release manifest and the
 ordered Source file on every read. The separate execution application
 continues to offer only its existing workloads. The private display grants
 no authority to execute a retrieval or extraction experiment.
+
+### Inspect a separately frozen exploratory reference
+
+The same owner instance can show a consensus reference when both
+`PCG_EXPLORATORY_REFERENCE_FILE` and `PCG_EXPLORATORY_REFERENCE_SHA256` identify
+an exact private projection for the installed workload. Keep the projection
+outside the two-file Source release and bind its workload ID and Source
+commitment to that release. The endpoint verifies the references and all
+displayed body quotations before returning the projection.
+
+The view separates the ten-reader majority reference, the independent
+evidence-adjudicated subset and below-threshold propositions. The majority
+rule requires six affirmative votes. Explicit rejections, uncertainty and
+omissions have separate counts. The full vote matrix and original reviewer
+packets remain in private evidence custody. Treat the two reference sets as
+exploratory artifacts. Any future graph metrics against them must remain
+separate from Evaluation Protocol v1.
