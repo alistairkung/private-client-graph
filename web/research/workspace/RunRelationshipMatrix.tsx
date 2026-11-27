@@ -3,14 +3,16 @@ import type { GraphCounts } from "../shared/contracts";
 export function RunRelationshipMatrix({
   counts,
   expectedEdgesWithoutGraph,
+  scope = "All conditions",
 }: {
   counts: GraphCounts;
   expectedEdgesWithoutGraph: number;
+  scope?: string;
 }) {
   return (
     <figure className="run-matrix">
       <table className="run-matrix-table">
-        <caption>Relationship confusion matrix · All conditions</caption>
+        <caption>Relationship confusion matrix · {scope}</caption>
         <thead>
           <tr>
             <th scope="col">Expected</th>

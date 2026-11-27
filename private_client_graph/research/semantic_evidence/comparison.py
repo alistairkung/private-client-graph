@@ -48,7 +48,8 @@ def _reference(row: dict) -> tuple:
 
 
 def _side(data: dict[str, Any]) -> dict:
-    return {key: data[key] for key in ('run_id', 'plan_sha256', 'state', 'graph_f1', 'target_summary', 'operations')}
+    return {key: data[key] for key in ('run_id', 'plan_sha256', 'state', 'graph_f1', 'evidence_adjusted_f1',
+                                      'target_summary', 'operations')}
 
 
 def _transition(left: dict, right: dict) -> dict:

@@ -106,11 +106,20 @@ class SemanticTarget(BaseModel):
     reuse: SemanticReuse | None = None
 
 
+class EvidenceAdjustedF1(BaseModel):
+    f1: float
+    incomplete_recovered_proofs: int
+    weight_numerator: int
+    weight_denominator: int
+    proofs_completed_by_equivalence: int
+
+
 class SemanticRunSummary(BaseModel):
     run_id: str
     plan_sha256: str | None
     state: EvaluationState
     graph_f1: DeliveredGraphMetrics | None
+    evidence_adjusted_f1: EvidenceAdjustedF1 | None
     target_summary: SemanticSummary
     operations: SemanticOperations | None
 

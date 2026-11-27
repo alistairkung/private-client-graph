@@ -435,8 +435,12 @@ pre {
 .quality-card-grid .quality-scope { color: var(--muted); font-size: 0.8rem; line-height: 1.4; }
 .quality-card-grid .quality-scope small { display: block; font-size: inherit; }
 .evaluation-state { color: var(--muted); margin-block: 0.4rem 0.75rem; }
-@container run-summary (width >= 720px) {
-  .quality-card-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.evaluation-metric-heading { margin-block: 0.8rem 0.45rem; color: var(--muted); font-size: 0.9rem; }
+.evaluation-performance dd:not(.quality-scope) { font-size: 2rem; }
+.evaluation-evidence > div:last-child { grid-column: 1 / -1; }
+@container run-summary (width >= 680px) {
+  .evaluation-evidence { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .evaluation-evidence > div:last-child { grid-column: auto; }
 }
 @container run-summary (width < 265px) {
   .quality-card-grid { grid-template-columns: minmax(0, 1fr); }

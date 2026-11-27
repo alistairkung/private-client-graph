@@ -407,6 +407,14 @@ export type Evidence = {
   supporting_text: string;
 };
 
+export type EvidenceAdjustedF1 = {
+  f1: number;
+  incomplete_recovered_proofs: number;
+  weight_numerator: number;
+  weight_denominator: number;
+  proofs_completed_by_equivalence: number;
+};
+
 export type EvidenceQuality = {
   version: "deterministic_evidence_quality_v1";
   state: "unmeasured" | "provisional" | "complete";
@@ -1013,6 +1021,7 @@ export type SemanticEvidenceReport = {
   plan_sha256: string | null;
   state: "exact_only" | "pending" | "complete" | "complete_with_failures";
   graph_f1: DeliveredGraphMetrics | null;
+  evidence_adjusted_f1: EvidenceAdjustedF1 | null;
   target_summary: SemanticSummary;
   operations: SemanticOperations | null;
   methodology: string;
@@ -1085,6 +1094,7 @@ export type SemanticRunSummary = {
   plan_sha256: string | null;
   state: "exact_only" | "pending" | "complete" | "complete_with_failures";
   graph_f1: DeliveredGraphMetrics | null;
+  evidence_adjusted_f1: EvidenceAdjustedF1 | null;
   target_summary: SemanticSummary;
   operations: SemanticOperations | null;
 };

@@ -4,6 +4,7 @@ from fractions import Fraction
 from pathlib import Path
 from typing import Any, Literal
 
+from benchmark_v3.evaluation_protocol import GraphCounts
 from private_client_graph.research.artifacts import checksum
 from private_client_graph.research.benchmark_v4 import configured_custody, load_workload
 
@@ -16,6 +17,7 @@ from .judging import Quotation
 from .store import find
 
 METHODOLOGY = 'Ground-Truth-Aligned Evidence Evaluation'
+EVIDENCE_PENALTY_WEIGHT = Fraction(71, 113)
 EvaluationState = Literal['exact_only', 'pending', 'complete', 'complete_with_failures']
 SCOPE_NOTE = ('Approved Source quotations define the comparison. Stated dates, timing and authority '
               'are material. Model-assessed equivalence has no independent verification.')
@@ -59,6 +61,14 @@ def _report(inputs: AssessmentInputs, targets: list[dict[str, Any]], *, state: E
             digest: str | None = None, operations: dict[str, Any] | None = None) -> dict[str, Any]:
     quality = inputs.evidence_quality
     qualified = quality.qualified_graph
+    exact_only = state in ('exact_only', 'pending')
+    evidence = _target_summary(targets, exact_only=exact_only)
+    recovered = sum(row['deterministic']['exact_outcome'] in ('complete', 'incomplete') for row in targets)
+    adjusted = _evidence_adjusted_f1(
+        qualified.counts,
+        incomplete_recovered_proofs=recovered - evidence['proof_completion']['count'],
+        proofs_completed_by_equivalence=0 if exact_only else evidence['newly_completed_proofs'],
+    ) if qualified else None
     return {
         'assessment': VERSION,
         'methodology': METHODOLOGY,
@@ -76,6 +86,7 @@ def _report(inputs: AssessmentInputs, targets: list[dict[str, Any]], *, state: E
         },
         'extractor_manifest_sha256': inputs.extractor_manifest_sha256,
         'graph_f1': qualified.model_dump(mode='json') if qualified else None,
+        'evidence_adjusted_f1': adjusted,
         'deterministic_baseline': {
             'report_version': quality.version,
             'benchmark_sha256': quality.scope_sha256,
@@ -84,9 +95,22 @@ def _report(inputs: AssessmentInputs, targets: list[dict[str, Any]], *, state: E
             'proof_completion': quality.complete_proof.model_dump(mode='json'),
             'multi_source_evidence_coverage': quality.joint_only_coverage.model_dump(mode='json'),
         },
-        'target_summary': _target_summary(targets, exact_only=state in ('exact_only', 'pending')),
+        'target_summary': evidence,
         'operations': operations,
         'targets': targets,
+    }
+
+
+def _evidence_adjusted_f1(counts: GraphCounts, *, incomplete_recovered_proofs: int,
+                          proofs_completed_by_equivalence: int) -> dict[str, int | float]:
+    numerator = 2 * counts.tp
+    denominator = numerator + counts.fp + counts.fn + EVIDENCE_PENALTY_WEIGHT * incomplete_recovered_proofs
+    return {
+        'f1': float(numerator / denominator) if denominator else 0.0,
+        'incomplete_recovered_proofs': incomplete_recovered_proofs,
+        'weight_numerator': EVIDENCE_PENALTY_WEIGHT.numerator,
+        'weight_denominator': EVIDENCE_PENALTY_WEIGHT.denominator,
+        'proofs_completed_by_equivalence': proofs_completed_by_equivalence,
     }
 
 

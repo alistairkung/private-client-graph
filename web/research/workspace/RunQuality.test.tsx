@@ -112,14 +112,14 @@ it("shares the selected quality metric across plots and leaves missing scores an
   expect(select).not.toHaveBeenCalled();
 });
 
-it("shows one provisional evaluation with four unavailable values before qualified observations", () => {
+it("shows one provisional evaluation with five unavailable values before qualified observations", () => {
   render(<PCGEvaluation run={qualityRun("provisional", provisional)}>{null}</PCGEvaluation>);
   expect(screen.getByRole("heading", { name: "PCG Evaluation" })).toBeVisible();
   expect(screen.getByRole("status")).toHaveTextContent("Evaluation is provisional");
-  for (const label of ["Graph F1", "Evidence Support", "Proof Completion", "Multi-Source Evidence Coverage"]) {
+  for (const label of ["Graph F1", "Evidence-Adjusted F1", "Evidence Support", "Proof Completion", "Multi-Source Evidence Coverage"]) {
     expect(screen.getByText(label, { exact: true })).toBeVisible();
   }
-  expect(screen.getAllByText("Unavailable", { exact: true })).toHaveLength(4);
+  expect(screen.getAllByText("Unavailable", { exact: true })).toHaveLength(5);
 });
 
 it("uses unavailable qualified scope from quality even if the raw graph projection has zero", () => {

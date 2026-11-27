@@ -38,9 +38,31 @@ targets, including 30 Multi-Source targets.
 | Metric | Calculation |
 | --- | --- |
 | Graph F1 | Existing qualified Graph F1, computed from TP, FP and FN, including delivery failures. |
+| Evidence-Adjusted F1 | Custom weighted score using the qualified graph counts and the additional penalty for recovered formal targets without complete proof. |
 | Evidence Support | Targets with at least one matched required member divided by 71. |
 | Proof Completion | Targets with a fully matched approved alternative divided by 71. |
 | Multi-Source Evidence Coverage | For each Multi-Source target, take the highest matched-member fraction of its approved alternatives. Sum those fractions and divide by 30, giving equal weight to each target. |
+
+Evidence-Adjusted F1 is a custom weighted F1-style metric alongside
+conventional Graph F1. Its formula is `2TP / (2TP + FP + FN + αU)`. All four
+counts use the same 34 qualified Conditions. `U` counts recovered formal proof
+targets with no complete approved alternative under the displayed evaluation
+state. The 42 expected relationships outside the formal proof targets carry
+no additional evidence penalty. Missing formal targets count through graph FN,
+and incorrect relationships count through graph FP.
+
+The fixed weight `α = 71/113` reflects formal annotation coverage. It is a
+design choice without statistical calibration. A zero denominator yields
+zero, following Graph F1. With `U = 0` the scores coincide. Each completed
+proof can remove one penalty, with no partial-proof weight. For a fixed
+expected graph, recovering a missed relationship changes TP by +1 and FN by
+−1. Even when it adds one evidence penalty, the numerator rises by 2 and
+the denominator by only `1 + α`.
+
+For the retained Extractor v1 exact-only baseline, TP = 105, FP = 10,
+FN = 8 and `U = 56` (67 recovered formal targets less 11 complete routes).
+Graph F1 is **92.11%** and Evidence-Adjusted F1 is **79.79%**. Model-assessed
+proof completions only enter the headline once the evaluation finishes.
 
 Missing relationships and unavailable graphs contribute zero. Exact credit
 survives all review outcomes. Before a plan exists the report shows an exact-only
@@ -53,13 +75,15 @@ credit and are identified separately.
 Only completed evaluations free of invalid responses and provider failures
 are eligible for evidence change comparisons. Comparisons also require the
 same frozen populations, approved routes, scoring scope, model settings and
-prompt. Exact-only and pending values remain visible with their state and
-no change is inferred from them. A committed plan with no eligible pairs
+prompt. Exact-only and pending evidence values remain visible with their
+state and evidence changes are withheld. Qualified Graph F1 changes remain
+available across compatible Runs. A committed plan with no eligible pairs
 completes without provider access.
 
-The Workbench shows the four headline metrics, a confusion matrix and expandable
-evidence diagnostics. Inspect approved and actual Source-attributed quotations,
-exact and model-assessed matches, material differences, proof routes,
+The Workbench shows both F1 scores above the three supporting evidence metrics,
+a confusion matrix and expandable evidence diagnostics. The F1 details expose
+`U`, `α` and the number of proofs completed through equivalence. Inspect approved
+and actual Source-attributed quotations, exact and model-assessed matches, material differences, proof routes,
 judgment coverage, invalid responses, costs and latency. The configured judge is
 DeepSeek V4 Pro (`deepseek-v4-pro`). Reports retain its settings and prompt
 commitment and record the returned model and token usage. Model-assessed

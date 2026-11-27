@@ -14,6 +14,7 @@ export function BenchmarkRunSummary({
   benchmark: BenchmarkRun;
 }) {
   const mixed = run.benchmark_v4;
+  const qualifiedGraph = run.quality ? run.quality.qualified_graph : mixed?.qualified;
   return (
     <section
       className="benchmark-run-summary"
@@ -22,8 +23,12 @@ export function BenchmarkRunSummary({
       {mixed ? (
         <>
           <PCGEvaluation key={run.id} run={run}>
-            {(run.quality ? run.quality.qualified_graph : mixed.qualified) && <div className="protocol-results-matrix">
-              <RelationshipMatrix benchmark={benchmark} />
+            {qualifiedGraph && <div className="protocol-results-matrix">
+              <RunRelationshipMatrix
+                counts={qualifiedGraph.counts}
+                expectedEdgesWithoutGraph={benchmark.cohort.expected_edges_without_graph}
+                scope={`${qualifiedGraph.inputs} qualified Conditions`}
+              />
             </div>}
           </PCGEvaluation>
           <details>

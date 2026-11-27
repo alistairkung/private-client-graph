@@ -7,6 +7,7 @@ from pathlib import Path
 import httpx
 import pytest
 
+from benchmark_v3.evaluation_protocol import GraphCounts
 from private_client_graph.models.source import Source
 from private_client_graph.research.artifacts import checksum
 from private_client_graph.research.evidence_quality import EvidenceQuality
@@ -101,6 +102,50 @@ def _run(directory, digest, client, rates=RATES, reference='offline test'):
             api_key='fixture-key', http_client=client)
 
 
+def test_exact_evidence_adjusted_f1_uses_only_recovered_formal_targets(inputs):
+    evaluation = exact_report(inputs)
+    assert evaluation['graph_f1']['f1'] == pytest.approx(0.9210526)
+    assert evaluation['evidence_adjusted_f1'] == {
+        'f1': pytest.approx(0.7979152656355077),
+        'incomplete_recovered_proofs': 56,
+        'weight_numerator': 71,
+        'weight_denominator': 113,
+        'proofs_completed_by_equivalence': 0,
+    }
+
+
+def _with_graph_counts(inputs, tp, fp, fn):
+    counts = GraphCounts(tp=tp, fp=fp, fn=fn)
+    graph = inputs.evidence_quality.qualified_graph.model_copy(update={'counts': counts, 'f1': counts.f1})
+    return inputs.model_copy(update={'evidence_quality': inputs.evidence_quality.model_copy(
+        update={'qualified_graph': graph})})
+
+
+def test_evidence_adjusted_f1_rewards_correct_predictions_and_counts_graph_errors_once(inputs):
+    baseline = exact_report(inputs)['evidence_adjusted_f1']
+    recovered = (*inputs.targets[:68], _target(68, 'incomplete'), *inputs.targets[69:])
+    added = _with_graph_counts(inputs.model_copy(update={'targets': recovered}), 106, 10, 7)
+    adjusted = exact_report(added)['evidence_adjusted_f1']
+    assert adjusted['incomplete_recovered_proofs'] == 57
+    assert adjusted['f1'] > baseline['f1']
+
+    for counts in [(104, 10, 9), (105, 11, 8)]:
+        evaluation = exact_report(_with_graph_counts(inputs, *counts))
+        adjusted = evaluation['evidence_adjusted_f1']
+        assert adjusted['incomplete_recovered_proofs'] == 56
+        assert adjusted['f1'] < baseline['f1']
+        assert adjusted['f1'] <= evaluation['graph_f1']['f1']
+
+
+@pytest.mark.parametrize('tp,fn', [(42, 71), (0, 113), (0, 0)])
+def test_evidence_adjusted_f1_equals_graph_f1_without_recovered_incomplete_proofs(inputs, tp, fn):
+    targets = tuple(_target(index, 'missing_relationship') for index in range(71)) if fn else ()
+    evaluation = exact_report(_with_graph_counts(inputs.model_copy(update={'targets': targets}), tp, 0, fn))
+    adjusted = evaluation['evidence_adjusted_f1']
+    assert adjusted['incomplete_recovered_proofs'] == 0
+    assert adjusted['f1'] == evaluation['graph_f1']['f1']
+
+
 def test_fixed_targets_and_source_matched_request_boundary(tmp_path, inputs):
     directory = tmp_path / 'assessment'
     digest = freeze(directory, inputs)
@@ -189,6 +234,10 @@ def test_semantic_metrics_keep_exact_credit_and_score_each_alternative(tmp_path,
     summary = result['target_summary']
     assert summary['evidence_support'] == {'count': 65, 'targets': 71, 'rate': pytest.approx(65 / 71)}
     assert summary['proof_completion'] == {'count': 38, 'targets': 71, 'rate': pytest.approx(38 / 71)}
+    adjusted = result['evidence_adjusted_f1']
+    assert adjusted['incomplete_recovered_proofs'] == 29
+    assert adjusted['proofs_completed_by_equivalence'] == 27
+    assert exact_report(inputs)['evidence_adjusted_f1']['f1'] < adjusted['f1'] <= result['graph_f1']['f1']
     assert summary['multi_source_evidence_coverage'] == {
         'targets': 30, 'matched_target_equivalents': 13.5, 'mean': pytest.approx(13.5 / 30),
     }
@@ -409,6 +458,8 @@ def test_reuse_binds_packet_source_target_and_keeps_invalid_in_comparison(tmp_pa
     assert pending['formal_targets'] == 71
     assert pending['paired_valid_targets'] == 52
     assert not pending['comparable'] and pending['transitions'] == []
+    assert pending['right']['target_summary']['newly_completed_proofs'] > 0
+    assert pending['right']['evidence_adjusted_f1'] == exact_report(other)['evidence_adjusted_f1']
 
     packets = []
 
@@ -461,6 +512,8 @@ def test_only_compatible_completed_evaluations_expose_transitions(tmp_path, inpu
     assert baseline['target_summary']['proof_completion']['count'] == 11
     mixed = compare_reports(report(donor), baseline)
     assert not mixed['comparable'] and mixed['transitions'] == []
+    assert mixed['right']['evidence_adjusted_f1'] == baseline['evidence_adjusted_f1']
+    assert mixed['left']['evidence_adjusted_f1']['f1'] >= baseline['evidence_adjusted_f1']['f1']
 
     retry_digest = freeze(recipient, other, donors=(donor,))
     assert not compare(donor, recipient)['comparable']

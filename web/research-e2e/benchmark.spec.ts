@@ -226,10 +226,10 @@ test("compatible imports compare the full roster and changed order withholds del
   await expect(page.getByText(/deltas withheld/i)).toBeVisible();
 });
 
-test("unified evaluation shows four metrics and compares only completed matching assessments", async ({ page }, testInfo) => {
+test("unified evaluation shows both F1 scores and compares completed evidence assessments", async ({ page }, testInfo) => {
   const graph = (inputs: number) => ({
     inputs, valid_graphs: inputs, without_graph: 0, exact_graphs: 0,
-    precision: 1, recall: 0.5, f1: 2 / 3, counts: { tp: 2, fp: 0, fn: 2 }, outcomes: {},
+    precision: 105 / 115, recall: 105 / 113, f1: 210 / 228, counts: { tp: 105, fp: 10, fn: 8 }, outcomes: {},
   });
   const quality: EvidenceQuality = {
     version: "deterministic_evidence_quality_v1", state: "complete",
@@ -270,8 +270,15 @@ test("unified evaluation shows four metrics and compares only completed matching
     await route.fulfill({ response, json: { ...await response.json(), benchmark_v4: comparison } });
   });
 
+  const exactAdjustment = {
+    f1: 0.7979152656355077, incomplete_recovered_proofs: 56,
+    weight_numerator: 71, weight_denominator: 113, proofs_completed_by_equivalence: 0,
+  };
   const assessment: SemanticEvidenceReport = {
     methodology: "Ground-Truth-Aligned Evidence Evaluation", state: "complete", run_id: control, plan_sha256: "fixture", graph_f1: graph(34),
+    evidence_adjusted_f1: {
+      ...exactAdjustment, f1: 0.7998247328861775, incomplete_recovered_proofs: 55, proofs_completed_by_equivalence: 1,
+    },
     scope_note: "Approved members define the comparison. Preserve stated dates, timing and authority.",
     evaluator: { version: "pcg-semantic-evidence-equivalence", prompt_sha256: "prompt", model: "deepseek-v4-pro",
       observation_origin: "offline_fixture",
@@ -327,6 +334,7 @@ test("unified evaluation shows four metrics and compares only completed matching
     const exact = selectedState === "exact_only";
     return {
       ...assessment, state: selectedState, plan_sha256: exact ? null : assessment.plan_sha256,
+      evidence_adjusted_f1: exactAdjustment,
       operations: exact ? null : assessment.operations,
       target_summary: {
         ...assessment.target_summary,
@@ -346,8 +354,9 @@ test("unified evaluation shows four metrics and compares only completed matching
     const semantic: SemanticComparison = {
       methodology: assessment.methodology, scope_note: assessment.scope_note, comparable,
       evaluator: assessment.evaluator, formal_targets: 71, paired_valid_targets: 1,
-      left: { ...assessment, run_id: treatment, target_summary: {
+      left: { ...assessment, run_id: treatment, evidence_adjusted_f1: exactAdjustment, target_summary: {
         ...assessment.target_summary, evidence_support: { count: 20, targets: 71, rate: 20 / 71 },
+        proof_completion: { count: 11, targets: 71, rate: 11 / 71 }, newly_completed_proofs: 0,
       } }, right: selectedReport(),
       transitions: comparable ? [{ id: "first", condition: "F0", edge: assessment.targets[0].edge,
         left: { status: "judged", exact_outcome: "incomplete", complete: false, reused: false },
@@ -377,29 +386,42 @@ test("unified evaluation shows four metrics and compares only completed matching
   const evaluation = page.getByRole("region", { name: "PCG Evaluation", exact: true });
   await expect(evaluation.getByRole("heading", { name: "PCG Evaluation" })).toBeVisible();
   await expect(evaluation.getByText("Exact-only baseline · combined evaluation pending", { exact: true })).toBeVisible();
-  const cards = evaluation.locator("dl[aria-label='Evaluation metrics']");
-  await expect(cards.locator("dt")).toHaveText(["Graph F1", "Evidence Support", "Proof Completion", "Multi-Source Evidence Coverage"]);
-  await expect(cards.getByText("66.67%", { exact: true })).toBeVisible();
-  await expect(cards.getByText("22.54%", { exact: true })).toBeVisible();
-  await expect(cards.getByText("15.49%", { exact: true })).toBeVisible();
-  await expect(cards.getByText("40.00%", { exact: true })).toBeVisible();
-  await expect(evaluation.getByRole("table", { name: /Relationship confusion matrix/ })).toBeVisible();
+  const performance = evaluation.locator("dl[aria-label='Performance metrics']");
+  const evidence = evaluation.locator("dl[aria-label='Supporting evidence metrics']");
+  await expect(performance.locator("dt")).toHaveText(["Graph F1", "Evidence-Adjusted F1"]);
+  await expect(evidence.locator("dt")).toHaveText(["Evidence Support", "Proof Completion", "Multi-Source Evidence Coverage"]);
+  await expect(performance.getByText("92.11%", { exact: true })).toBeVisible();
+  await expect(performance.getByText("79.79%", { exact: true })).toBeVisible();
+  await expect(performance.getByText("56 incomplete recovered proofs · Exact-only")).toBeVisible();
+  await expect(evidence.getByText("22.54%", { exact: true })).toBeVisible();
+  await expect(evidence.getByText("15.49%", { exact: true })).toBeVisible();
+  await expect(evidence.getByText("40.00%", { exact: true })).toBeVisible();
+  const matrix = evaluation.getByRole("table", { name: "Relationship confusion matrix · 34 qualified Conditions" });
+  await expect(matrix.getByRole("cell", { name: /105 TP/ })).toBeVisible();
+  await expect(matrix.getByRole("cell", { name: /10 FP/ })).toBeVisible();
+  await expect(matrix.getByRole("cell", { name: /8 FN/ })).toBeVisible();
 
   const comparator = page.getByRole("combobox", { name: "Compare with verified Run" });
   await comparator.selectOption(treatment);
   const table = page.getByRole("table", { name: "PCG Evaluation comparison" });
   await expect(table.getByRole("row", { name: /Evidence Support/ })).toContainText("22.54%");
   await expect(table.getByRole("columnheader", { name: /Selected Run.*Exact-only baseline/ })).toBeVisible();
-  await expect(table.getByRole("columnheader", { name: "Change" })).toHaveCount(0);
+  const graphRow = table.getByRole("row", { name: /^Graph F1/ });
+  const adjustedRow = table.getByRole("row", { name: /^Evidence-Adjusted F1/ });
+  await expect(graphRow.getByRole("cell").last()).toHaveText("0.00 pp");
+  await expect(adjustedRow.getByRole("cell").last()).toHaveText("Unavailable");
 
   selectedState = "pending";
   await evaluation.getByText("Evidence diagnostics", { exact: true }).press("Enter");
   await evaluation.getByRole("button", { name: "Refresh evaluation" }).click();
   await expect(evaluation.getByText("Exact-only baseline · combined evaluation pending or interrupted")).toBeVisible();
-  await expect(cards.getByText("15.49%", { exact: true })).toBeVisible();
-  await expect(cards.getByText("16.90%", { exact: true })).toHaveCount(0);
+  await expect(performance.getByText("79.79%", { exact: true })).toBeVisible();
+  await expect(evidence.getByText("15.49%", { exact: true })).toBeVisible();
+  await expect(evidence.getByText("16.90%", { exact: true })).toHaveCount(0);
 
   await evaluation.getByText("Evidence diagnostics", { exact: true }).press("Enter");
+  const adjustment = evaluation.locator("dl").filter({ hasText: "Evidence penalty weight (α)" });
+  await expect(adjustment.locator("dd")).toHaveText(["71/113", "56", "0", "Exact-only"]);
   await expect(evaluation.getByText(/2\/3 eligible pairs judged · 1 partially equivalent.*1 invalid judgment.*4 delivery failures/)).toBeVisible();
   await expect(evaluation.getByText(/25 exact · 1 equivalent added · 100 unmatched/)).toBeVisible();
   await expect(evaluation.getByText(/2.5s mean latency/)).toBeVisible();
@@ -422,19 +444,23 @@ test("unified evaluation shows four metrics and compares only completed matching
   selectedState = "complete";
   await evaluation.getByRole("button", { name: "Refresh evaluation" }).click();
   await expect(evaluation.getByText("Combined evaluation complete", { exact: true })).toBeVisible();
-  await expect(cards.getByText("66.67%", { exact: true })).toBeVisible();
-  await expect(cards.getByText("29.58%", { exact: true })).toBeVisible();
-  await expect(cards.getByText("16.90%", { exact: true })).toBeVisible();
-  await expect(cards.getByText("43.33%", { exact: true })).toBeVisible();
+  await expect(performance.getByText("92.11%", { exact: true })).toBeVisible();
+  await expect(performance.getByText("79.98%", { exact: true })).toBeVisible();
+  await evaluation.getByText("Evidence diagnostics", { exact: true }).press("Enter");
+  await expect(adjustment.locator("dd")).toHaveText(["71/113", "55", "1", "Exact and equivalent"]);
+  await expect(evidence.getByText("29.58%", { exact: true })).toBeVisible();
+  await expect(evidence.getByText("16.90%", { exact: true })).toBeVisible();
+  await expect(evidence.getByText("43.33%", { exact: true })).toBeVisible();
   expect(evaluationReads).toBe(3);
   if (testInfo.project.name === "research-desktop") {
-    const tops = await cards.locator("dt").evaluateAll((items) => items.map((item) => item.getBoundingClientRect().top));
+    const tops = await performance.locator("dt").evaluateAll((items) => items.map((item) => item.getBoundingClientRect().top));
     expect(new Set(tops).size).toBe(1);
   }
 
   await page.getByRole("button", { name: "Refresh comparison" }).click();
   const supportRow = table.getByRole("row", { name: /Evidence Support/ });
-  await expect(table.getByRole("columnheader", { name: "Change" })).toBeVisible();
+  await expect(graphRow.getByRole("cell").last()).toHaveText("0.00 pp");
+  await expect(adjustedRow.getByRole("cell").last()).toHaveText("+0.19 pp");
   await expect(supportRow.getByRole("cell").nth(0)).toContainText("28.17%");
   await expect(supportRow.getByRole("cell").nth(1)).toContainText("29.58%");
   await expect(supportRow.getByRole("cell").nth(2)).toContainText("+1.41 pp");
