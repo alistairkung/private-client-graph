@@ -274,8 +274,12 @@ test("evidence quality controls and comparison fit the viewport and retain keybo
   await page.getByText("Run history and selection", { exact: true }).click();
   const metric = page.getByRole("combobox", { name: "Performance metric" });
   await metric.selectOption("joint_only_coverage");
-  const coveragePoint = page.getByRole("button", { name: /Run 1, Multi-Source Evidence Coverage/ });
+  const coveragePoint = page.getByRole("tabpanel", { name: "By Run" }).getByRole("button", {
+    name: /^Run \d+, Multi-Source Evidence Coverage/,
+    pressed: true,
+  });
   await coveragePoint.focus();
+  await expect(coveragePoint).toBeFocused();
   await expect(coveragePoint).toHaveAccessibleDescription(/Average percentage of required evidence recovered for relationships that need multiple Sources\. Uses the best-matching approved proof route\./);
 
   const runTab = page.getByRole("tab", { name: "By Run" });
