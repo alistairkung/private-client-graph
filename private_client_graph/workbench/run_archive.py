@@ -4,14 +4,9 @@ from pathlib import Path
 from private_client_graph.research.artifacts import Bundle, utc_now
 from private_client_graph.research.run_plan import RunPlan
 from .execution_state import active_run_id
-from .supervisor import command_lock, latest_event
+from .run_lifecycle import can_archive, latest_event
+from .supervisor import command_lock
 from .workspaces import experiment_path, read_experiment, run_is_archived, workspace_lock, write_record
-
-
-def can_archive(bundle: Bundle, state: str) -> bool:
-    if state == 'failed':
-        return True
-    return state in ('frozen', 'stopped', 'interrupted') and not bundle.results()
 
 
 def archive_run(root: Path, experiment_id: str, run_id: str) -> None:
