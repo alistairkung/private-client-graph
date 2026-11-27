@@ -1,5 +1,6 @@
-import type { BenchmarkV4Operations, BenchmarkV4Summary as Summary, DeliveredGraphMetrics, Metrics, RunDetail } from "../shared/contracts";
+import type { BenchmarkV4Operations, BenchmarkV4Summary as Summary, DeliveredGraphMetrics, EvidenceQuality, Metrics, RunDetail } from "../shared/contracts";
 import { metric, money } from "./RunChart";
+import { evidenceMetricLabels, multiSourceProofCompletionLabel } from "./benchmark-metrics";
 
 export function BenchmarkV4Summary({ run }: { run: RunDetail }) {
   const summary = run.benchmark_v4!;
@@ -7,8 +8,14 @@ export function BenchmarkV4Summary({ run }: { run: RunDetail }) {
     <section className="benchmark-run-summary" aria-label="Benchmark v4 results">
       <p>{run.pipeline_usage?.origin_run_id ? "Extractor v1 candidates + Generative Resolver" : "Extractor v1 only"} · 35 evaluation inputs</p>
       {summary.observation_origin === "offline_fixture" && <p>Synthetic fixture results.</p>}
-      {summary.state === "unmeasured" ? (
-        <p role="status">Graph metrics will appear after the first retained observation.</p>
+      {run.quality && summary.state !== "unmeasured" ? (
+        <details>
+          <summary>Graph delivery by reference scope</summary>
+          {summary.state === "provisional" && <p>Unobserved inputs contribute their expected edges to the combined missing count.</p>}
+          <GraphMetrics summary={summary} quality={run.quality} />
+        </details>
+      ) : summary.state === "unmeasured" ? (
+        !run.quality && <p role="status">Graph metrics will appear after the first retained observation.</p>
       ) : (
         <>
           {summary.state === "provisional" && <p role="status">Provisional. Unobserved inputs contribute their expected edges to the combined missing count.</p>}
@@ -31,10 +38,10 @@ export function BenchmarkV4Summary({ run }: { run: RunDetail }) {
   );
 }
 
-export function GraphMetrics({ summary }: { summary: Summary }) {
+export function GraphMetrics({ summary, quality }: { summary: Summary; quality?: EvidenceQuality | null }) {
   const slices: Array<[string, DeliveredGraphMetrics | null]> = [
-    ["Combined · mixed references", summary.combined],
-    ["Benchmark v3 · 34 qualified Conditions", summary.qualified],
+    ["Combined · mixed references", quality ? quality.combined_graph : summary.combined],
+    ["Benchmark v3 · 34 qualified Conditions", quality ? quality.qualified_graph : summary.qualified],
     ["U revision 8 · consensus reference", summary.consensus],
   ];
   return (
@@ -44,7 +51,7 @@ export function GraphMetrics({ summary }: { summary: Summary }) {
         <thead>
           <tr>
             <th scope="col">Reference scope</th><th scope="col">Precision</th><th scope="col">Recall</th>
-            <th scope="col">Micro-F1</th><th scope="col">TP / FP / FN</th>
+            <th scope="col">Graph F1</th><th scope="col">TP / FP / FN</th>
             <th scope="col">Valid / planned</th><th scope="col">Without graph</th><th scope="col">Exact</th>
           </tr>
         </thead>
@@ -68,8 +75,8 @@ export function BenchmarkEvidence({ summary, proofs }: { summary: Summary; proof
   return (
     <>
       {proofs && summary.state !== "unmeasured" && (
-        <p>Complete qualified proofs {proofs.complete_proofs} / {proofs.planned_proofs} ·
-          Joint-only {proofs.complete_joint_proofs} / {proofs.planned_joint_proofs}.</p>
+        <p>{evidenceMetricLabels.complete_proof} {proofs.complete_proofs} / {proofs.planned_proofs} ·
+          {multiSourceProofCompletionLabel} {proofs.complete_joint_proofs} / {proofs.planned_joint_proofs}.</p>
       )}
       <p>U8 exact adjudicated citation matches {evidence.assessed
         ? `${evidence.matched_citations} / ${evidence.reference_citations}`

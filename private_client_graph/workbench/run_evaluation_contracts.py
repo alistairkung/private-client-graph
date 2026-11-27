@@ -4,6 +4,7 @@ from typing import Literal
 from pydantic import BaseModel, Field
 from benchmark_v3.evaluation_protocol import Metrics
 from private_client_graph.research.benchmark_v4_scoring import BenchmarkV4Summary
+from private_client_graph.research.evidence_quality import EvidenceQuality
 from private_client_graph.research.benchmark_v4_operations import BenchmarkV4Operations
 from private_client_graph.research.source_attribution import SourceAttributionDiagnostic
 
@@ -157,6 +158,13 @@ class BenchmarkComparison(BaseModel):
     family_macro_f1_delta: float | None = None
 
 
+class EvidenceQualityDelta(BaseModel):
+    combined_graph: float | None
+    qualified_graph: float | None
+    complete_proof: float | None
+    joint_only_coverage: float | None
+
+
 class BenchmarkV4Comparison(BaseModel):
     left: BenchmarkV4Summary
     right: BenchmarkV4Summary
@@ -165,6 +173,9 @@ class BenchmarkV4Comparison(BaseModel):
     left_usage: BenchmarkV4Operations | None = None
     right_usage: BenchmarkV4Operations | None = None
     shared_extraction_run_id: str | None = None
+    left_quality: EvidenceQuality | None = Field(default=None, json_schema_extra={'x-typescript-optional': True})
+    right_quality: EvidenceQuality | None = Field(default=None, json_schema_extra={'x-typescript-optional': True})
+    quality_delta: EvidenceQualityDelta | None = Field(default=None, json_schema_extra={'x-typescript-optional': True})
 
 
 class RunComparison(BaseModel):

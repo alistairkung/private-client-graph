@@ -13,6 +13,8 @@ import { compareRuns } from "./api";
 import { metric, money } from "./RunChart";
 import { BenchmarkEvidence, BenchmarkV4Summary, GraphMetrics, PipelineUsage } from "./BenchmarkV4Summary";
 import { BenchmarkRunSummary } from "./BenchmarkRunSummary";
+import { RunQuality, RunQualityComparison } from "./RunQuality";
+import { evidenceMetricLabels, multiSourceProofCompletionLabel } from "./benchmark-metrics";
 
 export function RunInspection({
   workspace,
@@ -291,14 +293,15 @@ function RunComparisonPanel({
       ))}
       {data.benchmark_v4 && (
         <section aria-label="Benchmark v4 comparison">
+          <RunQualityComparison comparison={data.benchmark_v4} />
           {data.benchmark_v4.shared_extraction_run_id && <p>Verified shared extraction candidates.</p>}
           <h4>Comparison Run</h4>
-          <GraphMetrics summary={data.benchmark_v4.left} />
-          <BenchmarkEvidence summary={data.benchmark_v4.left} proofs={data.benchmark_v4.left_proofs} />
+          <GraphMetrics summary={data.benchmark_v4.left} quality={data.benchmark_v4.left_quality} />
+          <BenchmarkEvidence summary={data.benchmark_v4.left} proofs={data.benchmark_v4.left_quality ? null : data.benchmark_v4.left_proofs} />
           {data.benchmark_v4.left_usage && <PipelineUsage usage={data.benchmark_v4.left_usage} complete={data.benchmark_v4.left.state === "complete"} />}
           <h4>Selected Run</h4>
-          <GraphMetrics summary={data.benchmark_v4.right} />
-          <BenchmarkEvidence summary={data.benchmark_v4.right} proofs={data.benchmark_v4.right_proofs} />
+          <GraphMetrics summary={data.benchmark_v4.right} quality={data.benchmark_v4.right_quality} />
+          <BenchmarkEvidence summary={data.benchmark_v4.right} proofs={data.benchmark_v4.right_quality ? null : data.benchmark_v4.right_proofs} />
           {data.benchmark_v4.right_usage && <PipelineUsage usage={data.benchmark_v4.right_usage} complete={data.benchmark_v4.right.state === "complete"} />}
         </section>
       )}
@@ -307,16 +310,16 @@ function RunComparisonPanel({
           <h4>Condition-aligned comparison · descriptive deltas</h4>
           {data.benchmark.cohort ? (
             <p>
-              All-condition micro-F1 Δ{" "}
+              All-condition Graph F1 Δ{" "}
               {signed(data.benchmark.cohort.all_condition_micro_f1)} · Family
               macro F1 Δ {signed(data.benchmark.family_macro_f1_delta)} ·
               Conditions {signed(data.benchmark.cohort.planned_conditions)} ·
               Exact graphs {signed(data.benchmark.cohort.exact_graphs)} ·
               TP/FP/FN {signed(data.benchmark.cohort.tp)}/
               {signed(data.benchmark.cohort.fp)}/
-              {signed(data.benchmark.cohort.fn)} · Proof{" "}
+              {signed(data.benchmark.cohort.fn)} · {evidenceMetricLabels.complete_proof}{" "}
               {signed(data.benchmark.cohort.complete_proofs)}/
-              {signed(data.benchmark.cohort.planned_proofs)} · Joint{" "}
+              {signed(data.benchmark.cohort.planned_proofs)} · {multiSourceProofCompletionLabel}{" "}
               {signed(data.benchmark.cohort.complete_joint_proofs)}/
               {signed(data.benchmark.cohort.planned_joint_proofs)}
             </p>
@@ -337,7 +340,7 @@ function RunComparisonPanel({
                 <thead>
                   <tr>
                     <th>Family</th>
-                    <th>Δ micro-F1</th>
+                    <th>Δ Graph F1</th>
                     <th>Δ exact graphs</th>
                     <th>Δ TP / FP / FN</th>
                     <th>Δ complete proofs</th>
@@ -371,8 +374,8 @@ function RunComparisonPanel({
                     <th>Family · Condition</th>
                     <th>Outcome left → right</th>
                     <th>Δ TP / FP / FN</th>
-                    <th>Δ proof</th>
-                    <th>Δ joint proof</th>
+                    <th>Δ {evidenceMetricLabels.complete_proof}</th>
+                    <th>Δ {multiSourceProofCompletionLabel}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -460,8 +463,11 @@ function BenchmarkRunInspection({
         </div>
         {mixed && copy && <button className="secondary" disabled={busy} onClick={copy}>Copy to next draft</button>}
       </div>
+      {run.quality && <RunQuality quality={run.quality} />}
       {mixed && <BenchmarkV4Summary run={run} />}
-      {mixed?.state !== "unmeasured" && <BenchmarkRunSummary run={run} benchmark={benchmark} />}
+      {mixed?.state !== "unmeasured" && (!run.quality || run.quality.observed_qualified_inputs > 0) && (
+        <BenchmarkRunSummary run={run} benchmark={benchmark} />
+      )}
       <BenchmarkFamilyExplorer
         key={run.id}
         run={run}

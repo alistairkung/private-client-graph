@@ -6,6 +6,7 @@ from private_client_graph.research.artifacts import Bundle
 from private_client_graph.research.benchmark_v4 import BenchmarkWorkload, EvaluationInput
 from private_client_graph.research.benchmark_v4_run import evaluate_retained_run
 from private_client_graph.research.benchmark_v4_operations import benchmark_v4_operations
+from private_client_graph.research.evidence_quality import report_evidence_quality
 from private_client_graph.research.results import ResearchResult
 from private_client_graph.research.run_plan import RunPlan
 from .benchmark_contracts import (
@@ -24,6 +25,7 @@ def attach_benchmark_v4(detail: 'RunDetail', bundle: Bundle) -> None:
     retained = evaluate_retained_run(bundle, workload, attempts=detail.attempts)
     mixed, results = retained.evaluation, retained.results
     detail.benchmark_v4 = mixed.summary
+    detail.quality = report_evidence_quality(mixed.qualified, workload.qualified, results, mixed=mixed.summary).quality
     detail.pipeline_usage = benchmark_v4_operations(retained, detail.attempts, bundle.plan.pricing,
                                                    live=bundle.plan.kind == 'live_experiment')
     detail.evaluation.full_pipeline_cost = detail.pipeline_usage.full_pipeline.estimated_cost
@@ -32,7 +34,7 @@ def attach_benchmark_v4(detail: 'RunDetail', bundle: Bundle) -> None:
         if detail.evaluation.full_pipeline_cost is not None else
         'Full pipeline estimate requires pricing and usage for every incurred attempt.')
     detail.benchmark = BenchmarkRun.from_protocol(mixed.qualified, workload.qualified,
-                                                  workload.family_details, results)
+                                                  workload.family_details, results, include_coverage=True)
     projections = [*detail.benchmark.observations,
                    _consensus_condition(workload, mixed.consensus, results.get(mixed.consensus.condition))]
     for observation, condition, template in zip(detail.observations, projections, bundle.plan.inputs, strict=True):

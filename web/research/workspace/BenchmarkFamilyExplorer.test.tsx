@@ -164,7 +164,7 @@ it("keeps all families concise and pairs graph score with proof completion", () 
   expect(screen.getAllByText("0/3")).toHaveLength(2);
   expect(screen.getAllByText("Graph F1")).toHaveLength(2);
   expect(screen.getAllByText("6/7 basis")).toHaveLength(2);
-  expect(screen.getAllByText("Complete proofs")).toHaveLength(2);
+  expect(screen.getAllByText("Proof Completion")).toHaveLength(2);
   expect(screen.getByText("Contradictory Assertions")).toBeInTheDocument();
   expect(screen.getByRole("button", { name: /^Family E/ })).toHaveAttribute(
     "aria-expanded",

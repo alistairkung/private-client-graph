@@ -181,3 +181,24 @@
 }
 .research-visual.run-chart[data-tactile] .chart-point > span { position: relative; }
 .research-visual.run-chart[data-tactile] .chart-point[aria-pressed="true"] { border-color: transparent; background: transparent; }
+
+.research-visual .chart-metric-filter {
+  max-width: 325px;
+  margin: 0 0 12px;
+}
+.research-visual .chart-metric-filter select {
+  min-width: 0;
+  min-height: 44px;
+}
+
+.research-visual .chart-plot-title {
+  margin: 0 0 6px;
+  font-size: 1rem;
+}
+
+.research-visual .chart-metric-filter label {
+  margin-bottom: 6px;
+}
+.research-visual .chart-metric-filter small {
+  font-weight: 400;
+}
