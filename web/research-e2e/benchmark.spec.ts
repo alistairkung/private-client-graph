@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import type { BenchmarkV4Comparison, BenchmarkV4Summary, EvidenceQuality } from "../research/shared/contracts";
+import type { BenchmarkV4Comparison, BenchmarkV4Summary, EvidenceQuality, SemanticEvidenceReport, SemanticComparison } from "../research/shared/contracts";
 
 const experiment = "e".repeat(32);
 const control = "1".repeat(32);
@@ -270,6 +270,52 @@ test("evidence quality controls and comparison fit the viewport and retain keybo
     await route.fulfill({ response, json: { ...await response.json(), benchmark_v4: comparison } });
   });
 
+  const assessment: SemanticEvidenceReport = {
+    status: "Exploratory and unverified", run_id: control, plan_sha256: "fixture",
+    evaluator: { version: "pcg-semantic-evidence-v1", prompt_sha256: "prompt", model: "deepseek-v4-pro",
+      observation_origin: "offline_fixture",
+      settings: { model: "deepseek-v4-pro", temperature: 0, timeout_seconds: 90, max_retries: 0, thinking: "disabled" } },
+    target_summary: { formal_targets: 71, recovered_targets: 67, verdicts: { Supported: 1 },
+      semantic_outcomes: { judged: 1, invalid_judgment: 1, unattempted: 65, deterministic_delivery_failure: 4 },
+      flags: { potentially_sufficient_overlooked_by_exact_matching: 1 },
+      potentially_sufficient_overlooked_by_exact_matching: { count: 1, formal_target_denominator: 71,
+        recovered_exact_incomplete_denominator: 56, recovered_exact_incomplete_judged: 1 } },
+    operations: { planned_attempts: 69, reserved_attempts: 2, reused_judgments: 0,
+      known_estimated_peak_usd: 0.013, reserved_attempts_without_usage: 0, mean_latency_seconds: 2.5 },
+    controls: [],
+    targets: [
+      { id: "first", condition: "F0", edge: ["Morgan Example", "trustee_of", "North Example Trust"],
+        status: "judged", flags: ["potentially_sufficient_overlooked_by_exact_matching"], control: null,
+        deterministic: { exact_outcome: "incomplete", joint_only: true, best_exact_pair_coverage: 0.5,
+          matches_any_approved_pair: [], approved_route_source_set_present: false },
+        quotations: [{ id: "Q1", source: "S1", source_id: "register", text: "Morgan is the current holder." }],
+        judgment: { verdict: "Supported", facts: [
+          { fact: "relationship", status: "satisfied", quotation_ids: ["Q1"], reason: "The register identifies the current holder." },
+        ] }, error: null, invalid_response: null, provider: null, reuse: null },
+      { id: "invalid", condition: "F1", edge: ["Dana Example", "trustee_of", "North Example Trust"],
+        status: "invalid_judgment", flags: [], control: null, deterministic: null, quotations: [],
+        judgment: null, error: "Invalid judgment schema", invalid_response: '{"verdict":"unsupported"}',
+        provider: null, reuse: null },
+    ],
+  };
+  let semanticReads = 0;
+  await page.route(`**/semantic-evidence/runs/${control}`, async (route) => {
+    semanticReads += 1;
+    await route.fulfill({ json: assessment });
+  });
+  const semantic: SemanticComparison = {
+    status: assessment.status, evaluator: assessment.evaluator, formal_targets: 71, paired_valid_targets: 1,
+    left: { ...assessment, run_id: treatment }, right: assessment,
+    transitions: [{ id: "first", condition: "F0", edge: assessment.targets[0].edge,
+      left: { status: "judged", verdict: "Partially Supported", exact_outcome: "incomplete",
+        potentially_sufficient: false, reused: false },
+      right: { status: "judged", verdict: "Supported", exact_outcome: "incomplete",
+        potentially_sufficient: true, reused: false },
+      facts_comparable: true, changed_facts: [{ fact: "relationship", left: "missing", right: "satisfied" }],
+    }],
+  };
+  await page.route("**/semantic-evidence/comparison?*", (route) => route.fulfill({ json: semantic }));
+
   await page.goto(`/#workspace=${experiment}&run=${control}`);
   await page.getByText("Run history and selection", { exact: true }).click();
   const metric = page.getByRole("combobox", { name: "Performance metric" });
@@ -300,5 +346,24 @@ test("evidence quality controls and comparison fit the viewport and retain keybo
       return left >= 0 && right <= window.innerWidth + 1;
     })).toBe(true);
   }
+
+  expect(semanticReads).toBe(0);
+  await page.getByText("Semantic Evidence — AI-assessed, unverified", { exact: true }).press("Enter");
+  await expect(page.getByText("1/71 valid judgments")).toBeVisible();
+  await page.getByText("Inspect formal targets (2)").press("Enter");
+  const filter = page.getByRole("combobox", { name: "Filter formal targets" });
+  await filter.selectOption("Supported");
+  await page.getByText(/F0 · Morgan Example.*Supported/).press("Enter");
+  await expect(page.getByText("Morgan is the current holder.", { exact: true })).toBeVisible();
+  await expect(page.getByText("The register identifies the current holder.", { exact: false })).toBeVisible();
+  await filter.selectOption("invalid_judgment");
+  await page.getByText(/F1 · Dana Example.*Invalid judgment/).press("Enter");
+  await page.getByText("Retained invalid response", { exact: true }).press("Enter");
+  await expect(page.getByText('{"verdict":"unsupported"}', { exact: true })).toBeVisible();
+
+  await page.getByText("Semantic Evidence — AI-assessed, unverified comparison", { exact: true }).press("Enter");
+  await expect(page.getByText("1/71 formal targets have two valid judgments.")).toBeVisible();
+  await page.getByText("F0 · Morgan Example · trustee of · North Example Trust", { exact: true }).press("Enter");
+  await expect(page.getByText("relationship · missing → satisfied")).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
 });

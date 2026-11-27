@@ -14,6 +14,7 @@ import { metric, money } from "./RunChart";
 import { BenchmarkEvidence, BenchmarkV4Summary, GraphMetrics, PipelineUsage } from "./BenchmarkV4Summary";
 import { BenchmarkRunSummary } from "./BenchmarkRunSummary";
 import { RunQuality, RunQualityComparison } from "./RunQuality";
+import { SemanticEvidenceComparison, SemanticEvidencePanel } from "./SemanticEvidence";
 import { evidenceMetricLabels, multiSourceProofCompletionLabel } from "./benchmark-metrics";
 
 export function RunInspection({
@@ -303,6 +304,7 @@ function RunComparisonPanel({
           <GraphMetrics summary={data.benchmark_v4.right} quality={data.benchmark_v4.right_quality} />
           <BenchmarkEvidence summary={data.benchmark_v4.right} proofs={data.benchmark_v4.right_quality ? null : data.benchmark_v4.right_proofs} />
           {data.benchmark_v4.right_usage && <PipelineUsage usage={data.benchmark_v4.right_usage} complete={data.benchmark_v4.right.state === "complete"} />}
+          <SemanticEvidenceComparison left={left} right={right} />
         </section>
       )}
       {data.benchmark && (
@@ -468,6 +470,7 @@ function BenchmarkRunInspection({
       {mixed?.state !== "unmeasured" && (!run.quality || run.quality.observed_qualified_inputs > 0) && (
         <BenchmarkRunSummary run={run} benchmark={benchmark} />
       )}
+      {mixed?.state === "complete" && <SemanticEvidencePanel key={run.id} run={run.id} />}
       <BenchmarkFamilyExplorer
         key={run.id}
         run={run}

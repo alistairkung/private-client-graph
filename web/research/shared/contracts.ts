@@ -6,6 +6,14 @@ export type AttributionFailure = {
   supporting_text: string;
 };
 
+export type Baseline = {
+  exact_outcome: "complete" | "incomplete" | "missing_relationship" | "unavailable_graph";
+  best_exact_pair_coverage: number;
+  joint_only: boolean;
+  matches_any_approved_pair: Array<string>;
+  approved_route_source_set_present: boolean | null;
+};
+
 export type BenchmarkComparison = {
   cohort: BenchmarkMetricDelta | null;
   families: Array<BenchmarkFamilyDelta>;
@@ -464,6 +472,13 @@ export type ExtractionResult = {
   relationships: Array<RelationshipCandidate>;
 };
 
+export type FactFinding = {
+  fact: "identity" | "relationship" | "timing" | "authority";
+  status: "satisfied" | "contradicted" | "missing" | "uncertain" | "inapplicable";
+  quotation_ids: Array<string>;
+  reason: string;
+};
+
 export type FamilyResearchContext = {
   revision: string | number;
   dossier_sha256: string;
@@ -561,6 +576,11 @@ export type JointCoverage = {
   mean: number | null;
 };
 
+export type Judgment = {
+  verdict: "Supported" | "Partially Supported" | "Unsupported" | "Uncertain";
+  facts: Array<FactFinding>;
+};
+
 export type LegacyCaseLabel = {
   case_id: string;
   input_id: string;
@@ -628,6 +648,14 @@ export type Metrics = {
   outcomes: Record<string, number>;
 };
 
+export type ModelSettings = {
+  model: string;
+  timeout_seconds: number;
+  temperature: number | null;
+  max_retries: 0;
+  thinking: "disabled";
+};
+
 export type Observation = {
   id: string;
   configuration: string;
@@ -662,6 +690,13 @@ export type PairingExclusion = {
   side: "left" | "right";
   observation_id: string;
   reason: string;
+};
+
+export type PotentialSupport = {
+  count: number | null;
+  formal_target_denominator: number;
+  recovered_exact_incomplete_denominator: number;
+  recovered_exact_incomplete_judged: number;
 };
 
 export type Preview = {
@@ -959,6 +994,123 @@ export type ScopeInput = {
   truth_digest: string;
   samples: number;
   repetitions: number;
+};
+
+export type SemanticComparison = {
+  status: "Exploratory and unverified";
+  evaluator: SemanticEvaluator;
+  formal_targets: number;
+  paired_valid_targets: number;
+  left: SemanticRunSummary;
+  right: SemanticRunSummary;
+  transitions: Array<SemanticTransition>;
+};
+
+export type SemanticEvaluator = {
+  version: string;
+  prompt_sha256: string;
+  model: string;
+  settings: ModelSettings;
+  observation_origin: string;
+};
+
+export type SemanticEvidenceReport = {
+  run_id: string;
+  plan_sha256: string;
+  target_summary: SemanticSummary;
+  operations: SemanticOperations;
+  status: "Exploratory and unverified";
+  evaluator: SemanticEvaluator;
+  targets: Array<SemanticTarget>;
+  controls: Array<SemanticTarget>;
+};
+
+export type SemanticFactChange = {
+  fact: "identity" | "relationship" | "timing" | "authority";
+  left: "satisfied" | "contradicted" | "missing" | "uncertain" | "inapplicable";
+  right: "satisfied" | "contradicted" | "missing" | "uncertain" | "inapplicable";
+};
+
+export type SemanticOperations = {
+  planned_attempts: number;
+  reserved_attempts: number;
+  reused_judgments: number;
+  known_estimated_peak_usd: number | null;
+  reserved_attempts_without_usage: number;
+  mean_latency_seconds: number | null;
+};
+
+export type SemanticOutcome = {
+  status: "judged" | "invalid_judgment" | "deterministic_delivery_failure" | "unattempted" | "awaiting_receipt" | "interrupted" | "provider_failed";
+  verdict: "Supported" | "Partially Supported" | "Unsupported" | "Uncertain" | null;
+  exact_outcome: "complete" | "incomplete" | "missing_relationship" | "unavailable_graph";
+  potentially_sufficient: boolean;
+  reused: boolean;
+};
+
+export type SemanticProvider = {
+  latency_seconds: number;
+  estimated_peak_usd: number | null;
+  usage: TokenUsage | null;
+  returned_model: string | null;
+  finish_reason: string | null;
+  status_code: number | null;
+};
+
+export type SemanticQuotation = {
+  id: string;
+  source: string;
+  text: string;
+  source_id: string;
+};
+
+export type SemanticReuse = {
+  origin_run: string;
+  origin_plan_sha256: string;
+  origin_request_sha256: string;
+  origin_receipt_sha256: string;
+};
+
+export type SemanticRunSummary = {
+  run_id: string;
+  plan_sha256: string;
+  target_summary: SemanticSummary;
+  operations: SemanticOperations;
+};
+
+export type SemanticSummary = {
+  formal_targets: number;
+  recovered_targets: number;
+  semantic_outcomes: Record<string, number>;
+  verdicts: Record<string, number>;
+  flags: Record<string, number>;
+  potentially_sufficient_overlooked_by_exact_matching: PotentialSupport;
+};
+
+export type SemanticTarget = {
+  id: string;
+  condition: string | null;
+  edge: [string, "parent_of" | "sibling_of" | "spouse_of" | "settlor_of" | "trustee_of" | "beneficiary_of", string];
+  control: string | null;
+  deterministic: Baseline | null;
+  status: "judged" | "invalid_judgment" | "deterministic_delivery_failure" | "unattempted" | "awaiting_receipt" | "interrupted" | "provider_failed";
+  flags: Array<string>;
+  quotations: Array<SemanticQuotation>;
+  judgment: Judgment | null;
+  error: string | null;
+  invalid_response: string | null;
+  provider: SemanticProvider | null;
+  reuse: SemanticReuse | null;
+};
+
+export type SemanticTransition = {
+  id: string;
+  condition: string;
+  edge: [string, "parent_of" | "sibling_of" | "spouse_of" | "settlor_of" | "trustee_of" | "beneficiary_of", string];
+  left: SemanticOutcome;
+  right: SemanticOutcome;
+  facts_comparable: boolean;
+  changed_facts: Array<SemanticFactChange>;
 };
 
 export type Source = {

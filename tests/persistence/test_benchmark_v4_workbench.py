@@ -148,6 +148,22 @@ def test_exact_v4_owner_workbench_freezes_authorizes_starts_and_indexes(database
         assert {attempt['request']['stage'] for attempt in resolved['attempts']} == {'resolution'}
         assert len({attempt['attempt_id'] for attempt in resolved['attempts']}) == 35
         assert resolved['benchmark_v4'] == mixed['benchmark_v4']
+        from private_client_graph.research.semantic_evidence import assessment, store
+
+        ledger = store.initialize(root)
+        for run_id in (plan['id'], paired['id']):
+            assessment.prepare(root / run_id, store.entry(root, run_id),
+                               task_root=Path(ledger['root']), task_call_ceiling=73)
+            view = client.get(f'/api/research/v2/semantic-evidence/runs/{run_id}').raise_for_status().json()
+            assert len(view['targets']) == 71
+            assert all(target['status'] == 'deterministic_delivery_failure' for target in view['targets'])
+            assert view['operations']['reserved_attempts'] == 0
+        semantic_comparison = client.get('/api/research/v2/semantic-evidence/comparison',
+            params={'left': plan['id'], 'right': paired['id']}).raise_for_status().json()
+        assert semantic_comparison['formal_targets'] == 71
+        assert semantic_comparison['paired_valid_targets'] == 0
+        assert client.get('/api/research/v2/status').json()['task_budget']['used'] == 70
+
         assert resolved['pipeline_usage']['incremental']['estimated_cost'] == pytest.approx(0.000385)
         assert resolved['pipeline_usage']['inherited_extraction']['estimated_cost'] == pytest.approx(0.000175)
         assert resolved['pipeline_usage']['full_pipeline']['estimated_cost'] == pytest.approx(0.00056)

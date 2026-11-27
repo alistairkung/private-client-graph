@@ -1,0 +1,107 @@
+.semantic-evidence {
+  margin-block: 1rem;
+  border-block: 1px solid var(--line, #c7d3c8);
+}
+
+.semantic-evidence summary {
+  min-block-size: 44px;
+  padding-block: 0.65rem;
+  cursor: pointer;
+  touch-action: manipulation;
+  overflow-wrap: anywhere;
+}
+
+.semantic-evidence summary:focus-visible {
+  outline: 2px solid var(--ink, #20372b);
+  outline-offset: 3px;
+}
+
+.semantic-evidence-content {
+  padding-block: 0.25rem 1rem;
+  min-inline-size: 0;
+}
+
+.semantic-evidence-content p,
+.semantic-metadata dd {
+  overflow-wrap: anywhere;
+}
+
+.semantic-coverage p,
+.semantic-target-content p {
+  margin-block: 0.45rem;
+}
+
+.semantic-note {
+  color: var(--muted, #46564a);
+  max-inline-size: 70ch;
+}
+
+.semantic-counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+  padding: 0;
+  margin-block: 0.45rem;
+  list-style: none;
+  font-variant-numeric: tabular-nums;
+}
+
+.semantic-target {
+  border-block-start: 1px solid var(--line, #c7d3c8);
+}
+
+.semantic-target summary strong {
+  font-weight: 650;
+  margin-inline-start: 0.4rem;
+}
+
+.semantic-target-content {
+  padding: 0 0.5rem 0.75rem;
+  max-inline-size: 75ch;
+}
+
+.semantic-target-content blockquote {
+  margin: 0.75rem 0;
+  padding: 0.35rem 0.75rem;
+  border-inline-start: 1px solid var(--line, #c7d3c8);
+  white-space: pre-wrap;
+}
+
+.semantic-metadata {
+  display: grid;
+  gap: 0.35rem 0.9rem;
+  grid-template-columns: max-content minmax(0, 1fr);
+}
+
+.semantic-metadata dd {
+  margin: 0;
+}
+
+.semantic-filter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-block: 0.75rem;
+}
+
+.semantic-filter select {
+  max-inline-size: 100%;
+  min-block-size: 44px;
+}
+
+.semantic-comparison {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.semantic-comparison h4 {
+  margin-block: 0.4rem;
+}
+
+.semantic-response {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

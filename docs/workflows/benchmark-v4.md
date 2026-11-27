@@ -161,6 +161,13 @@ paired Run directories. Run
 `uv run pytest tests/research/test_benchmark_v4.py tests/research/test_v3_evaluation_protocol.py`.
 CI uses synthetic fixtures and substituted provider responses.
 
+## Optional Semantic Evidence assessment
+
+The owner Workbench can show an AI-assessed, unverified evidence comparison
+for completed Runs. The standalone stage reuses retained quotations and
+requires separate approval for any new DeepSeek calls. See the
+[Semantic Evidence v1 workflow](semantic-evidence-diagnostic-v1.md).
+
 ## Later retrieval experiment
 
 Freeze a 35-input full-context Run and a matched retrieval Run from the same

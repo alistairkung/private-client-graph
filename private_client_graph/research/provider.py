@@ -110,6 +110,23 @@ def invoke_deepseek(request: ModelRequest, *, api_key: str,
     return _persistable_response(result, api_key)
 
 
+def invoke_deepseek_json(system_prompt: str, user_prompt: str, *, settings: ModelSettings,
+                         max_output_tokens: int, api_key: str, base_url: str,
+                         http_client: httpx.Client | None = None) -> ModelResponse:
+    """Send one bounded JSON request through the research DeepSeek transport."""
+    if not api_key:
+        raise ValueError("DeepSeek API key is required")
+    llm = ChatDeepSeek(model=settings.model, api_key=SecretStr(api_key),
+                      max_retries=0, timeout=settings.timeout_seconds,
+                      temperature=settings.temperature, http_client=http_client,
+                      base_url=base_url, max_tokens=max_output_tokens,
+                      extra_body={"thinking": {"type": settings.thinking}})
+    with tracing_context(enabled=False):
+        message = llm.invoke([SystemMessage(content=system_prompt), HumanMessage(content=user_prompt)],
+                             response_format={"type": "json_object"})
+    return _persistable_response({"raw": message}, api_key)
+
+
 def _persistable_response(result: dict[str, Any], api_key: str) -> ModelResponse:
     """Build the allowlisted, credential-redacted artifact persisted by the runner."""
     message = result["raw"]

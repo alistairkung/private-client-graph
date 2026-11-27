@@ -10,6 +10,7 @@ from .case_catalog import CaseMetadata
 from .execution_state import ExecutionAvailability
 from .run_inspection import RunDetail, RunObservation
 from .run_evaluation_contracts import RunEvaluation, RunComparison
+from .semantic_evidence_api import SemanticComparison, SemanticEvidenceReport
 from .workspace_contracts import (CreateExperiment, DraftUpdate, CopyRunDraft, FreezeRun,
                                  RunConfiguration, RunDraft, WorkspaceDetail, WorkspaceHistory,
                                  LegacyHistoryRecord, LegacyStudyDetail, RunAuthorization)
@@ -47,7 +48,8 @@ def render() -> str:
                   Preview, Proposal, RunStatus, LiveApproval, CaseMetadata, ExecutionAvailability,
                   RunDetail, RunObservation, RunEvaluation, RunComparison, CreateExperiment,
                   DraftUpdate, CopyRunDraft, FreezeRun, RunConfiguration, RunDraft,
-                  WorkspaceDetail, WorkspaceHistory, LegacyHistoryRecord, LegacyStudyDetail, RunAuthorization):
+                  WorkspaceDetail, WorkspaceHistory, LegacyHistoryRecord, LegacyStudyDetail, RunAuthorization,
+                  SemanticComparison, SemanticEvidenceReport):
         schema = model.model_json_schema(mode='serialization')
         definitions.update(schema.pop('$defs', {}))
         definitions[model.__name__] = schema
