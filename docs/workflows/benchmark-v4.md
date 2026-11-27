@@ -56,15 +56,15 @@ following pooled counts across planned inputs.
   provisional. Unstarted Runs have no measured graph score.
 
 Evaluation Protocol v1 continues to score Sufficient Evidence Alternatives,
-including joint-only proofs, on the 34 original Environment Conditions. The
+including Multi-Source proofs, on the 34 original Environment Conditions. The
 U8 diagnostic counts exact overlaps with frozen adjudicated citations for the
 same relationship, Source ID and quotation. It is assessed when the graph is
 constructed. Accepted citations support the reference and are a limited set
 against which overlap can be reproduced. Other correct citations may exist.
 U8 supplies no formal proof-sufficiency denominator. The Workbench and CLI
 report [Deterministic Evidence Quality v1](deterministic-evidence-quality-v1.md),
-including Graph F1 on both scopes, Complete Proof Rate and mean joint-only
-coverage of exact Source–quotation pairs.
+including Graph F1 on both scopes, Proof Completion and Multi-Source Evidence
+Coverage of exact Source–quotation pairs.
 
 ## Historical transition
 
@@ -77,7 +77,7 @@ Benchmark v3 remains independently accessible through the
 [historical import and replay workflow](benchmark-v3-workbench.md).
 The frozen DeepSeek baseline retains TP 91, FP 10 and FN 22, graph micro-F1
 0.850467, 20/34 exact graphs, 18/71 complete proofs and 0/30 complete
-joint-only proofs. Those figures describe the original 34 Conditions. A new
+Multi-Source proofs. Those figures describe the original 34 Conditions. A new
 full-context v4 Run will supply the first measured 35-input baseline.
 
 ## Open the private Workbench
@@ -160,6 +160,13 @@ To verify the exact references and historical numbers offline, set
 paired Run directories. Run
 `uv run pytest tests/research/test_benchmark_v4.py tests/research/test_v3_evaluation_protocol.py`.
 CI uses synthetic fixtures and substituted provider responses.
+
+## Optional Semantic Evidence assessment
+
+The owner Workbench can show an AI-assessed, unverified evidence comparison
+for completed Runs. The standalone stage reuses retained quotations and
+requires separate approval for any new DeepSeek calls. See the
+[Semantic Evidence v1 workflow](semantic-evidence-diagnostic-v1.md).
 
 ## Later retrieval experiment
 

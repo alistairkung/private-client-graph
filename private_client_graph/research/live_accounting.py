@@ -224,7 +224,8 @@ def reserve_external_attempt(root: Path, *, authorization: str, attempt_id: str)
 def finish_external_attempt(root: Path, *, authorization: str, attempt_id: str,
                             outcome: Literal['completed', 'failed', 'uncertain'],
                             error_type: str | None = None, usage: TokenUsage | None = None,
-                            returned_model: str | None = None) -> None:
+                            returned_model: str | None = None,
+                            artifact_sha256: str | None = None) -> None:
     """Retain an application outcome without refunding its reserved attempt.
 
     Exception types, rather than exception messages, avoid persisting transport
@@ -247,7 +248,8 @@ def finish_external_attempt(root: Path, *, authorization: str, attempt_id: str,
             attempt_id=attempt_id, authorization=authorization, task_id=task['task_id'],
             outcome=outcome, error_type=error_type,
             usage=usage.model_dump() if usage is not None else None,
-            returned_model=returned_model, finished_at=utc_now()))
+            returned_model=returned_model, finished_at=utc_now(),
+            **({'artifact_sha256': artifact_sha256} if artifact_sha256 else {})))
 
 
 def _validate_external_identity(authorization: str, attempt_id: str) -> None:

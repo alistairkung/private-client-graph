@@ -14,6 +14,7 @@ import { metric, money } from "./RunChart";
 import { BenchmarkEvidence, BenchmarkV4Summary, GraphMetrics, PipelineUsage } from "./BenchmarkV4Summary";
 import { BenchmarkRunSummary } from "./BenchmarkRunSummary";
 import { RunQuality, RunQualityComparison } from "./RunQuality";
+import { SemanticEvidenceComparison } from "./SemanticEvidence";
 import { evidenceMetricLabels, multiSourceProofCompletionLabel } from "./benchmark-metrics";
 
 export function RunInspection({
@@ -303,6 +304,7 @@ function RunComparisonPanel({
           <GraphMetrics summary={data.benchmark_v4.right} quality={data.benchmark_v4.right_quality} />
           <BenchmarkEvidence summary={data.benchmark_v4.right} proofs={data.benchmark_v4.right_quality ? null : data.benchmark_v4.right_proofs} />
           {data.benchmark_v4.right_usage && <PipelineUsage usage={data.benchmark_v4.right_usage} complete={data.benchmark_v4.right.state === "complete"} />}
+          <SemanticEvidenceComparison left={left} right={right} />
         </section>
       )}
       {data.benchmark && (
@@ -445,6 +447,7 @@ function BenchmarkRunInspection({
 }) {
   const [other, setOther] = useState("");
   const mixed = run.benchmark_v4;
+  const showProtocol = mixed?.state !== "unmeasured" && (!run.quality || run.quality.observed_qualified_inputs > 0);
   const consensus = run.observations.find((row) => row.benchmark?.role === "consensus");
   return (
     <section className="run-inspection" aria-label={`Run ${number} details`}>
@@ -463,11 +466,9 @@ function BenchmarkRunInspection({
         </div>
         {mixed && copy && <button className="secondary" disabled={busy} onClick={copy}>Copy to next draft</button>}
       </div>
-      {run.quality && <RunQuality quality={run.quality} />}
+      {!showProtocol && run.quality && <RunQuality quality={run.quality} />}
       {mixed && <BenchmarkV4Summary run={run} />}
-      {mixed?.state !== "unmeasured" && (!run.quality || run.quality.observed_qualified_inputs > 0) && (
-        <BenchmarkRunSummary run={run} benchmark={benchmark} />
-      )}
+      {showProtocol && <BenchmarkRunSummary run={run} benchmark={benchmark} />}
       <BenchmarkFamilyExplorer
         key={run.id}
         run={run}

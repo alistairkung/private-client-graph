@@ -3,6 +3,13 @@
   grid-template-columns: 1fr 1fr minmax(0, 1.7fr);
   align-items: start;
 }
+.benchmark-run-summary .benchmark-overview-line-metrics {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.protocol-results-matrix {
+  margin-block: 1.25rem 0.4rem;
+  max-inline-size: 47rem;
+}
 .run-matrix { min-width: 0; margin: 0; }
 .run-matrix .run-matrix-table {
   min-width: 0;

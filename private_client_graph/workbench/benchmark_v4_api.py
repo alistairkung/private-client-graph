@@ -9,6 +9,7 @@ from .benchmark_v4 import load_private_workload
 from .benchmark_v4_inspection import inspect_frozen_input
 from .exploratory_workload import require_private_owner
 from .run_inspection import RunObservation
+from .semantic_evidence_api import mount_semantic_evidence
 
 
 def mount_benchmark_v4(app: FastAPI, root: Path, prefix: str) -> bool:
@@ -17,6 +18,7 @@ def mount_benchmark_v4(app: FastAPI, root: Path, prefix: str) -> bool:
     if not root.is_absolute() or root.resolve() != root or not root.is_dir() or root.stat().st_mode & 0o077:
         raise ValueError('Benchmark v4 requires a private absolute Research artifact directory')
     require_private_owner(app, os.getenv('PCG_BENCHMARK_V4_OWNER_TOKEN', ''))
+    mount_semantic_evidence(app, root, prefix)
 
     @app.get(f'{prefix}/benchmark-v4', response_model=BenchmarkRoster)
     def roster() -> BenchmarkRoster:

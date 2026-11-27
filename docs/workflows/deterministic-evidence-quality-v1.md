@@ -11,9 +11,9 @@ scores answer separate questions and have separate denominators.
 | --- | --- |
 | Benchmark v4 Graph F1 | 35 inputs under mixed references, including U8. Pool semantic TP, FP and FN before calculating precision, recall and micro-F1. |
 | Qualified Graph F1 | The same relationship scorer over the 34 original Conditions and their 113 expected relationship instances. |
-| Complete Proof Rate | Complete formal targets divided by all 71 planned formal targets on the qualified cohort. |
-| Joint-only Complete Proof Rate | Complete joint-only targets divided by the 30 planned joint-only targets. These targets already contribute to the overall proof rate. |
-| Joint-only Best-Alternative Evidence Coverage | The mean fraction of exact required pairs matched on the most-covered single route for each of the 30 planned joint-only targets. Every target has equal weight. |
+| Proof Completion | Complete formal targets divided by all 71 planned formal targets on the qualified cohort. |
+| Multi-Source Proof Completion | Complete Multi-Source targets divided by the 30 planned Multi-Source targets. These targets already contribute to the overall proof rate. |
+| Multi-Source Evidence Coverage | The mean fraction of exact required pairs matched on the most-covered single route for each of the 30 planned Multi-Source targets. Every target has equal weight. |
 
 The protected formal evaluator credits one complete proof when every required
 exact Source ID and verbatim quotation pair from any one approved alternative
@@ -24,7 +24,7 @@ canonical construction. Relationships with ordinary evidence but no formal
 target are still graph-scored. U8 keeps its separate adjudicated citation
 overlap diagnostic and supplies no formal targets.
 
-For each joint-only target, the diagnostic divides the number of attached
+For each Multi-Source target, the diagnostic divides the number of attached
 required pairs by the number of pairs in each frozen route and keeps the
 maximum fraction. For example, attaching two of three required pairs gives
 two-thirds coverage even when the proof remains incomplete. Full coverage is
@@ -79,13 +79,13 @@ uv run python -m private_client_graph.research inspect-v3-baseline ARCHIVE_DIREC
 The same optional `--include-proof-members` flag applies. Retained v3 and v4
 replays require no provider calls and print without writing to Run custody.
 
-| Retained Run | Mixed Graph F1 | Qualified Graph F1 | Complete proofs | Joint-only complete | Mean joint-only coverage |
+| Retained Run | Mixed Graph F1 | Qualified Graph F1 | Complete proofs | Multi-Source Proof Completion | Multi-Source Evidence Coverage |
 | --- | ---: | ---: | ---: | ---: | ---: |
 | Benchmark v3 first live baseline | — | 85.05% | 18/71 (25.35%) | 0/30 | 4.33% |
 | Benchmark v4 Extractor v1 | 92.50% | 92.11% | 11/71 (15.49%) | 0/30 | 4.33% |
 | Benchmark v4 Extractor v1 + Generative Resolver | 91.74% | 91.30% | 11/71 (15.49%) | 0/30 | 4.33% |
 
-Both v4 Runs have five joint-only targets with nonzero coverage, one at
+Both v4 Runs have five Multi-Source targets with nonzero coverage, one at
 one-half and four at one-fifth. The two Runs have identical coverage on each
 of the 30 targets. These diagnostic figures are derived from retained
 attachments and frozen alternatives.

@@ -2,6 +2,8 @@ import type { BenchmarkRun, RunDetail } from "../shared/contracts";
 import { metric, money } from "./RunChart";
 import { evidenceMetricLabels, formatF1Basis, multiSourceProofCompletionLabel } from "./benchmark-metrics";
 import { RunRelationshipMatrix } from "./RunRelationshipMatrix";
+import { RunQuality } from "./RunQuality";
+import { SemanticEvidencePanel } from "./SemanticEvidence";
 import "./run-relationship-matrix.css";
 
 export function BenchmarkRunSummary({
@@ -11,6 +13,9 @@ export function BenchmarkRunSummary({
   run: RunDetail;
   benchmark: BenchmarkRun;
 }) {
+  const semantic = run.benchmark_v4?.state === "complete"
+    ? <SemanticEvidencePanel key={run.id} run={run.id} />
+    : null;
   return (
     <section
       className="benchmark-run-summary"
@@ -21,9 +26,9 @@ export function BenchmarkRunSummary({
         Environment Conditions
       </p>
       {run.quality ? (
-        <RelationshipMatrix benchmark={benchmark} />
-      ) : (
-        <div className="benchmark-overview-line">
+        <RunQuality quality={run.quality} inline>{semantic}</RunQuality>
+      ) : <>
+        <div className={semantic ? "benchmark-overview-line benchmark-overview-line-metrics" : "benchmark-overview-line"}>
           <div>
             <span>All-condition Graph F1</span>
             <strong>{metric(benchmark.cohort.all_condition_micro_f1)}</strong>
@@ -44,6 +49,12 @@ export function BenchmarkRunSummary({
             </strong>
             <small>Annotated relationships with a complete approved proof</small>
           </div>
+          {!semantic && <RelationshipMatrix benchmark={benchmark} />}
+        </div>
+        {semantic}
+      </>}
+      {(run.quality || semantic) && (
+        <div className="protocol-results-matrix">
           <RelationshipMatrix benchmark={benchmark} />
         </div>
       )}
