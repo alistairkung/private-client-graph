@@ -65,17 +65,30 @@ def read_experiment(root: Path, identity: str) -> WorkspaceDetail:
         if membership.get('experiment_id') != identity or membership.get('run_id') != record.stem or not re.fullmatch('[a-f0-9]{32}', record.stem):
             raise ValueError('Run membership identity mismatch')
         memberships.append(membership)
-    runs = [record['run_id'] for record in sorted(memberships, key=lambda record: record['created_at'])]
-    if len(runs) != len(set(runs)):
-        raise ValueError('Duplicate Run membership')
+    ordered = sorted(memberships, key=lambda record: (record['created_at'], record['run_id']))
+    run_numbers = {record['run_id']: number for number, record in enumerate(ordered, start=1)
+                   if not run_is_archived(root, identity, record['run_id'])}
     return WorkspaceDetail(id=identity, name=command.name, hypothesis=command.hypothesis,
-        description=command.description, created_at=value['created_at'], draft=draft, run_ids=runs,
+        description=command.description, created_at=value['created_at'], draft=draft,
+        run_ids=list(run_numbers), run_numbers=run_numbers,
         read_only_import=value.get('read_only_import', False))
 
 
 def update_draft(root: Path, identity: str, command: DraftUpdate, *, copied_from: str | None = None) -> RunDraft:
     with workspace_lock(root):
         return save_draft(root, identity, command, copied_from=copied_from)
+
+
+def run_is_archived(root: Path, experiment_id: str, run_id: str) -> bool:
+    path = experiment_path(root, experiment_id) / 'archived-runs' / f'{run_id}.json'
+    if path.parent.is_symlink():
+        raise ValueError('Symlink Run archives are unsupported')
+    if not path.exists() and not path.is_symlink():
+        return False
+    record = read_record(path)
+    if record.get('experiment_id') != experiment_id or record.get('run_id') != run_id:
+        raise ValueError('Archived Run identity mismatch')
+    return True
 
 
 def save_draft(root: Path, identity: str, command: DraftUpdate, *, copied_from: str | None = None) -> RunDraft:

@@ -9,6 +9,7 @@ from .benchmark_v4 import default_benchmark_draft
 from .approval import authorize
 from .execution_contracts import Command, FrozenPlan, LiveApproval, Preview, RunStatus
 from .planning import open_executable, require_live
+from .run_archive import archive_run
 from .run_planning import copy_run_draft, freeze_run, preview_run
 from .supervisor import command_lock, latest_event, start, stop
 from .workspace_api import PREFIX
@@ -91,6 +92,12 @@ def mount_workspace_commands(app: FastAPI, root: Path) -> None:
         result = freeze_run(root, experiment_id, command)
         refresh()
         return result
+
+    @app.post(f'{PREFIX}/experiments/{{experiment_id}}/runs/{{run_id}}/archive', response_model=WorkspaceDetail)
+    def archive(experiment_id: str, run_id: str):
+        archive_run(root, experiment_id, run_id)
+        refresh()
+        return read_experiment(root, experiment_id)
 
     @app.post(f'{PREFIX}/experiments/{{experiment_id}}/runs/{{run_id}}/authorize', response_model=RunAuthorization)
     def approval(experiment_id: str, run_id: str, command: LiveApproval, request: Request):

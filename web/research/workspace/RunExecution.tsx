@@ -3,6 +3,7 @@ import type { ExecutionAvailability, RunDetail } from "../shared/contracts";
 import { authorizeRun, controlRun } from "./api";
 import { ReviewDialog } from "./ReviewDialog";
 import { ReviewSummary } from "./ReviewSummary";
+import { ArchiveRun } from "./ArchiveRun";
 
 export function RunExecution({
   run,
@@ -10,14 +11,19 @@ export function RunExecution({
   refresh,
   reviewRequested = false,
   number,
+  copy,
+  archived,
 }: {
   run: RunDetail;
   availability: ExecutionAvailability | null;
   refresh: () => void;
   reviewRequested?: boolean;
   number: number;
+  copy?: () => void;
+  archived?: () => void;
 }) {
-  const [busy, setBusy] = useState(false);
+  const [pending, setPending] = useState<"authorize" | "start" | "continue" | "stop" | null>(null);
+  const busy = pending !== null;
   const [error, setError] = useState("");
   const [review, setReview] = useState(reviewRequested);
   useEffect(() => {
@@ -36,10 +42,12 @@ export function RunExecution({
   const active = availability?.active_run_id;
   const ready = run.lifecycle === "frozen" || continuing;
   const budget = availability?.task_budget;
+  const proposedCap = plan.preview.proposal.task_call_cap;
+  const capBlocked = live && !!budget && (proposedCap < budget.cap || proposedCap <= budget.used);
   const act = async (action: "authorize" | "start" | "continue" | "stop") => {
     if (lock.current) return;
     lock.current = true;
-    setBusy(true);
+    setPending(action);
     setError("");
     const request_id =
       action === "stop"
@@ -74,9 +82,11 @@ export function RunExecution({
       refresh();
     } catch (error) {
       setError((error as Error).message);
+      setReview(false);
+      refresh();
     } finally {
       lock.current = false;
-      setBusy(false);
+      setPending(null);
     }
   };
   const title = continuing
@@ -87,7 +97,7 @@ export function RunExecution({
   const failure = error && (
     <p role="alert">
       {error}{" "}
-      <button
+      {ready && <button
         disabled={busy}
         onClick={() => {
           command.current = null;
@@ -95,10 +105,11 @@ export function RunExecution({
           setChecked(false);
           setError("");
           refresh();
+          setReview(true);
         }}
       >
-        Refresh and review again
-      </button>
+        Review a new authorization
+      </button>}
     </p>
   );
   return (
@@ -110,8 +121,11 @@ export function RunExecution({
         <div className="run-actions">
           {ready && (
             <button disabled={busy} onClick={() => setReview(true)}>
-              {continuing ? "Review continuation" : "Review frozen Run"}
+              {continuing ? "Review continuation" : error ? "Review and retry start" : "Review frozen Run"}
             </button>
+          )}
+          {ready && copy && (
+            <button className="secondary" disabled={busy} onClick={copy}>Use configuration in draft</button>
           )}
           {run.lifecycle === "running" && (
             <button disabled={busy} onClick={() => void act("stop")}>
@@ -121,6 +135,9 @@ export function RunExecution({
           <button className="secondary" disabled={busy} onClick={refresh}>
             Refresh status
           </button>
+          {run.can_archive && archived && (
+            <ArchiveRun run={run} number={number} disabled={busy || active === run.id} archived={archived} />
+          )}
         </div>
       </div>
       {active && (
@@ -129,6 +146,10 @@ export function RunExecution({
             ? "This Run is active. Closing the browser will not stop it."
             : `Another Run is active: ${active}. Wait for it to finish before starting.`}
         </p>
+      )}
+      {continuing && run.execution_message && <p role="status">{run.execution_message}</p>}
+      {capBlocked && ready && (
+        <p role="status">This frozen task cap cannot cover more attempts. Use the configuration in the draft and review a new total task cap.</p>
       )}
       {!review && failure}
       {ready && review && (
@@ -145,17 +166,17 @@ export function RunExecution({
               </small>
               {live && !authorized ? (
                 <button
-                  disabled={!checked || !budget || busy || !!active}
+                  disabled={!checked || !budget || capBlocked || busy || !!active}
                   onClick={() => void act("authorize")}
                 >
-                  Authorize invocation
+                  {pending === "authorize" ? "Authorizing…" : "Authorize invocation"}
                 </button>
               ) : (
                 <button
-                  disabled={busy || !availability || !!active}
+                  disabled={busy || !availability || capBlocked || !!active}
                   onClick={() => void act(continuing ? "continue" : "start")}
                 >
-                  {continuing ? "Continue Run" : "Start Run"}
+                  {pending ? "Submitting…" : continuing ? "Continue Run" : "Start Run"}
                 </button>
               )}
             </>
@@ -213,7 +234,7 @@ export function RunExecution({
           <button className="secondary" disabled={busy} onClick={refresh}>
             Refresh task status
           </button>
-          {failure}
+          {capBlocked && <p role="status">Close this review and use the configuration in the draft to propose a new total task cap.</p>}
         </ReviewDialog>
       )}
     </section>

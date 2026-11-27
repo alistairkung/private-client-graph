@@ -27,7 +27,8 @@ export type PerformanceRun = {
   scoreState: string;
   coverage: { scored: number; planned: number };
   cost: { total: number | null; currency: string | null };
-  costBasis?: "verified_provider_estimate";
+  costBasis?: "verified_provider_estimate" | "reference_rate_estimate";
+  fullPipelineCost?: boolean;
   scopeIdentity: string | null;
   eligibility: {
     f1_by_run: boolean;
@@ -36,7 +37,7 @@ export type PerformanceRun = {
     cost_reasons: string[];
   };
 };
-export type PerformanceExperiment = { name: string; runIds: string[] };
+export type PerformanceExperiment = { name: string; runIds: string[]; runNumbers?: Record<string, number> };
 export const metric = (value: number | null) =>
   value === null ? "Unavailable" : value.toFixed(3);
 export function RunPerformanceChart({
@@ -69,7 +70,7 @@ export function RunPerformanceChart({
   const chartRuns = activeMetric
     ? runs.map((run) => withMetric(run, activeMetric, metricName ?? "Metric"))
     : runs;
-  const runNumber = (id: string) => experiment.runIds.indexOf(id) + 1;
+  const runNumber = (id: string) => experiment.runNumbers?.[id] ?? experiment.runIds.indexOf(id) + 1;
   const visible = chartRuns.filter(
     (run) =>
       inputMode === "all" || run.inputMode === inputMode,
@@ -86,14 +87,15 @@ export function RunPerformanceChart({
   const costCurrency = (historicalCost ?? candidates[0])?.cost.currency ?? "USD";
   const incompatibleCost = (run: PerformanceRun) =>
     tab === "cost" &&
-    run.costBasis === "verified_provider_estimate" &&
+    !!run.costBasis &&
     run.cost.currency !== costCurrency;
   const eligible = candidates.filter((run) => !incompatibleCost(run));
   const maxCost = Math.max(
     ...eligible.map((run) => run.cost.total ?? 0),
     0.0001,
   );
-  const costAxis = !metricName
+  const fullPipelineCost = !!metricName || eligible.some((run) => run.fullPipelineCost);
+  const costAxis = !fullPipelineCost
     ? t("Estimated provider spend incurred by Run ({currency}) · 0–{max}", { currency: costCurrency, max: maxCost.toFixed(4) })
     : eligible.length > 0
       ? `Estimated full pipeline cost (${costCurrency}) · 0–${maxCost.toFixed(4)}`
@@ -184,6 +186,9 @@ export function RunPerformanceChart({
           <span>{metricName ? `${metricName} (%)` : eligible.find(run => run.metricLabel)?.metricLabel ?? t("F1 · 0–1")}</span>
           <span>◇ {t("No resolver")}　● {t("Generative resolver")}　○ {t("Provisional")}</span>
         </div>
+        {tab === "cost" && eligible.some((run) => run.costBasis === "reference_rate_estimate") && (
+          <p className="scope-notice">Reference-rate estimates use retained token usage at the configured DeepSeek rates. Actual charges can differ.</p>
+        )}
         {!runs.length ? (
           <p className="chart-empty">
             {t("Run your first configuration to begin comparing results.")}
@@ -201,7 +206,8 @@ export function RunPerformanceChart({
                 </div>
               ))}
               {eligible.map((run) => {
-                const index = runNumber(run.id) - 1;
+                const index = experiment.runIds.indexOf(run.id);
+                const number = runNumber(run.id);
                 const x =
                   tab === "run"
                     ? (index + 1) / (experiment.runIds.length + 1)
@@ -215,10 +221,10 @@ export function RunPerformanceChart({
                       top: `${(1 - (run.f1 ?? 0)) * 100}%`,
                     }}
                     aria-label={run.metricLabel
-                      ? `${run.displayName ?? t("Run {run}", { run: index + 1 })}, ${run.metricLabel} ${formatValue(run.f1)}, ${t(run.scoreState)}, ${run.coverage.scored}/${run.coverage.planned} ${run.coverageLabel ?? ""}`
+                      ? `${run.displayName ?? t("Run {run}", { run: number })}, ${run.metricLabel} ${formatValue(run.f1)}, ${t(run.scoreState)}, ${run.coverage.scored}/${run.coverage.planned} ${run.coverageLabel ?? ""}`
                       : run.displayName
                         ? t("{name}, F1 {f1}, {state}, {scored}/{planned} scored", { name: run.displayName, f1: metric(run.f1), state: t(run.scoreState), scored: run.coverage.scored, planned: run.coverage.planned })
-                        : t("Run {run}, F1 {f1}, {state}, {scored}/{planned} scored", { run: index + 1, f1: metric(run.f1), state: t(run.scoreState), scored: run.coverage.scored, planned: run.coverage.planned })}
+                        : t("Run {run}, F1 {f1}, {state}, {scored}/{planned} scored", { run: number, f1: metric(run.f1), state: t(run.scoreState), scored: run.coverage.scored, planned: run.coverage.planned })}
                     aria-pressed={selected === run.id}
                     aria-describedby={`${chartId}-tooltip`}
                     onFocus={() => setInspected(run.id)}
@@ -246,7 +252,7 @@ export function RunPerformanceChart({
                       left: `${((index + 1) / (experiment.runIds.length + 1)) * 100}%`,
                     }}
                   >
-                    {index + 1}
+                    {runNumber(id)}
                   </span>
                 ))}
             </div>}
@@ -285,6 +291,9 @@ export function RunPerformanceChart({
                     amount: String(tooltip.cost.total),
                   })}
                 </span>
+              )}
+              {tab === "cost" && tooltip.costBasis === "reference_rate_estimate" && (
+                <span>Reference-rate estimate · {tooltip.cost.currency} {tooltip.cost.total?.toFixed(4)}</span>
               )}
               <small>{tooltip.id}</small>
               <p>

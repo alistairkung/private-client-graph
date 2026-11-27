@@ -26,7 +26,7 @@ export function RunChart({
   const values = runs.map(performanceRun);
   return (
     <RunPerformanceChart
-      experiment={{ name: workspace.name, runIds: workspace.run_ids }}
+      experiment={{ name: workspace.name, runIds: workspace.run_ids, runNumbers: workspace.run_numbers }}
       runs={values}
       selected={selected}
       select={select}
@@ -58,9 +58,10 @@ function verifiedBenchmarkCost(run: RunDetail) {
 function performanceRun(run: RunDetail): PerformanceRun {
   const { benchmark, benchmark_v4: mixed, evaluation, quality } = run;
   if (mixed) {
-    const cost = mixed.observation_origin === "live"
+    const frozenCost = mixed.observation_origin === "live"
       ? verifiedFullPipelineCost(run.pipeline_usage?.full_pipeline)
       : null;
+    const cost = run.reference_cost ?? frozenCost;
     const score = mixed.combined;
     const state = quality?.state ?? mixed.state;
     const complete = state === "complete";
@@ -78,13 +79,14 @@ function performanceRun(run: RunDetail): PerformanceRun {
       scoreState: state === "unmeasured" ? "unavailable" : state,
       coverage: { scored: score?.valid_graphs ?? 0, planned: run.observations.length },
       cost: cost ?? { total: null, currency: null },
-      costBasis: cost ? "verified_provider_estimate" : undefined,
+      costBasis: run.reference_cost ? "reference_rate_estimate" : frozenCost ? "verified_provider_estimate" : undefined,
+      fullPipelineCost: true,
       scopeIdentity: `${mixed.scope_sha256}:${mixed.scoring_sha256}:${mixed.observation_origin}`,
       eligibility: {
         f1_by_run: quality ? state !== "unmeasured" : complete,
         f1_vs_cost: complete && cost !== null,
         f1_reasons: complete ? [] : ["Benchmark v4 coverage is incomplete."],
-        cost_reasons: !cost ? ["Verified provider cost is unavailable."]
+        cost_reasons: !cost ? ["F1 vs Cost needs complete provider token usage and pricing for the full pipeline."]
           : complete ? [] : ["Cost points require a complete Run."],
       },
     };

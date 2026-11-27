@@ -42,6 +42,12 @@ def benchmark_v4_operations(retained: VerifiedV4Run, attempts: list[dict], prici
         full_pipeline_seconds=(full.provider_seconds + local_seconds if full.provider_seconds is not None else None))
 
 
+def estimate_at_reference_rate(retained: VerifiedV4Run, attempts: list[dict], pricing: Pricing) -> float | None:
+    """Price the full pipeline uniformly for a read-time cost comparison."""
+    inherited = retained.origin.attempts if retained.origin else []
+    return _usage([(row, pricing) for row in [*inherited, *attempts]], live=True).estimated_cost
+
+
 def _usage(rows: Sequence[tuple[dict, Pricing | None]], *, live: bool) -> BenchmarkStageUsage:
     usages = [TokenUsage.model_validate(row.get('response', {}).get('usage', {})) for row, _ in rows]
     prices = [estimate_cost(tokens, price) if live else None

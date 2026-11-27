@@ -240,7 +240,7 @@ export function RunInspection({
               .filter((item) => item.id !== run.id)
               .map((item) => (
                 <option key={item.id} value={item.id}>
-                  Run {workspace.run_ids.indexOf(item.id) + 1}
+                  Run {workspace.run_numbers?.[item.id] ?? workspace.run_ids.indexOf(item.id) + 1}
                 </option>
               ))}
           </select>
@@ -498,7 +498,7 @@ function BenchmarkRunInspection({
             .filter((value) => value.id !== run.id)
             .map((value) => (
               <option key={value.id} value={value.id}>
-                Run {workspace.run_ids.indexOf(value.id) + 1}
+                Run {workspace.run_numbers?.[value.id] ?? workspace.run_ids.indexOf(value.id) + 1}
               </option>
             ))}
         </select>

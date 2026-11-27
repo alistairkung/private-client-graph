@@ -22,6 +22,8 @@ from .evidence import relationship_outcomes
 from .execution_contracts import FrozenPlan
 from .run_evaluation import evaluate_run, retained_attempts
 from .run_evaluation_contracts import RunEvaluation
+from .run_archive import can_archive
+from .supervisor import latest_event
 from .benchmark_contracts import BenchmarkCondition, BenchmarkRun
 from .workspaces import read_experiment
 
@@ -43,12 +45,21 @@ class RunObservation(BaseModel):
     benchmark: BenchmarkCondition | None = None
 
 
+class ReferenceCostEstimate(BaseModel):
+    total: float
+    currency: str
+    source_url: str
+    retrieved_at: str
+
+
 class RunDetail(BaseModel):
     api_version: Literal['2'] = '2'
     id: str
     experiment_id: str
     plan: FrozenPlan
     lifecycle: str
+    execution_message: str | None = Field(default=None, json_schema_extra={'x-typescript-optional': True})
+    can_archive: bool = Field(default=False, json_schema_extra={'x-typescript-optional': True})
     evaluation: RunEvaluation
     family_context: RunFamilyContext | None = None
     benchmark: BenchmarkRun | None = None
@@ -57,6 +68,8 @@ class RunDetail(BaseModel):
     quality: EvidenceQuality | None = Field(default=None, exclude_if=lambda value: value is None,
         json_schema_extra={'x-typescript-optional': True})
     pipeline_usage: BenchmarkV4Operations | None = Field(default=None, exclude_if=lambda value: value is None,
+        json_schema_extra={'x-typescript-optional': True})
+    reference_cost: ReferenceCostEstimate | None = Field(default=None, exclude_if=lambda value: value is None,
         json_schema_extra={'x-typescript-optional': True})
     observations: list[RunObservation]
     provenance: dict[str, Any]
@@ -86,13 +99,14 @@ def read_run(root: Path, experiment_id: str, identity: str) -> RunDetail:
     frozen = FrozenPlan.model_validate_json((path / 'execution.json').read_text())
     if frozen.id != identity or bundle.plan.run_id != identity or frozen.task_id != bundle.plan.task_id:
         raise ValueError('Frozen Run identity mismatch')
-    lifecycle = [json.loads(p.read_text()) for p in (path / 'lifecycle').glob('*.json')]
-    state = max(lifecycle, key=lambda item: item['at'])['state'] if lifecycle else 'frozen'
+    event = latest_event(bundle)
+    state = event['state']
     provenance = {key: value for key, value in bundle.manifest['provenance'].items() if key != 'code'}
     provenance['code_digest'] = checksum(json.dumps(bundle.manifest['provenance']['code'], sort_keys=True).encode())
     evaluation = evaluate_run(bundle)
     result = RunDetail(id=identity, experiment_id=experiment_id, plan=frozen,
-        lifecycle=state, evaluation=evaluation, observations=_observations(bundle, evaluation),
+        lifecycle=state, execution_message=event['message'], can_archive=can_archive(bundle, state),
+        evaluation=evaluation, observations=_observations(bundle, evaluation),
         provenance=provenance, artifact_digest=digest,
         authorized_invocations=[p.stem for p in sorted((path / 'authorizations').glob('*.json'))],
         attempts=retained_attempts(bundle)[0], pricing=bundle.plan.pricing.model_dump() if bundle.plan.pricing else None)

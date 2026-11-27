@@ -72,6 +72,7 @@ class WorkspaceDetail(BaseModel):
     created_at: str
     draft: RunDraft
     run_ids: list[str] = Field(default_factory=list)
+    run_numbers: dict[str, int] = Field(default_factory=dict, json_schema_extra={'x-typescript-optional': True})
     metadata_available: bool = True
     read_only_import: bool = False
 

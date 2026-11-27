@@ -734,6 +734,13 @@ export type QualifiedCohort = {
   historical_archive_inventory_sha256: string;
 };
 
+export type ReferenceCostEstimate = {
+  total: number;
+  currency: string;
+  source_url: string;
+  retrieved_at: string;
+};
+
 export type Relationship = {
   source: string;
   type: "parent_of" | "sibling_of" | "spouse_of" | "settlor_of" | "trustee_of" | "beneficiary_of";
@@ -852,12 +859,15 @@ export type RunDetail = {
   experiment_id: string;
   plan: FrozenPlan;
   lifecycle: string;
+  execution_message?: string | null;
+  can_archive?: boolean;
   evaluation: RunEvaluation;
   family_context: RunFamilyContext | null;
   benchmark: BenchmarkRun | null;
   benchmark_v4?: BenchmarkV4Summary | null;
   quality?: EvidenceQuality | null;
   pipeline_usage?: BenchmarkV4Operations | null;
+  reference_cost?: ReferenceCostEstimate | null;
   observations: Array<RunObservation>;
   provenance: Record<string, unknown>;
   artifact_digest: string;
@@ -1014,6 +1024,7 @@ export type WorkspaceDetail = {
   created_at: string;
   draft: RunDraft;
   run_ids: Array<string>;
+  run_numbers?: Record<string, number>;
   metadata_available: boolean;
   read_only_import: boolean;
 };

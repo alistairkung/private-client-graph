@@ -30,7 +30,7 @@ export function Workspace({
 }: {
   id: string;
   selected: string | null;
-  select: (id: string) => void;
+  select: (id: string | null) => void;
   capabilities: Capabilities | null;
   benchmark?: BenchmarkRoster | null;
   changed: () => void;
@@ -49,6 +49,7 @@ export function Workspace({
   const [copying, setCopying] = useState(false);
   const [executionId, setExecutionId] = useState<string | null>(null);
   const evaluation = useRef<HTMLDivElement>(null);
+  const draftArea = useRef<HTMLDivElement>(null);
   const focusRun = useRef<string | null>(null);
   const [selectionRevision, setSelectionRevision] = useState(0);
   const copyCommand = useRef<string | null>(null);
@@ -127,6 +128,37 @@ export function Workspace({
     setExecutionId(null);
     select(id);
   }
+  async function useRunConfiguration(runId: string) {
+    if (!workspace || copyLock.current) return;
+    copyLock.current = true;
+    setCopying(true);
+    setError("");
+    copyCommand.current ??= crypto.randomUUID();
+    try {
+      const draft = await copyDraft(id, {
+        request_id: copyCommand.current,
+        expected_revision: workspace.draft.revision,
+        run_id: runId,
+      });
+      setWorkspace((value) => value && { ...value, draft });
+      setDraftKey((value) => value + 1);
+      copyCommand.current = null;
+      draftArea.current?.focus();
+    } catch (error) {
+      setError((error as Error).message);
+    } finally {
+      copyLock.current = false;
+      setCopying(false);
+    }
+  }
+  function removeFromHistory(runId: string) {
+    setRuns((value) => value.filter((item) => item.id !== runId));
+    setWorkspace((value) => value && { ...value, run_ids: value.run_ids.filter((id) => id !== runId) });
+    setExecutionId(null);
+    if (selected === runId) select(null);
+    refresh();
+    changed();
+  }
   const runChart = workspace && (
     <RunChart workspace={workspace} runs={runs} selected={run?.id ?? null} select={selectEvaluation} />
   );
@@ -154,32 +186,35 @@ export function Workspace({
             )}
           </header>
           {editCapabilities ? (
-            <DraftEditor
-              key={draftKey}
-              id={id}
-              disabled={copying}
-              draft={workspace.draft}
-              runIds={workspace.run_ids}
-              extractorRuns={runs.filter((item) => item.benchmark_v4?.state === "complete"
-                && item.plan.preview.proposal.input_mode === "fresh"
-                && item.plan.preview.proposal.resolver === "none")}
-              benchmark={benchmark}
-              cases={cases}
-              capabilities={editCapabilities}
-              saving={(busy) => {
-                setDraftBusy(busy);
-                saving(busy);
-              }}
-              saved={(draft) =>
-                setWorkspace((value) => value && { ...value, draft })
-              }
-              frozen={(id) => {
-                select(run?.id ?? id);
-                setExecutionId(id);
-                refresh();
-                changed();
-              }}
-            />
+            <div ref={draftArea} tabIndex={-1}>
+              <DraftEditor
+                key={draftKey}
+                id={id}
+                disabled={copying}
+                draft={workspace.draft}
+                runIds={workspace.run_ids}
+                runNumbers={workspace.run_numbers}
+                extractorRuns={runs.filter((item) => item.benchmark_v4?.state === "complete"
+                  && item.plan.preview.proposal.input_mode === "fresh"
+                  && item.plan.preview.proposal.resolver === "none")}
+                benchmark={benchmark}
+                cases={cases}
+                capabilities={editCapabilities}
+                saving={(busy) => {
+                  setDraftBusy(busy);
+                  saving(busy);
+                }}
+                saved={(draft) =>
+                  setWorkspace((value) => value && { ...value, draft })
+                }
+                frozen={(id) => {
+                  select(run?.id ?? id);
+                  setExecutionId(id);
+                  refresh();
+                  changed();
+                }}
+              />
+            </div>
           ) : workspace.read_only_import ? null : (
             <p>
               This workspace is read-only. Retained Runs and Evidence remain
@@ -207,10 +242,12 @@ export function Workspace({
             <RunExecution
               key={`execution-${executionRun.id}`}
               run={executionRun}
-              number={workspace.run_ids.indexOf(executionRun.id) + 1}
+              number={workspace.run_numbers?.[executionRun.id] ?? workspace.run_ids.indexOf(executionRun.id) + 1}
               reviewRequested={executionId === executionRun.id}
               availability={availability}
               refresh={refresh}
+              copy={draftBusy || copying ? undefined : () => void useRunConfiguration(executionRun.id)}
+              archived={() => removeFromHistory(executionRun.id)}
             />
           )}
           {run && (
@@ -225,35 +262,10 @@ export function Workspace({
                 key={`inspection-${run.id}`}
                 workspace={workspace}
                 run={run}
-                number={workspace.run_ids.indexOf(run.id) + 1}
+                number={workspace.run_numbers?.[run.id] ?? workspace.run_ids.indexOf(run.id) + 1}
                 runs={runs}
                 busy={copying || draftBusy}
-                copy={
-                  editCapabilities
-                    ? async () => {
-                        if (copyLock.current) return;
-                        copyLock.current = true;
-                        setCopying(true);
-                        setError("");
-                        copyCommand.current ??= crypto.randomUUID();
-                        try {
-                          const draft = await copyDraft(id, {
-                            request_id: copyCommand.current,
-                            expected_revision: workspace.draft.revision,
-                            run_id: run.id,
-                          });
-                          setWorkspace((value) => value && { ...value, draft });
-                          setDraftKey((value) => value + 1);
-                          copyCommand.current = null;
-                        } catch (error) {
-                          setError((error as Error).message);
-                        } finally {
-                          copyLock.current = false;
-                          setCopying(false);
-                        }
-                      }
-                    : undefined
-                }
+                copy={editCapabilities ? () => void useRunConfiguration(run.id) : undefined}
               />
             </div>
           )}

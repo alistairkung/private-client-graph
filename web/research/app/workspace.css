@@ -45,6 +45,15 @@
   margin-top: 7px;
   font-size: 11px;
 }
+.research-reference-links {
+  margin-block-start: 16px;
+  padding-block-start: 8px;
+  border-block-start: 1px solid #cbd4c6;
+}
+.research-reference-links small {
+  display: block;
+  margin-block-start: 4px;
+}
 .experiment-sidebar nav a[aria-current="page"],
 .new-experiment {
   background: #173e38;
