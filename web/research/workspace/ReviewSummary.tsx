@@ -18,6 +18,7 @@ export function ReviewSummary({
             ? "Recorded demonstration · Not live quality"
             : "Provider-free replay"}
       </p>
+      {configuration.benchmark_v4_sha256 && <p>Benchmark v4 · Mixed reference methodologies</p>}
       <dl className="review-summary">
         <dt>Pipeline</dt>
         <dd>

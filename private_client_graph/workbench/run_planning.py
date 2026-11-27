@@ -4,6 +4,7 @@ from pathlib import Path
 from uuid import NAMESPACE_URL, uuid5
 
 from private_client_graph.research.artifacts import Bundle, write_json_once
+from .benchmark_v4 import load_private_workload, workload_metadata, run_pricing
 from .case_catalog import repository_inputs, frozen_case_metadata
 from private_client_graph.research.provider import ModelSettings
 from private_client_graph.research.run_plan import RunPlan
@@ -17,7 +18,11 @@ from .workspaces import experiment_path, read_experiment, save_draft, workspace_
 
 
 def preview_run(configuration: RunConfiguration, root: Path) -> Preview:
-    inputs, _, _ = _selected_inputs(configuration, root)
+    return _planned_run(configuration, root)[0]
+
+
+def _planned_run(configuration: RunConfiguration, root: Path) -> tuple[Preview, RunPlan]:
+    inputs, metadata, lineage = _selected_inputs(configuration, root)
     samples = {sample.sample_id: sample for sample in inputs}
     if len(set(configuration.input_ids)) != len(configuration.input_ids) or any(
             identity not in samples for identity in configuration.input_ids):
@@ -42,12 +47,21 @@ def preview_run(configuration: RunConfiguration, root: Path) -> Preview:
         reviewed.task_paid_usage, reviewed.task_paid_allowance = budget.used, budget.cap
         reviewed.task_paid_remaining = budget.remaining
         reviewed.cost_reason = 'Pricing is unavailable; live attempt costs remain explicitly unpriced.'
-    _run_plan(configuration, reviewed.task_id or 'offline-preview', maximum, root)
-    return reviewed
+    plan = _run_plan(configuration, reviewed.task_id or 'offline-preview',
+                     maximum, inputs, metadata, lineage)
+    if plan.pricing:
+        reviewed.cost_reason = f'Cost uses frozen {plan.pricing.currency} pricing and returned token usage.'
+    return reviewed, plan
 
 
 def _selected_inputs(configuration: RunConfiguration, root: Path
 ) -> tuple[list[ResearchInput], dict[str, CaseMetadata], RetainedInputLineage | None]:
+    if configuration.benchmark_v4_sha256:
+        workload = load_private_workload()
+        if (configuration.benchmark_v4_sha256 != workload.roster.sha256
+                or configuration.input_ids != [item.sample_id for item in workload.inputs]):
+            raise ValueError('Select all 35 frozen Benchmark v4 inputs in order')
+        return list(workload.inputs), workload_metadata(workload.roster), None
     if configuration.retained_run_id:
         from .retained_inputs import load_retained_inputs
         assert configuration.retained_experiment_id is not None
@@ -62,9 +76,12 @@ def _selected_inputs(configuration: RunConfiguration, root: Path
     return inputs, frozen_case_metadata(inputs), None
 
 
-def _run_plan(configuration: RunConfiguration, task_id: str, maximum: int, root: Path) -> RunPlan:
-    inputs, metadata, lineage = _selected_inputs(configuration, root)
+def _run_plan(configuration: RunConfiguration, task_id: str, maximum: int,
+              inputs: list[ResearchInput], metadata: dict[str, CaseMetadata],
+              lineage: RetainedInputLineage | None) -> RunPlan:
     return RunPlan(task_id=task_id, inputs=inputs, case_metadata=metadata, retained_input_lineage=lineage,
+        benchmark_v4_sha256=configuration.benchmark_v4_sha256,
+        pricing=run_pricing() if configuration.benchmark_v4_sha256 else None,
         kind='live_experiment' if configuration.execution_mode == 'live' else 'demonstration',
         task_call_cap=configuration.task_call_cap, input_mode=configuration.input_mode,
         execution_mode=configuration.execution_mode, resolver=configuration.resolver,
@@ -91,7 +108,7 @@ def freeze_run(root: Path, experiment_id: str, command: FreezeRun) -> FrozenPlan
             raise ValueError('Draft revision changed; review the current draft')
         if workspace.draft.configuration.retained_run_id and workspace.draft.configuration.retained_experiment_id != experiment_id:
             raise ValueError('Retained inputs must remain in the original Experiment')
-        reviewed = preview_run(workspace.draft.configuration, root)
+        reviewed, plan = _planned_run(workspace.draft.configuration, root)
         if (root / identity).exists():
             from .artifacts import _verify_execution_binding
             _verify_execution_binding(root / identity)
@@ -100,7 +117,7 @@ def freeze_run(root: Path, experiment_id: str, command: FreezeRun) -> FrozenPlan
                 raise ValueError('Interrupted publication does not match the requested Run')
             frozen = FrozenPlan.model_validate_json((root / identity / 'execution.json').read_text())
         else:
-            plan = _run_plan(workspace.draft.configuration, reviewed.task_id or f'offline-{identity}', reviewed.matrix_call_maximum, root)
+            plan.task_id = reviewed.task_id or f'offline-{identity}'
             plan.experiment_id = experiment_id
             plan.run_id = identity
             plan.draft_revision = workspace.draft.revision

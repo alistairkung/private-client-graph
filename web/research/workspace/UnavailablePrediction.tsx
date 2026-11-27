@@ -24,11 +24,11 @@ export function UnavailablePrediction({
       className="prediction-unavailable"
       aria-label="Unavailable prediction"
     >
-      <strong>Prediction unavailable</strong>
+      <strong>{condition?.outcome === "not_attempted" ? "Awaiting extraction" : "Prediction unavailable"}</strong>
       <p>
         {condition?.failure_detail ??
           observation.reason ??
-          condition?.outcome.replaceAll("_", " ")}
+          (condition?.outcome === "not_attempted" ? "No extraction is recorded for this input." : condition?.outcome.replaceAll("_", " "))}
       </p>
       {candidates && (
         <details>

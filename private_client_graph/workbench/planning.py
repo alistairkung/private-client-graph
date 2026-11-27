@@ -41,6 +41,8 @@ def capabilities(root: Path | None = None) -> Capabilities:
 
 
 def preview(proposal: Proposal, root: Path | None = None) -> Preview:
+    if proposal.benchmark_v4_sha256:
+        raise ValueError('Benchmark v4 requires Experiment Run planning')
     if proposal.retained_run_id or proposal.retained_experiment_id:
         raise ValueError('Retained inputs require Experiment Run planning')
     budget = None
@@ -109,7 +111,7 @@ def publish_plan(root: Path, identity: str, plan: FiniteExperimentPlan, reviewed
         write_json_once(ledger / 'offline.json', {'task_id': task_id, 'paid_allowance': 0})
     bundle = Bundle.create(root / identity, plan, task_ledger=ledger)
     records = json.loads((ROOT / 'research/fixtures/demonstration_responses.json').read_text())
-    if getattr(plan, 'plan_version', 0) == 4:
+    if getattr(plan, 'plan_version', 0) == 4 and not getattr(plan, 'benchmark_v4_sha256', None):
         for sample in plan.inputs:
             key = recording_key(ModelRequest(stage='extraction', source=sample.source, sources=sample.sources,
                                              settings=plan.settings))

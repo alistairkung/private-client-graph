@@ -2,6 +2,7 @@
 from typing import Literal
 
 from pydantic import BaseModel, Field
+from private_client_graph.research.benchmark_v4_scoring import BenchmarkV4Summary
 from private_client_graph.research.source_attribution import SourceAttributionDiagnostic
 
 
@@ -154,6 +155,11 @@ class BenchmarkComparison(BaseModel):
     family_macro_f1_delta: float | None = None
 
 
+class BenchmarkV4Comparison(BaseModel):
+    left: BenchmarkV4Summary
+    right: BenchmarkV4Summary
+
+
 class RunComparison(BaseModel):
     api_version: Literal['2'] = '2'
     left_run_id: str
@@ -167,3 +173,5 @@ class RunComparison(BaseModel):
     unqualified_improvement_allowed: bool = False
     reasons: list[str] = Field(default_factory=list)
     benchmark: BenchmarkComparison | None = None
+    benchmark_v4: BenchmarkV4Comparison | None = Field(default=None, exclude_if=lambda value: value is None,
+        json_schema_extra={'x-typescript-optional': True})

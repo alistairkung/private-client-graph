@@ -127,7 +127,7 @@ export function PipelineFields({
         Resolver
         <select
           value={proposal.resolver}
-          disabled={proposal.execution_mode === "replay"}
+          disabled={proposal.execution_mode === "replay" || !!proposal.benchmark_v4_sha256}
           onChange={(event) =>
             update(
               event.target.value === "none"

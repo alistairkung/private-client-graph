@@ -85,9 +85,11 @@ def create_app(*, refresh: Callable[[], None] | None = None, show_exploratory: b
         def frontend():
             return FileResponse(static / 'index.html')
 
-    from .workspace_api import mount_workspace_reads
+    from .benchmark_v4_api import mount_benchmark_v4
+    from .workspace_api import PREFIX as WORKSPACE_PREFIX, mount_workspace_reads
     mount_workspace_reads(app, root, refresh)
-    if show_exploratory:
+    has_benchmark_v4 = mount_benchmark_v4(app, root, WORKSPACE_PREFIX)
+    if show_exploratory and not has_benchmark_v4:
         mount_exploratory_workload(app, PREFIX)
     return app
 

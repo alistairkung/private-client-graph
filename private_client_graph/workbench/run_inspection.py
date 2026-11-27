@@ -5,6 +5,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
+from private_client_graph.research.benchmark_v4_scoring import BenchmarkV4Summary
 from private_client_graph.research.artifacts import Bundle, checksum
 from private_client_graph.research.inputs import ResearchInput
 from private_client_graph.models.source import Source
@@ -49,6 +50,8 @@ class RunDetail(BaseModel):
     evaluation: RunEvaluation
     family_context: RunFamilyContext | None = None
     benchmark: BenchmarkRun | None = None
+    benchmark_v4: BenchmarkV4Summary | None = Field(default=None, exclude_if=lambda value: value is None,
+        json_schema_extra={'x-typescript-optional': True})
     observations: list[RunObservation]
     provenance: dict[str, Any]
     artifact_digest: str
@@ -87,6 +90,9 @@ def read_run(root: Path, experiment_id: str, identity: str) -> RunDetail:
         provenance=provenance, artifact_digest=digest,
         authorized_invocations=[p.stem for p in sorted((path / 'authorizations').glob('*.json'))],
         attempts=retained_attempts(bundle)[0], pricing=bundle.plan.pricing.model_dump() if bundle.plan.pricing else None)
+    if bundle.plan.benchmark_v4_sha256:
+        from .benchmark_v4_inspection import attach_benchmark_v4
+        attach_benchmark_v4(result, bundle)
     if artifact_digest(path) != digest:
         raise ValueError('Run artifacts changed during inspection; retry the read')
     return result

@@ -43,6 +43,15 @@ export type BenchmarkConditionDelta = {
   right_outcome: string;
 };
 
+export type BenchmarkDefinition = {
+  version: "pcg-benchmark-v4";
+  matter_count: 20;
+  input_count: 35;
+  graph_scorer: "semantic_edges_v1";
+  qualified: QualifiedCohort;
+  consensus: ConsensusInput;
+};
+
 export type BenchmarkFamilyDelta = {
   tp: number;
   fp: number;
@@ -72,6 +81,12 @@ export type BenchmarkMetricDelta = {
   exact_graphs: number;
 };
 
+export type BenchmarkRoster = {
+  definition: BenchmarkDefinition;
+  sha256: string;
+  inputs: Array<EvaluationInput>;
+};
+
 export type BenchmarkRun = {
   scope: EvaluationScope;
   cohort: Metrics;
@@ -91,6 +106,23 @@ export type BenchmarkScope = {
   evaluator_version: string;
   aggregate_version: string;
   unequal_allocation: boolean;
+};
+
+export type BenchmarkV4Comparison = {
+  left: BenchmarkV4Summary;
+  right: BenchmarkV4Summary;
+};
+
+export type BenchmarkV4Summary = {
+  scope_sha256: string;
+  scoring_sha256: string | null;
+  observation_origin: "live" | "offline_fixture";
+  state: "unmeasured" | "provisional" | "complete";
+  combined: DeliveredGraphMetrics | null;
+  qualified: DeliveredGraphMetrics | null;
+  consensus: DeliveredGraphMetrics | null;
+  by_matter: Record<string, DeliveredGraphMetrics>;
+  consensus_evidence: ConsensusEvidenceDiagnostics;
 };
 
 export type CanonicalGraph = {
@@ -217,6 +249,33 @@ export type ConditionMetrics = {
   attribution_assessed: number;
 };
 
+export type ConsensusEvidenceDiagnostics = {
+  adjudicated_relationships: number;
+  reference_citations: number;
+  matched_citations: number | null;
+  assessed: boolean;
+};
+
+export type ConsensusInput = {
+  methodology: "consensus_adjudication";
+  evidence_protocol: "adjudicated_citation_overlap_v1";
+  matter: "U";
+  input: "u8";
+  source_count: 65;
+  release_id: string;
+  release_manifest_sha256: string;
+  source_file_sha256: string;
+  source_array_sha256: string;
+  reference_sha256: string;
+  reference_freeze_sha256: string;
+  reviewer_count: 10;
+  support_threshold: 6;
+  unanimous_relationships: 6;
+  adjudicated_relationships: 6;
+  zero_support_propositions: 4;
+  limitation: string;
+};
+
 export type CopyRunDraft = {
   request_id: string;
   expected_revision: number;
@@ -239,6 +298,18 @@ export type CreateExperiment = {
   description: string | null;
 };
 
+export type DeliveredGraphMetrics = {
+  inputs: number;
+  valid_graphs: number;
+  without_graph: number;
+  exact_graphs: number;
+  counts: GraphCounts;
+  precision: number;
+  recall: number;
+  f1: number;
+  outcomes: Record<string, number>;
+};
+
 export type DraftUpdate = {
   request_id: string;
   expected_revision: number;
@@ -255,6 +326,14 @@ export type Entity = {
   id: string;
   type: "person" | "trust";
   name: string;
+};
+
+export type EvaluationInput = {
+  id: string;
+  sample_id: string;
+  matter: string;
+  reference_methodology: "original_qualification" | "consensus_adjudication";
+  source_count: number;
 };
 
 export type EvaluationResult = {
@@ -563,6 +642,7 @@ export type ProofTarget = {
 
 export type Proposal = {
   input_ids: Array<string>;
+  benchmark_v4_sha256?: string | null;
   retained_experiment_id: string | null;
   retained_run_id: string | null;
   input_mode: "saved" | "fresh";
@@ -575,6 +655,17 @@ export type Proposal = {
   timeout_seconds: number;
   task_call_cap: number;
   model: "deepseek-flash";
+};
+
+export type QualifiedCohort = {
+  methodology: "original_qualification";
+  evidence_protocol: "benchmark_v3_evaluation_v1";
+  matter_count: 19;
+  input_count: 34;
+  public_register: "admissions/2026-11-24.json";
+  public_register_sha256: string;
+  private_register_sha256: string;
+  historical_archive_inventory_sha256: string;
 };
 
 export type Relationship = {
@@ -660,10 +751,12 @@ export type RunComparison = {
   unqualified_improvement_allowed: boolean;
   reasons: Array<string>;
   benchmark: BenchmarkComparison | null;
+  benchmark_v4?: BenchmarkV4Comparison | null;
 };
 
 export type RunConfiguration = {
   input_ids: Array<string>;
+  benchmark_v4_sha256?: string | null;
   retained_experiment_id: string | null;
   retained_run_id: string | null;
   input_mode: "saved" | "fresh";
@@ -696,6 +789,7 @@ export type RunDetail = {
   evaluation: RunEvaluation;
   family_context: RunFamilyContext | null;
   benchmark: BenchmarkRun | null;
+  benchmark_v4?: BenchmarkV4Summary | null;
   observations: Array<RunObservation>;
   provenance: Record<string, unknown>;
   artifact_digest: string;

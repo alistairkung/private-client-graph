@@ -289,7 +289,7 @@ export function ConditionInspection({
     ? selectedEdge
     : undefined;
   return (
-    <section className="condition-inspection condition-graph-first" aria-label={`Environment Condition ${benchmark.condition} graph comparison`}>
+    <section className="condition-inspection condition-graph-first" aria-label={`${benchmark.role === "consensus" ? "Evaluation input" : "Environment Condition"} ${benchmark.condition} graph comparison`}>
       <div className="comparison-toolbar">
         <div className="comparison-views" role="group" aria-label="Comparison view">
           <button type="button" aria-pressed={view === "graphs"} onClick={() => setView("graphs")}>Graphs</button>
@@ -424,7 +424,9 @@ export function ConditionInspection({
         ) : (
           <section className="comparison-evidence-empty">
             <h4>Supporting evidence</h4>
-            <p>Select a relationship to inspect its proof and Sources.</p>
+            <p>{benchmark.role === "consensus"
+              ? "Select a relationship to inspect its adjudicated quotations and Sources."
+              : "Select a relationship to inspect its proof and Sources."}</p>
           </section>
         )}
       </div>

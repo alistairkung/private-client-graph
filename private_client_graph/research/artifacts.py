@@ -59,6 +59,22 @@ def code_snapshot() -> dict[str, str]:
     return {str(p.relative_to(ROOT)): p.read_text() for p in paths}
 
 
+def benchmark_v4_scoring_digest() -> str:
+    # The protected v3 evaluator lives outside the research snapshot.
+    paths = [
+        'benchmark_v3/evaluation_protocol.py', 'benchmark_v3/replay_evidence.py',
+        'benchmark_v3/replay_manifest.py', 'private_client_graph/evaluation.py',
+        'private_client_graph/canonical_state.py', 'private_client_graph/graph.py',
+        'private_client_graph/pipeline/config.py', 'private_client_graph/pipeline/executor.py',
+        'private_client_graph/research/benchmark_v4.py',
+        'private_client_graph/research/benchmark_v4_scoring.py',
+        'private_client_graph/research/benchmark_v4_run.py',
+        'private_client_graph/research/source_attribution.py',
+    ]
+    files = {path: checksum((ROOT / path).read_bytes()) for path in paths}
+    return checksum(json.dumps(files, sort_keys=True).encode())
+
+
 def dependency_versions() -> dict[str, str]:
     packages = ('pydantic', 'pydantic-core', 'langchain-core', 'langchain-deepseek',
                 'langchain-openai', 'openai', 'langsmith', 'httpx', 'httpcore')
@@ -102,10 +118,12 @@ class Bundle:
     @classmethod
     def create(cls, path: Path, plan: ExperimentPlan, *, task_ledger: Path | None = None) -> "Bundle":
         path.mkdir(parents=True, exist_ok=False)
-        manifest = {'schema_version': plan.plan_version if isinstance(plan, FiniteExperimentPlan) else 1, 'experiment_id': uuid4().hex,
+        manifest: dict[str, Any] = {'schema_version': plan.plan_version if isinstance(plan, FiniteExperimentPlan) else 1, 'experiment_id': uuid4().hex,
                     'created_at': utc_now(), 'plan': plan.model_dump(mode='json'),
                     'task_ledger': str((task_ledger or ROOT / 'runs/research/task-ledgers' / plan.task_id).resolve()),
                     'provenance': _provenance()}
+        if isinstance(plan, RunPlan) and plan.benchmark_v4_sha256:
+            manifest['provenance']['benchmark_v4_scoring_sha256'] = benchmark_v4_scoring_digest()
         write_json_once(path / 'manifest.json', manifest)
         write_json_once(path / 'manifest-checksum.json', checksum((path / 'manifest.json').read_bytes()))
         return cls(path, manifest)

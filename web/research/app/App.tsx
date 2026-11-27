@@ -12,6 +12,8 @@ import { useRead } from "../shared/useRead";
 import { exploratoryManifest } from "../exploratory/api";
 import { ExploratoryWorkload } from "../exploratory/ExploratoryWorkload";
 import { LegacyMetadata } from "../workspace/LegacyMetadata";
+import { BenchmarkV4Catalogue } from "../workspace/BenchmarkV4Catalogue";
+import { benchmarkV4Roster } from "../workspace/api";
 import { Workspace } from "../workspace/Workspace";
 import { CreateExperiment } from "../workspace/CreateExperiment";
 import "./workspace.css";
@@ -48,6 +50,8 @@ export function App() {
   }, []);
   const params = new URLSearchParams(location.replace(/^#/, ""));
   const workspaceId = params.get("workspace");
+  const { data: benchmark, error: benchmarkError, retry: retryBenchmark } = useRead(benchmarkV4Roster);
+  const showBenchmark = params.has("benchmark") || ((!location || location === "#") && !!benchmark);
   const showExploratory = params.get("exploratory") === "1";
   const { data: exploratory } = useRead(exploratoryManifest);
   const id = params.get("experiment");
@@ -57,6 +61,7 @@ export function App() {
   [
     "plan",
     "exploratory",
+    "benchmark",
     "new",
     "experiment",
     "left",
@@ -87,6 +92,8 @@ export function App() {
       </a>
       <Sidebar
         selected={workspaceId}
+        benchmarkAvailable={!!benchmark}
+        benchmarkSelected={showBenchmark}
         exploratoryAvailable={!!exploratory}
         exploratorySelected={showExploratory}
         executable={!!available}
@@ -122,9 +129,16 @@ export function App() {
               window.location.hash = `workspace=${workspaceId}&run=${run}`;
             }}
             capabilities={available ?? null}
+            benchmark={benchmark}
             saving={setDraftSaving}
             changed={() => setSidebarRevision((value) => value + 1)}
           />
+        ) : showBenchmark ? (
+          benchmark ? <BenchmarkV4Catalogue roster={benchmark} executable={!!available} /> :
+            <p role="status">
+              {benchmarkError ?? "Benchmark v4 custody is unavailable."}{" "}
+              <button onClick={retryBenchmark}>Retry roster</button>
+            </p>
         ) : showExploratory ? (
           <ExploratoryWorkload />
         ) : (params.has("new") ||

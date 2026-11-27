@@ -1,5 +1,9 @@
 # Inspect Benchmark v3 in the read-only Research Workbench
 
+The [Benchmark v4 owner Workbench](benchmark-v4.md) uses the original
+34 Environment Conditions and the frozen U revision 8 input. This page
+covers the separate historical Benchmark v3 Run and earlier exploratory viewer.
+
 Use a checkout containing the Benchmark v3 Evaluation Protocol v1 implementation, Python dependencies, the web dependencies, and a dedicated PostgreSQL database for this Workbench instance. Keep the private archive, admitted registry and their referenced files on the same host. The importer checks the original records in place and does not relocate the archive.
 
 ## Import and open the baseline
@@ -49,11 +53,13 @@ Find the Experiment and Run identifiers in the Workbench. Omit `--condition` for
 - To opt in to the exact private regression, set `PCG_V3_PRIVATE_BASELINE_CUSTODY` to the existing Benchmark v3 custody root and run the Benchmark v3 evaluation and Workbench import tests locally.
 - Run browser tests and capture examples with synthetic fixture data for shared or public evidence. Keep screenshots, browser traces and exports from the live baseline private.
 
-## Inspect the separately released 65-Source rehearsal
+## Inspect the earlier standalone rehearsal view
 
 The exploratory scale workload appears in its own sidebar section. It is
 read-only, unqualified and unscored. It has no Benchmark Family, condition,
-run, admission or score and stays outside official reporting and run selection.
+run, admission or score and stays outside Benchmark v3 reporting and run
+selection. Benchmark v4 includes this exact U revision 8 release as one
+consensus-reference input.
 
 Start the read-only Workbench with the custodian's owner-only environment
 file and the usual private artifact root and database. The environment file
@@ -90,6 +96,7 @@ The view separates the ten-reader majority reference, the independent
 evidence-adjudicated subset and below-threshold propositions. The majority
 rule requires six affirmative votes. Explicit rejections, uncertainty and
 omissions have separate counts. The full vote matrix and original reviewer
-packets remain in private evidence custody. Treat the two reference sets as
-exploratory artifacts. Any future graph metrics against them must remain
-separate from Evaluation Protocol v1.
+packets remain in private evidence custody. The standalone view records the
+original exploratory status. Benchmark v4 uses the frozen consensus graph for
+graph delivery and retains Protocol v1 evidence denominators for the
+originally qualified cohort.

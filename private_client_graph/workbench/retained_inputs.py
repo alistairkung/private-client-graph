@@ -21,6 +21,8 @@ def load_retained_inputs(root: Path, experiment_id: str, run_id: str
     bundle = Bundle.open(path)
     if not isinstance(bundle.plan, RunPlan):
         raise ValueError('Retained inputs require a single-configuration Run')
+    if bundle.plan.benchmark_v4_sha256:
+        raise ValueError('Benchmark v4 Sources and predictions stay in the private Benchmark v4 workflow')
     if detail.lifecycle != 'complete' or bundle.plan.input_mode != 'fresh' or bundle.plan.resolver != 'none':
         raise ValueError('Retained inputs require a completed fresh no-resolution Run')
     samples, metadata, lineage = [], {}, {}

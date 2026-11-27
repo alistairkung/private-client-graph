@@ -1,5 +1,7 @@
 import type {
   CaseMetadata,
+  BenchmarkRoster,
+  RunObservation,
   Command,
   CopyRunDraft,
   CreateExperiment,
@@ -99,3 +101,14 @@ export const compareRuns = (
     undefined,
     signal,
   );
+
+
+export async function benchmarkV4Roster(signal: AbortSignal) {
+  const response = await fetch("/api/research/v2/benchmark-v4", { signal });
+  if (response.status === 404) return null;
+  if (!response.ok) throw new Error("Benchmark v4 roster is unavailable.");
+  return (await response.json()) as BenchmarkRoster;
+}
+
+export const benchmarkV4Input = (id: string, signal: AbortSignal) =>
+  request<RunObservation>(`/benchmark-v4/inputs/${encodeURIComponent(id)}`, undefined, undefined, signal);

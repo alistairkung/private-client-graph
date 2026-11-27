@@ -171,6 +171,15 @@ def _verified_inventory(archive: Path) -> dict[str, str]:
     return inventory
 
 
+def load_admitted_families(private_admissions: Path) -> dict[str, VerifiedFamily]:
+    """Verify the frozen cohort independently of any model or retained Run."""
+    public = commissioning._read_json(commissioning.trusted_bytes('admissions/2026-11-24.json'))
+    admission_bytes = read_bytes(private_admissions)
+    if checksum(admission_bytes) != public['private_register_sha256']:
+        raise ValueError('Private admission register differs from the frozen benchmark')
+    return _admitted_families(public, commissioning._read_json(admission_bytes))
+
+
 def _admitted_conditions(public: dict, private: dict) -> Iterator[PlannedCondition]:
     for family, verified in _admitted_families(public, private).items():
         for frozen in verified.conditions.values():

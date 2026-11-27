@@ -29,6 +29,7 @@ class RunPlan(FiniteExperimentPlan):
     planned_slots: list[ObservationSlot] = Field(default_factory=list)
     case_metadata: dict[str, CaseMetadata] = Field(default_factory=dict)
     retained_input_lineage: RetainedInputLineage | None = None
+    benchmark_v4_sha256: str | None = Field(default=None, pattern=r'^[a-f0-9]{64}$', exclude_if=lambda value: value is None)
     evaluator_version: str = 'semantic_edges_v1'
     aggregate_version: Literal['observation_micro_f1_v1'] = 'observation_micro_f1_v1'
 
@@ -75,6 +76,11 @@ class RunPlan(FiniteExperimentPlan):
             raise ValueError('Live execution requires a paid matrix and explicit task cap')
         if not live and self.task_call_cap:
             raise ValueError('Offline plans cannot authorize paid calls')
+        if self.benchmark_v4_sha256 and (
+            self.input_mode != 'fresh' or self.resolver != 'none' or self.fresh_extractions != 1
+            or len(self.inputs) != 35 or any(sample.sources is None for sample in self.inputs)
+        ):
+            raise ValueError('Benchmark v4 requires one Source-aware extraction per frozen input')
         if self.input_mode == 'fresh':
             if not self.fresh_extractions or any(sample.cohort != 'authored' for sample in self.inputs):
                 raise ValueError('Fresh extraction requires authored source templates and a sample count')

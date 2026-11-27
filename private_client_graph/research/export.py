@@ -4,11 +4,14 @@ import zipfile
 from pathlib import Path
 
 from .artifacts import Bundle, checksum
+from .run_plan import RunPlan
 
 REQUIRED_EXPORT_FILES = {'manifest.json', 'manifest-checksum.json', 'summary.json'}
 
 
 def export_bundle(bundle: Bundle, destination: Path) -> Path:
+    if isinstance(bundle.plan, RunPlan) and bundle.plan.benchmark_v4_sha256:
+        raise ValueError('Benchmark v4 Run bundles contain private Sources and references. Export the metrics summary only.')
     if destination.resolve().is_relative_to(bundle.path.resolve()):
         raise ValueError('Export must be outside the bundle')
     with bundle.execution_lock():

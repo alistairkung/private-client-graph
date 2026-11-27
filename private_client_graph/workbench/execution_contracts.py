@@ -6,6 +6,8 @@ from pydantic import BaseModel, ConfigDict, Field
 class Proposal(BaseModel):
     model_config = ConfigDict(extra='forbid')
     input_ids: list[str] = Field(min_length=1, max_length=100)
+    benchmark_v4_sha256: str | None = Field(default=None, pattern=r'^[a-f0-9]{64}$',
+        exclude_if=lambda value: value is None, json_schema_extra={'x-typescript-optional': True})
     retained_experiment_id: str | None = Field(default=None, pattern=r'^[a-f0-9]{32}$')
     retained_run_id: str | None = Field(default=None, pattern=r'^[a-f0-9]{32}$')
     input_mode: Literal['saved', 'fresh'] = 'saved'

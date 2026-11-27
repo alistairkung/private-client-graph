@@ -52,6 +52,8 @@ async function exportBenchmark({ origin, experiment, run, condition, output }) {
     url,
     `/api/research/v2/experiments/${experiment}/runs/${run}`,
   );
+  if (detail.benchmark_v4)
+    throw new Error("This figure exporter expects the historical Benchmark v3 Run.");
   if (!detail.benchmark)
     throw new Error("The Run has no verified Benchmark v3 result");
   const selected = condition
