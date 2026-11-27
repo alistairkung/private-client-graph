@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, expect, it, vi } from "vitest";
 import { DraftEditor } from "./DraftEditor";
 import * as api from "./api";
-import type { Capabilities, RunDraft, Preview } from "../shared/contracts";
+import type { Capabilities, RunDetail, RunDraft, Preview } from "../shared/contracts";
 vi.mock("./api", () => ({
   saveDraft: vi.fn(),
   getRun: vi.fn(),
@@ -185,4 +185,39 @@ it("rejects an unfinished retained Run without replacing the saved draft", async
   await screen.findByText("Select a completed fresh no-resolution Run.");
   expect(api.saveDraft).not.toHaveBeenCalled();
   expect(api.freezeDraft).not.toHaveBeenCalled();
+});
+
+
+it("defaults the Benchmark v4 resolver to the copied extraction and keeps the frozen roster", async () => {
+  const roster = Array.from({ length: 35 }, (_, index) => `input_${index}`);
+  const configuration: RunDraft["configuration"] = {
+    ...draft.configuration, benchmark_v4_sha256: "a".repeat(64), input_ids: roster,
+    input_mode: "fresh", execution_mode: "live", resolver: "none", invocation_cap: 35, task_call_cap: 70,
+  };
+  const extractor = (id: string, timeout_seconds: number) => ({
+    id, plan: { preview: { proposal: { ...configuration, timeout_seconds } } },
+  }) as RunDetail;
+  render(
+    <DraftEditor id="experiment" draft={{ ...draft, configuration, copied_from_run: "copied" }} cases={[]}
+      capabilities={capabilities} runIds={["copied", "other"]}
+      extractorRuns={[extractor("copied", 120), extractor("other", 180)]}
+      saved={() => {}} saving={() => {}} frozen={() => {}} />,
+  );
+  fireEvent.change(screen.getByRole("combobox", { name: "Benchmark v4 resolver" }), {
+    target: { value: "generative" },
+  });
+  const origin = screen.getByRole("combobox", { name: "Verified extraction origin" });
+  expect(origin).toHaveValue("copied");
+  await waitFor(() => expect(api.saveDraft).toHaveBeenCalledWith("experiment",
+    expect.objectContaining({ configuration: expect.objectContaining({
+      input_ids: roster, input_mode: "saved", resolver: "generative",
+      retained_experiment_id: "experiment", retained_run_id: "copied",
+      execution_mode: "live", invocation_cap: 35, timeout_seconds: 120,
+    }) })));
+  expect(screen.getByRole("spinbutton", { name: "Provider timeout (seconds)", hidden: true })).toBeDisabled();
+  fireEvent.change(origin, { target: { value: "other" } });
+  await waitFor(() => expect(api.saveDraft).toHaveBeenLastCalledWith("experiment",
+    expect.objectContaining({ configuration: expect.objectContaining({
+      retained_run_id: "other", timeout_seconds: 180, input_ids: roster,
+    }) })));
 });

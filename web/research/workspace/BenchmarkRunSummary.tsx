@@ -164,7 +164,7 @@ export function BenchmarkRunSummary({
           </table>
         </div>
       </details>
-      {benchmark.scope.observation_origin === "live" && (
+      {!run.benchmark_v4 && benchmark.scope.observation_origin === "live" && (
         <p>Historical baseline · reference for prospective comparison.</p>
       )}
       <details>
@@ -174,7 +174,7 @@ export function BenchmarkRunSummary({
           {money(run.evaluation.cost.total, run.evaluation.cost.currency)}
         </p>
         <p>
-          Run {run.id} · Archive {run.artifact_digest}
+          Run {run.id} · {run.benchmark_v4 ? "Artifact" : "Archive"} {run.artifact_digest}
         </p>
         <pre>
           {JSON.stringify(

@@ -101,7 +101,7 @@ export function BenchmarkFamilyExplorer({
   return (
     <section className="family-explorer" aria-label="Benchmark Families">
       <div className="family-explorer-heading">
-        <h3>Benchmark Families</h3>
+        <h3>{run.benchmark_v4 ? "Originally qualified Matters" : "Benchmark Families"}</h3>
         <span>{Object.keys(benchmark.families).length} families</span>
       </div>
 
@@ -142,7 +142,7 @@ export function BenchmarkFamilyExplorer({
             <FamilyRow
               key={family}
               family={family}
-              scores={scores}
+              scores={run.benchmark_v4?.state === "unmeasured" ? undefined : scores}
               context={context}
               axisDefinitions={familyContext?.axis_definitions ?? {}}
               observations={observations}
@@ -185,7 +185,7 @@ function FamilyRow({
   toggle,
 }: {
   family: string;
-  scores: NonNullable<RunDetail["benchmark"]>["families"][string];
+  scores: NonNullable<RunDetail["benchmark"]>["families"][string] | undefined;
   context:
     NonNullable<RunDetail["family_context"]>["families"][string] | undefined;
   axisDefinitions: Record<string, string>;
@@ -199,8 +199,8 @@ function FamilyRow({
   renderCondition: RenderCondition;
   toggle: () => void;
 }) {
-  const outcomes = scores.all_conditions;
-  const f1Basis = formatF1Basis(outcomes.tp, outcomes.fp, outcomes.fn);
+  const outcomes = scores?.all_conditions;
+  const f1Basis = outcomes ? formatF1Basis(outcomes.tp, outcomes.fp, outcomes.fn) : "";
   const conditionRepeatsFamilyScores =
     expanded && observations.length === 1 &&
     activeCondition?.benchmark?.outcome === "scored";
@@ -228,7 +228,7 @@ function FamilyRow({
             </strong>
           </span>
         </span>
-        {!conditionRepeatsFamilyScores && <span className="family-row-metrics">
+        {scores && !conditionRepeatsFamilyScores && <span className="family-row-metrics">
           <span className="family-metric">
             <span>Graph F1</span>
             <strong>{metric(scores.all_condition_micro_f1)}</strong>
@@ -283,7 +283,7 @@ function FamilyRow({
                     context={context}
                     axisDefinitions={axisDefinitions}
                   />
-                  <dl className="family-expanded-metrics">
+                  {scores && <dl className="family-expanded-metrics">
                     <div>
                       <dt>Construction coverage</dt>
                       <dd>
@@ -296,7 +296,7 @@ function FamilyRow({
                         {scores.exact_graphs} of {scores.planned_conditions}
                       </dd>
                     </div>
-                  </dl>
+                  </dl>}
                 </>
               }
             />

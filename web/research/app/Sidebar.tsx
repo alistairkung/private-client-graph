@@ -6,6 +6,8 @@ import { ReadState } from "../shared/presentation";
 export function Sidebar({
   selected,
   executable,
+  benchmarkAvailable,
+  benchmarkSelected,
   exploratoryAvailable,
   exploratorySelected,
   revision,
@@ -15,6 +17,8 @@ export function Sidebar({
 }: {
   selected: string | null;
   executable: boolean;
+  benchmarkAvailable?: boolean;
+  benchmarkSelected?: boolean;
   exploratoryAvailable: boolean;
   exploratorySelected: boolean;
   revision: number;
@@ -136,6 +140,16 @@ export function Sidebar({
       >
         Legacy study history
       </a>
+      {benchmarkAvailable && (
+        <a href="#benchmark=v4" aria-current={benchmarkSelected ? "page" : undefined}
+          onClick={(event) => {
+            if (saving) event.preventDefault();
+            else if (narrow) close();
+          }}>
+          <strong>Benchmark v4</strong>
+          <small>20 Matters · 35 evaluation inputs</small>
+        </a>
+      )}
       {exploratoryAvailable && (
         <nav
           aria-label="Exploratory workloads"

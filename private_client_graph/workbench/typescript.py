@@ -3,6 +3,7 @@ import argparse
 from pathlib import Path
 from typing import Any
 
+from private_client_graph.research.benchmark_v4 import BenchmarkRoster
 from .execution_contracts import Capabilities, Command, FrozenPlan, Preview, Proposal, RunStatus, LiveApproval
 from .contracts import Comparison, ExperimentDetail, HistoryPage
 from .case_catalog import CaseMetadata
@@ -32,7 +33,7 @@ def _type(schema: dict[str, Any]) -> str:
         return f'Array<{_type(schema.get("items", {}))}>'
     if kind == 'object':
         if 'properties' in schema:
-            return '{\n' + ''.join(f'  {key}: {_type(value)};\n'
+            return '{\n' + ''.join(f'  {key}{"?" if value.get("x-typescript-optional") else ""}: {_type(value)};\n'
                 for key, value in schema['properties'].items()) + '}'
         additional = schema.get('additionalProperties', {})
         return f'Record<string, {_type(additional) if isinstance(additional, dict) else "unknown"}>'
@@ -42,7 +43,7 @@ def _type(schema: dict[str, Any]) -> str:
 
 def render() -> str:
     definitions = {}
-    for model in (HistoryPage, ExperimentDetail, Comparison, Capabilities, Command, FrozenPlan,
+    for model in (BenchmarkRoster, HistoryPage, ExperimentDetail, Comparison, Capabilities, Command, FrozenPlan,
                   Preview, Proposal, RunStatus, LiveApproval, CaseMetadata, ExecutionAvailability,
                   RunDetail, RunObservation, RunEvaluation, RunComparison, CreateExperiment,
                   DraftUpdate, CopyRunDraft, FreezeRun, RunConfiguration, RunDraft,

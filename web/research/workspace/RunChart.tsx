@@ -52,7 +52,36 @@ function verifiedBenchmarkCost(run: RunDetail) {
 }
 
 function performanceRun(run: RunDetail): PerformanceRun {
-  const { benchmark, evaluation } = run;
+  const { benchmark, benchmark_v4: mixed, evaluation } = run;
+  if (mixed) {
+    const pipeline = run.pipeline_usage?.full_pipeline;
+    const cost = mixed.observation_origin === "live" && pipeline?.estimated_cost != null && pipeline.currency
+      ? { total: pipeline.estimated_cost, currency: pipeline.currency }
+      : null;
+    const score = mixed.combined;
+    return {
+      id: run.id,
+      lifecycle: run.lifecycle,
+      resolver: run.plan.preview.proposal.resolver === "generative",
+      inputMode: run.plan.preview.proposal.input_mode,
+      model: run.plan.preview.proposal.model,
+      recorded: mixed.observation_origin === "offline_fixture",
+      f1: score?.f1 ?? null,
+      metricLabel: "Benchmark v4 graph micro-F1 · mixed references",
+      coverageLabel: "valid graphs / planned inputs",
+      scoreState: mixed.state === "unmeasured" ? "unavailable" : mixed.state,
+      coverage: { scored: score?.valid_graphs ?? 0, planned: run.observations.length },
+      cost: cost ?? { total: null, currency: null },
+      costBasis: cost ? "verified_provider_estimate" : undefined,
+      scopeIdentity: `${mixed.scope_sha256}:${mixed.scoring_sha256}:${mixed.observation_origin}`,
+      eligibility: {
+        f1_by_run: mixed.state === "complete",
+        f1_vs_cost: mixed.state === "complete" && cost !== null,
+        f1_reasons: mixed.state === "complete" ? [] : ["Benchmark v4 coverage is incomplete."],
+        cost_reasons: cost ? [] : ["Verified provider cost is unavailable."],
+      },
+    };
+  }
   const verifiedCost = verifiedBenchmarkCost(run);
   const costReasons = evaluation?.cost.reasons ?? [];
   return {

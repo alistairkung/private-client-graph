@@ -13,6 +13,11 @@ class RunConfiguration(Proposal):
 
     @model_validator(mode='after')
     def retained_saved_inputs(self) -> 'RunConfiguration':
+        if self.benchmark_v4_sha256:
+            expected = ('saved', 'generative') if self.retained_run_id else ('fresh', 'none')
+            if ((self.input_mode, self.resolver) != expected or self.execution_mode != 'live'
+                    or self.extraction_samples != 1 or self.resolver_repetitions != 1):
+                raise ValueError('Benchmark v4 requires fresh extraction or one resolver pass over a verified Run')
         if bool(self.retained_run_id) != bool(self.retained_experiment_id):
             raise ValueError('Retained input selection requires an Experiment and Run')
         if self.retained_run_id and (self.input_mode != 'saved' or self.extraction_samples != 1):

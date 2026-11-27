@@ -102,17 +102,23 @@ def plan_digest(bundle: 'Bundle') -> str:
 def validate_authorization(bundle: 'Bundle') -> dict:
     if not bundle.authorization_id:
         raise ValueError('Explicit invocation approval is required before live execution')
+    return read_run_authorization(bundle, bundle.authorization_id)
+
+
+def read_run_authorization(bundle: 'Bundle', invocation: str) -> dict:
+    if not re.fullmatch(r'[a-zA-Z0-9_-]{1,80}', invocation):
+        raise ValueError('Invalid retained Run authorization identity')
     task = read_task(bundle.path.parent)
     if str(bundle.task_ledger) != task['ledger'] or bundle.plan.task_id != task['task_id']:
         raise ValueError('Live task identity mismatch')
-    key = f'{bundle.path.name}-{bundle.authorization_id}'
+    key = f'{bundle.path.name}-{invocation}'
     record = json.loads((bundle.task_ledger / 'authorizations' / f'{key}.json').read_text())
     if (record['plan_digest'] != plan_digest(bundle)
             or record['bundle_path'] != str(bundle.path.resolve())
-            or record['invocation'] != bundle.authorization_id
+            or record['invocation'] != invocation
             or record['task_id'] != bundle.plan.task_id):
         raise ValueError('Approval does not match this plan, task and invocation')
-    if record != json.loads((bundle.path / 'authorizations' / f'{bundle.authorization_id}.json').read_text()):
+    if record != json.loads((bundle.path / 'authorizations' / f'{invocation}.json').read_text()):
         raise ValueError('Approval publication is incomplete')
     return record
 
@@ -248,3 +254,20 @@ def _validate_external_identity(authorization: str, attempt_id: str) -> None:
     if (not re.fullmatch(r'external-[a-f0-9]{32}', authorization)
             or not re.fullmatch(r'[a-zA-Z0-9_-]+', attempt_id)):
         raise ValueError('Invalid external authorization or attempt identity')
+
+
+def retained_run_attempts(bundle: 'Bundle') -> tuple[list[dict], list[str]]:
+    """Read shared-only reservations without invoking mutating crash recovery."""
+    local = bundle.attempts()
+    if bundle.plan.kind != 'live_experiment':
+        return local, []
+    if not bundle.task_ledger.is_dir():
+        return local, ['Authoritative task ledger is unavailable; incurred attempts cannot be verified.']
+    prefix = bundle.manifest['experiment_id']
+    shared = [json.loads(path.read_text()) for path in
+              sorted((bundle.task_ledger / 'reservations').glob(f'{prefix}-*.json'))]
+    shared_ids = {row['attempt_id'] for row in shared}
+    missing = any(row['attempt_id'] not in shared_ids for row in local)
+    local_ids = {row['attempt_id'] for row in local}
+    return [*local, *(row for row in shared if row['attempt_id'] not in local_ids)], (
+        ['Authoritative task ledger is incomplete.'] if missing else [])

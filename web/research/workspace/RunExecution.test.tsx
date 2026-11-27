@@ -65,6 +65,27 @@ it("requires explicit approval, authorizes without dispatch and uses that invoca
     }),
   );
 });
+it("keeps a frozen mixed-reference Run executable through explicit authorization", async () => {
+  const mixedRun = {
+    ...run,
+    benchmark: {} as NonNullable<RunDetail["benchmark"]>,
+    benchmark_v4: { state: "unmeasured" } as NonNullable<RunDetail["benchmark_v4"]>,
+  };
+  vi.mocked(api.authorizeRun).mockResolvedValue({
+    authorized: true, started: false, invocation_id: "v4-approval",
+  });
+  render(<RunExecution number={1} run={mixedRun} availability={availability} refresh={() => {}} />);
+  fireEvent.click(screen.getByRole("button", { name: "Review frozen Run" }));
+  fireEvent.click(screen.getByRole("checkbox"));
+  fireEvent.click(screen.getByRole("button", { name: "Authorize invocation" }));
+  const start = await screen.findByRole("button", { name: "Start Run" });
+  expect(api.controlRun).not.toHaveBeenCalled();
+  fireEvent.click(start);
+  await waitFor(() => expect(api.controlRun).toHaveBeenCalledWith("experiment", "run", "start", {
+    request_id: "v4-approval", plan_digest: "digest",
+  }));
+});
+
 it("honors global active-run exclusion and displays rejected commands without retrying", async () => {
   const offline = {
     ...run,

@@ -15,11 +15,12 @@ from private_client_graph.pipeline import Pipeline, PipelineConfig, PipelineInpu
 from private_client_graph.resolution import EndpointEdits, ResolutionRequest, ResolutionProvider
 from . import tracing as trace
 from .artifacts import Bundle, BudgetExceeded, code_snapshot, dependency_versions, utc_now, write_json_once
+from .benchmark_v4_origin import ExtractionOrigin
 from .inputs import ResearchInput
 from .plan import FiniteExperimentPlan
 from .run_plan import RunPlan
 from .metrics import IdentityDiagnostics, estimate_cost, identity_diagnostics
-from .provider import ModelRequest, ModelResponse, TokenUsage
+from .provider import ModelRequest, ModelResponse, TokenUsage, resolution_model_request
 from .results import ResearchResult
 from .source_attribution import diagnose_source_attribution
 
@@ -31,13 +32,13 @@ def execute(bundle: Bundle, *, provider: Provider, live: bool = False,
             should_stop: Callable[[], bool] = lambda: False,
             tracing: trace.ResearchTracing | None = None) -> dict[str, Any]:
     """Resume recorded attempts without reissuing them, including uncertain calls."""
-    validate_execution(bundle, live)
+    origin = validate_execution(bundle, live)
     initial_count = bundle.attempt_count
     stop_reason = 'matrix_complete'
     with bundle.execution_lock():
         # All writes, including task-wide budget reservations, precede dispatch.
         try:
-            for sample in _ordered_inputs(bundle):
+            for sample in origin.samples.values() if origin else _ordered_inputs(bundle):
                 _checkpoint(should_stop)
                 _run_pair(bundle, sample, provider, initial_count, max_new_attempts, should_stop, tracing)
             for sample in _fresh_inputs(bundle, provider, initial_count, max_new_attempts, should_stop, tracing):
@@ -52,7 +53,7 @@ def execute(bundle: Bundle, *, provider: Provider, live: bool = False,
     return session
 
 
-def validate_execution(bundle: Bundle, live: bool) -> None:
+def validate_execution(bundle: Bundle, live: bool) -> ExtractionOrigin | None:
     plan = bundle.plan
     if live != (plan.kind != 'demonstration'):
         raise ValueError('Live execution must be explicit and match the manifest kind')
@@ -63,6 +64,17 @@ def validate_execution(bundle: Bundle, live: bool) -> None:
     if plan.kind == 'task_b_pilot' and not (plan.authorization_reference and plan.reviewed_commit):
         raise ValueError('Task B requires explicit user authorization and reviewed Task A commit')
     validate_environment(bundle)
+    if isinstance(plan, RunPlan) and plan.benchmark_v4_sha256:
+        from .benchmark_v4 import configured_custody, load_workload
+        from .benchmark_v4_origin import verify_extraction_origin
+        from .benchmark_v4_run import require_frozen_plan
+        custody = configured_custody()
+        if custody is None:
+            raise ValueError('Benchmark v4 private custody is unavailable')
+        workload = load_workload(custody)
+        require_frozen_plan(bundle, workload)
+        return verify_extraction_origin(bundle, workload)
+    return None
 
 
 def validate_environment(bundle: Bundle) -> None:
@@ -169,8 +181,7 @@ def _run_resolution_repetition(
 
     def resolve(request: ResolutionRequest) -> EndpointEdits:
         nonlocal observation, observation_seconds
-        operational_request = ModelRequest(stage='resolution', source=request.source,
-                                           extraction=request.extraction, settings=bundle.plan.settings)
+        operational_request = resolution_model_request(request, bundle.plan.settings)
         with trace.span('Resolution'):
             started = time.perf_counter()
             observation = _observe(bundle, attempt_id, operational_request, provider, initial_count, limit, should_stop)
@@ -180,7 +191,8 @@ def _run_resolution_repetition(
     template_id = sample.sample_id.split('_fresh_')[0] if sample.cohort == 'fresh' else sample.sample_id
     with trace.observation(bundle, tracing, attempt_id, sample_id=sample.sample_id, template_id=template_id):
         result, _ = _pipeline_result(sample, PipelineConfig(resolver='generative'), mode='replay',
-                                     resolution_provider=resolve)
+                                     resolution_provider=resolve,
+                                     score_result=not getattr(bundle.plan, 'benchmark_v4_sha256', None))
         _save_resolution_result(bundle, repetition, attempt_id, result, observation, observation_seconds)
         _trace_result(result)
 
@@ -239,10 +251,11 @@ def _pipeline_result(
     extractor: Callable[[str], ExtractionResult] = _replay_only,
     resolution_provider: ResolutionProvider | None = None,
     source_extractor: Callable[[list[Source]], SourcedExtractionResult] | None = None,
+    score_result: bool = True,
 ) -> tuple[ResearchResult, ExtractionResult | SourcedExtractionResult | None]:
     if sample.sources is not None:
         return _sourced_pipeline_result(sample, config, mode=mode, source_extractor=source_extractor,
-                                        resolution_provider=resolution_provider)
+                                        resolution_provider=resolution_provider, score_result=score_result)
     result = _base_result(sample)
     started = time.perf_counter()
 
@@ -384,7 +397,8 @@ def _fresh_inputs(bundle: Bundle, provider: Provider, initial_count: int,
         with trace.observation(bundle, baseline_tracing, baseline_id, sample_id=sample_id,
                                template_id=template.sample_id):
             baseline, extracted = _pipeline_result(sample, PipelineConfig(), mode='live', extractor=extract,
-                                                   source_extractor=extract_sources)
+                                                   source_extractor=extract_sources,
+                                                   score_result=not getattr(bundle.plan, 'benchmark_v4_sha256', None))
             _trace_result(baseline)
         if extracted is None:
             _save_unavailable_fresh_results(bundle, sample)
@@ -472,6 +486,7 @@ def _sourced_pipeline_result(sample: ResearchInput, config: PipelineConfig, *,
                              mode: Literal['live', 'replay'],
                              source_extractor: Callable[[list[Source]], SourcedExtractionResult] | None,
                              resolution_provider: ResolutionProvider | None,
+                             score_result: bool,
 ) -> tuple[ResearchResult, SourcedExtractionResult | None]:
     result = _base_result(sample)
     assert sample.sources is not None
@@ -522,5 +537,6 @@ def _sourced_pipeline_result(sample: ResearchInput, config: PipelineConfig, *,
     _record_prediction(result, sample, output.resolved)
     result.state = output.state
     result.graph = output.graph
-    _evaluate(result, sample)
+    if score_result:
+        _evaluate(result, sample)
     return result, output.extracted

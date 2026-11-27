@@ -1,5 +1,6 @@
 """Read-only, typed projection of Benchmark v3 protocol results."""
 
+from collections.abc import Mapping, Sequence
 from dataclasses import asdict
 from typing import Literal
 from hashlib import sha256
@@ -8,7 +9,7 @@ import hashlib
 from pydantic import BaseModel, ConfigDict, Field, computed_field
 
 from benchmark_v3.evaluation_protocol import (
-    ConditionResult, EvaluationScope, Metrics, Outcome, ProtocolResult,
+    ConditionResult, EvaluationScope, Metrics, Outcome, PlannedCondition, ProtocolResult,
 )
 from private_client_graph.models import EvaluationResult, GroundTruth, SourcedExtractionResult
 from private_client_graph.models.canonical_state import CanonicalState
@@ -21,6 +22,8 @@ from .contracts import EvidenceQuote
 from .contracts import RelationshipOutcome
 from private_client_graph.evaluation import _edge
 from benchmark_v3.replay_evidence import assess_evidence
+from benchmark_v3.replay_manifest import VerifiedFamily
+from private_client_graph.research.results import ResearchResult
 from benchmark_v3.retained_evaluation import VerifiedBaseline
 
 
@@ -112,15 +115,26 @@ class BenchmarkRun(BaseModel):
 
     @classmethod
     def from_verified(cls, verified: VerifiedBaseline) -> 'BenchmarkRun':
+        return cls.from_protocol(verified.protocol, verified.planned, verified.family_details,
+                                 verified.original_results)
+
+    @classmethod
+    def from_protocol(cls, protocol: ProtocolResult, planned: Sequence[PlannedCondition],
+                      families: Mapping[str, VerifiedFamily],
+                      results: Mapping[str, ResearchResult]) -> 'BenchmarkRun':
         return cls(
-            scope=verified.protocol.scope,
-            cohort=verified.protocol.cohort,
-            families=verified.protocol.families,
-            family_macro_f1=verified.protocol.family_macro_f1,
-            valid_graph_only_family_macro_f1=verified.protocol.valid_graph_only_family_macro_f1,
-            valid_graph_only_macro_family_count=verified.protocol.valid_graph_only_macro_family_count,
-            run_artifact_digest=verified.protocol.run_artifact_sha256,
-            observations=[_condition_projection(item, verified) for item in verified.planned],
+            scope=protocol.scope,
+            cohort=protocol.cohort,
+            families=protocol.families,
+            family_macro_f1=protocol.family_macro_f1,
+            valid_graph_only_family_macro_f1=protocol.valid_graph_only_family_macro_f1,
+            valid_graph_only_macro_family_count=protocol.valid_graph_only_macro_family_count,
+            run_artifact_digest=protocol.run_artifact_sha256,
+            observations=[
+                project_qualified_condition(item, protocol.conditions[item.frozen.saved.condition],
+                    families[item.family], results.get(item.frozen.saved.condition))
+                for item in planned
+            ],
         )
 
     def as_protocol_result(self) -> ProtocolResult:
@@ -179,15 +193,15 @@ def condition_metrics(result: ConditionResult) -> ConditionMetrics:
 
 def condition_relationship_outcomes(condition: BenchmarkCondition,
                                     result: EvaluationResult | None,
-                                    state: CanonicalState | None) -> list[RelationshipOutcome]:
+                                    state: CanonicalState | None, *, score_provenance: bool = True) -> list[RelationshipOutcome]:
     if result is None:
         return [RelationshipOutcome(
             id=hashlib.sha256(repr(row.edge).encode()).hexdigest(), edge=row.edge,
             outcome='missing', expected=row.quotes, predicted=[],
         ) for row in condition.expected_relationships]
     expected = {row.edge: row.quotes for row in condition.expected_relationships}
-    predicted = _predicted_quotes(state) if state else {}
-    failures = set(result.provenance_failures)
+    predicted = attributed_quotes(state) if state else {}
+    failures = set(result.provenance_failures) if score_provenance else set()
     matched = set(result.true_positive_edges)
     outcomes: list[tuple[Literal['missing', 'extra', 'matched', 'provenance_failure'], SemanticEdge]] = [
         ('missing', edge) for edge in result.false_negative_edges
@@ -203,12 +217,11 @@ def condition_relationship_outcomes(condition: BenchmarkCondition,
     ) for outcome, edge in outcomes]
 
 
-def _condition_projection(item, verified: VerifiedBaseline) -> BenchmarkCondition:
+def project_qualified_condition(item: PlannedCondition, result: ConditionResult,
+                                family: VerifiedFamily, original: ResearchResult | None) -> BenchmarkCondition:
     saved = item.frozen.saved
-    result = verified.protocol.conditions[saved.condition]
-    original = verified.original_results[saved.condition]
     expected = _expected_state(item.frozen.sources, saved.truth, saved.source_approval)
-    predicted = original.state
+    predicted = original.state if original else None
     attachments = _attachments(predicted) if predicted else {}
     proof_by_edge = {_edge(*row.edge): row for row in saved.sufficient_evidence}
     proof_status = {}
@@ -227,7 +240,6 @@ def _condition_projection(item, verified: VerifiedBaseline) -> BenchmarkConditio
         ]
         targets.append(ProofTarget(edge=edge, joint_only=annotation.joint_only,
             status=proof_status.get(edge, 'without_graph'), alternatives=alternatives))
-    family = verified.family_details[item.family]
     natural_condition = next(iter(family.conditions))
     contrast = _contrast_label(item.family, saved.condition, family, natural_condition)
     return BenchmarkCondition(
@@ -235,7 +247,7 @@ def _condition_projection(item, verified: VerifiedBaseline) -> BenchmarkConditio
         contrast=contrast,
         role='natural' if saved.condition == natural_condition else 'matched',
         outcome=result.outcome, expected=expected, expected_edges=result.expected_edges,
-        parsed_prediction=original.sourced_extraction,
+        parsed_prediction=original.sourced_extraction if original else None,
         expected_relationships=_expected_relationships(item.frozen.sources, saved.truth,
                                                        saved.source_approval),
         graph=result.graph,
@@ -302,11 +314,11 @@ def _attachments(state: CanonicalState) -> dict[tuple[str, str, str], set[tuple[
     }
 
 
-def _predicted_quotes(state: CanonicalState) -> dict[tuple[str, str, str], list[EvidenceQuote]]:
+def attributed_quotes(state: CanonicalState) -> dict[SemanticEdge, list[EvidenceQuote]]:
     sources = {source.id: source.text for source in state.sources}
     evidence = {row.id: row for row in state.evidence}
     names = {entity.id: entity.name for entity in state.entities}
-    quotes: dict[tuple[str, str, str], list[EvidenceQuote]] = {}
+    quotes: dict[SemanticEdge, list[EvidenceQuote]] = {}
     for relationship in state.relationships:
         edge = _edge(names[relationship.source], relationship.type, names[relationship.target])
         for identity in relationship.evidence_ids:

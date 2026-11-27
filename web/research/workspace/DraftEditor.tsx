@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import type {
+  BenchmarkRoster,
   Capabilities,
   CaseMetadata,
   Preview,
   RunDraft,
   RunConfiguration,
+  RunDetail,
 } from "../shared/contracts";
 import { Pipeline } from "../configuration/Pipeline";
 import { PipelineFields } from "../configuration/Fields";
@@ -24,6 +26,8 @@ export function DraftEditor({
   saving,
   disabled = false,
   runIds = [],
+  extractorRuns = [],
+  benchmark,
 }: {
   id: string;
   draft: RunDraft;
@@ -34,10 +38,13 @@ export function DraftEditor({
   saving: (busy: boolean) => void;
   disabled?: boolean;
   runIds?: string[];
+  extractorRuns?: RunDetail[];
+  benchmark?: BenchmarkRoster | null;
 }) {
   const [configuration, setConfiguration] = useState<RunConfiguration>(
     draft.configuration,
   );
+  const isBenchmark = !!configuration.benchmark_v4_sha256;
   const [preview, setPreview] = useState<Preview | null>(null);
   const [error, setError] = useState("");
   const [freezing, setBusy] = useState(false);
@@ -88,6 +95,7 @@ export function DraftEditor({
             if (!controller.signal.aborted) {
               setError((error as Error).message);
               setState("Draft not saved");
+              saving(false);
             }
           }
         });
@@ -113,9 +121,45 @@ export function DraftEditor({
     setConfiguration((value) => ({ ...value, ...changes }));
     freezeId.current = crypto.randomUUID();
   }
+  function selectBenchmarkExtractor(runId: string) {
+    const origin = extractorRuns.find((run) => run.id === runId);
+    if (!origin) {
+      update({ input_mode: "fresh", resolver: "none", retained_experiment_id: null, retained_run_id: null });
+      return;
+    }
+    const { model, temperature, timeout_seconds } = origin.plan.preview.proposal;
+    update({
+      input_mode: "saved", resolver: "generative", retained_experiment_id: id, retained_run_id: origin.id,
+      model, temperature, timeout_seconds,
+    });
+  }
+  const preferredOrigin = extractorRuns.find((run) => run.id === draft.copied_from_run) ?? extractorRuns.at(-1);
   async function selectInputOrigin(runId: string) {
+    if (runId === "benchmark-v4" && benchmark) {
+      update({
+        benchmark_v4_sha256: benchmark.sha256,
+        input_ids: benchmark.inputs.map((item) => item.sample_id),
+        retained_experiment_id: null,
+        retained_run_id: null,
+        input_mode: "fresh",
+        execution_mode: "live",
+        resolver: "none",
+        extraction_samples: 1,
+        resolver_repetitions: 1,
+        invocation_cap: benchmark.definition.input_count,
+        task_call_cap: Math.max(benchmark.definition.input_count, capabilities.live_task?.cap ?? 0),
+      });
+      return;
+    }
     if (!runId) {
       update({
+        ...(isBenchmark ? {
+          benchmark_v4_sha256: null,
+          input_mode: "saved",
+          execution_mode: "replay",
+          invocation_cap: 0,
+          task_call_cap: 0,
+        } : {}),
         retained_experiment_id: null,
         retained_run_id: null,
         input_ids: cases
@@ -128,6 +172,7 @@ export function DraftEditor({
     setError("");
     try {
       const run = await getRun(id, runId);
+      if (run.benchmark_v4) throw new Error("Benchmark v4 predictions stay within Benchmark v4.");
       if (
         run.lifecycle !== "complete" ||
         run.plan?.preview.proposal.input_mode !== "fresh" ||
@@ -136,6 +181,7 @@ export function DraftEditor({
         throw new Error("Select a completed fresh no-resolution Run.");
       }
       update({
+        benchmark_v4_sha256: null,
         retained_experiment_id: id,
         retained_run_id: runId,
         input_ids: run.observations.map((item) => item.sample_id),
@@ -168,16 +214,40 @@ export function DraftEditor({
         <select
           aria-label="Input origin"
           disabled={busy}
-          value={configuration.retained_run_id ?? ""}
+          value={isBenchmark ? "benchmark-v4" : configuration.retained_run_id ?? ""}
           onChange={(event) => void selectInputOrigin(event.target.value)}
         >
+          {(benchmark || isBenchmark) && <option value="benchmark-v4">PCG Benchmark v4</option>}
           <option value="">Repository case fixtures</option>
           {runIds.map((runId) => (
             <option key={runId} value={runId}>Retained extraction — {runId}</option>
           ))}
         </select>
       </label>
-      {configuration.retained_run_id ? (
+      {isBenchmark ? (
+        <>
+          <label>
+            Benchmark v4 resolver
+            <select value={configuration.resolver} disabled={busy} onChange={(event) =>
+              selectBenchmarkExtractor(event.target.value === "generative" ? preferredOrigin?.id ?? "" : "")}>
+              <option value="none">Extractor only</option>
+              <option value="generative" disabled={!preferredOrigin}>Generative Resolver</option>
+            </select>
+          </label>
+          {configuration.resolver === "generative" ? (
+            <>
+              <label>
+                Verified extraction origin
+                <select value={configuration.retained_run_id ?? ""} disabled={busy}
+                  onChange={(event) => selectBenchmarkExtractor(event.target.value)}>
+                  {extractorRuns.map((run) => <option key={run.id} value={run.id}>Run {runIds.indexOf(run.id) + 1}</option>)}
+                </select>
+              </label>
+              <p>Reuses the original candidates across all 35 frozen inputs. One alias-resolution attempt per usable extraction.</p>
+            </>
+          ) : <p>35 frozen evaluation inputs · One fresh full-context extraction per input.</p>}
+        </>
+      ) : configuration.retained_run_id ? (
         <p>
           Using all {configuration.input_ids.length} retained extractions from Run {configuration.retained_run_id}.
           Source order, evidence and original provider outputs are verified before freezing.
@@ -190,14 +260,14 @@ export function DraftEditor({
           disabled={busy}
         />
       )}
-      <Pipeline
+      {!isBenchmark && <Pipeline
         persistent
         proposal={configuration}
         capabilities={capabilities}
         update={update}
         busy={busy}
-      />
-      {configuration.resolver === "none" && (
+      />}
+      {(isBenchmark || configuration.resolver === "none") && (
         <details className="draft-options">
           <summary>Run settings and invocation limits</summary>
           <PipelineFields

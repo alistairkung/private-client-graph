@@ -1,9 +1,11 @@
 """Explicitly labelled descriptive statistics; failures are never score zero."""
+from dataclasses import asdict
 from statistics import mean, stdev
 from typing import Any
 
 from .artifacts import Bundle
 from .plan import FiniteExperimentPlan
+from .run_plan import RunPlan
 from .metrics import estimate_cost
 from .provider import TokenUsage
 from .source_attribution import SourceAttributionDiagnostic, aggregate_source_attribution
@@ -23,6 +25,8 @@ def distribution(values: list[float | None]) -> dict[str, Any]:
 
 
 def summarize(bundle: Bundle) -> dict[str, Any]:
+    if isinstance(bundle.plan, RunPlan) and bundle.plan.benchmark_v4_sha256:
+        return _summarize_v4(bundle)
     rows = bundle.results()
     attempts = bundle.attempts()
     samples = [{'sample_id': s.sample_id, 'case_id': s.case_id, 'cohort': s.cohort}
@@ -44,6 +48,35 @@ def summarize(bundle: Bundle) -> dict[str, Any]:
                 if row.get('source_attribution') is not None]).model_dump(),
             'provenance': bundle.manifest['provenance'],
             'sessions': _sessions(bundle)}
+
+
+def _summarize_v4(bundle: Bundle) -> dict[str, Any]:
+    from .benchmark_v4 import configured_custody, load_workload
+    from .benchmark_v4_operations import benchmark_v4_operations
+    from .benchmark_v4_run import evaluate_retained_run
+    from .live_accounting import retained_run_attempts
+    custody = configured_custody()
+    if custody is None:
+        raise ValueError('Benchmark v4 private custody is unavailable')
+    attempts, authority_reasons = retained_run_attempts(bundle)
+    retained = evaluate_retained_run(bundle, load_workload(custody), attempts=attempts)
+    protocol = retained.evaluation.qualified
+    operations = _operations(bundle, attempts)
+    operations.pop('attempts')  # Provider requests and responses stay in the private artifacts.
+    if authority_reasons or not attempts or bundle.plan.kind != 'live_experiment':
+        operations['estimated_spend'] = None
+    return {
+        'schema_version': 1, 'suite': 'pcg-benchmark-v4',
+        'run_id': getattr(bundle.plan, 'run_id', None) or bundle.manifest['experiment_id'],
+        'configuration': bundle.plan.model_dump(mode='json', exclude={'inputs'}),
+        'benchmark_v4': retained.evaluation.summary.model_dump(mode='json'),
+        'qualified_protocol': {'scope': asdict(protocol.scope), 'cohort': asdict(protocol.cohort),
+                               'families': {name: asdict(metrics) for name, metrics in protocol.families.items()}},
+        'operations': {**operations, 'authority_reasons': authority_reasons},
+        'pipeline_usage': benchmark_v4_operations(retained, attempts, bundle.plan.pricing,
+            live=bundle.plan.kind == 'live_experiment' and not authority_reasons).model_dump(mode='json'),
+        'provenance': {key: value for key, value in bundle.manifest['provenance'].items() if key != 'code'},
+    }
 
 
 def _sample_summary(bundle: Bundle, sample: dict[str, Any], rows: list[dict[str, Any]],

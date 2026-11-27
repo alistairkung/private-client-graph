@@ -29,7 +29,7 @@ def experiment_path(root: Path, identity: str) -> Path:
     return path
 
 
-def create_experiment(root: Path, command: CreateExperiment) -> WorkspaceDetail:
+def create_experiment(root: Path, command: CreateExperiment, *, initial_draft: RunDraft | None = None) -> WorkspaceDetail:
     identity = uuid5(NAMESPACE_URL, 'pcg-experiment:' + command.request_id).hex
     path = experiment_path(root, identity)
     with workspace_lock(root):
@@ -41,7 +41,7 @@ def create_experiment(root: Path, command: CreateExperiment) -> WorkspaceDetail:
         else:
             write_record(artifact, {'schema_version': 1, 'id': identity,
                 'created_at': utc_now(), 'command': command.model_dump(),
-                'initial_draft': RunDraft().model_dump(mode='json')})
+                'initial_draft': (initial_draft or RunDraft()).model_dump(mode='json')})
         return read_experiment(root, identity)
 
 

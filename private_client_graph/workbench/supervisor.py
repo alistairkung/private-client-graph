@@ -76,10 +76,13 @@ def _status(root: Path, identity: str) -> RunStatus:
     if latest['state'] in ('running', 'stopping'):
         pending = [attempt for attempt in attempts if attempt['status'] == 'uncertain']
         current_work = max(pending, key=lambda attempt: attempt['started_at'])['attempt_id'] if pending else 'Processing frozen inputs and results'
+    eligible = plan.preview.eligible_resolution_inputs
+    skipped = plan.preview.planned_observations - eligible if eligible is not None and latest['state'] != 'frozen' else 0
+    maximum = eligible if eligible is not None else plan.preview.matrix_call_maximum
     return RunStatus(plan=plan, state=latest['state'], message=latest['message'],
-        completed_observations=len(bundle.results()), planned_observations=plan.preview.planned_observations,
+        completed_observations=len(bundle.results()) + skipped, planned_observations=plan.preview.planned_observations,
         attempts=len(attempts), uncertain_attempts=sum(a['status'] == 'uncertain' for a in attempts),
-        remaining_attempts=max(0, plan.preview.matrix_call_maximum - len(attempts)),
+        remaining_attempts=max(0, maximum - len(attempts)),
         result_id=digest_text(identity), active_plan_id=active, current_work=current_work,
         task_budget=live_budget(root) if bundle.plan.kind == 'live_experiment' else None)
 

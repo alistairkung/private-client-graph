@@ -1,0 +1,35 @@
+{
+  "version": "pcg-benchmark-v4",
+  "matter_count": 20,
+  "input_count": 35,
+  "graph_scorer": "semantic_edges_v1",
+  "qualified": {
+    "methodology": "original_qualification",
+    "evidence_protocol": "benchmark_v3_evaluation_v1",
+    "matter_count": 19,
+    "input_count": 34,
+    "public_register": "admissions/2026-11-24.json",
+    "public_register_sha256": "e9b74b6ac4a5c4d3191531fd4aae3161dcf4ac40f18b9087d29a1d26c8cb3e4a",
+    "private_register_sha256": "c864f58786d21fd3f5b9735023c93df62256e537133f15fa602d3cf3d8d13b70",
+    "historical_archive_inventory_sha256": "b41242bd7bcfec25c09396b197f887441e11dccc0dff3aa920017fc6c18cdbab"
+  },
+  "consensus": {
+    "methodology": "consensus_adjudication",
+    "evidence_protocol": "adjudicated_citation_overlap_v1",
+    "matter": "U",
+    "input": "u8",
+    "source_count": 65,
+    "release_id": "exploratory-scale-65-7d5d252d15fd",
+    "release_manifest_sha256": "f168588d67194cf00e47eb8d6e3d7c835425b9219b67fc94233e9913265a01da",
+    "source_file_sha256": "6897368841e4ac84484783e109e3dd54ea587286322c382c15030465b977f6e1",
+    "source_array_sha256": "7d5d252d15fd8adf04fcb1417731ac43da7cb242a42da66ad4ea956746ab655a",
+    "reference_sha256": "eb5320f5627128472a5cae90337f22d3f8c88dc408164f0cf0ac03f0f46befca",
+    "reference_freeze_sha256": "71c1f82d1bf65e4bfde73d9f68c3bb3d48c3c9a39f45faf3ad47b2274593fa49",
+    "reviewer_count": 10,
+    "support_threshold": 6,
+    "unanimous_relationships": 6,
+    "adjudicated_relationships": 6,
+    "zero_support_propositions": 4,
+    "limitation": "The original qualification attempt ended with an unresolved title-dependent proof issue."
+  }
+}

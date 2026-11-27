@@ -31,7 +31,7 @@ def workbench_tracing(bundle: Bundle) -> Iterator[ResearchTracing | None]:
 
 def _configured_tracing(bundle: Bundle) -> ResearchTracing | None:
     plan = bundle.plan
-    if not isinstance(plan, RunPlan) or not plan.run_id or not plan.experiment_id:
+    if not isinstance(plan, RunPlan) or plan.benchmark_v4_sha256 or not plan.run_id or not plan.experiment_id:
         return None
     if os.getenv('PCG_RESEARCH_LANGFUSE_ENABLED') not in (None, '1'):
         return None

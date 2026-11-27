@@ -5,6 +5,7 @@ from pathlib import Path
 from fastapi import FastAPI, HTTPException, Request
 
 from private_client_graph.persistence.database import database_engine
+from .benchmark_v4 import default_benchmark_draft
 from .approval import authorize
 from .execution_contracts import Command, FrozenPlan, LiveApproval, Preview, RunStatus
 from .planning import open_executable, require_live
@@ -58,13 +59,16 @@ def mount_workspace_commands(app: FastAPI, root: Path) -> None:
 
     @app.post(f'{PREFIX}/experiments', response_model=WorkspaceDetail)
     def create(command: CreateExperiment):
-        result = create_experiment(root, command)
+        result = create_experiment(root, command, initial_draft=default_benchmark_draft(root))
         refresh()
         return result
 
     @app.put(f'{PREFIX}/experiments/{{experiment_id}}/draft', response_model=RunDraft)
     def draft(experiment_id: str, command: DraftUpdate):
         writable(experiment_id)
+        if (command.configuration.retained_run_id
+                and command.configuration.retained_experiment_id != experiment_id):
+            raise ValueError('Retained inputs must remain in the original Experiment')
         preview_run(command.configuration, root)
         result = update_draft(root, experiment_id, command)
         refresh()

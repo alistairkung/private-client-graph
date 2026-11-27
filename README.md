@@ -30,7 +30,9 @@ default and requires explicit authorization for each Run.
 Stop with `docker compose down`. Keep `runs/research` and its task ledgers together;
 they hold authoritative artifacts and execution accounting. PostgreSQL is a
 rebuildable research index. See the [Research Workbench guide](research/README.md)
-for the current workflow and recovery details.
+for the current workflow and recovery details. The owner Workbench uses
+[PCG Benchmark v4](docs/workflows/benchmark-v4.md) for future graph experiments
+when the private synthetic custody is installed.
 
 ### Landing and practitioner application
 

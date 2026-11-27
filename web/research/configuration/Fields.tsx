@@ -123,11 +123,12 @@ export function PipelineFields({
   return (
     <fieldset disabled={busy}>
       <legend>Pipeline & repetitions</legend>
+      {!proposal.benchmark_v4_sha256 && <>
       <label>
         Resolver
         <select
           value={proposal.resolver}
-          disabled={proposal.execution_mode === "replay"}
+          disabled={proposal.execution_mode === "replay" || !!proposal.benchmark_v4_sha256}
           onChange={(event) =>
             update(
               event.target.value === "none"
@@ -157,6 +158,7 @@ export function PipelineFields({
           }
         />
       </label>
+      </>}
       <label>
         Model
         <select value={proposal.model} disabled>
@@ -170,7 +172,7 @@ export function PipelineFields({
           min={0}
           max={2}
           step={0.1}
-          disabled={proposal.execution_mode === "replay"}
+          disabled={proposal.execution_mode === "replay" || !!(proposal.benchmark_v4_sha256 && proposal.retained_run_id)}
           value={proposal.temperature ?? ""}
           onChange={(event) =>
             update({
@@ -186,7 +188,7 @@ export function PipelineFields({
           type="number"
           min={1}
           max={300}
-          disabled={proposal.execution_mode === "replay"}
+          disabled={proposal.execution_mode === "replay" || !!(proposal.benchmark_v4_sha256 && proposal.retained_run_id)}
           value={proposal.timeout_seconds}
           onChange={(event) =>
             update({ timeout_seconds: Number(event.target.value) })

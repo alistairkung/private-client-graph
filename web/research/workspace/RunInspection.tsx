@@ -11,6 +11,7 @@ import { ReadState } from "../shared/presentation";
 import { useRead } from "../shared/useRead";
 import { compareRuns } from "./api";
 import { metric, money } from "./RunChart";
+import { BenchmarkEvidence, BenchmarkV4Summary, GraphMetrics, PipelineUsage } from "./BenchmarkV4Summary";
 import { BenchmarkRunSummary } from "./BenchmarkRunSummary";
 
 export function RunInspection({
@@ -37,6 +38,8 @@ export function RunInspection({
         benchmark={run.benchmark}
         number={number}
         runs={runs}
+        copy={copy}
+        busy={busy}
       />
     );
   if (!run.plan || !run.evaluation)
@@ -274,7 +277,7 @@ function RunComparisonPanel({
           ? "Comparable benchmark scope"
           : "Different benchmark scopes"}{" "}
         · {data.matched_inputs}{" "}
-        {data.benchmark ? "aligned Conditions" : "exactly matched inputs"}
+        {data.benchmark ? "aligned Conditions" : data.benchmark_v4 ? "aligned evaluation inputs" : "exactly matched inputs"}
       </p>
       {!data.unqualified_improvement_allowed && (
         <p>Do not interpret this comparison as an unqualified improvement.</p>
@@ -286,6 +289,19 @@ function RunComparisonPanel({
       ].map((reason, index) => (
         <p key={index}>{reason}</p>
       ))}
+      {data.benchmark_v4 && (
+        <section aria-label="Benchmark v4 comparison">
+          {data.benchmark_v4.shared_extraction_run_id && <p>Verified shared extraction candidates.</p>}
+          <h4>Comparison Run</h4>
+          <GraphMetrics summary={data.benchmark_v4.left} />
+          <BenchmarkEvidence summary={data.benchmark_v4.left} proofs={data.benchmark_v4.left_proofs} />
+          {data.benchmark_v4.left_usage && <PipelineUsage usage={data.benchmark_v4.left_usage} complete={data.benchmark_v4.left.state === "complete"} />}
+          <h4>Selected Run</h4>
+          <GraphMetrics summary={data.benchmark_v4.right} />
+          <BenchmarkEvidence summary={data.benchmark_v4.right} proofs={data.benchmark_v4.right_proofs} />
+          {data.benchmark_v4.right_usage && <PipelineUsage usage={data.benchmark_v4.right_usage} complete={data.benchmark_v4.right.state === "complete"} />}
+        </section>
+      )}
       {data.benchmark && (
         <section aria-label="Condition-aligned protocol comparison">
           <h4>Condition-aligned comparison · descriptive deltas</h4>
@@ -413,29 +429,39 @@ function BenchmarkRunInspection({
   benchmark,
   number,
   runs,
+  copy,
+  busy,
 }: {
   workspace: WorkspaceDetail;
   run: RunDetail;
   benchmark: BenchmarkRun;
   number: number;
   runs: RunDetail[];
+  copy?: () => void;
+  busy: boolean;
 }) {
   const [other, setOther] = useState("");
+  const mixed = run.benchmark_v4;
+  const consensus = run.observations.find((row) => row.benchmark?.role === "consensus");
   return (
     <section className="run-inspection" aria-label={`Run ${number} details`}>
       <div className="section-heading">
         <div>
-          <h2>Run {number} · Benchmark v3</h2>
+          <h2>Run {number} · Benchmark {mixed ? "v4" : "v3"}</h2>
           <small>
-            {workspace.name} · Verified read-only Run · {benchmark.scope.split}{" "}
+            {workspace.name} · {mixed ? "Mixed references" : "Verified read-only Run"} · {benchmark.scope.split}{" "}
             split ·{" "}
-            {benchmark.scope.observation_origin === "live"
-              ? "Verified live origin"
-              : "Synthetic fixture"}
+            {mixed?.state === "unmeasured"
+              ? "Awaiting retained observations"
+              : benchmark.scope.observation_origin === "live"
+                ? mixed ? "Retained live execution" : "Verified live origin"
+                : "Synthetic fixture"}
           </small>
         </div>
+        {mixed && copy && <button className="secondary" disabled={busy} onClick={copy}>Copy to next draft</button>}
       </div>
-      <BenchmarkRunSummary run={run} benchmark={benchmark} />
+      {mixed && <BenchmarkV4Summary run={run} />}
+      {mixed?.state !== "unmeasured" && <BenchmarkRunSummary run={run} benchmark={benchmark} />}
       <BenchmarkFamilyExplorer
         key={run.id}
         run={run}
@@ -449,6 +475,12 @@ function BenchmarkRunInspection({
           />
         )}
       />
+      {consensus && (
+        <details className="family-panel">
+          <summary>U revision 8 · Consensus adjudication · Single evaluation input</summary>
+          <ConditionInspection runId={run.id} observation={consensus} />
+        </details>
+      )}
       <label>
         Compare with verified Run
         <select

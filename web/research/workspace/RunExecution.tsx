@@ -28,7 +28,7 @@ export function RunExecution({
   const command = useRef<string | null>(null);
   const lock = useRef(false);
   const plan = run.plan;
-  if (!plan || run.benchmark) return null;
+  if (!plan || (run.benchmark && !run.benchmark_v4)) return null;
   const live = plan.preview.proposal.execution_mode === "live";
   const continuing = ["stopped", "interrupted", "failed"].includes(
     run.lifecycle,

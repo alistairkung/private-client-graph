@@ -5,6 +5,7 @@ import json
 from typing import Literal
 
 from private_client_graph.research.artifacts import Bundle
+from private_client_graph.research.live_accounting import retained_run_attempts as retained_attempts
 from private_client_graph.research.metrics import estimate_cost
 from private_client_graph.research.provider import TokenUsage
 from private_client_graph.research.results import ResearchResult
@@ -34,6 +35,8 @@ def evaluate_run(bundle: Bundle) -> RunEvaluation:
     current = lifecycle[-1] if lifecycle else {'state': 'frozen'}
     aggregate = aggregate_observations(slots, results, _slot_statuses(slots, attempts, current, bundle.path.name))
     cost = _bundle_cost(bundle, attempts, authority_reasons)
+    if bundle.plan.benchmark_v4_sha256:
+        aggregate = RunAggregate(reasons=['Graph delivery is evaluated under the Benchmark v4 mixed-reference contract.'])
     f1_reasons = [] if aggregate.f1 is not None else ['No scored planned observations.']
     return RunEvaluation(run_id=bundle.plan.run_id or bundle.manifest['experiment_id'], aggregate=aggregate,
         cost=cost, scope=_benchmark_scope(bundle.plan),
@@ -46,6 +49,8 @@ def evaluate_run(bundle: Bundle) -> RunEvaluation:
 
 
 def compare_runs(left: Bundle, right: Bundle) -> RunComparison:
+    if any(isinstance(item.plan, RunPlan) and item.plan.benchmark_v4_sha256 for item in (left, right)):
+        raise ValueError('Benchmark v4 requires a mixed-reference Run comparison')
     first, second = evaluate_run(left), evaluate_run(right)
     comparison = RunComparison(left_run_id=first.run_id, right_run_id=second.run_id)
     if first.scope is None or second.scope is None:
@@ -177,23 +182,6 @@ def _benchmark_scope(plan: RunPlan) -> BenchmarkScope:
 
 def _digest(value: object) -> str:
     return hashlib.sha256(json.dumps(value, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
-
-
-def retained_attempts(bundle: Bundle) -> tuple[list[dict], list[str]]:
-    """Read shared-only reservations without invoking mutating crash recovery."""
-    local = bundle.attempts()
-    if bundle.plan.kind != 'live_experiment':
-        return local, []
-    if not bundle.task_ledger.is_dir():
-        return local, ['Authoritative task ledger is unavailable; incurred attempts cannot be verified.']
-    prefix = bundle.manifest['experiment_id']
-    shared = [json.loads(path.read_text()) for path in
-              sorted((bundle.task_ledger / 'reservations').glob(f'{prefix}-*.json'))]
-    shared_ids = {row['attempt_id'] for row in shared}
-    missing = any(row['attempt_id'] not in shared_ids for row in local)
-    local_ids = {row['attempt_id'] for row in local}
-    return [*local, *(row for row in shared if row['attempt_id'] not in local_ids)], (
-        ['Authoritative task ledger is incomplete.'] if missing else [])
 
 
 def _bundle_cost(bundle: Bundle, attempts: list[dict], reasons: list[str]) -> RunCost:
