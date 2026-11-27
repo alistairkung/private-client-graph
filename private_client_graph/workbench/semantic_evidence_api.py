@@ -109,6 +109,7 @@ class SemanticTarget(BaseModel):
 class EvidenceAdjustedF1(BaseModel):
     f1: float
     incomplete_recovered_proofs: int
+    penalty_units: float
     weight_numerator: int
     weight_denominator: int
     proofs_completed_by_equivalence: int
@@ -124,10 +125,16 @@ class SemanticRunSummary(BaseModel):
     operations: SemanticOperations | None
 
 
+class ProofPopulation(BaseModel):
+    true_positives_without_formal_targets: int
+    unrecovered_formal_targets: int
+
+
 class SemanticEvidenceReport(SemanticRunSummary):
     methodology: str
     scope_note: str
     evaluator: SemanticEvaluator
+    proof_population: ProofPopulation | None
     targets: list[SemanticTarget]
 
 

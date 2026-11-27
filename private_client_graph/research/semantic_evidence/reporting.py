@@ -87,6 +87,10 @@ def _report(inputs: AssessmentInputs, targets: list[dict[str, Any]], *, state: E
         'extractor_manifest_sha256': inputs.extractor_manifest_sha256,
         'graph_f1': qualified.model_dump(mode='json') if qualified else None,
         'evidence_adjusted_f1': adjusted,
+        'proof_population': {
+            'true_positives_without_formal_targets': qualified.counts.tp - recovered,
+            'unrecovered_formal_targets': evidence['formal_targets'] - recovered,
+        } if qualified else None,
         'deterministic_baseline': {
             'report_version': quality.version,
             'benchmark_sha256': quality.scope_sha256,
@@ -104,10 +108,12 @@ def _report(inputs: AssessmentInputs, targets: list[dict[str, Any]], *, state: E
 def _evidence_adjusted_f1(counts: GraphCounts, *, incomplete_recovered_proofs: int,
                           proofs_completed_by_equivalence: int) -> dict[str, int | float]:
     numerator = 2 * counts.tp
-    denominator = numerator + counts.fp + counts.fn + EVIDENCE_PENALTY_WEIGHT * incomplete_recovered_proofs
+    penalty = EVIDENCE_PENALTY_WEIGHT * incomplete_recovered_proofs
+    denominator = numerator + counts.fp + counts.fn + penalty
     return {
         'f1': float(numerator / denominator) if denominator else 0.0,
         'incomplete_recovered_proofs': incomplete_recovered_proofs,
+        'penalty_units': float(penalty),
         'weight_numerator': EVIDENCE_PENALTY_WEIGHT.numerator,
         'weight_denominator': EVIDENCE_PENALTY_WEIGHT.denominator,
         'proofs_completed_by_equivalence': proofs_completed_by_equivalence,

@@ -108,9 +108,16 @@ def test_exact_evidence_adjusted_f1_uses_only_recovered_formal_targets(inputs):
     assert evaluation['evidence_adjusted_f1'] == {
         'f1': pytest.approx(0.7979152656355077),
         'incomplete_recovered_proofs': 56,
+        'penalty_units': pytest.approx(35.1858407079646),
         'weight_numerator': 71,
         'weight_denominator': 113,
         'proofs_completed_by_equivalence': 0,
+    }
+    assert evaluation['proof_population'] == {
+        'true_positives_without_formal_targets': 38, 'unrecovered_formal_targets': 4,
+    }
+    assert evaluation['target_summary']['proof_completion'] == {
+        'count': 11, 'targets': 71, 'rate': pytest.approx(11 / 71),
     }
 
 
@@ -133,6 +140,7 @@ def test_evidence_adjusted_f1_rewards_correct_predictions_and_counts_graph_error
         evaluation = exact_report(_with_graph_counts(inputs, *counts))
         adjusted = evaluation['evidence_adjusted_f1']
         assert adjusted['incomplete_recovered_proofs'] == 56
+        assert adjusted['penalty_units'] == baseline['penalty_units']
         assert adjusted['f1'] < baseline['f1']
         assert adjusted['f1'] <= evaluation['graph_f1']['f1']
 
@@ -143,6 +151,9 @@ def test_evidence_adjusted_f1_equals_graph_f1_without_recovered_incomplete_proof
     evaluation = exact_report(_with_graph_counts(inputs.model_copy(update={'targets': targets}), tp, 0, fn))
     adjusted = evaluation['evidence_adjusted_f1']
     assert adjusted['incomplete_recovered_proofs'] == 0
+    assert adjusted['penalty_units'] == 0
+    assert evaluation['proof_population']['true_positives_without_formal_targets'] == tp
+    assert evaluation['proof_population']['unrecovered_formal_targets'] == len(targets)
     assert adjusted['f1'] == evaluation['graph_f1']['f1']
 
 
@@ -237,7 +248,15 @@ def test_semantic_metrics_keep_exact_credit_and_score_each_alternative(tmp_path,
     adjusted = result['evidence_adjusted_f1']
     assert adjusted['incomplete_recovered_proofs'] == 29
     assert adjusted['proofs_completed_by_equivalence'] == 27
-    assert exact_report(inputs)['evidence_adjusted_f1']['f1'] < adjusted['f1'] <= result['graph_f1']['f1']
+    assert adjusted['penalty_units'] == pytest.approx(18.221238938053098)
+    assert adjusted['f1'] == pytest.approx(0.8528914926499659)
+    baseline = exact_report(inputs)
+    assert result['graph_f1'] == baseline['graph_f1']
+    assert result['proof_population'] == baseline['proof_population']
+    recovered = summary['proof_completion']['count'] + adjusted['incomplete_recovered_proofs']
+    assert recovered + result['proof_population']['unrecovered_formal_targets'] == summary['formal_targets'] == 71
+    assert recovered + result['proof_population']['true_positives_without_formal_targets'] == result['graph_f1']['counts']['tp']
+    assert baseline['evidence_adjusted_f1']['f1'] < adjusted['f1'] <= result['graph_f1']['f1']
     assert summary['multi_source_evidence_coverage'] == {
         'targets': 30, 'matched_target_equivalents': 13.5, 'mean': pytest.approx(13.5 / 30),
     }
@@ -460,6 +479,7 @@ def test_reuse_binds_packet_source_target_and_keeps_invalid_in_comparison(tmp_pa
     assert not pending['comparable'] and pending['transitions'] == []
     assert pending['right']['target_summary']['newly_completed_proofs'] > 0
     assert pending['right']['evidence_adjusted_f1'] == exact_report(other)['evidence_adjusted_f1']
+    assert pending['right']['target_summary']['proof_completion']['count'] == 11
 
     packets = []
 
