@@ -14,8 +14,10 @@ REVISION = "autonomous_realism_repair"
 STOP = "autonomous_realism_stop"
 PLAN_JOB = "repair-plan"
 EXACT_PLAN_JOB = "repair-plan-exact-classification"
+LOCAL_PLAN_JOB = "repair-plan-local-records"
 BUDGET_PLAN_JOB = "repair-budget-plan"
 PLAN_RECOVERY = "realism_plan_reference_recovery"
+LOCAL_PLAN_RECOVERY = "realism_local_plan_recovery"
 RETAINED_DESIGN_NOTE = "realism-retained-design-review-note"
 LEGACY_REVISED_ATTACHMENTS = "Rewrite this record using the revised received correspondence."
 LEGACY_REVISED_INSTRUCTIONS = "Write this record using its revised instructions."
@@ -45,3 +47,8 @@ def recorded_classification_retry(runner: "SessionRunner") -> dict[str, Any] | N
     return next((row["details"]["exact_classification"] for row in events
                  if (row["revision"], row["kind"], row["name"]) == (runner.revision, "reconcile", PLAN_RECOVERY)
                  and "exact_classification" in row["details"]), None)
+
+
+def recorded_local_retry(runner: "SessionRunner") -> dict[str, Any] | None:
+    return next((row["details"] for row in runner.ledger.events(runner.manifest.batch_id, runner.family)
+                 if (row["revision"], row["kind"], row["name"]) == (runner.revision, "reconcile", LOCAL_PLAN_RECOVERY)), None)

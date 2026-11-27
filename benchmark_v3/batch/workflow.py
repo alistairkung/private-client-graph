@@ -14,8 +14,8 @@ from benchmark_v3 import commissioning, packet, replay
 from benchmark_v3.batch import (
     adjudication_contract, adjudication_recovery, annotation_recovery, artifacts, audit_boundary, audit_contract, audit_recovery,
     author_context, author_delivery, author_repair, authorisation, autonomous_realism, clean_redesign, construction, continuation,
-    design_recovery,
-    design_review, evidence_recovery, frozen_rekey, joint_control_plan, milestone_repair, read_format_recovery, repair_authority, science,
+    delivery_audience, design_recovery,
+    design_review, evidence_recovery, frozen_rekey, joint_control_plan, mask_dispute, milestone_repair, read_format_recovery, repair_authority, science,
 )
 from benchmark_v3.batch.contracts import (
     Adjudication, AuditReview, AuthorBrief, AuthoredSource, Code, DesignOutput, MaskAssignment, Reading, RealismReview,
@@ -188,7 +188,7 @@ class FamilyWorkflow:
         cutoff_repair = design_recovery.isolated_cutoff_recovery(self.runner, self.slot)
         replacement = clean_redesign.recorded(self.runner)
         merits_repair = large_merits_repair.recorded(self.runner)
-        self.large_merits_required = (merits_repair is not None or
+        self.large_merits_required = (self.runner.ledger.requires_workload_merits or merits_repair is not None or
                                       (replacement is not None and replacement.audited_replacement is not None))
         initial_retry = design_recovery.initial_runtime_retry(self.runner)
         sender_repair = author_repair.reopen_empty_sender_repair(self.runner)
@@ -284,7 +284,9 @@ class FamilyWorkflow:
         return design
 
     def _verify_fresh_design(self, design: DesignOutput) -> None:
-        science.verify_design(self.slot, design_recovery._without_full_file_snapshot(design))
+        science.verify_design(self.slot, design_recovery.fresh_design_representation(
+            design, workload=self.runner.ledger.requires_workload_merits,
+        ))
         self._project_authors(design, {})
 
     def _reviewed_design(self, design: DesignOutput) -> DesignOutput:
@@ -333,6 +335,21 @@ class FamilyWorkflow:
         return list(sources.values())
 
     def _review_large_workload_merits(self, design: DesignOutput) -> None:
+        inventory = {row.source_id for row in design.inventory}
+        sequence = (" At this pre-author gate, assess whether the design can support these checks. Actual full-file "
+                    "readings, measured packet sizes and the bidirectional audit must be obtained after authorship "
+                    "and verified before qualification.")
+        if not self._use_scoped_prompt(clean_redesign.MERITS_JOB, sequence):
+            sequence = ""
+        roster = (" In findings, use exactly the supplied Source IDs as keys. Put a blocking file-level issue "
+                  "in objections instead of introducing a case-summary key in findings.")
+        if not self._use_scoped_prompt(clean_redesign.MERITS_JOB, roster):
+            roster = ""
+
+        def verify_acceptance(review: author_context.AuthorContextReview) -> None:
+            if review.verdict == "accept" and not review.objections and review.findings.keys() != inventory:
+                raise ValueError("An accepted workload review needs precisely one finding per Source ID.")
+
         review = self.job(clean_redesign.MERITS_JOB, "audit", {
             "intended_intervention": design.model_dump_json(),
             "audit_rules": _json({"hypothesis": self.slot.hypothesis.model_dump(mode="json"),
@@ -346,19 +363,33 @@ class FamilyWorkflow:
            "Check ordinary alternative proofs, varied documentary workstreams, exact evidence scope, "
            "unscored sections and prefixes, and two complete independently reviewed lanes. Reject unsupported "
            "historical premises, padding or hidden answers. Return a distinct finding for every Source ID, "
-           "with no objections on acceptance. This review is separate from the author-scope gate.",
-           author_context.AuthorContextReview)
-        if review.verdict != "accept" or review.objections or review.findings.keys() != {row.source_id for row in design.inventory}:
+           "with no objections on acceptance. This review is separate from the author-scope gate." + sequence + roster,
+           author_context.AuthorContextReview, validate=verify_acceptance)
+        if review.verdict != "accept" or review.objections or review.findings.keys() != inventory:
             self.reject("scientific_review", review.model_dump_json(), quarantine=True, disposition=clean_redesign.MERITS_JOB)
 
     def _project_authors(self, design: DesignOutput, tickets: dict[str, str]) -> dict[str, Any]:
         guard = author_delivery if self.runner.ledger.requires_delivery_attestation else author_context
+        if self.runner.ledger.requires_delivery_attestation and self.runner.ledger.requires_workload_merits:
+            reserved = any(row["revision"] == self.runner.revision and row["stage"] == "author"
+                           and row["job"].startswith("author-") and row["job"] not in {
+                               author_context.JOB, author_context.JOB + repair_authority.FORMAT_RETRY,
+                           } for row in self.runner.ledger.attempts(self.runner.family))
+            if not reserved:
+                delivery_audience.verify_design(design)
         return guard.projection(design, tickets)
 
     def _review_author_context(self, design: DesignOutput, tickets: dict[str, str]) -> dict[str, Any]:
         projected = self._project_authors(design, tickets)
         attested = self.runner.ledger.requires_delivery_attestation
         rules = {"participant_packets": projected, **({"delivery_attestation": 1} if attested else {})}
+        policy = " Any flagged local ticket names or periods require actual participant authority before dispatch."
+        needs_basis = (attested and self.runner.ledger.requires_workload_merits and self.documentary_revision is not None
+                       and self._use_scoped_prompt(author_context.JOB, policy))
+        if needs_basis:
+            revision = self.documentary_revision
+            assert revision is not None
+            rules.update(ticket_basis_version=1, unavailable_ticket_literals=autonomous_realism.unavailable_ticket_literals(revision, projected))
         exact_context = ""
         if self.documentary_revision is not None and self.documentary_revision.parent.exact_recipient_edit is not None:
             exact = self.documentary_revision.parent.exact_recipient_edit
@@ -402,9 +433,11 @@ class FamilyWorkflow:
            "The participant's own act or observation may be documented in ordinary wording. Check that other "
            "people's knowledge and experimental reasoning stay out. Return on any material objection. "
            "Give one finding keyed to every Source ID."
-           + (" " + author_delivery.REVIEW_INSTRUCTION if attested else "") + delivery_scope + origin_scope + exact_context,
+           + (" " + author_delivery.REVIEW_INSTRUCTION if attested else "") + delivery_scope + origin_scope + exact_context
+           + (policy if needs_basis else ""),
            author_context.AuthorContextReview)
-        if review.verdict != "accept" or review.objections or review.findings.keys() != projected.keys():
+        if (review.verdict != "accept" or review.objections or rules.get("unavailable_ticket_literals")
+                or review.findings.keys() != projected.keys()):
             self.reject("scientific_review", review.model_dump_json(), quarantine=True)
         return projected
 
@@ -416,6 +449,8 @@ class FamilyWorkflow:
             raise ValueError("Repair tickets must identify known Sources.")
         revision = self.documentary_revision
         scoped = revision is not None and self.runner.ledger.requires_delivery_attestation
+        if revision is not None and scoped:
+            tickets = autonomous_realism.retained_draft_tickets(self.runner, revision, tickets)
         retained_tickets = self._retained_generated_tickets() if scoped else {}
         prior_sources = ({source.id: source for source in revision.parent.bundles[revision.parent.freeze.natural]}
                          if revision is not None else {})
@@ -511,6 +546,11 @@ class FamilyWorkflow:
 
         if self.runner.ledger.requires_delivery_attestation:
             expected = self.documentary_revision.parent.expected_local_source() if self.documentary_revision else None
+            if self.documentary_revision is not None:
+                parent = self.documentary_revision.parent
+                intake = parent.incoming_particulars
+                if parent.owned_records is not None and (intake is None or identity != intake.source_id):
+                    expected = parent.owned_records.get(identity)
 
             def verify_source(source: author_delivery.AttestedSource) -> None:
                 verify_literals(source)
@@ -740,6 +780,15 @@ class FamilyWorkflow:
             prompt += adjudication_contract.COMPLETE_EVIDENCE_INSTRUCTIONS
         if self.frozen_case is not None:
             prompt += frozen_rekey.POLICY
+            if self.frozen_release is not None and self.frozen_release.retry is not None:
+                prompt += (" Record limitations on what evidence cannot establish in the relevant source_audit. "
+                           "Use unresolved only for remaining uncertainty that affects an actual graph "
+                           "proposition or an approved evidence alternative in this key. Decide each independently.")
+            if self.frozen_release is not None and self.frozen_release.mask_corrections:
+                prompt += (" Test whether coded-office statements bind the named trust within each exact evidence "
+                           "alternative. A name inferred from the full file needs its own body evidence in the "
+                           "alternative. Treat substantive status, signatory capacity, salutations and effective start "
+                           "dates as separate propositions, and apply one continuity standard throughout.")
         proof_retry = adjudication_contract.proof_retry(self.runner, job)
         if proof_retry is not None:
             _, receipt, previous = self.runner.committed_packet("adjudicate", job, "adjudication")
@@ -846,6 +895,8 @@ class FamilyWorkflow:
         valid = None
         requested: list[audit_boundary.ExactExcerpt] = []
         whole: list[MaskAssignment] = []
+        corrections = self.frozen_release.mask_corrections if self.frozen_release is not None else {}
+        nominated: dict[str, MaskAssignment] = {}
         if recheck is not None or self.frozen_case is not None:
             if recheck is not None:
                 original = audit_boundary.returned_audit(self.runner, recheck)
@@ -858,6 +909,18 @@ class FamilyWorkflow:
                 if isinstance(original, audit_boundary.RecheckedAudit):
                     requested = original.excerpt_controls
                 prompt += " Independently audit the fresh condition-local evidence keys on the exact retained freeze."
+            if corrections:
+                assert self.frozen_case is not None
+                nominated = frozen_rekey.candidate_control_corrections(self.frozen_case.audit, corrections)
+                original = frozen_rekey.unsuperseded_controls(original, nominated)
+                rules["nominated_unsupported_controls"] = {digest: {
+                    "original": mask.model_dump(mode="json"), "questioned_present_edges": corrections[digest],
+                } for digest, mask in nominated.items()}
+                prompt += (" Independently assess the specifically nominated, unexecuted controls from the returned "
+                           "audit. For acceptance, precommit the identical Source selection, deletions and question "
+                           "with the unsupported canonical positives as explicit absences, keeping every other "
+                           "expectation. Preserve the old commitments in the lineage. Test the positive proofs "
+                           "separately in renderings with sufficient local evidence. Return on scientific disagreement.")
             if recheck is not None and recheck.get("incomplete_joint_control_plan") is True:
                 assert self.frozen_case is not None
                 previous = self.frozen_case.audit
@@ -920,6 +983,8 @@ class FamilyWorkflow:
             if value.verdict == "accept":
                 if value.objections:
                     raise ValueError(audit_boundary.ACCEPTANCE_FORMAT_ERROR)
+                if corrections:
+                    frozen_rekey.verify_mask_corrections(MilestoneAudit.model_validate(value), nominated, corrections)
                 if valid is not None:
                     science.verify_audit(science_audit(value), bundles, freeze, required, reviews)
                     audit_boundary.verify_recheck(audit_boundary.RecheckedAudit.model_validate(value), valid, whole,
@@ -956,6 +1021,12 @@ class FamilyWorkflow:
     ) -> AuditReview:
         original = joint_control_plan.retained_audit(self.runner, release)
         earlier: list[MilestoneAudit] = [self.frozen_case.audit] if self.frozen_case is not None else []
+        corrections = self.frozen_release.mask_corrections if self.frozen_release is not None else {}
+        if corrections:
+            assert self.frozen_case is not None
+            nominated = frozen_rekey.candidate_control_corrections(self.frozen_case.audit, corrections)
+            frozen_rekey.verify_mask_corrections(original, nominated, corrections)
+            earlier = [frozen_rekey.unsuperseded_controls(self.frozen_case.audit, nominated)]
         recheck = audit_boundary.release(self.runner)
         if recheck is not None:
             earlier.append(audit_boundary.returned_audit(self.runner, recheck))
@@ -1052,6 +1123,16 @@ class FamilyWorkflow:
     ) -> list[dict[str, Any]]:
         assignments = []
         first_jobs: dict[str, str] = {}
+        supported: dict[int, tuple[mask_dispute.Clarification, MaskAssignment]] = {}
+        clarified: dict[str, dict[str, Any]] = {}
+        for scope, dispute, receipt in mask_dispute.clarifications(self.runner):
+            if dispute.release.audit_sha256 != authorisation.commitment(audit):
+                raise ValueError("The clarified views must retain the same original accepted audit.")
+            if supported.keys() & dispute.assignments.keys():
+                raise ValueError("A precommitted test can have only one clarified comparison.")
+            self.sessions.append(receipt)
+            self.transition_inputs[f"executed_control_clarification_{dispute.release.observation_job}"] = authorisation.commitment(scope)
+            supported.update({index: (scope, mask) for index, mask in dispute.assignments.items()})
         excerpts = audit.excerpt_controls if isinstance(audit, audit_boundary.RecheckedAudit) else []
         for index, mask in enumerate([*audit.masks, *excerpts]):
             if any(condition.casefold() in mask.question.casefold() for condition in bundles):
@@ -1065,7 +1146,15 @@ class FamilyWorkflow:
                 sources = science.mask_sources(mask, condition_sources)
             signature = evidence_recovery.observation_key(mask, sources)
             job = f"mask-{index:03}"
-            if audit.equivalent_views_reusable:
+            if index in supported:
+                scope, original = supported[index]
+                if mask != original:
+                    raise ValueError("A clarified observation cannot change the original precommitted assignment.")
+                job += "-clarified"
+                clarified[job] = {"original_assignment_sha256": scope.view_sha256s[index],
+                                  "scope": scope.model_dump(mode="json")}
+                mask = mask.model_copy(update={"question": scope.question})
+            elif audit.equivalent_views_reusable:
                 job = first_jobs.setdefault(signature, job)
             assignments.append((job, mask, sources))
         self.runner.ledger.require_capacity(
@@ -1075,6 +1164,7 @@ class FamilyWorkflow:
         results = [
             {"assignment": mask.model_dump(mode="json"), "observation_job": job,
              "observed_edges": sorted(observations[job]),
+             **({"clarification": clarified[job]} if job in clarified else {}),
              **({"observation_kind": "isolated_whole_file_confirmation"}
                 if (self.runner.ledger.requires_delivery_attestation
                     and not isinstance(mask, audit_boundary.ExactExcerpt)
@@ -1110,7 +1200,7 @@ class FamilyWorkflow:
                 for (job, mask, _), (edges, _) in zip(batch, completed, strict=True):
                     if not set(mask.present) <= edges or set(mask.absent) & edges:
                         self.reject("scientific_review", f"Independent observation {job} failed a required control.",
-                                    quarantine=True)
+                                    quarantine=True, disposition=f"mask-observation-{job}", job=job)
                     observations[job] = edges
         return observations
 
@@ -1174,7 +1264,7 @@ class FamilyWorkflow:
 
     def reject(
         self, code: Code, evidence: str, *, repair_tickets: dict[str, str] | None = None,
-        quarantine: bool = False, disposition: str | None = None,
+        quarantine: bool = False, disposition: str | None = None, job: str | None = None,
     ) -> None:
         autonomous = code == "documentary_realism" and repair_authority.enabled(
             self.runner.ledger, self.runner.manifest,
@@ -1187,7 +1277,7 @@ class FamilyWorkflow:
             "evidence": evidence, "role": "batch_coordinator",
             "inputs": self.transition_inputs, "sessions": self.sessions,
         })
-        raise Blocked(self.stage, code, evidence)
+        raise Blocked(self.stage, code, evidence, job=job)
 
 
 def review_commitments(root: Path, manifest: BatchFamilyManifest) -> dict[str, str]:

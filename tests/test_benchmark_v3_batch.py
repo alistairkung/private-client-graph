@@ -1228,6 +1228,48 @@ def test_shared_pool_reconciles_only_a_pre_dispatch_runner_version_mismatch(appr
         pooled.require_running()
 
 
+def test_shared_scale_keeps_each_verified_halt_and_blocks_unreconciled_halts(approved, tmp_path, monkeypatch):
+    from contextlib import closing
+
+    ledger, commission = approved
+    manifest = commission.manifest
+    coordinator.commission_batch(ledger, commission, BOUNDARY)
+    pool = MilestonePool(tmp_path / "shared", PoolAuthority(
+        owner=OWNER, reference="Test multiple recoveries.", prior_archive_sha256="c" * 64,
+        starting_charges=199, cumulative_ceiling=202, additional_target=1,
+        members=[CustodyMember(root=str(ledger.root), task_id=manifest.task_id, starting_charges=0)],
+    ))
+    monkeypatch.setattr(MilestonePool, "shared_scale", property(lambda _: True))
+    batch = manifest.batch_id
+    packet_sha = commissioning.digest(Path(packet.__file__).read_bytes())
+
+    def reconcile(revision: int) -> tuple[int, str]:
+        ledger.event(batch, "G", revision, "task_halt", "design-isolation", "design", None,
+                     {"stage": "design", "code": "isolation", "evidence": f"Boundary at revision {revision}."})
+        with pytest.raises(TaskHalted, match="unresolved shared integrity"):
+            pool.check_running()
+        with closing(ledger.connect()) as database:
+            sequence, raw_halt = database.execute(
+                "SELECT sequence, details FROM events WHERE kind = 'task_halt' AND revision = ?", (revision,),
+            ).fetchone()
+        evidence = f"Verified boundary at revision {revision}.".encode()
+        digest = pool._install_boundary_successor(ledger.root, evidence, {
+            "halt_sequence": sequence, "halt_sha256": commissioning.digest(raw_halt.encode()),
+            "packet_sha256": packet_sha, "evidence_sha256": commissioning.digest(evidence),
+        }, undispatched_revision=revision)
+        pool.check_running()
+        return sequence, digest
+
+    first, second = reconcile(1), reconcile(2)
+    assert {sequence: row[4] for sequence, (_, row) in pool.boundary_records(ledger.root).items()} == dict([first, second])
+    directory, _ = pool.boundary_records(ledger.root)[first[0]]
+    first_record = directory / f"{first[1]}.json"
+    first_record.chmod(0o600)
+    first_record.write_bytes(b"Changed first reconciliation")
+    with pytest.raises(TaskHalted, match="boundary evidence changed"):
+        pool.check_running()
+
+
 def test_shared_pool_counts_verified_dossiers_and_stops_new_reservations(approved, transport, tmp_path):
     original, commission = approved
     coordinator.commission_batch(original, commission, BOUNDARY)
@@ -2758,6 +2800,11 @@ def test_authored_scope_repair_reuses_checked_delivery_after_preauthor_return(
     coordinator._work_family(ledger, commission, slot)
     coordinator._work_family(ledger, commission, slot)
     assert coordinator.family_status(ledger, batch, family)[:2] == (2, "quarantined")
+    with pytest.raises(ValueError, match="independent planning option"):
+        coordinator.release_returned_pre_author_plan(ledger, batch, family, local_repair_option="Consider a local repair.")
+    with pytest.raises(ValueError, match="limits-focused replan"):
+        coordinator.release_returned_pre_author_plan(ledger, batch, family, keep_documentary_limits=True)
+    assert coordinator.family_status(ledger, batch, family)[:2] == (2, "quarantined")
     coordinator.release_returned_pre_author_plan(ledger, batch, family)
     coordinator._work_family(ledger, commission, slot)
     assert coordinator.family_status(ledger, batch, family)[:2] == (3, "quarantined")
@@ -2772,6 +2819,8 @@ def test_authored_scope_repair_reuses_checked_delivery_after_preauthor_return(
         particulars.model_copy(update={"recipient_author": "Another participant"}).require_preserved_deliveries(
             locked_design, locked_design, {"src2"},
         )
+    with pytest.raises(ValueError, match="independent planning option"):
+        coordinator.release_returned_authored_scope_plan(ledger, batch, family, local_repair_option="Consider a form field.")
     with pytest.raises(ValueError, match="specific recipient Source"):
         coordinator.release_returned_authored_scope_plan(ledger, batch, family, incoming_particulars_source="src1")
     coordinator.release_returned_authored_scope_plan(ledger, batch, family, incoming_particulars_source="src2")
@@ -2891,12 +2940,14 @@ def test_authored_scope_repair_reuses_checked_delivery_after_preauthor_return(
     assert {revision for _, revision, job, _ in calls if job.startswith("reading")} == {f"G@{qualified_revision}"}
 
 
-def test_missing_sender_repair_retains_unaffected_author_receipts(autonomous, transport, tmp_path, monkeypatch):
-    from benchmark_v3.batch import author_repair
+@pytest.mark.parametrize(("partial", "defer"), [(False, False), (True, False), (True, True)])
+def test_missing_sender_repair_retains_unaffected_author_receipts(autonomous, transport, tmp_path, monkeypatch, partial, defer):
+    from benchmark_v3.batch import author_repair, clean_redesign
     from benchmark_v3.batch.pool import PooledLedger
 
     original, base = autonomous
-    slot = base.portfolio.slots[0].model_copy(update={"expected_sources": 3})
+    count = 4 if partial else 3
+    slot = base.portfolio.slots[0].model_copy(update={"expected_sources": count})
     portfolio = base.portfolio.model_copy(update={"slots": [slot]})
     manifest = base.manifest.model_copy(update={"portfolio_sha256": authorisation.commitment(portfolio)})
     commission = coordinator.Commission(portfolio, manifest, _approval(portfolio, manifest))
@@ -2909,12 +2960,22 @@ def test_missing_sender_repair_retains_unaffected_author_receipts(autonomous, tr
     ))
     monkeypatch.setattr(PooledLedger, "requires_author_context", property(lambda _: True))
     monkeypatch.setattr(PooledLedger, "requires_delivery_attestation", property(lambda _: True))
+    monkeypatch.setattr(PooledLedger, "requires_workload_merits", property(lambda _: partial))
+    if defer:
+        monkeypatch.setattr(MilestonePool, "shared_scale", property(lambda _: True))
     ledger = pool.join(original.root)
     ledger.release(batch, family, 1, "design", parent_sha256="a" * 64, reference="Original work.")
     calls, behavior, _ = transport
-    design = _design(family, count=3)
+    design = _design(family, count=count)
     design["inventory"][1]["provenance"] = f"The writer sends this record personally.\nDelivered {TODAY} to Writer 3"
     design["inventory"][2]["received"] = ["src2"]
+    if partial:
+        design["inventory"][1]["provenance"] += f"\nDelivered {TODAY} to Writer 4"
+        design["inventory"][3]["received"] = ["src2"]
+        behavior[family, clean_redesign.MERITS_JOB] = lambda _: {
+            "verdict": "accept", "objections": [],
+            "findings": {row["source_id"]: "Verified local." for row in design["inventory"]},
+        }
     behavior[family, "design"] = lambda _: design
     behavior[family, "author-context"] = lambda inputs: {
         "verdict": "accept", "objections": [],
@@ -2922,27 +2983,45 @@ def test_missing_sender_repair_retains_unaffected_author_receipts(autonomous, tr
     }
     behavior[family, "author-src1"] = lambda _: {"title": "Independent record", "text": QUOTE, "deliveries": []}
     behavior[family, "author-src3"] = lambda _: {"title": "Received note", "text": "I retained the incoming note.", "deliveries": []}
+    behavior[family, "author-src4"] = behavior[family, "author-src3"]
 
     def sender(inputs):
         brief = json.loads(inputs["author_brief"])
-        deliveries = brief["outgoing_deliveries"] if "Personally send this record" in brief["brief"] else []
+        grants = brief["outgoing_deliveries"]
+        deliveries = grants if "Personally send this record" in brief["brief"] else (grants[1:] if partial else [])
         return {"title": "Sent note", "text": "The sender retained an ordinary counterpart.", "deliveries": deliveries}
 
     behavior[family, "author-src2"] = behavior[family, "author-src2-format-retry"] = sender
     coordinator._work_family(ledger, commission, slot)
     assert coordinator.family_status(ledger, batch, family)[:2] == (1, "quarantined")
-    with pytest.raises(ValueError, match="exactly retained missing sender attestation"):
+    with pytest.raises(ValueError, match="distinct retained omission"):
         coordinator.release_empty_sender_repair(ledger, batch, family, "src1")
-    coordinator.release_empty_sender_repair(ledger, batch, family, "src2")
+    if defer:
+        coordinator.release_clean_redesign(ledger, batch, family, "Consider an independent replacement.")
+        replacement = _design(family, count=count)
+        replacement.update(neutral_brief="A separate file.", cutoff=(TODAY + timedelta(days=1)).isoformat(),
+                           candidates=[["Ada Reed", "parent_of", "Mia Reed"]],
+                           required={"G000": [["Ada Reed", "parent_of", "Mia Reed"]]})
+        for number, row in enumerate(replacement["inventory"], 1):
+            row["source_id"] = f"new{number}"
+        behavior[family, "design"] = lambda _: replacement
+        coordinator._work_family(ledger, commission, slot, design_only=True)
+        assert coordinator.family_status(ledger, batch, family)[:2] == (2, "author")
+    coordinator.release_empty_sender_repair(ledger, batch, family, "src2", defer_clean_design=defer)
     coordinator._work_family(ledger, commission, slot)
 
-    assert any(row["revision"] == 2 and row["name"] == "author" and row["kind"] == "transition"
+    successor = 3 if defer else 2
+    assert any(row["revision"] == successor and row["name"] == "author" and row["kind"] == "transition"
                for row in ledger.events(batch, family))
     retained = next(row["details"] for row in ledger.events(batch, family) if row["name"] == author_repair.EMPTY_ATTESTATION_REPAIR)
     assert retained["retained_sources"].keys() == {"src1"}
+    assert ("deferred_redesign" in retained) is defer
     actors = [(rev, job) for _, rev, job, _ in calls if job.startswith("author-src")]
-    assert actors == [(f"{family}@1", "author-src1"), (f"{family}@1", "author-src2"), (f"{family}@1", "author-src2-format-retry"),
-                      (f"{family}@2", "author-src2"), (f"{family}@2", "author-src3")]
+    expected = [(f"{family}@1", "author-src1"), (f"{family}@1", "author-src2"), (f"{family}@1", "author-src2-format-retry"),
+                (f"{family}@{successor}", "author-src2"), (f"{family}@{successor}", "author-src3")]
+    if partial:
+        expected.append((f"{family}@{successor}", "author-src4"))
+    assert actors == expected
 
 
 def test_scope_replay_preserves_a_preauthor_return_after_an_authored_return():
@@ -2957,6 +3036,175 @@ def test_scope_replay_preserves_a_preauthor_return_after_an_authored_return():
         autonomous_realism._scope_returns_by_revision([authored], ["a" * 64], [preauthor | {"revision": 2}])
     with pytest.raises(ValueError, match="one unique charged receipt"):
         autonomous_realism._scope_returns_by_revision([authored], ["b" * 64], [preauthor])
+
+
+def test_scale_preauthor_progress_distinguishes_new_scope_from_a_reworded_return():
+    from benchmark_v3.batch import autonomous_realism, clean_redesign
+
+    def findings(*objections):
+        return {"objections": list(objections)}
+
+    previously = [findings("src1: Premature issue reference."), findings("src2: Missing referenced input.")]
+    ids = {"src1", "src2", "src3"}
+    assert autonomous_realism.pre_author_progress(previously, findings("src3 / src2: Wrong originating version."), ids)
+    assert not autonomous_realism.pre_author_progress(previously, findings("src2: The same local input remains missing."), ids)
+    assert not autonomous_realism.pre_author_progress(previously, findings("src9: Unrecorded ID."), ids)
+    assert not autonomous_realism.pre_author_progress(previously, previously[0], ids)
+    reduced = [findings("src1: Premature issue reference.", "src2: Missing referenced input.")]
+    assert autonomous_realism.pre_author_progress(reduced, findings("src2: Missing referenced input."), ids)
+    merits = {"review_job": clean_redesign.MERITS_JOB}
+    assert autonomous_realism.pre_author_progress(previously, findings("Check the authority stated in src3.") | merits, ids)
+    assert not autonomous_realism.pre_author_progress(previously, findings("Check the authority in src3 and src2.") | merits, ids)
+    assert not autonomous_realism.pre_author_progress(previously, findings("Check the authority stated in src30.") | merits, ids)
+    prior_unlinked = [findings("The operative signing rule is unresolved.") | merits, findings("src1: Misaddressed instruction.")]
+    assert autonomous_realism.pre_author_progress(
+        prior_unlinked, findings("src2: Unavailable earlier issue.", "src3: Unavailable date."), ids,
+    )
+    assert not autonomous_realism.pre_author_progress(
+        prior_unlinked, findings("src1: Still misaddressed.", "src3: Unavailable date."), ids,
+    )
+
+
+def test_scope_review_keeps_the_authenticated_original_separate_from_a_returned_draft():
+    from types import SimpleNamespace
+    from benchmark_v3.batch import autonomous_realism, repair_authority
+    from benchmark_v3.replay_manifest import source_commitments
+
+    original = Source(id="source-01", title="Receipt", text="I received the original by hand at the office.")
+    returned = original.model_copy(update={"text": "I checked my correspondence for any referral."})
+    record = {"original_realism_sources": {"G000": [original.model_dump(mode="json")]},
+              "original_realism_source_commitments": {"G000": source_commitments([original])}}
+    parent = SimpleNamespace(prior_scope_return=record, bundles={"G000": [returned]})
+    attempts = []
+    runner = SimpleNamespace(revision=3, family="G", ledger=SimpleNamespace(requires_workload_merits=True,
+                                                                          attempts=lambda _: attempts))
+    baseline = autonomous_realism._scope_realism_baseline(runner, parent)
+    assert baseline == record["original_realism_sources"]
+    assert baseline["G000"][0]["text"] != returned.text
+    record["original_realism_sources"]["G000"][0]["text"] = "I was told the original might have been received."
+    with pytest.raises(ValueError, match="exact initially reviewed Sources"):
+        autonomous_realism._scope_realism_baseline(runner, parent)
+    attempts.append({"revision": 3, "job": repair_authority.VERIFY_JOB, "request": commissioning.json_text({
+        "inputs": {"paired_bundles": commissioning.json_text({"original": {}, "revised": {}})},
+    })})
+    assert autonomous_realism._scope_realism_baseline(runner, parent) is None
+
+
+def test_owned_scope_restoration_supplies_only_the_authenticated_original_to_its_author(monkeypatch):
+    from types import SimpleNamespace
+    from benchmark_v3.batch import autonomous_realism
+    from benchmark_v3.replay_manifest import BatchSourceFreeze, source_commitments
+
+    original = Source(id="src1", title="Retained original", text="I recorded hand delivery of the signed original.")
+    returned = original.model_copy(update={"text": "I looked for a note about delivery."})
+    freeze = BatchSourceFreeze(order={"G000": [original.id]}, sources_sha256={}, source_commitments={},
+                               natural="G000", variants={}, candidates=[], required={"G000": []})
+    design = DesignOutput.model_validate(_design("G"))
+    parent = autonomous_realism.ReturnedFile(design, {"G000": [returned]}, freeze, {}, {}, {}, None, [], prior_scope_return={
+        "original_realism_sources": {"G000": [original.model_dump(mode="json")]},
+        "original_realism_source_commitments": {"G000": source_commitments([original])},
+    })
+    runner = SimpleNamespace(revision=6, family="G", ledger=SimpleNamespace(requires_workload_merits=True,
+                                                                          attempts=lambda _: []))
+    grants = [{"recipient": "Recipient", "sent_on": "2025-01-03"}]
+    response = {original.id: (original, grants)}
+
+    def records(_runner, _case, requested, first, last, *, verify_grants):
+        assert (requested, first, last, verify_grants) == ({original.id: 2}, 2, 3, True)
+        return response
+
+    monkeypatch.setattr(autonomous_realism, "_verified_owned_records", records)
+    history = [{"revision": 2, "details": {"documentary_redesign": {}}}]
+    restored = autonomous_realism._restore_baseline_records(runner, parent, 3, {original.id: 2}, history)
+    assert restored.baseline_owned_grants == {original.id: grants}
+    plan = autonomous_realism.RepairPlan(disposition="repair", objections={}, tickets={"src1": "Retain the original.",
+                                                                                           "src2": "Repair your cover."},
+                                         progress="improved", rationale="Preserve the original comparison.")
+    revision = autonomous_realism.Revision(restored, design, plan, {"src1", "src2"}, {}, "repair-plan")
+    tickets = revision.participant_tickets()
+    assert f"Title: {original.title}\n\n{original.text}" in tickets["src1"]
+    assert tickets["src2"] == plan.tickets["src2"]
+    response[original.id] = (returned, grants)
+    with pytest.raises(ValueError, match="match the exact original comparison"):
+        autonomous_realism._restore_baseline_records(runner, parent, 3, {original.id: 2}, history)
+
+
+def test_attachment_audience_rejects_restricted_versions_at_design_and_dispatch():
+    from benchmark_v3.batch import delivery_audience
+
+    raw = _design("G")
+    raw["inventory"][0]["provenance"] = (
+        "Issued in separate messages. Each recipient received only their own message. My file has both copies."
+    )
+    raw["inventory"][1]["received"] = [raw["inventory"][0]["source_id"]]
+    with pytest.raises(delivery_audience.AudienceError, match="packages separately issued messages"):
+        delivery_audience.verify_design(DesignOutput.model_validate(raw))
+    raw["inventory"][1]["received"] = []
+    delivery_audience.verify_design(DesignOutput.model_validate(raw))
+
+    def packet(text):
+        source = Source(id="src1", title="Sent file", text=text)
+        return {"received_correspondence": commissioning.json_text([source.model_dump(mode="json")])}
+
+    confined = "To: Alice Example\nHere is your copy.\n\n> **Draft to: Bryn Example**\nFor your file alone."
+    with pytest.raises(delivery_audience.AudienceError, match="different recipient headings"):
+        delivery_audience.verify_packet(packet(confined))
+    with pytest.raises(delivery_audience.AudienceError, match="declared separate audiences"):
+        delivery_audience.verify_packet(packet("Two differently addressed bodies. Each recipient only saw their own message."))
+    delivery_audience.verify_packet(packet("To: Alice Example and Bryn Example\nCc: Records\nThe same notice goes to both."))
+    delivery_audience.verify_packet(packet("To: Alice Example\nThe quoted cover also says:\n> To: Alice Example"))
+
+
+def test_audience_recovery_binds_the_submitted_packet_and_quarantines_its_entire_lineage(approved, tmp_path, monkeypatch):
+    from benchmark_v3.batch import author_delivery, delivery_audience
+    from benchmark_v3.batch.contracts import ExceptionRecord
+    from benchmark_v3.batch.pool import PooledLedger
+    from benchmark_v3.batch.sessions import SessionRunner
+
+    original, commission = approved
+    manifest = commission.manifest
+    coordinator.commission_batch(original, commission, BOUNDARY)
+    pool = MilestonePool(tmp_path / "audience-recovery", PoolAuthority(
+        owner=OWNER, reference="Test audience restoration.", prior_archive_sha256="c" * 64,
+        starting_charges=199, cumulative_ceiling=202, additional_target=1,
+        members=[CustodyMember(root=str(original.root), task_id=manifest.task_id, starting_charges=0)],
+    ))
+    monkeypatch.setattr(PooledLedger, "requires_delivery_attestation", property(lambda _: True))
+    monkeypatch.setattr(MilestonePool, "shared_scale", property(lambda _: True))
+    active = pool.join(original.root)
+    batch, family = manifest.batch_id, "G"
+    active.event(batch, family, 2, "reconcile", "pooled-release", "design", "design", {"documentary_redesign": {}})
+    active.event(batch, family, 3, "operator_close", "prior-science-stop", "author", "quarantined", {})
+    active.block(batch, 3, ExceptionRecord(stage="author", family_id=family, code="isolation", job="author-src2",
+                 evidence=delivery_audience.HALT, repair_permitted=False, human_action="Verify the boundary.",
+                 remaining_work="task_halted"), qualifier="audience-assembly")
+    attestation = {"receipt_sha256": "a" * 64}
+    source = Source(id="src1", title="Two messages", text="To: Author One\nFirst.\nDraft to: Author Two\nSecond.")
+    monkeypatch.setattr(SessionRunner, "committed_packet", lambda *_: (
+        b"", attestation, {"inputs": {"received_correspondence": commissioning.json_text([source.model_dump(mode="json")])}},
+    ))
+    proof = {
+        "submitted_turns": 0, "packet_sha256": commissioning.digest(Path(packet.__file__).read_bytes()),
+        "author_delivery_sha256": commissioning.digest(Path(author_delivery.__file__).read_bytes()),
+        "audience_guard_sha256": commissioning.digest(Path(delivery_audience.__file__).read_bytes()),
+        "reproduced_rejection_receipt_sha256": attestation["receipt_sha256"],
+        "filesystem": {key: {"allowed": key == "inside", "denied": key != "inside"}
+                       for key in ("inside", "outside", "repository")},
+        "runtime": {effort: {"effort": effort, "thread_id": effort, "ephemeral": True, "empty_workspace": True,
+                             "approval_policy": "never", "sandbox": {"type": "readOnly", "networkAccess": False},
+                             "permission_profile": {"id": "benchmark_packet", "extends": None}, "instruction_sources": [],
+                             "thread_environments": [], "runtime_workspace_roots": []} for effort in ("medium", "high")},
+    }
+    with pytest.raises(TaskHalted, match="unresolved shared integrity"):
+        pool.check_running()
+    with pytest.raises(ValueError, match="exact affected dispatch"):
+        pool.reconcile_delivery_audience(active, family, proof | {"reproduced_rejection_receipt_sha256": "b" * 64})
+    digest = pool.reconcile_delivery_audience(active, family, proof)
+    pool.check_running()
+    retained = commissioning._read_json((pool.root / "boundary" / f"{digest}.json").read_bytes())
+    assert retained["quarantined_revisions"] == [2, 3]
+    assert coordinator.family_status(active, batch, family)[:2] == (3, "quarantined")
+    assert coordinator.family_status(active, batch, family)[2]["code"] == "scientific_review"
 
 
 def test_exact_recipient_document_repair_preserves_the_original_delivery_graph():
@@ -2987,8 +3235,9 @@ def test_exact_recipient_document_repair_preserves_the_original_delivery_graph()
         edit.require_exact_omission_objections([*exact_objections, "src3 introduces a future receipt."])
 
 
-def test_exact_classification_retry_retains_both_failed_plans_and_uses_the_same_file(
-    autonomous, transport, tmp_path, monkeypatch,
+@pytest.mark.parametrize("local", [False, True])
+def test_repair_retry_retains_both_failed_plans_and_uses_the_same_file(
+    autonomous, transport, tmp_path, monkeypatch, local,
 ):
     from benchmark_v3.batch import autonomous_realism, repair_authority
     from benchmark_v3.batch.pool import PooledLedger
@@ -3004,9 +3253,15 @@ def test_exact_classification_retry_retains_both_failed_plans_and_uses_the_same_
     ))
     monkeypatch.setattr(PooledLedger, "requires_author_context", property(lambda _: True))
     monkeypatch.setattr(PooledLedger, "requires_delivery_attestation", property(lambda _: True))
+    if local:
+        monkeypatch.setattr(PooledLedger, "requires_workload_merits", property(lambda _: True))
     ledger = pool.join(original.root)
     ledger.release(batch, family, 1, "design", parent_sha256="a" * 64, reference="Original work.")
     calls, behavior, _ = transport
+    behavior[family, "clean-design-merits"] = lambda inputs: {
+        "verdict": "accept", "objections": [],
+        "findings": {row["source_id"]: "Reviewed." for row in json.loads(inputs["intended_intervention"])["inventory"]},
+    }
     behavior[family, "author-context"] = lambda inputs: {
         "verdict": "accept", "objections": [],
         "findings": {key: "Reviewed." for key in json.loads(inputs["audit_rules"])["participant_packets"]},
@@ -3016,7 +3271,7 @@ def test_exact_classification_retry_retains_both_failed_plans_and_uses_the_same_
     }
     behavior[family, "author-src2"] = lambda _: {"title": "Note", "text": "Routine note.", "deliveries": []}
     behavior[family, "realism-000"] = lambda inputs: _output("realism", family, "", inputs) | (
-        {"verdict": "repair", "objections": ["Keep the recorded date distinct from receipt."]}
+        {"verdict": "repair", "objections": ["src1: Keep the recorded date distinct from receipt."]}
         if "Clarified date" not in inputs["sources"] else {}
     )
     behavior[family, "repair-verification"] = lambda _: {
@@ -3029,39 +3284,481 @@ def test_exact_classification_retry_retains_both_failed_plans_and_uses_the_same_
 
     def ambiguous(inputs):
         output = plan(inputs)
-        output["objections"]["earlier:G000:3"] = output["objections"]["G000:1"]
+        if local:
+            output["tickets"]["non_source_note"] = "Keep this in the review."
+        else:
+            output["objections"]["earlier:G000:3"] = output["objections"]["G000:1"]
         return output
 
     job = repair_authority.PLAN_JOB
     retry = job + repair_authority.FORMAT_RETRY
-    exact = repair_authority.EXACT_PLAN_JOB
+    exact = repair_authority.LOCAL_PLAN_JOB if local else repair_authority.EXACT_PLAN_JOB
+    release = coordinator.release_local_documentary_plan if local else coordinator.release_exact_plan_classification
+    result_type = autonomous_realism.LocalRepairPlan if local else autonomous_realism.RepairPlan
+    failure = autonomous_realism.PLAN_SCOPE_FAILURE if local else autonomous_realism.PLAN_REFERENCE_FAILURE
     behavior[family, job] = behavior[family, retry] = ambiguous
-    behavior[family, exact] = plan
+    def repaired(inputs):
+        result = plan(inputs)
+        if local:
+            result.pop("revised_design", None)
+            design = json.loads(inputs["intended_intervention"])["original_design"]
+            selected = next(row for row in design["inventory"] if row["source_id"] == "src1")
+            result["revised_records"] = {"src1": selected | {
+                "participant_brief": selected["participant_brief"] + " Identify the issue date.",
+            }}
+        return result
+
+    behavior[family, exact] = repaired
     coordinator._work_family(ledger, commission, slot)
     coordinator._work_family(ledger, commission, slot)
     rev, state, issue = coordinator.family_status(ledger, batch, family)
     assert (rev, state, issue["evidence"]) == (
-        2, "quarantined", f"{retry} failed its output contract: {autonomous_realism.PLAN_REFERENCE_FAILURE}",
+        2, "quarantined", f"{retry} failed its output contract: {failure}",
     )
     runner = commission.session_runner(ledger, family, rev)
     original_packets = [runner.committed_packet("design", key, "audit") for key in (job, retry)]
     assert all(autonomous_realism.CLASSIFICATION_LAYOUT in request["prompt"] for _, _, request in original_packets)
-    coordinator.release_exact_plan_classification(ledger, batch, family)
+    release(ledger, batch, family)
     with pytest.raises(ValueError, match="Only the authorised audit or repair job"):
         runner.run("design", exact, "audit", {"audit_rules": "Different repair packet."},
-                   "Review the packet.", autonomous_realism.RepairPlan)
+                   "Review the packet.", result_type)
     coordinator._work_family(ledger, commission, slot)
     assert coordinator.family_status(ledger, batch, family) == (2, "admission_ready", None)
     assert original_packets == [runner.committed_packet("design", key, "audit") for key in (job, retry)]
     assert [key for _, _, key, _ in calls if key.startswith(job)] == [job, retry, exact]
     request = runner.committed_packet("design", exact, "audit")[2]
     assert request["inputs"] == original_packets[0][2]["inputs"] == original_packets[1][2]["inputs"]
-    assert "Copy the current keys" in request["prompt"]
+    assert ("map of changed author records only" if local else "Copy the current keys") in request["prompt"]
     scope_request = runner.committed_packet("author", "author-context", "audit")[2]
     assert "A claimed personal worksheet that reproduces the case-wide file needs separately documented local" in scope_request["prompt"]
     assert [key for _, revision, key, _ in calls if revision == "G@2" and key.startswith("author-src")] == ["author-src1"]
-    with pytest.raises(ValueError, match="One fresh classification"):
-        coordinator.release_exact_plan_classification(ledger, batch, family)
+    if local:
+        realism_release = autonomous_realism.release_event(runner)
+        assert realism_release is not None
+        repair = autonomous_realism._committed_prior_plan(
+            runner, slot, realism_release, ledger.events(batch, family),
+        )
+        assert repair.tickets == {"src1": "Clarified date."}
+        parent = autonomous_realism._read_return(runner, slot, realism_release)
+        local_plan, _, _ = runner.committed_result("design", exact, "audit", autonomous_realism.LocalRepairPlan)
+        assert repair.revised_design is not None
+        assert repair.revised_design.inventory[1] == parent.design.inventory[1]
+        with pytest.raises(ValueError, match="named by the returning reviewer"):
+            autonomous_realism._local_derivative(parent, local_plan.model_copy(update={"tickets": {"src2": "Other."}}))
+    with pytest.raises(ValueError, match="A local replan" if local else "One fresh classification"):
+        release(ledger, batch, family)
+
+
+def test_case_wide_intake_ticket_cannot_replace_an_actual_author_attachment(approved):
+    from dataclasses import replace
+    from types import SimpleNamespace
+
+    from benchmark_v3.batch import autonomous_realism, author_delivery, delivery_particulars, science
+    from private_client_graph.models.source import Source
+
+    _, commission = approved
+    slot = commission.portfolio.slots[0]
+    original = DesignOutput.model_validate(_design("G"))
+    sender, recipient = original.inventory
+    recipient_name = author_delivery._participant(recipient.author)
+    sender = sender.model_copy(update={"provenance": f"Delivered {sender.created_on} to {recipient_name}"})
+    design = original.model_copy(update={"inventory": [sender, recipient]})
+    sources = [Source(id=row.source_id, title="Retained", text="Original document.") for row in design.inventory]
+    bundles, freeze = science.freeze_bundles(slot, design, sources)
+    objections = [f"Revised {recipient.source_id} lists only one arrival. The ledger establishes additional arrivals "
+                  f"to {recipient_name.split()[0]}: {sender.source_id}. The scope is unchanged."]
+    parent = autonomous_realism.ReturnedFile(design, bundles, freeze, {}, {}, {}, None, [],
+        prior_scope_return={"independent_finding": {"objections": objections}})
+    runner = SimpleNamespace(ledger=SimpleNamespace(requires_workload_merits=True))
+    plan = autonomous_realism.RepairPlan(disposition="repair", objections={}, revised_design=None,
+        tickets={recipient.source_id: "Use your intake record and include the other sender's date."},
+        progress="improved", rationale="The projection omitted an exact earlier arrival.")
+    with pytest.raises(ValueError, match="authenticated participant attachments"):
+        autonomous_realism._verify_intake_basis(runner, parent, plan)
+    assert autonomous_realism._intake_gaps(parent, design) == {recipient.source_id: [sender.source_id]}
+    permitted = design.model_copy(update={"inventory": [sender, recipient.model_copy(update={"received": [sender.source_id]})]})
+    autonomous_realism._verify_intake_basis(runner, parent, plan.model_copy(update={"revised_design": permitted}))
+    projections = author_delivery.projection(permitted, {})
+    assert projections[recipient.source_id]["received_ids"] == [sender.source_id]
+    assert autonomous_realism._intake_gaps(replace(parent, prior_scope_return=None), design) == {}
+
+    particulars = delivery_particulars.IncomingParticulars(source_id=recipient.source_id,
+        recipient_author=recipient.author, recipient_on=recipient.created_on, records=[
+            delivery_particulars.ReceiptParticular(source_id=sender.source_id,
+                sender=author_delivery._participant(sender.author), sent_on=sender.created_on,
+                author_receipt_sha256="a" * 64),
+        ])
+    local_records = {sender.source_id: sources[0].model_copy(update={"text": "Sender's previously issued record."}),
+                     recipient.source_id: sources[1].model_copy(update={"text": "Recipient's earlier intake note."})}
+    restored = replace(parent, incoming_particulars=particulars, owned_records=local_records)
+    revision = autonomous_realism.Revision(restored, permitted, plan, set(local_records), {}, "fixture")
+    tickets = revision.participant_tickets()
+    assert "Copy your own original title and complete text exactly" in tickets[sender.source_id]
+    assert "Recipient's earlier intake note" not in tickets[sender.source_id]
+    assert "Recipient's earlier intake note" in tickets[recipient.source_id]
+    assert "Sender's previously issued record" not in tickets[recipient.source_id]
+
+
+def test_audit_origin_documentary_repair_preserves_design_and_limits_local_changes(approved):
+    from benchmark_v3.batch import autonomous_realism, science
+    from private_client_graph.models.source import Source
+
+    _, commission = approved
+    slot = commission.portfolio.slots[0]
+    design = DesignOutput.model_validate(_design("G"))
+    sources = [Source(id=row.source_id, title="Record", text="Ordinary retained body.") for row in design.inventory]
+    bundles, freeze = science.freeze_bundles(slot, design, sources)
+    parent = autonomous_realism.ReturnedFile(design, bundles, freeze, {}, {}, {}, None, [],
+        audit_repair_sources=frozenset({"src1"}))
+    plan = autonomous_realism.RepairPlan(disposition="repair", objections={},
+        tickets={"src1": "Identify the matter in your record body."}, progress="initial", rationale="Local repair.")
+    revised, affected = autonomous_realism._verify_plan(slot, parent, plan)
+    assert revised == design and affected == {"src1"}
+    unrelated = plan.model_copy(update={"tickets": {"src2": "Change another record."}})
+    with pytest.raises(ValueError, match="outside its exact local briefs"):
+        autonomous_realism._verify_plan(slot, parent, unrelated)
+    modified_design = design.model_copy(update={"private_history": "An undeclared change."})
+    with pytest.raises(ValueError, match="outside its exact local briefs"):
+        autonomous_realism._verify_plan(slot, parent, plan.model_copy(update={"revised_design": modified_design}))
+
+
+def test_scale_design_recovers_symmetric_order_without_removing_any_claim(approved):
+    from benchmark_v3.batch import design_recovery
+
+    _, commission = approved
+    slot = commission.portfolio.slots[0]
+    reversed_edge = ("Zoe Vale", "spouse_of", "Ada Vale")
+    canonical_edge = ("Ada Vale", "spouse_of", "Zoe Vale")
+    directed_edge = ("Zoe Vale", "parent_of", "Ada Vale")
+    design = DesignOutput.model_validate(_design("G") | {
+        "candidates": [reversed_edge, directed_edge], "required": {"G000": [reversed_edge]},
+    })
+    with pytest.raises(ValueError, match="canonical critical candidates"):
+        science.verify_design(slot, design)
+    derived = design_recovery.fresh_design_representation(design, workload=True)
+    science.verify_design(slot, derived)
+    assert derived.candidates == [canonical_edge, directed_edge]
+    assert derived.required == {"G000": [canonical_edge]}
+    assert derived.inventory == design.inventory and design.candidates == [reversed_edge, directed_edge]
+    duplicate = design.model_copy(update={"candidates": [reversed_edge, canonical_edge]})
+    with pytest.raises(ValueError, match="distinct canonical critical candidates"):
+        science.verify_design(slot, design_recovery.fresh_design_representation(duplicate, workload=True))
+
+
+@pytest.mark.parametrize("narrowed", [False, True])
+def test_scale_repair_reuses_only_the_affected_participants_own_draft(approved, monkeypatch, narrowed):
+    from benchmark_v3.batch import author_delivery, autonomous_realism
+    from benchmark_v3.batch.sessions import SessionRunner
+
+    ledger, commission = approved
+    slot = commission.portfolio.slots[0]
+    design = DesignOutput.model_validate(_design("G"))
+    first, second = design.inventory
+    sources = [Source(id=first.source_id, title="Original", text="Writer one's original owned text."),
+               Source(id=second.source_id, title="Separate", text="Another participant's original text.")]
+    bundles, freeze = science.freeze_bundles(slot, design, sources)
+    parent = autonomous_realism.ReturnedFile(
+        design, bundles, freeze, {}, {}, {}, None, [],
+        prior_scope_return={"revision": 1} if narrowed else None,
+        narrowed_scope_source=first.source_id if narrowed else None,
+    )
+    plan = autonomous_realism.RepairPlan(disposition="repair", progress="initial", rationale="Local wording.",
+        tickets={first.source_id: "Fix the displayed locator.", second.source_id: "Fix the knowledge boundary."},
+        objections={"1": {"cause": "documentary", "sources": [first.source_id], "diagnosis": "Local label."},
+                    "2": {"cause": "participant_knowledge", "sources": [second.source_id], "diagnosis": "Scope."}})
+    if narrowed:
+        plan = plan.model_copy(update={"tickets": {first.source_id: "Restore your firsthand attestation."},
+                                     "objections": {"1": autonomous_realism.Objection(
+                                         cause="provenance", sources=[first.source_id], diagnosis="Restore attribution.",
+                                     )}})
+    revision = autonomous_realism.Revision(parent, design, plan, set(plan.tickets), {"parent_revision": 1}, "repair-plan")
+    runner = commission.session_runner(ledger, "G", 2)
+    monkeypatch.setattr(type(ledger), "requires_workload_merits", property(lambda _: True))
+    monkeypatch.setattr(type(ledger), "requires_delivery_attestation", property(lambda _: True))
+    monkeypatch.setattr(ledger, "attempts", lambda _: [
+        {"revision": 1, "job": f"author-{first.source_id}"}, {"revision": 2, "job": f"author-{first.source_id}"},
+    ])
+    approved_brief = author_delivery.projection(design, {})[first.source_id]["author_brief"]
+    document = author_delivery.AttestedSource(title=sources[0].title, text=sources[0].text, deliveries=[])
+
+    def authenticate(origin, stage, job, role, contract):
+        assert (origin.revision, job, role) == (1, f"author-{first.source_id}", "author")
+        return document, {"receipt_sha256": "a" * 64}, {"inputs": {"author_brief": approved_brief}}
+
+    monkeypatch.setattr(SessionRunner, "committed_result", authenticate)
+    monkeypatch.setattr(author_delivery, "require_projection", lambda *_: None)
+    tickets = autonomous_realism.retained_draft_tickets(runner, revision, plan.tickets)
+    assert sources[0].text in tickets[first.source_id] and sources[1].text not in tickets[first.source_id]
+    assert tickets.get(second.source_id) == plan.tickets.get(second.source_id)
+    assert autonomous_realism.retained_draft_tickets(runner, revision, plan.tickets) == tickets
+    document = document.model_copy(update={"text": "Different retained material."})
+    with pytest.raises(packet.PacketIsolationError, match="own retained author receipt"):
+        autonomous_realism.retained_draft_tickets(runner, revision, plan.tickets)
+
+
+def test_nested_scale_ticket_cannot_supply_undocumented_names_and_periods(approved, monkeypatch):
+    from benchmark_v3.batch import author_context, autonomous_realism, ticket_authority
+    from benchmark_v3.batch.sessions import SessionRunner
+    from benchmark_v3.batch.workflow import FamilyWorkflow
+
+    ledger, commission = approved
+    slot = commission.portfolio.slots[0]
+    data = _design("G")
+    data["inventory"][0].update(author="Morgan Wright, file clerk", participant_brief="Use the inspection reference LP-01.",
+                                created_on="2026-09-10")
+    data["inventory"][1].update(author="Dara Moore, estate reviewer", participant_brief="Retain ordinary correspondence.")
+    design = DesignOutput.model_validate(data)
+    sources = [Source(id="src1", title="Inspection note", text="The inspection reference is LP-01."),
+               Source(id="src2", title="Undelivered", text="Dara noted copies in October and November.")]
+    bundles, freeze = science.freeze_bundles(slot, design, sources)
+    parent = autonomous_realism.ReturnedFile(design, bundles, freeze, {}, {}, {}, None, [])
+    unsafe = "Use LP-01. Say that Dara received the copies in October and November."
+    plan = autonomous_realism.RepairPlan(disposition="repair", progress="initial", rationale="Layout.",
+        tickets={"src1": unsafe}, objections={})
+    revision = autonomous_realism.Revision(parent, design, plan, {"src1"}, {"parent_revision": 1}, "repair-plan")
+    runner = commission.session_runner(ledger, "G", 2)
+    workflow = FamilyWorkflow(runner, slot, commission.portfolio.admission_criteria)
+    workflow.documentary_revision = revision
+    workflow.repair_tickets = plan.tickets
+    workflow.stage = "author"
+    monkeypatch.setattr(type(ledger), "requires_workload_merits", property(lambda _: True))
+    monkeypatch.setattr(type(ledger), "requires_delivery_attestation", property(lambda _: True))
+    monkeypatch.setattr(type(ledger), "requires_author_context", property(lambda _: True))
+    accepted = author_context.AuthorContextReview(verdict="accept", findings={"src1": "Clear", "src2": "Clear"}, objections=[])
+    captured = {}
+
+    def accept(_job, _role, inputs, *_args):
+        captured.update(inputs)
+        return accepted
+
+    def reject(code, evidence, **_kwargs):
+        raise Blocked("author", code, evidence)
+
+    monkeypatch.setattr(workflow, "job", accept)
+    monkeypatch.setattr(workflow, "reject", reject)
+    monkeypatch.setattr(workflow, "_author_record", lambda *_: pytest.fail("A participant must not be dispatched"))
+    with pytest.raises(Blocked):
+        workflow.author(design)
+    rules = json.loads(captured["audit_rules"])
+    assert rules["unavailable_ticket_literals"] == {"src1": ["Dara", "November", "October"]}
+    monkeypatch.setattr(SessionRunner, "committed_result", lambda *_: (accepted, {}, {"inputs": captured}))
+    with pytest.raises(packet.PacketIsolationError, match="did not clear"):
+        ticket_authority.require_cleared(runner)
+    assert ticket_authority.unsupported_literals(design, unsafe, sources[1].text) == []
+
+
+@pytest.mark.parametrize("restore_issued", [False, True])
+def test_audit_sender_retry_only_clarifies_the_committed_delivery(approved, monkeypatch, restore_issued):
+    from benchmark_v3.batch import autonomous_realism
+    from benchmark_v3.batch.sessions import SessionRunner
+
+    ledger, commission = approved
+    slot = commission.portfolio.slots[0]
+    design = DesignOutput.model_validate(_design("G"))
+    sources = [Source(id=row.source_id, title="Record", text="Ordinary retained body.") for row in design.inventory]
+    bundles, freeze = science.freeze_bundles(slot, design, sources)
+    parent = autonomous_realism.ReturnedFile(design, bundles, freeze, {}, {}, {}, None, [],
+        audit_repair_sources=frozenset({"src1"}), owned_records={"src1": sources[0]} if restore_issued else None)
+    original = "Clarify the matter in your own record. Do not make a new delivery."
+    plan = autonomous_realism.RepairPlan(disposition="repair", objections={},
+        tickets={"src1": original}, progress="initial", rationale="Local repair.")
+    proof = {"source_id": "src1", "grants": [{"recipient": "Documented Recipient", "sent_on": "2028-06-02"}]}
+    if restore_issued:
+        proof["issued_source_sha256"] = authorisation.commitment(sources[0])
+        proof["issued_revision"] = 1
+    receipt = {"receipt_sha256": "a" * 64}
+    runner = commission.session_runner(ledger, "G", 3)
+    artifacts.write_json(runner.directory.with_name("2") / "design.json", design.model_dump(mode="json"))
+    def retained(_, source, *, issued, issued_revision=None):
+        assert source == "src1" and issued == (sources[0] if restore_issued else None)
+        assert issued_revision == (1 if restore_issued else None)
+        return proof
+
+    monkeypatch.setattr(autonomous_realism, "document_audit_sender_return", retained)
+    monkeypatch.setattr(ledger, "events", lambda *_: [
+        {"revision": 2, "kind": "repair_plan_selection", "details": receipt | {"job": "repair-plan"}},
+    ])
+    monkeypatch.setattr(SessionRunner, "committed_result", lambda *_: (plan, receipt, {}))
+    monkeypatch.setattr(SessionRunner, "committed_packet", lambda *_: ("", receipt, {"inputs": {"revision_ticket": original}}))
+
+    revised, original_receipt, selected_design, affected, _ = autonomous_realism._retained_audit_sender_plan(runner, slot, parent, proof)
+
+    assert original_receipt == receipt and selected_design == design and affected == {"src1"}
+    local = "Retain the exact issued version of your own earlier record." if restore_issued else original
+    assert revised.tickets == {"src1": local + " Record the original documented delivery to Documented Recipient on "
+        "2028-06-02 in the deliveries field. This is an attestation of the original sending act. Do not make a new delivery."}
+    with pytest.raises(ValueError, match="attestations changed"):
+        autonomous_realism._retained_audit_sender_plan(runner, slot, parent, proof | {"grants": []})
+
+
+def test_prior_issued_recovery_requires_exact_retained_receipts_and_body(approved, monkeypatch):
+    from benchmark_v3.batch import autonomous_realism
+
+    ledger, commission = approved
+    slot = commission.portfolio.slots[0]
+    design = DesignOutput.model_validate(_design("G"))
+    sources = [Source(id=row.source_id, title="Issued record", text="Ordinary issued body.")
+               for row in design.inventory]
+    bundles, freeze = science.freeze_bundles(slot, design, sources)
+    parent = autonomous_realism.ReturnedFile(design, bundles, freeze, {}, {}, {}, None, [])
+    runner = commission.session_runner(ledger, "G", 4)
+    proof = {"source_id": "src1", "issued_source_sha256": authorisation.commitment(sources[0])}
+    recorded = {"recovery_revision": 3, "sender_return": proof}
+    delivery = autonomous_realism.author_delivery
+    restored = delivery.AttestedSource(title=sources[0].title, text=sources[0].text, deliveries=[])
+    calls = []
+
+    def prior_release(recovered):
+        assert recovered.revision == 3
+        return {"audit_sender_return": proof}
+
+    def failed_receipts(failed, source_id, *, issued):
+        assert (failed.revision, source_id, issued) == (2, "src1", sources[0])
+        return proof
+
+    def result(recovered, stage, job, role, contract):
+        assert (recovered.revision, stage, job, role, contract) == (3, "author", "author-src1", "author", delivery.AttestedSource)
+        return restored, {}, {"inputs": {"author_brief": "retained brief"}}
+
+    monkeypatch.setattr(autonomous_realism, "release_event", prior_release)
+    monkeypatch.setattr(autonomous_realism, "document_audit_sender_return", failed_receipts)
+    monkeypatch.setattr(type(runner), "committed_result", result)
+    monkeypatch.setattr(delivery, "require_projection", lambda *args: calls.append("projection"))
+    monkeypatch.setattr(delivery, "verify_attestation", lambda *args: calls.append("attestation"))
+
+    assert autonomous_realism.verify_previous_issued_recovery(runner, parent, recorded) == 2
+    assert calls == ["projection", "attestation"]
+    with pytest.raises(ValueError, match="immutable release"):
+        autonomous_realism.verify_previous_issued_recovery(
+            runner, parent, recorded | {"sender_return": proof | {"issued_source_sha256": "0" * 64}},
+        )
+    restored = restored.model_copy(update={"text": "A newly composed draft."})
+    with pytest.raises(ValueError, match="exact independently authored issued record"):
+        autonomous_realism.verify_previous_issued_recovery(runner, parent, recorded)
+
+
+def test_authored_scope_replan_requires_a_strictly_narrower_local_change(approved):
+    from dataclasses import replace
+
+    from benchmark_v3.batch import autonomous_realism
+
+    _, commission = approved
+    slot = commission.portfolio.slots[0]
+    design = DesignOutput.model_validate(_design("G"))
+    sources = [Source(id=row.source_id, title="Record", text="Retained body.") for row in design.inventory]
+    bundles, freeze = science.freeze_bundles(slot, design, sources)
+    parent = autonomous_realism.ReturnedFile(
+        design, bundles, freeze, {}, {}, {}, None, [],
+        prior_scope_return={
+            "independent_finding": {"objections": ["The record src2 has one remaining concern."]},
+            "earlier_authored_scope": {"objections": ["src1 changed scope.", "src2 understated its purpose."]},
+        },
+    )
+    autonomous_realism._require_narrowed_scope(parent, "src2")
+    with pytest.raises(ValueError, match="narrow to a single Source"):
+        autonomous_realism._require_narrowed_scope(parent, "src1")
+    same_scope = replace(parent, prior_scope_return={
+        "independent_finding": {"objections": ["src2 remains incomplete."]},
+        "earlier_authored_scope": {"objections": ["src2 understated its purpose."]},
+    })
+    with pytest.raises(ValueError, match="narrow to a single Source"):
+        autonomous_realism._require_narrowed_scope(same_scope, "src2")
+    distinct = replace(parent, prior_scope_return=(parent.prior_scope_return or {}) | {
+        "earlier_authored_scope": {"objections": ["src1 changed scope."]},
+    })
+    autonomous_realism._require_distinct_scope(distinct, frozenset({"src2"}))
+    with pytest.raises(ValueError, match="distinct Sources"):
+        autonomous_realism._require_distinct_scope(parent, frozenset({"src2"}))
+    dependent = design.model_copy(update={"inventory": [
+        design.inventory[1], design.inventory[0].model_copy(update={"received": ["src2"]}),
+    ]})
+    with pytest.raises(ValueError, match="full dependency closure"):
+        autonomous_realism._require_distinct_scope(replace(distinct, design=dependent), frozenset({"src2"}))
+
+    narrowed = replace(parent, narrowed_scope_source="src2")
+    plan = autonomous_realism.RepairPlan(
+        disposition="repair", progress="improved", rationale="Restore a firsthand observation.",
+        objections={}, tickets={"src2": "Record your original first-person observation."},
+    )
+    assert autonomous_realism._verify_plan(slot, narrowed, plan) == (design, {"src2"})
+    with pytest.raises(ValueError, match="exactly one local ticket"):
+        autonomous_realism._verify_plan(slot, narrowed, plan.model_copy(
+            update={"tickets": plan.tickets | {"src1": "Rewrite this record too."}},
+        ))
+
+
+def test_partial_author_repair_retains_only_ticketed_brief_changes():
+    from benchmark_v3.batch import autonomous_realism
+
+    design = DesignOutput.model_validate(_design("G"))
+    first, second = design.inventory
+    locale = first.model_copy(update={"participant_brief": "Ask for the two reports separately.",
+                                     "provenance": "Changed issue narrative."})
+    unrelated = second.model_copy(update={"participant_brief": "Unrelated wording.",
+                                         "provenance": "Unrelated transport change."})
+    drifted = design.model_copy(update={"inventory": [locale, unrelated], "private_history": "Revised history."})
+    earlier = autonomous_realism.RepairPlan(
+        disposition="repair", progress="improved", rationale="Local timing clarification.",
+        revised_design=drifted, tickets={first.source_id: "Ask for the two reports separately."}, objections={},
+    )
+    derived = autonomous_realism._without_unapproved_design_edits(design, earlier)
+    assert derived.tickets == earlier.tickets
+    assert derived.revised_design == design.model_copy(update={"inventory": [
+        first.model_copy(update={"participant_brief": locale.participant_brief}), second,
+    ]})
+    with pytest.raises(ValueError, match="must remove an unrelated design change"):
+        autonomous_realism._without_unapproved_design_edits(design, derived)
+
+
+@pytest.mark.parametrize("wording", [
+    "Remove the Different revision ticket from {actor}'s cover packet.",
+    "Remove the Different-directed ticket from {actor}’s packet.",
+])
+def test_misaddressed_ticket_omission_requires_exact_reviewed_author(approved, monkeypatch, wording):
+    from benchmark_v3.batch import author_context, autonomous_realism
+
+    ledger, commission = approved
+    runner = commission.session_runner(ledger, "G", 2)
+    design = DesignOutput.model_validate(_design("G"))
+    actor = design.inventory[0].author.split(",", 1)[0]
+    artifacts.write_json(runner.directory / "design.json", design.model_dump(mode="json"))
+    prior = autonomous_realism.RepairPlan(
+        disposition="repair", progress="initial", rationale="Ordinary repair.", objections={},
+        tickets={"src1": "Different: Retain your native file.", "src2": "Keep your other Source."},
+    )
+    report = author_context.AuthorContextReview(
+        verdict="return", findings={}, objections=["src1 — " + wording.format(actor=actor)],
+    )
+    receipt = {"receipt_sha256": "a" * 64}
+    packet = {"participant_packets": {"src1": {"revision_ticket": prior.tickets["src1"]}}}
+    monkeypatch.setattr(autonomous_realism, "pre_author_scope_return", lambda *args, **kwargs: (
+        {"scope_receipt_sha256": receipt["receipt_sha256"]}, prior,
+    ))
+    monkeypatch.setattr(type(runner), "committed_result", lambda *_: (
+        report, receipt, {"inputs": {"audit_rules": json.dumps(packet)}},
+    ))
+    slot = commission.portfolio.slots[0]
+    commitment, derived, _ = autonomous_realism.remove_misaddressed_ticket(runner, slot)
+    assert commitment["source_id"] == "src1"
+    assert derived.tickets == {"src2": prior.tickets["src2"]}
+    packet["participant_packets"]["src1"]["revision_ticket"] = "Different: A different instruction."
+    with pytest.raises(ValueError, match="exact different author"):
+        autonomous_realism.remove_misaddressed_ticket(runner, slot)
+
+
+def test_quoted_ticket_omission_keeps_every_other_instruction():
+    from benchmark_v3.batch import autonomous_realism
+
+    ticket = "Preserve the actual register. Do not mention the restricted memo. Retain the issue date."
+    expected = "Preserve the actual register. Retain the issue date."
+    assert autonomous_realism._omit_quoted_ticket_sentence(ticket, "Do not mention the restricted memo") == expected
+    assert autonomous_realism._omit_quoted_ticket_sentence(ticket, "Do not mention the restricted memo.") == expected
+    for partial in ("mention the restricted memo", "Preserve the actual register", "Retain the issue date"):
+        with pytest.raises(ValueError, match="one exact interior ticket sentence"):
+            autonomous_realism._omit_quoted_ticket_sentence(ticket, partial)
+    repeated = ticket.replace(" Retain", " Do not mention the restricted memo. Retain")
+    with pytest.raises(ValueError, match="one exact interior ticket sentence"):
+        autonomous_realism._omit_quoted_ticket_sentence(repeated, "Do not mention the restricted memo")
 
 
 def test_scoped_review_context_preserves_reserved_prompt_on_resume(approved, monkeypatch):
@@ -3264,6 +3961,8 @@ def test_shared_isolation_restart_carries_closed_charges_into_fresh_custody(appr
     assert active.requires_author_context
     assert active.requires_delivery_attestation == attachment_stop
     assert active.attempts("G") == after.attempts("G")
+    assert active.historical_pooled_revision(new_manifest.batch_id, "G", 1)
+    assert not active.pooled_revision(new_manifest.batch_id, "G", 1)
     active.release(new_manifest.batch_id, "G", 1, "design", parent_sha256=closed, reference="Exact budget extension.")
     with active.reservation_transaction() as db:
         assert expanded.remaining(db) == 2
@@ -3347,6 +4046,126 @@ def test_giant_phase_preserves_unused_budget_and_gates_the_exact_next_workload(a
     ), BOUNDARY)
     with pytest.raises(ValueError, match="Only the exact registered giant"):
         entered.enrol(replacement, replacement_manifest, reference="Outside the dedicated phase.")
+
+
+@pytest.mark.parametrize("shared", [False, True])
+def test_rehearsal_preserves_ceiling_and_requires_its_own_exact_dossier(approved, tmp_path, monkeypatch, shared):
+    import sqlite3
+    from types import SimpleNamespace
+
+    from benchmark_v3.batch.pool import GiantPhaseRelease, RehearsalRelease
+
+    ledger, commission = approved
+    coordinator.commission_batch(ledger, commission, BOUNDARY)
+    ancestor = MilestonePool(tmp_path / "closed-non-giant", PoolAuthority(
+        owner=OWNER, reference="Frozen cohort.", prior_archive_sha256="a" * 64,
+        starting_charges=300, cumulative_ceiling=1000, additional_target=1, excluded_families=("V",),
+        members=[CustodyMember(root=str(ledger.root), task_id=commission.manifest.task_id, starting_charges=0)],
+    ))
+    dossier = {"family": "G", "revision": 1, "dossier_sha256": "1" * 64, "custody": str(ledger.root)}
+    with closing(sqlite3.connect(ancestor.path)) as database, database:
+        database.execute("INSERT INTO qualified VALUES ('G', ?, ?, 1)", (dossier["dossier_sha256"], dossier["custody"]))
+    closed = {"cumulative_charges": 300, "remaining": 700, "unresolved_reservations": [], "shared_halts": []}
+    original_account = artifacts.write_json(ancestor.root / "final-accounting.json", closed | {
+        "number_qualified": 19, "added_technical_dossiers": [dossier],
+        "qualified_coverage": [{"family_id": name} for name in "ABCDEFGHIJKLMNOPQRS"],
+    })
+    original_authority = artifacts.write_json(ancestor.root / "giant-phase-authorisation.json", {
+        "predecessor_pool_sha256": ancestor.digest, "additional_sessions": 2000, "combined_cumulative_ceiling": 3000,
+    })
+    hypothesis = {"hypothesis_sha256": "d" * 64}
+    artifacts.write_json(commissioning._ROOT / "planning/development-20/portfolio.json", {"slots": [
+        {"family_id": "V", "tier": "giant", "expected_sources": 150, "hypothesis": hypothesis},
+        {"family_id": "U", "tier": "administrative", "expected_sources": 65, "hypothesis": hypothesis},
+    ]})
+    monkeypatch.setattr(type(ancestor), "isolation_guard",
+                        property(lambda _: SimpleNamespace(require_delivery_attestation=True)))
+    monkeypatch.setattr(ancestor, "_verified_workload", lambda _minimum, _maximum: True)
+    authority = PoolAuthority(
+        owner=OWNER, reference="One separate rehearsal.", prior_archive_sha256="b" * 64,
+        starting_charges=300, cumulative_ceiling=1000, additional_target=1, excluded_families=("V",),
+        members=[], predecessor_sha256=ancestor.digest,
+        rehearsal_release=RehearsalRelease(previous_database_sha256=commissioning.digest(ancestor.path.read_bytes()),
+                                           previous_accounting_sha256=original_account),
+    )
+    with pytest.raises(ValueError, match="cumulative ceiling"):
+        MilestonePool(tmp_path / "raised", authority.model_copy(update={"cumulative_ceiling": 1001}), predecessor=ancestor)
+    with pytest.raises(ValueError, match="exact closed non-giant budget"):
+        MilestonePool(tmp_path / "charges", authority.model_copy(update={"starting_charges": 299}), predecessor=ancestor)
+    rehearsal = MilestonePool(tmp_path / "rehearsal", authority, predecessor=ancestor)
+    with pytest.raises(TaskHalted, match="superseded"):
+        ancestor.check_running()
+    assert not rehearsal._verified_local_workload(65, 65)
+    assert rehearsal._verified_intermediate()
+    with pytest.raises(ValueError, match="historical author custody"):
+        rehearsal.enrol(ledger, commission.manifest, reference="Historical custody.")
+    replacement = coordinator.open_ledger(tmp_path / "unrelated-rehearsal")
+    coordinator.commission_batch(replacement, commission, BOUNDARY)
+    with pytest.raises(ValueError, match="Only the exact registered 65-Source rehearsal"):
+        rehearsal.enrol(replacement, commission.manifest, reference="Other family.")
+    rehearsal_account = artifacts.write_json(rehearsal.root / "final-accounting.json", closed | {"rehearsal_dossier": None})
+    if shared:
+        with closing(sqlite3.connect(rehearsal.path)) as database, database:
+            database.execute("INSERT INTO enrolments VALUES (?, ?, ?, ?, ?)", (
+                str(ledger.root), commission.manifest.task_id, commission.manifest.batch_id, "c" * 64, "d" * 64,
+            ))
+        shared_root = tmp_path / "shared-scale"
+        mandate = artifacts.write_json(shared_root / "scale-reallocation.json", {
+            "owner": OWNER, "previous_pool_sha256": rehearsal.digest, "previous_accounting_sha256": rehearsal_account,
+            "original_giant_authorisation_sha256": original_authority, "remaining_sessions": 2000,
+        })
+        shared_authority = PoolAuthority(owner=OWNER, reference="Reallocate the existing reserve.",
+            prior_archive_sha256="e" * 64, starting_charges=300, cumulative_ceiling=2300,
+            additional_target=1, excluded_families=("V",), predecessor_sha256=rehearsal.digest,
+            members=list(rehearsal.members.values()), budget_extension=BudgetExtension(
+                previous_database_sha256=commissioning.digest(rehearsal.path.read_bytes()),
+                previous_accounting_sha256=rehearsal_account, additional_sessions=2000, reallocation_sha256=mandate,
+            ))
+        with pytest.raises(ValueError, match="exact closeout, exclusions, charges and outstanding target"):
+            MilestonePool(shared_root, shared_authority.model_copy(update={"cumulative_ceiling": 2301}), predecessor=rehearsal)
+        rehearsal = MilestonePool(shared_root, shared_authority, predecessor=rehearsal)
+        with closing(sqlite3.connect(rehearsal.path)) as database, database:
+            database.execute("INSERT INTO reservations VALUES (?, 'U', 1, 'design', 'design', ?)", (str(ledger.root), "f" * 64))
+        closed |= {"cumulative_charges": 301, "remaining": 1999}
+        rehearsal_account = artifacts.write_json(rehearsal.root / "final-accounting.json", closed | {"rehearsal_dossier": None})
+    giant_authority = PoolAuthority(
+        owner=OWNER, reference="Giant continuation.", prior_archive_sha256="c" * 64,
+        starting_charges=300, cumulative_ceiling=3000, additional_target=1, members=[],
+        predecessor_sha256=rehearsal.digest,
+        budget_extension=BudgetExtension(previous_database_sha256=commissioning.digest(rehearsal.path.read_bytes()),
+            previous_accounting_sha256=rehearsal_account, additional_sessions=2000,
+            giant_phase=GiantPhaseRelease(authorisation_sha256=original_authority, expected_sources=150, **hypothesis)),
+    )
+    if shared:
+        giant_authority = giant_authority.model_copy(update={
+            "starting_charges": 301, "cumulative_ceiling": 2300, "budget_extension": None,
+            "shared_giant_release": GiantPhaseRelease(authorisation_sha256=mandate, expected_sources=150, **hypothesis),
+            "shared_giant_closeout": RehearsalRelease(previous_database_sha256=commissioning.digest(rehearsal.path.read_bytes()),
+                                                        previous_accounting_sha256=rehearsal_account),
+        })
+    with pytest.raises(ValueError, match="exact verified 65-Source rehearsal"):
+        MilestonePool(tmp_path / "giant-too-early", giant_authority, predecessor=rehearsal)
+    rehearsal_dossier = {**dossier, "family": "U", "dossier_sha256": "2" * 64}
+    with closing(sqlite3.connect(rehearsal.path)) as database, database:
+        database.execute("INSERT INTO qualified VALUES ('U', ?, ?, 1)",
+                         (rehearsal_dossier["dossier_sha256"], rehearsal_dossier["custody"]))
+    (rehearsal.root / "final-accounting.json").unlink()
+    rehearsal_account = artifacts.write_json(rehearsal.root / "final-accounting.json",
+                                             closed | {"rehearsal_dossier": rehearsal_dossier})
+    field = "shared_giant_closeout" if shared else "budget_extension"
+    extension = giant_authority.shared_giant_closeout if shared else giant_authority.budget_extension
+    assert extension is not None
+    giant_authority = giant_authority.model_copy(update={field: extension.model_copy(update={
+        "previous_database_sha256": commissioning.digest(rehearsal.path.read_bytes()),
+        "previous_accounting_sha256": rehearsal_account,
+    })})
+    monkeypatch.setattr(rehearsal, "_verified_local_workload", lambda minimum, maximum: minimum <= 64 <= maximum)
+    with pytest.raises(ValueError, match="exact verified 65-Source rehearsal"):
+        MilestonePool(tmp_path / "giant-wrong-workload", giant_authority, predecessor=rehearsal)
+    monkeypatch.setattr(rehearsal, "_verified_local_workload", lambda minimum, maximum: minimum <= 65 <= maximum)
+    giant = MilestonePool(tmp_path / "giant-after-rehearsal", giant_authority, predecessor=rehearsal)
+    with closing(sqlite3.connect(giant.path)) as database:
+        assert giant.remaining(database, attached=False) == (1999 if shared else 2700)
 
 
 def test_pre_author_return_repairs_only_a_committed_brief(approved, transport, monkeypatch):
@@ -3925,6 +4744,62 @@ def test_clean_redesign_retains_a_failed_lineage_and_rejects_relabelled_design(a
                and "distinct documentary history" in row["details"]["reason"] for row in active.events(batch, family))
 
 
+def test_clean_redesign_after_unstarted_repair_retains_exact_case_reference(approved, monkeypatch):
+    from benchmark_v3.batch import clean_redesign, repair_authority
+
+    ledger, commission = approved
+    runner = commission.session_runner(ledger, "G", 3)
+    design = DesignOutput.model_validate(_design("G"))
+    anchor = runner.directory.with_name("1") / "design.json"
+    artifacts.write_json(anchor, design.model_dump(mode="json"))
+    monkeypatch.setattr(type(ledger), "requires_workload_merits", property(lambda _: True))
+    events = [{"revision": 2, "kind": "transition", "name": repair_authority.REVISION,
+               "details": {"parent_revision": 1}}]
+    monkeypatch.setattr(ledger, "events", lambda *_: events)
+    reservations = []
+    monkeypatch.setattr(ledger, "attempts", lambda *_: reservations)
+
+    retained = clean_redesign.details(runner, 2, "Replace the returned case.", retained_design_revision=1)
+    assert retained.parent_design_sha256 == commissioning.digest(anchor.read_bytes())
+    with pytest.raises(ValueError, match="distinct documentary history"):
+        clean_redesign.verify_distinct(runner, design, retained)
+    with pytest.raises(ValueError, match="exact reviewed predecessor"):
+        clean_redesign.details(runner, 2, "Wrong parent.", retained_design_revision=2)
+    reservations.append({"revision": 2, "job": "repair-plan"})
+    with pytest.raises(ValueError, match="unstarted repair"):
+        clean_redesign.verify_distinct(runner, design, retained)
+
+
+def test_capacity_reassessment_recognizes_only_the_explicit_full_file_assumption():
+    from benchmark_v3.batch import autonomous_realism
+
+    reason = "The plan calls for fresh isolated authoring for all 65 Sources. Only 70 sessions are available."
+    assert autonomous_realism.assumes_whole_file_reauthoring(reason, 65)
+    assert not autonomous_realism.assumes_whole_file_reauthoring(reason, 64)
+    assert not autonomous_realism.assumes_whole_file_reauthoring(
+        "The plan does not require fresh isolated authoring for all 65 Sources. Only 70 sessions are available.", 65,
+    )
+    assert not autonomous_realism.assumes_whole_file_reauthoring(
+        "The alteration would change the approved scientific contrast. Only 70 sessions are available.", 65,
+    )
+
+
+def test_predispatch_attachment_recovery_rejects_a_reserved_author(approved, monkeypatch):
+    from benchmark_v3.batch import autonomous_realism, predispatch_lineage
+
+    ledger, commission = approved
+    runner = commission.session_runner(ledger, "G", 5)
+    monkeypatch.setattr(autonomous_realism, "release_event", lambda *_: {"partial_packet_return": {"revision": 3}})
+    monkeypatch.setattr(autonomous_realism, "_read_return", lambda *_: pytest.fail("A reserved packet cannot be recovered here."))
+    monkeypatch.setattr(ledger, "attempts", lambda *_: [{"revision": 5, "job": "author-src2"}])
+    with pytest.raises(ValueError, match="precede any reservation"):
+        predispatch_lineage.verify_return(runner, commission.portfolio.slots[0], "author-src2")
+    monkeypatch.setattr(ledger, "attempts", lambda *_: [])
+    (runner.directory / "packets" / "author-src2").mkdir(parents=True)
+    with pytest.raises(ValueError, match="precede any reservation"):
+        predispatch_lineage.verify_return(runner, commission.portfolio.slots[0], "author-src2")
+
+
 def test_large_merits_repair_preserves_the_exact_design_outside_approved_rows():
     from benchmark_v3.batch import large_merits_repair
 
@@ -3943,7 +4818,8 @@ def test_large_merits_repair_preserves_the_exact_design_outside_approved_rows():
         large_merits_repair.apply(design, moved, {row.source_id})
 
 
-def test_audited_large_replacement_requires_merits_before_participant_authoring(autonomous, transport, monkeypatch):
+@pytest.mark.parametrize("dedicated_scope", [False, True])
+def test_large_workload_requires_merits_before_participant_authoring(autonomous, transport, monkeypatch, dedicated_scope):
     from benchmark_v3.batch import clean_redesign
     from benchmark_v3.batch.workflow import FamilyWorkflow
 
@@ -3968,7 +4844,10 @@ def test_audited_large_replacement_requires_merits_before_participant_authoring(
     design = artifacts.read_contract(runner.directory / "design.json", DesignOutput)
     with pytest.raises(ValueError, match="Only the authorised audit or repair job"):
         workflow.author(design)
-    monkeypatch.setattr(clean_redesign, "recorded", lambda _: replacement)
+    if dedicated_scope:
+        monkeypatch.setattr(type(ledger), "requires_workload_merits", property(lambda _: True))
+    else:
+        monkeypatch.setattr(clean_redesign, "recorded", lambda _: replacement)
     calls, behavior, _ = transport
     behavior[family, clean_redesign.MERITS_JOB] = lambda _: {
         "verdict": "return", "findings": {"src1": "Prior delivery is not documented.", "src2": "Ordinary record."},
@@ -3978,6 +4857,89 @@ def test_audited_large_replacement_requires_merits_before_participant_authoring(
         workflow.author(design)
     assert coordinator.family_status(ledger, batch, family)[:2] == (1, "quarantined")
     assert [job for _, _, job, _ in calls] == ["design", clean_redesign.MERITS_JOB]
+
+
+def test_large_workload_repair_reopens_exact_scope_return_before_author_dispatch(autonomous, transport, monkeypatch):
+    from types import SimpleNamespace
+
+    from benchmark_v3.batch import author_context, clean_redesign, large_merits_repair
+    from benchmark_v3.batch.workflow import FamilyWorkflow
+
+    ledger, commission = autonomous
+    family, slot = "G", commission.portfolio.slots[0]
+    batch = commission.manifest.batch_id
+    coordinator.commission_batch(ledger, commission, BOUNDARY)
+    coordinator._activate_roadmap_slots(ledger, commission, [family])
+    monkeypatch.setattr(type(ledger), "requires_author_context", property(lambda _: True))
+    monkeypatch.setattr(type(ledger), "requires_delivery_attestation", property(lambda _: True))
+    monkeypatch.setattr(type(ledger), "requires_workload_merits", property(lambda _: True))
+    runner = commission.session_runner(ledger, family, 1)
+    workflow = FamilyWorkflow(runner, slot, commission.portfolio.admission_criteria)
+    calls, behavior, _ = transport
+    findings = {"src1": "Ordinary original.", "src2": "Ordinary acknowledgment."}
+    behavior[family, clean_redesign.MERITS_JOB] = lambda _: {
+        "verdict": "accept", "findings": findings, "objections": [],
+    }
+    objection = "src2 exposes a later name in the sender's ticket."
+    behavior[family, author_context.JOB] = lambda _: {
+        "verdict": "return", "findings": findings, "objections": [objection],
+    }
+    design = workflow.design()
+    with pytest.raises(Blocked, match="later name"):
+        workflow.author(design)
+    held, scope, commitment = large_merits_repair.returned(runner)
+    assert held == design and scope.objections == [objection]
+    assert commitment == runner.committed_result("author", author_context.JOB, "audit", type(scope))[1]["receipt_sha256"]
+    assert [job for _, _, job, _ in calls] == ["design", clean_redesign.MERITS_JOB, author_context.JOB]
+    with monkeypatch.context() as release:
+        original_events = ledger.events
+        earlier = {"revision": 0, "kind": "transition", "name": large_merits_repair.RELEASE, "next": "design",
+                   "details": {"source_ids": ["src1"]}}
+        release.setattr(ledger, "events", lambda *args: [earlier, *original_events(*args)])
+        release.setattr(ledger, "pooled_revision", lambda *_: True)
+        pool = SimpleNamespace(shared_scale=False)
+        release.setattr(ledger, "pool", pool, raising=False)
+        with pytest.raises(ValueError, match="distinct retained pre-author return"):
+            coordinator.release_large_merits_repair(ledger, batch, family, {"src2"})
+        pool.shared_scale = True
+        with pytest.raises(ValueError, match="distinct retained pre-author return"):
+            coordinator.release_large_merits_repair(ledger, batch, family, {"src1"})
+        coordinator.release_large_merits_repair(ledger, batch, family, {"src2"})
+        assert large_merits_repair.recorded(commission.session_runner(ledger, family, 2))["source_ids"] == ["src2"]
+    recorded = ledger.attempts(family)
+    monkeypatch.setattr(ledger, "attempts", lambda _: [*recorded, {"revision": 1, "stage": "author", "job": "author-src1"}])
+    with pytest.raises(ValueError, match="no participant dispatch"):
+        large_merits_repair.returned(runner)
+
+
+def test_large_merits_retries_extra_findings_before_the_author_scope_gate(autonomous, transport, monkeypatch):
+    from benchmark_v3.batch import author_context, clean_redesign
+    from benchmark_v3.batch.workflow import FamilyWorkflow
+
+    ledger, commission = autonomous
+    family, slot = "G", commission.portfolio.slots[0]
+    batch = commission.manifest.batch_id
+    coordinator.commission_batch(ledger, commission, BOUNDARY)
+    coordinator._activate_roadmap_slots(ledger, commission, [family])
+    monkeypatch.setattr(type(ledger), "requires_author_context", property(lambda _: True))
+    monkeypatch.setattr(type(ledger), "requires_delivery_attestation", property(lambda _: True))
+    monkeypatch.setattr(type(ledger), "requires_workload_merits", property(lambda _: True))
+    runner = commission.session_runner(ledger, family, 1)
+    workflow = FamilyWorkflow(runner, slot, commission.portfolio.admission_criteria)
+    calls, behavior, _ = transport
+    findings = {"src1": "Ordinary original.", "src2": "Ordinary acknowledgment."}
+    accepted = {"verdict": "accept", "findings": findings, "objections": []}
+    merits = clean_redesign.MERITS_JOB
+    behavior[family, merits] = lambda _: accepted | {"findings": findings | {"global_summary": "Review synthesis."}}
+    behavior[family, merits + "-format-retry"] = lambda _: accepted
+    behavior[family, author_context.JOB] = lambda _: accepted | {
+        "verdict": "return", "objections": ["Hold before the participant reservation."],
+    }
+    design = workflow.design()
+    with pytest.raises(Blocked, match="Hold before the participant reservation"):
+        workflow.author(design)
+    assert [job for _, _, job, _ in calls] == ["design", merits, merits + "-format-retry", author_context.JOB]
+    clean_redesign.require_merits(runner)
 
 
 def test_word_preserving_blind_quote_recovery_uses_the_retained_reader(autonomous, transport, monkeypatch):
@@ -4027,12 +4989,40 @@ def test_word_preserving_blind_quote_recovery_uses_the_retained_reader(autonomou
         read_format_recovery.exact_whitespace_span("a  a", "a a a")
 
 
-@pytest.mark.parametrize("disposition", ["repair", "return", "quarantine", "followup", "returned_layout",
+def test_frozen_mask_disposition_requires_the_same_view_and_preserves_every_other_expectation():
+    from benchmark_v3.batch import frozen_rekey
+    from benchmark_v3.batch.contracts import MaskAssignment, MilestoneAudit
+
+    supported = ("Mia Reed", "parent_of", "Ada Reed")
+    unsupported = ("Mia Reed", "trustee_of", "River Trust")
+    prior = MaskAssignment(condition="G000", risk="shortcut", reason="Returned positive.",
+        question="Which relationships are supported by this copy?", included=["src1"], present=[supported, unsupported], absent=[])
+    original = MilestoneAudit(verdict="return", summary="Unavailable scope binding.", completeness={}, sufficiency={},
+        negative_controls={}, shortcuts={}, matched_controls={}, risks=["shortcut"], masks=[prior],
+        objections=["The named trust cannot be established in the rendered Source."], limitations=[])
+    digest = authorisation.commitment(prior)
+    corrections = {digest: [unsupported]}
+    nominated = frozen_rekey.candidate_control_corrections(original, corrections)
+    assert original.masks == [prior] and frozen_rekey.unsuperseded_controls(original, nominated).masks == []
+    new = prior.model_copy(update={"present": [supported], "absent": [unsupported], "reason": "Test the missing identity."})
+    accepted = original.model_copy(update={"verdict": "accept", "objections": [], "masks": [new]})
+    frozen_rekey.verify_mask_corrections(accepted, nominated, corrections)
+    drops_unaffected_positive = new.model_copy(update={"present": [], "absent": [supported, unsupported]})
+    with pytest.raises(ValueError, match="exact corrected expectations"):
+        frozen_rekey.verify_mask_corrections(accepted.model_copy(update={"masks": [drops_unaffected_positive]}), nominated, corrections)
+    moving = new.model_copy(update={"included": ["src1", "src2"]})
+    with pytest.raises(ValueError, match="identical|same view"):
+        frozen_rekey.verify_mask_corrections(accepted.model_copy(update={"masks": [moving]}), nominated, corrections)
+    with pytest.raises(ValueError, match="superseded positive"):
+        frozen_rekey.verify_mask_corrections(accepted.model_copy(update={"masks": [prior, new]}), nominated, corrections)
+
+
+@pytest.mark.parametrize("disposition", ["repair", "return", "quarantine", "followup", "inherited_format_retry", "returned_layout",
                                         "accepted_layout", "missing_critical"])
 def test_frozen_evidence_review_reuses_sources_and_blind_receipts_without_cueing_the_new_key(
     approved, transport, tmp_path, monkeypatch, disposition,
 ):
-    from benchmark_v3.batch import audit_boundary, frozen_rekey, science
+    from benchmark_v3.batch import audit_boundary, author_delivery, autonomous_realism, frozen_rekey, repair_authority, science
     from benchmark_v3.batch.pool import PooledLedger
 
     original, fixture = approved
@@ -4130,6 +5120,45 @@ def test_frozen_evidence_review_reuses_sources_and_blind_receipts_without_cueing
 
     coordinator.release_frozen_evidence_review(active, batch, family, "Reassess exact local context.")
     behavior[family, "audit"] = lambda inputs: _output("audit", family, "", inputs) | {"excerpt_controls": []}
+    qualified = 2
+    if disposition == "inherited_format_retry":
+        monkeypatch.setattr(MilestonePool, "shared_scale", property(lambda _: True))
+        job = "adjudicate-000"
+        behavior[family, job] = lambda inputs: _output("adjudication", family, "", inputs) | {
+            "unresolved": ["This evidence leaves the administrator's later practice outside the filing period."],
+        }
+        coordinator._work_family(active, commission, slot)
+        second = commission.session_runner(active, family, 2)
+        assert coordinator.family_status(active, batch, family)[:2] == (2, "adjudicate")
+        with pytest.raises(ValueError, match="inherits realism"):
+            coordinator.release_adjudication_documentary_repair(active, batch, family)
+        returned = autonomous_realism.document_adjudication_return(second)
+        active.event(batch, family, 3, "transition", repair_authority.REVISION, "adjudicate", "design", {
+            "parent_revision": 2, "adjudication_return": returned, "manifest_sha256": authorisation.commitment(manifest),
+        })
+        active.event(batch, family, 3, "task_halt", "design-isolation", "design", None, {
+            "stage": "design", "code": "isolation", "evidence": autonomous_realism.LINEAGE_REOPEN_FAILURE,
+        })
+        with pytest.raises(TaskHalted, match="unresolved shared integrity"):
+            coordinator.release_frozen_evidence_format_retry(active, batch, family)
+        proof = {
+            "submitted_turns": 0, "packet_sha256": commissioning.digest(Path(packet.__file__).read_bytes()),
+            "author_delivery_sha256": commissioning.digest(Path(author_delivery.__file__).read_bytes()),
+            "filesystem": {key: {"allowed": key == "inside", "denied": key != "inside"}
+                           for key in ("inside", "outside", "repository")},
+            "runtime": {effort: {"effort": effort, "thread_id": effort, "ephemeral": True, "empty_workspace": True,
+                                 "approval_policy": "never", "sandbox": {"type": "readOnly", "networkAccess": False},
+                                 "permission_profile": {"id": "benchmark_packet", "extends": None}, "instruction_sources": [],
+                                 "thread_environments": [], "runtime_workspace_roots": []} for effort in ("medium", "high")},
+        }
+        pool.reconcile_documentary_lineage(active, family, proof)
+        coordinator.release_frozen_evidence_format_retry(active, batch, family)
+        assert not any(item["revision"] == 3 for item in active.attempts(family))
+        del behavior[family, job]
+        qualified = 4
+        retry = frozen_rekey.recorded(commission.session_runner(active, family, qualified))
+        assert retry is not None and retry.retry is not None and retry.parent_revision == 1
+        assert retry.retry.returned_adjudication_sha256 == returned["receipt_sha256"]
     if disposition == "followup":
         behavior[family, "adjudicate-000"] = lambda inputs: json.loads(
             json.dumps(_output("adjudication", family, "", inputs)).replace(QUOTE, longer_quote),
@@ -4149,11 +5178,11 @@ def test_frozen_evidence_review_reuses_sources_and_blind_receipts_without_cueing
         assert [job for _, parent, job, _ in calls if parent == "G@3"] == ["adjudicate-000", "audit"]
         return
     coordinator._work_family(active, commission, slot)
-    assert coordinator.family_status(active, batch, family) == (2, "admission_ready", None)
-    work = commission.session_runner(active, family, 2).directory / "family"
+    assert coordinator.family_status(active, batch, family) == (qualified, "admission_ready", None)
+    work = commission.session_runner(active, family, qualified).directory / "family"
     assert (work / "freeze.json").read_bytes() == frozen_bytes == (prior / "freeze.json").read_bytes()
     assert (prior / "G000.json").read_bytes() == original_saved
-    new_calls = [(job, inputs) for _, parent, job, inputs in calls if parent == "G@2"]
+    new_calls = [(job, inputs) for _, parent, job, inputs in calls if parent == f"G@{qualified}"]
     assert [job for job, _ in new_calls] == ["adjudicate-000", "audit"]
     assert "provisional_keys" not in new_calls[0][1] and "intended_intervention" not in new_calls[0][1]
     result = json.loads((work / "dossier.json").read_bytes())
@@ -4200,14 +5229,25 @@ def test_pre_author_cover_clarification_preserves_the_participant_projection(app
         author_repair.cover_clarification(runner, "src1", "src3", "src2")
 
 
-def test_new_pre_author_plan_binds_the_rejected_scope_and_precedes_authoring(autonomous, monkeypatch):
-    from benchmark_v3.batch import author_context, autonomous_realism, repair_authority
+@pytest.mark.parametrize("merits", [False, True])
+def test_new_pre_author_plan_binds_the_rejected_scope_and_precedes_authoring(autonomous, monkeypatch, merits):
+    from benchmark_v3.batch import author_context, autonomous_realism, clean_redesign, repair_authority
     from benchmark_v3.batch.sessions import SessionRunner
 
     ledger, commission = autonomous
     batch, family = commission.manifest.batch_id, "G"
     coordinator.commission_batch(ledger, commission, BOUNDARY)
     monkeypatch.setattr(type(ledger), "requires_delivery_attestation", property(lambda _: True))
+    review_job = clean_redesign.MERITS_JOB if merits else author_context.JOB
+    design = DesignOutput.model_validate(_design(family))
+    if merits:
+        monkeypatch.setattr(type(ledger), "requires_workload_merits", property(lambda _: True))
+        monkeypatch.setattr(ledger, "attempts", lambda _: [
+            {"revision": revision, "stage": "author", "job": review_job} for revision in (2, 3)
+        ])
+        for revision in (2, 3):
+            runner = commission.session_runner(ledger, family, revision)
+            artifacts.write_json(runner.directory / "design.json", design.model_dump(mode="json"))
     ledger.event(batch, family, 2, "transition", repair_authority.REVISION, "returned", "design",
                  {"parent_revision": 1})
     ledger.event(batch, family, 2, "repair_plan_selection", "chosen", "design", "design", {
@@ -4216,21 +5256,25 @@ def test_new_pre_author_plan_binds_the_rejected_scope_and_precedes_authoring(aut
     plan = autonomous_realism.RepairPlan(disposition="repair", objections={}, revised_design=None,
                                         tickets={"src1": "Clarify the received letter."}, progress="initial",
                                         rationale="Address the earlier documentary return.")
-    review = author_context.AuthorContextReview(verdict="return", findings={"src1": "Wrong attachment version."},
-                                                objections=["The letter came from a different issuing counterpart."])
+    findings = {"src1": "Wrong attachment version.", "src2": "Unchanged local document."}
+    if merits:
+        findings["_design"] = "One documentary transmission remains unverified."
+    review = author_context.AuthorContextReview(verdict="return", findings=findings,
+        objections=["The letter came from a different issuing counterpart."])
 
     def retained(self, stage, job, role, result_type):
         assert self.revision in (2, 3) and role == "audit"
         if job == repair_authority.PLAN_JOB:
             return plan, {"receipt_sha256": "a" * 64}, {}
-        assert job == author_context.JOB and stage == "author"
-        return review, {"receipt_sha256": "b" * 64}, {}
+        assert job == review_job and stage == "author"
+        return review, {"receipt_sha256": "b" * 64}, {"inputs": {"intended_intervention": design.model_dump_json()}}
 
     monkeypatch.setattr(SessionRunner, "committed_result", retained)
     runner = commission.session_runner(ledger, family, 2)
     details, original = autonomous_realism.pre_author_scope_return(runner)
     assert original == plan and details["scope_receipt_sha256"] == "b" * 64
     assert details["objections"] == review.objections
+    assert details.get("review_job") == (review_job if merits else None)
     ledger.event(batch, family, 3, "transition", repair_authority.REVISION, "quarantined", "design",
                  {"parent_revision": 1, "pre_author_scope_return": details})
     assert autonomous_realism._earlier_pre_author_references(runner, ledger.events(batch, family), 3) == ((2, "pre-author:1"),)
@@ -4240,7 +5284,7 @@ def test_new_pre_author_plan_binds_the_rejected_scope_and_precedes_authoring(aut
     successor = commission.session_runner(ledger, family, 3)
     second, _ = autonomous_realism.pre_author_scope_return(successor)
     assert second["revision"] == 3
-    monkeypatch.setattr(type(ledger), "attempts", lambda *_: [{"revision": 2, "stage": "author", "job": "author-src1"}])
+    monkeypatch.setattr(ledger, "attempts", lambda *_: [{"revision": 2, "stage": "author", "job": "author-src1"}])
     with pytest.raises(ValueError, match="before any author dispatch"):
         autonomous_realism.pre_author_scope_return(runner)
 
@@ -4500,6 +5544,154 @@ def test_joint_audit_repairs_only_a_unique_whitespace_excerpt():
     ambiguous = {"G000": [sources["G000"][0].model_copy(update={"text": f"{exact}\n{exact}"})]}
     with pytest.raises(ValueError, match="one exact span"):
         joint_control_plan._recover_exact_excerpt_format(audit, ambiguous)
+
+
+@pytest.mark.parametrize("retained", [False, True])
+def test_joint_control_plan_preserves_a_separate_exact_whole_file_confirmation(retained):
+    from benchmark_v3.batch import audit_boundary, joint_control_plan
+    from benchmark_v3.batch.contracts import Adjudication, MaskAssignment
+    from benchmark_v3.replay_manifest import BatchSourceFreeze
+
+    condition = "G000"
+    sources = [Source(id=f"src{i + 1}", title=f"Record {i + 1}", text=f"Evidence {i + 1}.") for i in range(21)]
+    source_ids = [source.id for source in sources]
+    bundles = {condition: sources}
+    freeze = BatchSourceFreeze(order={condition: source_ids}, sources_sha256={}, source_commitments={},
+                               natural=condition, variants={}, candidates=[EDGE], required={condition: [EDGE]})
+    proof = {"edge": EDGE, "alternatives": [[{"source_id": source.id, "supporting_text": source.text}
+                                              for source in sources[:2]]]}
+    key = _output("adjudication", "G", "", {})
+    key["key"]["sufficient_evidence"] = [proof]
+    adjudications = {condition: Adjudication.model_validate(key)}
+    whole = MaskAssignment(condition=condition, risk="large_or_complex", reason="Reconstruct from the entire file.",
+                           question="What is established across the complete file?", included=source_ids,
+                           present=[EDGE], absent=[])
+    targeted = whole.model_copy(update={"included": source_ids[:2], "question": "What does the selected pair establish?"})
+    audit = audit_boundary.RecheckedAudit.model_validate(_output("audit", "G", "", {}) | {
+        "completeness": {condition: dict.fromkeys(source_ids, "Independently reviewed.")},
+        "masks": [targeted], "risks": ["joint_proof", "large_or_complex"], "excerpt_controls": [],
+    })
+    full_review = audit.model_copy(update={"masks": [targeted, whole]})
+    plan = joint_control_plan.build_plan(audit if retained else full_review, [full_review] if retained else [],
+                                         bundles, freeze, {"joint_proof", "large_or_complex"}, adjudications)
+    assert plan.audit.masks.count(whole) == 1
+    assert [view for view in plan.audit.masks if view != whole] == [targeted, *plan.proposed]
+    assert len(plan.proposed) == 3
+    with pytest.raises(ValueError, match="retained whole-file objective"):
+        joint_control_plan.build_plan(
+            audit.model_copy(update={"masks": [targeted, whole.model_copy(update={"risk": "shortcut"})]}),
+            [], bundles, freeze, {"joint_proof", "large_or_complex"}, adjudications,
+        )
+
+
+def test_executed_control_clarification_requires_unchanged_views_and_independent_scope(approved, monkeypatch):
+    from benchmark_v3.batch import audit_boundary, joint_control_plan, mask_dispute
+    from benchmark_v3.batch.contracts import MaskAssignment, Reading
+    from benchmark_v3.batch.sessions import SessionRunner
+    from benchmark_v3.replay_manifest import BatchSourceFreeze, source_commitments
+    from private_client_graph.research.retained_inputs import value_digest
+
+    ledger, commission = approved
+    coordinator.commission_batch(ledger, commission, BOUNDARY)
+    batch, family, condition = commission.manifest.batch_id, "G", "G000"
+    runner = commission.session_runner(ledger, family, 1)
+    sources = [Source(id="src1", title="Record", text=QUOTE), Source(id="src2", title="Receipt", text="Received individually."),
+               Source(id="src3", title="Note", text="Ordinary note.")]
+    by_condition = {condition: [source.model_dump(mode="json") for source in sources]}
+    artifacts.write_json(runner.directory / "family" / "sources" / f"{condition}.json", by_condition[condition])
+    freeze = BatchSourceFreeze(order={condition: [source.id for source in sources]},
+                               sources_sha256={condition: value_digest(by_condition[condition])},
+                               source_commitments={condition: source_commitments(sources)},
+                               natural=condition, variants={}, candidates=[EDGE], required={condition: [EDGE]})
+    artifacts.write_json(runner.directory / "family" / "freeze.json", freeze.model_dump(mode="json"))
+    whole = MaskAssignment(condition=condition, risk="joint_proof", reason="Check both records.",
+                           question="What does this file establish?", included=["src1", "src2"], present=[EDGE], absent=[])
+    missing = whole.model_copy(update={"included": ["src1"], "present": [], "absent": whole.present})
+    second_question = "What do these selected records establish at the cutoff?"
+    second_positive = whole.model_copy(update={"risk": "ambiguous_identity_or_dates", "question": second_question})
+    second_negative = missing.model_copy(update={"risk": "shortcut", "question": second_question})
+    masks = [whole, missing, second_positive, second_negative]
+    result = audit_boundary.RecheckedAudit.model_validate(_output("audit", family, "", {}) | {
+        "masks": masks, "excerpt_controls": [],
+    })
+    ledger.event(batch, family, 1, "transition", "audit", "audit", "masks", {
+        "outputs": {"audit": authorisation.commitment(result)},
+    })
+    packet_inputs = {"paired_bundles": commissioning.json_text(by_condition), "neutral_brief": "Review at cutoff.",
+                     "audit_rules": commissioning.json_text({"full_control_plan": result.model_dump(mode="json"),
+                                                             "additional_proposed_views_by_commitment": {}})}
+    proposal_records = {}
+
+    def committed(_, stage, job, role, model):
+        if job == joint_control_plan.JOB:
+            return joint_control_plan.Confirmation(verdict="accept", confirmed_views=[], findings="Accepted.",
+                                                   objections=[], limitations=[]), {}, {"inputs": packet_inputs}
+        if role == "masked":
+            mask = masks[int(job.removeprefix("mask-"))]
+            viewed = [source for source in sources if source.id in mask.included]
+            inputs = {"sources": commissioning.json_text([source.model_dump(mode="json") for source in viewed]),
+                      "neutral_brief": packet_inputs["neutral_brief"] + f"\n\nReviewer question: {mask.question}"}
+            reading = Reading.model_validate(_output("masked", family, "", inputs))
+            return reading, {"receipt_sha256": "b" * 64}, {"inputs": inputs}
+        return proposal_records[job]
+
+    monkeypatch.setattr(SessionRunner, "committed_result", committed)
+    with pytest.raises(ValueError, match="conforming observation"):
+        mask_dispute.reopen(runner, "mask-000")
+    dispute = mask_dispute.reopen(runner, "mask-001")
+    assert dispute.assignments == {0: whole, 1: missing}
+    assert not mask_dispute.permits(runner, dispute.inputs)
+    ledger.event(batch, family, 1, "reconcile", mask_dispute.RELEASE, "masks", "audit", dispute.release.model_dump(mode="json"))
+    assert mask_dispute.permits(runner, dispute.inputs)
+    assert not mask_dispute.permits(runner, dispute.inputs | {"audit_rules": "{}"})
+    review = mask_dispute.DisputeReview(verdict="scope_clarification", reasoning="The threshold was ambiguous.",
+                                       objections=[], limitations=[], clarified_question="Separate assertions and proof.")
+    proposal_records[mask_dispute.JOB] = review, {"receipt_sha256": "c" * 64}, {"inputs": dispute.inputs}
+    release, packet_inputs_for_scope, question, _ = mask_dispute.scope_packet(runner)
+    ledger.event(batch, family, 1, "reconcile", mask_dispute.SCOPE_RELEASE, "audit", "audit", release.model_dump(mode="json"))
+    scope = mask_dispute.ScopeReview(verdict="accept", question_sha256="d" * 64,
+                                    reasoning="Compatible.", objections=[], limitations=[])
+    proposal_records[mask_dispute.SCOPE_JOB] = scope, {"receipt_sha256": "e" * 64}, {"inputs": packet_inputs_for_scope}
+    with pytest.raises(ValueError, match="confirm the exact clarified question"):
+        mask_dispute.make_clarification(runner)
+    proposal_records[mask_dispute.SCOPE_JOB] = scope.model_copy(update={"question_sha256": commissioning.digest(question.encode())}), {
+        "receipt_sha256": "e" * 64,
+    }, {"inputs": packet_inputs_for_scope}
+    exact, _, _ = mask_dispute.make_clarification(runner)
+    assert exact.view_sha256s == {0: authorisation.commitment(whole), 1: authorisation.commitment(missing)}
+    ledger.event(batch, family, 1, "reconcile", mask_dispute.CLARIFY, "audit", "masks", exact.model_dump(mode="json"))
+    observed = {"sources": commissioning.json_text(by_condition[condition][:1]),
+                "neutral_brief": packet_inputs["neutral_brief"] + f"\n\nReviewer question: {question}",
+                "ontology": commissioning.trusted_bytes("instructions/ontology.md").decode(),
+                "annotation_rules": commissioning.trusted_bytes("instructions/annotation.md").decode()}
+    mask_dispute.require_observation_inputs(runner, "mask-001-clarified", observed)
+    with pytest.raises(ValueError, match="exact Source view"):
+        mask_dispute.require_observation_inputs(runner, "mask-001-clarified", observed | {
+            "sources": commissioning.json_text(by_condition[condition][:2]),
+        })
+    second_job = "mask-003"
+    second = mask_dispute.reopen(runner, second_job)
+    assert second.assignments == {2: second_positive, 3: second_negative}
+    ledger.event(batch, family, 1, "reconcile", mask_dispute.lineage_name(runner, mask_dispute.RELEASE, second_job),
+                 "masks", "audit", second.release.model_dump(mode="json"))
+    other_audit_job = mask_dispute.lineage_name(runner, mask_dispute.JOB)
+    assert not mask_dispute.permits(runner, second.inputs)
+    assert mask_dispute.permits(runner, second.inputs, job=other_audit_job)
+    proposal_records[other_audit_job] = review, {"receipt_sha256": "f" * 64}, {"inputs": second.inputs}
+    newer, other_packet, other_question, _ = mask_dispute.scope_packet(runner)
+    ledger.event(batch, family, 1, "reconcile", mask_dispute.lineage_name(runner, mask_dispute.SCOPE_RELEASE),
+                 "audit", "audit", newer.model_dump(mode="json"))
+    proposal_records[mask_dispute.lineage_name(runner, mask_dispute.SCOPE_JOB)] = (
+        scope.model_copy(update={"question_sha256": commissioning.digest(other_question.encode())}),
+        {"receipt_sha256": "1" * 64}, {"inputs": other_packet},
+    )
+    newer_clarification, _, _ = mask_dispute.make_clarification(runner)
+    ledger.event(batch, family, 1, "reconcile", mask_dispute.lineage_name(runner, mask_dispute.CLARIFY),
+                 "audit", "masks", newer_clarification.model_dump(mode="json"))
+    assert [record for record, _, _ in mask_dispute.clarifications(runner)] == [exact, newer_clarification]
+    mask_dispute.require_observation_inputs(runner, "mask-001-clarified", observed)
+    with pytest.raises(ValueError, match="approved wording"):
+        mask_dispute.require_observation_inputs(runner, "mask-003-clarified", observed)
 
 
 def test_review_note_recovery_retains_the_prior_independent_un_authored_design():

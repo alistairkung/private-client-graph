@@ -12,7 +12,8 @@ from pydantic import BaseModel
 from benchmark_v3 import commissioning, packet
 from benchmark_v3.batch import (
     adjudication_contract, adjudication_recovery, annotation_recovery, artifacts, audit_boundary, audit_recovery, author_context,
-    author_delivery, author_repair, authorisation, construction, continuation, design_review, joint_control_plan, repair_authority,
+    author_delivery, author_repair, authorisation, construction, continuation, delivery_audience, design_review, joint_control_plan, mask_dispute, repair_authority,
+    ticket_authority,
 )
 from benchmark_v3.batch.contracts import BatchManifest, Code, ExceptionRecord, Role, Stage
 from benchmark_v3.batch.ledger import Ledger, TaskHalted
@@ -165,7 +166,7 @@ class SessionRunner:
         return next((row["details"] for row in self.ledger.events(self.manifest.batch_id, self.family)
                      if (row["revision"], row["kind"], row["name"]) == (self.revision, "output_selection", job)), None)
 
-    def _require_audited_replacement_merits(self) -> None:
+    def _require_large_workload_merits(self) -> None:
         if not self.ledger.requires_delivery_attestation:
             return
         from benchmark_v3.batch import clean_redesign, large_merits_repair
@@ -193,8 +194,14 @@ class SessionRunner:
         if role == "author" and self.ledger.requires_author_context:
             try:
                 self._author_guard().require_projection(self, job, inputs)
+                ticket_authority.require_cleared(self)
             except (ValueError, OSError, KeyError, TypeError, packet.PacketError) as error:
                 raise Blocked(stage, "isolation", str(error), job=job) from error
+            if self.ledger.requires_workload_merits and not self.ledger.has_reservation(self.family, self.revision, job):
+                try:
+                    delivery_audience.verify_packet(inputs)
+                except delivery_audience.AudienceError as error:
+                    raise Blocked(stage, "scientific_review", str(error), job=job) from error
         allocation = self.manifest.models[role]
         prompt = instructions if role == "designer" else (
             f"{instructions}\nReturn one JSON object. Output schema: "
@@ -223,12 +230,25 @@ class SessionRunner:
                 permitted = joint_control_plan.released(self) is not None
             if self.ledger.requires_delivery_attestation and stage == "audit" and base_job == joint_control_plan.FOLLOWUP_JOB:
                 permitted = joint_control_plan.followup(self) is not None
+            if self.ledger.requires_delivery_attestation and stage == "audit" and job.startswith(mask_dispute.JOB):
+                permitted = (instructions == mask_dispute.INSTRUCTIONS and result_type is mask_dispute.DisputeReview
+                             and mask_dispute.permits(self, inputs, job=job))
+            if self.ledger.requires_delivery_attestation and stage == "audit" and job.startswith(mask_dispute.SCOPE_JOB):
+                permitted = (instructions == mask_dispute.SCOPE_PROMPT and result_type is mask_dispute.ScopeReview
+                             and mask_dispute.permits_scope(self, inputs, job=job))
             if self.ledger.requires_delivery_attestation and (stage, job) == ("design", repair_authority.EXACT_PLAN_JOB):
                 events = self.ledger.events(self.manifest.batch_id, self.family)
                 retry = repair_authority.recorded_classification_retry(self)
                 permitted = (self._pooled_documentary_repair(events) and retry is not None
                              and retry["manifest_sha256"] == authorisation.commitment(self.manifest)
                              and retry["inputs_sha256"] == commissioning.digest(commissioning.json_text(inputs).encode()))
+            if (stage, job) == ("design", repair_authority.LOCAL_PLAN_JOB):
+                events = self.ledger.events(self.manifest.batch_id, self.family)
+                local = repair_authority.recorded_local_retry(self)
+                permitted = (self.ledger.requires_workload_merits and self.ledger.requires_delivery_attestation
+                             and self._pooled_documentary_repair(events) and local is not None
+                             and local["manifest_sha256"] == authorisation.commitment(self.manifest)
+                             and local["inputs_sha256"] == commissioning.digest(commissioning.json_text(inputs).encode()))
             if recovery and (stage, base_job) in {
                 ("design", repair_authority.PLAN_JOB), ("design", repair_authority.BUDGET_PLAN_JOB),
                 ("author", repair_authority.VERIFY_JOB),
@@ -256,7 +276,7 @@ class SessionRunner:
                         permitted = True
             if self.ledger.requires_author_context:
                 if (stage, base_job) == ("author", author_context.JOB):
-                    self._require_audited_replacement_merits()
+                    self._require_large_workload_merits()
                     permitted = True
                 if (stage, base_job) == ("design", author_repair.JOB) and author_repair.recorded(self) is not None:
                     permitted = True
@@ -269,6 +289,8 @@ class SessionRunner:
             authorised_jobs = {f"mask-{index:03}" for index in range(len(audit_release.views))}
             if job not in authorised_jobs:
                 raise ValueError("The mask job is outside the authorised audit recovery plan.")
+        if role == "masked" and mask_dispute.CLARIFIED_JOB.fullmatch(job):
+            mask_dispute.require_observation_inputs(self, job, inputs)
         active_only = (release is not None or self.manifest.phase == "milestone" or followup is not None
                        or self.ledger.pooled_revision(self.manifest.batch_id, self.family, self.revision))
         reuse_only = (role in {"designer", "author", "realism", "annotation"}
@@ -333,6 +355,7 @@ class SessionRunner:
             guard = self._author_guard()
             guard.require_prompt(directory.name, request["prompt"])
             guard.require_projection(self, directory.name, request["inputs"])
+            ticket_authority.require_cleared(self)
             message = commissioning.json_text({"inputs": request["inputs"], "prompt": request["prompt"]})
             handoff = commissioning._read_json(artifacts.read_bytes(directory / "handoff.json"))
             if handoff["packet_sha256"] != commissioning.digest(message.encode()):
