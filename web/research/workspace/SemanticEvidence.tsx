@@ -1,7 +1,7 @@
 import { useCallback, useState, type ReactNode } from "react";
 import { percentMetric } from "../../src/shared/research/presentation";
 import type {
-  SemanticEvidenceReport, SemanticOperations, SemanticOutcome, SemanticSummary,
+  SemanticEvidenceReport, SemanticOperations, SemanticOutcome, SemanticQuotation, SemanticSummary,
   SemanticTarget, SemanticTransition,
 } from "../shared/contracts";
 import { ReadState } from "../shared/presentation";
@@ -11,11 +11,11 @@ import { evidenceMetricLabels } from "./benchmark-metrics";
 import "./semantic-evidence.css";
 
 const title = "Semantic Evidence";
-const subtitle = "AI-assessed, unverified";
-const timingWithoutCutoff = "timing (assessment cutoff unavailable)";
-const verdicts = ["Supported", "Partially Supported", "Unsupported", "Uncertain"] as const;
+const subtitle = "AI-assisted, unverified";
+const verdicts = ["Equivalent", "Partially Equivalent", "Not Equivalent", "Uncertain"] as const;
 const statuses = {
   judged: "Judged",
+  no_eligible_comparison: "No eligible comparison",
   invalid_judgment: "Invalid judgment",
   deterministic_delivery_failure: "Delivery failure",
   unattempted: "Unattempted",
@@ -23,14 +23,8 @@ const statuses = {
   interrupted: "Interrupted attempt",
   provider_failed: "Provider failure",
 };
-const flags: Record<string, string> = {
-  potentially_sufficient_overlooked_by_exact_matching: "Potentially sufficient evidence missed by exact matching",
-  potential_new_partial_support: "Potential partial support from a non-matching quotation",
-  exact_complete_not_called_supported: "Exact proof complete · AI did not return Supported",
-  joint_only_supported_with_one_cited_source: "Multi-Source target · Supported using one cited Source",
-  supported_control: "Control returned Supported",
-};
 const readable = (value: string) => value.replaceAll("_", " ");
+const number = new Intl.NumberFormat("en", { maximumFractionDigits: 3 });
 const usd = new Intl.NumberFormat("en", { style: "currency", currency: "USD", maximumFractionDigits: 4 });
 
 function Disclosure({ label, children }: { label: string; children: ReactNode }) {
@@ -65,7 +59,7 @@ export function SemanticEvidencePanel({ run }: { run: string }) {
         <>
           <SupportDiagnostics summary={data.target_summary} />
           <ExecutionUsage operations={data.operations} />
-          <p className="semantic-note"><strong>Timing unverified.</strong> Retained assertions had no explicit benchmark cutoff, including trust relationships where operative timing matters.</p>
+          <p className="semantic-note">{data.scope_note}</p>
           <Disclosure label="Inspect semantic assessment">
             <AssessmentDetails assessment={data} />
             <button className="secondary" onClick={retry}>Refresh assessment</button>
@@ -81,15 +75,15 @@ function semanticMetrics(summary: SemanticSummary) {
   return [
     {
       label: "Evidence Support", rate: support.rate, basis: `${support.count}/${support.targets} formal targets`,
-      description: "Supported or Partially Supported",
+      description: "At least one exact or equivalent required member",
     },
     {
       label: evidenceMetricLabels.complete_proof, rate: completion.rate, basis: `${completion.count}/${completion.targets} formal targets`,
-      description: "Supported · potential sufficiency",
+      description: "Every member of an approved proof alternative matched",
     },
     {
-      label: evidenceMetricLabels.joint_only_coverage, rate: coverage.mean, basis: `${coverage.judged}/${coverage.targets} targets with valid judgments`,
-      description: `Mean share of applicable facts satisfied across all ${coverage.targets} Multi-Source targets`,
+      label: evidenceMetricLabels.joint_only_coverage, rate: coverage.mean, basis: `${number.format(coverage.matched_target_equivalents)}/${coverage.targets} target-equivalents`,
+      description: "Mean matched-member fraction of the best approved alternative",
     },
   ];
 }
@@ -109,18 +103,22 @@ function SemanticMetricCards({ summary }: { summary: SemanticSummary }) {
 }
 
 function SupportDiagnostics({ summary }: { summary: SemanticSummary }) {
-  const partial = summary.potential_partial_support_beyond_exact_matching;
+  const judgedPairs = Object.values(summary.pair_verdicts).reduce((total, count) => total + count, 0);
   const gaps = assessmentGaps(summary.semantic_outcomes);
+  const pairCoverage = summary.candidate_pairs
+    ? `${judgedPairs}/${summary.candidate_pairs} eligible pairs judged`
+    : "No eligible pairs to judge";
   return (
     <dl className="semantic-diagnostics">
       <div>
         <dt>Judgment Coverage</dt>
-        <dd>{summary.semantic_outcomes.judged ?? 0}/{summary.formal_targets} valid judgments{gaps && ` · ${gaps}`}</dd>
+        <dd>{pairCoverage} · {summary.pair_verdicts["Partially Equivalent"] ?? 0} partially equivalent
+          {gaps && ` · ${gaps}`}</dd>
       </div>
       <div>
-        <dt>Potential Partial Support Beyond Exact Matching</dt>
-        <dd>{partial.rate === null ? "No recovered targets with zero exact matches" :
-          `${partial.count}/${partial.targets} (${percentMetric(partial.rate)}) of recovered targets with zero exact matches`}</dd>
+        <dt>Beyond Exact Matching</dt>
+        <dd>{countLabel(summary.additional_matched_members, "added member")} across {countLabel(summary.targets_with_added_matches, "target")}
+          {" · "}{countLabel(summary.newly_completed_proofs, "newly completed proof")}</dd>
       </div>
     </dl>
   );
@@ -128,20 +126,11 @@ function SupportDiagnostics({ summary }: { summary: SemanticSummary }) {
 
 function AssessmentDetails({ assessment }: { assessment: SemanticEvidenceReport }) {
   const { target_summary: summary, evaluator } = assessment;
-  const potential = summary.potentially_sufficient_overlooked_by_exact_matching;
   return (
     <>
-      <p className="semantic-note"><strong>Temporal limitation.</strong> {assessment.temporal_limitation}</p>
-      <p className="semantic-note">DeepSeek assesses attached quotations. The judge and extractor can share model-specific biases.</p>
-      <p>Targets without valid judgments contribute zero observed support and fact coverage.</p>
-      <VerdictCounts verdictCounts={summary.verdicts} />
-      <p>{potential.count ?? "Unavailable"} potentially sufficient missed proofs ·{" "}
-        {potential.recovered_exact_incomplete_judged}/{potential.recovered_exact_incomplete_denominator} recovered targets with incomplete exact proofs judged</p>
+      <p>Exact credit is retained across all {summary.formal_targets} formal targets. Only Equivalent earns additional member credit.</p>
+      <VerdictCounts verdictCounts={summary.pair_verdicts} />
       <Targets targets={assessment.targets} />
-      <details>
-        <summary>Sanity controls ({assessment.controls.length})</summary>
-        {assessment.controls.map((row) => <Target key={row.id} row={row} />)}
-      </details>
       <details>
         <summary>Evaluator and execution record</summary>
         <dl className="semantic-metadata">
@@ -155,16 +144,21 @@ function AssessmentDetails({ assessment }: { assessment: SemanticEvidenceReport 
   );
 }
 
-function VerdictCounts({ verdictCounts }: { verdictCounts: SemanticSummary["verdicts"] }) {
+function VerdictCounts({ verdictCounts }: { verdictCounts: SemanticSummary["pair_verdicts"] }) {
   return <ul className="semantic-counts" aria-label="Semantic verdict distribution">
     {verdicts.map((verdict) => <li key={verdict}>{verdict} <strong>{verdictCounts[verdict] ?? 0}</strong></li>)}
   </ul>;
 }
 
+function countLabel(count: number, label: string) {
+  return `${count} ${label}${count === 1 ? "" : "s"}`;
+}
+
 function assessmentGaps(outcomes: SemanticSummary["semantic_outcomes"]) {
-  return Object.entries(outcomes).filter(([state, count]) => state !== "judged" && count > 0)
+  return Object.entries(outcomes)
+    .filter(([state, count]) => state !== "judged" && state !== "no_eligible_comparison" && count > 0)
     .map(([state, count]) => {
-      const label = state === "invalid_judgment" ? "invalid response" : statuses[state as keyof typeof statuses].toLowerCase();
+      const label = statuses[state as keyof typeof statuses].toLowerCase();
       return `${count} ${count === 1 || state === "unattempted" || state === "awaiting_receipt" ? label : `${label}s`}`;
     }).join(" · ");
 }
@@ -179,14 +173,14 @@ function ExecutionUsage({ operations }: { operations: SemanticOperations }) {
 function Targets({ targets }: { targets: SemanticTarget[] }) {
   const [filter, setFilter] = useState("all");
   const visible = targets.filter((item) => filter === "all" || item.status === filter ||
-    item.judgment?.verdict === filter || (filter === "disagreements" && item.flags.length > 0));
+    item.decisions.some((decision) => decision.verdict === filter) || (filter === "added" && item.semantic_members.length > 0));
   return (
     <details>
       <summary>Inspect formal targets ({targets.length})</summary>
       <label className="semantic-filter">Filter formal targets
         <select value={filter} onChange={(event) => setFilter(event.target.value)}>
           <option value="all">All outcomes</option>
-          <option value="disagreements">Evidence disagreements</option>
+          <option value="added">Added semantic matches</option>
           {verdicts.map((verdict) => <option key={verdict}>{verdict}</option>)}
           {Object.entries(statuses).filter(([state]) => state !== "judged").map(([state, label]) =>
             <option key={state} value={state}>{label}</option>)}
@@ -204,42 +198,70 @@ function relationship(edge: SemanticTarget["edge"]) {
 
 function Target({ row }: { row: SemanticTarget }) {
   const [open, setOpen] = useState(false);
-  const baseline = row.deterministic;
   return (
     <details className="semantic-target" onToggle={(event) => setOpen(event.currentTarget.open)}>
       <summary>
-        {row.condition ?? readable(row.control ?? "Control")} · {relationship(row.edge)}{" "}
-        <strong>{row.judgment?.verdict ?? statuses[row.status]}</strong>
+        {row.condition} · {relationship(row.edge)}{" "}
+        <strong>{row.routes.some((route) => route.complete) ? "Complete proof" : "Incomplete proof"}</strong>
       </summary>
       {open && <div className="semantic-target-content">
-        {baseline && <p>Exact outcome · {readable(baseline.exact_outcome)}
-          {baseline.joint_only && ` · ${evidenceMetricLabels.joint_only_coverage} ${(baseline.best_exact_pair_coverage * 100).toFixed(1)}%`}
-        </p>}
-        {row.flags.map((flag) => <p key={flag}>{flags[flag] ?? readable(flag)}</p>)}
+        <p>Exact outcome · {readable(row.deterministic.exact_outcome)} · {statuses[row.status]}</p>
         {row.reuse && <p>Reused from Run <code>{row.reuse.origin_run}</code></p>}
         {row.error && <p>{row.error}</p>}
         {row.invalid_response != null && <details>
           <summary>Retained invalid response</summary>
           <pre className="semantic-response">{row.invalid_response || "The response was empty."}</pre>
         </details>}
-        {row.judgment && <>
-          <h4>Documentary facts</h4>
-          <ul>{row.judgment.facts.map((fact) => (
-            <li key={fact.fact}>
-              <strong>{fact.fact === "timing" && row.control === null ? timingWithoutCutoff : readable(fact.fact)} · {fact.status}</strong>{" "}
-              {fact.quotation_ids.length > 0 && <span>({fact.quotation_ids.join(", ")}) </span>}{fact.reason}</li>
-          ))}</ul>
-        </>}
-        {row.quotations.length > 0 && <>
-          <h4>Attached quotations</h4>
-          {row.quotations.map((quote) => <blockquote key={quote.id}>
-            <p><strong>{quote.id}</strong> · Source <code>{quote.source_id}</code></p>
-            <p>{quote.text}</p>
-          </blockquote>)}
-        </>}
+        <h4>Approved proof alternatives</h4>
+        <ol>{row.routes.map((route, index) => (
+          <li key={index}><strong>{route.complete ? "Complete" : "Incomplete"}</strong> · {route.matched_members.length}/{route.members.length} members matched · {route.members.join(", ")}</li>
+        ))}</ol>
+        <h4>Required evidence and matches</h4>
+        {row.members.map((member) => <RequiredMember key={member.id} member={member} row={row} />)}
+        <OtherQuotations row={row} />
       </div>}
     </details>
   );
+}
+
+function OtherQuotations({ row }: { row: SemanticTarget }) {
+  if (row.quotations.length === 0) return <p>No quotations were attached.</p>;
+  const shown = new Set([...Object.values(row.exact_matches), ...row.candidate_pairs.map((pair) => pair.quotation_id)]);
+  const other = row.quotations.filter((quote) => !shown.has(quote.id));
+  if (other.length === 0) return null;
+  return <details>
+    <summary>Other attached quotations ({other.length})</summary>
+    {other.map((quote) => <Quotation key={quote.id} quote={quote} label="Actual PCG quotation" />)}
+  </details>;
+}
+
+function RequiredMember({ member, row }: { member: SemanticQuotation; row: SemanticTarget }) {
+  const exact = row.quotations.find((quote) => quote.id === row.exact_matches[member.id]);
+  const pairs = row.candidate_pairs.filter((pair) => pair.member_id === member.id);
+  return (
+    <section className="semantic-member">
+      <Quotation quote={member} label="Required evidence" />
+      {exact ? <Quotation quote={exact} label="Exact match · actual PCG quotation" /> :
+        pairs.length === 0 ? <p>No attached quotation from this Source.</p> :
+          pairs.map((pair) => {
+            const quote = row.quotations.find((item) => item.id === pair.quotation_id);
+            const decision = row.decisions.find((item) => item.member_id === member.id && item.quotation_id === pair.quotation_id);
+            return <div key={pair.quotation_id} className="semantic-pair">
+              {quote && <Quotation quote={quote} label="Actual PCG quotation" />}
+              <p><strong>{decision?.verdict ?? statuses[row.status]}</strong>{decision && ` · ${decision.reason}`}</p>
+              {!!decision?.material_differences.length && <ul>{decision.material_differences.map((difference, index) =>
+                <li key={index}>{difference}</li>)}</ul>}
+            </div>;
+          })}
+    </section>
+  );
+}
+
+function Quotation({ quote, label }: { quote: SemanticQuotation; label: string }) {
+  return <blockquote>
+    <p><strong>{label} · {quote.id}</strong> · Source <code>{quote.source_id}</code></p>
+    <p>{quote.text}</p>
+  </blockquote>;
 }
 
 export function SemanticEvidenceComparison({ left, right }: { left: string; right: string }) {
@@ -256,9 +278,9 @@ function Comparison({ left, right }: { left: string; right: string }) {
   return (
     <>
       <p className="semantic-note">{subtitle}</p>
-      <p className="semantic-note"><strong>Temporal limitation.</strong> {data.temporal_limitation}</p>
-      <p><strong>{data.paired_valid_targets}/{data.formal_targets} formal targets have two valid judgments.</strong>{" "}
-        Fact transitions are shown only for those pairs.</p>
+      <p className="semantic-note">{data.scope_note}</p>
+      <p><strong>{data.paired_valid_targets}/{data.formal_targets} formal targets have valid judgments in both Runs.</strong>{" "}
+        Exact matches count across all targets.</p>
       <SemanticMetricComparison left={data.left.target_summary} right={data.right.target_summary} />
       <div className="semantic-comparison">
         <div>
@@ -281,9 +303,10 @@ function Comparison({ left, right }: { left: string; right: string }) {
           <summary>{row.condition} · {relationship(row.edge)}</summary>
           <p>{outcome(row.left)} → {outcome(row.right)}</p>
           <p>Exact outcome · {readable(row.left.exact_outcome)} → {readable(row.right.exact_outcome)}</p>
-          {!row.facts_comparable && <p>Two valid judgments are required to compare documentary facts.</p>}
-          {row.changed_facts.length > 0 && <ul>{row.changed_facts.map((fact) =>
-            <li key={fact.fact}>{fact.fact === "timing" ? timingWithoutCutoff : fact.fact} · {fact.left} → {fact.right}</li>)}</ul>}
+          {row.changed_members.length > 0 && <ul>{row.changed_members.map((member) => (
+            <li key={member.member_id}><strong>{member.member_id} · {member.left} → {member.right}</strong> · Source <code>{member.source_id}</code><br />
+              {member.quotation}</li>
+          ))}</ul>}
         </details>
       ))}
     </>
@@ -312,11 +335,10 @@ function SemanticMetricComparison({ left, right }: { left: SemanticSummary; righ
 }
 
 function outcome(value: SemanticOutcome) {
-  const verdict = value.verdict ?? statuses[value.status];
-  return value.reused ? `${verdict} (reused)` : verdict;
+  return `${value.complete ? "Complete proof" : "Incomplete proof"} · ${statuses[value.status]}${value.reused ? " (reused)" : ""}`;
 }
 
 function changed(row: SemanticTransition) {
-  return row.left.status !== row.right.status || row.left.verdict !== row.right.verdict ||
-    row.left.exact_outcome !== row.right.exact_outcome || row.changed_facts.length > 0;
+  return row.left.status !== row.right.status || row.left.complete !== row.right.complete ||
+    row.left.exact_outcome !== row.right.exact_outcome || row.changed_members.length > 0;
 }

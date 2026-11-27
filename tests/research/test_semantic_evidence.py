@@ -1,7 +1,6 @@
 """The live boundary is exercised with local HTTP responses only."""
 import json
 from concurrent.futures import ThreadPoolExecutor
-from datetime import date
 from decimal import Decimal
 from pathlib import Path
 
@@ -9,12 +8,13 @@ import httpx
 import pytest
 
 from private_client_graph.models.source import Source
+from private_client_graph.research.artifacts import checksum
 from private_client_graph.research.evidence_quality import EvidenceQuality
 from private_client_graph.research.provider import ModelResponse
 from private_client_graph.research.semantic_evidence.assessment import execute, freeze as freeze_plan, open_plan
 from private_client_graph.research.live_accounting import initialize_task
 from private_client_graph.research.semantic_evidence.inputs import (
-    EXTRACTOR_MANIFEST_SHA256, AssessmentInputs, Baseline, ExactOutcome, Item, _controls, _verified_quotes,
+    AssessmentInputs, Baseline, ExactOutcome, Item, _verify_quotations,
 )
 from private_client_graph.research.semantic_evidence.judging import Quotation, make_packet, parse_judgment
 from private_client_graph.research.semantic_evidence.reporting import report
@@ -33,13 +33,13 @@ def inputs():
         'observed_proof_targets': 71, 'observed_joint_targets': 30,
         'complete_proof': {'complete': 11, 'targets': 71, 'rate': 11 / 71},
         'joint_only_complete_proof': {'complete': 0, 'targets': 30, 'rate': 0.0},
-        'joint_only_coverage': {'targets': 30, 'mean': 0.043333333333333335},
+        'joint_only_coverage': {'targets': 30, 'mean': 1 / 60},
     })
     targets = [item for start, count, outcome in (
         (0, 11, 'complete'), (11, 56, 'incomplete'), (67, 2, 'missing_relationship'), (69, 2, 'unavailable_graph')
     ) for item in (_target(i, outcome) for i in range(start, start + count))]
-    return AssessmentInputs(extractor_manifest_sha256=EXTRACTOR_MANIFEST_SHA256,
-                            evidence_quality=quality, targets=tuple(targets), controls=_controls())
+    return AssessmentInputs(extractor_run='b' * 32, extractor_manifest_sha256='retained fixture',
+                            evidence_quality=quality, targets=tuple(targets))
 
 
 def freeze(directory, inputs, *, donors=(), task_root=None, task_call_ceiling=69):
@@ -53,23 +53,38 @@ def freeze(directory, inputs, *, donors=(), task_root=None, task_call_ceiling=69
 
 def _target(index: int, outcome: ExactOutcome) -> Item:
     edge = (f'Parent {index}', 'parent_of', f'Child {index}')
-    quote = Quotation(id='Q1', source='S1', text=f'Parent {index} is a parent of Child {index}.')
-    available = outcome in ('complete', 'incomplete')
+    members = (Quotation(id='M1', source='S1', text=f'Parent {index} is a parent of Child {index}.'),)
+    multi_source = 11 <= index < 40 or index == 67
+    if multi_source:
+        members += (Quotation(id='M2', source='S2', text=f'The register identifies Child {index}.'),)
+    routes = (tuple(member.id for member in members),)
+    if index == 13:
+        members += (Quotation(id='M3', source='S1', text='Names in original register.'),
+                    Quotation(id='M4', source='S3', text='Original entry records the relationship.'),
+                    Quotation(id='M5', source='S3', text='Entry takes effect after approval.'))
+        routes += (('M3', 'M4', 'M5'),)
+    exact = outcome == 'complete' or (outcome == 'incomplete' and index == 11)
+    actual = ()
+    if outcome in ('complete', 'incomplete'):
+        actual = (Quotation(id='Q1', source='S1', text=members[0].text if exact else f'Child {index} has Parent {index} as a parent.'),)
+        if index == 11:
+            actual += (Quotation(id='Q2', source='S2', text=f'Child {index} is identified in the register.'),)
+        if index == 13:
+            actual += (Quotation(id='Q2', source='S3', text='The relationship appears in the original entry.'),)
     return Item(id=f'{index:064x}', edge=edge, family='fixture', condition='fixture',
-        packet=make_packet(edge, (quote,)) if available else None,
-        source_ids={'S1': 'private source ID'} if available else {},
-        baseline=Baseline(exact_outcome=outcome, best_exact_pair_coverage=float(outcome == 'complete'),
-            joint_only=11 <= index < 41, matches_any_approved_pair=('Q1',) if outcome == 'complete' else ()))
+        source_ids={q.source: f'private source ID {q.source}' for q in members},
+        members=members, quotations=actual, alternatives=routes,
+        baseline=Baseline(exact_outcome=outcome, best_exact_pair_coverage=0.5 if exact and multi_source else float(exact),
+                          joint_only=multi_source))
 
 
-def _judgment(packet: dict, verdict: str = 'Supported') -> dict:
-    return {'verdict': verdict, 'facts': [
-        {'fact': fact['fact'], 'status': 'satisfied', 'quotation_ids': [packet['quotations'][0]['id']],
-         'reason': 'A bound fixture citation.'} for fact in packet['requirements']
-    ]}
+def _judgment(packet: dict, verdict: str = 'Equivalent') -> dict:
+    return {'decisions': [{**pair, 'verdict': verdict, 'reason': 'Fixture review of the attached words.',
+                           'material_differences': ['A material detail is missing.'] if verdict == 'Partially Equivalent' else []}
+                          for pair in packet['pairs']]}
 
 
-def _response(packet: dict, *, tokens: int = 100, verdict: str = 'Supported') -> httpx.Response:
+def _response(packet: dict, *, tokens: int = 100, verdict: str = 'Equivalent') -> httpx.Response:
     return httpx.Response(200, json={
         'id': 'mock', 'object': 'chat.completion', 'created': 1, 'model': 'deepseek-v4-pro',
         'choices': [{'index': 0, 'finish_reason': 'stop', 'message': {
@@ -83,15 +98,18 @@ def _run(directory, digest, client, rates=RATES, reference='offline test'):
             api_key='fixture-key', http_client=client)
 
 
-def test_fixed_targets_controls_and_privacy_boundary(tmp_path, inputs):
+def test_fixed_targets_and_source_matched_request_boundary(tmp_path, inputs):
     directory = tmp_path / 'assessment'
     digest = freeze(directory, inputs)
     offline = report(directory)
     assert offline['target_summary']['semantic_outcomes'] == {
-        'unattempted': 67, 'deterministic_delivery_failure': 4,
+        'unattempted': 56, 'no_eligible_comparison': 11, 'deterministic_delivery_failure': 4,
     }
-    assert offline['target_summary']['multi_source_evidence_coverage'] == {'targets': 30, 'judged': 0, 'mean': 0}
-    assert offline['target_summary']['evidence_support'] == {'count': 0, 'targets': 71, 'rate': 0}
+    assert offline['target_summary']['multi_source_evidence_coverage'] == {
+        'targets': 30, 'matched_target_equivalents': 0.5, 'mean': pytest.approx(1 / 60),
+    }
+    assert offline['target_summary']['evidence_support'] == {'count': 12, 'targets': 71, 'rate': pytest.approx(12 / 71)}
+    assert offline['target_summary']['proof_completion']['count'] == 11
     assert offline['operations']['reserved_attempts'] == 0
     requests = []
 
@@ -105,7 +123,7 @@ def test_fixed_targets_controls_and_privacy_boundary(tmp_path, inputs):
         assert request['response_format'] == {'type': 'json_object'}
         assert [message['role'] for message in request['messages']] == ['system', 'user']
         assertion = json.loads(request['messages'][1]['content'])
-        assert set(assertion) == {'assertion', 'requirements', 'quotations'}
+        assert set(assertion) == {'relationship', 'members', 'quotations', 'pairs'}
         assert all(set(quote) == {'id', 'source', 'text'} for quote in assertion['quotations'])
         assert 'private source ID' not in request['messages'][1]['content']
         if len(requests) == 1:
@@ -121,78 +139,59 @@ def test_fixed_targets_controls_and_privacy_boundary(tmp_path, inputs):
                 execution.result(timeout=20)
 
     result = report(directory)
-    assert len(requests) == 69
-    assert 'no explicit assessment cutoff' in result['temporal_limitation']
-    assert 'temporal correctness at that cutoff remains unverified' in result['temporal_limitation']
+    assert len(requests) == 56
     summary = result['target_summary']
-    assert summary['semantic_outcomes'] == {'provider_failed': 1, 'judged': 66, 'deterministic_delivery_failure': 4}
-    assert summary['verdicts'] == {'Uncertain': 1, 'Supported': 65}
-    assert summary['potentially_sufficient_overlooked_by_exact_matching'] == {
-        'count': 56, 'formal_target_denominator': 71,
-        'recovered_exact_incomplete_denominator': 56, 'recovered_exact_incomplete_judged': 56,
+    assert summary['semantic_outcomes'] == {
+        'no_eligible_comparison': 11, 'provider_failed': 1, 'judged': 55, 'deterministic_delivery_failure': 4,
     }
-    assert result['control_summary']['supported_warnings'] == 2
-    assert result['operations']['reserved_attempts'] == 69
+    assert summary['pair_verdicts']['Uncertain'] == 1
+    assert result['operations']['reserved_attempts'] == 56
     assert result['operations']['reserved_attempts_without_usage'] == 1
-    assert result['operations']['maximum_estimated_peak_usd'] == '2.18592'
+    assert Decimal(result['operations']['maximum_estimated_peak_usd']) == Decimal('1.77408')
     assert result['deterministic_baseline'] == offline['deterministic_baseline']
 
 
-def test_semantic_metrics_use_fixed_denominators_and_distinguish_partial_support(tmp_path, inputs):
-    targets = list(inputs.targets)
-    for index in (12, 13):
-        item = targets[index]
-        second = Quotation(id='Q2', source='S2', text='A second retained quotation.')
-        targets[index] = item.model_copy(update={
-            'packet': make_packet(item.edge, (*item.packet.quotations, second)),
-            'source_ids': {**item.source_ids, 'S2': 'second source ID'},
-            'baseline': item.baseline.model_copy(update={
-                'matches_any_approved_pair': ('Q2',) if index == 12 else (),
-                'best_exact_pair_coverage': 0.5 if index == 12 else 0,
-            }),
-        })
-    for index, multi_source in ((15, False), (67, True)):
-        item = targets[index]
-        targets[index] = item.model_copy(update={'baseline': item.baseline.model_copy(update={'joint_only': multi_source})})
-
+def test_semantic_metrics_keep_exact_credit_and_score_each_alternative(tmp_path, inputs):
     directory = tmp_path / 'assessment'
-    digest = freeze(directory, inputs.model_copy(update={'targets': tuple(targets)}))
+    digest = freeze(directory, inputs)
 
     def transport(request):
         packet = json.loads(json.loads(request.content)['messages'][1]['content'])
-        subject = packet['assertion']['subject']
-        response = _response(packet)
-        if subject == 'Parent 45':
+        subject = packet['relationship'][0]
+        if subject == 'Parent 11':
+            return _response(packet, verdict='old independent verdict')
+        if subject == 'Parent 12':
+            return _response(packet, verdict='Partially Equivalent')
+        if subject == 'Parent 14':
             return _response(packet, verdict='Uncertain')
-        if subject == 'Parent 46':
-            return _response(packet, verdict='Unsupported')
-        if subject not in {'Parent 12', 'Parent 13', 'Parent 14'}:
-            return response
-        body = response.json()
+        if subject != 'Parent 13':
+            return _response(packet)
+        body = _response(packet).json()
         judgment = _judgment(packet)
-        identity, relationship, timing, authority = judgment['facts']
-        for fact in (timing, authority):
-            fact.update(status='inapplicable', quotation_ids=[])
-        if subject in {'Parent 12', 'Parent 13'}:
-            judgment['verdict'] = 'Partially Supported'
-            identity.update(status='contradicted', quotation_ids=['Q2'])
-        else:
-            relationship['quotation_ids'] = ['Q2']
+        for decision in judgment['decisions']:
+            if decision['member_id'] in {'M3', 'M5'}:
+                decision.update(verdict='Not Equivalent', material_differences=['Different entry.'])
         body['choices'][0]['message']['content'] = json.dumps(judgment)
         return httpx.Response(200, json=body)
 
     with httpx.Client(transport=httpx.MockTransport(transport)) as client:
         _run(directory, digest, client)
 
-    summary = report(directory)['target_summary']
-    assert summary['semantic_outcomes'] == {'judged': 66, 'invalid_judgment': 1, 'deterministic_delivery_failure': 4}
-    assert summary['evidence_support'] == {'count': 64, 'targets': 71, 'rate': pytest.approx(64 / 71)}
-    assert summary['proof_completion'] == {'count': 62, 'targets': 71, 'rate': pytest.approx(62 / 71)}
-    assert summary['multi_source_evidence_coverage'] == {'targets': 30, 'judged': 28, 'mean': pytest.approx(27 / 30)}
-    assert summary['flags']['potential_new_partial_support'] == 2
-    assert summary['potential_partial_support_beyond_exact_matching'] == {
-        'count': 1, 'targets': 55, 'rate': pytest.approx(1 / 55),
+    result = report(directory)
+    summary = result['target_summary']
+    assert summary['evidence_support'] == {'count': 65, 'targets': 71, 'rate': pytest.approx(65 / 71)}
+    assert summary['proof_completion'] == {'count': 38, 'targets': 71, 'rate': pytest.approx(38 / 71)}
+    assert summary['multi_source_evidence_coverage'] == {
+        'targets': 30, 'matched_target_equivalents': 13.5, 'mean': pytest.approx(13.5 / 30),
     }
+    assert summary['pair_verdicts']['Partially Equivalent'] == 1
+    exact_row, partial_row, alternative_row = result['targets'][11:14]
+    assert exact_row['status'] == 'invalid_judgment'
+    assert exact_row['routes'][0]['matched_members'] == ['M1']
+    assert partial_row['routes'][0]['matched_members'] == []
+    assert [route['matched_members'] for route in alternative_row['routes']] == [['M1'], ['M4']]
+    assert [len(route['members']) for route in alternative_row['routes']] == [2, 3]
+    assert not any(route['complete'] for route in alternative_row['routes'])
 
 
 def test_interruption_spends_its_single_slot_on_continuation(tmp_path, inputs):
@@ -219,9 +218,9 @@ def test_interruption_spends_its_single_slot_on_continuation(tmp_path, inputs):
         _run(directory, digest, client)
     active, = active_states
     assert active['interrupted'] == active['awaiting_receipt'] == 1
-    assert len(seen) == 69
+    assert len(seen) == 56
     assert seen.count(seen[0]) == 1
-    assert report(directory)['operations']['reserved_attempts'] == 69
+    assert report(directory)['operations']['reserved_attempts'] == 56
     assert report(directory)['target_summary']['semantic_outcomes']['interrupted'] == 1
 
 
@@ -248,42 +247,78 @@ def test_price_digest_and_token_limits_block_dispatch(tmp_path, inputs):
 
 
 def test_oversized_request_cannot_be_frozen(tmp_path, inputs):
-    item = inputs.targets[0]
-    assert item.packet is not None
+    item = inputs.targets[12]
     large = Quotation(id='Q1', source='S1', text='é' * 6_500)
-    packet = item.packet.model_copy(update={'quotations': (large,)})
-    updated = inputs.model_copy(update={'targets': (item.model_copy(update={'packet': packet}), *inputs.targets[1:])})
+    targets = (*inputs.targets[:12], item.model_copy(update={'quotations': (large,)}), *inputs.targets[13:])
     with pytest.raises(ValueError, match='input-token envelope'):
-        freeze(tmp_path / 'oversized', updated)
+        freeze(tmp_path / 'oversized', inputs.model_copy(update={'targets': targets}))
 
 
-def test_mismatched_source_and_unsupported_citation_are_rejected():
+def test_mismatched_source_and_unsubmitted_pair_are_rejected():
     sources = [Source(id='original', title='hidden', text='Exact words'),
                Source(id='wrong', title='hidden', text='Another passage')]
     with pytest.raises(ValueError, match='attributed Source'):
-        _verified_quotes({('wrong', 'Exact words')}, sources)
+        _verify_quotations({('wrong', 'Exact words')}, sources)
 
     packet = make_packet(('Person', 'trustee_of', 'Trust'),
-                         (Quotation(id='Q1', source='S1', text='Exact words'),), cutoff=date(2040, 1, 1))
+                         (Quotation(id='M1', source='S1', text='Effective on 1 June.'),),
+                         (Quotation(id='Q1', source='S1', text='Effective in June.'),))
     judgment = _judgment(packet.model_dump(mode='json'))
-    judgment['facts'][0]['quotation_ids'] = ['unsubmitted']
-    response = ModelResponse(raw_response={'content': json.dumps(judgment),
-                             'response_metadata': {'finish_reason': 'stop'}})
-    with pytest.raises(ValueError, match='in this packet'):
-        parse_judgment(packet, response)
+    judgment['decisions'][0]['quotation_id'] = 'unsubmitted'
+    with pytest.raises(ValueError, match='exactly once'):
+        parse_judgment(packet, _model_response(judgment))
 
 
-@pytest.mark.parametrize('status, citations', [('missing', []), ('inapplicable', []), ('satisfied', [])])
-def test_supported_requires_cited_applicable_facts(status, citations):
+def _model_response(judgment: dict) -> ModelResponse:
+    return ModelResponse(raw_response={'content': json.dumps(judgment),
+                                       'response_metadata': {'finish_reason': 'stop'}})
+
+
+@pytest.mark.parametrize('invalid', ['omitted', 'duplicate', 'equivalent with difference', 'partial without difference', 'old verdict'])
+def test_pair_responses_are_bound_and_consistent(invalid):
     packet = make_packet(('Person', 'trustee_of', 'Trust'),
-                         (Quotation(id='Q1', source='S1', text='Exact words'),))
+                         (Quotation(id='M1', source='S1', text='Effective on 1 June.'),),
+                         (Quotation(id='Q1', source='S1', text='Effective in June.'),))
     judgment = _judgment(packet.model_dump(mode='json'))
-    fact = next(fact for fact in judgment['facts'] if fact['fact'] == 'timing')
-    fact.update(status=status, quotation_ids=citations)
-    response = ModelResponse(raw_response={'content': json.dumps(judgment),
-                             'response_metadata': {'finish_reason': 'stop'}})
+    decision, = judgment['decisions']
+    if invalid == 'omitted':
+        judgment['decisions'] = []
+    elif invalid == 'duplicate':
+        judgment['decisions'].append(decision)
+    elif invalid == 'equivalent with difference':
+        decision['material_differences'] = ['Missing appointment date.']
+    elif invalid == 'partial without difference':
+        decision['verdict'] = 'Partially Equivalent'
+    else:
+        decision['verdict'] = 'Supported'
     with pytest.raises(ValueError):
-        parse_judgment(packet, response)
+        parse_judgment(packet, _model_response(judgment))
+
+
+@pytest.mark.parametrize('reference, actual, verdict, difference', [
+    ('Nora is appointed effective 1 June 2040.', 'Nora is appointed effective 1 July 2040.',
+     'Not Equivalent', 'The effective date is a month later.'),
+    ('Nora serves only up to the 30 June 2040 cutoff.', 'Nora serves through July 2040.',
+     'Not Equivalent', 'The actual quotation extends service past the stated cutoff.'),
+    ('The signed deed appoints Nora.', 'The unsigned draft proposes appointing Nora.',
+     'Not Equivalent', 'The attached text describes draft rather than operative authority.'),
+    ('Jo is the parent of Lee.', 'Lee is the parent of Jo.',
+     'Not Equivalent', 'The direction of the relationship is reversed.'),
+    ('Nora is appointed effective 1 June 2040.', 'Nora is appointed.',
+     'Partially Equivalent', 'The actual quotation omits the effective date.'),
+    ('The signed deed appoints Nora.', 'It names Nora.',
+     'Uncertain', 'The role and authority are unclear.'),
+])
+def test_material_differences_are_preserved_for_inspection(reference, actual, verdict, difference):
+    edge = ('Jo', 'parent_of', 'Lee') if reference.startswith('Jo') else ('Nora', 'trustee_of', 'Trust')
+    packet = make_packet(edge,
+                         (Quotation(id='M1', source='S1', text=reference),),
+                         (Quotation(id='Q1', source='S1', text=actual),))
+    judgment = _judgment(packet.model_dump(mode='json'), verdict)
+    judgment['decisions'][0]['material_differences'] = [difference]
+    decision, = parse_judgment(packet, _model_response(judgment)).decisions
+    assert decision.verdict == verdict
+    assert decision.material_differences == (difference,)
 
 
 def test_plan_tampering_cannot_use_original_digest(tmp_path, inputs):
@@ -293,6 +328,21 @@ def test_plan_tampering_cannot_use_original_digest(tmp_path, inputs):
     path.write_bytes(path.read_bytes().replace(b'0.0', b'1.0', 1))
     with pytest.raises(ValueError, match='checksum mismatch'):
         open_plan(directory)
+
+
+def test_old_independent_assessment_cannot_be_used_as_a_reuse_donor(tmp_path, inputs):
+    donor = tmp_path / 'old'
+    freeze(donor, inputs)
+    path = donor / 'plan.json'
+    payload = json.loads(path.read_text())
+    payload['version'] = 'pcg-semantic-evidence-v1'
+    raw = json.dumps(payload).encode()
+    path.write_bytes(raw)
+    (donor / 'plan-sha256.json').write_text(json.dumps(checksum(raw)))
+    recipient = tmp_path / 'recipient'
+    with pytest.raises(ValueError, match='pcg-semantic-evidence-equivalence'):
+        freeze(recipient, inputs.model_copy(update={'extractor_run': 'a' * 32}), donors=(donor,))
+    assert not recipient.exists()
 
 
 def test_provider_access_failure_preserves_remaining_slots(tmp_path, inputs):
@@ -318,7 +368,7 @@ def test_reuse_binds_packet_source_target_and_keeps_invalid_in_comparison(tmp_pa
 
     def original(request):
         packet = json.loads(json.loads(request.content)['messages'][1]['content'])
-        if packet['assertion']['subject'] == 'Parent 0':
+        if packet['relationship'][0] == 'Parent 15':
             return _response(packet, verdict='unsupported')
         return _response(packet)
 
@@ -326,12 +376,14 @@ def test_reuse_binds_packet_source_target_and_keeps_invalid_in_comparison(tmp_pa
         _run(donor, donor_digest, client)
     original_summary = report(donor)['deterministic_baseline']
 
-    same_words_new_source = inputs.targets[12].model_copy(update={'source_ids': {'S1': 'a different Source'}})
+    source_item = inputs.targets[12]
+    same_words_new_source = source_item.model_copy(update={'quotations': (
+        source_item.quotations[0].model_copy(update={'source': 'S2'}),
+    )})
     new_source_item = inputs.targets[17]
-    changed_quote = new_source_item.packet.model_copy(update={'quotations': (
+    changed_item = new_source_item.model_copy(update={'quotations': (
         Quotation(id='Q1', source='S1', text='A different attached excerpt.'),
     )})
-    changed_item = new_source_item.model_copy(update={'packet': changed_quote})
     right_targets = list(inputs.targets)
     right_targets[12], right_targets[17] = same_words_new_source, changed_item
     right_targets[13] = _target(13, 'missing_relationship')
@@ -340,14 +392,14 @@ def test_reuse_binds_packet_source_target_and_keeps_invalid_in_comparison(tmp_pa
     digest = freeze(recipient, other, donors=(donor,))
     plan, _, _ = open_plan(recipient)
     assert plan.max_calls == 4
-    assert len(plan.reused) == 65
-    assert not {inputs.targets[index].id for index in (0, 12, 13, 17, 69)} & plan.reused.keys()
+    assert len(plan.reused) == 52
+    assert not {inputs.targets[index].id for index in (12, 13, 15, 17, 69)} & plan.reused.keys()
     assert all(reuse.origin_run == inputs.extractor_run and reuse.origin_plan_sha256 == donor_digest
                for reuse in plan.reused.values())
 
     pending = compare(donor, recipient)
     assert pending['formal_targets'] == 71
-    assert pending['paired_valid_targets'] == 63
+    assert pending['paired_valid_targets'] == 52
     assert len(pending['transitions']) == 71
 
     packets = []
@@ -355,34 +407,29 @@ def test_reuse_binds_packet_source_target_and_keeps_invalid_in_comparison(tmp_pa
     def changed(request):
         packet = json.loads(json.loads(request.content)['messages'][1]['content'])
         packets.append(packet)
-        response = _response(packet)
-        if packet['assertion']['subject'] == 'Parent 12':
-            body = response.json()
-            judgment = _judgment(packet, 'Partially Supported')
-            judgment['facts'][1].update(status='missing', quotation_ids=[])
-            body['choices'][0]['message']['content'] = json.dumps(judgment)
-            return httpx.Response(200, json=body)
-        return response
+        if packet['relationship'][0] == 'Parent 12':
+            return _response(packet, verdict='Partially Equivalent')
+        return _response(packet)
 
     with httpx.Client(transport=httpx.MockTransport(changed)) as client:
         _run(recipient, digest, client)
     assert len(packets) == 4
     after = compare(donor, recipient)
-    assert after['temporal_limitation'] == report(donor)['temporal_limitation']
+    assert after['scope_note'] == report(donor)['scope_note']
     assert after['formal_targets'] == 71
-    assert after['paired_valid_targets'] == 65
+    assert after['paired_valid_targets'] == 54
     for side in ('left', 'right'):
         summary = after[side]['target_summary']
         assert summary['evidence_support']['targets'] == summary['proof_completion']['targets'] == 71
         assert summary['multi_source_evidence_coverage']['targets'] == 30
-    assert after['right']['operations']['reused_judgments'] == 65
+    assert after['right']['operations']['reused_judgments'] == 52
     assert after['right']['operations']['reserved_attempts'] == 4
     rows = {row['id']: row for row in after['transitions']}
-    assert rows[inputs.targets[0].id]['left']['status'] == 'invalid_judgment'
-    assert rows[inputs.targets[0].id]['changed_facts'] == []
-    assert rows[inputs.targets[12].id]['changed_facts'] == [
-        {'fact': 'relationship', 'left': 'satisfied', 'right': 'missing'},
-    ]
+    assert rows[inputs.targets[15].id]['left']['status'] == 'invalid_judgment'
+    assert rows[inputs.targets[12].id]['changed_members'] == [{
+        'member_id': 'M1', 'source_id': 'private source ID S1',
+        'quotation': 'Parent 12 is a parent of Child 12.', 'left': 'semantic', 'right': 'unmatched',
+    }]
     assert rows[inputs.targets[13].id]['right']['status'] == 'deterministic_delivery_failure'
     assert report(recipient)['deterministic_baseline'] == original_summary
 
@@ -400,8 +447,8 @@ def test_fully_reused_plan_can_report_without_paid_authority(tmp_path, inputs):
     freeze(recipient, inputs.model_copy(update={'extractor_run': 'a' * 32}), donors=(donor,))
     view = report(recipient)
     assert view['operations']['planned_attempts'] == view['operations']['reserved_attempts'] == 0
-    assert view['operations']['reused_judgments'] == 69
-    assert view['target_summary']['semantic_outcomes']['judged'] == 67
+    assert view['operations']['reused_judgments'] == 56
+    assert view['target_summary']['semantic_outcomes']['judged'] == 56
 
 
 def test_private_workbench_reads_allow_owner_only(tmp_path, inputs, monkeypatch):
@@ -427,7 +474,7 @@ def test_private_workbench_reads_allow_owner_only(tmp_path, inputs, monkeypatch)
         assert response.status_code == 200
         assert response.headers['cache-control'] == 'no-store'
         assert len(response.json()['targets']) == 71
-        assert 'no explicit assessment cutoff' in response.json()['temporal_limitation']
+        assert 'cutoff absent' in response.json()['scope_note']
         assert client.post(path, auth=('owner', token)).status_code == 405
     with TestClient(app, client=('192.0.2.1', 1234)) as client:
         assert client.get(path, auth=('owner', token)).status_code == 403
@@ -441,7 +488,7 @@ def test_two_assessments_share_the_task_ceiling(tmp_path, inputs):
     task_root.mkdir()
     task = initialize_task(task_root, 'Shared semantic budget')
     first, second = tmp_path / 'first', tmp_path / 'second'
-    cap = 70
+    cap = 57
     first_digest = freeze(first, inputs, task_root=task_root, task_call_ceiling=cap)
     other = inputs.model_copy(update={'extractor_run': 'a' * 32})
     second_digest = freeze(second, other, task_root=task_root, task_call_ceiling=cap)
@@ -458,7 +505,7 @@ def test_two_assessments_share_the_task_ceiling(tmp_path, inputs):
             with pytest.raises(BudgetExceeded, match='Shared task allowance'):
                 _run(second, second_digest, client)
     assert task_state(Path(task['ledger']))['used'] == len(requests) == cap
-    assert report(first)['operations']['reserved_attempts'] == 69
+    assert report(first)['operations']['reserved_attempts'] == 56
     assert report(second)['operations']['reserved_attempts'] == 1
 
 
@@ -479,14 +526,16 @@ def test_in_flight_and_wrong_model_are_distinct(tmp_path, inputs):
         _run(directory, digest, client)
 
     result = report(directory)
-    assert result['target_summary']['semantic_outcomes'] == {'invalid_judgment': 67, 'deterministic_delivery_failure': 4}
+    assert result['target_summary']['semantic_outcomes'] == {
+        'invalid_judgment': 56, 'no_eligible_comparison': 11, 'deterministic_delivery_failure': 4,
+    }
     assert result['operations']['known_estimated_peak_usd'] > 0
-    first = result['targets'][0]
+    first = result['targets'][11]
     assert first['error'] == 'Provider did not return the frozen judge model'
     assert first['invalid_response']
 
 
-def test_mismatched_scorer_and_neutral_requirements_are_rejected(tmp_path, inputs):
+def test_mismatched_scorer_and_frozen_reference_are_rejected(tmp_path, inputs):
     left, right = tmp_path / 'left', tmp_path / 'right'
     freeze(left, inputs)
     quality = inputs.evidence_quality.model_copy(update={'scoring_sha256': 'alternative'})
@@ -495,12 +544,13 @@ def test_mismatched_scorer_and_neutral_requirements_are_rejected(tmp_path, input
     with pytest.raises(ValueError, match='same frozen target scope'):
         compare(left, right)
 
-    item = inputs.targets[0]
-    changed = item.packet.requirements[0].model_copy(update={'description': 'Use extra context'})
-    packet = item.packet.model_copy(update={'requirements': (changed, *item.packet.requirements[1:])})
-    targets = (item.model_copy(update={'packet': packet}), *inputs.targets[1:])
-    with pytest.raises(ValueError, match='neutral documentary requirements'):
-        freeze(tmp_path / 'nonneutral', inputs.model_copy(update={'targets': targets}))
+    item = inputs.targets[12]
+    altered = item.members[0].model_copy(update={'text': 'A different required quotation.'})
+    targets = (*inputs.targets[:12], item.model_copy(update={'members': (altered, *item.members[1:])}), *inputs.targets[13:])
+    other = inputs.model_copy(update={'extractor_run': 'c' * 32, 'targets': targets})
+    freeze(tmp_path / 'other-reference', other)
+    with pytest.raises(ValueError, match='same frozen target scope'):
+        compare(left, tmp_path / 'other-reference')
 
 
 def test_plan_is_retryable_on_interrupted_publication(tmp_path, inputs, monkeypatch):
@@ -528,14 +578,14 @@ def test_sealed_receipts_detect_substitution(tmp_path, inputs):
 
     def interrupt_after_one(request):
         packet = json.loads(json.loads(request.content)['messages'][1]['content'])
-        if packet['assertion']['subject'] != 'Parent 0':
+        if packet['relationship'][0] != 'Parent 11':
             raise KeyboardInterrupt
         return _response(packet)
 
     with httpx.Client(transport=httpx.MockTransport(interrupt_after_one)) as client:
         with pytest.raises(KeyboardInterrupt):
             _run(directory, digest, client)
-    original = directory / 'receipts' / f'{inputs.targets[0].id}.json'
+    original = directory / 'receipts' / f'{inputs.targets[11].id}.json'
     original.write_bytes(original.read_bytes().replace(b'deepseek-v4-pro', b'changed-model'))
     with pytest.raises(ValueError, match='sealed completion'):
         report(directory)
@@ -594,3 +644,19 @@ def test_task_registry_recovers_single_unpublished_identity(tmp_path, monkeypatc
     saved, = store.task_root(tmp_path).glob('task-ledgers/*/task.json')
     assert store.initialize(tmp_path) == json.loads(saved.read_text())
     assert store.initialize(tmp_path) == json.loads(saved.read_text())
+
+
+def test_equivalence_packet_excludes_exact_matches_and_wrong_sources():
+    actual = (
+        Quotation(id='Q1', source='S1', text='Approved appointment.'),
+        Quotation(id='Q2', source='S2', text='The appointment took effect on 1 June.'),
+        Quotation(id='Q3', source='S3', text='The appointment took effect on 1 June.'),
+    )
+    required = (
+        Quotation(id='M1', source='S1', text='Approved appointment.'),
+        Quotation(id='M2', source='S2', text='Effective from the first of June.'),
+    )
+    packet = make_packet(('Nora Vale', 'trustee_of', 'Hearth Trust'), required, actual)
+    assert [(pair.member_id, pair.quotation_id) for pair in packet.pairs] == [('M2', 'Q2')]
+    assert [quote.id for quote in packet.quotations] == ['Q2']
+    assert [member.id for member in packet.members] == ['M2']

@@ -163,10 +163,10 @@ CI uses synthetic fixtures and substituted provider responses.
 
 ## Optional Semantic Evidence assessment
 
-The owner Workbench can show an AI-assessed, unverified evidence comparison
+The owner Workbench can show an AI-assisted, unverified evidence comparison
 for completed Runs. The standalone stage reuses retained quotations and
 requires separate approval for any new DeepSeek calls. See the
-[Semantic Evidence v1 workflow](semantic-evidence-diagnostic-v1.md).
+[Semantic Evidence workflow](semantic-evidence-diagnostic-v1.md).
 
 ## Later retrieval experiment
 

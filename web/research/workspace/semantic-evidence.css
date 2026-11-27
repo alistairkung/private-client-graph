@@ -144,3 +144,13 @@
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
+
+.semantic-member + .semantic-member {
+  border-block-start: 1px solid var(--rule);
+  margin-block-start: 1rem;
+  padding-block-start: 0.5rem;
+}
+
+.semantic-pair {
+  margin-inline-start: 0.75rem;
+}

@@ -9,11 +9,11 @@ from private_client_graph.models.evaluation_result import SemanticEdge
 from private_client_graph.research.provider import ModelSettings, TokenUsage
 from private_client_graph.research.semantic_evidence.comparison import compare
 from private_client_graph.research.semantic_evidence.inputs import Baseline, ExactOutcome
-from private_client_graph.research.semantic_evidence.judging import Fact, FactStatus, Judgment, Quotation, Verdict
+from private_client_graph.research.semantic_evidence.judging import CandidatePair, PairDecision, Quotation, Verdict
 from private_client_graph.research.semantic_evidence.reporting import report
 from private_client_graph.research.semantic_evidence.store import find
 
-SemanticStatus = Literal['judged', 'invalid_judgment', 'deterministic_delivery_failure',
+SemanticStatus = Literal['judged', 'invalid_judgment', 'deterministic_delivery_failure', 'no_eligible_comparison',
                          'unattempted', 'awaiting_receipt', 'interrupted', 'provider_failed']
 
 
@@ -34,13 +34,6 @@ class SemanticOperations(BaseModel):
     mean_latency_seconds: float | None
 
 
-class PotentialSupport(BaseModel):
-    count: int | None
-    formal_target_denominator: int
-    recovered_exact_incomplete_denominator: int
-    recovered_exact_incomplete_judged: int
-
-
 class SemanticTargetRate(BaseModel):
     count: int
     targets: int
@@ -49,21 +42,21 @@ class SemanticTargetRate(BaseModel):
 
 class SemanticMultiSourceEvidenceCoverage(BaseModel):
     targets: int
-    judged: int
+    matched_target_equivalents: float
     mean: float | None
 
 
 class SemanticSummary(BaseModel):
     formal_targets: int
-    recovered_targets: int
     semantic_outcomes: dict[SemanticStatus, int]
-    verdicts: dict[Verdict, int]
-    flags: dict[str, int]
+    pair_verdicts: dict[Verdict, int]
+    candidate_pairs: int
     evidence_support: SemanticTargetRate
     proof_completion: SemanticTargetRate
     multi_source_evidence_coverage: SemanticMultiSourceEvidenceCoverage
-    potential_partial_support_beyond_exact_matching: SemanticTargetRate
-    potentially_sufficient_overlooked_by_exact_matching: PotentialSupport
+    targets_with_added_matches: int
+    additional_matched_members: int
+    newly_completed_proofs: int
 
 
 class SemanticReuse(BaseModel):
@@ -86,16 +79,25 @@ class SemanticQuotation(Quotation):
     source_id: str
 
 
+class SemanticRoute(BaseModel):
+    members: list[str]
+    matched_members: list[str]
+    complete: bool
+
+
 class SemanticTarget(BaseModel):
     id: str
-    condition: str | None
+    condition: str
     edge: SemanticEdge
-    control: str | None
-    deterministic: Baseline | None
+    deterministic: Baseline
     status: SemanticStatus
-    flags: list[str]
-    quotations: list[SemanticQuotation] = []
-    judgment: Judgment | None = None
+    members: list[SemanticQuotation]
+    quotations: list[SemanticQuotation]
+    exact_matches: dict[str, str]
+    semantic_members: list[str]
+    routes: list[SemanticRoute]
+    candidate_pairs: list[CandidatePair]
+    decisions: list[PairDecision]
     error: str | None = None
     invalid_response: str | None = None
     provider: SemanticProvider | None = None
@@ -110,25 +112,28 @@ class SemanticRunSummary(BaseModel):
 
 
 class SemanticEvidenceReport(SemanticRunSummary):
-    status: Literal['Exploratory and unverified']
-    temporal_limitation: str
+    status: Literal['AI-assisted, unverified']
+    scope_note: str
     evaluator: SemanticEvaluator
     targets: list[SemanticTarget]
-    controls: list[SemanticTarget]
 
 
 class SemanticOutcome(BaseModel):
     status: SemanticStatus
-    verdict: Verdict | None
     exact_outcome: ExactOutcome
-    potentially_sufficient: bool
+    complete: bool
     reused: bool
 
 
-class SemanticFactChange(BaseModel):
-    fact: Fact
-    left: FactStatus
-    right: FactStatus
+MemberMatch = Literal['exact', 'semantic', 'unmatched']
+
+
+class SemanticMemberChange(BaseModel):
+    member_id: str
+    source_id: str
+    quotation: str
+    left: MemberMatch
+    right: MemberMatch
 
 
 class SemanticTransition(BaseModel):
@@ -137,13 +142,12 @@ class SemanticTransition(BaseModel):
     edge: SemanticEdge
     left: SemanticOutcome
     right: SemanticOutcome
-    facts_comparable: bool
-    changed_facts: list[SemanticFactChange]
+    changed_members: list[SemanticMemberChange]
 
 
 class SemanticComparison(BaseModel):
-    status: Literal['Exploratory and unverified']
-    temporal_limitation: str
+    status: Literal['AI-assisted, unverified']
+    scope_note: str
     evaluator: SemanticEvaluator
     formal_targets: int
     paired_valid_targets: int

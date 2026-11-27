@@ -10,8 +10,6 @@ export type Baseline = {
   exact_outcome: "complete" | "incomplete" | "missing_relationship" | "unavailable_graph";
   best_exact_pair_coverage: number;
   joint_only: boolean;
-  matches_any_approved_pair: Array<string>;
-  approved_route_source_set_present: boolean | null;
 };
 
 export type BenchmarkComparison = {
@@ -156,6 +154,11 @@ export type BenchmarkV4Summary = {
   consensus: DeliveredGraphMetrics | null;
   by_matter: Record<string, DeliveredGraphMetrics>;
   consensus_evidence: ConsensusEvidenceDiagnostics;
+};
+
+export type CandidatePair = {
+  member_id: string;
+  quotation_id: string;
 };
 
 export type CanonicalGraph = {
@@ -472,13 +475,6 @@ export type ExtractionResult = {
   relationships: Array<RelationshipCandidate>;
 };
 
-export type FactFinding = {
-  fact: "identity" | "relationship" | "timing" | "authority";
-  status: "satisfied" | "contradicted" | "missing" | "uncertain" | "inapplicable";
-  quotation_ids: Array<string>;
-  reason: string;
-};
-
 export type FamilyResearchContext = {
   revision: string | number;
   dossier_sha256: string;
@@ -574,11 +570,6 @@ export type InputChoice = {
 export type JointCoverage = {
   targets: number;
   mean: number | null;
-};
-
-export type Judgment = {
-  verdict: "Supported" | "Partially Supported" | "Unsupported" | "Uncertain";
-  facts: Array<FactFinding>;
 };
 
 export type LegacyCaseLabel = {
@@ -686,17 +677,18 @@ export type ObservationPair = {
   right_sample: string;
 };
 
+export type PairDecision = {
+  member_id: string;
+  quotation_id: string;
+  verdict: "Equivalent" | "Partially Equivalent" | "Not Equivalent" | "Uncertain";
+  reason: string;
+  material_differences: Array<string>;
+};
+
 export type PairingExclusion = {
   side: "left" | "right";
   observation_id: string;
   reason: string;
-};
-
-export type PotentialSupport = {
-  count: number | null;
-  formal_target_denominator: number;
-  recovered_exact_incomplete_denominator: number;
-  recovered_exact_incomplete_judged: number;
 };
 
 export type Preview = {
@@ -997,8 +989,8 @@ export type ScopeInput = {
 };
 
 export type SemanticComparison = {
-  status: "Exploratory and unverified";
-  temporal_limitation: string;
+  status: "AI-assisted, unverified";
+  scope_note: string;
   evaluator: SemanticEvaluator;
   formal_targets: number;
   paired_valid_targets: number;
@@ -1020,22 +1012,23 @@ export type SemanticEvidenceReport = {
   plan_sha256: string;
   target_summary: SemanticSummary;
   operations: SemanticOperations;
-  status: "Exploratory and unverified";
-  temporal_limitation: string;
+  status: "AI-assisted, unverified";
+  scope_note: string;
   evaluator: SemanticEvaluator;
   targets: Array<SemanticTarget>;
-  controls: Array<SemanticTarget>;
 };
 
-export type SemanticFactChange = {
-  fact: "identity" | "relationship" | "timing" | "authority";
-  left: "satisfied" | "contradicted" | "missing" | "uncertain" | "inapplicable";
-  right: "satisfied" | "contradicted" | "missing" | "uncertain" | "inapplicable";
+export type SemanticMemberChange = {
+  member_id: string;
+  source_id: string;
+  quotation: string;
+  left: "exact" | "semantic" | "unmatched";
+  right: "exact" | "semantic" | "unmatched";
 };
 
 export type SemanticMultiSourceEvidenceCoverage = {
   targets: number;
-  judged: number;
+  matched_target_equivalents: number;
   mean: number | null;
 };
 
@@ -1049,10 +1042,9 @@ export type SemanticOperations = {
 };
 
 export type SemanticOutcome = {
-  status: "judged" | "invalid_judgment" | "deterministic_delivery_failure" | "unattempted" | "awaiting_receipt" | "interrupted" | "provider_failed";
-  verdict: "Supported" | "Partially Supported" | "Unsupported" | "Uncertain" | null;
+  status: "judged" | "invalid_judgment" | "deterministic_delivery_failure" | "no_eligible_comparison" | "unattempted" | "awaiting_receipt" | "interrupted" | "provider_failed";
   exact_outcome: "complete" | "incomplete" | "missing_relationship" | "unavailable_graph";
-  potentially_sufficient: boolean;
+  complete: boolean;
   reused: boolean;
 };
 
@@ -1079,6 +1071,12 @@ export type SemanticReuse = {
   origin_receipt_sha256: string;
 };
 
+export type SemanticRoute = {
+  members: Array<string>;
+  matched_members: Array<string>;
+  complete: boolean;
+};
+
 export type SemanticRunSummary = {
   run_id: string;
   plan_sha256: string;
@@ -1088,27 +1086,30 @@ export type SemanticRunSummary = {
 
 export type SemanticSummary = {
   formal_targets: number;
-  recovered_targets: number;
   semantic_outcomes: Record<string, number>;
-  verdicts: Record<string, number>;
-  flags: Record<string, number>;
+  pair_verdicts: Record<string, number>;
+  candidate_pairs: number;
   evidence_support: SemanticTargetRate;
   proof_completion: SemanticTargetRate;
   multi_source_evidence_coverage: SemanticMultiSourceEvidenceCoverage;
-  potential_partial_support_beyond_exact_matching: SemanticTargetRate;
-  potentially_sufficient_overlooked_by_exact_matching: PotentialSupport;
+  targets_with_added_matches: number;
+  additional_matched_members: number;
+  newly_completed_proofs: number;
 };
 
 export type SemanticTarget = {
   id: string;
-  condition: string | null;
+  condition: string;
   edge: [string, "parent_of" | "sibling_of" | "spouse_of" | "settlor_of" | "trustee_of" | "beneficiary_of", string];
-  control: string | null;
-  deterministic: Baseline | null;
-  status: "judged" | "invalid_judgment" | "deterministic_delivery_failure" | "unattempted" | "awaiting_receipt" | "interrupted" | "provider_failed";
-  flags: Array<string>;
+  deterministic: Baseline;
+  status: "judged" | "invalid_judgment" | "deterministic_delivery_failure" | "no_eligible_comparison" | "unattempted" | "awaiting_receipt" | "interrupted" | "provider_failed";
+  members: Array<SemanticQuotation>;
   quotations: Array<SemanticQuotation>;
-  judgment: Judgment | null;
+  exact_matches: Record<string, string>;
+  semantic_members: Array<string>;
+  routes: Array<SemanticRoute>;
+  candidate_pairs: Array<CandidatePair>;
+  decisions: Array<PairDecision>;
   error: string | null;
   invalid_response: string | null;
   provider: SemanticProvider | null;
@@ -1127,8 +1128,7 @@ export type SemanticTransition = {
   edge: [string, "parent_of" | "sibling_of" | "spouse_of" | "settlor_of" | "trustee_of" | "beneficiary_of", string];
   left: SemanticOutcome;
   right: SemanticOutcome;
-  facts_comparable: boolean;
-  changed_facts: Array<SemanticFactChange>;
+  changed_members: Array<SemanticMemberChange>;
 };
 
 export type Source = {

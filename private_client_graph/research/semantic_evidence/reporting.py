@@ -1,5 +1,6 @@
 """Regenerate unverified comparisons from the fixed plan and retained observations."""
 from collections import Counter
+from fractions import Fraction
 from pathlib import Path
 from typing import Any
 
@@ -10,26 +11,21 @@ from .assessment import (
     open_plan, read_receipt, reservation_snapshot, upper_cost, validate_judge_response,
 )
 from .inputs import Item
-from .judging import Judgment
+from .judging import Quotation
 
-TEMPORAL_LIMITATION = (
-    'Benchmark v4 targets have no explicit assessment cutoff. Timing findings, including satisfied, '
-    'describe the submitted quotations. When a claim depends on a cutoff, temporal correctness at that '
-    'cutoff remains unverified. This includes Supported judgments on trust relationships where operative '
-    'timing matters.'
-)
+SCOPE_NOTE = ('Approved members define the comparison. Preserve stated dates, timing and authority. '
+              'A cutoff absent from the approved text is not inferred.')
 
 
 def report(directory: Path) -> dict[str, Any]:
     plan, digest, task = open_plan(directory)
     reservations = reservation_snapshot(plan, digest, task)
     targets = [_row(directory, plan, item, reservations) for item in plan.inputs.targets]
-    controls = [_row(directory, plan, item, reservations) for item in plan.inputs.controls]
     quality = plan.inputs.evidence_quality
     return {
         'assessment': plan.version,
-        'status': 'Exploratory and unverified',
-        'temporal_limitation': TEMPORAL_LIMITATION,
+        'status': 'AI-assisted, unverified',
+        'scope_note': SCOPE_NOTE,
         'plan_sha256': digest,
         'extractor_run': plan.inputs.extractor_run,
         'run_id': plan.inputs.extractor_run,
@@ -38,7 +34,7 @@ def report(directory: Path) -> dict[str, Any]:
             'prompt_sha256': checksum(plan.system_prompt.encode()),
             'model': plan.settings.model,
             'settings': plan.settings.model_dump(mode='json'),
-            'observation_origin': plan.inputs.evidence_quality.observation_origin,
+            'observation_origin': quality.observation_origin,
         },
         'extractor_manifest_sha256': plan.inputs.extractor_manifest_sha256,
         'deterministic_baseline': {
@@ -47,59 +43,40 @@ def report(directory: Path) -> dict[str, Any]:
             'qualified_reference_sha256': quality.qualified_reference_sha256,
             'scorer_sha256': quality.scoring_sha256,
             'proof_completion': quality.complete_proof.model_dump(mode='json'),
-            'multi_source_proof_completion': quality.joint_only_complete_proof.model_dump(mode='json'),
             'multi_source_evidence_coverage': quality.joint_only_coverage.model_dump(mode='json'),
         },
-        'target_summary': _target_summary(targets, sum(item.packet is not None for item in plan.inputs.targets)),
-        'control_summary': {
-            'count': len(controls),
-            'semantic_outcomes': dict(Counter(row['status'] for row in controls)),
-            'verdicts': _verdicts(controls),
-            'supported_warnings': sum('supported_control' in row['flags'] for row in controls),
-        },
-        'operations': _operations(plan, [*targets, *controls], reservations.ids),
+        'target_summary': _target_summary(targets),
+        'operations': _operations(plan, targets, reservations.ids),
         'targets': targets,
-        'controls': controls,
     }
 
 
-def _target_summary(targets: list[dict[str, Any]], recovered_count: int) -> dict[str, Any]:
-    incomplete = [row for row in targets if row['deterministic']['exact_outcome'] == 'incomplete']
-    zero_exact = [row for row in incomplete if not row['deterministic']['matches_any_approved_pair']]
-    joint_only = [row for row in targets if row['deterministic']['joint_only']]
-    verdicts = _verdicts(targets)
-    supported = verdicts.get('Supported', 0)
-    judged_incomplete = sum(row['status'] == 'judged' for row in incomplete)
+def _target_summary(targets: list[dict[str, Any]]) -> dict[str, Any]:
+    multi_source = [row for row in targets if row['deterministic']['joint_only']]
+    total_coverage = sum((_best_coverage(row) for row in multi_source), Fraction())
     return {
         'formal_targets': len(targets),
-        'recovered_targets': recovered_count,
-        'deterministic_outcomes': dict(Counter(row['deterministic']['exact_outcome'] for row in targets)),
         'semantic_outcomes': dict(Counter(row['status'] for row in targets)),
-        'verdicts': verdicts,
-        'flags': dict(Counter(flag for row in targets for flag in row['flags'])),
-        'verdicts_by_exact_outcome': {
-            outcome: _verdicts([row for row in targets if row['deterministic']['exact_outcome'] == outcome])
-            for outcome in ('complete', 'incomplete')
+        'pair_verdicts': dict(Counter(decision['verdict'] for row in targets for decision in row['decisions'])),
+        'candidate_pairs': sum(len(row['candidate_pairs']) for row in targets),
+        'evidence_support': _target_rate(sum(any(route['matched_members'] for route in row['routes'])
+                                             for row in targets), len(targets)),
+        'proof_completion': _target_rate(sum(any(route['complete'] for route in row['routes'])
+                                              for row in targets), len(targets)),
+        'multi_source_evidence_coverage': {
+            'targets': len(multi_source),
+            'matched_target_equivalents': float(total_coverage),
+            'mean': float(total_coverage / len(multi_source)) if multi_source else None,
         },
-        'joint_only': {
-            'formal_targets': len(joint_only),
-            'semantic_outcomes': dict(Counter(row['status'] for row in joint_only)),
-            'verdicts': _verdicts(joint_only),
-        },
-        'evidence_support': _target_rate(supported + verdicts.get('Partially Supported', 0), len(targets)),
-        'proof_completion': _target_rate(supported, len(targets)),
-        'multi_source_evidence_coverage': _multi_source_evidence_coverage(joint_only),
-        'potential_partial_support_beyond_exact_matching': _target_rate(
-            sum('potential_new_partial_support' in row['flags'] for row in zero_exact), len(zero_exact),
-        ),
-        'potentially_sufficient_overlooked_by_exact_matching': {
-            'count': sum('potentially_sufficient_overlooked_by_exact_matching' in row['flags']
-                         for row in incomplete) if judged_incomplete else None,
-            'formal_target_denominator': len(targets),
-            'recovered_exact_incomplete_denominator': len(incomplete),
-            'recovered_exact_incomplete_judged': judged_incomplete,
-        },
+        'targets_with_added_matches': sum(bool(row['semantic_members']) for row in targets),
+        'additional_matched_members': sum(len(row['semantic_members']) for row in targets),
+        'newly_completed_proofs': sum(row['deterministic']['exact_outcome'] != 'complete'
+                                      and any(route['complete'] for route in row['routes']) for row in targets),
     }
+
+
+def _best_coverage(row: dict[str, Any]) -> Fraction:
+    return max(Fraction(len(route['matched_members']), len(route['members'])) for route in row['routes'])
 
 
 def _target_rate(count: int, targets: int) -> dict[str, int | float | None]:
@@ -107,78 +84,63 @@ def _target_rate(count: int, targets: int) -> dict[str, int | float | None]:
 
 
 def _row(directory: Path, plan: Plan, item: Item, reservations: ReservationSnapshot) -> dict[str, Any]:
+    packet = item.packet
     row: dict[str, Any] = {
         'id': item.id,
         'condition': item.condition,
         'family': item.family,
         'edge': item.edge,
-        'control': item.control,
-        'deterministic': item.baseline.model_dump(mode='json') if item.baseline else None,
-        'flags': [],
+        'deterministic': item.baseline.model_dump(mode='json'),
+        'members': [_attributed(quote, item) for quote in item.members],
+        'quotations': [_attributed(quote, item) for quote in item.quotations],
+        'exact_matches': item.exact,
+        'candidate_pairs': [pair.model_dump(mode='json') for pair in packet.pairs] if packet else [],
+        'decisions': [],
     }
-    packet = item.packet
-    if packet is None:
-        return {**row, 'status': 'deterministic_delivery_failure'}
-    row['quotations'] = [{**quote.model_dump(mode='json'), 'source_id': item.source_ids[quote.source]}
-                         for quote in packet.quotations]
-    row['request_sha256'] = plan.request_sha256[item.id]
+    row.update(_assessment_outcome(directory, plan, item, reservations))
+    semantic = {decision['member_id'] for decision in row['decisions'] if decision['verdict'] == 'Equivalent'}
+    matched = set(row['exact_matches']) | semantic
+    row['semantic_members'] = sorted(semantic)
+    row['routes'] = [{
+        'members': list(route),
+        'matched_members': [member for member in route if member in matched],
+        'complete': matched.issuperset(route),
+    } for route in item.alternatives]
+    return row
+
+
+def _attributed(quote: Quotation, item: Item) -> dict[str, Any]:
+    return {**quote.model_dump(mode='json'), 'source_id': item.source_ids[quote.source]}
+
+
+def _assessment_outcome(directory: Path, plan: Plan, item: Item, reservations: ReservationSnapshot) -> dict[str, Any]:
+    if item.baseline.exact_outcome in ('missing_relationship', 'unavailable_graph'):
+        return {'status': 'deterministic_delivery_failure'}
+    if item.packet is None:
+        return {'status': 'no_eligible_comparison'}
+    outcome: dict[str, Any] = {'request_sha256': plan.request_sha256[item.id]}
     reused = plan.reused.get(item.id)
     receipt = reused.receipt if reused else read_receipt(directory, plan, item, reservations)
     if receipt is None:
         if item.id not in reservations.ids:
-            return {**row, 'status': 'unattempted'}
-        return {**row, 'status': 'awaiting_receipt' if execution_active(directory, item) else 'interrupted'}
+            return {**outcome, 'status': 'unattempted'}
+        return {**outcome, 'status': 'awaiting_receipt' if execution_active(directory, item) else 'interrupted'}
     if reused:
-        row['reuse'] = {'origin_run': reused.origin_run, 'origin_plan_sha256': reused.origin_plan_sha256,
-                        'origin_request_sha256': receipt.request_sha256,
-                        'origin_receipt_sha256': reused.origin_receipt_sha256}
+        outcome['reuse'] = {'origin_run': reused.origin_run, 'origin_plan_sha256': reused.origin_plan_sha256,
+                            'origin_request_sha256': receipt.request_sha256,
+                            'origin_receipt_sha256': reused.origin_receipt_sha256}
     else:
-        row['provider'] = _provider_details(plan, receipt)
+        outcome['provider'] = _provider_details(plan, receipt)
     if receipt.response is None:
-        return {**row, 'status': 'provider_failed', 'error': receipt.provider_error}
+        return {**outcome, 'status': 'provider_failed', 'error': receipt.provider_error}
     try:
         judgment = validate_judge_response(plan, item, receipt.response)
     except ValueError as error:
         content = receipt.response.raw_response.get('content')
-        return {**row, 'status': 'invalid_judgment', 'error': str(error),
+        return {**outcome, 'status': 'invalid_judgment', 'error': str(error),
                 'invalid_response': content if isinstance(content, str) else None}
-    return {**row, 'status': 'judged', 'judgment': judgment.model_dump(mode='json'),
-            'flags': _flags(item, judgment)}
-
-
-def _flags(item: Item, judgment: Judgment) -> list[str]:
-    flags = []
-    supported = judgment.verdict == 'Supported'
-    if item.control is not None:
-        return ['supported_control'] if supported else []
-    assert item.baseline is not None and item.packet is not None
-    baseline = item.baseline
-    cited = {identity for fact in judgment.facts if fact.status == 'satisfied' for identity in fact.quotation_ids}
-    if baseline.exact_outcome == 'incomplete':
-        if supported:
-            flags.append('potentially_sufficient_overlooked_by_exact_matching')
-        elif judgment.verdict == 'Partially Supported' and cited.difference(baseline.matches_any_approved_pair):
-            flags.append('potential_new_partial_support')
-    if baseline.exact_outcome == 'complete' and not supported:
-        flags.append('exact_complete_not_called_supported')
-    if supported and baseline.joint_only and len({quote.source for quote in item.packet.quotations
-                                                 if quote.id in cited}) == 1:
-        flags.append('joint_only_supported_with_one_cited_source')
-    return flags
-
-
-def _multi_source_evidence_coverage(targets: list[dict[str, Any]]) -> dict[str, Any]:
-    judged = [row for row in targets if row['status'] == 'judged']
-    return {
-        'targets': len(targets),
-        'judged': len(judged),
-        'mean': sum(_satisfied_fact_fraction(row) for row in judged) / len(targets) if targets else None,
-    }
-
-
-def _satisfied_fact_fraction(row: dict[str, Any]) -> float:
-    applicable = [fact for fact in row['judgment']['facts'] if fact['status'] != 'inapplicable']
-    return sum(fact['status'] == 'satisfied' for fact in applicable) / len(applicable)
+    return {**outcome, 'status': 'judged',
+            'decisions': [decision.model_dump(mode='json') for decision in judgment.decisions]}
 
 
 def _provider_details(plan: Plan, receipt: Receipt) -> dict[str, Any]:
@@ -194,10 +156,6 @@ def _provider_details(plan: Plan, receipt: Receipt) -> dict[str, Any]:
     return {**details, 'usage': usage.model_dump(mode='json'), 'estimated_peak_usd': estimate,
             'returned_model': response.returned_model, 'exceeded_envelope': exceeded_envelope(plan, response),
             'finish_reason': response.raw_response.get('response_metadata', {}).get('finish_reason')}
-
-
-def _verdicts(rows: list[dict[str, Any]]) -> dict[str, int]:
-    return dict(Counter(row['judgment']['verdict'] for row in rows if row['status'] == 'judged'))
 
 
 def _operations(plan: Plan, rows: list[dict[str, Any]], reservations: frozenset[str]) -> dict[str, Any]:

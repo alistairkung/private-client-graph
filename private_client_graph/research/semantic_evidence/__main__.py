@@ -1,4 +1,4 @@
-"""Plan, execute and report an independent DeepSeek Semantic Evidence stage."""
+"""Plan, execute and report ground-truth-aligned Semantic Evidence."""
 import argparse
 import json
 import os
@@ -9,7 +9,7 @@ from pathlib import Path
 from .assessment import MAX_USD, PRICING, execute, open_plan, prepare, upper_cost, frozen_rates
 from .comparison import compare
 from .reporting import report
-from .store import entry, initialize, register_baseline, require, task_root
+from .store import entry, initialize, require, task_root
 
 
 def main() -> None:
@@ -24,9 +24,6 @@ def main() -> None:
     plan.add_argument('--task-call-ceiling', type=int, required=True)
     commands.add_parser('initialize-task', help='Provision the shared Semantic Evidence ledger with zero authority'
                         ).add_argument('artifact_root', type=Path)
-    baseline = commands.add_parser('register-baseline', help='Link the retained Extractor v1 diagnostic')
-    baseline.add_argument('artifact_root', type=Path)
-    baseline.add_argument('original_directory', type=Path)
     run = commands.add_parser('run', help='Dispatch only the explicitly approved assessment')
     run.add_argument('directory', type=Path)
     run.add_argument('--approve-plan-sha256', required=True)
@@ -43,8 +40,6 @@ def main() -> None:
         _plan(args)
     elif args.command == 'initialize-task':
         print(initialize(args.artifact_root)['task_id'])
-    elif args.command == 'register-baseline':
-        print(register_baseline(args.artifact_root, args.original_directory))
     elif args.command == 'run':
         input_rate, output_rate = args.verified_peak_rates
         execute(args.directory, approved_digest=args.approve_plan_sha256, approval_reference=args.approval_reference,

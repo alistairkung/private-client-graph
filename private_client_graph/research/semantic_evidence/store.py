@@ -6,8 +6,7 @@ from pathlib import Path
 from private_client_graph.research.artifacts import Bundle, checksum, write_json_once
 from private_client_graph.research.live_accounting import initialize_task, read_task, task_lock
 
-from .assessment import BASELINE_PLAN_SHA256, open_plan, publish_directory
-from .inputs import EXTRACTOR_MANIFEST_SHA256, EXTRACTOR_RUN
+from .assessment import open_plan
 
 TASK_LABEL = 'Semantic Evidence provider accounting'
 
@@ -53,24 +52,14 @@ def entry(root: Path, run_id: str) -> Path:
 
 def find(root: Path, run_id: str) -> Path | None:
     directory = entry(root, run_id)
-    legacy = directory / 'retained-assessment.json'
-    has_plan = (directory / 'plan.json').is_file() and (directory / 'plan-sha256.json').is_file()
-    if not has_plan and not legacy.is_file():
+    if not (directory / 'plan.json').is_file() or not (directory / 'plan-sha256.json').is_file():
         return None
-    path = directory
-    if legacy.is_file():
-        link = json.loads(legacy.read_text())
-        path = Path(link['directory'])
-        if has_plan or run_id != EXTRACTOR_RUN or link['plan_sha256'] != BASELINE_PLAN_SHA256:
-            raise ValueError('Invalid retained assessment registration')
-        if checksum((path / 'plan.json').read_bytes()) != BASELINE_PLAN_SHA256:
-            raise ValueError('Retained assessment differs from the registered baseline')
-    plan, _, _ = open_plan(path)
+    plan, _, _ = open_plan(directory)
     bundle = Bundle.open(root / run_id)
     if (plan.inputs.extractor_run != run_id
             or plan.inputs.extractor_manifest_sha256 != checksum((bundle.path / 'manifest.json').read_bytes())):
         raise ValueError('Semantic Evidence is bound to a different Benchmark v4 Run')
-    return path
+    return directory
 
 
 def require(root: Path, run_id: str) -> Path:
@@ -78,18 +67,3 @@ def require(root: Path, run_id: str) -> Path:
     if path is None:
         raise ValueError(f'No Semantic Evidence assessment for Run {run_id}')
     return path
-
-
-def register_baseline(root: Path, original: Path) -> Path:
-    root, original = root.resolve(), original.resolve()
-    plan, digest, _ = open_plan(original)
-    bundle = Bundle.open(root / EXTRACTOR_RUN)
-    if (digest != BASELINE_PLAN_SHA256 or plan.inputs.extractor_run != EXTRACTOR_RUN
-            or plan.inputs.extractor_manifest_sha256 != EXTRACTOR_MANIFEST_SHA256
-            or checksum((bundle.path / 'manifest.json').read_bytes()) != EXTRACTOR_MANIFEST_SHA256):
-        raise ValueError('The completed Extractor v1 Run and retained assessment do not match')
-    directory = entry(root, EXTRACTOR_RUN)
-    directory.parent.mkdir(mode=0o700, exist_ok=True)
-    with publish_directory(directory) as staging:
-        write_json_once(staging / 'retained-assessment.json', {'directory': str(original), 'plan_sha256': digest})
-    return directory

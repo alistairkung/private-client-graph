@@ -1,11 +1,11 @@
-"""Build the fixed formal-proof roster from verified Benchmark v4 attachments."""
+"""Freeze approved routes and verified attachments from a completed Benchmark v4 Run."""
 import json
 from collections.abc import Sequence
-from datetime import date
+from fractions import Fraction
 from pathlib import Path
-from typing import Literal
+from typing import Literal, Self
 
-from pydantic import Field
+from pydantic import Field, model_validator
 
 from benchmark_v3.replay_evidence import EvidencePair, _attached_evidence
 from private_client_graph.models.evaluation_result import SemanticEdge
@@ -18,14 +18,11 @@ from private_client_graph.research.evidence_quality import (
 )
 from private_client_graph.research.live_accounting import retained_run_attempts
 
-from .judging import Contract, JudgePacket, Quotation, make_packet
+from .judging import Contract, JudgePacket, Quotation, exact_matches, make_packet
 
-EXTRACTOR_RUN: Literal['ee1defcdc6f85a3ba12efcfc78b70da2'] = 'ee1defcdc6f85a3ba12efcfc78b70da2'
-EXTRACTOR_MANIFEST_SHA256 = 'bedcfd11c136a1070a79eb38a465a45f4af8554e21a6162b8ad1b124ea44273b'
-VERSION: Literal['pcg-semantic-evidence-v1'] = 'pcg-semantic-evidence-v1'
+VERSION: Literal['pcg-semantic-evidence-equivalence'] = 'pcg-semantic-evidence-equivalence'
 EXPECTED_TARGETS = 71
-EXPECTED_RECOVERED = 67
-CONTROL_COUNT = 2
+EXPECTED_MULTI_SOURCE = 30
 ExactOutcome = Literal['complete', 'incomplete', 'missing_relationship', 'unavailable_graph']
 
 
@@ -33,32 +30,61 @@ class Baseline(Contract):
     exact_outcome: ExactOutcome
     best_exact_pair_coverage: float
     joint_only: bool
-    matches_any_approved_pair: tuple[str, ...] = ()
-    approved_route_source_set_present: bool | None = None
 
 
 class Item(Contract):
     id: str = Field(pattern=r'^[a-f0-9]{64}$')
     edge: SemanticEdge
-    packet: JudgePacket | None = None
-    source_ids: dict[str, str] = Field(default_factory=dict)
-    family: str | None = None
-    condition: str | None = None
-    baseline: Baseline | None = None
-    control: str | None = None
+    family: str
+    condition: str
+    baseline: Baseline
+    source_ids: dict[str, str]
+    members: tuple[Quotation, ...]
+    quotations: tuple[Quotation, ...]
+    alternatives: tuple[tuple[str, ...], ...]
+
+    @property
+    def packet(self) -> JudgePacket | None:
+        return make_packet(self.edge, self.members, self.quotations)
+
+    @property
+    def exact(self) -> dict[str, str]:
+        return exact_matches(self.members, self.quotations)
+
+    @model_validator(mode='after')
+    def validate_evidence(self) -> Self:
+        members = {member.id: member for member in self.members}
+        if (not self.alternatives or any(not route or len(set(route)) != len(route) for route in self.alternatives)
+                or {identity for route in self.alternatives for identity in route} != members.keys()):
+            raise ValueError('Approved alternatives must cover the frozen required evidence members')
+        for quotes in (self.members, self.quotations):
+            if (len({quote.id for quote in quotes}) != len(quotes)
+                    or len({(quote.source, quote.text) for quote in quotes}) != len(quotes)
+                    or any(not quote.text.strip() for quote in quotes)):
+                raise ValueError('Evidence IDs and Source–quotation pairs must be distinct and nonblank')
+        if ({quote.source for quote in (*self.members, *self.quotations)} != self.source_ids.keys()
+                or len(set(self.source_ids.values())) != len(self.source_ids)):
+            raise ValueError('Quotation Source mapping must be complete and one-to-one')
+        exact = set(self.exact)
+        coverage = max(Fraction(len(exact.intersection(route)), len(route)) for route in self.alternatives)
+        multi_source = all(len({members[identity].source for identity in route}) > 1 for route in self.alternatives)
+        outcome = self.baseline.exact_outcome
+        if (float(coverage) != self.baseline.best_exact_pair_coverage or self.baseline.joint_only != multi_source
+                or (outcome == 'complete') != (coverage == 1)
+                or bool(self.quotations) != (outcome in ('complete', 'incomplete'))):
+            raise ValueError('Frozen exact matches differ from the deterministic baseline')
+        return self
 
 
 class AssessmentInputs(Contract):
-    extractor_run: str = Field(default=EXTRACTOR_RUN, pattern=r'^[a-f0-9]{32}$')
+    extractor_run: str = Field(pattern=r'^[a-f0-9]{32}$')
     extractor_manifest_sha256: str
     evidence_quality: EvidenceQuality
     targets: tuple[Item, ...]
-    controls: tuple[Item, ...]
 
     @property
     def dispatchable(self) -> tuple[Item, ...]:
-        return tuple(sorted((item for item in (*self.targets, *self.controls) if item.packet is not None),
-                            key=lambda item: item.id))
+        return tuple(sorted((item for item in self.targets if item.packet is not None), key=lambda item: item.id))
 
 
 def extract_inputs(run_directory: Path, workload: BenchmarkWorkload) -> AssessmentInputs:
@@ -69,17 +95,15 @@ def extract_inputs(run_directory: Path, workload: BenchmarkWorkload) -> Assessme
         raise ValueError('Expected the original identified Benchmark v4 Run directory')
     attempts, authority_reasons = retained_run_attempts(bundle)
     if authority_reasons:
-        raise ValueError('Retained Extractor v1 attempt authority could not be verified')
+        raise ValueError('Retained Run attempt authority could not be verified')
     retained = evaluate_retained_run(bundle, workload, attempts=attempts)
     if retained.evaluation.summary.state != 'complete':
         raise ValueError('Semantic Evidence requires a complete Benchmark v4 Run')
-    protocol = retained.evaluation.qualified
     return AssessmentInputs(
         extractor_run=run_directory.name, extractor_manifest_sha256=manifest_sha256,
-        evidence_quality=report_evidence_quality(protocol, workload.qualified, retained.results,
+        evidence_quality=report_evidence_quality(retained.evaluation.qualified, workload.qualified, retained.results,
             mixed=retained.evaluation.summary).quality,
         targets=tuple(_retained_targets(workload, retained)),
-        controls=_controls(),
     )
 
 
@@ -94,63 +118,41 @@ def _retained_targets(workload: BenchmarkWorkload, retained: VerifiedV4Run) -> l
             raise ValueError('Retained graph availability differs from the verified proof result')
         attached = _attached_evidence(state) if state is not None else {}
         for proof in match_proof_routes(saved, state):
-            targets.append(_retained_item(condition.family, saved.condition,
-                attached.get(proof.edge), condition.frozen.sources, proof, has_graph=state is not None))
+            targets.append(_retained_item(condition.family, saved.condition, attached.get(proof.edge),
+                           condition.frozen.sources, proof, has_graph=state is not None))
     return targets
 
 
 def _retained_item(family: str, condition: str, pairs: set[EvidencePair] | None,
                    sources: Sequence[Source], proof: ProofMatch, *, has_graph: bool) -> Item:
-    identity = _item_id(condition, proof.edge)
+    required = {pair for route in proof.routes for pair in route.required}
+    actual = pairs if pairs is not None else set()
+    _verify_quotations(required | actual, sources)
+    labels = {source: f'S{index}' for index, source in enumerate(sorted({source for source, _ in required | actual}), 1)}
+    members = _quotations(required, labels, 'M')
+    member_ids = {pair: member.id for pair, member in zip(sorted(required), members, strict=True)}
+    outcome: ExactOutcome
     if pairs is None:
-        outcome: ExactOutcome = 'missing_relationship' if has_graph else 'unavailable_graph'
-        return Item(id=identity, edge=proof.edge, family=family, condition=condition,
-            baseline=Baseline(exact_outcome=outcome, best_exact_pair_coverage=0, joint_only=proof.joint_only))
-    quotes, source_ids, quote_ids = _verified_quotes(pairs, sources)
-    return Item(id=identity, edge=proof.edge, packet=make_packet(proof.edge, quotes), source_ids=source_ids,
-                family=family, condition=condition, baseline=_baseline(proof, pairs, quote_ids))
-
-
-def _baseline(proof: ProofMatch, pairs: set[EvidencePair], quote_ids: dict[EvidencePair, str]) -> Baseline:
-    matched_ids = {quote_ids[pair] for route in proof.routes for pair in route.matched}
-    attached_sources = {source for source, _ in pairs}
-    routes_covered = any({source for source, _ in route.required} <= attached_sources for route in proof.routes)
-    return Baseline(exact_outcome='complete' if proof.coverage == 1 else 'incomplete',
-        best_exact_pair_coverage=float(proof.coverage), joint_only=proof.joint_only,
-        matches_any_approved_pair=tuple(sorted(matched_ids)), approved_route_source_set_present=routes_covered)
-
-
-def _verified_quotes(pairs: set[EvidencePair], sources: Sequence[Source],
-                     ) -> tuple[tuple[Quotation, ...], dict[str, str], dict[EvidencePair, str]]:
-    sources_by_id = {source.id: source.text for source in sources}
-    if not pairs or any(not text.strip() or text not in sources_by_id.get(source, '') for source, text in pairs):
-        raise ValueError('An attached quotation is missing or does not occur verbatim in its attributed Source')
-    labels = {source: f'S{index}' for index, source in enumerate(sorted({source for source, _ in pairs}), 1)}
-    quote_ids = {pair: f'Q{index}' for index, pair in enumerate(sorted(pairs), 1)}
-    quotes = tuple(Quotation(id=identity, source=labels[source], text=text)
-                   for (source, text), identity in quote_ids.items())
-    return quotes, {label: source for source, label in labels.items()}, quote_ids
-
-
-def _item_id(*parts: object) -> str:
-    return checksum(json.dumps((VERSION, *parts), ensure_ascii=False, separators=(',', ':')).encode())
-
-
-def _controls() -> tuple[Item, ...]:
-    trustee: SemanticEdge = ('Nora Vale', 'trustee_of', 'Hearth Trust')
-    return (
-        _control('post_cutoff', trustee, (
-            'This deed appoints Nora Vale as trustee of the Hearth Trust with effect from 1 July 2040.',),
-            cutoff=date(2040, 6, 30)),
-        _control('conflicting_authority', trustee, (
-            'A board summary says Nora Vale is the trustee of the Hearth Trust.',
-            'The signed operative deed names only Cora Rill as trustee of the Hearth Trust and expressly '
-            'supersedes this board summary. Nora Vale has no trustee appointment under the deed.')),
+        outcome = 'missing_relationship' if has_graph else 'unavailable_graph'
+    else:
+        outcome = 'complete' if proof.coverage == 1 else 'incomplete'
+    return Item(
+        id=checksum(json.dumps((condition, proof.edge), ensure_ascii=False, separators=(',', ':')).encode()),
+        edge=proof.edge, family=family, condition=condition,
+        baseline=Baseline(exact_outcome=outcome, best_exact_pair_coverage=float(proof.coverage),
+                          joint_only=proof.joint_only),
+        source_ids={label: source for source, label in labels.items()},
+        members=members, quotations=_quotations(actual, labels, 'Q'),
+        alternatives=tuple(tuple(member_ids[pair] for pair in route.required) for route in proof.routes),
     )
 
 
-def _control(label: str, edge: SemanticEdge, texts: tuple[str, ...], *, cutoff: date | None = None) -> Item:
-    sources = [Source(id=f'control-{i}', text=text, title='Synthetic control') for i, text in enumerate(texts, 1)]
-    quotes, source_ids, _ = _verified_quotes({(source.id, source.text) for source in sources}, sources)
-    return Item(id=_item_id('control', label), edge=edge, packet=make_packet(edge, quotes, cutoff=cutoff),
-                source_ids=source_ids, control=label)
+def _verify_quotations(pairs: set[EvidencePair], sources: Sequence[Source]) -> None:
+    sources_by_id = {source.id: source.text for source in sources}
+    if any(not text.strip() or text not in sources_by_id.get(source, '') for source, text in pairs):
+        raise ValueError('An evidence quotation does not occur verbatim in its attributed Source')
+
+
+def _quotations(pairs: set[EvidencePair], labels: dict[str, str], prefix: str) -> tuple[Quotation, ...]:
+    return tuple(Quotation(id=f'{prefix}{index}', source=labels[source], text=text)
+                 for index, (source, text) in enumerate(sorted(pairs), 1))
