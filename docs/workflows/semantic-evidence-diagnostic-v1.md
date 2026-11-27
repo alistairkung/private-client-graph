@@ -104,8 +104,10 @@ retained receipt blocks continuation pending custody recovery. The retained v1
 receipt inventory is verified separately. A response from a different or
 unidentified judge remains invalid. The Workbench routes are read-only and
 inherit owner-only access.
-Open a completed Run, expand **Semantic Evidence — AI-assessed, unverified**,
-then refresh that section to see newly retained observations.
+The Evaluation Protocol panel for a completed Run shows **Semantic Evidence**
+with its **AI-assessed, unverified** label. Open **Inspect semantic assessment**
+for cited evidence and execution details. Use **Refresh assessment** to read a
+newly retained assessment.
 
 ## Reuse and compare
 

@@ -1,6 +1,6 @@
 import { useCallback, useState, type ReactNode } from "react";
 import type {
-  SemanticOutcome, SemanticRunSummary, SemanticTarget, SemanticTransition,
+  SemanticOperations, SemanticOutcome, SemanticRunSummary, SemanticSummary, SemanticTarget, SemanticTransition,
 } from "../shared/contracts";
 import { ReadState } from "../shared/presentation";
 import { useRead } from "../shared/useRead";
@@ -41,41 +41,87 @@ function Disclosure({ label, children }: { label: string; children: ReactNode })
 }
 
 export function SemanticEvidencePanel({ run }: { run: string }) {
-  return <Disclosure label={title}><RunAssessment key={run} run={run} /></Disclosure>;
-}
-
-function RunAssessment({ run }: { run: string }) {
   const load = useCallback((signal: AbortSignal) => getSemanticEvidence(run, signal), [run]);
   const { data, error, retry } = useRead(load);
-  if (data === undefined) return <ReadState error={error} retry={retry} />;
-  if (!data) return (
-    <>
-      <p>No semantic assessment is recorded for this Run. The Workbench operator can prepare one from the retained Run.</p>
-      <button className="secondary" onClick={retry}>Refresh assessment</button>
-    </>
+  return (
+    <section className="semantic-overview" aria-label={title}>
+      <div className="semantic-overview-heading">
+        <h3>Semantic Evidence</h3>
+        <span>AI-assessed, unverified</span>
+      </div>
+      {data === undefined ? <ReadState error={error} retry={retry} /> : !data ? (
+        <>
+          <p>No semantic assessment is recorded for this Run.</p>
+          <button className="secondary" onClick={retry}>Refresh assessment</button>
+        </>
+      ) : (
+        <>
+          <SemanticOverview summary={data.target_summary} />
+          <p className="semantic-note"><strong>Timing unverified.</strong> Explicit assessment cutoffs were unavailable.</p>
+          <Disclosure label="Inspect semantic assessment">
+            <p className="semantic-note"><strong>Temporal limitation.</strong> {data.temporal_limitation}</p>
+            <p className="semantic-note">DeepSeek assesses attached quotations. The judge and extractor can share model-specific biases.</p>
+            <ExecutionUsage operations={data.operations} />
+            <Targets targets={data.targets} />
+            <details>
+              <summary>Sanity controls ({data.controls.length})</summary>
+              {data.controls.map((row) => <Target key={row.id} row={row} />)}
+            </details>
+            <details>
+              <summary>Evaluator and execution record</summary>
+              <dl className="semantic-metadata">
+                <dt>Evaluator</dt><dd>{data.evaluator.version}</dd>
+                <dt>Judge</dt><dd>{data.evaluator.model} · temperature {data.evaluator.settings.temperature} · {data.evaluator.settings.max_retries} retries</dd>
+                <dt>Prompt SHA-256</dt><dd>{data.evaluator.prompt_sha256}</dd>
+                <dt>Plan SHA-256</dt><dd>{data.plan_sha256}</dd>
+              </dl>
+            </details>
+            <button className="secondary" onClick={retry}>Refresh assessment</button>
+          </Disclosure>
+        </>
+      )}
+    </section>
   );
+}
+
+function SemanticOverview({ summary }: { summary: SemanticSummary }) {
+  const potential = summary.potentially_sufficient_overlooked_by_exact_matching;
   return (
     <>
-      <p className="semantic-note"><strong>Temporal limitation.</strong> {data.temporal_limitation}</p>
-      <Coverage summary={data} />
-      <p className="semantic-note">DeepSeek assesses attached quotations. The judge and extractor can share model-specific biases.</p>
-      <Targets targets={data.targets} />
-      <details>
-        <summary>Sanity controls ({data.controls.length})</summary>
-        {data.controls.map((row) => <Target key={row.id} row={row} />)}
-      </details>
-      <details>
-        <summary>Evaluator and execution record</summary>
-        <dl className="semantic-metadata">
-          <dt>Evaluator</dt><dd>{data.evaluator.version}</dd>
-          <dt>Judge</dt><dd>{data.evaluator.model} · temperature {data.evaluator.settings.temperature} · {data.evaluator.settings.max_retries} retries</dd>
-          <dt>Prompt SHA-256</dt><dd>{data.evaluator.prompt_sha256}</dd>
-          <dt>Plan SHA-256</dt><dd>{data.plan_sha256}</dd>
-        </dl>
-      </details>
-      <button className="secondary" onClick={retry}>Refresh assessment</button>
+      <dl className="semantic-overview-metrics">
+        <div>
+          <dt>Valid judgments</dt>
+          <dd>{summary.semantic_outcomes.judged ?? 0} / {summary.formal_targets}</dd>
+          <dd className="semantic-basis">{summary.recovered_targets} formal targets recovered</dd>
+        </div>
+        <div>
+          <dt>Potentially sufficient missed proofs</dt>
+          <dd>{potential.count ?? "Unavailable"}</dd>
+          <dd className="semantic-basis">{potential.recovered_exact_incomplete_judged} of {potential.recovered_exact_incomplete_denominator} recovered targets with incomplete exact proofs judged</dd>
+        </div>
+      </dl>
+      {potential.count !== null && <p className="semantic-basis">
+        <strong>{summary.flags.potential_new_partial_support ?? 0}</strong> targets with potential partial support beyond exact matches
+      </p>}
+      <VerdictCounts verdictCounts={summary.verdicts} />
+      <OutcomeGaps outcomes={summary.semantic_outcomes} />
     </>
   );
+}
+
+function VerdictCounts({ verdictCounts }: { verdictCounts: SemanticSummary["verdicts"] }) {
+  return <ul className="semantic-counts" aria-label="Semantic verdict distribution">
+    {verdicts.map((verdict) => <li key={verdict}>{verdict} <strong>{verdictCounts[verdict] ?? 0}</strong></li>)}
+  </ul>;
+}
+
+function OutcomeGaps({ outcomes }: { outcomes: SemanticSummary["semantic_outcomes"] }) {
+  const gaps = Object.entries(outcomes).filter(([state, count]) => state !== "judged" && count > 0);
+  if (gaps.length === 0) return null;
+  return <p className="semantic-basis">{gaps.map(([state, count]) => {
+    const label = statuses[state as keyof typeof statuses].toLowerCase();
+    return `${count} ${count === 1 || state === "unattempted" || state === "awaiting_receipt" ? label : `${label}s`}`;
+  }).join(" · ")}</p>;
 }
 
 function Coverage({ summary }: { summary: SemanticRunSummary }) {
@@ -85,19 +131,20 @@ function Coverage({ summary }: { summary: SemanticRunSummary }) {
     <div className="semantic-coverage">
       <p><strong>{coverage.semantic_outcomes.judged ?? 0}/{coverage.formal_targets} valid judgments</strong> ·{" "}
         {coverage.recovered_targets} recovered targets</p>
-      <ul className="semantic-counts" aria-label="Semantic verdict distribution">
-        {verdicts.map((verdict) => <li key={verdict}>{verdict} <strong>{coverage.verdicts[verdict] ?? 0}</strong></li>)}
-      </ul>
-      <p>{Object.entries(coverage.semantic_outcomes).filter(([state, count]) => state !== "judged" && count > 0)
-        .map(([state, count]) => `${count} ${statuses[state as keyof typeof statuses].toLowerCase()}`).join(" · ")}</p>
+      <VerdictCounts verdictCounts={coverage.verdicts} />
+      <OutcomeGaps outcomes={coverage.semantic_outcomes} />
       <p>{potential.count ?? "Unavailable"} potentially sufficient missed proofs ·{" "}
         {potential.recovered_exact_incomplete_judged}/{potential.recovered_exact_incomplete_denominator} recovered exact-incomplete targets judged</p>
-      <p>{operations.reserved_attempts}/{operations.planned_attempts} attempts reserved · {operations.reused_judgments} reused ·{" "}
-        {operations.known_estimated_peak_usd == null ? "No usage estimate" : `${usd.format(operations.known_estimated_peak_usd)} estimated at peak rates`}
-        {operations.reserved_attempts_without_usage > 0 && ` · ${operations.reserved_attempts_without_usage} without usage`}
-        {operations.mean_latency_seconds != null && ` · ${operations.mean_latency_seconds.toFixed(1)}s mean latency`}</p>
+      <ExecutionUsage operations={operations} />
     </div>
   );
+}
+
+function ExecutionUsage({ operations }: { operations: SemanticOperations }) {
+  return <p>{operations.reserved_attempts}/{operations.planned_attempts} attempts reserved · {operations.reused_judgments} reused ·{" "}
+    {operations.known_estimated_peak_usd == null ? "No usage estimate" : `${usd.format(operations.known_estimated_peak_usd)} estimated at peak rates`}
+    {operations.reserved_attempts_without_usage > 0 && ` · ${operations.reserved_attempts_without_usage} without usage`}
+    {operations.mean_latency_seconds != null && ` · ${operations.mean_latency_seconds.toFixed(1)}s mean latency`}</p>;
 }
 
 function Targets({ targets }: { targets: SemanticTarget[] }) {

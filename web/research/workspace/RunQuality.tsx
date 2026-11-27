@@ -34,10 +34,11 @@ const primaryMeanings = {
   complete_proof: "Expected relationships with a complete approved proof",
 };
 
-export function RunQuality({ quality }: { quality: EvidenceQuality }) {
+export function RunQuality({ quality, inline = false }: { quality: EvidenceQuality; inline?: boolean }) {
+  const multiSource = quality.joint_only_complete_proof;
   return (
-    <section className="benchmark-run-summary run-quality" aria-label="Evidence quality">
-      <h3>Evidence quality</h3>
+    <section className={inline ? "run-quality run-quality-inline" : "benchmark-run-summary run-quality"} aria-label="Evidence quality">
+      <h3>{inline ? "Deterministic benchmark metrics" : "Evidence quality"}</h3>
       {quality.state === "unmeasured" && <p role="status">Awaiting retained observations.</p>}
       {quality.state === "provisional" && (
         <p role="status">Provisional · {quality.observed_inputs} of {quality.planned_inputs} inputs observed.</p>
@@ -48,11 +49,25 @@ export function RunQuality({ quality }: { quality: EvidenceQuality }) {
             <dt>{evidenceMetricLabels[key]}</dt>
             <dd>{percentMetric(qualityValue(quality, key))}</dd>
             <dd className="quality-scope">
-              {qualityScope(quality, key)}
+              {inline && key === "complete_proof" && quality.complete_proof.rate !== null
+                ? `${quality.complete_proof.complete} of ${quality.complete_proof.targets} formal targets`
+                : qualityScope(quality, key)}
               <small>{primaryMeanings[key]}</small>
             </dd>
           </div>
         ))}
+        {inline && <>
+          <div className="quality-diagnostic">
+            <dt>{multiSourceProofCompletionLabel}</dt>
+            <dd>{multiSource.rate === null ? "Unavailable" : `${multiSource.complete} / ${multiSource.targets}`}</dd>
+            <dd className="quality-scope">Complete approved multi-Source proofs</dd>
+          </div>
+          <div className="quality-diagnostic">
+            <dt>{evidenceMetricLabels.joint_only_coverage}</dt>
+            <dd>{percentMetric(qualityValue(quality, "joint_only_coverage"))}</dd>
+            <dd className="quality-scope">Average exact coverage across {quality.joint_only_coverage.targets} targets</dd>
+          </div>
+        </>}
       </dl>
       <p className="quality-combined">
         {evidenceMetricLabels.combined_graph} <strong>{percentMetric(qualityValue(quality, "combined_graph"))}</strong>

@@ -353,11 +353,24 @@ test("evidence quality controls and comparison fit the viewport and retain keybo
     })).toBe(true);
   }
 
-  expect(semanticReads).toBe(0);
-  await page.getByText("Semantic Evidence — AI-assessed, unverified", { exact: true }).press("Enter");
-  await expect(page.getByText("1/71 valid judgments")).toBeVisible();
-  await expect(page.getByText(assessment.temporal_limitation)).toBeVisible();
-  await page.getByText("Inspect formal targets (2)").press("Enter");
+  const protocol = page.getByRole("region", { name: "Evaluation Protocol v1 results" });
+  await expect(protocol.getByText("15.49%", { exact: true })).toBeVisible();
+  await expect(protocol.getByText("11 of 71 formal targets", { exact: false })).toBeVisible();
+  await expect(protocol.getByText("1 / 30", { exact: true })).toBeVisible();
+  await expect(protocol.getByText("40.00%", { exact: true })).toBeVisible();
+  const semanticSummary = protocol.getByRole("region", { name: "Semantic Evidence — AI-assessed, unverified" });
+  await expect(semanticSummary.getByText("1 / 71", { exact: true })).toBeVisible();
+  await expect(semanticSummary.getByText("Potentially sufficient missed proofs")).toBeVisible();
+  await expect(semanticSummary.getByText("0 targets with potential partial support beyond exact matches")).toBeVisible();
+  await expect(semanticSummary.getByText(/1 invalid judgment.*4 delivery failures/)).toBeVisible();
+  await expect(semanticSummary.getByText("Timing unverified.")).toBeVisible();
+  await expect(semanticSummary.getByText("Inspect formal targets (2)")).not.toBeVisible();
+  expect(semanticReads).toBe(1);
+
+  await semanticSummary.getByText("Inspect semantic assessment", { exact: true }).press("Enter");
+  await expect(semanticSummary.getByText(assessment.temporal_limitation)).toBeVisible();
+  await semanticSummary.getByText("Inspect formal targets (2)").press("Enter");
+  expect(semanticReads).toBe(1);
   const filter = page.getByRole("combobox", { name: "Filter formal targets" });
   await filter.selectOption("Supported");
   await page.getByText(/F0 · Morgan Example.*Supported/).press("Enter");

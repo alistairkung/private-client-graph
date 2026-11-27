@@ -436,6 +436,32 @@ pre {
   margin: 14px 0 12px;
   padding-top: 12px;
 }
+.run-quality-inline .quality-primary {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+.run-quality-inline .quality-primary > div {
+  display: grid;
+  grid-template-rows: subgrid;
+  grid-row: span 3;
+  gap: 0.25rem;
+  border: 1px solid var(--rule);
+  padding: 0.75rem 0.85rem;
+  background: white;
+}
+.run-quality-inline .quality-primary dt { font-size: 0.9rem; line-height: 1.3; }
+.run-quality-inline .quality-primary dd:not(.quality-scope) { line-height: 1.2; }
+.run-quality-inline .quality-primary .quality-diagnostic dd:not(.quality-scope) { font-size: 1.4rem; }
+.run-quality-inline .quality-scope { font-size: 0.8rem; line-height: 1.4; }
+.run-quality-inline .quality-scope small { display: block; font-size: inherit; }
+.run-quality-inline .quality-combined { margin-block: 0.75rem 0; padding: 0; border: 0; font-size: 0.85rem; }
+.run-quality-inline .quality-combined span { display: inline; margin-inline-start: 0.5rem; }
+@container run-summary (width >= 720px) {
+  .run-quality-inline .quality-primary { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@container run-summary (width < 265px) {
+  .run-quality-inline .quality-primary { grid-template-columns: minmax(0, 1fr); }
+}
 .run-quality .quality-counts {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
