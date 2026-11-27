@@ -10,17 +10,19 @@ export function RunRelationshipMatrix({
   counts,
   expectedEdgesWithoutGraph,
   scope = "All conditions",
+  caption = "Relationship confusion matrix",
   proofBreakdown,
 }: {
   counts: GraphCounts;
   expectedEdgesWithoutGraph: number;
   scope?: string;
+  caption?: string;
   proofBreakdown?: ProofBreakdown;
 }) {
   return (
     <figure className="run-matrix">
       <table className={proofBreakdown ? "run-matrix-table run-matrix-table-evidence" : "run-matrix-table"}>
-        <caption>Relationship confusion matrix · {scope}</caption>
+        <caption><span className="run-matrix-caption-prefix">{caption} · </span>{scope}</caption>
         <thead>
           <tr>
             <th scope="col">Expected</th>

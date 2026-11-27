@@ -80,13 +80,15 @@ state and evidence changes are withheld. Qualified Graph F1 changes remain
 available across compatible Runs. A committed plan with no eligible pairs
 completes without provider access.
 
-The Workbench shows both F1 scores above the three supporting evidence metrics
-and the qualified confusion matrix. Its true-positive cell separates complete
-proofs, incomplete formal proofs and correct relationships without a formal
-target. The calculation shows `U`, `α` and their product. The exact-only
-Extractor v1 split is 11 complete, 56 incomplete and 38 without a formal
-target. Four unrecovered formal targets account for the rest of the 71 and
-already count as false negatives. Expand the evidence diagnostics to inspect
+The Workbench shows both F1 scores above the three supporting evidence metrics.
+Each score has a collapsible matrix for the qualified Conditions. The
+Evidence-Adjusted F1 matrix separates complete proofs, incomplete formal proofs
+and correct relationships without a formal target within the true-positive cell.
+It shows the penalty beneath the matrix, with the formula and counting rules
+available on demand. The exact-only Extractor v1 split is 11 complete,
+56 incomplete and 38 without a formal target. Four unrecovered formal targets
+account for the rest of the 71 and already count as false negatives.
+Expand the evidence diagnostics to inspect
 approved and actual Source-attributed quotations, exact and model-assessed
 matches, material differences, proof routes, coverage, failures, costs and
 latency. The configured judge is

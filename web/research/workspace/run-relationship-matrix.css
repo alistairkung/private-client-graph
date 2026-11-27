@@ -3,10 +3,6 @@
   grid-template-columns: 1fr 1fr minmax(0, 1.7fr);
   align-items: start;
 }
-.protocol-results-matrix {
-  margin-block: 1.25rem 0.4rem;
-  max-inline-size: 47rem;
-}
 .run-matrix { min-width: 0; margin: 0; }
 .run-matrix .run-matrix-table {
   min-width: 0;
@@ -41,15 +37,6 @@
   color: var(--muted);
   font-size: 0.82rem;
 }
-.evidence-aware-matrix {
-  display: grid;
-  align-items: start;
-  gap: 1rem;
-  max-inline-size: none;
-}
-.run-matrix-table-evidence thead th {
-  overflow-wrap: anywhere;
-}
 .run-matrix-table-evidence thead th:first-child { width: 22%; }
 .run-matrix-table-evidence thead th:nth-child(2) { width: 47%; }
 .run-matrix-proof-breakdown {
@@ -74,35 +61,29 @@
 .run-matrix-proof-incomplete { color: #855400; background: #faf3e5; }
 .run-matrix-proof-unannotated { color: var(--muted); background: #f0f3ee; }
 .run-matrix-penalty {
-  min-width: 0;
-  padding: 0.7rem 0.85rem;
-  border: 1px solid var(--rule);
-  background: #fff;
+  margin-top: 0.75rem;
   color: var(--muted);
   font-size: 0.84rem;
   line-height: 1.4;
   font-variant-numeric: tabular-nums;
 }
-.run-matrix-penalty h4 { color: var(--ink); font-size: 0.92rem; margin: 0; }
-.run-matrix-penalty p { margin: 0.35rem 0 0; }
-.run-matrix-penalty code { color: var(--ink); }
-.run-matrix-penalty dl {
-  display: block;
-  border-block: 1px solid var(--rule);
-  margin-block: 0.55rem;
-  padding-block: 0.45rem;
-}
-.run-matrix-penalty dl > div {
+.run-matrix-penalty-strip {
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
-  gap: 0 0.5rem;
+  align-items: center;
+  column-gap: 0.75rem;
+  padding: 0.55rem 0.65rem;
+  border-inline-start: 3px solid #855400;
+  background: #faf3e5;
 }
-.run-matrix-penalty dl > div + div { margin-top: 0.24rem; }
-.run-matrix-penalty dd { color: var(--ink); margin: 0; }
-@container run-summary (width >= 820px) {
-  .evidence-aware-matrix { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); }
-}
+.run-matrix-penalty-strip h5 { color: var(--ink); font-size: inherit; margin: 0; }
+.run-matrix-penalty-strip p { margin: 0; }
+.run-matrix-penalty-strip strong { color: #855400; font-size: 1rem; }
+.run-matrix-formula { border-bottom: 0; }
+.run-matrix-formula > summary { color: var(--ink); font-weight: 600; }
+.run-matrix-formula > :not(summary) { margin: 0 0 0.45rem; }
+.run-matrix-formula > :last-child { margin-bottom: 0; }
 @container run-summary (width < 780px) {
   .benchmark-run-summary .benchmark-overview-line {
     grid-template-columns: repeat(2, minmax(0, 1fr));

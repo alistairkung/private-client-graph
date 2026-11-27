@@ -52,8 +52,7 @@ export function PCGEvaluation({ run, expectedEdgesWithoutGraph }: EvaluationProp
       {run.benchmark_v4?.state === "complete" ? <CompletedRunEvaluation run={run} expectedEdgesWithoutGraph={expectedEdgesWithoutGraph} /> : (
         <>
           <p role="status">Evaluation is provisional until the Benchmark Run finishes.</p>
-          <EvaluationCards metrics={evaluationMetrics(undefined, run)} />
-          <EvaluationRelationshipMatrix graph={evaluationGraph(undefined, run)} expectedEdgesWithoutGraph={expectedEdgesWithoutGraph} />
+          <EvaluationCards run={run} expectedEdgesWithoutGraph={expectedEdgesWithoutGraph} />
         </>
       )}
     </>
@@ -68,13 +67,8 @@ function CompletedRunEvaluation({ run, expectedEdgesWithoutGraph }: EvaluationPr
       <p role="status" className="evaluation-state">
         {data ? stateLabels[data.state] : error ? "Evaluation unavailable" : "Loading evaluation"}
       </p>
-      <EvaluationCards metrics={evaluationMetrics(data, run)} />
+      <EvaluationCards run={run} evaluation={data} expectedEdgesWithoutGraph={expectedEdgesWithoutGraph} />
       {error && <ReadState error={error} retry={retry} />}
-      <EvaluationRelationshipMatrix
-        graph={evaluationGraph(data, run)}
-        evaluation={data}
-        expectedEdgesWithoutGraph={expectedEdgesWithoutGraph}
-      />
       {data && <Disclosure label="Evidence diagnostics">
         <AssessmentDetails assessment={data} />
         <button className="secondary" onClick={retry}>Refresh evaluation</button>
@@ -132,33 +126,55 @@ function adjustmentBasis(state: SemanticRunSummary["state"]) {
   return state === "exact_only" || state === "pending" ? "Exact-only" : "Exact and equivalent";
 }
 
-function EvaluationCards({ metrics }: { metrics: ReturnType<typeof evaluationMetrics> }) {
-  const [graph, adjusted, ...evidence] = metrics;
+function EvaluationCards({ run, evaluation, expectedEdgesWithoutGraph }: EvaluationProps & {
+  evaluation?: SemanticEvidenceReport;
+}) {
+  const [graphMetric, adjustedMetric, ...evidence] = evaluationMetrics(evaluation, run);
+  const graph = evaluationGraph(evaluation, run);
   return (
     <>
-      <MetricCards label="Performance metrics" metrics={[graph, adjusted]} performance />
-      <MetricCards label="Supporting evidence metrics" metrics={evidence} />
+      <h4 className="evaluation-metric-heading">Performance metrics</h4>
+      <div className="evaluation-performance" role="group" aria-label="Performance metrics">
+        <PerformanceMetricCard metric={graphMetric} detailLabel="Relationship confusion matrix">
+          {graph ? <EvaluationRelationshipMatrix graph={graph} expectedEdgesWithoutGraph={expectedEdgesWithoutGraph} />
+            : <p>Qualified graph counts are unavailable for this Run.</p>}
+        </PerformanceMetricCard>
+        <PerformanceMetricCard metric={adjustedMetric} detailLabel="Evidence-aware confusion matrix">
+          {graph && evaluation?.evidence_adjusted_f1 && evaluation.proof_population
+            ? <EvaluationRelationshipMatrix graph={graph} evaluation={evaluation} expectedEdgesWithoutGraph={expectedEdgesWithoutGraph} />
+            : <p>The evidence breakdown is available once the evaluation report loads.</p>}
+        </PerformanceMetricCard>
+      </div>
+      <h4 className="evaluation-metric-heading">Supporting evidence metrics</h4>
+      <dl className="quality-card-grid evaluation-evidence" aria-label="Supporting evidence metrics">
+        {evidence.map((metric) => <div key={metric.label}><MetricValues metric={metric} /></div>)}
+      </dl>
     </>
   );
 }
 
-function MetricCards({ metrics, label, performance = false }: {
-  metrics: ReturnType<typeof evaluationMetrics>; label: string; performance?: boolean;
+type MetricValue = ReturnType<typeof evaluationMetrics>[number];
+
+function PerformanceMetricCard({ metric, detailLabel, children }: {
+  metric: MetricValue; detailLabel: string; children: ReactNode;
 }) {
   return (
-    <>
-      <h4 className="evaluation-metric-heading">{label}</h4>
-      <dl className={`quality-card-grid ${performance ? "evaluation-performance" : "evaluation-evidence"}`} aria-label={label}>
-        {metrics.map(({ label, rate, basis, description }) => (
-          <div key={label}>
-            <dt>{label}</dt>
-            <dd>{percentMetric(rate)}</dd>
-            <dd className="quality-scope">{description}{basis && <small>{basis}</small>}</dd>
-          </div>
-        ))}
-      </dl>
-    </>
+    <div className="evaluation-performance-card">
+      <dl className="evaluation-performance-value"><MetricValues metric={metric} /></dl>
+      <details className="evaluation-performance-detail">
+        <summary>{detailLabel}</summary>
+        <div className="evaluation-performance-content">{children}</div>
+      </details>
+    </div>
   );
+}
+
+function MetricValues({ metric: { label, rate, basis, description } }: { metric: MetricValue }) {
+  return <>
+    <dt>{label}</dt>
+    <dd>{percentMetric(rate)}</dd>
+    <dd className="quality-scope">{description}{basis && <small>{basis}</small>}</dd>
+  </>;
 }
 
 function EvidenceCounts({ summary }: { summary: SemanticSummary }) {
