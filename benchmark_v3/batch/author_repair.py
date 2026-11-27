@@ -4,7 +4,7 @@ from dataclasses import replace
 from typing import TYPE_CHECKING, Any
 
 from benchmark_v3 import commissioning
-from benchmark_v3.batch import artifacts, author_context, author_delivery, authorisation, repair_authority
+from benchmark_v3.batch import artifacts, author_context, author_delivery, authorisation, clean_redesign, repair_authority
 from benchmark_v3.batch.contracts import DesignOutput
 from benchmark_v3.research_contracts import Contract, Text
 from private_client_graph.models.source import Source
@@ -140,13 +140,21 @@ def _missing_sender_receipts(runner: "SessionRunner", source_id: str, events: li
     rejected = {row["name"]: row["details"] for row in events if row["kind"] == "rejected_output"}
     job = f"author-{source_id}"
     found = {}
+    prior_inputs = None
+    partial = None
     for name in (job, job + repair_authority.FORMAT_RETRY):
         output, receipt, request = runner.committed_packet("author", name, "author")
-        author_delivery.require_projection(runner, name, request["inputs"])
+        inputs = request["inputs"]
+        author_delivery.require_projection(runner, name, inputs)
         author_delivery.require_prompt(name, request["prompt"])
-        if (author_delivery.AttestedSource.model_validate_json(output).deliveries
+        supplied = [item.model_dump(mode="json") for item in author_delivery.AttestedSource.model_validate_json(output).deliveries]
+        expected = commissioning._read_json(inputs["author_brief"])["outgoing_deliveries"]
+        if ((supplied and not runner.ledger.requires_workload_merits)
+                or supplied != [grant for grant in expected if grant in supplied] or supplied == expected
+                or (prior_inputs is not None and (inputs != prior_inputs or supplied != partial))
                 or rejected.get(name) != {"receipt_sha256": receipt["receipt_sha256"], "reason": ATTESTATION_ERROR}):
-            raise ValueError("Both original authors must have returned empty attestations under the same cleared scope.")
+            raise ValueError("Both original authors must have omitted the same existing grants under the same cleared scope.")
+        prior_inputs, partial = inputs, supplied
         found[name] = receipt["receipt_sha256"]
     return found
 
@@ -194,10 +202,37 @@ def reopen_empty_sender_repair(runner: "SessionRunner") -> tuple[DesignOutput, d
     if record is None:
         return None
     previous = replace(runner, revision=runner.revision - 1, directory=runner.directory.with_name(str(runner.revision - 1)))
+    deferred = record.get("deferred_redesign")
+    if deferred is not None:
+        if deferred != deferred_sender_redesign(previous):
+            raise ValueError("The deferred clean design no longer matches its retained receipts.")
+        previous = replace(previous, revision=previous.revision - 1, directory=previous.directory.with_name(str(previous.revision - 1)))
     expected, design, retained = empty_sender_repair(previous, record["source_id"])
-    if expected != record:
+    if expected | ({"deferred_redesign": deferred} if deferred is not None else {}) != record:
         raise ValueError("The sender reminder differs from the original independently held receipts.")
     return design, retained, record
+
+
+def deferred_sender_redesign(runner: "SessionRunner") -> dict[str, Any]:
+    """Keep a design-only replacement separate when a stronger prior lineage becomes recoverable."""
+    batch, family, revision = runner.manifest.batch_id, runner.family, runner.revision
+    replacement = clean_redesign.recorded(runner)
+    if replacement is None or replacement.parent_revision != revision - 1 or not runner.ledger.requires_workload_merits:
+        raise ValueError("Only the direct design-only replacement may be deferred for sender recovery.")
+    attempts = [row for row in runner.ledger.attempts(family) if row["revision"] == revision]
+    results = {row["name"]: row["details"] for row in runner.ledger.events(batch, family)
+               if row["revision"] == revision and row["kind"] == "session"}
+    if (not attempts or any(row["stage"] != "design" or row["job"] not in results for row in attempts)):
+        raise ValueError("A replacement with active reservations or post-design work may not be deferred.")
+    receipts = {}
+    for attempt in attempts:
+        job = attempt["job"]
+        receipt = artifacts.read_bytes(runner.directory / "packets" / job / "receipt.json")
+        digest = commissioning.digest(receipt)
+        if digest != results[job]["receipt_sha256"]:
+            raise ValueError("A deferred replacement must retain every exact designer receipt.")
+        receipts[job] = digest
+    return {"revision": revision, "replacement_sha256": authorisation.commitment(replacement), "receipts": receipts}
 
 
 def verify_unused_attestation(runner: "SessionRunner", source_id: str, design: DesignOutput) -> dict[str, Any]:

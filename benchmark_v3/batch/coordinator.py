@@ -12,7 +12,7 @@ from benchmark_v3 import commissioning, packet
 from benchmark_v3.batch import (
     adjudication_contract, adjudication_recovery, annotation_recovery, artifacts, audit_boundary, audit_recovery, author_repair, authorisation,
     autonomous_realism, clean_redesign, construction, continuation, delivery_particulars, design_recovery, design_review, evidence_recovery, exception_review, frozen_rekey, joint_control_plan,
-    large_merits_repair, milestone_repair, read_format_recovery, recipient_edit, repair_authority, science,
+    large_merits_repair, mask_dispute, milestone_repair, read_format_recovery, recipient_edit, repair_authority, science,
 )
 from benchmark_v3.batch.contracts import (
     Adjudication, AdjudicationQuoteRecovery, AnnotationRecovery, AuditRecovery, BatchDecision, BatchManifest, BudgetAmendment,
@@ -27,6 +27,7 @@ from benchmark_v3.batch.sessions import Blocked, InvalidRoleOutput, SessionRunne
 from benchmark_v3.batch.workflow import FamilyWorkflow, verify_dossier
 from benchmark_v3.portfolio import FamilySlot, Portfolio
 from benchmark_v3.research_contracts import Digest
+from private_client_graph.models.evaluation_result import SemanticEdge
 from private_client_graph.models.source import Source
 
 
@@ -472,12 +473,14 @@ def family_status(ledger: Ledger, batch_id: str, family: str) -> tuple[int, str,
         if record["kind"] in {"reconcile", "family_release"}:
             blocking = None
             if record["kind"] == "reconcile" and record["name"] in {
-                repair_authority.PLAN_RECOVERY, repair_authority.RETAINED_DESIGN_NOTE,
+                repair_authority.PLAN_RECOVERY, repair_authority.LOCAL_PLAN_RECOVERY, repair_authority.RETAINED_DESIGN_NOTE,
+                repair_authority.CAPACITY_SUCCESSOR,
             }:
                 state = "design"
             if record["kind"] == "reconcile" and (
                 record["name"].startswith(("construction-followup", "pooled-release", read_format_recovery.RELEASE,
-                                           read_format_recovery.MASK_RELEASE))
+                                           read_format_recovery.MASK_RELEASE, mask_dispute.RELEASE, mask_dispute.SCOPE_RELEASE,
+                                           mask_dispute.CLARIFY))
                 or record["name"] in {audit_boundary.RECHECK, audit_boundary.FORMAT_RETRY,
                                       audit_boundary.LARGE_CONFIRMATION, author_repair.UNUSED_ATTESTATION,
                                       repair_authority.SCOPE_REVIEW_RETRY, joint_control_plan.RELEASE,
@@ -644,6 +647,8 @@ def _block(
         qualifier = next((row["name"] for row in reversed(ledger.events(batch, family))
                           if row["revision"] == revision and row["kind"] == "reconcile"
                           and row["name"].startswith(reading_release_prefix)), qualifier)
+    if workflow.stage == "masks" and code == "scientific_review" and job is not None and job.startswith("mask-"):
+        qualifier = f"observation-{job}"
     ledger.block(batch, revision, ExceptionRecord(
         stage=workflow.stage, family_id=family, code=code, evidence=evidence, job=job,
         repair_permitted=repair,
@@ -705,6 +710,7 @@ def recover_scope_review_representation(ledger: Ledger, batch: str, family: str)
 
 def release_clean_redesign(
     ledger: PooledLedger, batch: str, family: str, reason: str, *, independent_large_assessment: str | None = None,
+    retained_design_revision: int | None = None,
 ) -> None:
     """Retain a failed lineage and commission one fresh independent replacement."""
     with ledger.coordinator_lock():
@@ -714,17 +720,20 @@ def release_clean_redesign(
         events = ledger.events(batch, family)
         scoped = (commission.manifest.phase == "milestone" and ledger.requires_delivery_attestation
                   and not commission.manifest.requires_design_review)
+        eligible = {"scientific_review", "documentary_realism"}
+        if ledger.pool.shared_scale:
+            eligible.add("failed_dispatch")
         if (not scoped or not reason.strip() or state not in {"quarantined", "returned"}
-                or not issue or issue["code"] not in {"scientific_review", "documentary_realism"}):
-            raise ValueError("A clean redesign needs a retained scientific failure and a released non-giant hypothesis.")
+                or not issue or issue["code"] not in eligible):
+            raise ValueError("A clean redesign needs a retained scientific failure and a released hypothesis.")
         prior = [row for row in events if "documentary_redesign" in row["details"]]
         slot = next(row for row in commission.portfolio.slots if row.family_id == family)
-        if slot.tier == "giant" or slot.expected_sources >= 100:
-            raise ValueError("The giant workload is outside clean redesign authority.")
+        if (slot.tier == "giant" or slot.expected_sources >= 100) and ledger.pool.giant_phase is None:
+            raise ValueError("The giant workload needs a dedicated phase before clean redesign.")
         runner = commission.session_runner(ledger, family, revision + 1)
         audit = None
         if independent_large_assessment is None:
-            if prior:
+            if prior and not ledger.pool.shared_scale:
                 raise ValueError("The ordinary clean redesign has already been used.")
         else:
             if (len(prior) != 1 or not 51 <= slot.expected_sources <= 99 or slot.tier != "administrative"
@@ -735,7 +744,9 @@ def release_clean_redesign(
                 audit_receipt_sha256=clean_redesign.reviewed_audit_receipt(runner, revision),
                 independent_assessment_sha256=independent_large_assessment,
             )
-        record = clean_redesign.details(runner, revision, reason.strip(), audit)
+        record = clean_redesign.details(
+            runner, revision, reason.strip(), audit, retained_design_revision=retained_design_revision,
+        )
         ledger.release(batch, family, revision + 1, "design", parent_sha256=authorisation.commitment(record),
                        reference="Fresh documentary design after a retained scientific failure.",
                        documentary_redesign=record.model_dump(mode="json"))
@@ -747,11 +758,15 @@ def release_large_merits_repair(ledger: PooledLedger, batch: str, family: str, s
         commission = load_commission(ledger, batch)
         revision, state, _ = family_status(ledger, batch, family)
         events = ledger.events(batch, family)
+        repeated = any(row["name"] == large_merits_repair.RELEASE and (
+            not ledger.pool.shared_scale or set(row["details"]["source_ids"]) == source_ids
+        ) for row in events)
         if (state != "quarantined" or not ledger.requires_delivery_attestation
-                or not ledger.pooled_revision(batch, family, revision)
-                or any(row["name"] == large_merits_repair.RELEASE for row in events)):
-            raise ValueError("One bounded large design merits repair may follow the retained pre-author return.")
+                or not ledger.pooled_revision(batch, family, revision) or repeated):
+            raise ValueError("A large design merits repair requires a distinct retained pre-author return and repair scope.")
         runner = commission.session_runner(ledger, family, revision)
+        if ledger.pool.shared_scale and autonomous_realism.release_event(runner) is not None:
+            raise ValueError("A documentary repair must preserve its original scoped repair and dependent review lineage.")
         design, review, receipt = large_merits_repair.returned(runner)
         if not source_ids or not source_ids <= review.findings.keys():
             raise ValueError("A merits repair must target specific Sources from the independent review.")
@@ -761,7 +776,10 @@ def release_large_merits_repair(ledger: PooledLedger, batch: str, family: str, s
         })
 
 
-def release_frozen_evidence_review(ledger: PooledLedger, batch: str, family: str, rationale: str) -> None:
+def release_frozen_evidence_review(
+    ledger: PooledLedger, batch: str, family: str, rationale: str,
+    *, mask_corrections: dict[str, list[SemanticEdge]] | None = None,
+) -> None:
     """Preserve documentary and blind commitments before a fresh condition-local rekey."""
     with ledger.coordinator_lock():
         ledger.require_running()
@@ -779,9 +797,30 @@ def release_frozen_evidence_review(ledger: PooledLedger, batch: str, family: str
         slot = next(row for row in commission.portfolio.slots if row.family_id == family)
         if commission.manifest.phase != "milestone" or slot.tier == "giant" or slot.expected_sources >= 100:
             raise ValueError("Frozen evidence review is scoped to non-giant milestone candidates.")
-        record = frozen_rekey.make_release(commission.session_runner(ledger, family, revision), slot, rationale.strip())
+        if mask_corrections and (not ledger.pool.shared_scale or state != "returned"):
+            raise ValueError("Returned, unexecuted control corrections require the shared scale release.")
+        record = frozen_rekey.make_release(commission.session_runner(ledger, family, revision), slot, rationale.strip(),
+                                           mask_corrections=mask_corrections)
         ledger.release(batch, family, revision + 1, "adjudicate", parent_sha256=authorisation.commitment(record),
                        reference="Independent condition-local evidence re-adjudication on the retained freeze.",
+                       frozen_evidence_review=record.model_dump(mode="json"))
+
+
+def release_frozen_evidence_format_retry(ledger: PooledLedger, batch: str, family: str) -> None:
+    """Commission a fresh adjudicator after restoring a halted, undispatched documentary transition."""
+    with ledger.coordinator_lock():
+        ledger.require_running()
+        commission = load_commission(ledger, batch)
+        revision, state, issue = family_status(ledger, batch, family)
+        restored = [row for row in ledger.events(batch, family) if row["revision"] == revision
+                    and row["name"] == "verified_documentary_lineage" and row["kind"] == "reconcile"]
+        if not ledger.pool.shared_scale or state != "design" or issue or len(restored) != 1:
+            raise ValueError("This retry requires a restored, undispatched documentary transition in the shared scale phase.")
+        slot = next(row for row in commission.portfolio.slots if row.family_id == family)
+        runner = commission.session_runner(ledger, family, revision + 1)
+        record = frozen_rekey.make_format_retry(runner, slot, restored[0]["details"]["boundary_sha256"])
+        ledger.release(batch, family, runner.revision, "adjudicate", parent_sha256=authorisation.commitment(record),
+                       reference="Fresh independent evidence adjudication after a preserved response-format return.",
                        frozen_evidence_review=record.model_dump(mode="json"))
 
 
@@ -800,20 +839,35 @@ def recover_unused_attestation(ledger: Ledger, batch: str, family: str, source_i
         ledger.event(batch, family, revision, "reconcile", author_repair.UNUSED_ATTESTATION, state, "author", details)
 
 
-def release_empty_sender_repair(ledger: PooledLedger, batch: str, family: str, source_id: str) -> None:
+def release_empty_sender_repair(
+    ledger: PooledLedger, batch: str, family: str, source_id: str, *, defer_clean_design: bool = False,
+) -> None:
     """Reopen only the documented local sending act and its dependent authoring."""
     with ledger.coordinator_lock():
         ledger.require_running()
         commission = load_commission(ledger, batch)
         revision, state, issue = family_status(ledger, batch, family)
-        expected = f"author-{source_id}-format-retry failed its output contract: {author_repair.ATTESTATION_ERROR}"
-        if (state != "quarantined" or not issue or (issue["stage"], issue["code"], issue["evidence"])
-                != ("author", "scientific_review", expected)
-                or not ledger.pooled_revision(batch, family, revision)
-                or any(row["name"] == author_repair.EMPTY_ATTESTATION_REPAIR for row in ledger.events(batch, family))):
-            raise ValueError("Only one exactly retained missing sender attestation can receive a local remedy.")
         runner = commission.session_runner(ledger, family, revision)
+        deferred = None
+        history = ledger.events(batch, family)
+        if defer_clean_design:
+            if not ledger.pool.shared_scale or state not in {"design", "author"} or issue is not None:
+                raise ValueError("Only a design-only replacement in the shared scale pool may be deferred.")
+            deferred = author_repair.deferred_sender_redesign(runner)
+            runner = commission.session_runner(ledger, family, revision - 1)
+            issue = next((row["details"] for row in reversed(history)
+                          if row["revision"] == runner.revision and row["kind"] == "exception"), None)
+        expected = f"author-{source_id}-format-retry failed its output contract: {author_repair.ATTESTATION_ERROR}"
+        repeated = any(row["name"] == author_repair.EMPTY_ATTESTATION_REPAIR and (
+            not ledger.pool.shared_scale or row["details"]["source_id"] == source_id
+        ) for row in history)
+        if ((state != "quarantined" and deferred is None) or not issue or (issue["stage"], issue["code"], issue["evidence"])
+                != ("author", "scientific_review", expected)
+                or not ledger.pooled_revision(batch, family, runner.revision) or repeated):
+            raise ValueError("A missing sender attestation requires a distinct retained omission for local repair.")
         record, _, _ = author_repair.empty_sender_repair(runner, source_id)
+        if deferred is not None:
+            record["deferred_redesign"] = deferred
         ledger.event(batch, family, revision + 1, "transition", author_repair.EMPTY_ATTESTATION_REPAIR, state, "design", record)
 
 
@@ -934,6 +988,57 @@ def release_joint_plan_followup(
                      release.model_dump(mode="json"))
 
 
+def release_executed_control_dispute(ledger: PooledLedger, batch: str, family: str) -> None:
+    """Reserve a separate independent audit of the executed failure before selecting a scientific disposition."""
+    with ledger.coordinator_lock():
+        ledger.require_running()
+        commission = load_commission(ledger, batch)
+        revision, state, issue = family_status(ledger, batch, family)
+        runner = commission.session_runner(ledger, family, revision)
+        match = mask_dispute.FAILURE.fullmatch(issue["evidence"]) if issue else None
+        if (not ledger.pool.shared_scale or not ledger.requires_delivery_attestation or state != "quarantined"
+                or not issue or (issue["stage"], issue["code"]) != ("masks", "scientific_review") or match is None
+                or mask_dispute.recorded(runner, match[1]) is not None):
+            raise ValueError("Each executed control dispute requires a distinct exact retained scientific disagreement.")
+        dispute = mask_dispute.reopen(runner, match[1])
+        existing = {index for _, prior, _ in mask_dispute.clarifications(runner) for index in prior.assignments}
+        if existing & dispute.assignments.keys():
+            raise ValueError("A previously clarified control cannot receive another modified question.")
+        event = mask_dispute.lineage_name(runner, mask_dispute.RELEASE, match[1])
+        ledger.event(batch, family, revision, "reconcile", event, state, "audit",
+                     dispute.release.model_dump(mode="json"))
+
+
+def release_executed_control_clarification(ledger: PooledLedger, batch: str, family: str) -> None:
+    with ledger.coordinator_lock():
+        ledger.require_running()
+        commission = load_commission(ledger, batch)
+        revision, state, issue = family_status(ledger, batch, family)
+        runner = commission.session_runner(ledger, family, revision)
+        if not ledger.pool.shared_scale or not ledger.requires_delivery_attestation or state != "audit" or issue:
+            raise ValueError("Clarified views require the active held control-dispute audit.")
+        clarification, dispute, _ = mask_dispute.make_clarification(runner)
+        if any((found := mask_dispute.CLARIFIED_JOB.fullmatch(row["job"])) is not None
+               and int(found[1]) in dispute.assignments for row in ledger.attempts(family) if row["revision"] == revision):
+            raise ValueError("An executed dispute may release only one independent paired clarification.")
+        ledger.require_capacity(family, revision, {f"mask-{index:03}-clarified" for index in dispute.assignments})
+        ledger.event(batch, family, revision, "reconcile", mask_dispute.lineage_name(runner, mask_dispute.CLARIFY), state, "masks",
+                     clarification.model_dump(mode="json"))
+
+
+def release_executed_control_scope_confirmation(ledger: PooledLedger, batch: str, family: str) -> None:
+    with ledger.coordinator_lock():
+        ledger.require_running()
+        commission = load_commission(ledger, batch)
+        revision, state, issue = family_status(ledger, batch, family)
+        runner = commission.session_runner(ledger, family, revision)
+        if not ledger.pool.shared_scale or not ledger.requires_delivery_attestation or state != "audit" or issue:
+            raise ValueError("An independent scope test requires the active control-dispute return.")
+        release, _, _, _ = mask_dispute.scope_packet(runner)
+        ledger.event(batch, family, revision, "reconcile", mask_dispute.lineage_name(runner, mask_dispute.SCOPE_RELEASE), state, "audit",
+                     release.model_dump(mode="json"))
+
+
 def release_joint_plan_recheck(ledger: PooledLedger, batch: str, family: str) -> None:
     """Independently complete all required joint observations before any mask is sent."""
     with ledger.coordinator_lock():
@@ -1044,6 +1149,11 @@ def release_returned_authored_scope_plan(
     ledger: PooledLedger, batch: str, family: str, *, incoming_particulars_source: str | None = None,
     natural_provenance_restoration: bool = False,
     exact_inventory_edit: recipient_edit.ExactRecipientEdit | None = None,
+    owned_source_revisions: dict[str, int] | None = None,
+    baseline_owned_restoration: bool = False,
+    narrowed_scope_source: str | None = None,
+    distinct_scope_sources: set[str] | None = None,
+    local_repair_option: str | None = None,
 ) -> None:
     """Open one documentary replan from an independently rejected authored repair."""
     with ledger.coordinator_lock():
@@ -1053,10 +1163,22 @@ def release_returned_authored_scope_plan(
         runner = commission.session_runner(ledger, family, revision)
         earlier = autonomous_realism.release_event(runner)
         previous_receipts = autonomous_realism._authored_scope_receipts(earlier or {})
+        issued = (earlier or {}).get("audit_sender_return", {})
+        earlier_issued = (earlier or {}).get("previous_issued_sender_recovery")
+        settled_sender = bool(issued.get("issued_source_sha256"))
+        local_scope = narrowed_scope_source is not None or distinct_scope_sources is not None
+        if local_scope:
+            expected = bool(previous_receipts) and not any((earlier or {}).get(key) for key in (
+                "narrowed_scope_source", "distinct_scope_sources",
+            ))
+        elif baseline_owned_restoration:
+            expected = len(previous_receipts) <= 1
+        else:
+            expected = len(previous_receipts) == int(natural_provenance_restoration)
         if (not ledger.requires_delivery_attestation or earlier is None
                 or earlier.get("parent_revision") != revision - 1 - len(autonomous_realism._pre_author_returns(earlier))
-                - len(previous_receipts)
-                or (len(previous_receipts) != int(natural_provenance_restoration))
+                - len(previous_receipts) - int(bool(earlier_issued or settled_sender)) - int(bool(earlier.get("partial_packet_return")))
+                or not expected or (earlier_issued and settled_sender)
                 or state != "quarantined" or not issue or (issue["stage"], issue["code"]) != ("author", "scientific_review")
                 or not ledger.pooled_revision(batch, family, revision)):
             raise ValueError("An authored-scope replan requires an independently returned documentary revision.")
@@ -1065,22 +1187,72 @@ def release_returned_authored_scope_plan(
         if review.verdict != "changed" or not review.objections or issue["evidence"] != autonomous_realism.scope_failure(review):
             raise ValueError("The exact retained scope review must establish the documentary objection.")
         release = {key: value for key, value in earlier.items()
-                   if key not in {"scope_ticket_omission", "generated_attachment_ticket", "incoming_particulars"}} | {
+                   if key not in {"scope_ticket_omission", "generated_attachment_ticket", "incoming_particulars",
+                                  "local_repair_option"}} | {
             "scope_return_receipt_sha256": receipt["receipt_sha256"],
             "family_sessions_remaining": ledger.effective_budget().families[family] - len(ledger.attempts(family)),
         }
+        if settled_sender:
+            release.pop("audit_sender_return")
+            release["previous_issued_sender_recovery"] = {"recovery_revision": revision, "sender_return": issued}
         slot = next(row for row in commission.portfolio.slots if row.family_id == family)
+        if local_repair_option is not None:
+            if (not ledger.pool.shared_scale or not ledger.requires_workload_merits
+                    or len(science.condition_ids(slot)) != 1 or not local_repair_option.strip()
+                    or (runner.directory / "family").exists()):
+                raise ValueError("An independent planning option requires an exact returned natural file before key construction.")
+            release.update(local_repair_option=local_repair_option.strip(), keep_documentary_limits=True)
+        if baseline_owned_restoration:
+            if (not ledger.pool.shared_scale or not ledger.requires_workload_merits or not owned_source_revisions
+                    or len(science.condition_ids(slot)) != 1 or (runner.directory / "family").exists()
+                    or any((natural_provenance_restoration, exact_inventory_edit, incoming_particulars_source))):
+                raise ValueError("Original owned records may restore only the exact returned natural comparison.")
+            release.update(earlier_authored_scope_receipts=previous_receipts, baseline_owned_restoration=True)
+        if local_scope:
+            if (not ledger.pool.shared_scale or not ledger.requires_workload_merits
+                    or len(science.condition_ids(slot)) != 1 or (runner.directory / "family").exists()
+                    or (distinct_scope_sources is not None and (not distinct_scope_sources or narrowed_scope_source is not None))
+                    or any((baseline_owned_restoration, natural_provenance_restoration, exact_inventory_edit,
+                            incoming_particulars_source, owned_source_revisions))):
+                raise ValueError("A Source-scoped repair requires the original natural condition before key construction.")
+            release.pop("baseline_owned_restoration", None)
+            release.pop("owned_source_revisions", None)
+            release["earlier_authored_scope_receipts"] = previous_receipts
+            if distinct_scope_sources is not None:
+                release["distinct_scope_sources"] = sorted(distinct_scope_sources)
+            else:
+                release["narrowed_scope_source"] = narrowed_scope_source
+        expanded = False
         if natural_provenance_restoration:
             previous_particulars = (earlier.get("incoming_particulars") or {}).get("source_id")
-            if (not incoming_particulars_source or incoming_particulars_source != previous_particulars
+            resolved_gaps = {source: ids for prior_return in autonomous_realism._pre_author_returns(earlier)
+                             for source, ids in prior_return.get("mechanically_missing_intake_attachments", {}).items()}
+            expanded = (ledger.requires_workload_merits and previous_particulars is None
+                        and owned_source_revisions is not None and incoming_particulars_source is not None
+                        and incoming_particulars_source in owned_source_revisions
+                        and incoming_particulars_source in resolved_gaps)
+            if (not incoming_particulars_source or (incoming_particulars_source != previous_particulars and not expanded)
                     or len(science.condition_ids(slot)) != 1 or (runner.directory / "family").exists()):
                 raise ValueError("One final natural-file restoration requires the same proven recipient and no key.")
             release.update(earlier_authored_scope_receipts=previous_receipts, natural_provenance_restoration=True)
+            if expanded:
+                restored = delivery_particulars.reopen(runner, incoming_particulars_source)
+                if not set(resolved_gaps[incoming_particulars_source]) <= set(restored.source_ids()):
+                    raise ValueError("The restored recipient's inputs must cover every previously missing attachment.")
+        if owned_source_revisions:
+            if (not (natural_provenance_restoration or baseline_owned_restoration)
+                    or not ledger.requires_workload_merits or exact_inventory_edit):
+                raise ValueError("Only the independently returned large natural file can restore exact owned records.")
+            release["owned_source_revisions"] = owned_source_revisions
         if incoming_particulars_source is not None:
             if not any(incoming_particulars_source in reason for reason in review.objections):
                 affected = commissioning._read_json(request["inputs"]["audit_rules"])["affected_sources"]
-                if (affected != [incoming_particulars_source] or incoming_particulars_source not in review.provenance
-                        or len(science.condition_ids(slot)) != 1 or (runner.directory / "family").exists()):
+                continued_intake = (natural_provenance_restoration and expanded and incoming_particulars_source in affected
+                                    and any("intake" in reason.casefold() and "author inputs" in reason.casefold()
+                                            for reason in review.objections))
+                isolated_recipient = affected == [incoming_particulars_source] and incoming_particulars_source in review.provenance
+                if (not (isolated_recipient or continued_intake) or len(science.condition_ids(slot)) != 1
+                        or (runner.directory / "family").exists()):
                     raise ValueError("The returned scope must identify the specific recipient Source.")
                 release["verified_recipient_scope_restoration"] = True
             particulars = delivery_particulars.reopen(runner, incoming_particulars_source)
@@ -1167,6 +1339,10 @@ def release_returned_pre_author_plan(
     ledger: PooledLedger, batch: str, family: str, *,
     omit_reply_for: str | None = None, omit_future_reference: autonomous_realism.FutureReferenceOmission | None = None,
     incoming_particulars_source: str | None = None, exact_omission_assessment: str | None = None,
+    keep_documentary_limits: bool = False,
+    omit_quoted_instruction: bool = False,
+    omit_misaddressed_ticket: bool = False,
+    local_repair_option: str | None = None,
 ) -> None:
     with ledger.coordinator_lock():
         ledger.require_running()
@@ -1182,27 +1358,55 @@ def release_returned_pre_author_plan(
         record, _ = autonomous_realism.pre_author_scope_return(runner, slot=slot)
         if commissioning._read_json(issue["evidence"]) != record["review"]:
             raise ValueError("The retained independent scope review differs from the current exception.")
+        if local_repair_option is not None and (not keep_documentary_limits or not local_repair_option.strip()):
+            raise ValueError("An independent planning option requires an exact evidence-limits scope return.")
+        if keep_documentary_limits and (
+            not ledger.pool.shared_scale or not ledger.requires_workload_merits
+            or len(science.condition_ids(slot)) != 1
+            or (original.get("keep_documentary_limits")
+                and (local_repair_option is None or local_repair_option.strip() == original.get("local_repair_option")))
+            or any((omit_reply_for, omit_future_reference, incoming_particulars_source, exact_omission_assessment,
+                    omit_quoted_instruction, omit_misaddressed_ticket))
+        ):
+            raise ValueError("A limits-focused replan requires one independently returned natural-file proposal.")
         earlier = autonomous_realism._pre_author_returns(original)
         if "exact_recipient_edit" in original and exact_omission_assessment is None:
             raise ValueError("An exact recipient scope return requires an independent omission assessment.")
         if exact_omission_assessment is not None:
             if (earlier or "exact_recipient_edit" not in original or "exact_omission_assessment" in original
-                    or any((omit_reply_for, omit_future_reference, incoming_particulars_source))):
+                    or any((omit_reply_for, omit_future_reference, incoming_particulars_source,
+                            omit_quoted_instruction, omit_misaddressed_ticket))):
                 raise ValueError("One independent omission assessment may reopen only an exact recipient repair.")
             edit = recipient_edit.ExactRecipientEdit.model_validate(original["exact_recipient_edit"])
             edit.require_exact_omission_objections(record["objections"])
             TypeAdapter(Digest).validate_python(exact_omission_assessment)
         omission: dict[str, Any] | None
-        if omit_future_reference is not None:
+        if omit_quoted_instruction or omit_misaddressed_ticket:
+            if (not ledger.pool.shared_scale or not ledger.requires_workload_merits
+                    or len(science.condition_ids(slot)) != 1 or "scope_ticket_omission" in original
+                    or (omit_quoted_instruction and omit_misaddressed_ticket)
+                    or any((omit_reply_for, omit_future_reference, incoming_particulars_source))):
+                raise ValueError("Ticket omission requires one exact independently returned natural-file proposal.")
+            remove = (autonomous_realism.remove_quoted_ticket_instruction if omit_quoted_instruction
+                      else autonomous_realism.remove_misaddressed_ticket)
+            omission = remove(runner, slot)[0]
+        elif omit_future_reference is not None:
             if omit_reply_for is not None or len(earlier) > 2 or "scope_ticket_omission" in original:
                 raise ValueError("Use only one exact unavailable-document omission in an un-authored repair chain.")
             omission = autonomous_realism.remove_future_reference(runner, slot, omit_future_reference)[0]
-        elif len(earlier) >= 2 or (earlier and len(record["objections"]) >= len(earlier[-1]["objections"])):
-            raise ValueError("A repeated un-authored scope repair requires tangible progress on earlier objections.")
         else:
+            if ledger.pool.shared_scale:
+                design = artifacts.read_contract(runner.directory / "design.json", DesignOutput)
+                progress = autonomous_realism.pre_author_progress(earlier, record, {row.source_id for row in design.inventory})
+            else:
+                progress = len(earlier) < 2 and (not earlier or len(record["objections"]) < len(earlier[-1]["objections"]))
+            if not progress:
+                raise ValueError("A repeated un-authored scope repair requires tangible progress on earlier objections.")
             omission = autonomous_realism.remove_separate_reply_ticket(runner, slot, omit_reply_for)[0] if omit_reply_for else None
-        release = original | {
+        release = {key: value for key, value in original.items() if key != "scope_ticket_omission"} | {
             "pre_author_scope_return": record,
+            **({"keep_documentary_limits": True, "narrow_originating_records": True} if keep_documentary_limits else {}),
+            **({"local_repair_option": local_repair_option.strip()} if local_repair_option is not None else {}),
             **({"prior_pre_author_scope_returns": earlier} if earlier else {}),
             **({"scope_ticket_omission": omission} if omission is not None else {}),
             **({"exact_omission_assessment": exact_omission_assessment} if exact_omission_assessment is not None else {}),
@@ -1225,6 +1429,59 @@ def release_returned_pre_author_plan(
         ledger.event(batch, family, revision + 1, "transition", repair_authority.REVISION, state, "design", release)
 
 
+def release_partial_author_packet_repair(
+    ledger: PooledLedger, batch: str, family: str, attachment: str,
+) -> None:
+    """Retain an unfinished revision and repeat only its planned participant-local edits."""
+    with ledger.coordinator_lock():
+        ledger.require_running()
+        commission = load_commission(ledger, batch)
+        revision, state, issue = family_status(ledger, batch, family)
+        runner = commission.session_runner(ledger, family, revision)
+        original = autonomous_realism.release_event(runner)
+        if (original is None or state != "author" or not issue or not issue.get("job")
+                or not ledger.pool.shared_scale or not ledger.pooled_revision(batch, family, revision)
+                or any(original.get(key) for key in (
+                    "audit_sender_return", "scope_ticket_omission", "generated_attachment_ticket",
+                    "incoming_particulars", "owned_source_revisions", "exact_recipient_edit",
+                ))):
+            raise ValueError("A partial packet repair requires the exact stopped pooled authoring revision.")
+        slot = next(row for row in commission.portfolio.slots if row.family_id == family)
+        parent = autonomous_realism._read_return(runner, slot, original)
+        record, _, _, _ = autonomous_realism.partial_packet_plan(runner, slot, parent, issue["job"], attachment)
+        release = original | {
+            "partial_packet_return": record,
+            "family_sessions_remaining": ledger.effective_budget().families[family] - len(ledger.attempts(family)),
+        }
+        successor = commission.session_runner(ledger, family, revision + 1)
+        autonomous_realism._read_return(successor, slot, release)
+        ledger.event(batch, family, revision + 1, "transition", repair_authority.REVISION, state, "design", release)
+
+
+def release_unattested_intake_repair(ledger: PooledLedger, batch: str, family: str) -> None:
+    """Reopen an exact pre-author hold when retained scope acceptance missed missing author attachments."""
+    with ledger.coordinator_lock():
+        ledger.require_running()
+        commission = load_commission(ledger, batch)
+        revision, state, _ = family_status(ledger, batch, family)
+        runner = commission.session_runner(ledger, family, revision)
+        original = autonomous_realism.release_event(runner)
+        if (not ledger.requires_workload_merits or state != "quarantined" or original is None
+                or not ledger.pooled_revision(batch, family, revision)):
+            raise ValueError("A missing-intake recovery requires the exact un-authored large-workload hold.")
+        slot = next(row for row in commission.portfolio.slots if row.family_id == family)
+        record, _ = autonomous_realism.pre_author_scope_return(runner, slot=slot)
+        if not record.get("mechanically_missing_intake_attachments"):
+            raise ValueError("The held review does not prove an exact missing-intake attachment.")
+        earlier = autonomous_realism._pre_author_returns(original)
+        release = original | {"pre_author_scope_return": record,
+                              "family_sessions_remaining": ledger.effective_budget().families[family]
+                              - len(ledger.attempts(family))}
+        if earlier:
+            release["prior_pre_author_scope_returns"] = earlier
+        ledger.event(batch, family, revision + 1, "transition", repair_authority.REVISION, state, "design", release)
+
+
 def release_exact_plan_classification(ledger: PooledLedger, batch: str, family: str) -> None:
     with ledger.coordinator_lock():
         ledger.require_running()
@@ -1244,6 +1501,57 @@ def release_exact_plan_classification(ledger: PooledLedger, batch: str, family: 
         ledger.event(batch, family, revision, "reconcile", repair_authority.PLAN_RECOVERY, state, "design", {
             "exact_classification": details,
         })
+
+
+def release_retained_file_capacity_review(ledger: PooledLedger, batch: str, family: str) -> None:
+    """Reassess one explicit whole-file reauthoring assumption with the existing local repair authority."""
+    with ledger.coordinator_lock():
+        ledger.require_running()
+        commission = load_commission(ledger, batch)
+        revision, state, issue = family_status(ledger, batch, family)
+        runner = commission.session_runner(ledger, family, revision)
+        release = autonomous_realism.release_event(runner)
+        events = ledger.events(batch, family)
+        if (not ledger.pool.shared_scale or not ledger.requires_workload_merits or release is None
+                or not ledger.pooled_revision(batch, family, revision) or state != "quarantined" or not issue
+                or (issue["stage"], issue["code"]) != ("design", "scientific_review")
+                or any(row["revision"] == revision and row["name"] == repair_authority.CAPACITY_SUCCESSOR for row in events)
+                or any(row["revision"] == revision and row["stage"] != "design" for row in ledger.attempts(family))):
+            raise ValueError("A retained-file capacity review requires the exact preauthor planning return.")
+        prior, receipt, _ = runner.committed_result("design", repair_authority.PLAN_JOB, "audit", autonomous_realism.RepairPlan)
+        slot = next(row for row in commission.portfolio.slots if row.family_id == family)
+        parent = autonomous_realism._read_return(runner, slot, release)
+        total = len(parent.design.inventory)
+        if (prior.disposition != "infeasible" or not prior.tickets
+                or issue["evidence"] != f"Independent repair planning returned infeasible: {prior.rationale}"
+                or not autonomous_realism.assumes_whole_file_reauthoring(prior.rationale, total)):
+            raise ValueError("The exact prior planning return must assume full reauthoring despite identifying local repairs.")
+        ledger.require_capacity(family, revision, {
+            repair_authority.BUDGET_PLAN_JOB,
+            *autonomous_realism.mandatory_jobs(parent.design, set(prior.tickets), verification=True),
+        })
+        ledger.event(batch, family, revision, "reconcile", repair_authority.CAPACITY_SUCCESSOR, state, "design", {
+            "prior_receipt_sha256": receipt["receipt_sha256"],
+            "available_sessions": ledger.effective_budget().families[family] - len(ledger.attempts(family)),
+            "retained_file_sha256": authorisation.commitment(parent.freeze),
+        })
+
+
+def release_local_documentary_plan(ledger: PooledLedger, batch: str, family: str) -> None:
+    with ledger.coordinator_lock():
+        ledger.require_running()
+        commission = load_commission(ledger, batch)
+        revision, state, issue = family_status(ledger, batch, family)
+        runner = commission.session_runner(ledger, family, revision)
+        if (not ledger.requires_workload_merits or not ledger.requires_delivery_attestation
+                or not ledger.pooled_revision(batch, family, revision)
+                or autonomous_realism.release_event(runner) is None or state != "quarantined" or not issue
+                or (issue["stage"], issue["code"]) != ("design", "scientific_review")
+                or repair_authority.recorded_local_retry(runner) is not None
+                or any(row["revision"] == revision and row["stage"] != "design" for row in ledger.attempts(family))):
+            raise ValueError("A local replan requires a stopped large-workload repair with no participant dispatch.")
+        details, _ = autonomous_realism.local_retry_details(runner)
+        ledger.event(batch, family, revision, "reconcile", repair_authority.LOCAL_PLAN_RECOVERY, state, "design", details)
 
 
 def release_generated_attachment_ticket_recovery(ledger: PooledLedger, batch: str, family: str, source_id: str) -> None:
@@ -1466,6 +1774,67 @@ def recover_adjudication_whitespace(ledger: PooledLedger, batch: str, family: st
         })
 
 
+def release_audit_documentary_repair(ledger: PooledLedger, batch: str, family: str, source_ids: set[str]) -> None:
+    """Commission a new design revision while preserving the returned freeze and key."""
+    with ledger.coordinator_lock():
+        ledger.require_running()
+        commission = load_commission(ledger, batch)
+        revision, state, issue = family_status(ledger, batch, family)
+        if (not ledger.pool.shared_scale or state != "returned" or not issue
+                or (issue["stage"], issue["code"]) != ("audit", "scientific_review")
+                or not repair_authority.enabled(ledger, commission.manifest)):
+            raise ValueError("An audit-origin documentary repair requires an independently returned scale file.")
+        runner = commission.session_runner(ledger, family, revision)
+        reviewed = autonomous_realism.document_audit_return(runner, source_ids)
+        next_revision = revision + 1
+        ledger.release(batch, family, next_revision, "design", parent_sha256=reviewed["receipt_sha256"],
+                       reference="Scoped documentary revision after independent audit return.")
+        ledger.event(batch, family, next_revision, "transition", repair_authority.REVISION, "design", "design", {
+            "role": "batch_coordinator", "parent_revision": revision, "documentary_audit_return": reviewed,
+            "manifest_sha256": authorisation.commitment(commission.manifest),
+            "family_sessions_remaining": ledger.effective_budget().families[family] - len(ledger.attempts(family)),
+        })
+
+
+def release_audit_sender_retry(
+    ledger: PooledLedger, batch: str, family: str, source_id: str, *, restore_issued: bool = False,
+    issued_revision: int | None = None,
+) -> None:
+    """Send the exact documentary repair to a new author with a documented delivery clarification."""
+    with ledger.coordinator_lock():
+        ledger.require_running()
+        commission = load_commission(ledger, batch)
+        revision, state, issue = family_status(ledger, batch, family)
+        expected = f"author-{source_id}-format-retry failed its output contract: {author_repair.ATTESTATION_ERROR}"
+        if (not ledger.pool.shared_scale or state != "quarantined" or not issue
+                or (issue["stage"], issue["code"], issue["evidence"]) != ("author", "scientific_review", expected)):
+            raise ValueError("A fresh sender requires the exact omitted attestation failure.")
+        runner = commission.session_runner(ledger, family, revision)
+        release = autonomous_realism.release_event(runner)
+        if release is None:
+            raise ValueError("A sender recovery requires the exact independently proposed documentary revision.")
+        if issued_revision is not None and not restore_issued:
+            raise ValueError("An earlier lineage can establish only an exact original issued record.")
+        issued = None
+        if restore_issued:
+            slot = next(row for row in commission.portfolio.slots if row.family_id == family)
+            if len(science.condition_ids(slot)) != 1 or any(key in release for key in (
+                "scope_ticket_omission", "owned_source_revisions", "incoming_particulars", "exact_recipient_edit",
+            )):
+                raise ValueError("The exact issued record may reopen only in the same natural documentary lineage.")
+            parent = autonomous_realism._read_return(runner, slot, release)
+            issued = next((source for source in parent.bundles[parent.freeze.natural] if source.id == source_id), None)
+            if issued is None:
+                raise ValueError("The original independent review did not include the requested issued record.")
+        reviewed = autonomous_realism.document_audit_sender_return(
+            runner, source_id, issued=issued, issued_revision=issued_revision,
+        )
+        ledger.release(batch, family, revision + 1, "design", parent_sha256=reviewed["receipt_sha256"],
+                       reference="Fresh participant turn for an omitted historic delivery attestation.")
+        ledger.event(batch, family, revision + 1, "transition", repair_authority.REVISION, "design", "design",
+                     release | {"audit_sender_return": reviewed})
+
+
 def release_adjudication_documentary_repair(ledger: Ledger, batch: str, family: str) -> None:
     with ledger.coordinator_lock():
         ledger.require_running()
@@ -1477,6 +1846,8 @@ def release_adjudication_documentary_repair(ledger: Ledger, batch: str, family: 
                        for event in ledger.events(batch, family))):
             raise ValueError("Only one bounded documentary repair can follow the first unlocked adjudication return.")
         runner = commission.session_runner(ledger, family, revision)
+        if frozen_rekey.recorded(runner) is not None:
+            raise ValueError("A returned evidence review inherits realism and cannot authorize documentary repair directly.")
         if not repair_authority.enabled(ledger, commission.manifest):
             raise ValueError("This family has no autonomous documentary repair authority.")
         adjudication = autonomous_realism.document_adjudication_return(runner)
