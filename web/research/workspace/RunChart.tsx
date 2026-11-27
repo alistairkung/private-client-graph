@@ -54,12 +54,15 @@ function verifiedBenchmarkCost(run: RunDetail) {
 function performanceRun(run: RunDetail): PerformanceRun {
   const { benchmark, benchmark_v4: mixed, evaluation } = run;
   if (mixed) {
-    const cost = verifiedBenchmarkCost(run);
+    const pipeline = run.pipeline_usage?.full_pipeline;
+    const cost = mixed.observation_origin === "live" && pipeline?.estimated_cost != null && pipeline.currency
+      ? { total: pipeline.estimated_cost, currency: pipeline.currency }
+      : null;
     const score = mixed.combined;
     return {
       id: run.id,
       lifecycle: run.lifecycle,
-      resolver: false,
+      resolver: run.plan.preview.proposal.resolver === "generative",
       inputMode: run.plan.preview.proposal.input_mode,
       model: run.plan.preview.proposal.model,
       recorded: mixed.observation_origin === "offline_fixture",

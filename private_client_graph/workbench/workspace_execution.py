@@ -66,6 +66,9 @@ def mount_workspace_commands(app: FastAPI, root: Path) -> None:
     @app.put(f'{PREFIX}/experiments/{{experiment_id}}/draft', response_model=RunDraft)
     def draft(experiment_id: str, command: DraftUpdate):
         writable(experiment_id)
+        if (command.configuration.retained_run_id
+                and command.configuration.retained_experiment_id != experiment_id):
+            raise ValueError('Retained inputs must remain in the original Experiment')
         preview_run(command.configuration, root)
         result = update_draft(root, experiment_id, command)
         refresh()

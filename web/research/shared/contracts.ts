@@ -108,9 +108,31 @@ export type BenchmarkScope = {
   unequal_allocation: boolean;
 };
 
+export type BenchmarkStageUsage = {
+  attempts: number;
+  estimated_cost: number | null;
+  currency: string | null;
+  unpriced_attempts: number;
+  tokens: TokenUsage;
+  provider_seconds: number | null;
+};
+
 export type BenchmarkV4Comparison = {
   left: BenchmarkV4Summary;
   right: BenchmarkV4Summary;
+  left_proofs: Metrics | null;
+  right_proofs: Metrics | null;
+  left_usage: BenchmarkV4Operations | null;
+  right_usage: BenchmarkV4Operations | null;
+  shared_extraction_run_id: string | null;
+};
+
+export type BenchmarkV4Operations = {
+  origin_run_id: string | null;
+  incremental: BenchmarkStageUsage;
+  inherited_extraction: BenchmarkStageUsage | null;
+  full_pipeline: BenchmarkStageUsage;
+  full_pipeline_seconds: number | null;
 };
 
 export type BenchmarkV4Summary = {
@@ -611,6 +633,7 @@ export type Preview = {
   inputs: Array<InputChoice>;
   extraction_call_maximum: number;
   resolution_call_maximum: number;
+  eligible_resolution_inputs?: number | null;
   matrix_call_maximum: number;
   planned_observations: number;
   invocation_cap: number;
@@ -790,6 +813,7 @@ export type RunDetail = {
   family_context: RunFamilyContext | null;
   benchmark: BenchmarkRun | null;
   benchmark_v4?: BenchmarkV4Summary | null;
+  pipeline_usage?: BenchmarkV4Operations | null;
   observations: Array<RunObservation>;
   provenance: Record<string, unknown>;
   artifact_digest: string;

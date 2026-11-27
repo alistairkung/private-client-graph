@@ -1,18 +1,11 @@
-import type { BenchmarkV4Summary as Summary, DeliveredGraphMetrics, RunDetail } from "../shared/contracts";
+import type { BenchmarkV4Operations, BenchmarkV4Summary as Summary, DeliveredGraphMetrics, Metrics, RunDetail } from "../shared/contracts";
 import { metric, money } from "./RunChart";
 
 export function BenchmarkV4Summary({ run }: { run: RunDetail }) {
   const summary = run.benchmark_v4!;
-  const evidence = summary.consensus_evidence;
-  const cost = run.evaluation.cost;
-  const attempts = run.attempts;
-  const inputTokens = observed(attempts.map((attempt) => usage(attempt, "input_tokens")));
-  const outputTokens = observed(attempts.map((attempt) => usage(attempt, "output_tokens")));
-  const seconds = observed(attempts.map((attempt) => attempt.provider_seconds));
-
   return (
     <section className="benchmark-run-summary" aria-label="Benchmark v4 results">
-      <p>35 evaluation inputs · Mixed reference methodologies</p>
+      <p>{run.pipeline_usage?.origin_run_id ? "Extractor v1 candidates + Generative Resolver" : "Extractor v1 only"} · 35 evaluation inputs</p>
       {summary.observation_origin === "offline_fixture" && <p>Synthetic fixture results.</p>}
       {summary.state === "unmeasured" ? (
         <p role="status">Graph metrics will appear after the first retained observation.</p>
@@ -24,19 +17,14 @@ export function BenchmarkV4Summary({ run }: { run: RunDetail }) {
       )}
       <details>
         <summary>U revision 8 evidence adjudication</summary>
-        <p>{evidence.adjudicated_relationships} reference relationships accepted after Source-body review.</p>
-        <p>Exact adjudicated citation matches {evidence.assessed
-          ? `${evidence.matched_citations} / ${evidence.reference_citations}`
-          : "unavailable until graph construction succeeds"}.</p>
-        <p>The diagnostic compares the relationship, Source ID and exact quotation. Formal proof sufficiency is assessed under Evaluation Protocol v1 for the qualified cohort.</p>
+        <p>{summary.consensus_evidence.adjudicated_relationships} reference relationships accepted after Source-body review.</p>
+        <BenchmarkEvidence summary={summary} />
+        <p>The diagnostic compares the relationship, Source ID and exact quotation. Evaluation Protocol v1 assesses formal proofs on the qualified cohort.</p>
       </details>
-      {summary.observation_origin === "live" && attempts.length > 0 && (
+      {summary.observation_origin === "live" && run.pipeline_usage && (
         <details>
           <summary>Provider usage and cost</summary>
-          <p>Estimated spend {money(cost.total, cost.currency)} · {cost.unpriced_attempts} unpriced attempts.</p>
-          {inputTokens && <p>{inputTokens.total.toLocaleString()} input tokens across {inputTokens.count} of {attempts.length} attempts with usage.</p>}
-          {outputTokens && <p>{outputTokens.total.toLocaleString()} output tokens across {outputTokens.count} of {attempts.length} attempts with usage.</p>}
-          {seconds && <p>Mean provider latency {(seconds.total / seconds.count).toFixed(2)} s across {seconds.count} of {attempts.length} attempts with timing.</p>}
+          <PipelineUsage usage={run.pipeline_usage} complete={summary.state === "complete"} />
         </details>
       )}
     </section>
@@ -75,12 +63,52 @@ export function GraphMetrics({ summary }: { summary: Summary }) {
   );
 }
 
-function observed(values: unknown[]) {
-  const known = values.filter((value): value is number => typeof value === "number" && Number.isFinite(value));
-  return known.length ? { count: known.length, total: known.reduce((sum, value) => sum + value, 0) } : null;
+export function BenchmarkEvidence({ summary, proofs }: { summary: Summary; proofs?: Metrics | null }) {
+  const evidence = summary.consensus_evidence;
+  return (
+    <>
+      {proofs && summary.state !== "unmeasured" && (
+        <p>Complete qualified proofs {proofs.complete_proofs} / {proofs.planned_proofs} ·
+          Joint-only {proofs.complete_joint_proofs} / {proofs.planned_joint_proofs}.</p>
+      )}
+      <p>U8 exact adjudicated citation matches {evidence.assessed
+        ? `${evidence.matched_citations} / ${evidence.reference_citations}`
+        : "unavailable until graph construction succeeds"}.</p>
+    </>
+  );
 }
 
-function usage(attempt: Record<string, unknown>, field: string) {
-  const response = attempt.response as { usage?: Record<string, unknown> } | undefined;
-  return response?.usage?.[field];
+export function PipelineUsage({ usage, complete }: { usage: BenchmarkV4Operations; complete: boolean }) {
+  const rows = [
+    { label: usage.origin_run_id ? "Incremental resolver" : "Extraction", value: usage.incremental },
+    ...(usage.inherited_extraction ? [{ label: "Inherited extraction", value: usage.inherited_extraction }] : []),
+    { label: "Full pipeline", value: usage.full_pipeline },
+  ];
+  return (
+    <div className="table-scroll">
+      <table>
+        <caption>{complete ? "Recorded usage" : "Recorded usage to date"}</caption>
+        <thead><tr>
+          <th scope="col">Stage</th><th scope="col">Attempts</th><th scope="col">Estimated cost</th>
+          <th scope="col">Provider latency</th><th scope="col">Input tokens</th><th scope="col">Output tokens</th>
+        </tr></thead>
+        <tbody>
+          {rows.map(({ label, value }) => (
+            <tr key={label}>
+              <th scope="row">{label}</th><td>{value.attempts}</td>
+              <td>{money(value.estimated_cost, value.currency)}{value.unpriced_attempts > 0 ? ` · ${value.unpriced_attempts} unpriced` : ""}</td>
+              <td>{seconds(value.provider_seconds)}</td>
+              <td>{value.tokens.input_tokens?.toLocaleString() ?? "Unavailable"}</td>
+              <td>{value.tokens.output_tokens?.toLocaleString() ?? "Unavailable"}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <p>Reconstructed pipeline latency, including local edits and graph construction · {seconds(usage.full_pipeline_seconds)}.</p>
+    </div>
+  );
+}
+
+function seconds(value: number | null) {
+  return value === null ? "Unavailable" : `${value.toFixed(2)} s`;
 }

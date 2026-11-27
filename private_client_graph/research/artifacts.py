@@ -69,6 +69,8 @@ def benchmark_v4_scoring_digest() -> str:
         'private_client_graph/research/benchmark_v4.py',
         'private_client_graph/research/benchmark_v4_scoring.py',
         'private_client_graph/research/benchmark_v4_run.py',
+        'private_client_graph/research/benchmark_v4_origin.py',
+        'private_client_graph/resolution.py',
         'private_client_graph/research/source_attribution.py',
     ]
     files = {path: checksum((ROOT / path).read_bytes()) for path in paths}

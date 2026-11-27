@@ -22,14 +22,16 @@ def preview_run(configuration: RunConfiguration, root: Path) -> Preview:
 
 
 def _planned_run(configuration: RunConfiguration, root: Path) -> tuple[Preview, RunPlan]:
-    inputs, metadata, lineage = _selected_inputs(configuration, root)
+    budget = require_live(root) if configuration.execution_mode == 'live' else None
+    settings = ModelSettings(model=configuration.model, temperature=configuration.temperature,
+                             timeout_seconds=configuration.timeout_seconds)
+    inputs, metadata, lineage = _selected_inputs(configuration, root, settings, budget.task_id if budget else None)
     samples = {sample.sample_id: sample for sample in inputs}
     if len(set(configuration.input_ids)) != len(configuration.input_ids) or any(
             identity not in samples for identity in configuration.input_ids):
         raise ValueError('Select distinct repository-owned input identities')
     if configuration.input_mode == 'saved' and configuration.extraction_samples != 1:
         raise ValueError('Saved inputs have fixed extraction identities')
-    budget = require_live(root) if configuration.execution_mode == 'live' else None
     if budget and configuration.task_call_cap < budget.cap:
         raise ValueError('Proposed task cap cannot reduce the existing allowance')
     extractions = len(configuration.input_ids) * configuration.extraction_samples if configuration.input_mode == 'fresh' else 0
@@ -40,6 +42,7 @@ def _planned_run(configuration: RunConfiguration, root: Path) -> tuple[Preview, 
         inputs=[InputChoice(id=samples[i].sample_id, case_id=samples[i].case_id,
             cohort=samples[i].cohort, hashes=samples[i].origin_hashes) for i in configuration.input_ids],
         extraction_call_maximum=extractions, resolution_call_maximum=resolutions,
+        eligible_resolution_inputs=len(lineage.samples) if configuration.benchmark_v4_sha256 and lineage else None,
         matrix_call_maximum=maximum, planned_observations=resolutions or observations,
         invocation_cap=configuration.invocation_cap)
     if budget:
@@ -48,20 +51,26 @@ def _planned_run(configuration: RunConfiguration, root: Path) -> tuple[Preview, 
         reviewed.task_paid_remaining = budget.remaining
         reviewed.cost_reason = 'Pricing is unavailable; live attempt costs remain explicitly unpriced.'
     plan = _run_plan(configuration, reviewed.task_id or 'offline-preview',
-                     maximum, inputs, metadata, lineage)
+                     maximum, inputs, metadata, lineage, settings)
     if plan.pricing:
         reviewed.cost_reason = f'Cost uses frozen {plan.pricing.currency} pricing and returned token usage.'
     return reviewed, plan
 
 
-def _selected_inputs(configuration: RunConfiguration, root: Path
-) -> tuple[list[ResearchInput], dict[str, CaseMetadata], RetainedInputLineage | None]:
+def _selected_inputs(configuration: RunConfiguration, root: Path, settings: ModelSettings,
+                     task_id: str | None) -> tuple[list[ResearchInput], dict[str, CaseMetadata], RetainedInputLineage | None]:
     if configuration.benchmark_v4_sha256:
         workload = load_private_workload()
         if (configuration.benchmark_v4_sha256 != workload.roster.sha256
                 or configuration.input_ids != [item.sample_id for item in workload.inputs]):
             raise ValueError('Select all 35 frozen Benchmark v4 inputs in order')
-        return list(workload.inputs), workload_metadata(workload.roster), None
+        lineage = None
+        if configuration.retained_run_id:
+            from .retained_inputs import load_benchmark_v4_lineage
+            assert configuration.retained_experiment_id is not None and task_id is not None
+            lineage = load_benchmark_v4_lineage(root, configuration.retained_experiment_id,
+                configuration.retained_run_id, workload, settings, task_id)
+        return list(workload.inputs), workload_metadata(workload.roster), lineage
     if configuration.retained_run_id:
         from .retained_inputs import load_retained_inputs
         assert configuration.retained_experiment_id is not None
@@ -78,7 +87,7 @@ def _selected_inputs(configuration: RunConfiguration, root: Path
 
 def _run_plan(configuration: RunConfiguration, task_id: str, maximum: int,
               inputs: list[ResearchInput], metadata: dict[str, CaseMetadata],
-              lineage: RetainedInputLineage | None) -> RunPlan:
+              lineage: RetainedInputLineage | None, settings: ModelSettings) -> RunPlan:
     return RunPlan(task_id=task_id, inputs=inputs, case_metadata=metadata, retained_input_lineage=lineage,
         benchmark_v4_sha256=configuration.benchmark_v4_sha256,
         pricing=run_pricing() if configuration.benchmark_v4_sha256 else None,
@@ -87,8 +96,7 @@ def _run_plan(configuration: RunConfiguration, task_id: str, maximum: int,
         execution_mode=configuration.execution_mode, resolver=configuration.resolver,
         repetitions=configuration.resolver_repetitions,
         fresh_extractions=configuration.extraction_samples if configuration.input_mode == 'fresh' else 0,
-        settings=ModelSettings(model=configuration.model, temperature=configuration.temperature,
-                               timeout_seconds=configuration.timeout_seconds),
+        settings=settings,
         max_calls=maximum, invocation_cap=configuration.invocation_cap)
 
 

@@ -5,6 +5,7 @@ from benchmark_v3.evaluation_protocol import ConditionResult
 from private_client_graph.research.artifacts import Bundle
 from private_client_graph.research.benchmark_v4 import BenchmarkWorkload, EvaluationInput
 from private_client_graph.research.benchmark_v4_run import evaluate_retained_run
+from private_client_graph.research.benchmark_v4_operations import benchmark_v4_operations
 from private_client_graph.research.results import ResearchResult
 from private_client_graph.research.run_plan import RunPlan
 from .benchmark_contracts import (
@@ -23,6 +24,13 @@ def attach_benchmark_v4(detail: 'RunDetail', bundle: Bundle) -> None:
     retained = evaluate_retained_run(bundle, workload, attempts=detail.attempts)
     mixed, results = retained.evaluation, retained.results
     detail.benchmark_v4 = mixed.summary
+    detail.pipeline_usage = benchmark_v4_operations(retained, detail.attempts, bundle.plan.pricing,
+                                                   live=bundle.plan.kind == 'live_experiment')
+    detail.evaluation.full_pipeline_cost = detail.pipeline_usage.full_pipeline.estimated_cost
+    detail.evaluation.full_pipeline_cost_reason = (
+        'Estimate includes inherited extraction and incurred resolver calls when applicable.'
+        if detail.evaluation.full_pipeline_cost is not None else
+        'Full pipeline estimate requires pricing and usage for every incurred attempt.')
     detail.benchmark = BenchmarkRun.from_protocol(mixed.qualified, workload.qualified,
                                                   workload.family_details, results)
     projections = [*detail.benchmark.observations,

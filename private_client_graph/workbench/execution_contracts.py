@@ -55,6 +55,8 @@ class Preview(BaseModel):
     inputs: list[InputChoice]
     extraction_call_maximum: int
     resolution_call_maximum: int
+    eligible_resolution_inputs: int | None = Field(default=None, exclude_if=lambda value: value is None,
+        json_schema_extra={'x-typescript-optional': True})
     matrix_call_maximum: int
     planned_observations: int
     invocation_cap: int
