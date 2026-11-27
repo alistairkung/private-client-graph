@@ -83,6 +83,8 @@ export const freezeDraft = (id: string, body: FreezeRun) =>
   request<FrozenPlan>(`${workspacePath(id)}/runs`, body);
 export const authorizeRun = (id: string, run: string, body: LiveApproval) =>
   request<RunAuthorization>(`${runPath(id, run)}/authorize`, body);
+export const archiveRun = (id: string, run: string) =>
+  request<WorkspaceDetail>(`${runPath(id, run)}/archive`, {});
 export const controlRun = (
   id: string,
   run: string,

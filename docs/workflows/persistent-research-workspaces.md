@@ -71,6 +71,11 @@ mounts commands. No browser credential or provider key is accepted.
    scores/coverage/cost, frozen names and exact relationship Evidence.
    `GET .../comparison?left=...&right=...` separates benchmark scope from verified
    input pairing. Selecting a Run never changes the draft or authorization.
+8. `POST .../runs/{run}/archive` removes an unused or failed Run from the
+   Experiment history and prevents execution through the Workbench. The
+   checksum-protected archive record preserves membership, artifacts, and all
+   paid accounting. Use **Review continuation** to resume pending work or
+   copy the configuration to freeze an explicitly new Run.
 
 All paths above are under `/api/research`. Backend-generated client types live in
 `web/research/shared/contracts.ts`; regenerate with

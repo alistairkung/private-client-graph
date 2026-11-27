@@ -23,7 +23,7 @@ export function RunChart({
   const values = runs.map(performanceRun);
   return (
     <RunPerformanceChart
-      experiment={{ name: workspace.name, runIds: workspace.run_ids }}
+      experiment={{ name: workspace.name, runIds: workspace.run_ids, runNumbers: workspace.run_numbers }}
       runs={values}
       selected={selected}
       select={select}
@@ -55,9 +55,10 @@ function performanceRun(run: RunDetail): PerformanceRun {
   const { benchmark, benchmark_v4: mixed, evaluation } = run;
   if (mixed) {
     const pipeline = run.pipeline_usage?.full_pipeline;
-    const cost = mixed.observation_origin === "live" && pipeline?.estimated_cost != null && pipeline.currency
+    const frozenCost = mixed.observation_origin === "live" && pipeline?.estimated_cost != null && pipeline.currency
       ? { total: pipeline.estimated_cost, currency: pipeline.currency }
       : null;
+    const cost = run.reference_cost ?? frozenCost;
     const score = mixed.combined;
     return {
       id: run.id,
@@ -72,13 +73,14 @@ function performanceRun(run: RunDetail): PerformanceRun {
       scoreState: mixed.state === "unmeasured" ? "unavailable" : mixed.state,
       coverage: { scored: score?.valid_graphs ?? 0, planned: run.observations.length },
       cost: cost ?? { total: null, currency: null },
-      costBasis: cost ? "verified_provider_estimate" : undefined,
+      costBasis: run.reference_cost ? "reference_rate_estimate" : frozenCost ? "verified_provider_estimate" : undefined,
+      fullPipelineCost: true,
       scopeIdentity: `${mixed.scope_sha256}:${mixed.scoring_sha256}:${mixed.observation_origin}`,
       eligibility: {
         f1_by_run: mixed.state === "complete",
         f1_vs_cost: mixed.state === "complete" && cost !== null,
         f1_reasons: mixed.state === "complete" ? [] : ["Benchmark v4 coverage is incomplete."],
-        cost_reasons: cost ? [] : ["Verified provider cost is unavailable."],
+        cost_reasons: cost ? [] : ["F1 vs Cost needs complete provider token usage and pricing for the full pipeline."],
       },
     };
   }

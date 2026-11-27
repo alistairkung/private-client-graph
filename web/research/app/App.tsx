@@ -126,7 +126,7 @@ export function App() {
             id={workspaceId}
             selected={params.get("run")}
             select={(run) => {
-              window.location.hash = `workspace=${workspaceId}&run=${run}`;
+              window.location.hash = run ? `workspace=${workspaceId}&run=${run}` : `workspace=${workspaceId}`;
             }}
             capabilities={available ?? null}
             benchmark={benchmark}

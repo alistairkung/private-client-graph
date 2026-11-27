@@ -90,7 +90,7 @@ used to start the Workbench.
 | `DATABASE_URL` | Local dedicated Research Workbench database |
 | `PCG_BENCHMARK_V4_CUSTODY` | Absolute owner-only v3 custody root containing the frozen admissions, U8 Source release and U8 consensus freeze |
 | `PCG_BENCHMARK_V4_OWNER_TOKEN` | Private URL-safe token of at least 32 characters for the local `owner` sign-in |
-| `PCG_BENCHMARK_V4_PRICING_FILE` | Optional local JSON conforming to the existing `Pricing` contract for the requested model |
+| `PCG_BENCHMARK_V4_PRICING_FILE` | Optional local JSON conforming to `Pricing`. New Runs freeze this rate. F1 vs Cost uses it as a uniform reference rate for completed Runs with full token usage. |
 
 Run the historical import steps against the same private artifact root to
 keep the v3 Run visible alongside v4. Set `umask 077` for artifact writes.
@@ -133,6 +133,11 @@ zero paid allowance.
    provider time, resolver provider time, and local edit and final graph
    construction timings. Provider costs remain unpriced without the frozen
    pricing and usage needed for the estimate.
+
+The F1 vs Cost chart can show a reference-rate estimate from retained billable
+tokens, including inherited extraction, even for Runs frozen without pricing.
+The configured rate is a comparison basis. Historical Run accounting, the
+task ledger and CLI summaries still use the original frozen commitments.
 
 The Resolver receives the same ordered Sources and the existing candidate
 projection. Its endpoint edits are applied to the retained attributed
