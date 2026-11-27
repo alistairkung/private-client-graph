@@ -11,11 +11,21 @@
 
 .semantic-overview .semantic-overview-heading h3 { margin: 0; font-size: 1.02rem; }
 .semantic-overview-heading span { color: var(--muted); font-size: 0.82rem; font-weight: 650; }
-.semantic-overview-heading p { color: var(--muted); font-size: 0.82rem; margin-block: 0.4rem 0; }
 .semantic-overview-metrics { --quality-card-background: #edf1ed; }
 .semantic-overview-metrics > div:last-child { grid-column: 1 / -1; }
 
-.semantic-basis { color: var(--muted); font-size: 0.8rem; }
+.semantic-diagnostics {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.5rem 1rem;
+  margin-block: 0.75rem 0.5rem;
+  padding-block: 0.65rem;
+  border-block: 1px solid var(--rule);
+}
+.semantic-diagnostics dt { font-weight: 650; }
+.semantic-diagnostics dd { margin: 0; color: var(--muted); }
+.semantic-usage { margin-block: 0.5rem; color: var(--muted); font-size: 0.82rem; }
+.semantic-metric-comparison small { display: block; color: var(--muted); font-weight: 400; }
+.semantic-metric-comparison :is(th, td) { white-space: normal; }
 .semantic-overview > .semantic-note { font-size: 0.82rem; margin-block: 0.65rem 0.35rem; }
 .semantic-overview > .semantic-evidence { margin: 0; }
 .semantic-overview > .semantic-evidence > summary { font-size: 0.9rem; font-weight: 650; }
@@ -25,6 +35,7 @@
   .semantic-overview-heading { align-self: center; }
   .semantic-overview .semantic-overview-metrics { grid-column: 2 / -1; grid-template-columns: subgrid; }
   .semantic-overview-metrics > div:last-child { grid-column: auto; }
+  .semantic-overview .semantic-diagnostics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 .semantic-evidence {
@@ -55,7 +66,6 @@
   overflow-wrap: anywhere;
 }
 
-.semantic-coverage p,
 .semantic-target-content p {
   margin-block: 0.45rem;
 }

@@ -1,16 +1,17 @@
 import { useCallback, useState, type ReactNode } from "react";
 import { percentMetric } from "../../src/shared/research/presentation";
 import type {
-  SemanticEvidenceReport, SemanticOperations, SemanticOutcome, SemanticRunSummary, SemanticSummary,
+  SemanticEvidenceReport, SemanticOperations, SemanticOutcome, SemanticSummary,
   SemanticTarget, SemanticTransition,
 } from "../shared/contracts";
 import { ReadState } from "../shared/presentation";
 import { useRead } from "../shared/useRead";
 import { compareSemanticEvidence, getSemanticEvidence } from "./api";
-import { evidenceMetricLabels, multiSourceProofCompletionLabel } from "./benchmark-metrics";
+import { evidenceMetricLabels } from "./benchmark-metrics";
 import "./semantic-evidence.css";
 
-const title = "Semantic Evidence — AI-assessed, unverified";
+const title = "Semantic Evidence";
+const subtitle = "AI-assessed, unverified";
 const timingWithoutCutoff = "timing (assessment cutoff unavailable)";
 const verdicts = ["Supported", "Partially Supported", "Unsupported", "Uncertain"] as const;
 const statuses = {
@@ -47,14 +48,13 @@ export function SemanticEvidencePanel({ run }: { run: string }) {
   const { data, error, retry } = useRead(load);
   const summary = data?.target_summary;
   return (
-    <section className="semantic-overview" aria-label={title}>
+    <section className="semantic-overview" aria-label={`${title} — ${subtitle}`}>
       <div className="semantic-overview-row">
         <div className="semantic-overview-heading">
-          <h3>Semantic Evidence</h3>
-          <span>AI-assessed, unverified</span>
-          {summary && <p>{summary.semantic_outcomes.judged ?? 0} / {summary.formal_targets} valid judgments</p>}
+          <h3>{title}</h3>
+          <span>{subtitle}</span>
         </div>
-        {summary && <SemanticProofMetrics summary={summary} />}
+        {summary && <SemanticMetricCards summary={summary} />}
       </div>
       {data === undefined ? <ReadState error={error} retry={retry} /> : !data ? (
         <>
@@ -63,7 +63,9 @@ export function SemanticEvidencePanel({ run }: { run: string }) {
         </>
       ) : (
         <>
-          <p className="semantic-note"><strong>Timing unverified.</strong> Explicit assessment cutoffs were unavailable.</p>
+          <SupportDiagnostics summary={data.target_summary} />
+          <ExecutionUsage operations={data.operations} />
+          <p className="semantic-note"><strong>Timing unverified.</strong> Retained assertions had no explicit benchmark cutoff, including trust relationships where operative timing matters.</p>
           <Disclosure label="Inspect semantic assessment">
             <AssessmentDetails assessment={data} />
             <button className="secondary" onClick={retry}>Refresh assessment</button>
@@ -74,29 +76,51 @@ export function SemanticEvidencePanel({ run }: { run: string }) {
   );
 }
 
-function SemanticProofMetrics({ summary }: { summary: SemanticSummary }) {
-  const multiSource = summary.multi_source_evidence;
-  const supported = summary.verdicts.Supported ?? 0;
-  const judged = summary.semantic_outcomes.judged ?? 0;
+function semanticMetrics(summary: SemanticSummary) {
+  const { evidence_support: support, proof_completion: completion, multi_source_evidence_coverage: coverage } = summary;
+  return [
+    {
+      label: "Evidence Support", rate: support.rate, basis: `${support.count}/${support.targets} formal targets`,
+      description: "Supported or Partially Supported",
+    },
+    {
+      label: evidenceMetricLabels.complete_proof, rate: completion.rate, basis: `${completion.count}/${completion.targets} formal targets`,
+      description: "Supported · potential sufficiency",
+    },
+    {
+      label: evidenceMetricLabels.joint_only_coverage, rate: coverage.mean, basis: `${coverage.judged}/${coverage.targets} targets with valid judgments`,
+      description: `Mean share of applicable facts satisfied across all ${coverage.targets} Multi-Source targets`,
+    },
+  ];
+}
+
+function SemanticMetricCards({ summary }: { summary: SemanticSummary }) {
   return (
     <dl className="quality-card-grid semantic-overview-metrics">
+      {semanticMetrics(summary).map(({ label, rate, basis, description }) => (
+        <div key={label}>
+          <dt>{label}</dt>
+          <dd>{percentMetric(rate)}</dd>
+          <dd className="quality-scope">{description}<small>{basis}</small></dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
+function SupportDiagnostics({ summary }: { summary: SemanticSummary }) {
+  const partial = summary.potential_partial_support_beyond_exact_matching;
+  const gaps = assessmentGaps(summary.semantic_outcomes);
+  return (
+    <dl className="semantic-diagnostics">
       <div>
-        <dt>{evidenceMetricLabels.complete_proof}</dt>
-        <dd>{percentMetric(judged ? supported / summary.formal_targets : null)}</dd>
-        <dd className="quality-scope">{supported} of {summary.formal_targets} formal targets judged Supported</dd>
+        <dt>Judgment Coverage</dt>
+        <dd>{summary.semantic_outcomes.judged ?? 0}/{summary.formal_targets} valid judgments{gaps && ` · ${gaps}`}</dd>
       </div>
       <div>
-        <dt>{multiSourceProofCompletionLabel}</dt>
-        <dd>{multiSource.judged ? `${multiSource.supported_with_multiple_sources} / ${multiSource.targets}` : "Unavailable"}</dd>
-        <dd className="quality-scope">Supported with citations from at least two Sources</dd>
-      </div>
-      <div>
-        <dt>{evidenceMetricLabels.joint_only_coverage}</dt>
-        <dd>{percentMetric(multiSource.fact_coverage)}</dd>
-        <dd className="quality-scope">
-          Mean share of applicable facts satisfied across {multiSource.targets} targets<br />
-          {multiSource.judged} of {multiSource.targets} targets judged
-        </dd>
+        <dt>Potential Partial Support Beyond Exact Matching</dt>
+        <dd>{partial.rate === null ? "No recovered targets with zero exact matches" :
+          `${partial.count}/${partial.targets} (${percentMetric(partial.rate)}) of recovered targets with zero exact matches`}</dd>
       </div>
     </dl>
   );
@@ -104,17 +128,15 @@ function SemanticProofMetrics({ summary }: { summary: SemanticSummary }) {
 
 function AssessmentDetails({ assessment }: { assessment: SemanticEvidenceReport }) {
   const { target_summary: summary, evaluator } = assessment;
-  const multiSource = summary.multi_source_evidence;
   const potential = summary.potentially_sufficient_overlooked_by_exact_matching;
   return (
     <>
       <p className="semantic-note"><strong>Temporal limitation.</strong> {assessment.temporal_limitation}</p>
       <p className="semantic-note">DeepSeek assesses attached quotations. The judge and extractor can share model-specific biases.</p>
-      <p>{multiSource.judged} of {multiSource.targets} Multi-Source targets had valid judgments. Targets without valid judgments contribute zero observed fact coverage.</p>
-      <Coverage summary={assessment} />
-      {potential.count !== null && <p>
-        <strong>{summary.flags.potential_new_partial_support ?? 0}</strong> targets with potential partial support beyond exact matches
-      </p>}
+      <p>Targets without valid judgments contribute zero observed support and fact coverage.</p>
+      <VerdictCounts verdictCounts={summary.verdicts} />
+      <p>{potential.count ?? "Unavailable"} potentially sufficient missed proofs ·{" "}
+        {potential.recovered_exact_incomplete_judged}/{potential.recovered_exact_incomplete_denominator} recovered targets with incomplete exact proofs judged</p>
       <Targets targets={assessment.targets} />
       <details>
         <summary>Sanity controls ({assessment.controls.length})</summary>
@@ -139,33 +161,16 @@ function VerdictCounts({ verdictCounts }: { verdictCounts: SemanticSummary["verd
   </ul>;
 }
 
-function OutcomeGaps({ outcomes }: { outcomes: SemanticSummary["semantic_outcomes"] }) {
-  const gaps = Object.entries(outcomes).filter(([state, count]) => state !== "judged" && count > 0);
-  if (gaps.length === 0) return null;
-  return <p className="semantic-basis">{gaps.map(([state, count]) => {
-    const label = statuses[state as keyof typeof statuses].toLowerCase();
-    return `${count} ${count === 1 || state === "unattempted" || state === "awaiting_receipt" ? label : `${label}s`}`;
-  }).join(" · ")}</p>;
-}
-
-function Coverage({ summary }: { summary: SemanticRunSummary }) {
-  const { target_summary: coverage, operations } = summary;
-  const potential = coverage.potentially_sufficient_overlooked_by_exact_matching;
-  return (
-    <div className="semantic-coverage">
-      <p><strong>{coverage.semantic_outcomes.judged ?? 0}/{coverage.formal_targets} valid judgments</strong> ·{" "}
-        {coverage.recovered_targets} recovered targets</p>
-      <VerdictCounts verdictCounts={coverage.verdicts} />
-      <OutcomeGaps outcomes={coverage.semantic_outcomes} />
-      <p>{potential.count ?? "Unavailable"} potentially sufficient missed proofs ·{" "}
-        {potential.recovered_exact_incomplete_judged}/{potential.recovered_exact_incomplete_denominator} recovered exact-incomplete targets judged</p>
-      <ExecutionUsage operations={operations} />
-    </div>
-  );
+function assessmentGaps(outcomes: SemanticSummary["semantic_outcomes"]) {
+  return Object.entries(outcomes).filter(([state, count]) => state !== "judged" && count > 0)
+    .map(([state, count]) => {
+      const label = state === "invalid_judgment" ? "invalid response" : statuses[state as keyof typeof statuses].toLowerCase();
+      return `${count} ${count === 1 || state === "unattempted" || state === "awaiting_receipt" ? label : `${label}s`}`;
+    }).join(" · ");
 }
 
 function ExecutionUsage({ operations }: { operations: SemanticOperations }) {
-  return <p>{operations.reserved_attempts}/{operations.planned_attempts} attempts reserved · {operations.reused_judgments} reused ·{" "}
+  return <p className="semantic-usage">{operations.reserved_attempts}/{operations.planned_attempts} attempts reserved · {operations.reused_judgments} reused ·{" "}
     {operations.known_estimated_peak_usd == null ? "No usage estimate" : `${usd.format(operations.known_estimated_peak_usd)} estimated at peak rates`}
     {operations.reserved_attempts_without_usage > 0 && ` · ${operations.reserved_attempts_without_usage} without usage`}
     {operations.mean_latency_seconds != null && ` · ${operations.mean_latency_seconds.toFixed(1)}s mean latency`}</p>;
@@ -250,12 +255,22 @@ function Comparison({ left, right }: { left: string; right: string }) {
   const rows = all ? data.transitions : data.transitions.filter(changed);
   return (
     <>
+      <p className="semantic-note">{subtitle}</p>
       <p className="semantic-note"><strong>Temporal limitation.</strong> {data.temporal_limitation}</p>
       <p><strong>{data.paired_valid_targets}/{data.formal_targets} formal targets have two valid judgments.</strong>{" "}
         Fact transitions are shown only for those pairs.</p>
+      <SemanticMetricComparison left={data.left.target_summary} right={data.right.target_summary} />
       <div className="semantic-comparison">
-        <div><h4>Comparison Run</h4><Coverage summary={data.left} /></div>
-        <div><h4>Selected Run</h4><Coverage summary={data.right} /></div>
+        <div>
+          <h4>Comparison Run diagnostics</h4>
+          <SupportDiagnostics summary={data.left.target_summary} />
+          <ExecutionUsage operations={data.left.operations} />
+        </div>
+        <div>
+          <h4>Selected Run diagnostics</h4>
+          <SupportDiagnostics summary={data.right.target_summary} />
+          <ExecutionUsage operations={data.right.operations} />
+        </div>
       </div>
       <label className="semantic-filter"><input type="checkbox" checked={all} onChange={(event) => setAll(event.target.checked)} />
         Show every formal target
@@ -272,6 +287,27 @@ function Comparison({ left, right }: { left: string; right: string }) {
         </details>
       ))}
     </>
+  );
+}
+
+function SemanticMetricComparison({ left, right }: { left: SemanticSummary; right: SemanticSummary }) {
+  const comparisonMetrics = semanticMetrics(left);
+  const selectedMetrics = semanticMetrics(right);
+  return (
+    <div className="table-scroll semantic-metric-comparison">
+      <table>
+        <caption>Semantic Evidence metrics</caption>
+        <thead><tr><th scope="col">Metric</th><th scope="col">Comparison Run</th><th scope="col">Selected Run</th></tr></thead>
+        <tbody>{selectedMetrics.map((metric, index) => (
+          <tr key={metric.label}>
+            <th scope="row">{metric.label}<small>{metric.description}</small></th>
+            {[comparisonMetrics[index], metric].map(({ rate, basis }, side) => (
+              <td key={side}><strong>{percentMetric(rate)}</strong><small>{basis}</small></td>
+            ))}
+          </tr>
+        ))}</tbody>
+      </table>
+    </div>
   );
 }
 

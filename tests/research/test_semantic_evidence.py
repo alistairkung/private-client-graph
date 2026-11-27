@@ -90,9 +90,8 @@ def test_fixed_targets_controls_and_privacy_boundary(tmp_path, inputs):
     assert offline['target_summary']['semantic_outcomes'] == {
         'unattempted': 67, 'deterministic_delivery_failure': 4,
     }
-    assert offline['target_summary']['multi_source_evidence'] == {
-        'targets': 30, 'judged': 0, 'supported_with_multiple_sources': 0, 'fact_coverage': None,
-    }
+    assert offline['target_summary']['multi_source_evidence_coverage'] == {'targets': 30, 'judged': 0, 'mean': 0}
+    assert offline['target_summary']['evidence_support'] == {'count': 0, 'targets': 71, 'rate': 0}
     assert offline['operations']['reserved_attempts'] == 0
     requests = []
 
@@ -139,14 +138,18 @@ def test_fixed_targets_controls_and_privacy_boundary(tmp_path, inputs):
     assert result['deterministic_baseline'] == offline['deterministic_baseline']
 
 
-def test_multi_source_metrics_use_cited_support_and_the_frozen_target_denominator(tmp_path, inputs):
+def test_semantic_metrics_use_fixed_denominators_and_distinguish_partial_support(tmp_path, inputs):
     targets = list(inputs.targets)
-    for index, source in ((11, 'S2'), (12, 'S1'), (13, 'S2')):
+    for index in (12, 13):
         item = targets[index]
-        second = Quotation(id='Q2', source=source, text='A second retained quotation.')
+        second = Quotation(id='Q2', source='S2', text='A second retained quotation.')
         targets[index] = item.model_copy(update={
             'packet': make_packet(item.edge, (*item.packet.quotations, second)),
-            'source_ids': {'S1': 'private source ID', **({'S2': 'second source ID'} if source == 'S2' else {})},
+            'source_ids': {**item.source_ids, 'S2': 'second source ID'},
+            'baseline': item.baseline.model_copy(update={
+                'matches_any_approved_pair': ('Q2',) if index == 12 else (),
+                'best_exact_pair_coverage': 0.5 if index == 12 else 0,
+            }),
         })
     for index, multi_source in ((15, False), (67, True)):
         item = targets[index]
@@ -159,14 +162,18 @@ def test_multi_source_metrics_use_cited_support_and_the_frozen_target_denominato
         packet = json.loads(json.loads(request.content)['messages'][1]['content'])
         subject = packet['assertion']['subject']
         response = _response(packet)
-        if subject not in {f'Parent {index}' for index in range(11, 15)}:
+        if subject == 'Parent 45':
+            return _response(packet, verdict='Uncertain')
+        if subject == 'Parent 46':
+            return _response(packet, verdict='Unsupported')
+        if subject not in {'Parent 12', 'Parent 13', 'Parent 14'}:
             return response
         body = response.json()
         judgment = _judgment(packet)
         identity, relationship, timing, authority = judgment['facts']
         for fact in (timing, authority):
             fact.update(status='inapplicable', quotation_ids=[])
-        if subject == 'Parent 13':
+        if subject in {'Parent 12', 'Parent 13'}:
             judgment['verdict'] = 'Partially Supported'
             identity.update(status='contradicted', quotation_ids=['Q2'])
         else:
@@ -177,9 +184,14 @@ def test_multi_source_metrics_use_cited_support_and_the_frozen_target_denominato
     with httpx.Client(transport=httpx.MockTransport(transport)) as client:
         _run(directory, digest, client)
 
-    assert report(directory)['target_summary']['multi_source_evidence'] == {
-        'targets': 30, 'judged': 28, 'supported_with_multiple_sources': 1,
-        'fact_coverage': pytest.approx(27.5 / 30),
+    summary = report(directory)['target_summary']
+    assert summary['semantic_outcomes'] == {'judged': 66, 'invalid_judgment': 1, 'deterministic_delivery_failure': 4}
+    assert summary['evidence_support'] == {'count': 64, 'targets': 71, 'rate': pytest.approx(64 / 71)}
+    assert summary['proof_completion'] == {'count': 62, 'targets': 71, 'rate': pytest.approx(62 / 71)}
+    assert summary['multi_source_evidence_coverage'] == {'targets': 30, 'judged': 28, 'mean': pytest.approx(27 / 30)}
+    assert summary['flags']['potential_new_partial_support'] == 2
+    assert summary['potential_partial_support_beyond_exact_matching'] == {
+        'count': 1, 'targets': 55, 'rate': pytest.approx(1 / 55),
     }
 
 
@@ -359,6 +371,10 @@ def test_reuse_binds_packet_source_target_and_keeps_invalid_in_comparison(tmp_pa
     assert after['temporal_limitation'] == report(donor)['temporal_limitation']
     assert after['formal_targets'] == 71
     assert after['paired_valid_targets'] == 65
+    for side in ('left', 'right'):
+        summary = after[side]['target_summary']
+        assert summary['evidence_support']['targets'] == summary['proof_completion']['targets'] == 71
+        assert summary['multi_source_evidence_coverage']['targets'] == 30
     assert after['right']['operations']['reused_judgments'] == 65
     assert after['right']['operations']['reserved_attempts'] == 4
     rows = {row['id']: row for row in after['transitions']}

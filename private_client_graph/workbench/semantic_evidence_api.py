@@ -41,11 +41,16 @@ class PotentialSupport(BaseModel):
     recovered_exact_incomplete_judged: int
 
 
-class SemanticMultiSourceEvidence(BaseModel):
+class SemanticTargetRate(BaseModel):
+    count: int
+    targets: int
+    rate: float | None
+
+
+class SemanticMultiSourceEvidenceCoverage(BaseModel):
     targets: int
     judged: int
-    supported_with_multiple_sources: int
-    fact_coverage: float | None
+    mean: float | None
 
 
 class SemanticSummary(BaseModel):
@@ -54,7 +59,10 @@ class SemanticSummary(BaseModel):
     semantic_outcomes: dict[SemanticStatus, int]
     verdicts: dict[Verdict, int]
     flags: dict[str, int]
-    multi_source_evidence: SemanticMultiSourceEvidence
+    evidence_support: SemanticTargetRate
+    proof_completion: SemanticTargetRate
+    multi_source_evidence_coverage: SemanticMultiSourceEvidenceCoverage
+    potential_partial_support_beyond_exact_matching: SemanticTargetRate
     potentially_sufficient_overlooked_by_exact_matching: PotentialSupport
 
 

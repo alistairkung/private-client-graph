@@ -15,7 +15,8 @@ from .judging import Judgment
 TEMPORAL_LIMITATION = (
     'Benchmark v4 targets have no explicit assessment cutoff. Timing findings, including satisfied, '
     'describe the submitted quotations. When a claim depends on a cutoff, temporal correctness at that '
-    'cutoff remains unverified.'
+    'cutoff remains unverified. This includes Supported judgments on trust relationships where operative '
+    'timing matters.'
 )
 
 
@@ -24,10 +25,6 @@ def report(directory: Path) -> dict[str, Any]:
     reservations = reservation_snapshot(plan, digest, task)
     targets = [_row(directory, plan, item, reservations) for item in plan.inputs.targets]
     controls = [_row(directory, plan, item, reservations) for item in plan.inputs.controls]
-    incomplete = [row for row in targets if row['deterministic']['exact_outcome'] == 'incomplete']
-    count = sum('potentially_sufficient_overlooked_by_exact_matching' in row['flags'] for row in incomplete)
-    judged_incomplete = sum(row['status'] == 'judged' for row in incomplete)
-    joint_only = [row for row in targets if row['deterministic']['joint_only']]
     quality = plan.inputs.evidence_quality
     return {
         'assessment': plan.version,
@@ -53,30 +50,7 @@ def report(directory: Path) -> dict[str, Any]:
             'multi_source_proof_completion': quality.joint_only_complete_proof.model_dump(mode='json'),
             'multi_source_evidence_coverage': quality.joint_only_coverage.model_dump(mode='json'),
         },
-        'target_summary': {
-            'formal_targets': len(targets),
-            'recovered_targets': sum(item.packet is not None for item in plan.inputs.targets),
-            'deterministic_outcomes': dict(Counter(row['deterministic']['exact_outcome'] for row in targets)),
-            'semantic_outcomes': dict(Counter(row['status'] for row in targets)),
-            'verdicts': _verdicts(targets),
-            'flags': dict(Counter(flag for row in targets for flag in row['flags'])),
-            'verdicts_by_exact_outcome': {
-                outcome: _verdicts([row for row in targets if row['deterministic']['exact_outcome'] == outcome])
-                for outcome in ('complete', 'incomplete')
-            },
-            'joint_only': {
-                'formal_targets': len(joint_only),
-                'semantic_outcomes': dict(Counter(row['status'] for row in joint_only)),
-                'verdicts': _verdicts(joint_only),
-            },
-            'multi_source_evidence': _multi_source_evidence(joint_only),
-            'potentially_sufficient_overlooked_by_exact_matching': {
-                'count': count if judged_incomplete else None,
-                'formal_target_denominator': len(targets),
-                'recovered_exact_incomplete_denominator': len(incomplete),
-                'recovered_exact_incomplete_judged': judged_incomplete,
-            },
-        },
+        'target_summary': _target_summary(targets, sum(item.packet is not None for item in plan.inputs.targets)),
         'control_summary': {
             'count': len(controls),
             'semantic_outcomes': dict(Counter(row['status'] for row in controls)),
@@ -87,6 +61,49 @@ def report(directory: Path) -> dict[str, Any]:
         'targets': targets,
         'controls': controls,
     }
+
+
+def _target_summary(targets: list[dict[str, Any]], recovered_count: int) -> dict[str, Any]:
+    incomplete = [row for row in targets if row['deterministic']['exact_outcome'] == 'incomplete']
+    zero_exact = [row for row in incomplete if not row['deterministic']['matches_any_approved_pair']]
+    joint_only = [row for row in targets if row['deterministic']['joint_only']]
+    verdicts = _verdicts(targets)
+    supported = verdicts.get('Supported', 0)
+    judged_incomplete = sum(row['status'] == 'judged' for row in incomplete)
+    return {
+        'formal_targets': len(targets),
+        'recovered_targets': recovered_count,
+        'deterministic_outcomes': dict(Counter(row['deterministic']['exact_outcome'] for row in targets)),
+        'semantic_outcomes': dict(Counter(row['status'] for row in targets)),
+        'verdicts': verdicts,
+        'flags': dict(Counter(flag for row in targets for flag in row['flags'])),
+        'verdicts_by_exact_outcome': {
+            outcome: _verdicts([row for row in targets if row['deterministic']['exact_outcome'] == outcome])
+            for outcome in ('complete', 'incomplete')
+        },
+        'joint_only': {
+            'formal_targets': len(joint_only),
+            'semantic_outcomes': dict(Counter(row['status'] for row in joint_only)),
+            'verdicts': _verdicts(joint_only),
+        },
+        'evidence_support': _target_rate(supported + verdicts.get('Partially Supported', 0), len(targets)),
+        'proof_completion': _target_rate(supported, len(targets)),
+        'multi_source_evidence_coverage': _multi_source_evidence_coverage(joint_only),
+        'potential_partial_support_beyond_exact_matching': _target_rate(
+            sum('potential_new_partial_support' in row['flags'] for row in zero_exact), len(zero_exact),
+        ),
+        'potentially_sufficient_overlooked_by_exact_matching': {
+            'count': sum('potentially_sufficient_overlooked_by_exact_matching' in row['flags']
+                         for row in incomplete) if judged_incomplete else None,
+            'formal_target_denominator': len(targets),
+            'recovered_exact_incomplete_denominator': len(incomplete),
+            'recovered_exact_incomplete_judged': judged_incomplete,
+        },
+    }
+
+
+def _target_rate(count: int, targets: int) -> dict[str, int | float | None]:
+    return {'count': count, 'targets': targets, 'rate': count / targets if targets else None}
 
 
 def _row(directory: Path, plan: Plan, item: Item, reservations: ReservationSnapshot) -> dict[str, Any]:
@@ -150,23 +167,13 @@ def _flags(item: Item, judgment: Judgment) -> list[str]:
     return flags
 
 
-def _multi_source_evidence(targets: list[dict[str, Any]]) -> dict[str, Any]:
+def _multi_source_evidence_coverage(targets: list[dict[str, Any]]) -> dict[str, Any]:
     judged = [row for row in targets if row['status'] == 'judged']
     return {
         'targets': len(targets),
         'judged': len(judged),
-        'supported_with_multiple_sources': sum(
-            row['judgment']['verdict'] == 'Supported' and _cites_multiple_supporting_sources(row)
-            for row in judged
-        ),
-        'fact_coverage': sum(_satisfied_fact_fraction(row) for row in judged) / len(targets) if judged else None,
+        'mean': sum(_satisfied_fact_fraction(row) for row in judged) / len(targets) if targets else None,
     }
-
-
-def _cites_multiple_supporting_sources(row: dict[str, Any]) -> bool:
-    cited = {identity for fact in row['judgment']['facts'] if fact['status'] == 'satisfied'
-             for identity in fact['quotation_ids']}
-    return len({quote['source_id'] for quote in row['quotations'] if quote['id'] in cited}) >= 2
 
 
 def _satisfied_fact_fraction(row: dict[str, Any]) -> float:

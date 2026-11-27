@@ -27,9 +27,12 @@ is checked against its attributed frozen Source body. Opaque Source labels
 preserve grouping while the local artifact retains original attribution.
 Approved evidence, Source titles, Source context, other relationships, and
 deterministic outcomes stay out of the request. Timing and authority are required
-for trust roles. The two authored sanity controls cover an appointment after
-an explicit cutoff and conflicting authority. Control judgments sit outside the
-71-target denominator.
+for trust roles. **Ordinary retained Benchmark v4 assertions do not supply an
+explicit cutoff.** For trust relationships, a satisfied timing finding describes
+what the submitted words support about operative timing. Even a Supported
+verdict leaves temporal correctness at a benchmark cutoff unverified. The two
+authored sanity controls cover an appointment after an explicit cutoff and
+conflicting authority. Control judgments sit outside the 71-target denominator.
 
 | Verdict | Meaning |
 | --- | --- |
@@ -46,9 +49,9 @@ citation membership. Semantic interpretation still comes from the model.
 
 The retained Extractor v1 assessment used this same prompt, rubric, and
 `deepseek-v4-pro` settings. It surfaced one potentially sufficient quotation
-boundary miss, plus 22 partial signals at zero exact match. Seventeen responses
-were invalid. The raw judgments and frozen report remain in their original
-private directory. The Workbench links that assessment and does not rerun it.
+boundary miss. The raw judgments and frozen report remain in their original
+private directory. The Workbench regenerates the display summary from retained
+receipts.
 
 ## Prepare, authorize, and inspect a Run
 
@@ -107,19 +110,28 @@ inherit owner-only access.
 The Evaluation Protocol panel for a completed Run shows a **Semantic Evidence**
 row labelled **AI-assessed, unverified** below the deterministic metrics.
 
-- **Proof Completion** counts Supported verdicts across all formal targets.
-- **Multi-Source Proof Completion** counts Supported judgments that cite at
-  least two distinct Sources for satisfied facts across all Multi-Source targets.
-- **Multi-Source Evidence Coverage** averages the share of applicable facts
-  judged satisfied per Multi-Source target. Targets without a valid judgment
-  contribute zero observed coverage, and inapplicable facts are outside each
-  target's fact denominator. With no valid judgments, the measures for that
-  cohort are unavailable.
+| Metric | Calculation | Retained Extractor v1 |
+| --- | --- | --- |
+| Evidence Support | Count valid Supported and Partially Supported verdicts across all 71 formal targets. | (6 + 29) / 71 = **49.30%** |
+| Proof Completion | Count valid Supported verdicts across all 71 formal targets. These indicate potential sufficiency under the supplied assertion. | 6 / 71 = **8.45%** |
+| Multi-Source Evidence Coverage | For each valid judgment, divide facts marked satisfied by all applicable facts. Exclude facts marked inapplicable. Sum the per-target shares and divide by all 30 Multi-Source targets, weighting each target equally. | The 19 valid Multi-Source judgments sum to six target equivalents. 6 / 30 = **20.00%**. |
 
-Semantic coverage measures applicable facts. Exact coverage measures approved
-Source–quotation pairs. Open **Inspect semantic assessment** for cited evidence,
-judgment coverage, discrepancies and execution details. Use **Refresh
-assessment** to read a newly retained assessment.
+Invalid, undelivered, and other targets without valid judgments contribute zero
+to all three measures. Semantic coverage measures documentary facts. Exact
+coverage measures approved Source–quotation pairs.
+
+**Judgment Coverage** records successful assessment separately from evidence
+support. The baseline has 50/71 valid judgments, 17 invalid responses, and four
+delivery failures. **Potential Partial Support Beyond Exact Matching** counts
+valid Partially Supported judgments that credit a quotation outside the approved
+exact matches, among all recovered targets with zero exact Source–quotation
+matches. The baseline has 22/51 (43.14%). Unjudged or invalid recovered targets
+remain in this diagnostic's denominator.
+
+Open **Inspect semantic assessment** for fact-level findings, attached
+quotations, and retained invalid responses. The summary also shows estimated
+cost and mean latency. Use **Refresh assessment** to read a newly retained
+assessment.
 
 ## Reuse and compare
 
@@ -141,10 +153,11 @@ The comparison requires the same judge contract, frozen target population,
 deterministic scorer, and report version. It works across Experiments in the
 same private artifact root.
 Within a Workbench Experiment, use **Compare with verified Run** and expand the
-Semantic Evidence comparison under the deterministic results. Every formal
-target retains both states. Coverage shows the fixed denominator and the
-number with two valid judgments. Documentary fact changes are computed only
-for those pairs. An unattempted, interrupted, invalid, or undelivered target
-continues to count in each Run's denominator. A Supported result on an
+Semantic Evidence comparison under the deterministic results. The comparison
+shows the same three semantic metrics and supporting diagnostics for both Runs.
+Every formal target retains both states. The pair count shows how many targets
+have two valid judgments. Documentary fact changes are computed only for those
+pairs. An unattempted, interrupted, invalid, or undelivered target continues to
+count in each Run's denominator. A Supported result on an
 exact-incomplete target is a candidate for interpretation. These comparisons
 provide no certified documentary or legal sufficiency or causal attribution.
