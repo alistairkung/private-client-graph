@@ -41,12 +41,20 @@ class PotentialSupport(BaseModel):
     recovered_exact_incomplete_judged: int
 
 
+class SemanticMultiSourceEvidence(BaseModel):
+    targets: int
+    judged: int
+    supported_with_multiple_sources: int
+    fact_coverage: float | None
+
+
 class SemanticSummary(BaseModel):
     formal_targets: int
     recovered_targets: int
     semantic_outcomes: dict[SemanticStatus, int]
     verdicts: dict[Verdict, int]
     flags: dict[str, int]
+    multi_source_evidence: SemanticMultiSourceEvidence
     potentially_sufficient_overlooked_by_exact_matching: PotentialSupport
 
 

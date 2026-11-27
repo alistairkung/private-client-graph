@@ -1,63 +1,30 @@
 .semantic-overview {
-  min-inline-size: 0;
-  padding: 0.85rem 1rem 0;
-  background: #edf1ed;
-  border: 1px solid var(--rule);
-  border-radius: 4px;
+  margin-block: 1rem;
+  padding-block-start: 0.85rem;
+  border-block-start: 1px solid var(--rule);
 }
 
-.semantic-overview-heading {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 0.15rem 0.65rem;
+.semantic-overview-row {
+  display: grid;
+  gap: var(--quality-card-gap);
 }
 
-.semantic-overview-heading h3 { margin: 0; font-size: 1.02rem; }
+.semantic-overview .semantic-overview-heading h3 { margin: 0; font-size: 1.02rem; }
 .semantic-overview-heading span { color: var(--muted); font-size: 0.82rem; font-weight: 650; }
-.semantic-overview > p { margin-block: 0.6rem; }
-.semantic-overview > .secondary { margin-block-end: 0.85rem; }
+.semantic-overview-heading p { color: var(--muted); font-size: 0.82rem; margin-block: 0.4rem 0; }
+.semantic-overview-metrics { --quality-card-background: #edf1ed; }
+.semantic-overview-metrics > div:last-child { grid-column: 1 / -1; }
 
-.semantic-overview-metrics {
-  grid-template-columns: minmax(0, 0.75fr) minmax(0, 1.25fr);
-  gap: 0.85rem;
-  margin-block: 0.8rem 0.5rem;
-}
-
-.semantic-overview-metrics > div {
-  display: grid;
-  grid-template-rows: subgrid;
-  grid-row: span 3;
-  gap: 0.2rem;
-  min-inline-size: 0;
-}
-
-.semantic-overview-metrics dt { font-weight: 650; font-size: 0.85rem; line-height: 1.3; }
-.semantic-overview-metrics dd { margin: 0; }
-.semantic-overview-metrics dd:not(.semantic-basis) {
-  font-size: 1.35rem;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  line-height: 1.2;
-}
 .semantic-basis { color: var(--muted); font-size: 0.8rem; }
-
-.semantic-overview .semantic-counts {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.2rem 0.85rem;
-  padding-block: 0.55rem;
-  border-block: 1px solid var(--rule);
-  font-size: 0.82rem;
-}
-
-.semantic-overview .semantic-counts li { display: flex; justify-content: space-between; gap: 0.3rem; }
-.semantic-overview > .semantic-note { font-size: 0.82rem; }
-.semantic-overview > .semantic-evidence { margin: 0; border-block-end: 0; }
+.semantic-overview > .semantic-note { font-size: 0.82rem; margin-block: 0.65rem 0.35rem; }
+.semantic-overview > .semantic-evidence { margin: 0; }
 .semantic-overview > .semantic-evidence > summary { font-size: 0.9rem; font-weight: 650; }
 
-@container run-summary (width < 320px) {
-  .semantic-overview .semantic-counts { grid-template-columns: minmax(0, 1fr); }
+@container run-summary (width >= 720px) {
+  .semantic-overview-row { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .semantic-overview-heading { align-self: center; }
+  .semantic-overview .semantic-overview-metrics { grid-column: 2 / -1; grid-template-columns: subgrid; }
+  .semantic-overview-metrics > div:last-child { grid-column: auto; }
 }
 
 .semantic-evidence {

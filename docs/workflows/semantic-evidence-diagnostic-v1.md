@@ -104,10 +104,22 @@ retained receipt blocks continuation pending custody recovery. The retained v1
 receipt inventory is verified separately. A response from a different or
 unidentified judge remains invalid. The Workbench routes are read-only and
 inherit owner-only access.
-The Evaluation Protocol panel for a completed Run shows **Semantic Evidence**
-with its **AI-assessed, unverified** label. Open **Inspect semantic assessment**
-for cited evidence and execution details. Use **Refresh assessment** to read a
-newly retained assessment.
+The Evaluation Protocol panel for a completed Run shows a **Semantic Evidence**
+row labelled **AI-assessed, unverified** below the deterministic metrics.
+
+- **Proof Completion** counts Supported verdicts across all formal targets.
+- **Multi-Source Proof Completion** counts Supported judgments that cite at
+  least two distinct Sources for satisfied facts across all Multi-Source targets.
+- **Multi-Source Evidence Coverage** averages the share of applicable facts
+  judged satisfied per Multi-Source target. Targets without a valid judgment
+  contribute zero observed coverage, and inapplicable facts are outside each
+  target's fact denominator. With no valid judgments, the measures for that
+  cohort are unavailable.
+
+Semantic coverage measures applicable facts. Exact coverage measures approved
+Source–quotation pairs. Open **Inspect semantic assessment** for cited evidence,
+judgment coverage, discrepancies and execution details. Use **Refresh
+assessment** to read a newly retained assessment.
 
 ## Reuse and compare
 

@@ -226,7 +226,7 @@ test("compatible imports compare the full roster and changed order withholds del
   await expect(page.getByText(/deltas withheld/i)).toBeVisible();
 });
 
-test("evidence quality controls and comparison fit the viewport and retain keyboard selection", async ({ page }) => {
+test("evidence quality controls and comparison fit the viewport and retain keyboard selection", async ({ page }, testInfo) => {
   const graph = (inputs: number) => ({
     inputs, valid_graphs: inputs, without_graph: 0, exact_graphs: 0,
     precision: 1, recall: 0.5, f1: 2 / 3, counts: { tp: 2, fp: 0, fn: 2 }, outcomes: {},
@@ -279,6 +279,7 @@ test("evidence quality controls and comparison fit the viewport and retain keybo
     target_summary: { formal_targets: 71, recovered_targets: 67, verdicts: { Supported: 1 },
       semantic_outcomes: { judged: 1, invalid_judgment: 1, unattempted: 65, deterministic_delivery_failure: 4 },
       flags: { potentially_sufficient_overlooked_by_exact_matching: 1 },
+      multi_source_evidence: { targets: 30, judged: 1, supported_with_multiple_sources: 0, fact_coverage: 1 / 30 },
       potentially_sufficient_overlooked_by_exact_matching: { count: 1, formal_target_denominator: 71,
         recovered_exact_incomplete_denominator: 56, recovered_exact_incomplete_judged: 1 } },
     operations: { planned_attempts: 69, reserved_attempts: 2, reused_judgments: 0,
@@ -359,16 +360,26 @@ test("evidence quality controls and comparison fit the viewport and retain keybo
   await expect(protocol.getByText("1 / 30", { exact: true })).toBeVisible();
   await expect(protocol.getByText("40.00%", { exact: true })).toBeVisible();
   const semanticSummary = protocol.getByRole("region", { name: "Semantic Evidence — AI-assessed, unverified" });
-  await expect(semanticSummary.getByText("1 / 71", { exact: true })).toBeVisible();
-  await expect(semanticSummary.getByText("Potentially sufficient missed proofs")).toBeVisible();
-  await expect(semanticSummary.getByText("0 targets with potential partial support beyond exact matches")).toBeVisible();
-  await expect(semanticSummary.getByText(/1 invalid judgment.*4 delivery failures/)).toBeVisible();
+  await expect(semanticSummary.getByText("1 / 71 valid judgments", { exact: true })).toBeVisible();
+  await expect(semanticSummary.getByText("1.41%", { exact: true })).toBeVisible();
+  await expect(semanticSummary.getByText("0 / 30", { exact: true })).toBeVisible();
+  await expect(semanticSummary.getByText("3.33%", { exact: true })).toBeVisible();
+  await expect(semanticSummary.getByText("1 of 30 targets judged")).toBeVisible();
   await expect(semanticSummary.getByText("Timing unverified.")).toBeVisible();
   await expect(semanticSummary.getByText("Inspect formal targets (2)")).not.toBeVisible();
   expect(semanticReads).toBe(1);
+  const exactProof = (await protocol.getByText("15.49%", { exact: true }).boundingBox())!;
+  const semanticProof = (await semanticSummary.getByText("1.41%", { exact: true }).boundingBox())!;
+  expect(semanticProof.y).toBeGreaterThan(exactProof.y + exactProof.height);
+  if (testInfo.project.name === "research-desktop") {
+    expect(Math.abs(semanticProof.x - exactProof.x)).toBeLessThan(1);
+  }
 
   await semanticSummary.getByText("Inspect semantic assessment", { exact: true }).press("Enter");
   await expect(semanticSummary.getByText(assessment.temporal_limitation)).toBeVisible();
+  await expect(semanticSummary.getByText(/1 potentially sufficient missed proofs/)).toBeVisible();
+  await expect(semanticSummary.getByText("0 targets with potential partial support beyond exact matches")).toBeVisible();
+  await expect(semanticSummary.getByText(/1 invalid judgment.*4 delivery failures/)).toBeVisible();
   await semanticSummary.getByText("Inspect formal targets (2)").press("Enter");
   expect(semanticReads).toBe(1);
   const filter = page.getByRole("combobox", { name: "Filter formal targets" });

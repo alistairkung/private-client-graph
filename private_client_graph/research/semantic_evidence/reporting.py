@@ -69,6 +69,7 @@ def report(directory: Path) -> dict[str, Any]:
                 'semantic_outcomes': dict(Counter(row['status'] for row in joint_only)),
                 'verdicts': _verdicts(joint_only),
             },
+            'multi_source_evidence': _multi_source_evidence(joint_only),
             'potentially_sufficient_overlooked_by_exact_matching': {
                 'count': count if judged_incomplete else None,
                 'formal_target_denominator': len(targets),
@@ -147,6 +148,30 @@ def _flags(item: Item, judgment: Judgment) -> list[str]:
                                                  if quote.id in cited}) == 1:
         flags.append('joint_only_supported_with_one_cited_source')
     return flags
+
+
+def _multi_source_evidence(targets: list[dict[str, Any]]) -> dict[str, Any]:
+    judged = [row for row in targets if row['status'] == 'judged']
+    return {
+        'targets': len(targets),
+        'judged': len(judged),
+        'supported_with_multiple_sources': sum(
+            row['judgment']['verdict'] == 'Supported' and _cites_multiple_supporting_sources(row)
+            for row in judged
+        ),
+        'fact_coverage': sum(_satisfied_fact_fraction(row) for row in judged) / len(targets) if judged else None,
+    }
+
+
+def _cites_multiple_supporting_sources(row: dict[str, Any]) -> bool:
+    cited = {identity for fact in row['judgment']['facts'] if fact['status'] == 'satisfied'
+             for identity in fact['quotation_ids']}
+    return len({quote['source_id'] for quote in row['quotations'] if quote['id'] in cited}) >= 2
+
+
+def _satisfied_fact_fraction(row: dict[str, Any]) -> float:
+    applicable = [fact for fact in row['judgment']['facts'] if fact['status'] != 'inapplicable']
+    return sum(fact['status'] == 'satisfied' for fact in applicable) / len(applicable)
 
 
 def _provider_details(plan: Plan, receipt: Receipt) -> dict[str, Any]:

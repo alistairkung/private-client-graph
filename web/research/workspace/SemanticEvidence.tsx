@@ -1,11 +1,13 @@
 import { useCallback, useState, type ReactNode } from "react";
+import { percentMetric } from "../../src/shared/research/presentation";
 import type {
-  SemanticOperations, SemanticOutcome, SemanticRunSummary, SemanticSummary, SemanticTarget, SemanticTransition,
+  SemanticEvidenceReport, SemanticOperations, SemanticOutcome, SemanticRunSummary, SemanticSummary,
+  SemanticTarget, SemanticTransition,
 } from "../shared/contracts";
 import { ReadState } from "../shared/presentation";
 import { useRead } from "../shared/useRead";
 import { compareSemanticEvidence, getSemanticEvidence } from "./api";
-import { evidenceMetricLabels } from "./benchmark-metrics";
+import { evidenceMetricLabels, multiSourceProofCompletionLabel } from "./benchmark-metrics";
 import "./semantic-evidence.css";
 
 const title = "Semantic Evidence — AI-assessed, unverified";
@@ -43,11 +45,16 @@ function Disclosure({ label, children }: { label: string; children: ReactNode })
 export function SemanticEvidencePanel({ run }: { run: string }) {
   const load = useCallback((signal: AbortSignal) => getSemanticEvidence(run, signal), [run]);
   const { data, error, retry } = useRead(load);
+  const summary = data?.target_summary;
   return (
     <section className="semantic-overview" aria-label={title}>
-      <div className="semantic-overview-heading">
-        <h3>Semantic Evidence</h3>
-        <span>AI-assessed, unverified</span>
+      <div className="semantic-overview-row">
+        <div className="semantic-overview-heading">
+          <h3>Semantic Evidence</h3>
+          <span>AI-assessed, unverified</span>
+          {summary && <p>{summary.semantic_outcomes.judged ?? 0} / {summary.formal_targets} valid judgments</p>}
+        </div>
+        {summary && <SemanticProofMetrics summary={summary} />}
       </div>
       {data === undefined ? <ReadState error={error} retry={retry} /> : !data ? (
         <>
@@ -56,26 +63,9 @@ export function SemanticEvidencePanel({ run }: { run: string }) {
         </>
       ) : (
         <>
-          <SemanticOverview summary={data.target_summary} />
           <p className="semantic-note"><strong>Timing unverified.</strong> Explicit assessment cutoffs were unavailable.</p>
           <Disclosure label="Inspect semantic assessment">
-            <p className="semantic-note"><strong>Temporal limitation.</strong> {data.temporal_limitation}</p>
-            <p className="semantic-note">DeepSeek assesses attached quotations. The judge and extractor can share model-specific biases.</p>
-            <ExecutionUsage operations={data.operations} />
-            <Targets targets={data.targets} />
-            <details>
-              <summary>Sanity controls ({data.controls.length})</summary>
-              {data.controls.map((row) => <Target key={row.id} row={row} />)}
-            </details>
-            <details>
-              <summary>Evaluator and execution record</summary>
-              <dl className="semantic-metadata">
-                <dt>Evaluator</dt><dd>{data.evaluator.version}</dd>
-                <dt>Judge</dt><dd>{data.evaluator.model} · temperature {data.evaluator.settings.temperature} · {data.evaluator.settings.max_retries} retries</dd>
-                <dt>Prompt SHA-256</dt><dd>{data.evaluator.prompt_sha256}</dd>
-                <dt>Plan SHA-256</dt><dd>{data.plan_sha256}</dd>
-              </dl>
-            </details>
+            <AssessmentDetails assessment={data} />
             <button className="secondary" onClick={retry}>Refresh assessment</button>
           </Disclosure>
         </>
@@ -84,27 +74,61 @@ export function SemanticEvidencePanel({ run }: { run: string }) {
   );
 }
 
-function SemanticOverview({ summary }: { summary: SemanticSummary }) {
+function SemanticProofMetrics({ summary }: { summary: SemanticSummary }) {
+  const multiSource = summary.multi_source_evidence;
+  const supported = summary.verdicts.Supported ?? 0;
+  const judged = summary.semantic_outcomes.judged ?? 0;
+  return (
+    <dl className="quality-card-grid semantic-overview-metrics">
+      <div>
+        <dt>{evidenceMetricLabels.complete_proof}</dt>
+        <dd>{percentMetric(judged ? supported / summary.formal_targets : null)}</dd>
+        <dd className="quality-scope">{supported} of {summary.formal_targets} formal targets judged Supported</dd>
+      </div>
+      <div>
+        <dt>{multiSourceProofCompletionLabel}</dt>
+        <dd>{multiSource.judged ? `${multiSource.supported_with_multiple_sources} / ${multiSource.targets}` : "Unavailable"}</dd>
+        <dd className="quality-scope">Supported with citations from at least two Sources</dd>
+      </div>
+      <div>
+        <dt>{evidenceMetricLabels.joint_only_coverage}</dt>
+        <dd>{percentMetric(multiSource.fact_coverage)}</dd>
+        <dd className="quality-scope">
+          Mean share of applicable facts satisfied across {multiSource.targets} targets<br />
+          {multiSource.judged} of {multiSource.targets} targets judged
+        </dd>
+      </div>
+    </dl>
+  );
+}
+
+function AssessmentDetails({ assessment }: { assessment: SemanticEvidenceReport }) {
+  const { target_summary: summary, evaluator } = assessment;
+  const multiSource = summary.multi_source_evidence;
   const potential = summary.potentially_sufficient_overlooked_by_exact_matching;
   return (
     <>
-      <dl className="semantic-overview-metrics">
-        <div>
-          <dt>Valid judgments</dt>
-          <dd>{summary.semantic_outcomes.judged ?? 0} / {summary.formal_targets}</dd>
-          <dd className="semantic-basis">{summary.recovered_targets} formal targets recovered</dd>
-        </div>
-        <div>
-          <dt>Potentially sufficient missed proofs</dt>
-          <dd>{potential.count ?? "Unavailable"}</dd>
-          <dd className="semantic-basis">{potential.recovered_exact_incomplete_judged} of {potential.recovered_exact_incomplete_denominator} recovered targets with incomplete exact proofs judged</dd>
-        </div>
-      </dl>
-      {potential.count !== null && <p className="semantic-basis">
+      <p className="semantic-note"><strong>Temporal limitation.</strong> {assessment.temporal_limitation}</p>
+      <p className="semantic-note">DeepSeek assesses attached quotations. The judge and extractor can share model-specific biases.</p>
+      <p>{multiSource.judged} of {multiSource.targets} Multi-Source targets had valid judgments. Targets without valid judgments contribute zero observed fact coverage.</p>
+      <Coverage summary={assessment} />
+      {potential.count !== null && <p>
         <strong>{summary.flags.potential_new_partial_support ?? 0}</strong> targets with potential partial support beyond exact matches
       </p>}
-      <VerdictCounts verdictCounts={summary.verdicts} />
-      <OutcomeGaps outcomes={summary.semantic_outcomes} />
+      <Targets targets={assessment.targets} />
+      <details>
+        <summary>Sanity controls ({assessment.controls.length})</summary>
+        {assessment.controls.map((row) => <Target key={row.id} row={row} />)}
+      </details>
+      <details>
+        <summary>Evaluator and execution record</summary>
+        <dl className="semantic-metadata">
+          <dt>Evaluator</dt><dd>{evaluator.version}</dd>
+          <dt>Judge</dt><dd>{evaluator.model} · temperature {evaluator.settings.temperature} · {evaluator.settings.max_retries} retries</dd>
+          <dt>Prompt SHA-256</dt><dd>{evaluator.prompt_sha256}</dd>
+          <dt>Plan SHA-256</dt><dd>{assessment.plan_sha256}</dd>
+        </dl>
+      </details>
     </>
   );
 }

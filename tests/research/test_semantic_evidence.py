@@ -90,6 +90,9 @@ def test_fixed_targets_controls_and_privacy_boundary(tmp_path, inputs):
     assert offline['target_summary']['semantic_outcomes'] == {
         'unattempted': 67, 'deterministic_delivery_failure': 4,
     }
+    assert offline['target_summary']['multi_source_evidence'] == {
+        'targets': 30, 'judged': 0, 'supported_with_multiple_sources': 0, 'fact_coverage': None,
+    }
     assert offline['operations']['reserved_attempts'] == 0
     requests = []
 
@@ -134,6 +137,50 @@ def test_fixed_targets_controls_and_privacy_boundary(tmp_path, inputs):
     assert result['operations']['reserved_attempts_without_usage'] == 1
     assert result['operations']['maximum_estimated_peak_usd'] == '2.18592'
     assert result['deterministic_baseline'] == offline['deterministic_baseline']
+
+
+def test_multi_source_metrics_use_cited_support_and_the_frozen_target_denominator(tmp_path, inputs):
+    targets = list(inputs.targets)
+    for index, source in ((11, 'S2'), (12, 'S1'), (13, 'S2')):
+        item = targets[index]
+        second = Quotation(id='Q2', source=source, text='A second retained quotation.')
+        targets[index] = item.model_copy(update={
+            'packet': make_packet(item.edge, (*item.packet.quotations, second)),
+            'source_ids': {'S1': 'private source ID', **({'S2': 'second source ID'} if source == 'S2' else {})},
+        })
+    for index, multi_source in ((15, False), (67, True)):
+        item = targets[index]
+        targets[index] = item.model_copy(update={'baseline': item.baseline.model_copy(update={'joint_only': multi_source})})
+
+    directory = tmp_path / 'assessment'
+    digest = freeze(directory, inputs.model_copy(update={'targets': tuple(targets)}))
+
+    def transport(request):
+        packet = json.loads(json.loads(request.content)['messages'][1]['content'])
+        subject = packet['assertion']['subject']
+        response = _response(packet)
+        if subject not in {f'Parent {index}' for index in range(11, 15)}:
+            return response
+        body = response.json()
+        judgment = _judgment(packet)
+        identity, relationship, timing, authority = judgment['facts']
+        for fact in (timing, authority):
+            fact.update(status='inapplicable', quotation_ids=[])
+        if subject == 'Parent 13':
+            judgment['verdict'] = 'Partially Supported'
+            identity.update(status='contradicted', quotation_ids=['Q2'])
+        else:
+            relationship['quotation_ids'] = ['Q2']
+        body['choices'][0]['message']['content'] = json.dumps(judgment)
+        return httpx.Response(200, json=body)
+
+    with httpx.Client(transport=httpx.MockTransport(transport)) as client:
+        _run(directory, digest, client)
+
+    assert report(directory)['target_summary']['multi_source_evidence'] == {
+        'targets': 30, 'judged': 28, 'supported_with_multiple_sources': 1,
+        'fact_coverage': pytest.approx(27.5 / 30),
+    }
 
 
 def test_interruption_spends_its_single_slot_on_continuation(tmp_path, inputs):

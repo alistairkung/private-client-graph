@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { percentMetric } from "../../src/shared/research/presentation";
 import type { BenchmarkV4Comparison, EvidenceQuality } from "../shared/contracts";
 import {
@@ -34,7 +35,11 @@ const primaryMeanings = {
   complete_proof: "Expected relationships with a complete approved proof",
 };
 
-export function RunQuality({ quality, inline = false }: { quality: EvidenceQuality; inline?: boolean }) {
+export function RunQuality({ quality, inline = false, children }: {
+  quality: EvidenceQuality;
+  inline?: boolean;
+  children?: ReactNode;
+}) {
   const multiSource = quality.joint_only_complete_proof;
   return (
     <section className={inline ? "run-quality run-quality-inline" : "benchmark-run-summary run-quality"} aria-label="Evidence quality">
@@ -43,7 +48,7 @@ export function RunQuality({ quality, inline = false }: { quality: EvidenceQuali
       {quality.state === "provisional" && (
         <p role="status">Provisional · {quality.observed_inputs} of {quality.planned_inputs} inputs observed.</p>
       )}
-      <dl className="quality-primary">
+      <dl className={inline ? "quality-card-grid" : "quality-primary"}>
         {primaryMetrics.map((key) => (
           <div key={key}>
             <dt>{evidenceMetricLabels[key]}</dt>
@@ -69,6 +74,7 @@ export function RunQuality({ quality, inline = false }: { quality: EvidenceQuali
           </div>
         </>}
       </dl>
+      {children}
       <p className="quality-combined">
         {evidenceMetricLabels.combined_graph} <strong>{percentMetric(qualityValue(quality, "combined_graph"))}</strong>
         <span>{qualityScope(quality, "combined_graph")}</span>

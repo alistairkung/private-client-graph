@@ -1033,6 +1033,13 @@ export type SemanticFactChange = {
   right: "satisfied" | "contradicted" | "missing" | "uncertain" | "inapplicable";
 };
 
+export type SemanticMultiSourceEvidence = {
+  targets: number;
+  judged: number;
+  supported_with_multiple_sources: number;
+  fact_coverage: number | null;
+};
+
 export type SemanticOperations = {
   planned_attempts: number;
   reserved_attempts: number;
@@ -1086,6 +1093,7 @@ export type SemanticSummary = {
   semantic_outcomes: Record<string, number>;
   verdicts: Record<string, number>;
   flags: Record<string, number>;
+  multi_source_evidence: SemanticMultiSourceEvidence;
   potentially_sufficient_overlooked_by_exact_matching: PotentialSupport;
 };
 
