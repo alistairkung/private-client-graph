@@ -7,14 +7,16 @@ from typing import Any, Literal
 from pydantic import TypeAdapter
 
 from benchmark_v3 import commissioning, packet
-from benchmark_v3.batch import artifacts, author_context, author_delivery, authorisation, delivery_particulars, design_review, recipient_edit, repair_authority, science
-from benchmark_v3.batch.contracts import Adjudication, DesignOutput, MatchedCondition, RealismReview, SourceId
+from benchmark_v3.batch import artifacts, audit_boundary, author_context, author_delivery, author_repair, authorisation, clean_redesign, delivery_particulars, design_review, recipient_edit, repair_authority, science, ticket_authority
+from benchmark_v3.batch import delivery_audience
+from benchmark_v3.batch.contracts import Adjudication, AuthorBrief, DesignOutput, MatchedCondition, MilestoneAudit, RealismReview, SourceId
 from benchmark_v3.batch.ledger import BudgetExhausted
 from benchmark_v3.batch.sessions import SessionRunner
 from benchmark_v3.portfolio import FamilySlot
-from benchmark_v3.replay_manifest import BatchSourceFreeze
+from benchmark_v3.replay_manifest import BatchSourceFreeze, source_commitments
 from benchmark_v3.research_contracts import Contract, Text
 from private_client_graph.models.source import Source
+from private_client_graph.research.retained_inputs import value_digest
 
 PLAN_PROMPT = (
     "Independently diagnose the returned fictional Matter before it has a key. Classify each supplied objection "
@@ -29,6 +31,8 @@ PLAN_PROMPT = (
 )
 ADJUDICATION_RETURN = "Adjudication has unresolved scientific objections."
 PLAN_REFERENCE_FAILURE = "Every additional classification must identify a retained earlier objection."
+PLAN_SCOPE_FAILURE = "The proposed repair changes committed targets, roster or contrast structure."
+INTAKE_ATTACHMENT_FAILURE = "The repair cites additional intake records without their authenticated participant attachments."
 LINEAGE_REOPEN_FAILURE = "The original realism inputs and receipts failed their commitments."
 PARTICIPANT_LITERAL_FAILURE = "A participant instruction exposes a condition identifier or alternate literal."
 CLASSIFICATION_LAYOUT = (
@@ -62,6 +66,15 @@ class RepairPlan(Contract):
     disposition: Literal["repair", "infeasible", "scope_change"]
     objections: dict[Text, Objection]
     revised_design: DesignOutput | None = None
+    tickets: dict[SourceId, Text]
+    progress: Literal["initial", "improved", "none"]
+    rationale: Text
+
+
+class LocalRepairPlan(Contract):
+    disposition: Literal["repair", "infeasible", "scope_change"]
+    objections: dict[Text, Objection]
+    revised_records: dict[SourceId, AuthorBrief]
     tickets: dict[SourceId, Text]
     progress: Literal["initial", "improved", "none"]
     rationale: Text
@@ -103,6 +116,16 @@ class ReturnedFile:
     incoming_particulars: delivery_particulars.IncomingParticulars | None = None
     exact_recipient_edit: recipient_edit.ExactRecipientEdit | None = None
     prior_owned_source: Source | None = None
+    owned_records: dict[SourceId, Source] | None = None
+    baseline_owned_grants: dict[SourceId, list[dict[str, str]]] | None = None
+    audit_repair_sources: frozenset[SourceId] = frozenset()
+    narrowed_scope_source: SourceId | None = None
+    distinct_scope_sources: frozenset[SourceId] = frozenset()
+
+    def local_scope_sources(self) -> frozenset[SourceId]:
+        if self.narrowed_scope_source is not None:
+            return frozenset({self.narrowed_scope_source})
+        return self.distinct_scope_sources
 
     def expected_local_source(self) -> Source | None:
         if self.exact_recipient_edit is None:
@@ -142,12 +165,20 @@ class Revision:
                 "record are unchanged.\nTitle: " + expected.title + "\n\n" + expected.text
             )}
         particulars = self.parent.incoming_particulars
-        if particulars is None:
-            return self.plan.tickets
-        source_id = particulars.source_id
-        basis = self.plan.tickets.get(source_id)
-        ticket = particulars.local_ticket()
-        return self.plan.tickets | {source_id: f"{basis}\n\n{ticket}" if basis else ticket}
+        source_id = particulars.source_id if particulars else None
+        tickets = dict(self.plan.tickets)
+        if particulars is not None:
+            basis = tickets.get(particulars.source_id)
+            ticket = particulars.local_ticket()
+            tickets[particulars.source_id] = f"{basis}\n\n{ticket}" if basis else ticket
+        for identity, record in (self.parent.owned_records or {}).items():
+            direction = (
+                "Use your own exact previous retained record below when preserving its original wording and annotation."
+                if identity == source_id else
+                "Copy your own original title and complete text exactly. Attest only the separately supplied transmissions."
+            )
+            tickets[identity] = f"{tickets.get(identity, '')}\n\n{direction}\nTitle: {record.title}\n\n{record.text}"
+        return tickets
 
 
 def release_event(runner: SessionRunner) -> dict[str, Any] | None:
@@ -158,6 +189,77 @@ def release_event(runner: SessionRunner) -> dict[str, Any] | None:
     ), None)
 
 
+def retained_draft_tickets(runner: SessionRunner, revision: Revision, tickets: dict[SourceId, str]) -> dict[SourceId, str]:
+    """Give a participant their own verified draft for a strictly local documentary edit."""
+    parent = revision.parent
+    if (not runner.ledger.requires_workload_merits or not runner.ledger.requires_delivery_attestation
+            or revision.design.matched or parent.audit_repair_sources or parent.owned_records is not None
+            or (parent.prior_scope_return is not None and not parent.local_scope_sources())
+            or parent.incoming_particulars is not None
+            or parent.exact_recipient_edit is not None):
+        return tickets
+    path = runner.directory / "own-draft-author-lineage.json"
+    attempts = runner.ledger.attempts(runner.family)
+    if not path.exists() and any(row["revision"] == runner.revision and row["job"] == author_context.JOB for row in attempts):
+        return tickets
+    index = revision.lineage["parent_revision"]
+    old = {brief.source_id: brief for brief in parent.design.inventory}
+    drafts = {source.id: source for source in parent.bundles[parent.freeze.natural]}
+    local = {identity for item in revision.plan.objections.values() if item.cause == "documentary" for identity in item.sources}
+    other = {identity for item in revision.plan.objections.values() if item.cause != "documentary" for identity in item.sources}
+    augmented = dict(tickets)
+    commitments = {}
+    exact_local = parent.local_scope_sources()
+    for brief in revision.design.inventory:
+        identity = brief.source_id
+        previous = old[identity]
+        ordinary_local_edit = identity in local and identity not in other
+        if (identity not in tickets or not (ordinary_local_edit or identity in exact_local)
+                or revision.affected.intersection(previous.received)
+                or previous.model_dump(exclude={"participant_brief"}) != brief.model_dump(exclude={"participant_brief"})):
+            continue
+        job = f"author-{identity}"
+        authored = max((row["revision"] for row in attempts if row["job"] == job and row["revision"] <= index), default=0)
+        if authored == 0:
+            continue
+        origin = replace(runner, revision=authored, directory=runner.directory.with_name(str(authored)))
+        document, receipt, request = origin.committed_result("author", job, "author", author_delivery.AttestedSource)
+        source = drafts[identity]
+        owned = commissioning._read_json(request["inputs"]["author_brief"])
+        if ((owned["participant"], owned["date"]) != (brief.author, brief.created_on.isoformat())
+                or (document.title, document.text) != (source.title, source.text)):
+            raise packet.PacketIsolationError("The local draft differs from the participant's own retained author receipt.")
+        author_delivery.require_projection(origin, job, request["inputs"])
+        author_delivery.verify_attestation(document, request["inputs"]["author_brief"])
+        commitments[identity] = receipt["receipt_sha256"]
+        augmented[identity] += ("\n\nBelow is your own earlier draft of this record. Preserve the existing document and its known "
+            "facts outside the specific repair. Use only your approved earlier attachments and own knowledge. "
+            "Retain the original record type, purpose and issue date.\nTitle: " + source.title + "\n\n" + source.text)
+    if commitments or path.exists():
+        artifacts.write_json(path, {"parent_revision": index, "author_receipts": commitments})
+    return augmented
+
+
+def unavailable_ticket_literals(revision: Revision, projected: dict[str, Any]) -> dict[SourceId, list[str]]:
+    """Check new instructions against the participant brief and already selected earlier records."""
+    parent = revision.parent
+    prior = {brief.source_id: brief for brief in parent.design.inventory}
+    documents = {document.id: document for document in parent.bundles[parent.freeze.natural]}
+    unsupported = {}
+    for row in revision.design.inventory:
+        identity = row.source_id
+        ticket = revision.plan.tickets.get(identity)
+        if not ticket:
+            continue
+        earlier = prior[identity]
+        approved = {anchor for anchor in row.received if anchor in earlier.received} if earlier.author == row.author else set()
+        evidence = [projected[identity]["author_brief"], row.created_on.strftime("%B")]
+        evidence.extend(f"{documents[anchor].title}\n{documents[anchor].text}" for anchor in sorted(approved))
+        if missing := ticket_authority.unsupported_literals(revision.design, ticket, "\n".join(evidence)):
+            unsupported[identity] = missing
+    return unsupported
+
+
 def plan_revision(
     runner: SessionRunner, slot: FamilySlot, release: dict[str, Any],
 ) -> tuple[Revision, dict[str, Any]]:
@@ -166,10 +268,16 @@ def plan_revision(
     except (OSError, ValueError, KeyError, TypeError, StopIteration) as error:
         raise packet.PacketIsolationError(LINEAGE_REOPEN_FAILURE) from error
     ticket_return = release.get("empty_ticket_return")
+    sender_return = release.get("audit_sender_return")
     note_recovery = retained_design_note(runner)
     omission = release.get("scope_ticket_omission")
     generated = release.get("generated_attachment_ticket")
-    if generated is not None:
+    packet_return = release.get("partial_packet_return")
+    if packet_return is not None and packet_return["revision"] == runner.revision - 1:
+        plan, receipt, job = _verify_partial_packet_plan(runner, slot, parent, packet_return)
+        design, affected = _verify_plan(slot, parent, plan, attested=True)
+        runner.ledger.require_capacity(runner.family, runner.revision, mandatory_jobs(design, affected, verification=True))
+    elif generated is not None:
         prior = replace(runner, revision=runner.revision - 1, directory=runner.directory.with_name(str(runner.revision - 1)))
         actual, plan, receipt = generated_attachment_ticket(prior, slot, generated["source_id"])
         if actual != generated:
@@ -192,6 +300,9 @@ def plan_revision(
         design, affected = _verify_plan(slot, parent, plan, attested=True)
         runner.ledger.require_capacity(runner.family, runner.revision, mandatory_jobs(design, affected, verification=True))
         job = repair_authority.PLAN_JOB
+    elif sender_return is not None:
+        plan, receipt, design, affected, job = _retained_audit_sender_plan(runner, slot, parent, sender_return)
+        runner.ledger.require_capacity(runner.family, runner.revision, mandatory_jobs(design, affected, verification=True))
     elif ticket_return is None:
         plan, receipt, design, affected, job = _plan_from_objections(runner, slot, parent, release)
     else:
@@ -212,6 +323,8 @@ def plan_revision(
         lineage["scoped_ticket_omission"] = omission
     if generated is not None:
         lineage["retired_automatic_ticket"] = generated
+    if packet_return is not None:
+        lineage["partial_packet_return"] = packet_return
     if parent.prior_scope_return is not None:
         lineage["last_realism_revision"] = release["parent_revision"]
         lineage["parent_revision"] = parent.prior_scope_return["revision"]
@@ -219,8 +332,22 @@ def plan_revision(
         lineage["last_realism_source_commitments"] = parent.prior_scope_return["original_realism_source_commitments"]
     if parent.incoming_particulars is not None:
         lineage["incoming_particulars"] = release["incoming_particulars"]
+    if "owned_source_revisions" in release:
+        lineage["owned_source_revisions"] = release["owned_source_revisions"]
+    if parent.audit_repair_sources:
+        lineage["documentary_audit_return"] = release["documentary_audit_return"]
+    if sender_return is not None:
+        lineage["audit_sender_return"] = sender_return
+    if "previous_issued_sender_recovery" in release:
+        lineage["previous_issued_sender_recovery"] = release["previous_issued_sender_recovery"]
     if release.get("natural_provenance_restoration"):
         lineage["natural_provenance_restoration"] = True
+    if release.get("baseline_owned_restoration"):
+        lineage["baseline_owned_restoration"] = True
+    if parent.narrowed_scope_source is not None:
+        lineage["narrowed_scope_source"] = parent.narrowed_scope_source
+    if parent.distinct_scope_sources:
+        lineage["distinct_scope_sources"] = sorted(parent.distinct_scope_sources)
     if release.get("verified_recipient_scope_restoration"):
         lineage["verified_recipient_scope_restoration"] = True
     if parent.exact_recipient_edit is not None:
@@ -284,6 +411,7 @@ def _plan_from_objections(
             "earlier_documentary_objections": parent.earlier_objections,
             **({"prior_scope_return": parent.prior_scope_return} if parent.prior_scope_return is not None else {}),
             **({"keep_documentary_limits": True} if release.get("keep_documentary_limits") else {}),
+            **({"local_repair_option": release["local_repair_option"]} if release.get("local_repair_option") else {}),
             **({"exact_recipient_edit": release["exact_recipient_edit"]} if parent.exact_recipient_edit is not None else {}),
             "capacity": {
                 "family_sessions_before_planning": release["family_sessions_remaining"],
@@ -302,12 +430,18 @@ def _select_plan(
     runner: SessionRunner, slot: FamilySlot, parent: ReturnedFile, inputs: dict[str, str], release: dict[str, Any],
 ) -> tuple[RepairPlan, dict[str, Any], DesignOutput, set[str], str]:
     attested = runner.ledger.requires_delivery_attestation
+    if repair_authority.recorded_local_retry(runner) is not None:
+        return _select_local_plan(runner, slot, parent, inputs)
 
     def propose(job: str, prompt: str, packet_inputs: dict[str, str]) -> tuple[RepairPlan, dict[str, Any]]:
+        def validate(plan: RepairPlan) -> None:
+            _verify_classification(slot, parent, plan, attested=attested)
+            _verify_intake_basis(runner, parent, plan)
+
         result, receipt = runner.run(
             "design", job, "audit", packet_inputs,
             prompt + (" " + author_delivery.DESIGN_INSTRUCTION if attested else ""), RepairPlan,
-            validate=lambda plan: _verify_classification(slot, parent, plan, attested=attested),
+            validate=validate,
             allow_format_retry=job != repair_authority.EXACT_PLAN_JOB,
         )
         artifacts.write_json(runner.directory / f"{job}.json", result.model_dump(mode="json"))
@@ -325,24 +459,75 @@ def _select_plan(
         rules = commissioning._read_json(inputs["audit_rules"])
         rules["superseded_capacity_return"] = prior.model_dump(mode="json")
         rules["capacity"]["family_sessions_before_planning"] = resumed["available_sessions"]
+        capacity_instruction = (" Reassess feasibility under the recorded new shared capacity. "
+                                "Independently confirm the documentary repair or retain the scientific return.")
+        if retained := resumed.get("retained_file_sha256"):
+            if retained != authorisation.commitment(parent.freeze):
+                raise ValueError("The authenticated retained file differs from the capacity assessment.")
+            capacity_instruction = (
+                " Reassess the exact retained file under the existing ceiling. The factory preserves verified"
+                " unaffected Sources byte for byte and regenerates only the independently approved changes and"
+                " their actual participant dependency closure. Do not assume every existing Source needs reauthoring."
+                " Check that any changed authority and all dependent judgments are fresh. Keep both whole-file"
+                " lanes, all applicable sectional reads, adjudication, exact audit and required controls. The"
+                " updated available count is calculated after the previous planner. Return infeasible if a"
+                " defensible source-local revision and all scientific gates cannot fit."
+            )
         job = repair_authority.BUDGET_PLAN_JOB
-        plan, receipt = propose(job, PLAN_PROMPT + " Reassess feasibility under the recorded new shared capacity. "
-                                "Independently confirm the documentary repair or retain the scientific return.",
+        plan, receipt = propose(job, PLAN_PROMPT + capacity_instruction,
                                 inputs | {"audit_rules": commissioning.json_text(rules)})
         design, affected = _verify_plan(slot, parent, plan, attested=attested)
         runner.ledger.require_capacity(runner.family, runner.revision, mandatory_jobs(design, affected, verification=True))
         _record_plan_selection(runner, job, receipt)
         return plan, receipt, design, affected, job
     prompt = PLAN_PROMPT
+    if parent.audit_repair_sources:
+        prompt += (" The scope is a new documentary revision after an independent audit return. Only change the "
+                   "participant briefs or add repair tickets for these exact originating Sources: "
+                   + commissioning.json_text(sorted(parent.audit_repair_sources))
+                   + ". Review whether the existing trust identity or operative fact can ordinarily be made explicit "
+                     "in the record body without changing who knew it or its business purpose. Do not rely on titles "
+                     "as proof members, withdraw an authentic evidence route, or change the graph or a frozen artifact. "
+                     "Fresh realism, both blind lanes, adjudication and controls are required. Return infeasible if necessary.")
     if parent.prior_scope_return is not None:
         prompt += (" The exact scoped return is the immediate documentary draft. Address the new scope objections "
                    "and preserve all unaffected records. Retain prior documentary objections for context and arrange "
                    "fresh independent realism on the revised full conditions.")
+    if parent.narrowed_scope_source is not None:
+        prompt += (
+            f" The latest independent scope review narrowed its objection to {parent.narrowed_scope_source}."
+            " Retain the current design and all other records. Provide a single local ticket to correct the exact"
+            " objection using the participant's authorized knowledge and original brief. Do not instruct the"
+            " participant to reproduce an unsupplied form. Return infeasible if the change requires any other record."
+        )
+    if parent.distinct_scope_sources:
+        prompt += (
+            " The latest independently returned scope identifies different originating records from the earlier return: "
+            + commissioning.json_text(sorted(parent.distinct_scope_sources))
+            + ". Leave the design and all other records unchanged. Give each identified participant a local ticket"
+              " preserving all propositions the original document could support directly, including any explicit"
+              " qualification used as evidence. Use vocabulary natural for that participant's record and its purpose."
+              " Retain the propositions in the same originating documents. Do not transfer the evidence to another"
+              " record, substitute an inference, or add an unknown act. Return infeasible if independent repair"
+              " requires changing the scientific scope."
+        )
     if parent.incoming_particulars is not None:
         prompt += (f" The original authorised direct-transmission particulars for {parent.incoming_particulars.source_id}"
                    " will be appended in full, in attachment order, after your local instructions. Do not embed"
                    " lists of delivery facts, quote the review, or single out a relationship proof. Preserve the exact"
                    " set of incoming attachments and every one of their original sending acts and Sources.")
+    if parent.baseline_owned_grants is not None:
+        prompt += (" The following originating participants will receive their own exact authenticated baseline records: "
+                   + commissioning.json_text(sorted(parent.baseline_owned_grants))
+                   + ". Give each a generic preserve-original ticket without copying facts or proof rationale into the ticket. "
+                     "Keep their previously attested sending acts. Independently repair other material documentary defects "
+                     "only where necessary. Do not disclose a record to anyone who did not actually receive it.")
+    elif parent.owned_records is not None:
+        prompt += (" The following affected participants will receive their own exact earlier authored record only: "
+                   + commissioning.json_text(sorted(parent.owned_records))
+                   + ". Issue a separate safe repair ticket for each. The inventory-note author will use that record's "
+                     "original wording and the verified current receipt details. For other participants, retain the exact "
+                     "prior issued record while verifying the original sending act. Do not expose those records to other authors.")
     if release.get("keep_documentary_limits"):
         prompt += (
             " Separate actual defects in the retained documents from substantive questions the historical"
@@ -351,6 +536,21 @@ def _select_plan(
             " Repair ambiguous terminology using only documented local facts. Treat any suggested future"
             " enquiry as practitioner follow-up, not as an author instruction to supply new evidence."
         )
+        if release.get("narrow_originating_records"):
+            prompt += (
+                " Where an unverified time or named enquiry has no authorized basis, consider narrowing the"
+                " originating record itself to facts the participant can attest. Distinguish proposed schedules,"
+                " authorization periods and later documented acts. An exhaustive as-of register can report its"
+                " actual entries without suggesting an outside query. Do not embed a later clarification in"
+                " an earlier record or make a new operative event to explain an existing document."
+            )
+        if release.get("local_repair_option"):
+            prompt += (
+                " The optional repair proposal is from the coordinator and is visible only to this planning review."
+                " Evaluate it independently against the original evidence and scope. Return infeasible if it would"
+                " require unavailable facts or alter the hypothesis. Derive isolated participant tickets without"
+                " quoting the review or proposal, and retain all independent checks."
+            )
     if parent.exact_recipient_edit is not None:
         if parent.exact_recipient_edit.brief_omission is None:
             prompt += (
@@ -395,6 +595,15 @@ def _select_plan(
             prompt += CLASSIFICATION_LAYOUT
         if _pre_author_returns(release) and _include_plan_instruction(runner, LOCAL_ORIGIN):
             prompt += LOCAL_ORIGIN
+        intake = _intake_attachments(parent)
+        if runner.ledger.requires_workload_merits and intake:
+            instruction = (" Add these exact earlier records to their recipient's received slice, preserving already "
+                           "authorised attachments and chronological order: " + commissioning.json_text(intake)
+                           + ". Do not substitute a case-wide reconstructed intake list in the brief or ticket. "
+                           "Ask the recipient to account for the locally available received records and preserve their "
+                           "own exact original note and annotation. If the authorised receipt path cannot be shown, return infeasible.")
+            if _include_plan_instruction(runner, instruction):
+                prompt += instruction
     plan, receipt = propose(repair_authority.PLAN_JOB, prompt, inputs)
     design, affected = _verify_plan(slot, parent, plan, attested=attested)
     original_jobs = mandatory_jobs(design, affected, verification=True)
@@ -442,9 +651,114 @@ def _include_plan_instruction(runner: SessionRunner, instruction: str) -> bool:
     return attempt is None or instruction in commissioning._read_json(attempt["request"])["prompt"]
 
 
+def assumes_whole_file_reauthoring(rationale: str, sources: int) -> bool:
+    return bool(re.search(rf"(?:calls for|requires) fresh isolated authoring for (?:all )?{sources} Sources\b", rationale, re.I)
+                and re.search(r"\bsessions? (?:is|are) available\b", rationale, re.I))
+
+
 def _record_plan_selection(runner: SessionRunner, job: str, receipt: dict[str, Any]) -> None:
     runner.ledger.event(runner.manifest.batch_id, runner.family, runner.revision, "repair_plan_selection",
                         "chosen", "design", "design", {"job": job, "receipt_sha256": receipt["receipt_sha256"]})
+
+
+def local_retry_details(runner: SessionRunner) -> tuple[dict[str, Any], dict[str, str]]:
+    rejected = {row["name"]: row["details"] for row in runner.ledger.events(runner.manifest.batch_id, runner.family)
+                if row["revision"] == runner.revision and row["kind"] == "rejected_output"}
+    failures = {}
+    inputs: dict[str, str] | None = None
+    for job in (repair_authority.PLAN_JOB, repair_authority.PLAN_JOB + repair_authority.FORMAT_RETRY):
+        _, receipt, request = runner.committed_packet("design", job, "audit")
+        rejection = rejected.get(job)
+        if (rejection is None or rejection.get("receipt_sha256") != receipt["receipt_sha256"]
+                or (inputs is not None and inputs != request["inputs"])):
+            raise ValueError("A local replan requires both exact rejected outputs on the same inputs.")
+        failures[job] = rejection
+        inputs = request["inputs"]
+    if not any(rejection["reason"] == PLAN_SCOPE_FAILURE for rejection in failures.values()):
+        raise ValueError("A local replan requires a demonstrated whole-design contract failure.")
+    assert inputs is not None
+    return {"prior_rejections": failures, "manifest_sha256": authorisation.commitment(runner.manifest),
+            "inputs_sha256": commissioning.digest(commissioning.json_text(inputs).encode())}, inputs
+
+
+def _select_local_plan(
+    runner: SessionRunner, slot: FamilySlot, parent: ReturnedFile, inputs: dict[str, str],
+) -> tuple[RepairPlan, dict[str, Any], DesignOutput, set[str], str]:
+    details, original_inputs = local_retry_details(runner)
+    if details != repair_authority.recorded_local_retry(runner) or original_inputs != inputs:
+        raise packet.PacketIsolationError("The local replan must preserve the two original review packets.")
+    job = repair_authority.LOCAL_PLAN_JOB
+    def validate(local: LocalRepairPlan) -> None:
+        plan = _local_derivative(parent, local)
+        _verify_classification(slot, parent, plan, attested=True)
+        _verify_intake_basis(runner, parent, plan)
+
+    result, receipt = runner.run("design", job, "audit", inputs, PLAN_PROMPT + (
+        " Use exact current objection keys. Return revised_records as a map of changed author records only, keyed "
+        "by their exact Source IDs. Ticket only Sources identified by the returning reviewers. Preserve the author, issue date, "
+        "overall design, targets and contrast. Use the earliest contemporaneous local basis for each change. "
+        "Keep observations and follow-up enquiries in rationale, outside participant instructions. If a repair needs "
+        "changes outside these local records and their dependency closure, return infeasible or scope_change."
+    ) + " " + author_delivery.DESIGN_INSTRUCTION, LocalRepairPlan,
+        validate=validate,
+        allow_format_retry=False)
+    plan = _local_derivative(parent, result)
+    design, affected = _verify_plan(slot, parent, plan, attested=True)
+    runner.ledger.require_capacity(runner.family, runner.revision, mandatory_jobs(design, affected, verification=True))
+    artifacts.write_json(runner.directory / f"{job}.json", plan.model_dump(mode="json"))
+    _record_plan_selection(runner, job, receipt)
+    return plan, receipt, design, affected, job
+
+
+def _local_derivative(parent: ReturnedFile, local: LocalRepairPlan) -> RepairPlan:
+    original = parent.design
+    records = {row.source_id: row for row in original.inventory}
+    named = {source for objection in local.objections.values() for source in objection.sources}
+    permitted = {source for review in parent.reviews.values() for source in review["repair_tickets"]}
+    permitted.update(source for source in records if any(
+        re.search(rf"(?<!\w){re.escape(source)}(?!\w)", objection, re.IGNORECASE)
+        for objection in parent.objections.values()
+    ))
+    if not (local.revised_records.keys() | local.tickets.keys()) <= records.keys() & permitted & named:
+        raise ValueError("A local repair must target Sources named by the returning reviewer and the classification.")
+    for identity, current in local.revised_records.items():
+        prior = records[identity]
+        if (current.source_id, current.author, current.created_on) != (identity, prior.author, prior.created_on):
+            raise ValueError("A local repair must preserve the affected Source's identity, author and date.")
+    revised = original.model_copy(update={"inventory": [local.revised_records.get(row.source_id, row)
+                                                         for row in original.inventory]})
+    return RepairPlan(**local.model_dump(exclude={"revised_records"}), revised_design=revised)
+
+
+def _intake_attachments(parent: ReturnedFile) -> dict[SourceId, list[SourceId]]:
+    """Read an independent review's explicit list of missing arrivals to a named recipient."""
+    if parent.prior_scope_return is None:
+        return {}
+    documents = {row.source_id: row for row in parent.design.inventory}
+    requirements: dict[SourceId, list[SourceId]] = {}
+    for objection in parent.prior_scope_return["independent_finding"]["objections"]:
+        matched = re.search(r"\bRevised (\w+) lists only\b.*?\badditional arrivals to ([^:]+): ([^.]+)\.", objection)
+        if matched is None:
+            continue
+        target, recipient, names = matched.groups()
+        if target not in documents or author_delivery._participant(documents[target].author).split()[0] != recipient:
+            continue
+        ids = [source for source in documents if re.search(rf"(?<!\w){re.escape(source)}(?!\w)", names)]
+        if ids:
+            requirements[target] = ids
+    return requirements
+
+
+def _intake_gaps(parent: ReturnedFile, design: DesignOutput) -> dict[SourceId, list[SourceId]]:
+    received = {row.source_id: set(row.received) for row in design.inventory}
+    return {target: missing for target, expected in _intake_attachments(parent).items()
+            if (missing := sorted(set(expected) - received.get(target, set())))}
+
+
+def _verify_intake_basis(runner: SessionRunner, parent: ReturnedFile, plan: RepairPlan) -> None:
+    if (runner.ledger.requires_workload_merits and plan.disposition == "repair"
+            and _intake_gaps(parent, plan.revised_design or parent.design)):
+        raise ValueError(INTAKE_ATTACHMENT_FAILURE)
 
 
 def classification_retry_details(runner: SessionRunner) -> tuple[dict[str, Any], dict[str, str]]:
@@ -472,20 +786,29 @@ def _read_return(runner: SessionRunner, slot: FamilySlot, release: dict[str, Any
     ledger, batch, family = runner.ledger, runner.manifest.batch_id, runner.family
     authored_receipts = _authored_scope_receipts(release)
     preauthor_returns = _pre_author_returns(release)
-    empty_ticket = bool(release.get("empty_ticket_return"))
-    if (revision != runner.revision - 1 - len(authored_receipts) - int(empty_ticket) - len(preauthor_returns)
-            or (empty_ticket and (authored_receipts or preauthor_returns))
-            or (len(authored_receipts) > 1 and not release.get("natural_provenance_restoration"))
-            or ((authored_receipts or preauthor_returns or empty_ticket)
-                and not ledger.pooled_revision(batch, family, runner.revision))):
+    skipped_ticket = bool(release.get("empty_ticket_return") or release.get("audit_sender_return"))
+    issued_restoration = (release.get("audit_sender_return") or {}).get("issued_source_sha256")
+    earlier_issued = release.get("previous_issued_sender_recovery")
+    partial = release.get("partial_packet_return")
+    if (revision != runner.revision - 1 - len(authored_receipts) - int(skipped_ticket) - int(bool(earlier_issued))
+            - int(bool(partial)) - len(preauthor_returns)
+            or (skipped_ticket and (authored_receipts or preauthor_returns) and not issued_restoration)
+            or (earlier_issued and skipped_ticket)
+            or (len(authored_receipts) > 1 and not any(release.get(key) for key in (
+                "natural_provenance_restoration", "baseline_owned_restoration", "narrowed_scope_source",
+                "distinct_scope_sources",
+            )))
+            or ((authored_receipts or preauthor_returns or skipped_ticket or partial)
+                and not ledger.historical_pooled_revision(batch, family, runner.revision))):
         raise ValueError("A repair must bind each of its verified intervening scope returns.")
     previous = SessionRunner(ledger, runner.manifest, family, revision, runner.directory.parent / str(revision), runner.owner)
     history = ledger.events(batch, family)
     events = [row for row in history if row["revision"] == revision]
     disposition = next((row for row in events if row["kind"] == "disposition" and row["name"] == "realism"), None)
     adjudication = release.get("adjudication_return")
+    audit = release.get("documentary_audit_return")
     if (release["manifest_sha256"] != authorisation.commitment(runner.manifest)
-            or (adjudication is None and (
+            or (adjudication is None and audit is None and (
                 disposition is None or release["disposition_sequence"] != disposition["sequence"]
             ))):
         raise ValueError("The repair must bind the exact previous realism disposition and approved manifest.")
@@ -514,6 +837,10 @@ def _read_return(runner: SessionRunner, slot: FamilySlot, release: dict[str, Any
             raise ValueError("The adjudication did not receive the reviewed documentary file.")
         objections = {f"adjudication:{index}": reason
                       for index, reason in enumerate(adjudication["objections"], 1)}
+    elif audit is not None:
+        if objections or disposition is not None or audit != document_audit_return(previous, set(audit["source_ids"])):
+            raise ValueError("An audit repair must retain passing realism and the exact returned audit.")
+        objections = {f"audit:{i}": reason for i, reason in enumerate(audit["objections"], 1)}
     elif disposition is None or reviews != commissioning._read_json(disposition["details"]["evidence"]) or not objections:
         raise ValueError("The realism responses differ from the returned disposition.")
     natural = supplied[science.condition_ids(slot)[0]]
@@ -522,6 +849,8 @@ def _read_return(runner: SessionRunner, slot: FamilySlot, release: dict[str, Any
     if reviewed_design is not None:
         design = design_review.verified_authoring_design(previous, design, reviewed_design)
     bundles, freeze = science.freeze_bundles(slot, design, natural)
+    if audit is not None and artifacts.read_contract(previous.directory / "family" / "freeze.json", BatchSourceFreeze) != freeze:
+        raise ValueError("The passed documentary review differs from the audit's frozen Sources.")
     expected = commissioning.digest(commissioning.json_text(
         [source.model_dump(mode="json") for source in natural],
     ).encode())
@@ -538,22 +867,57 @@ def _read_return(runner: SessionRunner, slot: FamilySlot, release: dict[str, Any
     scope_references = _earlier_pre_author_references(runner, history, revision, slot=slot)
     result = ReturnedFile(design, bundles, freeze, objections, reviews, receipts, prior, earlier,
                           earlier_scope_references=scope_references,
+                          audit_repair_sources=frozenset(audit["source_ids"]) if audit is not None else frozenset(),
                           retained_literal_briefs=_retained_literal_briefs(previous, design, natural, events))
     authored_returns, preauthor = _scope_returns_by_revision(history, authored_receipts, preauthor_returns)
-    if not empty_ticket and sorted((*authored_returns, *preauthor)) != list(range(revision + 1, runner.revision)):
+    last_scoped = runner.revision - int(bool(issued_restoration))
+    known = set(authored_returns) | set(preauthor)
+    if partial is not None:
+        stopped = partial["revision"]
+        successor = next((event["details"] for event in history if
+                          (event["revision"], event["kind"], event["name"]) == (stopped + 1, "transition", repair_authority.REVISION)), None)
+        if (not revision < stopped < runner.revision or stopped in known or (skipped_ticket and not issued_restoration)
+                or (stopped + 1 < runner.revision and (successor is None or successor.get("partial_packet_return") != partial))):
+            raise ValueError("An unfinished authoring stage requires its authenticated predispatch return.")
+        known.add(stopped)
+    if earlier_issued:
+        skipped_revision = verify_previous_issued_recovery(runner, result, earlier_issued)
+        if skipped_revision in known:
+            raise ValueError("A stopped sender draft cannot also count as an independently reviewed authored file.")
+        known.add(skipped_revision)
+    if (not skipped_ticket or issued_restoration) and known != set(range(revision + 1, last_scoped)):
         raise ValueError("Each intervening revision needs its own authenticated scope return.")
     if release.get("natural_provenance_restoration") and (len(authored_returns) != 2 or design.matched):
         raise ValueError("Provenance restoration requires one natural condition and two authenticated scope returns.")
+    if release.get("baseline_owned_restoration") and (not 1 <= len(authored_returns) <= 2 or design.matched):
+        raise ValueError("Original record restoration requires authenticated authored returns on one natural condition.")
+    narrowed = release.get("narrowed_scope_source")
+    distinct = frozenset(release.get("distinct_scope_sources", []))
+    if (narrowed is not None or distinct) and (
+        design.matched or len(authored_returns) < 2
+        or (narrowed is not None and distinct)
+        or any(release.get(key) for key in (
+            "natural_provenance_restoration", "baseline_owned_restoration", "owned_source_revisions",
+            "incoming_particulars", "exact_recipient_edit",
+        ))
+    ):
+        raise ValueError("A narrowed authored-scope repair requires only the authenticated natural-file comparison.")
     for rejected_revision in sorted((*authored_returns, *preauthor)):
         if rejected_revision in authored_returns:
             result = _scope_repair_parent(runner, slot, result, authored_returns[rejected_revision],
                                           rejected_revision=rejected_revision, original_revision=revision)
         else:
             result = _append_pre_author_return(runner, slot, result, rejected_revision, preauthor[rejected_revision])
+    if narrowed is not None:
+        _require_narrowed_scope(result, narrowed)
+        result = replace(result, narrowed_scope_source=narrowed)
+    if distinct:
+        _require_distinct_scope(result, distinct)
+        result = replace(result, distinct_scope_sources=distinct)
     if details := release.get("incoming_particulars"):
         source_revision = details.get("reviewed_source_revision", runner.revision - 1)
         retained_natural = (not authored_returns and source_revision == revision and not design.matched
-                            and ledger.pooled_revision(batch, family, runner.revision))
+                            and ledger.historical_pooled_revision(batch, family, runner.revision))
         if not (retained_natural or (authored_returns and source_revision == max(authored_returns))):
             raise ValueError("Delivery particulars require the exact reviewed draft revision.")
         previous_draft = replace(runner, revision=source_revision,
@@ -564,6 +928,21 @@ def _read_return(runner: SessionRunner, slot: FamilySlot, release: dict[str, Any
         if authorisation.commitment(particulars) != details["record_sha256"]:
             raise ValueError("The participant's original delivery particulars changed.")
         result = replace(result, incoming_particulars=particulars)
+    if owned := release.get("owned_source_revisions"):
+        if release.get("baseline_owned_restoration"):
+            result = _restore_baseline_records(runner, result, revision, owned, history)
+        elif result.incoming_particulars is None or not release.get("natural_provenance_restoration"):
+            raise ValueError("Earlier participant records require an exact natural-file provenance restoration.")
+        else:
+            records = _verified_owned_records(runner, result, owned, revision, max(authored_returns) - 1)
+            result = replace(result, owned_records={identity: record for identity, (record, _) in records.items()})
+    if issued_restoration:
+        sender_return = release["audit_sender_return"]
+        identity = sender_return["source_id"]
+        source = next(row for row in result.bundles[result.freeze.natural] if row.id == identity)
+        if value_digest(source.model_dump(mode="json")) != issued_restoration or result.owned_records is not None or design.matched:
+            raise ValueError("An issued-record recovery must preserve its exact original natural-file Source.")
+        result = replace(result, owned_records={identity: source}, baseline_owned_grants={identity: sender_return["grants"]})
     if edit := release.get("exact_recipient_edit"):
         exact = recipient_edit.ExactRecipientEdit.model_validate(edit)
         if "exact_omission_assessment" in release:
@@ -665,6 +1044,11 @@ def _retained_literal_briefs(
 def _committed_prior_plan(
     previous: SessionRunner, slot: FamilySlot, release: dict[str, Any], history: list[dict[str, Any]],
 ) -> RepairPlan:
+    if (partial := release.get("partial_packet_return")) and partial["revision"] == previous.revision - 1:
+        return _verify_partial_packet_plan(previous, slot, _read_return(previous, slot, release), partial)[0]
+    if sender_return := release.get("audit_sender_return"):
+        plan, _, _, _, _ = _retained_audit_sender_plan(previous, slot, _read_return(previous, slot, release), sender_return)
+        return plan
     note = retained_design_note(previous)
     if note is not None:
         parent = _read_return(previous, slot, release)
@@ -692,10 +1076,90 @@ def _committed_prior_plan(
                       and row["kind"] == "repair_plan_selection"), None)
     job = selection["job"] if selection else repair_authority.PLAN_JOB
     stored = artifacts.read_contract(planner.directory / f"{job}.json", RepairPlan)
-    committed, receipt, _ = planner.committed_result("design", job, "audit", RepairPlan)
+    if job == repair_authority.LOCAL_PLAN_JOB:
+        parent = _read_return(planner, slot, release)
+        local, receipt, _ = planner.committed_result("design", job, "audit", LocalRepairPlan)
+        committed = _local_derivative(parent, local)
+    else:
+        committed, receipt, _ = planner.committed_result("design", job, "audit", RepairPlan)
     if stored != committed or selection and receipt["receipt_sha256"] != selection["receipt_sha256"]:
         raise ValueError("The prior repair plan differs from its charged original.")
     return stored
+
+
+def partial_packet_plan(
+    previous: SessionRunner, slot: FamilySlot, parent: ReturnedFile, blocked_job: str, attachment: SourceId,
+) -> tuple[dict[str, Any], RepairPlan, dict[str, Any], str]:
+    release = release_event(previous)
+    attempts = [row for row in previous.ledger.attempts(previous.family) if row["revision"] == previous.revision]
+    history = previous.ledger.events(previous.manifest.batch_id, previous.family)
+    issues = [row["details"] for row in history if row["revision"] == previous.revision and row["kind"] == "exception"]
+    if (release is None or release.get("partial_packet_return") or not previous.ledger.requires_workload_merits
+            or parent.design.matched or not blocked_job.startswith("author-") or not issues
+            or (issues[-1]["stage"], issues[-1]["code"], issues[-1]["job"]) != ("author", "scientific_review", blocked_job)
+            or any(row["job"] == blocked_job for row in attempts)
+            or (previous.directory / "family").exists()):
+        raise ValueError("A partial packet recovery requires an exact unfinished predispatch hold.")
+    design = artifacts.read_contract(previous.directory / "design.json", DesignOutput)
+    recipient = next((row for row in design.inventory if row.source_id == blocked_job.removeprefix("author-")), None)
+    if recipient is None or attachment not in recipient.received:
+        raise ValueError("The stopped participant must have been assigned the exact held attachment.")
+    source_job = f"author-{attachment}"
+    source, source_receipt, request = previous.committed_result("author", source_job, "author", author_delivery.AttestedSource)
+    author_delivery.require_projection(previous, source_job, request["inputs"])
+    author_delivery.verify_attestation(source, request["inputs"]["author_brief"])
+    document = Source(id=attachment, title=source.title, text=source.text)
+    try:
+        delivery_audience.verify_packet({"received_correspondence": commissioning.json_text([document.model_dump(mode="json")])})
+    except delivery_audience.AudienceError as error:
+        if issues[-1]["evidence"] != str(error):
+            raise ValueError("The current audience guard must reproduce the exact predispatch exception.") from error
+    else:
+        raise ValueError("The current audience guard must reject the retained attachment.")
+    scope, scope_receipt, _ = previous.committed_result("author", author_context.JOB, "audit", author_context.AuthorContextReview)
+    if scope.verdict != "accept" or scope.objections:
+        raise ValueError("The original plan must have passed its independent author review before the predispatch stop.")
+    selection = next(row["details"] for row in history if row["revision"] == previous.revision
+                     and row["kind"] == "repair_plan_selection")
+    job = selection["job"]
+    original, receipt, _ = previous.committed_result("design", job, "audit", RepairPlan)
+    if receipt["receipt_sha256"] != selection["receipt_sha256"] or original.revised_design != design:
+        raise ValueError("The stopped authoring design must match its exact independent plan.")
+    plan = _without_unapproved_design_edits(parent.design, original)
+    _, affected = _verify_plan(slot, parent, plan, attested=True)
+    if attachment in affected or blocked_job.removeprefix("author-") in affected:
+        raise ValueError("An exact derivative must preserve both unaffected prior records.")
+    return {
+        "revision": previous.revision, "blocked_job": blocked_job, "attachment": attachment,
+        "original_plan_sha256": authorisation.commitment(original), "derivative_sha256": authorisation.commitment(plan),
+        "scope_receipt_sha256": scope_receipt["receipt_sha256"], "attachment_receipt_sha256": source_receipt["receipt_sha256"],
+    }, plan, receipt, job
+
+
+def _without_unapproved_design_edits(old: DesignOutput, plan: RepairPlan) -> RepairPlan:
+    new = plan.revised_design
+    if plan.disposition != "repair" or new is None or not plan.tickets:
+        raise ValueError("The stopped plan must contain exact participant-local repairs.")
+    requested = {row.source_id: row.participant_brief for row in new.inventory if row.source_id in plan.tickets}
+    if not requested.keys() <= {row.source_id for row in old.inventory} or requested.keys() != plan.tickets.keys():
+        raise ValueError("Keep only the original plan's exact participant-local ticketed records.")
+    revised = old.model_copy(update={"inventory": [
+        row.model_copy(update={"participant_brief": requested[row.source_id]}) if row.source_id in requested else row
+        for row in old.inventory
+    ]})
+    if revised == new:
+        raise ValueError("A stopped plan derivative must remove an unrelated design change.")
+    return plan.model_copy(update={"revised_design": revised})
+
+
+def _verify_partial_packet_plan(
+    runner: SessionRunner, slot: FamilySlot, parent: ReturnedFile, record: dict[str, Any],
+) -> tuple[RepairPlan, dict[str, Any], str]:
+    previous = replace(runner, revision=runner.revision - 1, directory=runner.directory.with_name(str(runner.revision - 1)))
+    actual, plan, receipt, job = partial_packet_plan(previous, slot, parent, record["blocked_job"], record["attachment"])
+    if actual != record:
+        raise ValueError("The exact unfinished packet return and derived plan changed.")
+    return plan, receipt, job
 
 
 def _pre_author_returns(release: dict[str, Any]) -> list[dict[str, Any]]:
@@ -705,6 +1169,30 @@ def _pre_author_returns(release: dict[str, Any]) -> list[dict[str, Any]]:
     return records
 
 
+def pre_author_progress(previous: list[dict[str, Any]], current: dict[str, Any], identities: set[SourceId]) -> bool:
+    """Recognize a new exact scope objection after earlier objects cleared."""
+    if not previous:
+        return True
+    if any(set(record["objections"]) == set(current["objections"]) for record in previous):
+        return False
+    if len(current["objections"]) < len(previous[-1]["objections"]):
+        return True
+
+    def leading_sources(record: dict[str, Any]) -> set[SourceId]:
+        names = {objection.split(maxsplit=1)[0].rstrip(":") for objection in record["objections"] if objection.strip()}
+        if names <= identities:
+            return names
+        if record.get("review_job") == clean_redesign.MERITS_JOB:
+            citations = [set(re.findall(r"[\w-]+", objection)) & identities for objection in record["objections"]]
+            if citations and all(citations):
+                return set().union(*citations)
+        return set()
+
+    current_sources = leading_sources(current)
+    previous_sources = [leading_sources(record) for record in previous]
+    return bool(current_sources and previous_sources[-1] and current_sources.isdisjoint(set().union(*previous_sources)))
+
+
 def _authored_scope_receipts(release: dict[str, Any]) -> list[str]:
     receipts = list(release.get("earlier_authored_scope_receipts", []))
     if "scope_return_receipt_sha256" in release:
@@ -712,14 +1200,24 @@ def _authored_scope_receipts(release: dict[str, Any]) -> list[str]:
     return receipts
 
 
+def _pre_author_review_jobs(runner: SessionRunner) -> set[str]:
+    from benchmark_v3.batch import clean_redesign
+
+    jobs = {author_context.JOB}
+    if runner.ledger.requires_workload_merits:
+        jobs.add(clean_redesign.MERITS_JOB)
+    return {name for job in jobs for name in (job, job + repair_authority.FORMAT_RETRY)}
+
+
 def pre_author_scope_return(runner: SessionRunner, *, slot: FamilySlot | None = None) -> tuple[dict[str, Any], RepairPlan]:
     batch, family = runner.manifest.batch_id, runner.family
     parent = release_event(runner)
-    if (not runner.ledger.requires_delivery_attestation or parent is None or len(_pre_author_returns(parent)) > 2
+    if (not runner.ledger.requires_delivery_attestation or parent is None
+            or (not runner.ledger.requires_workload_merits and len(_pre_author_returns(parent)) > 2)
             or parent["parent_revision"] != runner.revision - 1 - len(_pre_author_returns(parent))
-            - len(_authored_scope_receipts(parent))
+            - len(_authored_scope_receipts(parent)) - int(bool(parent.get("partial_packet_return")))
             or any(row["revision"] == runner.revision and row["stage"] == "author"
-                   and row["job"] not in {author_context.JOB, author_context.JOB + repair_authority.FORMAT_RETRY}
+                   and row["job"] not in _pre_author_review_jobs(runner)
                    for row in runner.ledger.attempts(family))):
         raise ValueError("A new preauthor plan requires a bounded independently returned repair before any author dispatch.")
     note = retained_design_note(runner)
@@ -730,18 +1228,122 @@ def pre_author_scope_return(runner: SessionRunner, *, slot: FamilySlot | None = 
         if actual != note:
             raise ValueError("The independently rejected scope must bind the exact retained plan derivative.")
         chosen = note
+    elif (partial := parent.get("partial_packet_return")) and partial["revision"] == runner.revision - 1:
+        if slot is None:
+            raise ValueError("A retained predispatch plan requires the exact approved workload.")
+        plan, planner, _ = _verify_partial_packet_plan(runner, slot, _read_return(runner, slot, parent), partial)
+        if plan.revised_design != artifacts.read_contract(runner.directory / "design.json", DesignOutput):
+            raise ValueError("The independently returned predispatch derivative differs from its exact design.")
+        chosen = planner
+    elif omission := parent.get("scope_ticket_omission"):
+        if slot is None:
+            raise ValueError("An exact omitted ticket requires the approved documentary workload.")
+        preceding = replace(runner, revision=runner.revision - 1, directory=runner.directory.with_name(str(runner.revision - 1)))
+        actual, plan, planner = _reopen_scope_omission(preceding, slot, omission)
+        retained = _read_return(runner, slot, parent)
+        revised, _ = _verify_plan(slot, retained, plan, attested=True)
+        if actual != omission or revised != artifacts.read_contract(runner.directory / "design.json", DesignOutput):
+            raise ValueError("The returned ticket derivative differs from its exact reviewed scope.")
+        chosen = planner
     else:
-        chosen = next(row["details"] for row in runner.ledger.events(batch, family)
+        history = runner.ledger.events(batch, family)
+        chosen = next(row["details"] for row in history
                       if row["revision"] == runner.revision and row["kind"] == "repair_plan_selection")
-        plan, planner, _ = runner.committed_result("design", chosen["job"], "audit", RepairPlan)
-    review, receipt, _ = runner.committed_result("author", author_context.JOB, "audit", author_context.AuthorContextReview)
-    if review.verdict != "return" or not review.objections or planner["receipt_sha256"] != chosen["receipt_sha256"]:
+        if chosen["job"] == repair_authority.LOCAL_PLAN_JOB:
+            if slot is None:
+                raise ValueError("A local record plan requires the exact approved workload.")
+            plan = _committed_prior_plan(runner, slot, parent, history)
+            _, planner, _ = runner.committed_packet("design", chosen["job"], "audit")
+        else:
+            plan, planner, _ = runner.committed_result("design", chosen["job"], "audit", RepairPlan)
+    review_job = author_context.JOB
+    merits_job = clean_redesign.MERITS_JOB
+    if runner.ledger.requires_workload_merits and any(
+        row["revision"] == runner.revision and row["job"] == merits_job for row in runner.ledger.attempts(family)
+    ):
+        merits, receipt, request = runner.committed_result("author", merits_job, "audit", author_context.AuthorContextReview)
+        if merits.verdict == "return":
+            design = artifacts.read_contract(runner.directory / "design.json", DesignOutput)
+            if (DesignOutput.model_validate_json(request["inputs"]["intended_intervention"]) != design
+                    or merits.findings.keys() - {"_design"} != {row.source_id for row in design.inventory}):
+                raise ValueError("The independent merits return differs from the exact held design.")
+            review_job = merits_job
+    review, receipt, request = runner.committed_result("author", review_job, "audit", author_context.AuthorContextReview)
+    objections = review.objections
+    intake: dict[SourceId, list[SourceId]] = {}
+    unsupported: dict[SourceId, list[str]] = {}
+    if (review.verdict == "accept" and not objections and runner.ledger.requires_workload_merits and slot is not None):
+        original = _read_return(runner, slot, parent)
+        design = artifacts.read_contract(runner.directory / "design.json", DesignOutput)
+        if DesignOutput.model_validate_json(request["inputs"]["intended_intervention"]) != design:
+            raise ValueError("The accepted scope review differs from the exact held design.")
+        rules = commissioning._read_json(request["inputs"]["audit_rules"])
+        if rules.get("ticket_basis_version") == 1:
+            revised, affected = _verify_plan(slot, original, plan, attested=True)
+            if revised != design:
+                raise ValueError("A ticket-basis return must match the independently reviewed scoped design.")
+            check = Revision(original, revised, plan, affected, {}, repair_authority.PLAN_JOB)
+            unsupported = unavailable_ticket_literals(check, rules["participant_packets"])
+            if unsupported != rules.get("unavailable_ticket_literals"):
+                raise ValueError("The retained local ticket authority check changed.")
+        if unsupported:
+            objections = [f"{source}: Repair instructions add names or periods without a local documentary basis. "
+                          f"Remove or authorise the exact facts about {', '.join(terms)}."
+                          for source, terms in unsupported.items()]
+        else:
+            intake = _intake_gaps(original, design)
+            objections = [f"{source}: {INTAKE_ATTACHMENT_FAILURE} Include the actual earlier correspondence for "
+                          f"{', '.join(missing)} in the participant's received slice." for source, missing in intake.items()]
+    if (not objections or (review.verdict != "return" and not intake and not unsupported)
+            or planner["receipt_sha256"] != chosen["receipt_sha256"]):
         raise ValueError("A new preauthor plan must bind the exact independently rejected documentary proposal.")
     return {
         "revision": runner.revision, "planner_receipt_sha256": planner["receipt_sha256"],
-        "scope_receipt_sha256": receipt["receipt_sha256"], "objections": review.objections,
+        "scope_receipt_sha256": receipt["receipt_sha256"], "objections": objections,
         "review": review.model_dump(mode="json"),
+        **({"review_job": review_job} if review_job == merits_job else {}),
+        **({"mechanically_missing_intake_attachments": intake} if intake else {}),
+        **({"mechanically_unsupported_ticket_literals": unsupported} if unsupported else {}),
     }, plan
+
+
+def _verified_owned_records(
+    runner: SessionRunner, case: ReturnedFile, requested: dict[str, int], first: int, last: int, *, verify_grants: bool = False,
+) -> dict[str, tuple[Source, list[dict[str, str]]]]:
+    current = {row.source_id: row for row in case.design.inventory}
+    records = {}
+    for identity, revision in requested.items():
+        if not first <= revision <= last or identity not in current:
+            raise ValueError("An owned record must precede the exact returned repair and stay in its roster.")
+        origin = replace(runner, revision=revision, directory=runner.directory.with_name(str(revision)))
+        document, _, request = origin.committed_result("author", f"author-{identity}", "author", author_delivery.AttestedSource)
+        brief = request["inputs"]["author_brief"]
+        local = commissioning._read_json(brief)
+        if (local["participant"], local["date"]) != (current[identity].author, current[identity].created_on.isoformat()):
+            raise ValueError("An earlier owned record must have the same author and issue date.")
+        author_delivery.require_projection(origin, f"author-{identity}", request["inputs"])
+        if verify_grants:
+            author_delivery.verify_attestation(document, brief)
+        records[identity] = (Source(id=identity, title=document.title, text=document.text), local["outgoing_deliveries"])
+    return records
+
+
+def _restore_baseline_records(
+    runner: SessionRunner, case: ReturnedFile, original_revision: int,
+    requested: dict[str, int], history: list[dict[str, Any]],
+) -> ReturnedFile:
+    baseline = _scope_realism_baseline(runner, case)
+    if not requested or not baseline or case.incoming_particulars is not None:
+        raise ValueError("Owned baseline recovery requires the exact first natural comparison and no unrelated intake.")
+    first = max((event["revision"] for event in history if event["revision"] <= original_revision
+                 and "documentary_redesign" in event["details"]), default=1)
+    originals = {source.id: source for source in TypeAdapter(list[Source]).validate_python(baseline[case.freeze.natural])}
+    current = {source.id: source for source in case.bundles[case.freeze.natural]}
+    records = _verified_owned_records(runner, case, requested, first, original_revision, verify_grants=True)
+    if any(originals.get(identity) != record or current[identity] == record for identity, (record, _) in records.items()):
+        raise ValueError("Each restored record must match the exact original comparison and differ from the returned draft.")
+    return replace(case, owned_records={identity: record for identity, (record, _) in records.items()},
+                   baseline_owned_grants={identity: grants for identity, (_, grants) in records.items()})
 
 
 def _earlier_pre_author_references(
@@ -794,7 +1396,72 @@ def _reopen_scope_omission(
 ) -> tuple[dict[str, Any], RepairPlan, dict[str, Any]]:
     if "future_reference" in record:
         return remove_future_reference(runner, slot, FutureReferenceOmission.model_validate(record["future_reference"]))
+    if record.get("quoted_ticket_instruction"):
+        return remove_quoted_ticket_instruction(runner, slot)
+    if record.get("misaddressed_ticket"):
+        return remove_misaddressed_ticket(runner, slot)
     return remove_separate_reply_ticket(runner, slot, record["source_id"])
+
+
+def remove_misaddressed_ticket(
+    runner: SessionRunner, slot: FamilySlot,
+) -> tuple[dict[str, Any], RepairPlan, dict[str, Any]]:
+    retained, prior = pre_author_scope_return(runner, slot=slot)
+    review, receipt, request = runner.committed_result("author", author_context.JOB, "audit", author_context.AuthorContextReview)
+    objection = review.objections[0] if len(review.objections) == 1 else ""
+    match = re.match(
+        r"^([\w-]+)\s*[:—-]\s*Remove the (\w+)(?: revision ticket|-directed ticket)"
+        r" from ([^.\n]+)['’]s (?:[^.\n]+ )?packet\.", objection,
+    )
+    if match is None or receipt["receipt_sha256"] != retained["scope_receipt_sha256"]:
+        raise ValueError("The independent review must explicitly identify the whole misaddressed ticket.")
+    identity, intended, actor = match.groups()
+    reviewed = commissioning._read_json(request["inputs"]["audit_rules"])["participant_packets"].get(identity, {})
+    design = artifacts.read_contract(runner.directory / "design.json", DesignOutput)
+    participant = next(row for row in design.inventory if row.source_id == identity)
+    ticket = prior.tickets.get(identity)
+    if (ticket is None or reviewed.get("revision_ticket") != ticket or not ticket.startswith(intended + ":")
+            or participant.author.split(",", 1)[0] != actor or participant.author.split(maxsplit=1)[0] == intended):
+        raise ValueError("The reviewed ticket must match its exact different author and retained plan.")
+    plan = prior.model_copy(update={"tickets": {key: value for key, value in prior.tickets.items() if key != identity},
+                                    "progress": "improved"})
+    return {
+        "misaddressed_ticket": True, "source_id": identity, "scope_receipt_sha256": receipt["receipt_sha256"],
+        "reviewed_pre_author_return": retained, "removed_ticket_sha256": commissioning.digest(ticket.encode()),
+        "prior_plan_sha256": authorisation.commitment(prior), "derivative_sha256": authorisation.commitment(plan),
+    }, plan, receipt
+
+
+def remove_quoted_ticket_instruction(
+    runner: SessionRunner, slot: FamilySlot,
+) -> tuple[dict[str, Any], RepairPlan, dict[str, Any]]:
+    retained, prior = pre_author_scope_return(runner, slot=slot)
+    review, receipt, request = runner.committed_result("author", author_context.JOB, "audit", author_context.AuthorContextReview)
+    objection = review.objections[0] if len(review.objections) == 1 else ""
+    match = re.match(r"^([\w-]+) revision_ticket: Remove '(.*?)' before dispatch\.", objection)
+    if match is None or receipt["receipt_sha256"] != retained["scope_receipt_sha256"]:
+        raise ValueError("An exact independent review must quote one instruction to remove before dispatch.")
+    identity, instruction = match.groups()
+    packet = commissioning._read_json(request["inputs"]["audit_rules"])["participant_packets"].get(identity, {})
+    ticket = prior.tickets.get(identity)
+    if ticket is None or packet.get("revision_ticket") != ticket:
+        raise ValueError("The independently reviewed ticket must match its exact retained plan.")
+    updated = _omit_quoted_ticket_sentence(ticket, instruction)
+    plan = prior.model_copy(update={"tickets": prior.tickets | {identity: updated}, "progress": "improved"})
+    return {
+        "quoted_ticket_instruction": True, "source_id": identity, "scope_receipt_sha256": receipt["receipt_sha256"],
+        "reviewed_pre_author_return": retained, "removed_sentence": instruction,
+        "prior_plan_sha256": authorisation.commitment(prior), "derivative_sha256": authorisation.commitment(plan),
+    }, plan, receipt
+
+
+def _omit_quoted_ticket_sentence(ticket: str, instruction: str) -> str:
+    sentence = instruction.removesuffix(".") + "."
+    surrounded = " " + sentence + " "
+    if (not instruction or any(char in sentence[:-1] for char in ".\r\n")
+            or ticket.count(sentence) != 1 or re.search(r"(?<=[.!?])" + re.escape(surrounded), ticket) is None):
+        raise ValueError("Only one exact interior ticket sentence can be omitted.")
+    return ticket.replace(surrounded, " ", 1)
 
 
 def remove_future_reference(
@@ -862,7 +1529,7 @@ def empty_attachment_ticket_return(runner: SessionRunner, source_id: str) -> dic
     """Authenticate a pre-author return of the factory's boilerplate attachment wording."""
     if not runner.ledger.requires_delivery_attestation or any(
         row["revision"] == runner.revision and row["stage"] == "author"
-        and row["job"] not in {author_context.JOB, author_context.JOB + repair_authority.FORMAT_RETRY}
+        and row["job"] not in _pre_author_review_jobs(runner)
         for row in runner.ledger.attempts(runner.family)
     ):
         raise ValueError("The boilerplate correction must precede all affected author turns.")
@@ -893,6 +1560,106 @@ def _retained_plan_for_empty_ticket(
     if design != artifacts.read_contract(previous.directory / "design.json", DesignOutput):
         raise ValueError("The retained un-authored revision has a different design.")
     return plan, receipt, design, affected, job
+
+
+def document_audit_sender_return(
+    runner: SessionRunner, source_id: str, *, issued: Source | None = None, issued_revision: int | None = None,
+) -> dict[str, Any]:
+    release = release_event(runner)
+    if (release is None or release.get("audit_sender_return")
+            or (issued is None and (release["parent_revision"] != runner.revision - 1
+                                    or source_id not in release.get("documentary_audit_return", {}).get("source_ids", [])))
+            or (issued_revision is not None and (issued is None or not 0 < issued_revision <= release["parent_revision"]))
+            or not runner.ledger.requires_delivery_attestation or (runner.directory / "family").exists()):
+        raise ValueError("A retained sender retry requires an exact un-frozen audit documentary revision.")
+    events = [row for row in runner.ledger.events(runner.manifest.batch_id, runner.family) if row["revision"] == runner.revision]
+    failures = author_repair._missing_sender_receipts(runner, source_id, events)
+    _, _, request = runner.committed_packet("author", f"author-{source_id}", "author")
+    _, receipt, retry = runner.committed_packet("author", f"author-{source_id}-format-retry", "author")
+    grants = commissioning._read_json(request["inputs"]["author_brief"])["outgoing_deliveries"]
+    if request["inputs"] != retry["inputs"] or not grants or not request["inputs"].get("revision_ticket"):
+        raise ValueError("A retained sender retry requires the same approved local ticket and existing transmissions.")
+    record = {"source_id": source_id, "failures": failures, "grants": grants, "receipt_sha256": receipt["receipt_sha256"]}
+    if issued is not None:
+        original_revision = issued_revision or release["parent_revision"]
+        origin = replace(runner, revision=original_revision, directory=runner.directory.with_name(str(original_revision)))
+        job = f"author-{source_id}"
+        answer, original_receipt, original_request = origin.committed_result("author", job, "author", author_delivery.AttestedSource)
+        author_delivery.require_projection(origin, job, original_request["inputs"])
+        author_delivery.verify_attestation(answer, original_request["inputs"]["author_brief"])
+        if (issued.id, issued.title, issued.text) != (source_id, answer.title, answer.text) or (
+            original_request["inputs"]["author_brief"] != request["inputs"]["author_brief"]
+        ):
+            raise ValueError("The independent original must bind the exact issued record, participant, date and sending acts.")
+        record.update(issued_source_sha256=value_digest(issued.model_dump(mode="json")),
+                      issued_receipt_sha256=original_receipt["receipt_sha256"])
+        if issued_revision is not None:
+            record["issued_revision"] = issued_revision
+    return record
+
+
+def _retained_audit_sender_plan(
+    runner: SessionRunner, slot: FamilySlot, parent: ReturnedFile, details: dict[str, Any],
+) -> tuple[RepairPlan, dict[str, Any], DesignOutput, set[str], str]:
+    previous = replace(runner, revision=runner.revision - 1, directory=runner.directory.with_name(str(runner.revision - 1)))
+    identity = details["source_id"]
+    issued = (parent.owned_records or {}).get(identity) if details.get("issued_source_sha256") else None
+    basis = {"issued_revision": details["issued_revision"]} if "issued_revision" in details else {}
+    if details != document_audit_sender_return(previous, identity, issued=issued, **basis):
+        raise ValueError("The two independently omitted sender attestations changed.")
+    history = runner.ledger.events(runner.manifest.batch_id, runner.family)
+    choice = next(row["details"] for row in history if row["revision"] == previous.revision and row["kind"] == "repair_plan_selection")
+    job = choice["job"]
+    plan, receipt, _ = previous.committed_result("design", job, "audit", RepairPlan)
+    design, affected = _verify_plan(slot, parent, plan, attested=True)
+    _, _, request = previous.committed_packet("author", f"author-{identity}", "author")
+    if (receipt["receipt_sha256"] != choice["receipt_sha256"] or plan.tickets.get(identity) != request["inputs"]["revision_ticket"]
+            or design != artifacts.read_contract(previous.directory / "design.json", DesignOutput)):
+        raise ValueError("The retained sender ticket differs from the accepted documentary plan.")
+    declared = " and ".join(f"{grant['recipient']} on {grant['sent_on']}" for grant in details["grants"])
+    clarification = (f" Record the original documented delivery to {declared} in the deliveries field. "
+                     "This is an attestation of the original sending act. Do not make a new delivery.")
+    local = "Retain the exact issued version of your own earlier record." if issued is not None else plan.tickets[identity]
+    revised = plan.model_copy(update={"tickets": plan.tickets | {identity: local + clarification}})
+    return revised, receipt, design, affected, job
+
+
+def verify_previous_issued_recovery(runner: SessionRunner, case: ReturnedFile, recorded: dict[str, Any]) -> int:
+    revision = recorded["recovery_revision"]
+    recovered = replace(runner, revision=revision, directory=runner.directory.with_name(str(revision)))
+    release = release_event(recovered)
+    proof = recorded["sender_return"]
+    if release is None or release.get("audit_sender_return") != proof or not proof.get("issued_source_sha256"):
+        raise ValueError("The prior issued-record recovery differs from its immutable release.")
+    identity = proof["source_id"]
+    source = next(row for row in case.bundles[case.freeze.natural] if row.id == identity)
+    failed = replace(runner, revision=revision - 1, directory=runner.directory.with_name(str(revision - 1)))
+    basis = {"issued_revision": proof["issued_revision"]} if "issued_revision" in proof else {}
+    if document_audit_sender_return(failed, identity, issued=source, **basis) != proof:
+        raise ValueError("The original failed sender attempts differ from their authenticated recovery.")
+    job = f"author-{identity}"
+    restored, _, request = recovered.committed_result("author", job, "author", author_delivery.AttestedSource)
+    author_delivery.require_projection(recovered, job, request["inputs"])
+    author_delivery.verify_attestation(restored, request["inputs"]["author_brief"])
+    if (restored.title, restored.text) != (source.title, source.text):
+        raise ValueError("The recovered participant did not preserve the exact independently authored issued record.")
+    return revision - 1
+
+
+def document_audit_return(runner: SessionRunner, source_ids: set[str]) -> dict[str, Any]:
+    recheck = audit_boundary.release(runner) is not None
+    job = audit_boundary.RECHECK if recheck else "audit"
+    contract = audit_boundary.RecheckedAudit if recheck else MilestoneAudit
+    review, receipt, _ = runner.committed_result("audit", job, "audit", contract)
+    design = artifacts.read_contract(runner.directory / "design.json", DesignOutput)
+    if (review.verdict not in {"return", "repair"} or not review.objections or not source_ids
+            or not source_ids <= {row.source_id for row in design.inventory}
+            or any(not any(re.search(rf"(?<!\w){re.escape(source)}(?!\w)", reason) for reason in review.objections)
+                   for source in source_ids)):
+        raise ValueError("A documentary release requires named Sources in an independent audit return.")
+    return {"job": job, "receipt_sha256": receipt["receipt_sha256"], "source_ids": sorted(source_ids),
+            "objections": review.objections,
+            "freeze_sha256": commissioning.digest(artifacts.read_bytes(runner.directory / "family" / "freeze.json"))}
 
 
 def document_adjudication_return(runner: SessionRunner) -> dict[str, Any]:
@@ -947,6 +1714,33 @@ def _scope_repair_parent(
     return replace(parent, design=rejected_design, bundles=bundles, freeze=freeze, retained_literal_briefs=frozenset(),
                    objections={f"scope:{index}": issue for index, issue in enumerate(finding.objections, start=1)},
                    earlier_objections=earlier_objections, earlier_scope_references=references, prior_scope_return=scope_record)
+
+
+def _scope_citations(parent: ReturnedFile) -> tuple[list[set[SourceId]], list[set[SourceId]]]:
+    review = parent.prior_scope_return or {}
+    latest = review.get("independent_finding", {}).get("objections", [])
+    earlier = review.get("earlier_authored_scope", {}).get("objections", [])
+    roster = set(parent.freeze.order[parent.freeze.natural])
+    return ([set(re.findall(r"[\w-]+", objection)) & roster for objection in latest],
+            [set(re.findall(r"[\w-]+", objection)) & roster for objection in earlier])
+
+
+def _require_narrowed_scope(parent: ReturnedFile, identity: SourceId) -> None:
+    current_sources, earlier_sources = _scope_citations(parent)
+    if (not current_sources or any(sources != {identity} for sources in current_sources)
+            or not earlier_sources or not all(earlier_sources)
+            or not {identity} < set().union(*earlier_sources)
+            or any(identity in row.received for row in parent.design.inventory)):
+        raise ValueError("The independent scope findings must narrow to a single Source without dependent records.")
+
+
+def _require_distinct_scope(parent: ReturnedFile, identities: frozenset[SourceId]) -> None:
+    latest, earlier = _scope_citations(parent)
+    if (not latest or not all(latest) or set().union(*latest) != identities
+            or not earlier or not all(earlier) or identities.intersection(set().union(*earlier))
+            or any(identities.intersection(row.received) and row.source_id not in identities
+                   for row in parent.design.inventory)):
+        raise ValueError("The independent scope findings must identify distinct Sources and their full dependency closure.")
 
 
 def _verify_classification(
@@ -1048,13 +1842,26 @@ def _verify_plan(
         raise RepairStopped("The repair proposes no change to any authored Source.")
     if parent.incoming_particulars is not None:
         parent.incoming_particulars.require_preserved_deliveries(old, design, affected)
+    if parent.owned_records is not None and not parent.owned_records.keys() <= plan.tickets.keys():
+        raise ValueError("Every independently designated owned Source needs its own localized repair ticket.")
+    if parent.baseline_owned_grants is not None:
+        projected = author_delivery.projection(design, {})
+        if any(commissioning._read_json(projected[identity]["author_brief"])["outgoing_deliveries"] != grants
+               for identity, grants in parent.baseline_owned_grants.items()):
+            raise ValueError("Restored baseline records must preserve their original attested sending acts.")
     if parent.exact_recipient_edit is not None and affected != {parent.exact_recipient_edit.source_id}:
         raise ValueError("An exact recipient edit cannot alter another document or require a descendant repair.")
+    if (local := parent.local_scope_sources()) and affected != local:
+        raise ValueError("A scoped repair can regenerate only the independently identified Sources.")
     return design, affected
 
 
 def _verify_design_change(slot: FamilySlot, parent: ReturnedFile, plan: RepairPlan) -> DesignOutput:
     old = parent.design
+    if (local := parent.local_scope_sources()) and (
+        (plan.revised_design is not None and plan.revised_design != old) or set(plan.tickets) != local
+    ):
+        raise ValueError("A scoped repair must retain the design and issue exactly one local ticket per identified Source.")
     edit = parent.exact_recipient_edit
     if edit is not None:
         if plan.revised_design is not None or set(plan.tickets) != {edit.source_id}:
@@ -1063,6 +1870,13 @@ def _verify_design_change(slot: FamilySlot, parent: ReturnedFile, plan: RepairPl
     else:
         design = plan.revised_design or old
     science.verify_design(slot, design)
+    if parent.audit_repair_sources:
+        if (not plan.tickets.keys() <= parent.audit_repair_sources or any(
+            revised != original and (original.source_id not in parent.audit_repair_sources
+                or revised.model_dump(exclude={"participant_brief"}) != original.model_dump(exclude={"participant_brief"}))
+            for original, revised in zip(old.inventory, design.inventory, strict=True)
+        ) or design.model_dump(exclude={"inventory"}) != old.model_dump(exclude={"inventory"})):
+            raise ValueError("An audit-origin repair must preserve the documentary design outside its exact local briefs.")
     roster = {brief.source_id for brief in old.inventory}
     if (
         design.candidates != old.candidates or design.required != old.required
@@ -1072,7 +1886,7 @@ def _verify_design_change(slot: FamilySlot, parent: ReturnedFile, plan: RepairPl
         or any(_control_identity(left) != _control_identity(right)
                for left, right in zip(old.matched, design.matched, strict=True))
     ):
-        raise ValueError("The proposed repair changes committed targets, roster or contrast structure.")
+        raise ValueError(PLAN_SCOPE_FAILURE)
     if _exposes_hidden_text(design, plan, parent.retained_literal_briefs):
         raise ValueError(PARTICIPANT_LITERAL_FAILURE)
     return design
@@ -1133,14 +1947,27 @@ def verify_revision(
     if bundles == revision.parent.bundles and revision.design == revision.parent.design:
         raise RepairStopped("The regenerated family has identical Source bytes and design.")
     inputs = revision.parent.inputs(slot)
-    inputs["paired_bundles"] = commissioning.json_text({
+    comparison = {
         "original": commissioning._read_json(inputs["paired_bundles"]),
         "revised": commissioning._read_json(_bundles(bundles)),
-    })
+    }
     rules: dict[str, Any] = {
         "revised_design": revision.design.model_dump(mode="json"), "affected_sources": sorted(revision.affected),
     }
     prompt = VERIFY_PROMPT
+    baseline = _scope_realism_baseline(runner, revision.parent)
+    if baseline is not None:
+        comparison["original_realism_baseline"] = baseline
+        prompt += (
+            " The paired comparison also includes an independently authenticated original realism baseline. "
+            "The file labelled original is the immediate draft that failed the previous scope review. "
+            "Compare the revised file with original_realism_baseline to decide whether it preserves the initial "
+            "scientific question, exact evidence conditions and operative documentary facts. Use the intervening "
+            "draft to account for each retained objection. A restoration of the original proof may be a change "
+            "from the failed draft. Return any unsupported new fact, altered proof requirement, unverified delivery "
+            "or other remaining scientific objection."
+        )
+    inputs["paired_bundles"] = commissioning.json_text(comparison)
     if (revision.lineage.get("natural_provenance_restoration")
             or revision.lineage.get("verified_recipient_scope_restoration")):
         rules["retained_scope_return"] = revision.parent.prior_scope_return
@@ -1172,6 +1999,25 @@ def verify_revision(
     if result.verdict != "preserved" or result.objections:
         raise RepairStopped(scope_failure(result))
     return receipt
+
+
+def _scope_realism_baseline(runner: SessionRunner, parent: ReturnedFile) -> dict[str, Any] | None:
+    retained = parent.prior_scope_return
+    if retained is None or len(parent.bundles) != 1 or not runner.ledger.requires_workload_merits:
+        return None
+    pending = next((row for row in runner.ledger.attempts(runner.family)
+                    if (row["revision"], row["job"]) == (runner.revision, repair_authority.VERIFY_JOB)), None)
+    if pending is not None:
+        requested = commissioning._read_json(pending["request"])["inputs"]["paired_bundles"]
+        if "original_realism_baseline" not in commissioning._read_json(requested):
+            return None
+    baseline = TypeAdapter(dict[str, list[Source]]).validate_python(retained["original_realism_sources"])
+    if baseline.keys() != parent.bundles.keys() or (
+        {condition: source_commitments(sources) for condition, sources in baseline.items()}
+        != retained["original_realism_source_commitments"]
+    ):
+        raise ValueError("A scientific scope baseline must reconstruct the exact initially reviewed Sources.")
+    return commissioning._read_json(_bundles(baseline))
 
 
 def scope_failure(result: ScopeReview) -> str:

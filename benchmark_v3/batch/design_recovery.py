@@ -7,10 +7,12 @@ from benchmark_v3.batch import artifacts, authorisation, science
 from benchmark_v3.batch.contracts import DesignOutput
 from benchmark_v3.batch.sessions import SessionRunner
 from benchmark_v3.portfolio import FamilySlot
+from private_client_graph.evaluation import _edge
 
 CUTOFF_RECOVERY = "source-cutoff"
 PREFIX_RECOVERY = "redundant-full-file-snapshot"
 PREFIX_FAILURE = "Scaling snapshots must be increasing proper prefixes of the inventory."
+SYMMETRIC_DECLARATIONS = "symmetric-design-declarations"
 INITIAL_RUNTIME_RETRY = "initial-design-runtime-retry"
 CONNECTION_FAILURE = "The Codex app-server closed its connection."
 
@@ -106,17 +108,38 @@ def _without_full_file_snapshot(design: DesignOutput) -> DesignOutput:
     return design.model_copy(update={"scaling_snapshots": snapshots[:-1]})
 
 
+def fresh_design_representation(design: DesignOutput, *, workload: bool) -> DesignOutput:
+    """Prepare a new design for validation without changing its critical claims."""
+    design = _without_full_file_snapshot(design)
+    if not workload:
+        return design
+    candidates = [_edge(*edge) for edge in design.candidates]
+    required = {name: [_edge(*edge) for edge in edges] for name, edges in design.required.items()}
+    if candidates == design.candidates and required == design.required:
+        return design
+    return design.model_copy(update={"candidates": candidates, "required": required})
+
+
 def verify_milestone_design(
     runner: SessionRunner, slot: FamilySlot, design: DesignOutput, *, fresh_replacement: bool = False,
 ) -> DesignOutput:
-    corrected = _without_full_file_snapshot(design) if runner.revision == 1 or fresh_replacement else design
+    fresh = runner.revision == 1 or fresh_replacement
+    corrected = fresh_design_representation(design, workload=runner.ledger.requires_workload_merits) if fresh else design
     science.verify_design(slot, corrected)
     if corrected is design:
         return design
     selected, selected_receipt, _ = runner.committed_result("design", "design", "designer", DesignOutput)
     if selected != design:
-        raise ValueError("Snapshot recovery must match the immutable original design.")
-    _record_snapshot_recovery(runner, design, corrected, selected_receipt)
+        raise ValueError("Design representation recovery must match the immutable original design.")
+    prefix = _without_full_file_snapshot(design)
+    if prefix is not design:
+        _record_snapshot_recovery(runner, design, prefix, selected_receipt)
+    if corrected != prefix:
+        runner.ledger.event(runner.manifest.batch_id, runner.family, runner.revision, "reconcile",
+                            SYMMETRIC_DECLARATIONS, "design", "design", {
+            "output_sha256": selected_receipt["output_sha256"], "receipt_sha256": selected_receipt["receipt_sha256"],
+            "original_design_sha256": authorisation.commitment(prefix), "design_sha256": authorisation.commitment(corrected),
+        })
     return corrected
 
 
