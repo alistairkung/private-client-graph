@@ -12,6 +12,12 @@ from .assessment import (
 from .inputs import Item
 from .judging import Judgment
 
+TEMPORAL_LIMITATION = (
+    'Benchmark v4 targets have no explicit assessment cutoff. Timing findings, including satisfied, '
+    'describe the submitted quotations. When a claim depends on a cutoff, temporal correctness at that '
+    'cutoff remains unverified.'
+)
+
 
 def report(directory: Path) -> dict[str, Any]:
     plan, digest, task = open_plan(directory)
@@ -26,6 +32,7 @@ def report(directory: Path) -> dict[str, Any]:
     return {
         'assessment': plan.version,
         'status': 'Exploratory and unverified',
+        'temporal_limitation': TEMPORAL_LIMITATION,
         'plan_sha256': digest,
         'extractor_run': plan.inputs.extractor_run,
         'run_id': plan.inputs.extractor_run,

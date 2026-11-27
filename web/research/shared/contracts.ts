@@ -998,6 +998,7 @@ export type ScopeInput = {
 
 export type SemanticComparison = {
   status: "Exploratory and unverified";
+  temporal_limitation: string;
   evaluator: SemanticEvaluator;
   formal_targets: number;
   paired_valid_targets: number;
@@ -1020,6 +1021,7 @@ export type SemanticEvidenceReport = {
   target_summary: SemanticSummary;
   operations: SemanticOperations;
   status: "Exploratory and unverified";
+  temporal_limitation: string;
   evaluator: SemanticEvaluator;
   targets: Array<SemanticTarget>;
   controls: Array<SemanticTarget>;

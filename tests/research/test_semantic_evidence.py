@@ -120,6 +120,8 @@ def test_fixed_targets_controls_and_privacy_boundary(tmp_path, inputs):
 
     result = report(directory)
     assert len(requests) == 69
+    assert 'no explicit assessment cutoff' in result['temporal_limitation']
+    assert 'temporal correctness at that cutoff remains unverified' in result['temporal_limitation']
     summary = result['target_summary']
     assert summary['semantic_outcomes'] == {'provider_failed': 1, 'judged': 66, 'deterministic_delivery_failure': 4}
     assert summary['verdicts'] == {'Uncertain': 1, 'Supported': 65}
@@ -307,6 +309,7 @@ def test_reuse_binds_packet_source_target_and_keeps_invalid_in_comparison(tmp_pa
         _run(recipient, digest, client)
     assert len(packets) == 4
     after = compare(donor, recipient)
+    assert after['temporal_limitation'] == report(donor)['temporal_limitation']
     assert after['formal_targets'] == 71
     assert after['paired_valid_targets'] == 65
     assert after['right']['operations']['reused_judgments'] == 65
@@ -361,6 +364,7 @@ def test_private_workbench_reads_allow_owner_only(tmp_path, inputs, monkeypatch)
         assert response.status_code == 200
         assert response.headers['cache-control'] == 'no-store'
         assert len(response.json()['targets']) == 71
+        assert 'no explicit assessment cutoff' in response.json()['temporal_limitation']
         assert client.post(path, auth=('owner', token)).status_code == 405
     with TestClient(app, client=('192.0.2.1', 1234)) as client:
         assert client.get(path, auth=('owner', token)).status_code == 403

@@ -15,6 +15,7 @@ def compare(left: Path, right: Path) -> dict[str, Any]:
     transitions = [_transition(row, right_targets[identity]) for identity, row in left_targets.items()]
     return {
         'status': 'Exploratory and unverified',
+        'temporal_limitation': first['temporal_limitation'],
         'evaluator': first['evaluator'],
         'formal_targets': len(transitions),
         'paired_valid_targets': sum(row['facts_comparable'] for row in transitions),

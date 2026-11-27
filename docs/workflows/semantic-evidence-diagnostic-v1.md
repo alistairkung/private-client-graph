@@ -6,6 +6,13 @@ Multi-Source Evidence Coverage. Those measures retain their existing contracts.
 The semantic assessment can surface plausible support or flaws in the attached
 Evidence. DeepSeek and the extractor can share model-specific biases.
 
+**Temporal limitation.** Benchmark v4 targets have no explicit assessment
+cutoff. A Supported verdict or a timing finding of satisfied describes the
+submitted quotations. If a claim depends on an unavailable cutoff, its status
+at that cutoff remains unverified. Dates in a quotation can establish what the
+Source says about timing. They cannot supply the assessment cutoff. The Run
+and comparison reports carry this limitation alongside the results.
+
 ## Scope and rubric
 
 The unit is one formal proof target in one qualified Benchmark v4 Condition.
@@ -20,14 +27,13 @@ is checked against its attributed frozen Source body. Opaque Source labels
 preserve grouping while the local artifact retains original attribution.
 Approved evidence, Source titles, Source context, other relationships, and
 deterministic outcomes stay out of the request. Timing and authority are required
-for trust roles. An explicit cutoff applies when part of the assertion. Retained
-v4 assertions have no dedicated cutoff field, so their timing is assessed from the
-packet. The two authored sanity controls cover a post-cutoff appointment and
-conflicting authority. Control judgments sit outside the 71-target denominator.
+for trust roles. The two authored sanity controls cover an appointment after
+an explicit cutoff and conflicting authority. Control judgments sit outside the
+71-target denominator.
 
 | Verdict | Meaning |
 | --- | --- |
-| Supported | The submitted citations establish all applicable facts in one coherent route. |
+| Supported | The submitted citations establish all applicable facts in one coherent route for the assertion as supplied. |
 | Partially Supported | A material fact is established with an evidentiary gap remaining. |
 | Unsupported | No material support or a decisive contradiction. |
 | Uncertain | Ambiguity prevents a clear decision. |

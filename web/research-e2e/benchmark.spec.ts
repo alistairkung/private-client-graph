@@ -272,6 +272,7 @@ test("evidence quality controls and comparison fit the viewport and retain keybo
 
   const assessment: SemanticEvidenceReport = {
     status: "Exploratory and unverified", run_id: control, plan_sha256: "fixture",
+    temporal_limitation: "Benchmark v4 targets have no explicit assessment cutoff. Temporal correctness at that cutoff remains unverified.",
     evaluator: { version: "pcg-semantic-evidence-v1", prompt_sha256: "prompt", model: "deepseek-v4-pro",
       observation_origin: "offline_fixture",
       settings: { model: "deepseek-v4-pro", temperature: 0, timeout_seconds: 90, max_retries: 0, thinking: "disabled" } },
@@ -285,12 +286,13 @@ test("evidence quality controls and comparison fit the viewport and retain keybo
     controls: [],
     targets: [
       { id: "first", condition: "F0", edge: ["Morgan Example", "trustee_of", "North Example Trust"],
-        status: "judged", flags: ["potentially_sufficient_overlooked_by_exact_matching"], control: null,
+        status: "judged", flags: ["potentially_sufficient_overlooked_by_exact_matching", "joint_only_supported_with_one_cited_source"], control: null,
         deterministic: { exact_outcome: "incomplete", joint_only: true, best_exact_pair_coverage: 0.5,
           matches_any_approved_pair: [], approved_route_source_set_present: false },
         quotations: [{ id: "Q1", source: "S1", source_id: "register", text: "Morgan is the current holder." }],
         judgment: { verdict: "Supported", facts: [
           { fact: "relationship", status: "satisfied", quotation_ids: ["Q1"], reason: "The register identifies the current holder." },
+          { fact: "timing", status: "satisfied", quotation_ids: ["Q1"], reason: "The register identifies the holder as current." },
         ] }, error: null, invalid_response: null, provider: null, reuse: null },
       { id: "invalid", condition: "F1", edge: ["Dana Example", "trustee_of", "North Example Trust"],
         status: "invalid_judgment", flags: [], control: null, deterministic: null, quotations: [],
@@ -304,14 +306,18 @@ test("evidence quality controls and comparison fit the viewport and retain keybo
     await route.fulfill({ json: assessment });
   });
   const semantic: SemanticComparison = {
-    status: assessment.status, evaluator: assessment.evaluator, formal_targets: 71, paired_valid_targets: 1,
+    status: assessment.status, temporal_limitation: assessment.temporal_limitation,
+    evaluator: assessment.evaluator, formal_targets: 71, paired_valid_targets: 1,
     left: { ...assessment, run_id: treatment }, right: assessment,
     transitions: [{ id: "first", condition: "F0", edge: assessment.targets[0].edge,
       left: { status: "judged", verdict: "Partially Supported", exact_outcome: "incomplete",
         potentially_sufficient: false, reused: false },
       right: { status: "judged", verdict: "Supported", exact_outcome: "incomplete",
         potentially_sufficient: true, reused: false },
-      facts_comparable: true, changed_facts: [{ fact: "relationship", left: "missing", right: "satisfied" }],
+      facts_comparable: true, changed_facts: [
+        { fact: "relationship", left: "missing", right: "satisfied" },
+        { fact: "timing", left: "missing", right: "satisfied" },
+      ],
     }],
   };
   await page.route("**/semantic-evidence/comparison?*", (route) => route.fulfill({ json: semantic }));
@@ -350,12 +356,16 @@ test("evidence quality controls and comparison fit the viewport and retain keybo
   expect(semanticReads).toBe(0);
   await page.getByText("Semantic Evidence — AI-assessed, unverified", { exact: true }).press("Enter");
   await expect(page.getByText("1/71 valid judgments")).toBeVisible();
+  await expect(page.getByText(assessment.temporal_limitation)).toBeVisible();
   await page.getByText("Inspect formal targets (2)").press("Enter");
   const filter = page.getByRole("combobox", { name: "Filter formal targets" });
   await filter.selectOption("Supported");
   await page.getByText(/F0 · Morgan Example.*Supported/).press("Enter");
   await expect(page.getByText("Morgan is the current holder.", { exact: true })).toBeVisible();
   await expect(page.getByText("The register identifies the current holder.", { exact: false })).toBeVisible();
+  await expect(page.getByText("timing (assessment cutoff unavailable) · satisfied", { exact: true })).toBeVisible();
+  await expect(page.getByText(/Multi-Source Evidence Coverage 50.0%/)).toBeVisible();
+  await expect(page.getByText("Multi-Source target · Supported using one cited Source")).toBeVisible();
   await filter.selectOption("invalid_judgment");
   await page.getByText(/F1 · Dana Example.*Invalid judgment/).press("Enter");
   await page.getByText("Retained invalid response", { exact: true }).press("Enter");
@@ -365,5 +375,7 @@ test("evidence quality controls and comparison fit the viewport and retain keybo
   await expect(page.getByText("1/71 formal targets have two valid judgments.")).toBeVisible();
   await page.getByText("F0 · Morgan Example · trustee of · North Example Trust", { exact: true }).press("Enter");
   await expect(page.getByText("relationship · missing → satisfied")).toBeVisible();
+  await expect(page.getByText("timing (assessment cutoff unavailable) · missing → satisfied")).toBeVisible();
+  await expect(page.getByText(assessment.temporal_limitation)).toHaveCount(2);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
 });

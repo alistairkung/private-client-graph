@@ -95,6 +95,7 @@ class SemanticRunSummary(BaseModel):
 
 class SemanticEvidenceReport(SemanticRunSummary):
     status: Literal['Exploratory and unverified']
+    temporal_limitation: str
     evaluator: SemanticEvaluator
     targets: list[SemanticTarget]
     controls: list[SemanticTarget]
@@ -126,6 +127,7 @@ class SemanticTransition(BaseModel):
 
 class SemanticComparison(BaseModel):
     status: Literal['Exploratory and unverified']
+    temporal_limitation: str
     evaluator: SemanticEvaluator
     formal_targets: int
     paired_valid_targets: int

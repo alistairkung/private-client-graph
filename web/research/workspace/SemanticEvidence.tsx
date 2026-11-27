@@ -5,9 +5,11 @@ import type {
 import { ReadState } from "../shared/presentation";
 import { useRead } from "../shared/useRead";
 import { compareSemanticEvidence, getSemanticEvidence } from "./api";
+import { evidenceMetricLabels } from "./benchmark-metrics";
 import "./semantic-evidence.css";
 
 const title = "Semantic Evidence — AI-assessed, unverified";
+const timingWithoutCutoff = "timing (assessment cutoff unavailable)";
 const verdicts = ["Supported", "Partially Supported", "Unsupported", "Uncertain"] as const;
 const statuses = {
   judged: "Judged",
@@ -22,7 +24,7 @@ const flags: Record<string, string> = {
   potentially_sufficient_overlooked_by_exact_matching: "Potentially sufficient evidence missed by exact matching",
   potential_new_partial_support: "Potential partial support from a non-matching quotation",
   exact_complete_not_called_supported: "Exact proof complete · AI did not return Supported",
-  joint_only_supported_with_one_cited_source: "Joint-only target · Supported using one cited Source",
+  joint_only_supported_with_one_cited_source: "Multi-Source target · Supported using one cited Source",
   supported_control: "Control returned Supported",
 };
 const readable = (value: string) => value.replaceAll("_", " ");
@@ -54,6 +56,7 @@ function RunAssessment({ run }: { run: string }) {
   );
   return (
     <>
+      <p className="semantic-note"><strong>Temporal limitation.</strong> {data.temporal_limitation}</p>
       <Coverage summary={data} />
       <p className="semantic-note">DeepSeek assesses attached quotations. The judge and extractor can share model-specific biases.</p>
       <Targets targets={data.targets} />
@@ -134,7 +137,7 @@ function Target({ row }: { row: SemanticTarget }) {
       </summary>
       {open && <div className="semantic-target-content">
         {baseline && <p>Exact outcome · {readable(baseline.exact_outcome)}
-          {baseline.joint_only && ` · Joint-only coverage ${(baseline.best_exact_pair_coverage * 100).toFixed(1)}%`}
+          {baseline.joint_only && ` · ${evidenceMetricLabels.joint_only_coverage} ${(baseline.best_exact_pair_coverage * 100).toFixed(1)}%`}
         </p>}
         {row.flags.map((flag) => <p key={flag}>{flags[flag] ?? readable(flag)}</p>)}
         {row.reuse && <p>Reused from Run <code>{row.reuse.origin_run}</code></p>}
@@ -146,7 +149,8 @@ function Target({ row }: { row: SemanticTarget }) {
         {row.judgment && <>
           <h4>Documentary facts</h4>
           <ul>{row.judgment.facts.map((fact) => (
-            <li key={fact.fact}><strong>{readable(fact.fact)} · {fact.status}</strong>{" "}
+            <li key={fact.fact}>
+              <strong>{fact.fact === "timing" && row.control === null ? timingWithoutCutoff : readable(fact.fact)} · {fact.status}</strong>{" "}
               {fact.quotation_ids.length > 0 && <span>({fact.quotation_ids.join(", ")}) </span>}{fact.reason}</li>
           ))}</ul>
         </>}
@@ -175,6 +179,7 @@ function Comparison({ left, right }: { left: string; right: string }) {
   const rows = all ? data.transitions : data.transitions.filter(changed);
   return (
     <>
+      <p className="semantic-note"><strong>Temporal limitation.</strong> {data.temporal_limitation}</p>
       <p><strong>{data.paired_valid_targets}/{data.formal_targets} formal targets have two valid judgments.</strong>{" "}
         Fact transitions are shown only for those pairs.</p>
       <div className="semantic-comparison">
@@ -192,7 +197,7 @@ function Comparison({ left, right }: { left: string; right: string }) {
           <p>Exact outcome · {readable(row.left.exact_outcome)} → {readable(row.right.exact_outcome)}</p>
           {!row.facts_comparable && <p>Two valid judgments are required to compare documentary facts.</p>}
           {row.changed_facts.length > 0 && <ul>{row.changed_facts.map((fact) =>
-            <li key={fact.fact}>{fact.fact} · {fact.left} → {fact.right}</li>)}</ul>}
+            <li key={fact.fact}>{fact.fact === "timing" ? timingWithoutCutoff : fact.fact} · {fact.left} → {fact.right}</li>)}</ul>}
         </details>
       ))}
     </>
