@@ -89,7 +89,7 @@ def create_execution_app() -> FastAPI:
     def refresh_index() -> None:
         rebuild_index(database_engine(), root)
 
-    app = create_app(refresh=refresh_index)
+    app = create_app(refresh=refresh_index, show_exploratory=False)
     mount_execution(app, root)
     from .workspace_execution import mount_workspace_commands
     mount_workspace_commands(app, root)

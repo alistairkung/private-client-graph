@@ -48,3 +48,31 @@ Find the Experiment and Run identifiers in the Workbench. Omit `--condition` for
 - Run the standard Python and Research Workbench test suites using a separate disposable PostgreSQL database.
 - To opt in to the exact private regression, set `PCG_V3_PRIVATE_BASELINE_CUSTODY` to the existing Benchmark v3 custody root and run the Benchmark v3 evaluation and Workbench import tests locally.
 - Run browser tests and capture examples with synthetic fixture data for shared or public evidence. Keep screenshots, browser traces and exports from the live baseline private.
+
+## Inspect the separately released 65-Source rehearsal
+
+The exploratory scale workload appears in its own sidebar section. It is
+read-only, unqualified and unscored. It has no Benchmark Family, condition,
+run, admission or score and stays outside official reporting and run selection.
+
+Start the read-only Workbench with the custodian's owner-only environment
+file and the usual private artifact root and database. The environment file
+supplies `PCG_EXPLORATORY_WORKLOAD_DIR`, `PCG_EXPLORATORY_MANIFEST_SHA256` and
+`PCG_EXPLORATORY_ACCESS_TOKEN`. The workload directory contains only the
+approved `manifest.json` and exact ordered `sources.json`. Keep the directory
+and both files owner-only. Keep the access token, review records, and all
+Source content outside Git.
+
+~~~sh
+set -a
+. /absolute/path/to/owner-only/workbench.env
+set +a
+uv run uvicorn private_client_graph.workbench.api:app --host 127.0.0.1 --port 8080 --no-proxy-headers --no-access-log
+~~~
+
+Open `http://127.0.0.1:8080/#exploratory=1` and sign in as `owner` with the
+access token from the private environment file. Use the owner instance
+directly on loopback. The Workbench verifies the release manifest and the
+ordered Source file on every read. The separate execution application
+continues to offer only its existing workloads. The private display grants
+no authority to execute a retrieval or extraction experiment.

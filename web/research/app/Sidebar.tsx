@@ -6,6 +6,8 @@ import { ReadState } from "../shared/presentation";
 export function Sidebar({
   selected,
   executable,
+  exploratoryAvailable,
+  exploratorySelected,
   revision,
   collapsed,
   toggle,
@@ -13,6 +15,8 @@ export function Sidebar({
 }: {
   selected: string | null;
   executable: boolean;
+  exploratoryAvailable: boolean;
+  exploratorySelected: boolean;
   revision: number;
   collapsed: boolean;
   toggle: () => void;
@@ -132,6 +136,27 @@ export function Sidebar({
       >
         Legacy study history
       </a>
+      {exploratoryAvailable && (
+        <nav
+          aria-label="Exploratory workloads"
+          className="exploratory-sidebar-link"
+        >
+          <a
+            href="#exploratory=1"
+            aria-current={exploratorySelected ? "page" : undefined}
+            onClick={(event) => {
+              if (saving) {
+                event.preventDefault();
+                return;
+              }
+              if (narrow) close();
+            }}
+          >
+            <strong>Exploratory Scale Workload</strong>
+            <small>65 Sources · Unqualified · Unscored</small>
+          </a>
+        </nav>
+      )}
       <p className="muted">Local · Synthetic research</p>
     </>
   );

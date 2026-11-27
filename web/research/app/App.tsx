@@ -8,6 +8,9 @@ import { Results } from "../results/Results";
 import { HistoricalComparison } from "../results/HistoricalComparison";
 
 import { Sidebar } from "./Sidebar";
+import { useRead } from "../shared/useRead";
+import { exploratoryManifest } from "../exploratory/api";
+import { ExploratoryWorkload } from "../exploratory/ExploratoryWorkload";
 import { LegacyMetadata } from "../workspace/LegacyMetadata";
 import { Workspace } from "../workspace/Workspace";
 import { CreateExperiment } from "../workspace/CreateExperiment";
@@ -45,12 +48,15 @@ export function App() {
   }, []);
   const params = new URLSearchParams(location.replace(/^#/, ""));
   const workspaceId = params.get("workspace");
+  const showExploratory = params.get("exploratory") === "1";
+  const { data: exploratory } = useRead(exploratoryManifest);
   const id = params.get("experiment");
   const left = params.get("left"),
     right = params.get("right");
   const historyParams = new URLSearchParams(params);
   [
     "plan",
+    "exploratory",
     "new",
     "experiment",
     "left",
@@ -81,6 +87,8 @@ export function App() {
       </a>
       <Sidebar
         selected={workspaceId}
+        exploratoryAvailable={!!exploratory}
+        exploratorySelected={showExploratory}
         executable={!!available}
         revision={sidebarRevision}
         saving={draftSaving}
@@ -117,6 +125,8 @@ export function App() {
             saving={setDraftSaving}
             changed={() => setSidebarRevision((value) => value + 1)}
           />
+        ) : showExploratory ? (
+          <ExploratoryWorkload />
         ) : (params.has("new") ||
             params.has("plan") ||
             params.has("legacy-new")) &&
