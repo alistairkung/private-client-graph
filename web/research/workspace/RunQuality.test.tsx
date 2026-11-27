@@ -49,6 +49,34 @@ function qualityRun(
   } as unknown as RunDetail;
 }
 
+it("plots reference-rate estimates with the selected quality metric and original Run number", () => {
+  const retained = qualityRun("retained", quality, { live: true, unpriced: 1 });
+  retained.reference_cost = {
+    total: 0.04, currency: "USD", source_url: "https://example.test/pricing", retrieved_at: "2026-11-27",
+  };
+  const workspace: WorkspaceDetail = {
+    api_version: "2", id: "experiment", name: "Synthetic comparison",
+    created_at: "2026-11-27", description: null, hypothesis: null,
+    draft: { revision: 0, configuration: retained.plan.preview.proposal, copied_from_run: null },
+    run_ids: [retained.id], run_numbers: { retained: 3 },
+    metadata_available: true, read_only_import: false,
+  };
+  render(
+    <RunChart
+      workspace={workspace}
+      runs={[retained]} selected={retained.id} select={vi.fn()}
+    />,
+  );
+  fireEvent.change(screen.getByRole("combobox", { name: "Performance metric" }), {
+    target: { value: "joint_only_coverage" },
+  });
+  fireEvent.click(screen.getByRole("tab", { name: "Vs Cost" }));
+  expect(screen.getByRole("button", {
+    name: /Run 3, Multi-Source Evidence Coverage.*45\.00%/,
+  })).toHaveAttribute("aria-pressed", "true");
+  expect(screen.getByText("Reference-rate estimate · USD 0.0400")).toBeVisible();
+});
+
 it("shares the selected quality metric across plots and leaves missing scores and unverifiable costs off the plot", () => {
   const runs = [
     qualityRun("priced", quality, { live: true }),
