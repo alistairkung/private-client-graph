@@ -3,10 +3,6 @@
   grid-template-columns: 1fr 1fr minmax(0, 1.7fr);
   align-items: start;
 }
-.protocol-results-matrix {
-  margin-block: 1.25rem 0.4rem;
-  max-inline-size: 47rem;
-}
 .run-matrix { min-width: 0; margin: 0; }
 .run-matrix .run-matrix-table {
   min-width: 0;
@@ -41,6 +37,53 @@
   color: var(--muted);
   font-size: 0.82rem;
 }
+.run-matrix-table-evidence thead th:first-child { width: 22%; }
+.run-matrix-table-evidence thead th:nth-child(2) { width: 47%; }
+.run-matrix-proof-breakdown {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.25rem;
+  margin: 0.4rem 0 0;
+  text-align: start;
+}
+.run-matrix-proof-breakdown > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.32rem;
+  align-items: baseline;
+  border-inline-start: 3px solid currentColor;
+  padding: 0.24rem 0.4rem;
+  line-height: 1.25;
+}
+.run-matrix-proof-breakdown dt { font-size: 0.8rem; overflow-wrap: anywhere; }
+.run-matrix-proof-breakdown dd { margin: 0; font-weight: 700; font-variant-numeric: tabular-nums; }
+.run-matrix-proof-complete { color: #23644b; background: #eef5ef; }
+.run-matrix-proof-incomplete { color: #855400; background: #faf3e5; }
+.run-matrix-proof-unannotated { color: var(--muted); background: #f0f3ee; }
+.run-matrix-penalty {
+  margin-top: 0.75rem;
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: 1.4;
+  font-variant-numeric: tabular-nums;
+}
+.run-matrix-penalty-strip {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  column-gap: 0.75rem;
+  padding: 0.55rem 0.65rem;
+  border-inline-start: 3px solid #855400;
+  background: #faf3e5;
+}
+.run-matrix-penalty-strip h5 { color: var(--ink); font-size: inherit; margin: 0; }
+.run-matrix-penalty-strip p { margin: 0; }
+.run-matrix-penalty-strip strong { color: #855400; font-size: 1rem; }
+.run-matrix-formula { border-bottom: 0; }
+.run-matrix-formula > summary { color: var(--ink); font-weight: 600; }
+.run-matrix-formula > :not(summary) { margin: 0 0 0.45rem; }
+.run-matrix-formula > :last-child { margin-bottom: 0; }
 @container run-summary (width < 780px) {
   .benchmark-run-summary .benchmark-overview-line {
     grid-template-columns: repeat(2, minmax(0, 1fr));

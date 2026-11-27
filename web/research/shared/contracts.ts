@@ -410,6 +410,7 @@ export type Evidence = {
 export type EvidenceAdjustedF1 = {
   f1: number;
   incomplete_recovered_proofs: number;
+  penalty_units: number;
   weight_numerator: number;
   weight_denominator: number;
   proofs_completed_by_equivalence: number;
@@ -727,6 +728,11 @@ export type ProofMember = {
   occurrences: Array<[number, number]>;
 };
 
+export type ProofPopulation = {
+  true_positives_without_formal_targets: number;
+  unrecovered_formal_targets: number;
+};
+
 export type ProofRate = {
   complete: number;
   targets: number;
@@ -1027,6 +1033,7 @@ export type SemanticEvidenceReport = {
   methodology: string;
   scope_note: string;
   evaluator: SemanticEvaluator;
+  proof_population: ProofPopulation | null;
   targets: Array<SemanticTarget>;
 };
 

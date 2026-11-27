@@ -8,6 +8,7 @@ import { ReadState } from "../shared/presentation";
 import { useRead } from "../shared/useRead";
 import { compareEvaluations, getEvaluation } from "./api";
 import { evidenceMetricLabels } from "./benchmark-metrics";
+import { EvaluationRelationshipMatrix } from "./EvaluationRelationshipMatrix";
 import "./semantic-evidence.css";
 
 const stateLabels = {
@@ -42,22 +43,23 @@ function Disclosure({ label, children }: { label: string; children: ReactNode })
   );
 }
 
-export function PCGEvaluation({ run, children }: { run: RunDetail; children: ReactNode }) {
+type EvaluationProps = { run: RunDetail; expectedEdgesWithoutGraph: number };
+
+export function PCGEvaluation({ run, expectedEdgesWithoutGraph }: EvaluationProps) {
   return (
     <>
       <h3>PCG Evaluation</h3>
-      {run.benchmark_v4?.state === "complete" ? <CompletedRunEvaluation run={run}>{children}</CompletedRunEvaluation> : (
+      {run.benchmark_v4?.state === "complete" ? <CompletedRunEvaluation run={run} expectedEdgesWithoutGraph={expectedEdgesWithoutGraph} /> : (
         <>
           <p role="status">Evaluation is provisional until the Benchmark Run finishes.</p>
-          <EvaluationCards metrics={evaluationMetrics(undefined, run)} />
-          {children}
+          <EvaluationCards run={run} expectedEdgesWithoutGraph={expectedEdgesWithoutGraph} />
         </>
       )}
     </>
   );
 }
 
-function CompletedRunEvaluation({ run, children }: { run: RunDetail; children: ReactNode }) {
+function CompletedRunEvaluation({ run, expectedEdgesWithoutGraph }: EvaluationProps) {
   const load = useCallback((signal: AbortSignal) => getEvaluation(run.id, signal), [run.id]);
   const { data, error, retry } = useRead(load);
   return (
@@ -65,9 +67,8 @@ function CompletedRunEvaluation({ run, children }: { run: RunDetail; children: R
       <p role="status" className="evaluation-state">
         {data ? stateLabels[data.state] : error ? "Evaluation unavailable" : "Loading evaluation"}
       </p>
-      <EvaluationCards metrics={evaluationMetrics(data, run)} />
+      <EvaluationCards run={run} evaluation={data} expectedEdgesWithoutGraph={expectedEdgesWithoutGraph} />
       {error && <ReadState error={error} retry={retry} />}
-      {children}
       {data && <Disclosure label="Evidence diagnostics">
         <AssessmentDetails assessment={data} />
         <button className="secondary" onClick={retry}>Refresh evaluation</button>
@@ -76,8 +77,12 @@ function CompletedRunEvaluation({ run, children }: { run: RunDetail; children: R
   );
 }
 
+function evaluationGraph(evaluation?: SemanticRunSummary, run?: RunDetail) {
+  return evaluation ? evaluation.graph_f1 : run?.quality ? run.quality.qualified_graph : run?.benchmark_v4?.qualified;
+}
+
 function evaluationMetrics(evaluation?: SemanticRunSummary, run?: RunDetail) {
-  const graph = evaluation ? evaluation.graph_f1 : run?.quality ? run.quality.qualified_graph : run?.benchmark_v4?.qualified;
+  const graph = evaluationGraph(evaluation, run);
   const adjusted = evaluation?.evidence_adjusted_f1;
   const summary = evaluation?.target_summary;
   const support = summary?.evidence_support;
@@ -121,33 +126,55 @@ function adjustmentBasis(state: SemanticRunSummary["state"]) {
   return state === "exact_only" || state === "pending" ? "Exact-only" : "Exact and equivalent";
 }
 
-function EvaluationCards({ metrics }: { metrics: ReturnType<typeof evaluationMetrics> }) {
-  const [graph, adjusted, ...evidence] = metrics;
+function EvaluationCards({ run, evaluation, expectedEdgesWithoutGraph }: EvaluationProps & {
+  evaluation?: SemanticEvidenceReport;
+}) {
+  const [graphMetric, adjustedMetric, ...evidence] = evaluationMetrics(evaluation, run);
+  const graph = evaluationGraph(evaluation, run);
   return (
     <>
-      <MetricCards label="Performance metrics" metrics={[graph, adjusted]} performance />
-      <MetricCards label="Supporting evidence metrics" metrics={evidence} />
+      <h4 className="evaluation-metric-heading">Performance metrics</h4>
+      <div className="evaluation-performance" role="group" aria-label="Performance metrics">
+        <PerformanceMetricCard metric={graphMetric} detailLabel="Relationship confusion matrix">
+          {graph ? <EvaluationRelationshipMatrix graph={graph} expectedEdgesWithoutGraph={expectedEdgesWithoutGraph} />
+            : <p>Qualified graph counts are unavailable for this Run.</p>}
+        </PerformanceMetricCard>
+        <PerformanceMetricCard metric={adjustedMetric} detailLabel="Evidence-aware confusion matrix">
+          {graph && evaluation?.evidence_adjusted_f1 && evaluation.proof_population
+            ? <EvaluationRelationshipMatrix graph={graph} evaluation={evaluation} expectedEdgesWithoutGraph={expectedEdgesWithoutGraph} />
+            : <p>The evidence breakdown is available once the evaluation report loads.</p>}
+        </PerformanceMetricCard>
+      </div>
+      <h4 className="evaluation-metric-heading">Supporting evidence metrics</h4>
+      <dl className="quality-card-grid evaluation-evidence" aria-label="Supporting evidence metrics">
+        {evidence.map((metric) => <div key={metric.label}><MetricValues metric={metric} /></div>)}
+      </dl>
     </>
   );
 }
 
-function MetricCards({ metrics, label, performance = false }: {
-  metrics: ReturnType<typeof evaluationMetrics>; label: string; performance?: boolean;
+type MetricValue = ReturnType<typeof evaluationMetrics>[number];
+
+function PerformanceMetricCard({ metric, detailLabel, children }: {
+  metric: MetricValue; detailLabel: string; children: ReactNode;
 }) {
   return (
-    <>
-      <h4 className="evaluation-metric-heading">{label}</h4>
-      <dl className={`quality-card-grid ${performance ? "evaluation-performance" : "evaluation-evidence"}`} aria-label={label}>
-        {metrics.map(({ label, rate, basis, description }) => (
-          <div key={label}>
-            <dt>{label}</dt>
-            <dd>{percentMetric(rate)}</dd>
-            <dd className="quality-scope">{description}{basis && <small>{basis}</small>}</dd>
-          </div>
-        ))}
-      </dl>
-    </>
+    <div className="evaluation-performance-card">
+      <dl className="evaluation-performance-value"><MetricValues metric={metric} /></dl>
+      <details className="evaluation-performance-detail">
+        <summary>{detailLabel}</summary>
+        <div className="evaluation-performance-content">{children}</div>
+      </details>
+    </div>
   );
+}
+
+function MetricValues({ metric: { label, rate, basis, description } }: { metric: MetricValue }) {
+  return <>
+    <dt>{label}</dt>
+    <dd>{percentMetric(rate)}</dd>
+    <dd className="quality-scope">{description}{basis && <small>{basis}</small>}</dd>
+  </>;
 }
 
 function EvidenceCounts({ summary }: { summary: SemanticSummary }) {
@@ -179,7 +206,6 @@ function AssessmentDetails({ assessment }: { assessment: SemanticEvidenceReport 
       <p className="semantic-note">{assessment.scope_note}</p>
       {assessment.state === "pending" && <p>Retained decisions are shown below. The headline scores still use exact matches.</p>}
       {assessment.state === "complete_with_failures" && <p>Invalid responses and provider failures earned no additional evidence credit.</p>}
-      <AdjustmentDetails assessment={assessment} />
       <EvidenceCounts summary={summary} />
       {assessment.operations && <ExecutionUsage operations={assessment.operations} />}
       <VerdictCounts verdictCounts={summary.pair_verdicts} />
@@ -194,23 +220,6 @@ function AssessmentDetails({ assessment }: { assessment: SemanticEvidenceReport 
           <dt>Plan SHA-256</dt><dd>{assessment.plan_sha256 ?? "Evaluation plan not prepared"}</dd>
         </dl>
       </details>
-    </>
-  );
-}
-
-function AdjustmentDetails({ assessment }: { assessment: SemanticEvidenceReport }) {
-  const adjusted = assessment.evidence_adjusted_f1;
-  if (!adjusted) return null;
-  return (
-    <>
-      <h4>Evidence-Adjusted F1 calculation</h4>
-      <p>Custom weighted F1-style score for the 34 qualified Conditions.</p>
-      <dl className="semantic-metadata">
-        <dt>Evidence penalty weight (α)</dt><dd>{adjusted.weight_numerator}/{adjusted.weight_denominator}</dd>
-        <dt>Incomplete recovered proofs (U)</dt><dd>{adjusted.incomplete_recovered_proofs}</dd>
-        <dt>Proofs completed through equivalence</dt><dd>{adjusted.proofs_completed_by_equivalence}</dd>
-        <dt>Evidence basis</dt><dd>{adjustmentBasis(assessment.state)}</dd>
-      </dl>
     </>
   );
 }

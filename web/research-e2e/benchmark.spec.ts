@@ -273,12 +273,15 @@ test("unified evaluation shows both F1 scores and compares completed evidence as
   const exactAdjustment = {
     f1: 0.7979152656355077, incomplete_recovered_proofs: 56,
     weight_numerator: 71, weight_denominator: 113, proofs_completed_by_equivalence: 0,
+    penalty_units: 35.1858407079646,
   };
   const assessment: SemanticEvidenceReport = {
     methodology: "Ground-Truth-Aligned Evidence Evaluation", state: "complete", run_id: control, plan_sha256: "fixture", graph_f1: graph(34),
     evidence_adjusted_f1: {
-      ...exactAdjustment, f1: 0.7998247328861775, incomplete_recovered_proofs: 55, proofs_completed_by_equivalence: 1,
+      ...exactAdjustment, f1: 0.7998247328861775, incomplete_recovered_proofs: 55,
+      proofs_completed_by_equivalence: 1, penalty_units: 34.557522123893804,
     },
+    proof_population: { true_positives_without_formal_targets: 38, unrecovered_formal_targets: 4 },
     scope_note: "Approved members define the comparison. Preserve stated dates, timing and authority.",
     evaluator: { version: "pcg-semantic-evidence-equivalence", prompt_sha256: "prompt", model: "deepseek-v4-pro",
       observation_origin: "offline_fixture",
@@ -386,9 +389,10 @@ test("unified evaluation shows both F1 scores and compares completed evidence as
   const evaluation = page.getByRole("region", { name: "PCG Evaluation", exact: true });
   await expect(evaluation.getByRole("heading", { name: "PCG Evaluation" })).toBeVisible();
   await expect(evaluation.getByText("Exact-only baseline · combined evaluation pending", { exact: true })).toBeVisible();
-  const performance = evaluation.locator("dl[aria-label='Performance metrics']");
+  const performance = evaluation.getByRole("group", { name: "Performance metrics" });
   const evidence = evaluation.locator("dl[aria-label='Supporting evidence metrics']");
-  await expect(performance.locator("dt")).toHaveText(["Graph F1", "Evidence-Adjusted F1"]);
+  const performanceLabels = performance.getByRole("term").filter({ hasText: /^(Graph F1|Evidence-Adjusted F1)$/ });
+  await expect(performanceLabels).toHaveText(["Graph F1", "Evidence-Adjusted F1"]);
   await expect(evidence.locator("dt")).toHaveText(["Evidence Support", "Proof Completion", "Multi-Source Evidence Coverage"]);
   await expect(performance.getByText("92.11%", { exact: true })).toBeVisible();
   await expect(performance.getByText("79.79%", { exact: true })).toBeVisible();
@@ -396,10 +400,41 @@ test("unified evaluation shows both F1 scores and compares completed evidence as
   await expect(evidence.getByText("22.54%", { exact: true })).toBeVisible();
   await expect(evidence.getByText("15.49%", { exact: true })).toBeVisible();
   await expect(evidence.getByText("40.00%", { exact: true })).toBeVisible();
-  const matrix = evaluation.getByRole("table", { name: "Relationship confusion matrix · 34 qualified Conditions" });
-  await expect(matrix.getByRole("cell", { name: /105 TP/ })).toBeVisible();
+  const graphToggle = performance.getByText("Relationship confusion matrix", { exact: true });
+  const adjustedToggle = performance.getByText("Evidence-aware confusion matrix", { exact: true });
+  const graphMatrix = performance.getByRole("table", { name: "Relationship confusion matrix · 34 qualified Conditions", exact: true });
+  const matrix = performance.getByRole("table", { name: "Evidence-aware confusion matrix · 34 qualified Conditions", exact: true });
+  await expect(graphMatrix).toBeHidden();
+  await expect(matrix).toBeHidden();
+  await graphToggle.press("Enter");
+  await expect(graphMatrix.getByRole("cell", { name: /105 TP/ })).toBeVisible();
+  await expect(graphMatrix.getByText("Incomplete formal proof")).toBeHidden();
+  await expect(matrix).toBeHidden();
+  await adjustedToggle.click();
+  await expect(matrix).toBeVisible();
+  await expect(graphMatrix).toBeVisible();
+  await graphToggle.press("Space");
+  await expect(graphMatrix).toBeHidden();
+  await expect(matrix).toBeVisible();
+  const truePositives = matrix.getByRole("cell", { name: /105 TP/ });
+  const penalty = evaluation.getByRole("region", { name: "Evidence-Adjusted F1 calculation" });
+  await expect(truePositives.getByRole("term")).toHaveText([
+    "Complete approved proof", "Incomplete formal proof", "No formal proof target",
+  ]);
+  await expect(truePositives.getByRole("definition")).toHaveText(["11", "56", "38"]);
+  const countRows = await truePositives.getByRole("definition").evaluateAll((items) =>
+    items.map((item) => item.getBoundingClientRect().top));
+  expect(new Set(countRows).size).toBe(3);
   await expect(matrix.getByRole("cell", { name: /10 FP/ })).toBeVisible();
   await expect(matrix.getByRole("cell", { name: /8 FN/ })).toBeVisible();
+  const formula = penalty.getByText("Formula and counting rules", { exact: true });
+  await expect(penalty.getByText("35.19 units")).toBeVisible();
+  await expect(penalty.getByText("2TP / (2TP + FP + FN + αU)")).toBeHidden();
+  await formula.press("Enter");
+  await expect(penalty.getByText("α = 71/113 ≈ 0.6283")).toBeVisible();
+  await expect(penalty.getByText("4 of 71 formal targets were unrecovered and count as false negatives.")).toBeVisible();
+  await formula.press("Enter");
+  await expect(penalty.getByText("2TP / (2TP + FP + FN + αU)")).toBeHidden();
 
   const comparator = page.getByRole("combobox", { name: "Compare with verified Run" });
   await comparator.selectOption(treatment);
@@ -416,12 +451,12 @@ test("unified evaluation shows both F1 scores and compares completed evidence as
   await evaluation.getByRole("button", { name: "Refresh evaluation" }).click();
   await expect(evaluation.getByText("Exact-only baseline · combined evaluation pending or interrupted")).toBeVisible();
   await expect(performance.getByText("79.79%", { exact: true })).toBeVisible();
+  await expect(truePositives.getByRole("definition")).toHaveText(["11", "56", "38"]);
+  await expect(penalty.getByText("35.19 units")).toBeVisible();
   await expect(evidence.getByText("15.49%", { exact: true })).toBeVisible();
   await expect(evidence.getByText("16.90%", { exact: true })).toHaveCount(0);
 
   await evaluation.getByText("Evidence diagnostics", { exact: true }).press("Enter");
-  const adjustment = evaluation.locator("dl").filter({ hasText: "Evidence penalty weight (α)" });
-  await expect(adjustment.locator("dd")).toHaveText(["71/113", "56", "0", "Exact-only"]);
   await expect(evaluation.getByText(/2\/3 eligible pairs judged · 1 partially equivalent.*1 invalid judgment.*4 delivery failures/)).toBeVisible();
   await expect(evaluation.getByText(/25 exact · 1 equivalent added · 100 unmatched/)).toBeVisible();
   await expect(evaluation.getByText(/2.5s mean latency/)).toBeVisible();
@@ -446,14 +481,19 @@ test("unified evaluation shows both F1 scores and compares completed evidence as
   await expect(evaluation.getByText("Combined evaluation complete", { exact: true })).toBeVisible();
   await expect(performance.getByText("92.11%", { exact: true })).toBeVisible();
   await expect(performance.getByText("79.98%", { exact: true })).toBeVisible();
-  await evaluation.getByText("Evidence diagnostics", { exact: true }).press("Enter");
-  await expect(adjustment.locator("dd")).toHaveText(["71/113", "55", "1", "Exact and equivalent"]);
+  await expect(truePositives.getByRole("definition")).toHaveText(["12", "55", "38"]);
+  await expect(matrix.getByRole("cell", { name: /10 FP/ })).toBeVisible();
+  await expect(matrix.getByRole("cell", { name: /8 FN/ })).toBeVisible();
+  await expect(penalty.getByText("34.56 units")).toBeVisible();
+  await expect(penalty.getByText("55 incomplete proofs × 0.6283")).toBeVisible();
+  await formula.press("Enter");
+  await expect(penalty.getByText("1 proof completed through equivalence.")).toBeVisible();
   await expect(evidence.getByText("29.58%", { exact: true })).toBeVisible();
   await expect(evidence.getByText("16.90%", { exact: true })).toBeVisible();
   await expect(evidence.getByText("43.33%", { exact: true })).toBeVisible();
   expect(evaluationReads).toBe(3);
   if (testInfo.project.name === "research-desktop") {
-    const tops = await performance.locator("dt").evaluateAll((items) => items.map((item) => item.getBoundingClientRect().top));
+    const tops = await performanceLabels.evaluateAll((items) => items.map((item) => item.getBoundingClientRect().top));
     expect(new Set(tops).size).toBe(1);
   }
 

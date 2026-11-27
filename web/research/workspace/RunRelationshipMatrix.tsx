@@ -1,18 +1,28 @@
 import type { GraphCounts } from "../shared/contracts";
 
+type ProofBreakdown = {
+  complete: number;
+  incomplete: number;
+  withoutFormalTarget: number;
+};
+
 export function RunRelationshipMatrix({
   counts,
   expectedEdgesWithoutGraph,
   scope = "All conditions",
+  caption = "Relationship confusion matrix",
+  proofBreakdown,
 }: {
   counts: GraphCounts;
   expectedEdgesWithoutGraph: number;
   scope?: string;
+  caption?: string;
+  proofBreakdown?: ProofBreakdown;
 }) {
   return (
     <figure className="run-matrix">
-      <table className="run-matrix-table">
-        <caption>Relationship confusion matrix · {scope}</caption>
+      <table className={proofBreakdown ? "run-matrix-table run-matrix-table-evidence" : "run-matrix-table"}>
+        <caption><span className="run-matrix-caption-prefix">{caption} · </span>{scope}</caption>
         <thead>
           <tr>
             <th scope="col">Expected</th>
@@ -25,6 +35,7 @@ export function RunRelationshipMatrix({
             <th scope="row">Present</th>
             <td className="run-matrix-correct">
               <strong>{counts.tp}</strong> <span>TP · Correct</span>
+              {proofBreakdown && <TruePositiveProofs breakdown={proofBreakdown} />}
             </td>
             <td className="run-matrix-missing">
               <strong>{counts.fn}</strong> <span>FN · Missing</span>
@@ -47,5 +58,21 @@ export function RunRelationshipMatrix({
         </figcaption>
       )}
     </figure>
+  );
+}
+
+function TruePositiveProofs({ breakdown }: { breakdown: ProofBreakdown }) {
+  return (
+    <dl className="run-matrix-proof-breakdown">
+      <div className="run-matrix-proof-complete">
+        <dt>Complete approved proof</dt><dd>{breakdown.complete}</dd>
+      </div>
+      <div className="run-matrix-proof-incomplete">
+        <dt>Incomplete formal proof</dt><dd>{breakdown.incomplete}</dd>
+      </div>
+      <div className="run-matrix-proof-unannotated">
+        <dt>No formal proof target</dt><dd>{breakdown.withoutFormalTarget}</dd>
+      </div>
+    </dl>
   );
 }

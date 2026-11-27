@@ -113,7 +113,7 @@ it("shares the selected quality metric across plots and leaves missing scores an
 });
 
 it("shows one provisional evaluation with five unavailable values before qualified observations", () => {
-  render(<PCGEvaluation run={qualityRun("provisional", provisional)}>{null}</PCGEvaluation>);
+  render(<PCGEvaluation run={qualityRun("provisional", provisional)} expectedEdgesWithoutGraph={0} />);
   expect(screen.getByRole("heading", { name: "PCG Evaluation" })).toBeVisible();
   expect(screen.getByRole("status")).toHaveTextContent("Evaluation is provisional");
   for (const label of ["Graph F1", "Evidence-Adjusted F1", "Evidence Support", "Proof Completion", "Multi-Source Evidence Coverage"]) {
