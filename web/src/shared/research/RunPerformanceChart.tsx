@@ -98,7 +98,7 @@ export function RunPerformanceChart({
   const costAxis = !fullPipelineCost
     ? t("Estimated provider spend incurred by Run ({currency}) · 0–{max}", { currency: costCurrency, max: maxCost.toFixed(4) })
     : eligible.length > 0
-      ? `Estimated full pipeline cost (${costCurrency}) · 0–${maxCost.toFixed(4)}`
+      ? t("Estimated full pipeline cost ({currency}) · 0–{max}", { currency: costCurrency, max: maxCost.toFixed(4) })
       : "Estimated full pipeline cost";
   const showPlot = !metricName || eligible.length > 0;
   const tooltip = chartRuns.find((run) => run.id === (inspected ?? selected));
@@ -187,7 +187,7 @@ export function RunPerformanceChart({
           <span>◇ {t("No resolver")}　● {t("Generative resolver")}　○ {t("Provisional")}</span>
         </div>
         {tab === "cost" && eligible.some((run) => run.costBasis === "reference_rate_estimate") && (
-          <p className="scope-notice">Reference-rate estimates use retained token usage at the configured DeepSeek rates. Actual charges can differ.</p>
+          <p className="scope-notice">{t("Reference-rate estimates use retained token usage at the configured DeepSeek rates. Actual charges can differ.")}</p>
         )}
         {!runs.length ? (
           <p className="chart-empty">
@@ -293,7 +293,10 @@ export function RunPerformanceChart({
                 </span>
               )}
               {tab === "cost" && tooltip.costBasis === "reference_rate_estimate" && (
-                <span>Reference-rate estimate · {tooltip.cost.currency} {tooltip.cost.total?.toFixed(4)}</span>
+                <span>{t("Reference-rate estimate · {currency} {amount}", {
+                  currency: tooltip.cost.currency ?? "",
+                  amount: tooltip.cost.total?.toFixed(4) ?? "",
+                })}</span>
               )}
               <small>{tooltip.id}</small>
               <p>
