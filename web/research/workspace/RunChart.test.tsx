@@ -166,7 +166,7 @@ it("plots the imported Protocol v1 score against the verified provider estimate"
   fireEvent.click(screen.getByRole("tab", { name: "F1 vs Cost" }));
   expect(
     screen.getByRole("button", {
-      name: /All-condition micro-F1 · Protocol v1 0.850/,
+      name: /All-condition Graph F1 · Protocol v1 0.850/,
     }),
   ).toBeVisible();
   expect(

@@ -1,12 +1,8 @@
 import { percentMetric } from "../../src/shared/research/presentation";
 import type { BenchmarkV4Comparison, EvidenceQuality } from "../shared/contracts";
-
-export const evidenceMetricLabels = {
-  combined_graph: "Combined Graph F1",
-  qualified_graph: "Qualified Graph F1",
-  complete_proof: "Complete Proof Rate",
-  joint_only_coverage: "Joint-only Exact Evidence Coverage",
-} as const;
+import {
+  evidenceMetricLabels, multiSourceEvidenceCoverageDescription, multiSourceProofCompletionLabel,
+} from "./benchmark-metrics";
 
 export type EvidenceMetric = keyof typeof evidenceMetricLabels;
 export const evidenceMetrics = Object.keys(evidenceMetricLabels) as EvidenceMetric[];
@@ -28,7 +24,7 @@ export function qualityScope(quality: EvidenceQuality, key: EvidenceMetric) {
       : `${quality.planned_inputs} evaluation inputs · mixed references`;
     case "qualified_graph": return `${quality.qualified_inputs} qualified Conditions`;
     case "complete_proof": return `${quality.complete_proof.targets} formal proof targets · qualified cohort`;
-    case "joint_only_coverage": return `${quality.joint_only_coverage.targets} joint-only proof targets · qualified cohort`;
+    case "joint_only_coverage": return `${quality.joint_only_coverage.targets} multi-Source proof targets · qualified cohort`;
   }
 }
 
@@ -68,13 +64,13 @@ export function RunQuality({ quality }: { quality: EvidenceQuality }) {
           <dt>Observed evaluation inputs</dt><dd>{quality.observed_inputs} / {quality.planned_inputs}</dd>
           <dt>Observed qualified Conditions</dt><dd>{quality.observed_qualified_inputs} / {quality.qualified_inputs}</dd>
           <dt>Expected qualified relationships</dt><dd>{quality.expected_relationships}</dd>
-          <dt>Complete formal proofs</dt><dd>{quality.complete_proof.complete} / {quality.complete_proof.targets} · {quality.observed_proof_targets} targets observed</dd>
-          <dt>Joint-only Complete Proof Rate</dt>
+          <dt>{evidenceMetricLabels.complete_proof}</dt><dd>{quality.complete_proof.complete} / {quality.complete_proof.targets} · {quality.observed_proof_targets} targets observed</dd>
+          <dt>{multiSourceProofCompletionLabel}</dt>
           <dd>{percentMetric(quality.joint_only_complete_proof.rate)} · {quality.joint_only_complete_proof.complete} / {quality.joint_only_complete_proof.targets} complete</dd>
           <dt>{evidenceMetricLabels.joint_only_coverage}</dt>
           <dd>{percentMetric(quality.joint_only_coverage.mean)} · {quality.observed_joint_targets} / {quality.joint_only_coverage.targets} targets observed</dd>
         </dl>
-        <p>Exact coverage averages the best matching approved evidence alternative for each joint-only target. These synthetic benchmark measures do not assess legal sufficiency.</p>
+        <p>{multiSourceEvidenceCoverageDescription} These synthetic benchmark measures do not assess legal sufficiency.</p>
       </details>
     </section>
   );

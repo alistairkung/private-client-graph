@@ -4,7 +4,7 @@ import type {
   RunObservation,
 } from "../shared/contracts";
 import { metric } from "./RunChart";
-import { formatF1Basis } from "./benchmark-metrics";
+import { evidenceMetricLabels, formatF1Basis } from "./benchmark-metrics";
 
 export type RenderCondition = (
   observation: RunObservation,
@@ -149,7 +149,7 @@ function ConditionFacts({ observation }: { observation: RunObservation }) {
         </dd>
       </div>
       <div>
-        <dt>Complete proofs</dt>
+        <dt>{evidenceMetricLabels.complete_proof}</dt>
         <dd>
           <strong>
             {metrics.planned_proofs

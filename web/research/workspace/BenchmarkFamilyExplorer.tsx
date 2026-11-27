@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { RunDetail, RunObservation } from "../shared/contracts";
 import { metric } from "./RunChart";
-import { formatF1Basis } from "./benchmark-metrics";
+import { evidenceMetricLabels, formatF1Basis } from "./benchmark-metrics";
 import {
   EnvironmentConditionPanel,
   type RenderCondition,
@@ -235,7 +235,7 @@ function FamilyRow({
             <small>{f1Basis}</small>
           </span>
           <span className="family-metric">
-            <span>Complete proofs</span>
+            <span>{evidenceMetricLabels.complete_proof}</span>
             <strong>
               {scores.planned_proofs
                 ? `${scores.complete_proofs}/${scores.planned_proofs}`

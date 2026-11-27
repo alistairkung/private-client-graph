@@ -4,7 +4,8 @@ import {
   type PerformanceMetricOptions,
 } from "../../src/shared/research/RunPerformanceChart";
 import type { BenchmarkStageUsage, RunDetail, WorkspaceDetail } from "../shared/contracts";
-import { evidenceMetricLabels, evidenceMetrics, qualityScope, qualityValue } from "./RunQuality";
+import { evidenceMetricLabels, multiSourceEvidenceCoverageDescription } from "./benchmark-metrics";
+import { evidenceMetrics, qualityScope, qualityValue } from "./RunQuality";
 export { metric } from "../../src/shared/research/RunPerformanceChart";
 export const money = (value: number | null, currency: string | null) =>
   value === null
@@ -72,7 +73,7 @@ function performanceRun(run: RunDetail): PerformanceRun {
       recorded: mixed.observation_origin === "offline_fixture",
       f1: score?.f1 ?? null,
       measures: quality ? qualityMeasures(quality) : undefined,
-      metricLabel: "Benchmark v4 graph micro-F1 · mixed references",
+      metricLabel: "Benchmark v4 Graph F1 · mixed references",
       coverageLabel: "valid graphs / planned inputs",
       scoreState: state === "unmeasured" ? "unavailable" : state,
       coverage: { scored: score?.valid_graphs ?? 0, planned: run.observations.length },
@@ -100,7 +101,7 @@ function performanceRun(run: RunDetail): PerformanceRun {
     f1: benchmark
       ? benchmark.cohort.all_condition_micro_f1
       : (evaluation?.aggregate.f1 ?? null),
-    metricLabel: benchmark ? "All-condition micro-F1 · Protocol v1" : undefined,
+    metricLabel: benchmark ? "All-condition Graph F1 · Protocol v1" : undefined,
     coverageLabel: benchmark ? "valid graphs / planned Conditions" : undefined,
     scoreState: benchmark
       ? benchmark.cohort.outcomes.not_attempted
@@ -159,6 +160,7 @@ function metricOptions(runs: RunDetail[]): PerformanceMetricOptions | undefined 
     return [key, {
       label: evidenceMetricLabels[key],
       scope: scopes.size === 1 ? [...scopes][0] : "Scope varies by Run",
+      description: key === "joint_only_coverage" ? multiSourceEvidenceCoverageDescription : undefined,
     }];
   }));
 }
@@ -174,7 +176,7 @@ function qualityMeasures(quality: NonNullable<RunDetail["quality"]>): Performanc
     combined_graph: "observed evaluation inputs",
     qualified_graph: "observed qualified Conditions",
     complete_proof: "complete formal proof targets",
-    joint_only_coverage: "observed joint-only proof targets",
+    joint_only_coverage: "observed multi-Source proof targets",
   };
   return Object.fromEntries(evidenceMetrics.map((key) => [key, {
     value: qualityValue(quality, key),

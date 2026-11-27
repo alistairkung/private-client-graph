@@ -7,6 +7,7 @@ import type {
   Source,
 } from "../shared/contracts";
 import { edgeKey } from "./benchmarkEdges";
+import { evidenceMetricLabels } from "./benchmark-metrics";
 import { SourceReader, type Passage } from "./SourceReader";
 import { percentMetric } from "../../src/shared/research/presentation";
 import "./relationship-evidence.css";
@@ -201,10 +202,10 @@ function ProofAlternatives({
       <h5>Sufficient Evidence Alternatives</h5>
       <p>
         {proofLabels[target.status]}
-        {target.joint_only && " · Joint evidence required"}
+        {target.joint_only && " · Multiple Sources required"}
       </p>
       {target.best_alternative_coverage != null && (
-        <p>Best approved alternative exact coverage · {percentMetric(target.best_alternative_coverage)}</p>
+        <p>{evidenceMetricLabels.joint_only_coverage} for this relationship · {percentMetric(target.best_alternative_coverage)}</p>
       )}
       {alternatives.length > 1 && (
         <div

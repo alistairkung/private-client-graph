@@ -21,7 +21,7 @@ test("read-only import exposes protocol metrics, proof, unavailable and empty gr
   await expect(matrix).toBeVisible();
   const family = page.getByRole("button", { name: /Family F\b/ });
   await expect(family).toContainText("Identify the current trustee");
-  await expect(family).toContainText("Complete proofs");
+  await expect(family).toContainText("Proof Completion");
   await family.press("Enter");
   await expect(matrix).toHaveCount(1);
   await expect(page.getByRole("tab", { name: /F0/ })).toHaveAttribute(
@@ -274,18 +274,22 @@ test("evidence quality controls and comparison fit the viewport and retain keybo
   await page.getByText("Run history and selection", { exact: true }).click();
   const metric = page.getByRole("combobox", { name: "Performance metric" });
   await metric.selectOption("joint_only_coverage");
+  const coveragePoint = page.getByRole("button", { name: /Run 1, Multi-Source Evidence Coverage/ });
+  await coveragePoint.focus();
+  await expect(coveragePoint).toHaveAccessibleDescription(/Average percentage of required evidence recovered for relationships that need multiple Sources\. Uses the best-matching approved proof route\./);
+
   const runTab = page.getByRole("tab", { name: "By Run" });
   await runTab.press("ArrowRight");
   await expect(page.getByRole("tab", { name: "Vs Cost" })).toBeFocused();
   await expect(metric).toHaveValue("joint_only_coverage");
-  await expect(metric).toHaveAccessibleDescription("30 joint-only proof targets · qualified cohort");
-  await expect(page.getByRole("heading", { name: "Joint-only Exact Evidence Coverage vs Cost" })).toBeVisible();
+  await expect(metric).toHaveAccessibleDescription("30 multi-Source proof targets · qualified cohort");
+  await expect(page.getByRole("heading", { name: "Multi-Source Evidence Coverage vs Cost" })).toBeVisible();
   await expect(page).toHaveURL(new RegExp(control + "$"));
 
   await page.getByRole("combobox", { name: "Compare with verified Run" }).selectOption(treatment);
   const table = page.getByRole("table", { name: "Evidence quality comparison" });
-  await expect(table.getByRole("row", { name: /Complete Proof Rate.*qualified cohort/ })).toBeVisible();
-  await expect(table.getByRole("row", { name: /Joint-only Exact Evidence Coverage/ })).toBeVisible();
+  await expect(table.getByRole("row", { name: /Proof Completion.*qualified cohort/ })).toBeVisible();
+  await expect(table.getByRole("row", { name: /Multi-Source Evidence Coverage/ })).toBeVisible();
   for (const element of [metric, table]) {
     expect(await element.evaluate((node) => {
       const { left, right } = node.getBoundingClientRect();

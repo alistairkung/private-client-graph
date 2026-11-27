@@ -1,5 +1,6 @@
 import type { BenchmarkV4Operations, BenchmarkV4Summary as Summary, DeliveredGraphMetrics, EvidenceQuality, Metrics, RunDetail } from "../shared/contracts";
 import { metric, money } from "./RunChart";
+import { evidenceMetricLabels, multiSourceProofCompletionLabel } from "./benchmark-metrics";
 
 export function BenchmarkV4Summary({ run }: { run: RunDetail }) {
   const summary = run.benchmark_v4!;
@@ -50,7 +51,7 @@ export function GraphMetrics({ summary, quality }: { summary: Summary; quality?:
         <thead>
           <tr>
             <th scope="col">Reference scope</th><th scope="col">Precision</th><th scope="col">Recall</th>
-            <th scope="col">Micro-F1</th><th scope="col">TP / FP / FN</th>
+            <th scope="col">Graph F1</th><th scope="col">TP / FP / FN</th>
             <th scope="col">Valid / planned</th><th scope="col">Without graph</th><th scope="col">Exact</th>
           </tr>
         </thead>
@@ -74,8 +75,8 @@ export function BenchmarkEvidence({ summary, proofs }: { summary: Summary; proof
   return (
     <>
       {proofs && summary.state !== "unmeasured" && (
-        <p>Complete qualified proofs {proofs.complete_proofs} / {proofs.planned_proofs} ·
-          Joint-only {proofs.complete_joint_proofs} / {proofs.planned_joint_proofs}.</p>
+        <p>{evidenceMetricLabels.complete_proof} {proofs.complete_proofs} / {proofs.planned_proofs} ·
+          {multiSourceProofCompletionLabel} {proofs.complete_joint_proofs} / {proofs.planned_joint_proofs}.</p>
       )}
       <p>U8 exact adjudicated citation matches {evidence.assessed
         ? `${evidence.matched_citations} / ${evidence.reference_citations}`

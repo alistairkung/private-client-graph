@@ -118,7 +118,7 @@ it("shows the projected best-alternative exact coverage beside the attached memb
       onBack={vi.fn()}
     />,
   );
-  expect(screen.getByText("Best approved alternative exact coverage · 50.00%")).toBeVisible();
+  expect(screen.getByText("Multi-Source Evidence Coverage for this relationship · 50.00%")).toBeVisible();
   expect(screen.getByText("Source missing from this relationship")).toBeVisible();
 });
 

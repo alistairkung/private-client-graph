@@ -1,6 +1,6 @@
 import type { BenchmarkRun, RunDetail } from "../shared/contracts";
 import { metric, money } from "./RunChart";
-import { formatF1Basis } from "./benchmark-metrics";
+import { evidenceMetricLabels, formatF1Basis, multiSourceProofCompletionLabel } from "./benchmark-metrics";
 import { RunRelationshipMatrix } from "./RunRelationshipMatrix";
 import "./run-relationship-matrix.css";
 
@@ -25,7 +25,7 @@ export function BenchmarkRunSummary({
       ) : (
         <div className="benchmark-overview-line">
           <div>
-            <span>All-condition graph F1</span>
+            <span>All-condition Graph F1</span>
             <strong>{metric(benchmark.cohort.all_condition_micro_f1)}</strong>
             <small>
               {formatF1Basis(
@@ -36,7 +36,7 @@ export function BenchmarkRunSummary({
             </small>
           </div>
           <div>
-            <span>Complete proofs</span>
+            <span>{evidenceMetricLabels.complete_proof}</span>
             <strong>
               {benchmark.cohort.planned_proofs
                 ? `${benchmark.cohort.complete_proofs} of ${benchmark.cohort.planned_proofs} complete`
@@ -51,7 +51,7 @@ export function BenchmarkRunSummary({
       <details className="protocol-metrics">
         <summary>Protocol metrics and denominators</summary>
         <p>
-          Graph micro-F1 = 2 × true positives / (2 × true positives + false
+          Graph F1 = 2 × true positives / (2 × true positives + false
           positives + false negatives).
         </p>
         <p>
@@ -66,23 +66,23 @@ export function BenchmarkRunSummary({
           All conditions · True positives / false positives / false negatives{" "}
           {benchmark.cohort.all_conditions.tp}/
           {benchmark.cohort.all_conditions.fp}/
-          {benchmark.cohort.all_conditions.fn} · micro-F1{" "}
+          {benchmark.cohort.all_conditions.fn} · Graph F1{" "}
           {metric(benchmark.cohort.all_condition_micro_f1)}
         </p>
         <p>
           Constructed graphs only · True positives / false positives / false
           negatives {benchmark.cohort.valid_graph_only.tp}/
           {benchmark.cohort.valid_graph_only.fp}/
-          {benchmark.cohort.valid_graph_only.fn} · micro-F1{" "}
+          {benchmark.cohort.valid_graph_only.fn} · Graph F1{" "}
           {metric(benchmark.cohort.valid_graph_only_micro_f1)}
         </p>
         <p>
-          Overall proof completion{" "}
+          {evidenceMetricLabels.complete_proof}{" "}
           {eligibleRatio(
             benchmark.cohort.complete_proofs,
             benchmark.cohort.planned_proofs,
           )}{" "}
-          · joint-only proof completion{" "}
+          · {multiSourceProofCompletionLabel}{" "}
           {eligibleRatio(
             benchmark.cohort.complete_joint_proofs,
             benchmark.cohort.planned_joint_proofs,
@@ -129,10 +129,10 @@ export function BenchmarkRunSummary({
                 <th>Family</th>
                 <th>Planned / valid graphs</th>
                 <th>True / unsupported / missing relationships</th>
-                <th>All-condition micro-F1</th>
+                <th>All-condition Graph F1</th>
                 <th>Exact graphs</th>
-                <th>Complete / planned proofs</th>
-                <th>Joint complete / planned</th>
+                <th>{evidenceMetricLabels.complete_proof}</th>
+                <th>{multiSourceProofCompletionLabel}</th>
               </tr>
             </thead>
             <tbody>

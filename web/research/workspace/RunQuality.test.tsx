@@ -65,7 +65,7 @@ it("shares the selected quality metric across plots and leaves missing scores an
   );
   const metric = screen.getByRole("combobox", { name: "Performance metric" });
   expect(within(metric).getAllByRole("option").map((option) => option.textContent)).toEqual([
-    "Combined Graph F1", "Qualified Graph F1", "Complete Proof Rate", "Joint-only Exact Evidence Coverage",
+    "Combined Graph F1", "Qualified Graph F1", "Proof Completion", "Multi-Source Evidence Coverage",
   ]);
   expect(screen.getByRole("button", { name: /Run 2, Combined Graph F1 · 35 evaluation inputs.*provisional/ })).toHaveAttribute("aria-pressed", "true");
   fireEvent.change(metric, { target: { value: "qualified_graph" } });
@@ -74,14 +74,15 @@ it("shares the selected quality metric across plots and leaves missing scores an
   expect(container.querySelectorAll(".chart-point")).toHaveLength(3);
   expect(screen.getByRole("button", { name: /Run 2 · No resolver/ })).toHaveAttribute("aria-pressed", "true");
   fireEvent.change(metric, { target: { value: "joint_only_coverage" } });
-  expect(screen.getByRole("button", { name: /Run 4, Joint-only Exact Evidence Coverage · 30 joint-only proof targets · qualified cohort 0.00%/ })).toBeVisible();
+  expect(screen.getByRole("button", { name: /Run 4, Multi-Source Evidence Coverage · 30 multi-Source proof targets · qualified cohort 0.00%/ })).toBeVisible();
   fireEvent.keyDown(screen.getByRole("tab", { name: "By Run" }), { key: "ArrowRight" });
   expect(screen.getByRole("tab", { name: "Vs Cost" })).toHaveFocus();
   expect(metric).toHaveValue("joint_only_coverage");
-  expect(screen.getByRole("heading", { name: "Joint-only Exact Evidence Coverage vs Cost" })).toBeVisible();
+  expect(screen.getByText("Average percentage of required evidence recovered for relationships that need multiple Sources. Uses the best-matching approved proof route.")).toBeVisible();
+  expect(screen.getByRole("heading", { name: "Multi-Source Evidence Coverage vs Cost" })).toBeVisible();
   expect(screen.getByText(/Estimated full pipeline cost \(USD\)/)).toBeVisible();
   expect(container.querySelectorAll(".chart-point")).toHaveLength(1);
-  expect(screen.getByRole("button", { name: /Run 1, Joint-only Exact Evidence Coverage.*45.00%/ })).toBeVisible();
+  expect(screen.getByRole("button", { name: /Run 1, Multi-Source Evidence Coverage.*45.00%/ })).toBeVisible();
   expect(select).not.toHaveBeenCalled();
 });
 
@@ -93,6 +94,7 @@ it("keeps unavailable provisional proof scores distinct from zero and exposes fi
   expect(screen.getByText(/71 formal proof targets · qualified cohort/)).toBeVisible();
   fireEvent.click(screen.getByText("Evidence metrics and counts"));
   expect(screen.getByText("0 / 71 · 0 targets observed")).toBeVisible();
+  expect(screen.getByText("Multi-Source Proof Completion")).toBeVisible();
   expect(screen.getByText("Unavailable · 0 / 30 targets observed")).toBeVisible();
   expect(screen.getByText(/synthetic benchmark measures do not assess legal sufficiency/)).toBeVisible();
 });

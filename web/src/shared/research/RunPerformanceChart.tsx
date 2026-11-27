@@ -3,7 +3,7 @@ import { LayoutGroup, motion, useReducedMotion } from "motion/react";
 import { percentMetric, researchText, type ResearchText } from "./presentation";
 import "./run-performance-chart.css";
 
-export type PerformanceMetricOptions = Record<string, { label: string; scope?: string }>;
+export type PerformanceMetricOptions = Record<string, { label: string; scope?: string; description?: string }>;
 
 type PerformanceMeasure = {
   value: number | null;
@@ -297,6 +297,7 @@ export function RunPerformanceChart({
           ) : (
             <span>{t("Focus or select a point to inspect its Run.")}</span>
           )}
+          {metricOption?.description && <p>{metricOption.description}</p>}
         </div>
         {!!runs.length && (
           <div className="run-history-list" aria-label={t("All Runs")}>
