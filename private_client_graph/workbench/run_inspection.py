@@ -6,6 +6,7 @@ from typing import Any, Literal
 from pydantic import BaseModel, Field
 
 from private_client_graph.research.benchmark_v4_scoring import BenchmarkV4Summary
+from private_client_graph.research.evidence_quality import EvidenceQuality
 from private_client_graph.research.benchmark_v4_operations import BenchmarkV4Operations
 from private_client_graph.research.artifacts import Bundle, checksum
 from private_client_graph.research.inputs import ResearchInput
@@ -52,6 +53,8 @@ class RunDetail(BaseModel):
     family_context: RunFamilyContext | None = None
     benchmark: BenchmarkRun | None = None
     benchmark_v4: BenchmarkV4Summary | None = Field(default=None, exclude_if=lambda value: value is None,
+        json_schema_extra={'x-typescript-optional': True})
+    quality: EvidenceQuality | None = Field(default=None, exclude_if=lambda value: value is None,
         json_schema_extra={'x-typescript-optional': True})
     pipeline_usage: BenchmarkV4Operations | None = Field(default=None, exclude_if=lambda value: value is None,
         json_schema_extra={'x-typescript-optional': True})

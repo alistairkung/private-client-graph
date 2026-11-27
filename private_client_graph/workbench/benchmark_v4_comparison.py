@@ -1,5 +1,6 @@
 """Descriptive comparison across identical Benchmark v4 reference commitments."""
-from .run_evaluation_contracts import BenchmarkV4Comparison, RunComparison, ObservationPair
+from private_client_graph.research.evidence_quality import EvidenceQuality
+from .run_evaluation_contracts import BenchmarkV4Comparison, EvidenceQualityDelta, RunComparison, ObservationPair
 from .run_inspection import RunDetail
 
 
@@ -27,6 +28,8 @@ def compare_benchmark_v4_runs(left: RunDetail, right: RunDetail) -> RunCompariso
         left_proofs=left.benchmark.cohort if left.benchmark else None,
         right_proofs=right.benchmark.cohort if right.benchmark else None,
         left_usage=left.pipeline_usage, right_usage=right.pipeline_usage,
+        left_quality=left.quality, right_quality=right.quality,
+        quality_delta=_quality_delta(left.quality, right.quality),
         shared_extraction_run_id=(left_origin or right_origin) if paired else None)
     output.reasons = ['Differences are descriptive. A controlled comparison requires matched model, '
                       'prompt and execution settings apart from the intended configuration change.']
@@ -39,3 +42,21 @@ def compare_benchmark_v4_runs(left: RunDetail, right: RunDetail) -> RunCompariso
     if first.state != 'complete' or second.state != 'complete':
         output.reasons.append('A comparison includes a Run with incomplete coverage.')
     return output
+
+
+def _quality_delta(left: EvidenceQuality | None, right: EvidenceQuality | None) -> EvidenceQualityDelta | None:
+    if (left is None or right is None or left.version != right.version
+            or left.state != 'complete' or right.state != 'complete'):
+        return None
+    return EvidenceQualityDelta(
+        combined_graph=_delta(left.combined_graph.f1 if left.combined_graph else None,
+                              right.combined_graph.f1 if right.combined_graph else None),
+        qualified_graph=_delta(left.qualified_graph.f1 if left.qualified_graph else None,
+                               right.qualified_graph.f1 if right.qualified_graph else None),
+        complete_proof=_delta(left.complete_proof.rate, right.complete_proof.rate),
+        joint_only_coverage=_delta(left.joint_only_coverage.mean, right.joint_only_coverage.mean),
+    )
+
+
+def _delta(left: float | None, right: float | None) -> float | None:
+    return right - left if left is not None and right is not None else None

@@ -121,7 +121,7 @@ def test_scope_guards_protocol_commitment_roster_order_and_observation_origin():
         evaluate(roster, {'V0': prediction(FIRST)})
 
 
-def test_exact_private_first_live_baseline(monkeypatch):
+def test_exact_private_first_live_baseline(monkeypatch, capsys):
     # Private data are opt-in and remain outside the source tree and CI.
     custody = os.environ.get('PCG_V3_PRIVATE_BASELINE_CUSTODY')
     if not custody:
@@ -136,6 +136,18 @@ def test_exact_private_first_live_baseline(monkeypatch):
     assert result.scope.benchmark_sha256 == 'c864f58786d21fd3f5b9735023c93df62256e537133f15fa602d3cf3d8d13b70'
     assert result.scope.observation_origin == 'live'
     assert result.run_artifact_sha256 == BASELINE_INVENTORY_SHA256
+    from private_client_graph.research.cli import main as research_cli
+    research_cli(['inspect-v3-baseline', str(root / 'live-baseline-2026-11-24'),
+                  str(root / 'admissions-2026-11-24/ADMISSIONS.json')])
+    replay = json.loads(capsys.readouterr().out)
+    quality = replay['quality']
+    assert replay['archive_inventory_sha256'] == BASELINE_INVENTORY_SHA256
+    assert replay['qualified_protocol']['cohort']['all_condition_micro_f1'] == 182 / 214
+    assert quality['combined_graph'] is None and quality['qualified_graph']['f1'] == 182 / 214
+    assert quality['complete_proof'] == {'complete': 18, 'targets': 71, 'rate': 18 / 71}
+    assert quality['joint_only_complete_proof'] == {'complete': 0, 'targets': 30, 'rate': 0.0}
+    assert quality['joint_only_coverage'] == {'targets': 30, 'mean': 13 / 300}
+
     assert (len(result.families), metrics.planned_conditions, metrics.valid_graphs, metrics.exact_graphs) == (19, 34, 30, 20)
     assert metrics.all_conditions == GraphCounts(91, 10, 22)
     assert metrics.valid_graph_only == GraphCounts(91, 10, 5)

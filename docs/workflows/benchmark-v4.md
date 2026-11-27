@@ -61,7 +61,10 @@ U8 diagnostic counts exact overlaps with frozen adjudicated citations for the
 same relationship, Source ID and quotation. It is assessed when the graph is
 constructed. Accepted citations support the reference and are a limited set
 against which overlap can be reproduced. Other correct citations may exist.
-U8 supplies no formal proof-sufficiency denominator.
+U8 supplies no formal proof-sufficiency denominator. The Workbench and CLI
+report [Deterministic Evidence Quality v1](deterministic-evidence-quality-v1.md),
+including Graph F1 on both scopes, Complete Proof Rate and mean joint-only
+coverage of exact Source–quotation pairs.
 
 ## Historical transition
 
@@ -141,12 +144,15 @@ Both Runs use the same v4 scorer and private roster. Freeze A and B on this
 revision to share the same scorer commitment.
 
 Use `uv run python -m private_client_graph.research summarize RUN_DIRECTORY`
-to regenerate the metrics without raw provider requests or responses. Keep the
+to print the metrics to stdout without writing to Run custody or including
+raw provider requests or responses. Keep the
 parent Run, child Run and original task ledger in private custody so the
 candidate lineage and receipts remain verifiable.
 
 To verify the exact references and historical numbers offline, set
-`PCG_V3_PRIVATE_BASELINE_CUSTODY` to the existing custody root and run
+`PCG_V3_PRIVATE_BASELINE_CUSTODY` to the existing custody root, and set
+`PCG_V4_RETAINED_EXTRACTOR` and `PCG_V4_RETAINED_RESOLVER` to the completed
+paired Run directories. Run
 `uv run pytest tests/research/test_benchmark_v4.py tests/research/test_v3_evaluation_protocol.py`.
 CI uses synthetic fixtures and substituted provider responses.
 

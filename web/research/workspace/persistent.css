@@ -409,3 +409,43 @@ pre {
   padding-block: 10px;
   cursor: pointer;
 }
+
+.run-quality h3 { margin: 0 0 12px; }
+.run-quality .quality-primary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+  gap: 12px 24px;
+  margin: 0;
+}
+.run-quality .quality-primary dt { font-weight: 600; }
+.run-quality dd { margin: 0; }
+.run-quality .quality-primary dd:not(.quality-scope) {
+  color: var(--ink);
+  font-size: 1.65rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.run-quality .quality-scope,
+.run-quality .quality-combined span,
+.quality-comparison td small {
+  color: var(--muted);
+  display: block;
+}
+.run-quality .quality-combined {
+  border-top: 1px solid #d5d9d2;
+  margin: 14px 0 12px;
+  padding-top: 12px;
+}
+.run-quality .quality-counts {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 4px 14px;
+}
+.run-quality .quality-counts dt { font-weight: 600; }
+.run-quality .quality-counts dd { margin-bottom: 8px; }
+.quality-comparison .quality-primary-row :is(th, td > span) { font-weight: 700; }
+.quality-comparison :is(th, td) { white-space: normal; }
+.quality-comparison .quality-change { white-space: nowrap; }
+@media (width < 520px) {
+  .quality-comparison :is(th, td) { padding-inline: 8px; }
+}

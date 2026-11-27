@@ -13,6 +13,7 @@ from .benchmark_v4_comparison import compare_benchmark_v4_runs
 from .benchmark_comparison import compare_benchmark_runs
 from .case_catalog import CaseMetadata, load_case_catalog
 from .execution_state import ExecutionAvailability, execution_availability
+from private_client_graph.research.evidence_quality import EvidenceQuality
 from .run_evaluation import compare_runs
 from .run_evaluation_contracts import RunComparison, RunEvaluation
 from .run_inspection import RunDetail, RunObservation, read_run
@@ -28,6 +29,7 @@ PREFIX = '/api/research/v2'
 class BenchmarkV4Aggregate(BaseModel):
     benchmark_v4: BenchmarkV4Summary
     qualified_protocol: BenchmarkRun
+    quality: EvidenceQuality
 
 
 def mount_workspace_reads(app: FastAPI, root: Path, refresh=None) -> None:
@@ -79,8 +81,9 @@ def mount_workspace_reads(app: FastAPI, root: Path, refresh=None) -> None:
     def aggregate(experiment_id: str, run_id: str):
         detail = read_run(root, experiment_id, run_id)
         if detail.benchmark_v4 is not None:
-            assert detail.benchmark is not None
-            return BenchmarkV4Aggregate(benchmark_v4=detail.benchmark_v4, qualified_protocol=detail.benchmark)
+            assert detail.benchmark is not None and detail.quality is not None
+            return BenchmarkV4Aggregate(benchmark_v4=detail.benchmark_v4, qualified_protocol=detail.benchmark,
+                                        quality=detail.quality)
         return detail.benchmark if detail.benchmark is not None else detail.evaluation
 
     @app.get(f'{PREFIX}/experiments/{{experiment_id}}/runs/{{run_id}}/observations/{{observation_id}}', response_model=RunObservation)

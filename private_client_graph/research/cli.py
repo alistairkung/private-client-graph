@@ -13,6 +13,7 @@ from .export import export_bundle, verify_export
 from .fixtures import load_inputs
 from .plan import ExperimentPlan, Pricing
 from .provider import ModelSettings, invoke_deepseek
+from .run_plan import RunPlan
 from .runner import Provider, execute
 from .summary import summarize
 
@@ -36,8 +37,16 @@ def main(argv: list[str] | None = None) -> None:
     run.add_argument('bundle', type=Path)
     run.add_argument('--live', action='store_true')
     run.add_argument('--checkpoint', type=int, help='Maximum new attempts this invocation; does not reset task budget')
-    for command in ('inspect', 'summarize'):
-        commands.add_parser(command).add_argument('bundle', type=Path)
+    inspect = commands.add_parser('inspect')
+    inspect.add_argument('bundle', type=Path)
+    inspect.add_argument('--include-proof-members', action='store_true',
+                         help='Include private reference quotations for formal evidence inspection')
+    commands.add_parser('summarize').add_argument('bundle', type=Path)
+    historical = commands.add_parser('inspect-v3-baseline', help='Inspect the verified v3 live baseline offline')
+    historical.add_argument('archive', type=Path)
+    historical.add_argument('admissions', type=Path)
+    historical.add_argument('--include-proof-members', action='store_true',
+                            help='Include private reference quotations for formal evidence inspection')
     export = commands.add_parser('export')
     export.add_argument('bundle', type=Path)
     export.add_argument('destination', type=Path)
@@ -45,11 +54,17 @@ def main(argv: list[str] | None = None) -> None:
     if args.command == 'plan':
         _plan(args)
         return
+    if args.command == 'inspect-v3-baseline':
+        _inspect_v3_baseline(args.archive, args.admissions, include_proof_members=args.include_proof_members)
+        return
     bundle = Bundle.open(args.bundle)
     if args.command == 'run':
         _run(bundle, args)
-    elif args.command == 'inspect':
-        print(json.dumps(summarize(bundle), indent=2))
+    elif args.command == 'inspect' or (
+        args.command == 'summarize' and isinstance(bundle.plan, RunPlan) and bundle.plan.benchmark_v4_sha256
+    ):
+        summary = summarize(bundle, include_proof_members=getattr(args, 'include_proof_members', False))
+        print(json.dumps(summary, indent=2))
     elif args.command == 'summarize':
         with bundle.execution_lock():
             (bundle.path / 'summary.json').write_text(json.dumps(summarize(bundle), indent=2) + '\n')
@@ -99,3 +114,21 @@ def _run(bundle: Bundle, args: argparse.Namespace) -> None:
         checkpoint = 6  # inspect the first matched challenge repetitions before continuing
     result = execute(bundle, provider=provider, live=args.live, max_new_attempts=checkpoint)
     print(json.dumps(result, indent=2))
+
+
+def _inspect_v3_baseline(archive: Path, admissions: Path, *, include_proof_members: bool) -> None:
+    from dataclasses import asdict
+    from benchmark_v3.retained_evaluation import verify_first_live_baseline
+    from .evidence_quality import report_evidence_quality
+
+    baseline = verify_first_live_baseline(archive, admissions)
+    protocol = baseline.protocol
+    report = report_evidence_quality(protocol, baseline.planned, baseline.original_results)
+    print(json.dumps({
+        'schema_version': 1, 'suite': 'pcg-benchmark-v3',
+        'archive_inventory_sha256': protocol.run_artifact_sha256,
+        'qualified_protocol': {'scope': asdict(protocol.scope), 'cohort': asdict(protocol.cohort)},
+        'quality': report.quality.model_dump(mode='json'),
+        **({'joint_only_targets': [target.report() for target in report.joint_targets]}
+           if include_proof_members else {}),
+    }, indent=2))

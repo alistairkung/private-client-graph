@@ -125,6 +125,9 @@ export type BenchmarkV4Comparison = {
   left_usage: BenchmarkV4Operations | null;
   right_usage: BenchmarkV4Operations | null;
   shared_extraction_run_id: string | null;
+  left_quality?: EvidenceQuality | null;
+  right_quality?: EvidenceQuality | null;
+  quality_delta?: EvidenceQualityDelta | null;
 };
 
 export type BenchmarkV4Operations = {
@@ -393,6 +396,34 @@ export type Evidence = {
   supporting_text: string;
 };
 
+export type EvidenceQuality = {
+  version: "deterministic_evidence_quality_v1";
+  state: "unmeasured" | "provisional" | "complete";
+  scope_sha256: string;
+  scoring_sha256: string | null;
+  qualified_reference_sha256: string;
+  observation_origin: "live" | "offline_fixture";
+  planned_inputs: number;
+  observed_inputs: number;
+  qualified_inputs: number;
+  observed_qualified_inputs: number;
+  expected_relationships: number;
+  observed_proof_targets: number;
+  observed_joint_targets: number;
+  combined_graph: DeliveredGraphMetrics | null;
+  qualified_graph: DeliveredGraphMetrics | null;
+  complete_proof: ProofRate;
+  joint_only_complete_proof: ProofRate;
+  joint_only_coverage: JointCoverage;
+};
+
+export type EvidenceQualityDelta = {
+  combined_graph: number | null;
+  qualified_graph: number | null;
+  complete_proof: number | null;
+  joint_only_coverage: number | null;
+};
+
 export type EvidenceQuote = {
   id: string;
   source_id: string;
@@ -523,6 +554,11 @@ export type InputChoice = {
   case_id: string;
   cohort: string;
   hashes: Record<string, string>;
+};
+
+export type JointCoverage = {
+  targets: number;
+  mean: number | null;
 };
 
 export type LegacyCaseLabel = {
@@ -656,11 +692,18 @@ export type ProofMember = {
   occurrences: Array<[number, number]>;
 };
 
+export type ProofRate = {
+  complete: number;
+  targets: number;
+  rate: number | null;
+};
+
 export type ProofTarget = {
   edge: [string, "parent_of" | "sibling_of" | "spouse_of" | "settlor_of" | "trustee_of" | "beneficiary_of", string];
   joint_only: boolean;
   status: "complete" | "incomplete" | "missed" | "without_graph";
   alternatives: Array<ProofAlternative>;
+  best_alternative_coverage?: number | null;
 };
 
 export type Proposal = {
@@ -813,6 +856,7 @@ export type RunDetail = {
   family_context: RunFamilyContext | null;
   benchmark: BenchmarkRun | null;
   benchmark_v4?: BenchmarkV4Summary | null;
+  quality?: EvidenceQuality | null;
   pipeline_usage?: BenchmarkV4Operations | null;
   observations: Array<RunObservation>;
   provenance: Record<string, unknown>;

@@ -8,6 +8,7 @@ import type {
 } from "../shared/contracts";
 import { edgeKey } from "./benchmarkEdges";
 import { SourceReader, type Passage } from "./SourceReader";
+import { percentMetric } from "../../src/shared/research/presentation";
 import "./relationship-evidence.css";
 
 type Edge = [string, string, string];
@@ -37,6 +38,7 @@ export function RelationshipEvidence({
       key={JSON.stringify([observation.id, key])}
       edge={edge}
       target={benchmark?.proof_targets.find(sameEdge)}
+      qualifiedExpected={Boolean(approved && (benchmark?.role === "natural" || benchmark?.role === "matched"))}
       expected={approved?.quotes ?? row?.expected ?? []}
       predicted={benchmark?.outcome === "scored" ? (row?.predicted ?? []) : []}
       sources={observation.sources ?? []}
@@ -74,6 +76,7 @@ function QuoteButton({
 export function EvidenceComparison({
   edge,
   target,
+  qualifiedExpected = false,
   expected,
   predicted,
   sources,
@@ -81,6 +84,7 @@ export function EvidenceComparison({
 }: {
   edge: Edge;
   target?: ProofTarget;
+  qualifiedExpected?: boolean;
   expected: EvidenceQuote[];
   predicted: EvidenceQuote[];
   sources: Source[];
@@ -124,10 +128,8 @@ export function EvidenceComparison({
           open={open}
           onChange={() => setReader(undefined)}
         />
-      ) : (
-        <p>
-          No sufficient evidence target was annotated for this relationship.
-        </p>
+      ) : qualifiedExpected && (
+        <p>No formal proof target is annotated for this expected relationship.</p>
       )}
       {(!target || expected.length > 0 || predicted.length > 0) && (
         <details
@@ -201,6 +203,9 @@ function ProofAlternatives({
         {proofLabels[target.status]}
         {target.joint_only && " · Joint evidence required"}
       </p>
+      {target.best_alternative_coverage != null && (
+        <p>Best approved alternative exact coverage · {percentMetric(target.best_alternative_coverage)}</p>
+      )}
       {alternatives.length > 1 && (
         <div
           className="proof-choices"

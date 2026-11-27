@@ -20,32 +20,33 @@ export function BenchmarkRunSummary({
         Evaluation Protocol v1 · {benchmark.cohort.planned_conditions}{" "}
         Environment Conditions
       </p>
-      <div className="benchmark-overview-line">
-        <div>
-          <span>All-condition graph F1</span>
-          <strong>{metric(benchmark.cohort.all_condition_micro_f1)}</strong>
-          <small>
-            {formatF1Basis(
-              benchmark.cohort.all_conditions.tp,
-              benchmark.cohort.all_conditions.fp,
-              benchmark.cohort.all_conditions.fn,
-            )}
-          </small>
+      {run.quality ? (
+        <RelationshipMatrix benchmark={benchmark} />
+      ) : (
+        <div className="benchmark-overview-line">
+          <div>
+            <span>All-condition graph F1</span>
+            <strong>{metric(benchmark.cohort.all_condition_micro_f1)}</strong>
+            <small>
+              {formatF1Basis(
+                benchmark.cohort.all_conditions.tp,
+                benchmark.cohort.all_conditions.fp,
+                benchmark.cohort.all_conditions.fn,
+              )}
+            </small>
+          </div>
+          <div>
+            <span>Complete proofs</span>
+            <strong>
+              {benchmark.cohort.planned_proofs
+                ? `${benchmark.cohort.complete_proofs} of ${benchmark.cohort.planned_proofs} complete`
+                : "Unavailable · 0 eligible"}
+            </strong>
+            <small>Annotated relationships with a complete approved proof</small>
+          </div>
+          <RelationshipMatrix benchmark={benchmark} />
         </div>
-        <div>
-          <span>Complete proofs</span>
-          <strong>
-            {benchmark.cohort.planned_proofs
-              ? `${benchmark.cohort.complete_proofs} of ${benchmark.cohort.planned_proofs} complete`
-              : "Unavailable · 0 eligible"}
-          </strong>
-          <small>Annotated relationships with a complete approved proof</small>
-        </div>
-        <RunRelationshipMatrix
-          counts={benchmark.cohort.all_conditions}
-          expectedEdgesWithoutGraph={benchmark.cohort.expected_edges_without_graph}
-        />
-      </div>
+      )}
 
       <details className="protocol-metrics">
         <summary>Protocol metrics and denominators</summary>
@@ -186,6 +187,13 @@ export function BenchmarkRunSummary({
       </details>
     </section>
   );
+}
+
+function RelationshipMatrix({ benchmark }: { benchmark: BenchmarkRun }) {
+  return <RunRelationshipMatrix
+    counts={benchmark.cohort.all_conditions}
+    expectedEdgesWithoutGraph={benchmark.cohort.expected_edges_without_graph}
+  />;
 }
 
 function eligibleRatio(count: number, planned: number) {

@@ -22,6 +22,7 @@ from .contracts import EvidenceQuote
 from .contracts import RelationshipOutcome
 from private_client_graph.evaluation import _edge
 from benchmark_v3.replay_evidence import assess_evidence
+from private_client_graph.research.evidence_quality import match_proof_routes
 from benchmark_v3.replay_manifest import VerifiedFamily
 from private_client_graph.research.results import ResearchResult
 from benchmark_v3.retained_evaluation import VerifiedBaseline
@@ -49,6 +50,8 @@ class ProofTarget(BaseModel):
     joint_only: bool
     status: Literal['complete', 'incomplete', 'missed', 'without_graph']
     alternatives: list[ProofAlternative]
+    best_alternative_coverage: float | None = Field(default=None, exclude_if=lambda value: value is None,
+        json_schema_extra={'x-typescript-optional': True})
 
 
 class ExpectedRelationship(BaseModel):
@@ -115,13 +118,14 @@ class BenchmarkRun(BaseModel):
 
     @classmethod
     def from_verified(cls, verified: VerifiedBaseline) -> 'BenchmarkRun':
+        # Archived v3 imports depend on byte-stable projection serialization.
         return cls.from_protocol(verified.protocol, verified.planned, verified.family_details,
                                  verified.original_results)
 
     @classmethod
     def from_protocol(cls, protocol: ProtocolResult, planned: Sequence[PlannedCondition],
                       families: Mapping[str, VerifiedFamily],
-                      results: Mapping[str, ResearchResult]) -> 'BenchmarkRun':
+                      results: Mapping[str, ResearchResult], *, include_coverage: bool = False) -> 'BenchmarkRun':
         return cls(
             scope=protocol.scope,
             cohort=protocol.cohort,
@@ -132,7 +136,7 @@ class BenchmarkRun(BaseModel):
             run_artifact_digest=protocol.run_artifact_sha256,
             observations=[
                 project_qualified_condition(item, protocol.conditions[item.frozen.saved.condition],
-                    families[item.family], results.get(item.frozen.saved.condition))
+                    families[item.family], results.get(item.frozen.saved.condition), include_coverage=include_coverage)
                 for item in planned
             ],
         )
@@ -218,28 +222,29 @@ def condition_relationship_outcomes(condition: BenchmarkCondition,
 
 
 def project_qualified_condition(item: PlannedCondition, result: ConditionResult,
-                                family: VerifiedFamily, original: ResearchResult | None) -> BenchmarkCondition:
+                                family: VerifiedFamily, original: ResearchResult | None, *,
+                                include_coverage: bool = False) -> BenchmarkCondition:
     saved = item.frozen.saved
     expected = _expected_state(item.frozen.sources, saved.truth, saved.source_approval)
     predicted = original.state if original else None
-    attachments = _attachments(predicted) if predicted else {}
-    proof_by_edge = {_edge(*row.edge): row for row in saved.sufficient_evidence}
     proof_status = {}
     if predicted:
         scored = assess_evidence(predicted, saved)['sufficiency']['targets']
         proof_status = {_edge(*row['edge']): row['status'] for row in scored}
     targets = []
-    for edge, annotation in sorted(proof_by_edge.items()):
-        edge_attachments = attachments.get(edge, set())
+    for match in match_proof_routes(saved, predicted):
         alternatives = [
             ProofAlternative(members=[
-                _proof_member(source_id, text, edge_attachments, item.frozen.sources)
-                for source_id, text in sorted({(quote.source_id, quote.supporting_text) for quote in group})
+                _proof_member(source_id, text, (source_id, text) in route.matched, item.frozen.sources)
+                for source_id, text in route.required
             ])
-            for group in annotation.alternatives
+            for route in match.routes
         ]
-        targets.append(ProofTarget(edge=edge, joint_only=annotation.joint_only,
-            status=proof_status.get(edge, 'without_graph'), alternatives=alternatives))
+        coverage = (float(match.coverage)
+                    if include_coverage and match.joint_only and result.outcome != 'not_attempted' else None)
+        targets.append(ProofTarget(edge=match.edge, joint_only=match.joint_only,
+            status=proof_status.get(match.edge, 'without_graph'), alternatives=alternatives,
+            best_alternative_coverage=coverage))
     natural_condition = next(iter(family.conditions))
     contrast = _contrast_label(item.family, saved.condition, family, natural_condition)
     return BenchmarkCondition(
@@ -305,15 +310,6 @@ def _expected_state(sources: list[Source], truth: GroundTruth, approval) -> Cano
         relationships=relationships, evidence=evidence)
 
 
-def _attachments(state: CanonicalState) -> dict[tuple[str, str, str], set[tuple[str, str]]]:
-    names = {entity.id: entity.name for entity in state.entities}
-    evidence = {row.id: (row.source_id, row.supporting_text) for row in state.evidence}
-    return {
-        _edge(names[row.source], row.type, names[row.target]): {evidence[key] for key in row.evidence_ids}
-        for row in state.relationships
-    }
-
-
 def attributed_quotes(state: CanonicalState) -> dict[SemanticEdge, list[EvidenceQuote]]:
     sources = {source.id: source.text for source in state.sources}
     evidence = {row.id: row for row in state.evidence}
@@ -337,7 +333,7 @@ def attributed_quotes(state: CanonicalState) -> dict[SemanticEdge, list[Evidence
     return quotes
 
 
-def _proof_member(source_id: str, text: str, attached: set[tuple[str, str]], sources: list[Source]) -> ProofMember:
+def _proof_member(source_id: str, text: str, attached: bool, sources: list[Source]) -> ProofMember:
     source = next((row for row in sources if row.id == source_id), None)
     occurrences = []
     if source is not None:
@@ -345,7 +341,7 @@ def _proof_member(source_id: str, text: str, attached: set[tuple[str, str]], sou
         while position >= 0:
             occurrences.append((position, position + len(text)))
             position = source.text.find(text, position + 1)
-    return ProofMember(source_id=source_id, text=text, attached=(source_id, text) in attached,
+    return ProofMember(source_id=source_id, text=text, attached=attached,
                        occurrences=occurrences)
 
 

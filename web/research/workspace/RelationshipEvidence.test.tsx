@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { expect, it, vi } from "vitest";
-import type { ProofTarget } from "../shared/contracts";
-import { EvidenceComparison } from "./RelationshipEvidence";
+import type { ProofTarget, RunObservation } from "../shared/contracts";
+import { EvidenceComparison, RelationshipEvidence } from "./RelationshipEvidence";
 
 const cited = {
   id: "note",
@@ -103,3 +103,42 @@ it.each([
     ).toBeNull();
   },
 );
+
+it("shows the projected best-alternative exact coverage beside the attached members", () => {
+  render(
+    <EvidenceComparison
+      edge={target.edge}
+      target={{
+        ...target, status: "incomplete", best_alternative_coverage: 0.5,
+        alternatives: [{ members: [{ ...cited, attached: true }, missing] }],
+      }}
+      expected={[]}
+      predicted={[cited]}
+      sources={[]}
+      onBack={vi.fn()}
+    />,
+  );
+  expect(screen.getByText("Best approved alternative exact coverage · 50.00%")).toBeVisible();
+  expect(screen.getByText("Source missing from this relationship")).toBeVisible();
+});
+
+it("shows the no-formal-target state only for qualified expected relationships", () => {
+  const observation = {
+    id: "observed",
+    relationships: [],
+    benchmark: {
+      role: "matched", proof_targets: [],
+      expected_relationships: [{ edge: target.edge, quotes: [cited] }],
+    },
+  } as unknown as RunObservation;
+  const { rerender } = render(<RelationshipEvidence observation={observation} edge={target.edge} onBack={vi.fn()} />);
+  const status = "No formal proof target is annotated for this expected relationship.";
+  expect(screen.getByText(status)).toBeVisible();
+  rerender(<RelationshipEvidence observation={observation} edge={["Extra", "trustee_of", "Blue Trust"]} onBack={vi.fn()} />);
+  expect(screen.queryByText(status)).not.toBeInTheDocument();
+  rerender(<RelationshipEvidence observation={{
+    ...observation,
+    benchmark: { ...observation.benchmark!, role: "consensus" },
+  }} edge={target.edge} onBack={vi.fn()} />);
+  expect(screen.queryByText(status)).not.toBeInTheDocument();
+});

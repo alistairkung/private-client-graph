@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import type { BenchmarkV4Comparison, BenchmarkV4Summary, EvidenceQuality } from "../research/shared/contracts";
 
 const experiment = "e".repeat(32);
 const control = "1".repeat(32);
@@ -223,4 +224,73 @@ test("compatible imports compare the full roster and changed order withholds del
     page.getByText(/order of the planned Conditions differs/i),
   ).toBeVisible();
   await expect(page.getByText(/deltas withheld/i)).toBeVisible();
+});
+
+test("evidence quality controls and comparison fit the viewport and retain keyboard selection", async ({ page }) => {
+  const graph = (inputs: number) => ({
+    inputs, valid_graphs: inputs, without_graph: 0, exact_graphs: 0,
+    precision: 1, recall: 0.5, f1: 2 / 3, counts: { tp: 2, fp: 0, fn: 2 }, outcomes: {},
+  });
+  const quality: EvidenceQuality = {
+    version: "deterministic_evidence_quality_v1", state: "complete",
+    scope_sha256: "fixture", scoring_sha256: "fixture", qualified_reference_sha256: "fixture",
+    observation_origin: "offline_fixture",
+    planned_inputs: 35, observed_inputs: 35, qualified_inputs: 34, observed_qualified_inputs: 34,
+    expected_relationships: 113, observed_proof_targets: 71, observed_joint_targets: 30,
+    combined_graph: graph(35), qualified_graph: graph(34),
+    complete_proof: { complete: 11, targets: 71, rate: 11 / 71 },
+    joint_only_complete_proof: { complete: 1, targets: 30, rate: 1 / 30 },
+    joint_only_coverage: { targets: 30, mean: 0.4 },
+  };
+  const summary: BenchmarkV4Summary = {
+    scope_sha256: quality.scope_sha256, scoring_sha256: quality.scoring_sha256,
+    observation_origin: quality.observation_origin, state: quality.state,
+    combined: quality.combined_graph, qualified: quality.qualified_graph,
+    consensus: graph(1), by_matter: {},
+    consensus_evidence: { adjudicated_relationships: 6, reference_citations: 8, matched_citations: 4, assessed: true },
+  };
+  // The browser server retains the v3 fixture. Add only the v4 reporting payload
+  // to its real reads so this test can exercise viewport and keyboard behavior.
+  await page.route(`**${workspace}/runs/*`, async (route) => {
+    const response = await route.fetch();
+    if (!response.ok() || ![control, treatment].some((id) => new URL(route.request().url()).pathname.endsWith(id))) {
+      await route.fulfill({ response });
+      return;
+    }
+    await route.fulfill({ response, json: { ...await response.json(), benchmark_v4: summary, quality } });
+  });
+  await page.route(`**${workspace}/comparison?*`, async (route) => {
+    const response = await route.fetch();
+    const comparison: BenchmarkV4Comparison = {
+      left: summary, right: summary, left_proofs: null, right_proofs: null,
+      left_usage: null, right_usage: null, shared_extraction_run_id: null,
+      left_quality: quality, right_quality: quality,
+      quality_delta: { combined_graph: 0, qualified_graph: 0, complete_proof: 0, joint_only_coverage: 0 },
+    };
+    await route.fulfill({ response, json: { ...await response.json(), benchmark_v4: comparison } });
+  });
+
+  await page.goto(`/#workspace=${experiment}&run=${control}`);
+  await page.getByText("Run history and selection", { exact: true }).click();
+  const metric = page.getByRole("combobox", { name: "Performance metric" });
+  await metric.selectOption("joint_only_coverage");
+  const runTab = page.getByRole("tab", { name: "By Run" });
+  await runTab.press("ArrowRight");
+  await expect(page.getByRole("tab", { name: "Vs Cost" })).toBeFocused();
+  await expect(metric).toHaveValue("joint_only_coverage");
+  await expect(metric).toHaveAccessibleDescription("30 joint-only proof targets · qualified cohort");
+  await expect(page.getByRole("heading", { name: "Joint-only Exact Evidence Coverage vs Cost" })).toBeVisible();
+  await expect(page).toHaveURL(new RegExp(control + "$"));
+
+  await page.getByRole("combobox", { name: "Compare with verified Run" }).selectOption(treatment);
+  const table = page.getByRole("table", { name: "Evidence quality comparison" });
+  await expect(table.getByRole("row", { name: /Complete Proof Rate.*qualified cohort/ })).toBeVisible();
+  await expect(table.getByRole("row", { name: /Joint-only Exact Evidence Coverage/ })).toBeVisible();
+  for (const element of [metric, table]) {
+    expect(await element.evaluate((node) => {
+      const { left, right } = node.getBoundingClientRect();
+      return left >= 0 && right <= window.innerWidth + 1;
+    })).toBe(true);
+  }
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
 });

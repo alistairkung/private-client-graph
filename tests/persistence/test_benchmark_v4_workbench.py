@@ -97,6 +97,9 @@ def test_exact_v4_owner_workbench_freezes_authorizes_starts_and_indexes(database
         assert mixed['benchmark_v4']['combined']['valid_graphs'] == 35
         assert mixed['benchmark_v4']['combined']['counts'] == {'tp': 0, 'fp': 0, 'fn': 119}
         assert mixed['qualified_protocol']['cohort']['planned_proofs'] == 71
+        assert mixed['quality']['complete_proof'] == {'complete': 0, 'targets': 71, 'rate': 0.0}
+        assert mixed['quality']['joint_only_coverage'] == {'targets': 30, 'mean': 0.0}
+        assert mixed['quality'] == client.get(run_url).json()['quality']
         assert mixed['benchmark_v4']['consensus_evidence']['matched_citations'] == 0
         assert client.get(workspace_url).json()['items'][0]['run_ids'] == [plan['id']]
 
@@ -157,8 +160,15 @@ def test_exact_v4_owner_workbench_freezes_authorizes_starts_and_indexes(database
         assert comparison['matched_inputs'] == 35 and comparison['comparable_scope']
         assert comparison['benchmark_v4']['shared_extraction_run_id'] == plan['id']
         assert comparison['benchmark_v4']['right_usage'] == usage
-        subprocess.run([sys.executable, '-m', 'private_client_graph.research', 'summarize', str(root / paired['id'])],
-                       check=True, capture_output=True)
-        summary = json.loads((root / paired['id'] / 'summary.json').read_text())
+        assert comparison['benchmark_v4']['quality_delta'] == {
+            'combined_graph': 0.0, 'qualified_graph': 0.0, 'complete_proof': 0.0, 'joint_only_coverage': 0.0,
+        }
+        completed = subprocess.run(
+            [sys.executable, '-m', 'private_client_graph.research', 'summarize', str(root / paired['id'])],
+            check=True, capture_output=True,
+        )
+        summary = json.loads(completed.stdout)
+        assert not (root / paired['id'] / 'summary.json').exists()
+        assert summary['quality'] == resolved['quality']
         assert summary['pipeline_usage'] == usage
         assert summary['benchmark_v4'] == resolved['benchmark_v4']

@@ -13,6 +13,7 @@ import { compareRuns } from "./api";
 import { metric, money } from "./RunChart";
 import { BenchmarkEvidence, BenchmarkV4Summary, GraphMetrics, PipelineUsage } from "./BenchmarkV4Summary";
 import { BenchmarkRunSummary } from "./BenchmarkRunSummary";
+import { RunQuality, RunQualityComparison } from "./RunQuality";
 
 export function RunInspection({
   workspace,
@@ -291,14 +292,15 @@ function RunComparisonPanel({
       ))}
       {data.benchmark_v4 && (
         <section aria-label="Benchmark v4 comparison">
+          <RunQualityComparison comparison={data.benchmark_v4} />
           {data.benchmark_v4.shared_extraction_run_id && <p>Verified shared extraction candidates.</p>}
           <h4>Comparison Run</h4>
-          <GraphMetrics summary={data.benchmark_v4.left} />
-          <BenchmarkEvidence summary={data.benchmark_v4.left} proofs={data.benchmark_v4.left_proofs} />
+          <GraphMetrics summary={data.benchmark_v4.left} quality={data.benchmark_v4.left_quality} />
+          <BenchmarkEvidence summary={data.benchmark_v4.left} proofs={data.benchmark_v4.left_quality ? null : data.benchmark_v4.left_proofs} />
           {data.benchmark_v4.left_usage && <PipelineUsage usage={data.benchmark_v4.left_usage} complete={data.benchmark_v4.left.state === "complete"} />}
           <h4>Selected Run</h4>
-          <GraphMetrics summary={data.benchmark_v4.right} />
-          <BenchmarkEvidence summary={data.benchmark_v4.right} proofs={data.benchmark_v4.right_proofs} />
+          <GraphMetrics summary={data.benchmark_v4.right} quality={data.benchmark_v4.right_quality} />
+          <BenchmarkEvidence summary={data.benchmark_v4.right} proofs={data.benchmark_v4.right_quality ? null : data.benchmark_v4.right_proofs} />
           {data.benchmark_v4.right_usage && <PipelineUsage usage={data.benchmark_v4.right_usage} complete={data.benchmark_v4.right.state === "complete"} />}
         </section>
       )}
@@ -460,8 +462,11 @@ function BenchmarkRunInspection({
         </div>
         {mixed && copy && <button className="secondary" disabled={busy} onClick={copy}>Copy to next draft</button>}
       </div>
+      {run.quality && <RunQuality quality={run.quality} />}
       {mixed && <BenchmarkV4Summary run={run} />}
-      {mixed?.state !== "unmeasured" && <BenchmarkRunSummary run={run} benchmark={benchmark} />}
+      {mixed?.state !== "unmeasured" && (!run.quality || run.quality.observed_qualified_inputs > 0) && (
+        <BenchmarkRunSummary run={run} benchmark={benchmark} />
+      )}
       <BenchmarkFamilyExplorer
         key={run.id}
         run={run}

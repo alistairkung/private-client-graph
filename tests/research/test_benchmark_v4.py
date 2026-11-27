@@ -2,7 +2,7 @@
 import json
 import os
 import subprocess
-from collections import defaultdict
+from collections import Counter, defaultdict
 from pathlib import Path
 
 import pytest
@@ -20,6 +20,7 @@ from private_client_graph.research import benchmark_v4
 from private_client_graph.research.artifacts import Bundle, checksum
 from private_client_graph.research.benchmark_v4 import BenchmarkWorkload, load_roster, load_workload
 from private_client_graph.research.benchmark_v4_scoring import evaluate_benchmark_v4
+from private_client_graph.research.evidence_quality import report_evidence_quality
 from private_client_graph.research.exploratory_reference import ConsensusReference
 from private_client_graph.research.inputs import ResearchInput
 from private_client_graph.research.provider import ModelRequest, ModelResponse, request_messages
@@ -177,6 +178,19 @@ def test_missing_invalid_and_empty_u8_have_distinct_construction_outcomes(worklo
         assert result.summary.consensus.valid_graphs == int(expected == 'scored')
 
 
+def test_u8_only_observation_keeps_formal_metrics_unmeasured(workload):
+    mixed = evaluate_benchmark_v4(workload, {'u8': _consensus()}, observation_origin='offline_fixture')
+    quality = report_evidence_quality(mixed.qualified, workload.qualified, {}, mixed=mixed.summary).quality
+    assert (quality.planned_inputs, quality.observed_inputs) == (35, 1)
+    assert (quality.qualified_inputs, quality.observed_qualified_inputs) == (34, 0)
+    assert quality.state == 'provisional' and quality.combined_graph.f1 == 2 / 42
+    assert quality.qualified_graph is None
+    assert quality.complete_proof.targets == quality.joint_only_coverage.targets == 34
+    assert quality.observed_proof_targets == quality.observed_joint_targets == 0
+    assert quality.complete_proof.rate is None and quality.joint_only_coverage.mean is None
+    assert mixed.summary.consensus_evidence.assessed
+
+
 def test_v4_owner_catalog_and_default_frozen_workbench_plan(tmp_path, monkeypatch, workload):
     monkeypatch.setenv('PCG_BENCHMARK_V4_CUSTODY', str(tmp_path))
     monkeypatch.setenv('PCG_RESEARCH_ARTIFACTS', str(tmp_path))
@@ -277,7 +291,7 @@ def test_private_custody_files_are_absent_from_git():
                    or '2026-11-27-u8-consensus' in path for path in tracked)
 
 
-def test_substituted_live_v4_run_replays_the_same_workbench_and_cli_summary(tmp_path, monkeypatch, workload):
+def test_substituted_live_v4_run_replays_the_same_workbench_and_cli_summary(tmp_path, monkeypatch, workload, capsys):
     from private_client_graph.research.live_accounting import initialize_task
     from private_client_graph.research.summary import summarize
     from private_client_graph.workbench.execution_contracts import LiveApproval
@@ -334,12 +348,35 @@ def test_substituted_live_v4_run_replays_the_same_workbench_and_cli_summary(tmp_
     ]
     assert [len(row.sources) for row in retained.observations[1:4]] == [2, 2, 2]
     assert retained.benchmark_v4.model_dump(mode='json') == summarize(bundle)['benchmark_v4']
+    from private_client_graph.research.cli import main as research_cli
+
+    assert retained.quality.complete_proof.rate == 31 / 34
+    assert retained.quality.joint_only_coverage.mean == 31 / 34
+    assert retained.quality.expected_relationships == 34
+    assert len(retained.benchmark.observations[0].proof_targets) == 1
+    assert retained.benchmark.observations[0].proof_targets[0].best_alternative_coverage == 1
+    research_cli(['inspect', str(bundle.path)])
+    cli_json = json.loads(capsys.readouterr().out)
+    assert cli_json['quality'] == retained.quality.model_dump(mode='json')
+    assert 'joint_only_targets' not in cli_json
+    research_cli(['inspect', str(bundle.path), '--include-proof-members'])
+    private_json = json.loads(capsys.readouterr().out)
+    assert private_json['quality'] == cli_json['quality']
+    assert private_json['joint_only_targets'][0]['alternatives'][0]['matched'] == 2
+    assert private_json['joint_only_targets'][1]['status'] == 'without_graph'
+    assert not (bundle.path / 'summary.json').exists()
+    research_cli(['summarize', str(bundle.path)])
+    assert json.loads(capsys.readouterr().out) == cli_json
+    assert not (bundle.path / 'summary.json').exists()
+
     assert 'attempts' not in summarize(bundle)['operations']
     assert read_run(tmp_path, identity, first.id).benchmark_v4 == retained.benchmark_v4
 
     comparison = compare_benchmark_v4_runs(retained, read_run(tmp_path, identity, second.id))
     assert comparison.comparable_scope and comparison.matched_inputs == 35
     assert not comparison.unqualified_improvement_allowed
+    assert comparison.benchmark_v4.left_quality == retained.quality
+    assert comparison.benchmark_v4.quality_delta is None
     with pytest.raises(ValueError, match='stay in the private'):
         load_retained_inputs(tmp_path, identity, first.id)
 
@@ -503,3 +540,36 @@ def test_paired_resolver_retains_input_lineage_and_resumes_without_repeating_att
     assert all(result['evaluation'] is None for result in second_bundle.results())
     with pytest.raises(ValueError, match='matching live Extractor-only'):
         preview_run(RunConfiguration.model_validate(dict(second_config, retained_run_id=second.id)), tmp_path)
+
+
+def test_retained_live_pair_evidence_quality_replays_exact_members(monkeypatch):
+    from private_client_graph.research.summary import summarize
+
+    custody = os.getenv('PCG_V3_PRIVATE_BASELINE_CUSTODY')
+    extractor = os.getenv('PCG_V4_RETAINED_EXTRACTOR')
+    resolver = os.getenv('PCG_V4_RETAINED_RESOLVER')
+    if not (custody and extractor and resolver):
+        pytest.skip('Set the private custody and both retained Run paths for exact replay')
+    monkeypatch.setenv('PCG_BENCHMARK_V4_CUSTODY', custody)
+    monkeypatch.delenv('DEEPSEEK_API_KEY', raising=False)
+
+    first, second = (summarize(Bundle.open(Path(path)), include_proof_members=True) for path in (extractor, resolver))
+    assert second['pipeline_usage']['origin_run_id'] == first['run_id']
+    coverages = []
+    for report, false_positives in ((first, 10), (second, 12)):
+        quality = report['quality']
+        assert quality['version'] == 'deterministic_evidence_quality_v1'
+        assert quality['state'] == 'complete' and quality['scoring_sha256']
+        assert quality['combined_graph']['counts'] == {'tp': 111, 'fp': false_positives, 'fn': 8}
+        assert quality['qualified_graph']['counts'] == {'tp': 105, 'fp': false_positives, 'fn': 8}
+        assert quality['expected_relationships'] == 113
+        assert quality['complete_proof'] == {'complete': 11, 'targets': 71, 'rate': 11 / 71}
+        assert quality['joint_only_complete_proof'] == {'complete': 0, 'targets': 30, 'rate': 0.0}
+        assert quality['joint_only_coverage'] == {'targets': 30, 'mean': 13 / 300}
+        by_target = {(target['condition'], tuple(target['edge'])): target['coverage']
+                     for target in report['joint_only_targets']}
+        assert Counter(by_target.values()) == {0.0: 25, 0.5: 1, 0.2: 4}
+        coverages.append(by_target)
+        assert report['benchmark_v4']['consensus_evidence']['matched_citations'] == 4
+        assert report['pipeline_usage']['full_pipeline']['estimated_cost'] is None
+    assert coverages[0] == coverages[1]
