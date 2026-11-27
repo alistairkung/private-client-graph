@@ -26,6 +26,7 @@ export function DraftEditor({
   saving,
   disabled = false,
   runIds = [],
+  runNumbers,
   extractorRuns = [],
   benchmark,
 }: {
@@ -38,6 +39,7 @@ export function DraftEditor({
   saving: (busy: boolean) => void;
   disabled?: boolean;
   runIds?: string[];
+  runNumbers?: Record<string, number>;
   extractorRuns?: RunDetail[];
   benchmark?: BenchmarkRoster | null;
 }) {
@@ -47,6 +49,7 @@ export function DraftEditor({
   const isBenchmark = !!configuration.benchmark_v4_sha256;
   const [preview, setPreview] = useState<Preview | null>(null);
   const [error, setError] = useState("");
+  const [freezeError, setFreezeError] = useState("");
   const [freezing, setBusy] = useState(false);
   const busy = freezing || disabled;
   const [review, setReview] = useState(false);
@@ -118,6 +121,7 @@ export function DraftEditor({
   function update(changes: Partial<RunConfiguration>) {
     setReview(false);
     setPreview(null);
+    setFreezeError("");
     setConfiguration((value) => ({ ...value, ...changes }));
     freezeId.current = crypto.randomUUID();
   }
@@ -240,7 +244,7 @@ export function DraftEditor({
                 Verified extraction origin
                 <select value={configuration.retained_run_id ?? ""} disabled={busy}
                   onChange={(event) => selectBenchmarkExtractor(event.target.value)}>
-                  {extractorRuns.map((run) => <option key={run.id} value={run.id}>Run {runIds.indexOf(run.id) + 1}</option>)}
+                  {extractorRuns.map((run) => <option key={run.id} value={run.id}>Run {runNumbers?.[run.id] ?? runIds.indexOf(run.id) + 1}</option>)}
                 </select>
               </label>
               <p>Reuses the original candidates across all 35 frozen inputs. One alias-resolution attempt per usable extraction.</p>
@@ -289,6 +293,7 @@ export function DraftEditor({
           </button>
         </p>
       )}
+      {freezeError && <p role="alert">Could not freeze the Run. {freezeError} Review the draft and use Run to try again.</p>}
       {review && preview && (
         <ReviewDialog
           title="Review next Run"
@@ -306,7 +311,7 @@ export function DraftEditor({
                   if (lock.current) return;
                   lock.current = true;
                   setBusy(true);
-                  setError("");
+                  setFreezeError("");
                   try {
                     const result = await freezeDraft(id, {
                       request_id: freezeId.current,
@@ -316,7 +321,8 @@ export function DraftEditor({
                     setReview(false);
                     frozen(result.id);
                   } catch (error) {
-                    setError((error as Error).message);
+                    setFreezeError((error as Error).message);
+                    setReview(false);
                   } finally {
                     lock.current = false;
                     setBusy(false);
@@ -329,7 +335,6 @@ export function DraftEditor({
           }
         >
           <ReviewSummary preview={preview} />
-          {error && <p role="alert">{error}</p>}
         </ReviewDialog>
       )}
     </section>

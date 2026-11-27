@@ -14,7 +14,7 @@ from private_client_graph.research.retained_inputs import RetainedInputLineage
 from .execution_contracts import FrozenPlan, InputChoice, Preview
 from .planning import publish_plan, require_live
 from .workspace_contracts import CopyRunDraft, DraftUpdate, FreezeRun, RunConfiguration, RunDraft
-from .workspaces import experiment_path, read_experiment, save_draft, workspace_lock, read_record, write_record
+from .workspaces import experiment_path, read_experiment, run_is_archived, save_draft, workspace_lock, read_record, write_record
 
 
 def preview_run(configuration: RunConfiguration, root: Path) -> Preview:
@@ -106,6 +106,8 @@ def freeze_run(root: Path, experiment_id: str, command: FreezeRun) -> FrozenPlan
         identity = uuid5(NAMESPACE_URL, f'pcg-run:{experiment_id}:{command.request_id}').hex
         membership = experiment_path(root, experiment_id) / 'runs' / f'{identity}.json'
         if membership.exists():
+            if run_is_archived(root, experiment_id, identity):
+                raise ValueError('This Run was removed. Review the draft to freeze a new Run.')
             from .artifacts import _verify_execution_binding
             _verify_execution_binding(root / identity)
             record = read_record(membership)

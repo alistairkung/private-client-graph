@@ -128,28 +128,25 @@ export function Sidebar({
           {!data.items.length && <p>No experiments yet.</p>}
         </nav>
       )}
-      <a
-        href="#browse=1"
-        onClick={(event) => {
-          if (saving) {
-            event.preventDefault();
-            return;
-          }
-          if (narrow) close();
-        }}
-      >
-        Legacy study history
-      </a>
-      {benchmarkAvailable && (
-        <a href="#benchmark=v4" aria-current={benchmarkSelected ? "page" : undefined}
+      <nav className="research-reference-links" aria-label="Research references">
+        <a href="#browse=1"
           onClick={(event) => {
             if (saving) event.preventDefault();
             else if (narrow) close();
           }}>
-          <strong>Benchmark v4</strong>
-          <small>20 Matters · 35 evaluation inputs</small>
+          Legacy study history
         </a>
-      )}
+        {benchmarkAvailable && (
+          <a href="#benchmark=v4" aria-current={benchmarkSelected ? "page" : undefined}
+            onClick={(event) => {
+              if (saving) event.preventDefault();
+              else if (narrow) close();
+            }}>
+            <strong>Benchmark v4</strong>
+            <small>20 Matters · 35 evaluation inputs</small>
+          </a>
+        )}
+      </nav>
       {exploratoryAvailable && (
         <nav
           aria-label="Exploratory workloads"

@@ -8,6 +8,7 @@ from uuid import uuid4
 from private_client_graph.research.artifacts import Bundle, checksum, write_json_once
 from private_client_graph.research.fixtures import ROOT, load_inputs
 from private_client_graph.research.plan import FiniteExperimentPlan
+from private_client_graph.research.run_plan import RunPlan
 from private_client_graph.research.provider import ModelSettings, ModelRequest
 from private_client_graph.research.demo import recording_key
 from .execution_contracts import Capabilities, FrozenPlan, InputChoice, Preview, Proposal, TaskBudget
@@ -142,6 +143,10 @@ def open_executable(root: Path, identity: str) -> tuple[Bundle, FrozenPlan]:
     bundle = Bundle.open(path)
     if not isinstance(bundle.plan, FiniteExperimentPlan):
         raise ValueError('Historical imports do not confer execution authority')
+    if isinstance(bundle.plan, RunPlan) and bundle.plan.experiment_id:
+        from .workspaces import run_is_archived
+        if run_is_archived(root, bundle.plan.experiment_id, identity):
+            raise ValueError('This Run was removed from the Experiment')
     authority = json.loads((path / 'execution-binding.json').read_text())
     frozen = FrozenPlan.model_validate_json((path / 'execution.json').read_text())
     if frozen.task_id != bundle.plan.task_id or frozen.preview.invocation_cap != bundle.plan.invocation_cap:

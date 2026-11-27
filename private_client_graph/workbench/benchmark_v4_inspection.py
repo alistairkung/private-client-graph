@@ -4,8 +4,8 @@ from typing import TYPE_CHECKING
 from benchmark_v3.evaluation_protocol import ConditionResult
 from private_client_graph.research.artifacts import Bundle
 from private_client_graph.research.benchmark_v4 import BenchmarkWorkload, EvaluationInput
-from private_client_graph.research.benchmark_v4_run import evaluate_retained_run
-from private_client_graph.research.benchmark_v4_operations import benchmark_v4_operations
+from private_client_graph.research.benchmark_v4_run import VerifiedV4Run, evaluate_retained_run
+from private_client_graph.research.benchmark_v4_operations import benchmark_v4_operations, estimate_at_reference_rate
 from private_client_graph.research.evidence_quality import report_evidence_quality
 from private_client_graph.research.results import ResearchResult
 from private_client_graph.research.run_plan import RunPlan
@@ -13,7 +13,7 @@ from .benchmark_contracts import (
     BenchmarkCondition, BenchmarkRun, ExpectedRelationship, condition_metrics,
     condition_relationship_outcomes, project_qualified_condition, attributed_quotes,
 )
-from .benchmark_v4 import load_private_workload, workload_metadata
+from .benchmark_v4 import load_private_workload, run_pricing, workload_metadata
 
 if TYPE_CHECKING:
     from .run_inspection import RunDetail, RunObservation
@@ -28,6 +28,8 @@ def attach_benchmark_v4(detail: 'RunDetail', bundle: Bundle) -> None:
     detail.quality = report_evidence_quality(mixed.qualified, workload.qualified, results, mixed=mixed.summary).quality
     detail.pipeline_usage = benchmark_v4_operations(retained, detail.attempts, bundle.plan.pricing,
                                                    live=bundle.plan.kind == 'live_experiment')
+    if mixed.summary.state == 'complete' and mixed.summary.observation_origin == 'live':
+        _attach_reference_cost(detail, bundle, retained)
     detail.evaluation.full_pipeline_cost = detail.pipeline_usage.full_pipeline.estimated_cost
     detail.evaluation.full_pipeline_cost_reason = (
         'Estimate includes inherited extraction and incurred resolver calls when applicable.'
@@ -46,6 +48,21 @@ def attach_benchmark_v4(detail: 'RunDetail', bundle: Bundle) -> None:
         observation.reason = condition.failure_detail
         observation.relationships = condition_relationship_outcomes(condition, outcome.graph,
             observation.result.state if observation.result else None, score_provenance=not consensus)
+
+
+def _attach_reference_cost(detail: 'RunDetail', bundle: Bundle, retained: VerifiedV4Run) -> None:
+    from .run_inspection import ReferenceCostEstimate
+
+    try:
+        pricing = run_pricing()
+    except ValueError:
+        return
+    if pricing is None or pricing.model != bundle.plan.settings.model:
+        return
+    total = estimate_at_reference_rate(retained, detail.attempts, pricing)
+    if total is not None:
+        detail.reference_cost = ReferenceCostEstimate(total=total, currency=pricing.currency,
+            source_url=pricing.source_url, retrieved_at=pricing.retrieved_at)
 
 
 def inspect_frozen_input(workload: BenchmarkWorkload, identity: str) -> 'RunObservation | None':

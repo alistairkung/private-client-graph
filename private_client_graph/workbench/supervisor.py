@@ -16,17 +16,12 @@ from .evidence import digest_text
 from .execution_contracts import Command, LiveApproval, RunStatus
 from .planning import open_executable, live_budget, require_live
 from .approval import authorize
+from .run_lifecycle import latest_event as latest_event
 
 
 def event(bundle: Bundle, state: str, message: str, invocation: str) -> None:
     write_json_once(bundle.path / 'lifecycle' / f'{uuid4().hex}.json',
         {'at': utc_now(), 'state': state, 'message': message, 'invocation': invocation})
-
-
-def latest_event(bundle: Bundle) -> dict:
-    events = [json.loads(p.read_text()) for p in (bundle.path / 'lifecycle').glob('*.json')]
-    return max(events, key=lambda e: e['at']) if events else {
-        'state': 'frozen', 'message': 'Frozen plan; execution has not started.', 'invocation': ''}
 
 
 @contextmanager

@@ -8,6 +8,7 @@ from pathlib import Path
 from fastapi.testclient import TestClient
 import pytest
 
+from private_client_graph.research.artifacts import Bundle
 from private_client_graph.research.live_accounting import initialize_task
 from private_client_graph.workbench import supervisor
 
@@ -172,3 +173,37 @@ def test_exact_v4_owner_workbench_freezes_authorizes_starts_and_indexes(database
         assert summary['quality'] == resolved['quality']
         assert summary['pipeline_usage'] == usage
         assert summary['benchmark_v4'] == resolved['benchmark_v4']
+
+        assert resolved['reference_cost']['total'] == pytest.approx(0.00056)
+        reference_pricing = json.loads(pricing.read_text())
+        reference_pricing['output_per_million'] *= 2
+        pricing.write_text(json.dumps(reference_pricing))
+        at_new_rate = client.get(paired_url).json()
+        assert at_new_rate['reference_cost']['total'] == pytest.approx(0.00098)
+        assert at_new_rate['pipeline_usage'] == usage
+
+        unused = client.post(f'{experiment_url}/runs', json={
+            'request_id': 'unused', 'expected_revision': updated.json()['revision'],
+        }).json()
+        unused_url = f"{experiment_url}/runs/{unused['id']}"
+        assert client.get(unused_url).json()['can_archive']
+        failed = client.post(f'{experiment_url}/runs', json={
+            'request_id': 'failed-worker', 'expected_revision': updated.json()['revision'],
+        }).json()
+        failed_url = f"{experiment_url}/runs/{failed['id']}"
+        supervisor.event(Bundle.open(root / failed['id']), 'failed', 'Substituted worker failure.', 'fixture')
+        assert client.get(failed_url).json()['execution_message'] == 'Substituted worker failure.'
+        assert client.post(f'{paired_url}/archive', json={}).status_code == 409
+        assert client.post(f'{unused_url}/archive', json={}, headers={'origin': 'https://example.test'}).status_code == 403
+        for _ in range(2):
+            archived = client.post(f'{unused_url}/archive', json={}).raise_for_status().json()
+            assert archived['run_ids'] == [plan['id'], paired['id'], failed['id']]
+            assert archived['run_numbers'][failed['id']] == 4
+        assert (root / unused['id'] / 'manifest.json').exists()
+        assert client.get(unused_url).status_code == 409
+        assert client.post(f'{unused_url}/start', json=command).status_code == 409
+        assert client.post(f"/api/research/v1/plans/{unused['id']}/start", json={
+            'request_id': 'archive-restart', 'plan_digest': unused['digest'],
+        }).status_code == 409
+        assert client.post(f'{failed_url}/archive', json={}).json()['run_ids'] == [plan['id'], paired['id']]
+        assert client.get('/api/research/v2/status').json()['task_budget']['used'] == 70

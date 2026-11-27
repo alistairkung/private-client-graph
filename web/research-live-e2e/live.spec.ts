@@ -1,5 +1,40 @@
 import { test, expect } from "@playwright/test";
 
+test("failed commands close review and unused runs can be removed", async ({ page }) => {
+  await page.goto("/#new=1");
+  await page.getByLabel("Experiment name", { exact: true }).fill("Execution recovery");
+  await page.getByRole("button", { name: "Create experiment", exact: true }).click();
+  const review = page.getByRole("dialog");
+  const run = page.getByRole("button", { name: "Run", exact: true });
+  await run.click();
+
+  const freeze = review.getByRole("button", { name: "Freeze Run", exact: true });
+  await page.route("**/api/research/v2/experiments/*/runs", (route) =>
+    route.fulfill({ status: 409, json: { detail: "Substituted freeze conflict" } }), { times: 1 });
+  await freeze.click();
+  await expect(review).toHaveCount(0);
+  await expect(page.getByRole("alert")).toContainText("Substituted freeze conflict");
+  await run.click();
+  await freeze.click();
+
+  const start = review.getByRole("button", { name: "Start Run", exact: true });
+  await page.route("**/api/research/v2/experiments/*/runs/*/start", (route) =>
+    route.fulfill({ status: 409, json: { detail: "Substituted worker error" } }));
+  await start.click();
+  await expect(review).toHaveCount(0);
+  const execution = page.getByRole("region", { name: "Run execution" });
+  await expect(execution.getByRole("alert")).toContainText("Substituted worker error");
+  await execution.getByRole("button", { name: "Review and retry start" }).click();
+  await expect(start).toBeEnabled();
+  await review.getByRole("button", { name: "Close review" }).click();
+  await execution.getByRole("button", { name: "Remove from history" }).click();
+  await review.getByRole("button", { name: "Remove Run", exact: true }).click();
+  await expect(execution).toHaveCount(0);
+  await expect(page.getByText("0 Runs", { exact: true })).toBeVisible();
+  await page.reload();
+  await expect(page.getByText("0 Runs", { exact: true })).toBeVisible();
+});
+
 test("explicit approval, checkpoint, continuation and exact Evidence with substituted provider", async ({
   page,
 }, info) => {
