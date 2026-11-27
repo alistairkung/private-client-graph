@@ -52,6 +52,7 @@ def summarize(bundle: Bundle) -> dict[str, Any]:
 
 def _summarize_v4(bundle: Bundle) -> dict[str, Any]:
     from .benchmark_v4 import configured_custody, load_workload
+    from .benchmark_v4_operations import benchmark_v4_operations
     from .benchmark_v4_run import evaluate_retained_run
     from .live_accounting import retained_run_attempts
     custody = configured_custody()
@@ -72,6 +73,8 @@ def _summarize_v4(bundle: Bundle) -> dict[str, Any]:
         'qualified_protocol': {'scope': asdict(protocol.scope), 'cohort': asdict(protocol.cohort),
                                'families': {name: asdict(metrics) for name, metrics in protocol.families.items()}},
         'operations': {**operations, 'authority_reasons': authority_reasons},
+        'pipeline_usage': benchmark_v4_operations(retained, attempts, bundle.plan.pricing,
+            live=bundle.plan.kind == 'live_experiment' and not authority_reasons).model_dump(mode='json'),
         'provenance': {key: value for key, value in bundle.manifest['provenance'].items() if key != 'code'},
     }
 

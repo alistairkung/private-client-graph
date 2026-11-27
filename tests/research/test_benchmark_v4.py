@@ -359,3 +359,147 @@ def test_substituted_live_v4_run_replays_the_same_workbench_and_cli_summary(tmp_
     monkeypatch.delenv('PCG_BENCHMARK_V4_CUSTODY')
     with pytest.raises(ValueError, match='private custody'):
         read_run(tmp_path, identity, first.id)
+
+
+def test_paired_resolver_retains_input_lineage_and_resumes_without_repeating_attempts(tmp_path, monkeypatch, workload):
+    from private_client_graph.research.live_accounting import initialize_task
+    from private_client_graph.research.summary import summarize
+    from private_client_graph.workbench.execution_contracts import LiveApproval
+    from private_client_graph.workbench.planning import live_budget, open_executable
+    from private_client_graph.workbench.workspace_contracts import CopyRunDraft, DraftUpdate, RunConfiguration
+    from private_client_graph.workbench.run_planning import copy_run_draft
+    from private_client_graph.workbench.workspaces import update_draft
+    from private_client_graph.workbench.workspace_execution import prepare_authorization
+
+    monkeypatch.setenv('PCG_BENCHMARK_V4_CUSTODY', str(tmp_path))
+    monkeypatch.setenv('PCG_RESEARCH_LIVE_ENABLED', '1')
+    monkeypatch.setattr(benchmark_v4, 'load_workload', lambda _: workload)
+    monkeypatch.setattr(workbench, 'load_workload', lambda _: workload)
+    initialize_task(tmp_path, 'Substituted pair')
+    draft = workbench.default_benchmark_draft(tmp_path)
+    workspace = create_experiment(tmp_path, CreateExperiment(request_id='new', name='Pair'), initial_draft=draft)
+    identity = workspace.id
+    first = freeze_run(tmp_path, identity, FreezeRun(request_id='first', expected_revision=0))
+    second_config = dict(draft.configuration.model_dump(), input_mode='saved', resolver='generative',
+                         retained_run_id=first.id, retained_experiment_id=identity, task_call_cap=70)
+    paired = RunConfiguration.model_validate(second_config)
+    with pytest.raises(ValueError, match='completed Run'):
+        preview_run(paired, tmp_path)
+
+    def open_authorized(frozen, invocation, continuation=False):
+        budget = live_budget(tmp_path)
+        prepare_authorization(tmp_path, frozen.id, LiveApproval(request_id=invocation, plan_digest=frozen.digest,
+            approved=True, task_id=frozen.task_id, expected_task_usage=budget.used, expected_task_cap=budget.cap,
+            task_cap=frozen.preview.proposal.task_call_cap, continuation=continuation), 'http://localhost')
+        bundle, _ = open_executable(tmp_path, frozen.id)
+        bundle.authorization_id = invocation
+        return bundle
+
+    first_bundle = open_authorized(first, 'extract')
+    expected_requests, resolution_calls = [], []
+    alias_input = _qualified(FIRST, SECOND)
+    alias_input.relationships[0].source_name = 'T.'
+
+    def extract(request):
+        assert request.stage == 'extraction'
+        expected_requests.append(request)
+        index = len(expected_requests)
+        if index == 2:
+            return ModelResponse(error_type='SubstituteParseError')
+        if index == 3:
+            raise RuntimeError('Substitute provider error')
+        if index == 4:
+            prediction = SourcedExtractionResult(relationships=[])
+        elif index == 1:
+            prediction = alias_input
+        else:
+            prediction = _consensus() if len(request.sources) == 65 else _qualified(FIRST, SECOND)
+        if index in (5, 6):
+            prediction.relationships[0].source_id = 'unavailable-source'
+        return ModelResponse(payload=prediction.model_dump())
+
+    execute(first_bundle, live=True, provider=extract)
+    event(first_bundle, 'complete', 'Substituted extraction finished', 'extract')
+    assert len(expected_requests) == 35
+    copied = copy_run_draft(tmp_path, identity, CopyRunDraft(request_id='copy', expected_revision=0, run_id=first.id))
+    assert copied.configuration.resolver == 'none'
+    with pytest.raises(ValueError, match='matching live Extractor-only'):
+        preview_run(RunConfiguration.model_validate(dict(second_config, temperature=0.4)), tmp_path)
+    other = create_experiment(tmp_path, CreateExperiment(request_id='other', name='Other'), initial_draft=draft)
+    with pytest.raises(ValueError, match='belong to this Experiment'):
+        preview_run(RunConfiguration.model_validate(dict(second_config, retained_experiment_id=other.id)), tmp_path)
+    with pytest.raises(ValueError, match='all 35'):
+        preview_run(RunConfiguration.model_validate(dict(second_config, input_ids=list(reversed(paired.input_ids)))), tmp_path)
+
+    updated = update_draft(tmp_path, identity, DraftUpdate(request_id='pair', expected_revision=1, configuration=paired))
+    second = freeze_run(tmp_path, identity, FreezeRun(request_id='second', expected_revision=updated.revision))
+    assert (second.preview.planned_observations, second.preview.extraction_call_maximum,
+            second.preview.resolution_call_maximum) == (35, 0, 35)
+    assert second.preview.eligible_resolution_inputs == 33
+    assert read_run(tmp_path, identity, second.id).benchmark_v4.state == 'unmeasured'
+    second_bundle = open_authorized(second, 'resolve')
+    assert second_bundle.plan.inputs == first_bundle.plan.inputs
+    lineage = second_bundle.plan.retained_input_lineage
+    assert len(lineage.samples) == 33 and lineage.run_id == first.id
+    assert lineage.samples[first_bundle.plan.planned_slots[0].sample_id].extraction_attempt_id.endswith('-extraction')
+
+    first_snapshot = first_bundle.path / 'fresh_inputs' / f'{first_bundle.plan.planned_slots[0].sample_id}.json'
+    original = first_snapshot.read_bytes()
+    first_snapshot.write_bytes(original + b' ')
+    with pytest.raises(ValueError, match='frozen lineage'):
+        execute(second_bundle, live=True, provider=lambda _: pytest.fail('Candidate origin changed before dispatch'))
+    first_snapshot.write_bytes(original)
+
+    def resolve(request):
+        assert request.stage == 'resolution'
+        wire = request_messages(request)[1][1]
+        assert 'Reference marker 5' not in wire and 'truth' not in json.loads(wire)
+        resolution_calls.append(request)
+        if len(resolution_calls) == 2:
+            assert request.extraction.relationships == []
+            raise KeyboardInterrupt
+        if len(resolution_calls) == 1:
+            edits = [{'candidate_index': 0, 'endpoint': 'source_name', 'name': 'Tess'}]
+        elif len(resolution_calls) == 3:
+            edits = [{'candidate_index': 99, 'endpoint': 'source_name', 'name': 'Tess'}]
+        else:
+            edits = []
+        return ModelResponse(payload={'edits': edits})
+
+    event(second_bundle, 'running', 'Substituted first invocation', 'resolve')
+    with pytest.raises(KeyboardInterrupt):
+        execute(second_bundle, live=True, provider=resolve)
+    event(second_bundle, 'interrupted', 'Substituted worker interrupted', 'resolve')
+    partial = read_run(tmp_path, identity, second.id)
+    assert partial.benchmark_v4.state == 'provisional'
+    assert partial.observations[3].status == 'uncertain'
+
+    second_bundle = open_authorized(second, 'continue', continuation=True)
+    execute(second_bundle, live=True, provider=resolve)
+    event(second_bundle, 'complete', 'Substituted resolution finished', 'continue')
+    assert len(resolution_calls) == second_bundle.attempt_count == 33
+    assert live_budget(tmp_path).used == 68
+    assert len({attempt['attempt_id'] for attempt in second_bundle.attempts()}) == 33
+    treatment = read_run(tmp_path, identity, second.id)
+    control = read_run(tmp_path, identity, first.id)
+    assert treatment.benchmark_v4.state == 'complete'
+    assert [row.status for row in treatment.observations[:4]] == ['scored', 'parse_failure', 'provider_failure', 'uncertain']
+    assert treatment.observations[0].result.sourced_extraction == _qualified(FIRST, SECOND)
+    assert treatment.observations[4].status == 'parse_failure'
+    assert treatment.observations[4].reason == 'Invalid resolver endpoint edits'
+    assert treatment.observations[5].status == 'validation_failure'
+    assert control.observations[3].status == 'scored' and control.observations[3].result.sourced_extraction.relationships == []
+    assert treatment.benchmark.cohort.complete_proofs == control.benchmark.cohort.complete_proofs + 1
+    assert treatment.benchmark_v4.consensus_evidence == control.benchmark_v4.consensus_evidence
+    assert treatment.benchmark_v4.scoring_sha256 == control.benchmark_v4.scoring_sha256
+    assert treatment.pipeline_usage.incremental.attempts == 33
+    assert treatment.pipeline_usage.inherited_extraction.attempts == 35
+    assert treatment.pipeline_usage.full_pipeline.attempts == 68
+    assert treatment.pipeline_usage.full_pipeline.provider_seconds is None
+    comparison = compare_benchmark_v4_runs(control, treatment)
+    assert comparison.matched_inputs == 35 and comparison.benchmark_v4.shared_extraction_run_id == first.id
+    assert summarize(second_bundle)['pipeline_usage'] == treatment.pipeline_usage.model_dump(mode='json')
+    assert summarize(second_bundle)['benchmark_v4'] == treatment.benchmark_v4.model_dump(mode='json')
+    assert all(result['evaluation'] is None for result in second_bundle.results())
+    with pytest.raises(ValueError, match='matching live Extractor-only'):
+        preview_run(RunConfiguration.model_validate(dict(second_config, retained_run_id=second.id)), tmp_path)

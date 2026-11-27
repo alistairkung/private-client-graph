@@ -101,33 +101,56 @@ default when custody is configured. Select a Matter and, where applicable,
 an Environment Condition. Inspect the frozen reference graph and Sources
 before running an experiment.
 
-Use the [existing execution workflow](persistent-research-workspaces.md)
-with `private_client_graph.workbench.execution_api:app` for an approved
-experiment. New drafts in the owner Workbench default to the v4 roster. The
-full-context configuration selects one Source-aware extraction per frozen
-input and bypasses alias resolution. Review, freeze, authorize and start
-through the existing Run controls. A frozen plan records all Source and
-reference commitments, model settings, prompt hashes, scoring implementation
-and authorization limits. Source bodies and titles reach the model through the
-existing Source-only request. Evidence keys and consensus records remain
-scorer-side. Benchmark v4 tracing stays local in the Run artifacts.
+## Run the paired resolver experiment
 
-Open the selected Run for combined and cohort graph metrics, construction
-outcomes, a separate U8 citation diagnostic and the qualified proof metrics.
-Provider tokens, latency and estimated cost are displayed when retained
-receipts and, for cost, frozen pricing support them. Run comparison aligns
-the same frozen input and scorer commitments. Differences are descriptive.
+Start the private execution Workbench with
+`private_client_graph.workbench.execution_api:app` and
+`PCG_RESEARCH_LIVE_ENABLED=1`. Load `DEEPSEEK_API_KEY` into the worker's
+environment. Keep the dedicated database at Alembic head and retain the
+owner-only artifact directory and its task ledger together. Use the
+[existing execution workflow](persistent-research-workspaces.md) to provision
+the task registry and review authorization. Provisioning a registry starts with
+zero paid allowance.
+
+1. Create **Extractor v1 — Resolver Ablation**. Confirm **PCG Benchmark v4**
+   and **Extractor only**. A fresh Run makes one `deepseek-flash` extraction per
+   frozen input. In **Run settings and invocation limits**, set the invocation
+   cap to 35 and enter the approved total task cap.
+2. Choose **Run**, review and **Freeze Run**, then **Authorize invocation** and
+   **Start Run**. Keep the completed, verified Run in the same Experiment.
+3. In Run A, choose **Copy to next draft**. Select **Generative Resolver** and
+   confirm Run A under **Verified extraction origin**. The model settings and
+   committed Sources come from Run A. Preview shows 35 planned inputs, zero
+   new extractions and up to 35 resolver attempts. A valid empty extraction is
+   eligible. Provider, parse and uncertain extraction outcomes stay visible
+   in their original slots.
+4. Freeze and authorize Run B separately. From a zero-use dedicated task, the
+   pair needs a maximum total task allowance of 70 calls. Stop or continue
+   through the existing bounded invocation controls.
+5. Open **Compare with verified Run**. The Workbench displays pooled graph
+   scores, cohort delivery and evidence metrics, along with incremental and
+   inherited usage. Full pipeline latency is reconstructed from extraction
+   provider time, resolver provider time, and local edit and final graph
+   construction timings. Provider costs remain unpriced without the frozen
+   pricing and usage needed for the estimate.
+
+The Resolver receives the same ordered Sources and the existing candidate
+projection. Its endpoint edits are applied to the retained attributed
+candidates before construction. References and adjudication stay scorer-side.
+Both Runs use the same v4 scorer and private roster. Freeze A and B on this
+revision to share the same scorer commitment.
+
 Use `uv run python -m private_client_graph.research summarize RUN_DIRECTORY`
-on a private Run bundle for a
-reproducible summary without raw provider requests and responses. Full bundles
-and their Sources stay in private custody.
+to regenerate the metrics without raw provider requests or responses. Keep the
+parent Run, child Run and original task ledger in private custody so the
+candidate lineage and receipts remain verifiable.
 
 To verify the exact references and historical numbers offline, set
 `PCG_V3_PRIVATE_BASELINE_CUSTODY` to the existing custody root and run
 `uv run pytest tests/research/test_benchmark_v4.py tests/research/test_v3_evaluation_protocol.py`.
 CI uses synthetic fixtures and substituted provider responses.
 
-## Next experiment
+## Later retrieval experiment
 
 Freeze a 35-input full-context Run and a matched retrieval Run from the same
 manifest. Keep the model, extraction contract and settings fixed and record

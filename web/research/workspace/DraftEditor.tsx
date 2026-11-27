@@ -6,6 +6,7 @@ import type {
   Preview,
   RunDraft,
   RunConfiguration,
+  RunDetail,
 } from "../shared/contracts";
 import { Pipeline } from "../configuration/Pipeline";
 import { PipelineFields } from "../configuration/Fields";
@@ -25,6 +26,7 @@ export function DraftEditor({
   saving,
   disabled = false,
   runIds = [],
+  extractorRuns = [],
   benchmark,
 }: {
   id: string;
@@ -36,6 +38,7 @@ export function DraftEditor({
   saving: (busy: boolean) => void;
   disabled?: boolean;
   runIds?: string[];
+  extractorRuns?: RunDetail[];
   benchmark?: BenchmarkRoster | null;
 }) {
   const [configuration, setConfiguration] = useState<RunConfiguration>(
@@ -118,6 +121,19 @@ export function DraftEditor({
     setConfiguration((value) => ({ ...value, ...changes }));
     freezeId.current = crypto.randomUUID();
   }
+  function selectBenchmarkExtractor(runId: string) {
+    const origin = extractorRuns.find((run) => run.id === runId);
+    if (!origin) {
+      update({ input_mode: "fresh", resolver: "none", retained_experiment_id: null, retained_run_id: null });
+      return;
+    }
+    const { model, temperature, timeout_seconds } = origin.plan.preview.proposal;
+    update({
+      input_mode: "saved", resolver: "generative", retained_experiment_id: id, retained_run_id: origin.id,
+      model, temperature, timeout_seconds,
+    });
+  }
+  const preferredOrigin = extractorRuns.find((run) => run.id === draft.copied_from_run) ?? extractorRuns.at(-1);
   async function selectInputOrigin(runId: string) {
     if (runId === "benchmark-v4" && benchmark) {
       update({
@@ -209,7 +225,28 @@ export function DraftEditor({
         </select>
       </label>
       {isBenchmark ? (
-        <p>35 frozen evaluation inputs · One fresh full-context extraction per input · Mixed reference methodologies.</p>
+        <>
+          <label>
+            Benchmark v4 resolver
+            <select value={configuration.resolver} disabled={busy} onChange={(event) =>
+              selectBenchmarkExtractor(event.target.value === "generative" ? preferredOrigin?.id ?? "" : "")}>
+              <option value="none">Extractor only</option>
+              <option value="generative" disabled={!preferredOrigin}>Generative Resolver</option>
+            </select>
+          </label>
+          {configuration.resolver === "generative" ? (
+            <>
+              <label>
+                Verified extraction origin
+                <select value={configuration.retained_run_id ?? ""} disabled={busy}
+                  onChange={(event) => selectBenchmarkExtractor(event.target.value)}>
+                  {extractorRuns.map((run) => <option key={run.id} value={run.id}>Run {runIds.indexOf(run.id) + 1}</option>)}
+                </select>
+              </label>
+              <p>Reuses the original candidates across all 35 frozen inputs. One alias-resolution attempt per usable extraction.</p>
+            </>
+          ) : <p>35 frozen evaluation inputs · One fresh full-context extraction per input.</p>}
+        </>
       ) : configuration.retained_run_id ? (
         <p>
           Using all {configuration.input_ids.length} retained extractions from Run {configuration.retained_run_id}.
@@ -230,7 +267,7 @@ export function DraftEditor({
         update={update}
         busy={busy}
       />}
-      {configuration.resolver === "none" && (
+      {(isBenchmark || configuration.resolver === "none") && (
         <details className="draft-options">
           <summary>Run settings and invocation limits</summary>
           <PipelineFields

@@ -5,11 +5,27 @@ from pathlib import Path
 from private_client_graph.models import ExtractionResult
 from private_client_graph.research.artifacts import Bundle, checksum
 from private_client_graph.research.case_metadata import CaseMetadata
+from private_client_graph.research.benchmark_v4 import BenchmarkWorkload
+from private_client_graph.research.benchmark_v4_origin import load_extraction_origin
+from private_client_graph.research.provider import ModelSettings
 from private_client_graph.research.inputs import ResearchInput
 from private_client_graph.research.run_plan import RunPlan
 from private_client_graph.research.retained_inputs import RetainedInputLineage, RetainedSampleLineage, input_digests
-from .artifacts import artifact_digest
+from .artifacts import artifact_digest, _verify_execution_binding
 from .run_inspection import read_run
+from .workspaces import experiment_path, read_experiment, read_record
+
+
+def load_benchmark_v4_lineage(root: Path, experiment: str, run: str, workload: BenchmarkWorkload,
+                             settings: ModelSettings, task_id: str) -> RetainedInputLineage:
+    if run not in read_experiment(root, experiment).run_ids:
+        raise ValueError('Extraction origin must belong to this Experiment')
+    _verify_execution_binding(root / run)
+    origin = load_extraction_origin(root, experiment, run, workload, settings, task_id)
+    membership = read_record(experiment_path(root, experiment) / 'runs' / f'{run}.json')
+    if membership['plan_digest'] != origin.lineage.plan_digest:
+        raise ValueError('Extraction origin differs from its Run membership')
+    return origin.lineage
 
 
 def load_retained_inputs(root: Path, experiment_id: str, run_id: str

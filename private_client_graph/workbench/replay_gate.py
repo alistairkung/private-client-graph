@@ -20,6 +20,17 @@ def require_replay_control(bundle: Bundle, invocation: str) -> str | None:
     plan = bundle.plan
     if not isinstance(plan, RunPlan) or plan.retained_input_lineage is None or plan.resolver != 'generative':
         return None
+    if plan.benchmark_v4_sha256:
+        # The v4 read path already replays the original receipts and checks the stored graphs.
+        from private_client_graph.research.benchmark_v4_origin import verify_extraction_origin
+        from private_client_graph.research.benchmark_v4_run import require_frozen_plan
+        from .benchmark_v4 import load_private_workload
+
+        workload = load_private_workload()
+        require_frozen_plan(bundle, workload)
+        origin = verify_extraction_origin(bundle, workload)
+        assert origin is not None
+        return value_digest(origin.lineage.model_dump(mode='json'))
     root, lineage = bundle.path.parent, plan.retained_input_lineage
     inputs, _, verified = load_retained_inputs(root, lineage.experiment_id, lineage.run_id)
     original = Bundle.open(root / lineage.run_id)

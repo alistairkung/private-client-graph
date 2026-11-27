@@ -13,7 +13,7 @@ from private_client_graph.extraction import (extraction_messages, build_relation
     sourced_extraction_messages, build_sourced_relationship_extraction_chain)
 from private_client_graph.models.source import Source
 from private_client_graph.models import ExtractionResult
-from private_client_graph.resolution import EndpointEdits, resolution_messages
+from private_client_graph.resolution import EndpointEdits, ResolutionRequest, resolution_messages
 
 
 class ModelSettings(BaseModel):
@@ -52,6 +52,10 @@ class ModelRequest(BaseModel):
         if (self.stage == "resolution") != (self.extraction is not None):
             raise ValueError("Only resolution requests require extraction input")
         return self
+
+
+def resolution_model_request(request: ResolutionRequest, settings: ModelSettings) -> ModelRequest:
+    return ModelRequest(stage='resolution', source=request.source, extraction=request.extraction, settings=settings)
 
 
 class ModelResponse(BaseModel):

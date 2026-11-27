@@ -160,6 +160,9 @@ export function Workspace({
               disabled={copying}
               draft={workspace.draft}
               runIds={workspace.run_ids}
+              extractorRuns={runs.filter((item) => item.benchmark_v4?.state === "complete"
+                && item.plan.preview.proposal.input_mode === "fresh"
+                && item.plan.preview.proposal.resolver === "none")}
               benchmark={benchmark}
               cases={cases}
               capabilities={editCapabilities}

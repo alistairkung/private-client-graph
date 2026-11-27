@@ -2,7 +2,9 @@
 from typing import Literal
 
 from pydantic import BaseModel, Field
+from benchmark_v3.evaluation_protocol import Metrics
 from private_client_graph.research.benchmark_v4_scoring import BenchmarkV4Summary
+from private_client_graph.research.benchmark_v4_operations import BenchmarkV4Operations
 from private_client_graph.research.source_attribution import SourceAttributionDiagnostic
 
 
@@ -158,6 +160,11 @@ class BenchmarkComparison(BaseModel):
 class BenchmarkV4Comparison(BaseModel):
     left: BenchmarkV4Summary
     right: BenchmarkV4Summary
+    left_proofs: Metrics | None = None
+    right_proofs: Metrics | None = None
+    left_usage: BenchmarkV4Operations | None = None
+    right_usage: BenchmarkV4Operations | None = None
+    shared_extraction_run_id: str | None = None
 
 
 class RunComparison(BaseModel):

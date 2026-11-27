@@ -20,7 +20,14 @@ def compare_benchmark_v4_runs(left: RunDetail, right: RunDetail) -> RunCompariso
         for row in left.observations if row.sample_id in right_inputs
     ]
     output.matched_inputs = len(output.pairs)
-    output.benchmark_v4 = BenchmarkV4Comparison(left=first, right=second)
+    left_origin = left.pipeline_usage.origin_run_id if left.pipeline_usage else None
+    right_origin = right.pipeline_usage.origin_run_id if right.pipeline_usage else None
+    paired = (left_origin or left.id) == (right_origin or right.id)
+    output.benchmark_v4 = BenchmarkV4Comparison(left=first, right=second,
+        left_proofs=left.benchmark.cohort if left.benchmark else None,
+        right_proofs=right.benchmark.cohort if right.benchmark else None,
+        left_usage=left.pipeline_usage, right_usage=right.pipeline_usage,
+        shared_extraction_run_id=(left_origin or right_origin) if paired else None)
     output.reasons = ['Differences are descriptive. A controlled comparison requires matched model, '
                       'prompt and execution settings apart from the intended configuration change.']
     a, b = left.plan.preview.proposal, right.plan.preview.proposal

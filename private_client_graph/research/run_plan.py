@@ -39,7 +39,7 @@ class RunPlan(FiniteExperimentPlan):
             raise ValueError('Select distinct frozen inputs')
         if any(sample.extraction is None or sample.cohort == 'fresh' for sample in self.inputs):
             raise ValueError('Templates require repository-owned frozen inputs')
-        if self.retained_input_lineage is not None:
+        if self.retained_input_lineage is not None and not self.benchmark_v4_sha256:
             origin = self.retained_input_lineage
             if self.input_mode != 'saved' or (self.experiment_id and origin.experiment_id != self.experiment_id):
                 raise ValueError('Retained inputs must remain saved in the original Experiment')
@@ -76,11 +76,8 @@ class RunPlan(FiniteExperimentPlan):
             raise ValueError('Live execution requires a paid matrix and explicit task cap')
         if not live and self.task_call_cap:
             raise ValueError('Offline plans cannot authorize paid calls')
-        if self.benchmark_v4_sha256 and (
-            self.input_mode != 'fresh' or self.resolver != 'none' or self.fresh_extractions != 1
-            or len(self.inputs) != 35 or any(sample.sources is None for sample in self.inputs)
-        ):
-            raise ValueError('Benchmark v4 requires one Source-aware extraction per frozen input')
+        if self.benchmark_v4_sha256:
+            self._validate_benchmark_v4_matrix()
         if self.input_mode == 'fresh':
             if not self.fresh_extractions or any(sample.cohort != 'authored' for sample in self.inputs):
                 raise ValueError('Fresh extraction requires authored source templates and a sample count')
@@ -100,6 +97,21 @@ class RunPlan(FiniteExperimentPlan):
         self.planned_slots = slots
         return self
 
+    def _validate_benchmark_v4_matrix(self) -> None:
+        if self.settings.model != 'deepseek-flash' or self.effective_model is not None:
+            raise ValueError('Benchmark v4 requires frozen deepseek-flash settings')
+        if len(self.inputs) != 35 or any(sample.sources is None for sample in self.inputs):
+            raise ValueError('Benchmark v4 requires all 35 Source-aware frozen inputs')
+        origin = self.retained_input_lineage
+        if origin is None:
+            if self.input_mode != 'fresh' or self.resolver != 'none' or self.fresh_extractions != 1:
+                raise ValueError('Benchmark v4 requires one Source-aware extraction per frozen input')
+            return
+        if (self.input_mode != 'saved' or self.resolver != 'generative' or self.repetitions != 1
+                or self.execution_mode != 'live' or (self.experiment_id and self.experiment_id != origin.experiment_id)
+                or self.run_id == origin.run_id):
+            raise ValueError('Benchmark v4 resolution requires one verified extraction origin in this Experiment')
+
     @property
     def maximum_attempts(self) -> int:
         extractions = len(self.inputs) * self.fresh_extractions if self.input_mode == 'fresh' else 0
@@ -109,9 +121,12 @@ class RunPlan(FiniteExperimentPlan):
     def observation_matrix(self) -> list[ObservationSlot]:
         slots = []
         for template in self.inputs:
-            sample_ids = ([f'{template.sample_id}_fresh_{index:02d}'
-                for index in range(1, self.fresh_extractions + 1)]
-                if self.input_mode == 'fresh' else [template.sample_id])
+            if self.benchmark_v4_sha256 and self.retained_input_lineage:
+                sample_ids = [f'{template.sample_id}_fresh_01']
+            elif self.input_mode == 'fresh':
+                sample_ids = [f'{template.sample_id}_fresh_{index:02d}' for index in range(1, self.fresh_extractions + 1)]
+            else:
+                sample_ids = [template.sample_id]
             for sample_id in sample_ids:
                 repetitions = range(1, self.repetitions + 1) if self.resolver == 'generative' else [0]
                 for repetition in repetitions:

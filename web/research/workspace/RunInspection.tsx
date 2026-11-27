@@ -11,7 +11,7 @@ import { ReadState } from "../shared/presentation";
 import { useRead } from "../shared/useRead";
 import { compareRuns } from "./api";
 import { metric, money } from "./RunChart";
-import { BenchmarkV4Summary, GraphMetrics } from "./BenchmarkV4Summary";
+import { BenchmarkEvidence, BenchmarkV4Summary, GraphMetrics, PipelineUsage } from "./BenchmarkV4Summary";
 import { BenchmarkRunSummary } from "./BenchmarkRunSummary";
 
 export function RunInspection({
@@ -291,10 +291,15 @@ function RunComparisonPanel({
       ))}
       {data.benchmark_v4 && (
         <section aria-label="Benchmark v4 comparison">
-          <h4>Earlier Run</h4>
+          {data.benchmark_v4.shared_extraction_run_id && <p>Verified shared extraction candidates.</p>}
+          <h4>Comparison Run</h4>
           <GraphMetrics summary={data.benchmark_v4.left} />
+          <BenchmarkEvidence summary={data.benchmark_v4.left} proofs={data.benchmark_v4.left_proofs} />
+          {data.benchmark_v4.left_usage && <PipelineUsage usage={data.benchmark_v4.left_usage} complete={data.benchmark_v4.left.state === "complete"} />}
           <h4>Selected Run</h4>
           <GraphMetrics summary={data.benchmark_v4.right} />
+          <BenchmarkEvidence summary={data.benchmark_v4.right} proofs={data.benchmark_v4.right_proofs} />
+          {data.benchmark_v4.right_usage && <PipelineUsage usage={data.benchmark_v4.right_usage} complete={data.benchmark_v4.right.state === "complete"} />}
         </section>
       )}
       {data.benchmark && (
