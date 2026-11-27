@@ -181,3 +181,11 @@
 }
 .research-visual.run-chart[data-tactile] .chart-point > span { position: relative; }
 .research-visual.run-chart[data-tactile] .chart-point[aria-pressed="true"] { border-color: transparent; background: transparent; }
+
+.research-visual .chart-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 16px;
+}
+.research-visual .chart-filters > label { flex: 1 1 230px; }
+.research-visual .chart-measure-title { margin: 0 0 8px; }

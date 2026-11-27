@@ -17,6 +17,7 @@ from private_client_graph.models import SourcedExtractionResult
 from private_client_graph.models.source import Source
 from private_client_graph.models.sourced_extraction import SourcedRelationshipCandidate
 from private_client_graph.research import benchmark_v4
+from private_client_graph.research.evidence_grounded import project_quality
 from private_client_graph.research.artifacts import Bundle, checksum
 from private_client_graph.research.benchmark_v4 import BenchmarkWorkload, load_roster, load_workload
 from private_client_graph.research.benchmark_v4_scoring import evaluate_benchmark_v4
@@ -157,6 +158,12 @@ def test_graph_pool_uses_expected_edges_for_every_unavailable_input(workload):
     assert result.consensus.planned_proofs == result.consensus.planned_joint_proofs == 0
     assert result.summary.consensus_evidence.matched_citations == 1
     assert result.summary.consensus_evidence.reference_citations == 6
+    quality = project_quality(result.qualified.conditions.values(), other=[result.consensus])
+    assert quality.graph.counts == GraphCounts(2, 1, 9)
+    assert quality.qualified_graph.counts == quality.grounded.counts == GraphCounts(1, 0, 4)
+    assert quality.observed_inputs == 6 and quality.observed_qualified_inputs == 5
+    assert quality.outcomes['not_attempted'] == 29
+    assert quality.complete_proof.rate == quality.grounded.recall == 1 / 5
     assert evaluate_benchmark_v4(workload, dict(reversed(list(predictions.items()))),
                                  observation_origin='offline_fixture').summary == result.summary
 
@@ -469,10 +476,19 @@ def test_paired_resolver_retains_input_lineage_and_resumes_without_repeating_att
     event(second_bundle, 'running', 'Substituted first invocation', 'resolve')
     with pytest.raises(KeyboardInterrupt):
         execute(second_bundle, live=True, provider=resolve)
+    in_progress = read_run(tmp_path, identity, second.id)
+    assert in_progress.observations[3].status == 'processing'
+    assert in_progress.quality.outcomes['processing'] == 1
+    assert in_progress.quality.outcomes['not_attempted'] == 31
+    assert in_progress.quality.observed_inputs == 3
+    assert in_progress.quality.model_dump(mode='json') == summarize(second_bundle)['quality']
+
     event(second_bundle, 'interrupted', 'Substituted worker interrupted', 'resolve')
     partial = read_run(tmp_path, identity, second.id)
     assert partial.benchmark_v4.state == 'provisional'
     assert partial.observations[3].status == 'uncertain'
+    assert partial.quality.outcomes['uncertain'] == 1
+    assert partial.quality.observed_inputs == 4
 
     second_bundle = open_authorized(second, 'continue', continuation=True)
     execute(second_bundle, live=True, provider=resolve)
@@ -503,3 +519,32 @@ def test_paired_resolver_retains_input_lineage_and_resumes_without_repeating_att
     assert all(result['evaluation'] is None for result in second_bundle.results())
     with pytest.raises(ValueError, match='matching live Extractor-only'):
         preview_run(RunConfiguration.model_validate(dict(second_config, retained_run_id=second.id)), tmp_path)
+
+
+def test_retained_live_pair_quality_replays_without_pricing(monkeypatch):
+    """Opt-in regression against the actual paired Runs, outside CI and Git."""
+    extractor = os.getenv('PCG_V4_RETAINED_EXTRACTOR')
+    resolver = os.getenv('PCG_V4_RETAINED_RESOLVER')
+    custody = os.getenv('PCG_V3_PRIVATE_BASELINE_CUSTODY')
+    if not (extractor and resolver and custody):
+        pytest.skip('Set paths for both retained Runs and exact private custody')
+    from private_client_graph.research.artifacts import Bundle
+    from private_client_graph.research.summary import summarize
+
+    monkeypatch.setenv('PCG_BENCHMARK_V4_CUSTODY', custody)
+    monkeypatch.delenv('DEEPSEEK_API_KEY', raising=False)
+    first, second = (summarize(Bundle.open(Path(path))) for path in (extractor, resolver))
+    assert second['pipeline_usage']['origin_run_id'] == first['run_id']
+    for report, extra, constructed in ((first, 10, 32), (second, 12, 33)):
+        mixed, quality = report['benchmark_v4'], report['quality']
+        assert mixed['state'] == 'complete'
+        assert mixed['combined']['valid_graphs'] == constructed
+        assert mixed['combined']['counts'] == {'tp': 111, 'fp': extra, 'fn': 8}
+        assert quality['qualified_graph']['counts'] == {'tp': 105, 'fp': extra, 'fn': 8}
+        assert quality['graph']['f1'] == 222 / (230 + extra)
+        assert quality['grounded']['f1'] == 22 / (218 + extra)
+        assert quality['grounded']['counts'] == {'tp': 11, 'fp': 94 + extra, 'fn': 102}
+        assert quality['complete_proof'] == {'complete': 11, 'targets': 71, 'rate': 11 / 71}
+        assert quality['joint_only_proof'] == {'complete': 0, 'targets': 30, 'rate': 0.0}
+        assert report['pipeline_usage']['full_pipeline']['estimated_cost'] is None
+    assert second['pipeline_usage']['inherited_extraction'] == first['pipeline_usage']['incremental']

@@ -120,6 +120,9 @@ export type BenchmarkStageUsage = {
 export type BenchmarkV4Comparison = {
   left: BenchmarkV4Summary;
   right: BenchmarkV4Summary;
+  left_quality: QualityProjection | null;
+  right_quality: QualityProjection | null;
+  quality_delta: QualityDelta | null;
   left_proofs: Metrics | null;
   right_proofs: Metrics | null;
   left_usage: BenchmarkV4Operations | null;
@@ -656,6 +659,12 @@ export type ProofMember = {
   occurrences: Array<[number, number]>;
 };
 
+export type ProofRate = {
+  complete: number;
+  targets: number;
+  rate: number | null;
+};
+
 export type ProofTarget = {
   edge: [string, "parent_of" | "sibling_of" | "spouse_of" | "settlor_of" | "trustee_of" | "beneficiary_of", string];
   joint_only: boolean;
@@ -691,6 +700,27 @@ export type QualifiedCohort = {
   historical_archive_inventory_sha256: string;
 };
 
+export type QualityDelta = {
+  graph: number;
+  qualified_graph: number;
+  grounded: number;
+};
+
+export type QualityProjection = {
+  version: "evidence_grounded_f1_v1";
+  planned_inputs: number;
+  observed_inputs: number;
+  qualified_inputs: number;
+  observed_qualified_inputs: number;
+  outcomes: Record<string, number>;
+  input_outcomes: Record<string, string>;
+  graph: RelationshipScore | null;
+  qualified_graph: RelationshipScore | null;
+  grounded: RelationshipScore | null;
+  complete_proof: ProofRate;
+  joint_only_proof: ProofRate;
+};
+
 export type Relationship = {
   source: string;
   type: "parent_of" | "sibling_of" | "spouse_of" | "settlor_of" | "trustee_of" | "beneficiary_of";
@@ -711,6 +741,13 @@ export type RelationshipOutcome = {
   outcome: "matched" | "missing" | "extra" | "provenance_failure";
   expected: Array<EvidenceQuote>;
   predicted: Array<EvidenceQuote>;
+};
+
+export type RelationshipScore = {
+  counts: GraphCounts;
+  precision: number;
+  recall: number;
+  f1: number;
 };
 
 export type ResearchResult = {
@@ -813,6 +850,7 @@ export type RunDetail = {
   family_context: RunFamilyContext | null;
   benchmark: BenchmarkRun | null;
   benchmark_v4?: BenchmarkV4Summary | null;
+  quality?: QualityProjection | null;
   pipeline_usage?: BenchmarkV4Operations | null;
   observations: Array<RunObservation>;
   provenance: Record<string, unknown>;

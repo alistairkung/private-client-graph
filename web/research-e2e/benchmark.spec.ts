@@ -224,3 +224,27 @@ test("compatible imports compare the full roster and changed order withholds del
   ).toBeVisible();
   await expect(page.getByText(/deltas withheld/i)).toBeVisible();
 });
+
+test("keeps both measures readable and carries the selected metric between plots", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto(`/#workspace=${experiment}&run=${control}`);
+  const overview = page.getByRole("region", { name: "Evaluation Protocol v1 results" });
+  await expect(overview).toContainText("Evidence-Grounded F1");
+  await expect(overview).toContainText("0.00%");
+  await page.getByText("Run history and selection", { exact: true }).click();
+  const history = page.getByRole("region", { name: "Run history and performance" });
+  const metric = history.getByRole("combobox", { name: "Metric" });
+  await metric.selectOption("grounded");
+  await expect(history.getByRole("heading", { name: "Evidence-Grounded F1 by Run" })).toBeVisible();
+  await history.getByRole("tab", { name: "F1 by Run" }).press("ArrowRight");
+  await expect(history.getByRole("tab", { name: "F1 vs Cost" })).toBeFocused();
+  await expect(metric).toHaveValue("grounded");
+  await expect(history.getByRole("heading", { name: "Evidence-Grounded F1 vs Cost" })).toBeVisible();
+  await expect(history).toContainText("0/3 Runs plotted");
+  const layout = await overview.locator(".run-quality-headlines").evaluate((headlines) => {
+    const [graph, grounded] = Array.from(headlines.children, (item) => item.getBoundingClientRect());
+    return { fits: headlines.scrollWidth <= headlines.clientWidth, sideBySide: graph.top === grounded.top };
+  });
+  expect(layout.fits).toBe(true);
+  expect(layout.sideBySide).toBe((page.viewportSize()?.width ?? 0) >= 500);
+});

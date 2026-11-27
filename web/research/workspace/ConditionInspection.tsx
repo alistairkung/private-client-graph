@@ -388,7 +388,11 @@ export function ConditionInspection({
                       <strong>{row.edge[0]}</strong><span>{row.edge[1].replaceAll("_", " ")}</span><strong>{row.edge[2]}</strong>
                     </span>
                     <span className={`outcome-text outcome-${row.status}`}>{presentation[row.status].label}</span>
-                    {proofStates.has(key) && <small className="relationship-row-proof">{proofStates.get(key)}</small>}
+                    {proofStates.has(key) ? (
+                      <small className="relationship-row-proof">{proofStates.get(key)}</small>
+                    ) : benchmark && benchmark.role !== "consensus" && row.status === "correct" && (
+                      <small className="relationship-row-proof">No formal proof target</small>
+                    )}
                   </button>
                   <button
                     type="button"

@@ -3,6 +3,13 @@ import { LayoutGroup, motion, useReducedMotion } from "motion/react";
 import { researchText, type ResearchText } from "./presentation";
 import "./run-performance-chart.css";
 
+export type PerformanceMetric = "graph" | "grounded" | "proof";
+const performanceMetrics: Record<PerformanceMetric, string> = {
+  graph: "Graph F1",
+  grounded: "Evidence-Grounded F1",
+  proof: "Complete Proof Rate",
+};
+
 export type PerformanceRun = {
   id: string;
   displayName?: string;
@@ -13,12 +20,19 @@ export type PerformanceRun = {
   recorded: boolean;
   f1: number | null;
   metricLabel?: string;
+  measures?: Partial<Record<PerformanceMetric, {
+    value: number | null;
+    label: string;
+    coverage: { scored: number; planned: number };
+    coverageLabel: string;
+  }>>;
   coverageLabel?: string;
   scoreState: string;
   coverage: { scored: number; planned: number };
   cost: { total: number | null; currency: string | null };
   costBasis?: "verified_provider_estimate";
   scopeIdentity: string | null;
+  costLabel?: string;
   eligibility: {
     f1_by_run: boolean;
     f1_vs_cost: boolean;
@@ -35,6 +49,7 @@ export function RunPerformanceChart({
   selected,
   select,
   tactile = false,
+  metricSelector = false,
   t = researchText,
 }: {
   experiment: PerformanceExperiment;
@@ -42,6 +57,7 @@ export function RunPerformanceChart({
   selected: string | null;
   select: (id: string) => void;
   tactile?: boolean;
+  metricSelector?: boolean;
   t?: ResearchText;
 }) {
   const [tab, setTab] = useState<"run" | "cost">("run");
@@ -49,15 +65,22 @@ export function RunPerformanceChart({
   const chartId = useId();
   const reducedMotion = useReducedMotion();
   const [inputMode, setInputMode] = useState("all");
+  const [selectedMetric, setSelectedMetric] = useState<PerformanceMetric>("graph");
+  const chartMetric = metricSelector ? selectedMetric : "graph";
+  const metricName = performanceMetrics[chartMetric];
+  const plotTitle = `${metricName} ${tab === "run" ? "by Run" : "vs Cost"}`;
+  const chartRuns = runs.map((run) => withMetric(run, chartMetric));
+  const displayMetric = metricSelector ? percentMetric : metric;
   const runNumber = (id: string) => experiment.runIds.indexOf(id) + 1;
-  const visible = runs.filter(
+  const visible = chartRuns.filter(
     (run) =>
       inputMode === "all" || run.inputMode === inputMode,
   );
   const candidates = visible.filter((run) =>
-    tab === "run"
+    run.f1 !== null && Number.isFinite(run.f1) && (tab === "run"
       ? run.eligibility.f1_by_run
-      : run.eligibility.f1_vs_cost,
+      : run.eligibility.f1_vs_cost && run.cost.total !== null &&
+        Number.isFinite(run.cost.total) && run.cost.total >= 0 && !!run.cost.currency),
   );
   // Preserve the historical currency when those Runs are visible. With only
   // verified estimates, the first visible estimate sets the cost axis.
@@ -72,7 +95,7 @@ export function RunPerformanceChart({
     ...eligible.map((run) => run.cost.total ?? 0),
     0.0001,
   );
-  const tooltip = runs.find((run) => run.id === (inspected ?? selected));
+  const tooltip = chartRuns.find((run) => run.id === (inspected ?? selected));
   return (
     <LayoutGroup id={chartId}><section className="research-visual run-chart" data-tactile={tactile || undefined} aria-label={t("Run history and performance")}>
       <div className="section-heading">
@@ -125,24 +148,41 @@ export function RunPerformanceChart({
         role="tabpanel"
         aria-labelledby={`${chartId}-${tab}`}
       >
-        <label className="chart-filter">
-          {t("Input mode")}
-          <select
-            value={inputMode}
-            onChange={(event) => setInputMode(event.target.value)}
-          >
-            <option value="all">{t("All inputs · Discrete points")}</option>
-            <option value="saved">{t("Saved extraction")}</option>
-            <option value="fresh">{t("Fresh extraction")}</option>
-          </select>
-        </label>
+        <div className="chart-filters">
+          {metricSelector && (
+            <label className="chart-filter">
+              Metric
+              <select value={chartMetric} onChange={(event) => setSelectedMetric(event.target.value as PerformanceMetric)}>
+                <option value="graph">Graph micro-F1</option>
+                <option value="grounded">Evidence-Grounded micro-F1</option>
+                <option value="proof">Complete Proof Rate</option>
+              </select>
+            </label>
+          )}
+          <label className="chart-filter">
+            {t("Input mode")}
+            <select
+              value={inputMode}
+              onChange={(event) => setInputMode(event.target.value)}
+            >
+              <option value="all">{t("All inputs · Discrete points")}</option>
+              <option value="saved">{t("Saved extraction")}</option>
+              <option value="fresh">{t("Fresh extraction")}</option>
+            </select>
+          </label>
+        </div>
+        {metricSelector && <h3 className="chart-measure-title">{plotTitle}</h3>}
         <div className="chart-legend">
-          <span>{eligible.find(run => run.metricLabel)?.metricLabel ?? t("F1 · 0–1")}</span>
+          <span>{metricSelector ? `${metricName} (%)` : eligible.find(run => run.metricLabel)?.metricLabel ?? t("F1 · 0–1")}</span>
           <span>◇ {t("No resolver")}　● {t("Generative resolver")}　○ {t("Provisional")}</span>
         </div>
         {!runs.length ? (
           <p className="chart-empty">
             {t("Run your first configuration to begin comparing results.")}
+          </p>
+        ) : metricSelector && !eligible.length ? (
+          <p className="chart-empty">
+            {tab === "cost" ? "No Runs have both this measurement and a verified cost." : "No Runs have this measurement in the selected input mode."}
           </p>
         ) : (
           <>
@@ -153,7 +193,7 @@ export function RunPerformanceChart({
                   className="plot-grid"
                   style={{ top: `${(1 - value) * 100}%` }}
                 >
-                  <span>{value.toFixed(2)}</span>
+                  <span>{metricSelector ? `${value * 100}%` : value.toFixed(2)}</span>
                 </div>
               ))}
               {eligible.map((run) => {
@@ -171,10 +211,10 @@ export function RunPerformanceChart({
                       top: `${(1 - (run.f1 ?? 0)) * 100}%`,
                     }}
                     aria-label={run.metricLabel
-                      ? `${run.displayName ?? t("Run {run}", { run: index + 1 })}, ${run.metricLabel} ${metric(run.f1)}, ${t(run.scoreState)}, ${run.coverage.scored}/${run.coverage.planned} ${run.coverageLabel ?? ""}`
+                      ? `${run.displayName ?? t("Run {run}", { run: index + 1 })}, ${run.metricLabel} ${displayMetric(run.f1)}, ${t(run.scoreState)}, ${run.coverage.scored}/${run.coverage.planned} ${run.coverageLabel ?? ""}`
                       : run.displayName
-                        ? t("{name}, F1 {f1}, {state}, {scored}/{planned} scored", { name: run.displayName, f1: metric(run.f1), state: t(run.scoreState), scored: run.coverage.scored, planned: run.coverage.planned })
-                        : t("Run {run}, F1 {f1}, {state}, {scored}/{planned} scored", { run: index + 1, f1: metric(run.f1), state: t(run.scoreState), scored: run.coverage.scored, planned: run.coverage.planned })}
+                        ? t("{name}, F1 {f1}, {state}, {scored}/{planned} scored", { name: run.displayName, f1: displayMetric(run.f1), state: t(run.scoreState), scored: run.coverage.scored, planned: run.coverage.planned })
+                        : t("Run {run}, F1 {f1}, {state}, {scored}/{planned} scored", { run: index + 1, f1: displayMetric(run.f1), state: t(run.scoreState), scored: run.coverage.scored, planned: run.coverage.planned })}
                     aria-pressed={selected === run.id}
                     aria-describedby={`${chartId}-tooltip`}
                     onFocus={() => setInspected(run.id)}
@@ -209,7 +249,9 @@ export function RunPerformanceChart({
             <div className="plot-axis">
               {tab === "run"
                 ? t("Run number within this experiment")
-                : t("Estimated provider spend incurred by Run ({currency}) · 0–{max}", { currency: costCurrency, max: maxCost.toFixed(4) })}
+                : metricSelector
+                  ? `Estimated provider cost (${costCurrency})${eligible.length ? ` · 0–${maxCost.toFixed(4)}` : ""}`
+                  : t("Estimated provider spend incurred by Run ({currency}) · 0–{max}", { currency: costCurrency, max: maxCost.toFixed(4) })}
             </div>
             {!eligible.length && (
               <p>
@@ -233,12 +275,12 @@ export function RunPerformanceChart({
               </strong>
               <span>
                 {tooltip.metricLabel
-                  ? `${tooltip.metricLabel}: ${t(metric(tooltip.f1))} · ${t(tooltip.scoreState)} · ${tooltip.coverage.scored}/${tooltip.coverage.planned} ${tooltip.coverageLabel ?? ""}`
-                  : t("F1 {f1} · {state} · {scored}/{planned} scored", { f1: t(metric(tooltip.f1)), state: t(tooltip.scoreState), scored: tooltip.coverage.scored, planned: tooltip.coverage.planned })}
+                  ? `${tooltip.metricLabel}: ${t(displayMetric(tooltip.f1))} · ${t(tooltip.scoreState)} · ${tooltip.coverage.scored}/${tooltip.coverage.planned} ${tooltip.coverageLabel ?? ""}`
+                  : t("F1 {f1} · {state} · {scored}/{planned} scored", { f1: t(displayMetric(tooltip.f1)), state: t(tooltip.scoreState), scored: tooltip.coverage.scored, planned: tooltip.coverage.planned })}
               </span>
               {tab === "cost" && tooltip.costBasis === "verified_provider_estimate" && (
                 <span>
-                  {t("Estimated provider spend · {currency} {amount}", {
+                  {t(tooltip.costLabel ?? "Estimated provider spend · {currency} {amount}", {
                     currency: tooltip.cost.currency ?? "",
                     amount: String(tooltip.cost.total),
                   })}
@@ -258,7 +300,7 @@ export function RunPerformanceChart({
         </div>
         {!!runs.length && (
           <div className="run-history-list" aria-label={t("All Runs")}>
-            {runs.map((run) => (
+            {chartRuns.map((run) => (
               <div key={run.id}>
                 <button
                   className="secondary"
@@ -268,9 +310,10 @@ export function RunPerformanceChart({
                   {run.displayName ?? <>{t("Run {run}", { run: runNumber(run.id) })} ·{" "}
                     {!run.resolver ? t("No resolver") : t("Generative resolver")}</>}
                   <small>
-                    {run.lifecycle && <>{t(run.lifecycle)} · </>}F1 {metric(run.f1)} ·{" "}
+                    {run.lifecycle && <>{t(run.lifecycle)} · </>}{metricSelector ? metricName : "F1"} {displayMetric(run.f1)} ·{" "}
                     {t(run.scoreState)}
                   </small>
+                  {metricSelector && run.metricLabel && <small>{run.metricLabel}</small>}
                 </button>
                 {!(tab === "run"
                   ? run.eligibility.f1_by_run
@@ -281,6 +324,7 @@ export function RunPerformanceChart({
                             currency: run.cost.currency ?? "",
                             plotCurrency: costCurrency,
                           })
+                        : run.f1 === null && metricSelector ? "No retained measurement for this metric."
                         : (tab === "run" ? run.eligibility.f1_reasons : run.eligibility.cost_reasons)
                           .map(reason => t(reason)).join(" ")}
                     </small>
@@ -292,4 +336,21 @@ export function RunPerformanceChart({
       </div>
     </section></LayoutGroup>
   );
+}
+
+
+function percentMetric(value: number | null) {
+  return value === null ? "Unavailable" : `${(value * 100).toFixed(2)}%`;
+}
+
+function withMetric(run: PerformanceRun, selected: PerformanceMetric): PerformanceRun {
+  const measure = run.measures?.[selected];
+  if (!measure && selected === "graph") return run;
+  return {
+    ...run,
+    f1: measure?.value ?? null,
+    metricLabel: measure?.label ?? performanceMetrics[selected],
+    coverage: measure?.coverage ?? { scored: 0, planned: 0 },
+    coverageLabel: measure?.coverageLabel ?? "",
+  };
 }

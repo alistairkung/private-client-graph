@@ -13,6 +13,7 @@ from .export import export_bundle, verify_export
 from .fixtures import load_inputs
 from .plan import ExperimentPlan, Pricing
 from .provider import ModelSettings, invoke_deepseek
+from .run_plan import RunPlan
 from .runner import Provider, execute
 from .summary import summarize
 
@@ -38,6 +39,9 @@ def main(argv: list[str] | None = None) -> None:
     run.add_argument('--checkpoint', type=int, help='Maximum new attempts this invocation; does not reset task budget')
     for command in ('inspect', 'summarize'):
         commands.add_parser(command).add_argument('bundle', type=Path)
+    baseline = commands.add_parser('inspect-v3-baseline', help='Report the verified first live v3 baseline offline')
+    baseline.add_argument('archive', type=Path)
+    baseline.add_argument('admissions', type=Path)
     export = commands.add_parser('export')
     export.add_argument('bundle', type=Path)
     export.add_argument('destination', type=Path)
@@ -45,10 +49,15 @@ def main(argv: list[str] | None = None) -> None:
     if args.command == 'plan':
         _plan(args)
         return
+    if args.command == 'inspect-v3-baseline':
+        _inspect_v3_baseline(args.archive, args.admissions)
+        return
     bundle = Bundle.open(args.bundle)
     if args.command == 'run':
         _run(bundle, args)
-    elif args.command == 'inspect':
+    elif args.command == 'inspect' or (
+        args.command == 'summarize' and isinstance(bundle.plan, RunPlan) and bundle.plan.benchmark_v4_sha256
+    ):
         print(json.dumps(summarize(bundle), indent=2))
     elif args.command == 'summarize':
         with bundle.execution_lock():
@@ -99,3 +108,16 @@ def _run(bundle: Bundle, args: argparse.Namespace) -> None:
         checkpoint = 6  # inspect the first matched challenge repetitions before continuing
     result = execute(bundle, provider=provider, live=args.live, max_new_attempts=checkpoint)
     print(json.dumps(result, indent=2))
+
+
+def _inspect_v3_baseline(archive: Path, admissions: Path) -> None:
+    from dataclasses import asdict
+
+    from benchmark_v3.retained_evaluation import evaluate_first_live_baseline
+    from .evidence_grounded import project_quality
+
+    baseline = evaluate_first_live_baseline(archive, admissions)
+    print(json.dumps({'suite': 'pcg-benchmark-v3', 'schema_version': 1,
+        'archive_inventory_sha256': baseline.run_artifact_sha256,
+        'qualified_protocol': {'scope': asdict(baseline.scope), 'cohort': asdict(baseline.cohort)},
+        'quality': project_quality(baseline.conditions.values()).model_dump(mode='json')}, indent=2))

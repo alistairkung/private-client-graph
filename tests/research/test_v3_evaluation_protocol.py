@@ -16,6 +16,7 @@ from benchmark_v3.retained_evaluation import BASELINE_INVENTORY_SHA256, evaluate
 from private_client_graph.extraction.semantic import SOURCED_EXTRACTION_PROMPT
 from private_client_graph.models import SourcedExtractionResult
 from private_client_graph.models.source import Source
+from private_client_graph.research.evidence_grounded import project_quality
 from private_client_graph.research.provider import ModelSettings
 from private_client_graph.research.retained_inputs import value_digest
 
@@ -153,6 +154,11 @@ def test_exact_private_first_live_baseline(monkeypatch):
     assert (metrics.incomplete_proofs, metrics.missed_proofs, metrics.proofs_without_graph) == (44, 5, 4)
     assert (metrics.quote_passed, metrics.quote_assessed, metrics.attribution_passed, metrics.attribution_assessed) == (23, 66, 23, 74)
     assert metrics.outcomes == {'scored': 30, 'validation_failure': 4}
+    projection = project_quality(result.conditions.values())
+    assert projection.grounded.counts == GraphCounts(18, 83, 95)
+    assert projection.grounded.f1 == 36 / 214
+    assert projection.grounded.recall == 18 / 113
+    assert projection.complete_proof.rate == 18 / 71
     config = json.loads((root / 'live-baseline-2026-11-24/CONFIGURATION.json').read_text())
     plan = json.loads(commissioning.trusted_bytes('planning/experiments/PROOF-COMPLETENESS-v1.json'))
     assert plan['wire_parameters_without_messages_sha256'] == value_digest(config['exact_wire_parameters_and_schema'])
@@ -197,3 +203,42 @@ def test_preregistered_matrix_and_prompt_commitments():
     assert digest(prompt) == plan['control_prompt_sha256']
     assert prompt.count(operation['insert_before']) == 1
     assert digest(prompt.replace(operation['insert_before'], operation['insert'] + operation['insert_before'], 1)) == plan['treatment_prompt_sha256']
+
+
+def test_grounded_quality_pools_distinct_edges_and_requires_exact_joint_routes():
+    first = planned('A', 'A0')
+    same_text_other_source = Source(id='copy', title='Copy', text=SECOND['supporting_text'])
+    incomplete = planned('A', 'A1')
+    incomplete = replace(incomplete, frozen=replace(incomplete.frozen,
+        sources=[*incomplete.frozen.sources, same_text_other_source]))
+    wrong_source = SECOND | {'source_id': 'copy'}
+    unsupported = prediction(FIRST).relationships[0].model_copy(update={'source_name': 'Other'})
+    predicted = prediction(FIRST, SECOND, ALTERNATE, SECOND)
+    predicted.relationships.append(unsupported)
+    roster = [first, incomplete, planned('A', 'A2'), planned('A', 'A3', empty=True),
+              planned('A', 'A4'), planned('A', 'A5')]
+    report = evaluate(roster, {
+        'A0': predicted, 'A1': prediction(FIRST, wrong_source), 'A2': prediction(),
+        'A3': prediction(), 'A4': prediction(FIRST | {'supporting_text': 'Invalid quote'}),
+    })
+    quality = project_quality(report.conditions.values(), processing={'A5'})
+    assert quality.outcomes == {'scored': 4, 'validation_failure': 1, 'processing': 1}
+    assert quality.observed_inputs == 5
+    assert quality.qualified_graph.counts == GraphCounts(2, 1, 2)
+    assert quality.grounded.counts == GraphCounts(1, 2, 3)
+    assert quality.grounded.precision == 1 / 3
+    assert quality.grounded.recall == 1 / 4
+    assert quality.grounded.f1 == 2 / 7 < quality.qualified_graph.f1
+    assert quality.complete_proof.rate == quality.joint_only_proof.rate == quality.grounded.recall
+    assert quality.complete_proof.complete == report.cohort.complete_proofs == 1
+
+
+def test_grounded_quality_distinguishes_unexecuted_and_valid_empty_graph():
+    roster = [planned('A', 'A0', empty=True)]
+    empty = project_quality(evaluate(roster, {'A0': prediction()}).conditions.values())
+    missing = project_quality(evaluate(roster, {}).conditions.values())
+    assert empty.grounded.counts == GraphCounts(0, 0, 0)
+    assert empty.grounded.precision == empty.grounded.recall == empty.grounded.f1 == 0.0
+    assert empty.complete_proof.rate is None and empty.outcomes == {'scored': 1}
+    assert missing.graph is None and missing.grounded is None
+    assert missing.outcomes == {'not_attempted': 1}

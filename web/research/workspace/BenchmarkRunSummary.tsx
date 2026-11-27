@@ -3,6 +3,7 @@ import { metric, money } from "./RunChart";
 import { formatF1Basis } from "./benchmark-metrics";
 import { RunRelationshipMatrix } from "./RunRelationshipMatrix";
 import "./run-relationship-matrix.css";
+import { QualityDiagnostics, RunQuality } from "./RunQuality";
 
 export function BenchmarkRunSummary({
   run,
@@ -20,7 +21,16 @@ export function BenchmarkRunSummary({
         Evaluation Protocol v1 · {benchmark.cohort.planned_conditions}{" "}
         Environment Conditions
       </p>
-      <div className="benchmark-overview-line">
+      {!run.benchmark_v4 && run.quality && (
+        <>
+          <RunQuality quality={run.quality} />
+          <RunRelationshipMatrix
+            counts={benchmark.cohort.all_conditions}
+            expectedEdgesWithoutGraph={benchmark.cohort.expected_edges_without_graph}
+          />
+        </>
+      )}
+      {!run.quality && <div className="benchmark-overview-line">
         <div>
           <span>All-condition graph F1</span>
           <strong>{metric(benchmark.cohort.all_condition_micro_f1)}</strong>
@@ -45,10 +55,11 @@ export function BenchmarkRunSummary({
           counts={benchmark.cohort.all_conditions}
           expectedEdgesWithoutGraph={benchmark.cohort.expected_edges_without_graph}
         />
-      </div>
+      </div>}
 
       <details className="protocol-metrics">
         <summary>Protocol metrics and denominators</summary>
+        {!run.benchmark_v4 && run.quality && <QualityDiagnostics quality={run.quality} />}
         <p>
           Graph micro-F1 = 2 × true positives / (2 × true positives + false
           positives + false negatives).

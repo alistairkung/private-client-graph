@@ -11,6 +11,7 @@ import { ReadState } from "../shared/presentation";
 import { useRead } from "../shared/useRead";
 import { compareRuns } from "./api";
 import { metric, money } from "./RunChart";
+import { QualityComparison, QualityDiagnostics } from "./RunQuality";
 import { BenchmarkEvidence, BenchmarkV4Summary, GraphMetrics, PipelineUsage } from "./BenchmarkV4Summary";
 import { BenchmarkRunSummary } from "./BenchmarkRunSummary";
 
@@ -292,14 +293,20 @@ function RunComparisonPanel({
       {data.benchmark_v4 && (
         <section aria-label="Benchmark v4 comparison">
           {data.benchmark_v4.shared_extraction_run_id && <p>Verified shared extraction candidates.</p>}
-          <h4>Comparison Run</h4>
-          <GraphMetrics summary={data.benchmark_v4.left} />
-          <BenchmarkEvidence summary={data.benchmark_v4.left} proofs={data.benchmark_v4.left_proofs} />
-          {data.benchmark_v4.left_usage && <PipelineUsage usage={data.benchmark_v4.left_usage} complete={data.benchmark_v4.left.state === "complete"} />}
-          <h4>Selected Run</h4>
-          <GraphMetrics summary={data.benchmark_v4.right} />
-          <BenchmarkEvidence summary={data.benchmark_v4.right} proofs={data.benchmark_v4.right_proofs} />
-          {data.benchmark_v4.right_usage && <PipelineUsage usage={data.benchmark_v4.right_usage} complete={data.benchmark_v4.right.state === "complete"} />}
+          <QualityComparison comparison={data.benchmark_v4} />
+          <details>
+            <summary>Evaluation and provider diagnostics</summary>
+            <h4>Comparison Run</h4>
+            {data.benchmark_v4.left_quality && <QualityDiagnostics quality={data.benchmark_v4.left_quality} />}
+            <GraphMetrics summary={data.benchmark_v4.left} />
+            <BenchmarkEvidence summary={data.benchmark_v4.left} proofs={data.benchmark_v4.left_proofs} />
+            {data.benchmark_v4.left_usage && <PipelineUsage usage={data.benchmark_v4.left_usage} complete={data.benchmark_v4.left.state === "complete"} />}
+            <h4>Selected Run</h4>
+            {data.benchmark_v4.right_quality && <QualityDiagnostics quality={data.benchmark_v4.right_quality} />}
+            <GraphMetrics summary={data.benchmark_v4.right} />
+            <BenchmarkEvidence summary={data.benchmark_v4.right} proofs={data.benchmark_v4.right_proofs} />
+            {data.benchmark_v4.right_usage && <PipelineUsage usage={data.benchmark_v4.right_usage} complete={data.benchmark_v4.right.state === "complete"} />}
+          </details>
         </section>
       )}
       {data.benchmark && (

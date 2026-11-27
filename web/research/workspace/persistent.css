@@ -409,3 +409,27 @@ pre {
   padding-block: 10px;
   cursor: pointer;
 }
+
+.run-quality-headlines {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 215px), 1fr));
+  gap: 20px;
+  margin: 16px 0;
+}
+.run-quality-measure {
+  display: grid;
+  align-content: start;
+  gap: 4px;
+}
+.run-quality-measure > span { font-weight: 600; }
+.run-quality-measure > strong { font-size: 1.75rem; font-variant-numeric: tabular-nums; }
+.run-quality-outcomes { display: flex; gap: 16px; flex-wrap: wrap; }
+.run-quality-outcomes > div { display: flex; gap: 6px; }
+.run-quality-outcomes dd { margin: 0; }
+.run-quality-comparison { width: 100%; table-layout: fixed; }
+.run-quality-comparison th:first-child { width: 35%; }
+.run-quality-comparison small { display: block; }
+.run-quality-comparison td strong { white-space: nowrap; }
+@media (width < 600px) {
+  .run-quality-comparison :is(th, td) { padding-inline: 6px; }
+}

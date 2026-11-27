@@ -7,6 +7,7 @@ export function UnavailablePrediction({
   observation: RunObservation;
 }) {
   const condition = observation.benchmark;
+  const processing = observation.status === "processing";
   const resolving = observation.configuration === "generative_full_source";
   const candidates = condition?.parsed_prediction?.relationships;
   const sources = observation.sources ?? [];
@@ -25,9 +26,9 @@ export function UnavailablePrediction({
       className="prediction-unavailable"
       aria-label="Unavailable prediction"
     >
-      <strong>{condition?.outcome === "not_attempted" ? resolving ? "Awaiting resolution" : "Awaiting extraction" : "Prediction unavailable"}</strong>
+      <strong>{processing ? "Processing this input" : condition?.outcome === "not_attempted" ? resolving ? "Awaiting resolution" : "Awaiting extraction" : "Prediction unavailable"}</strong>
       <p>
-        {condition?.failure_detail ??
+        {(processing ? "Waiting for the retained result." : null) ?? condition?.failure_detail ??
           observation.reason ??
           (condition?.outcome === "not_attempted" ? resolving ? "No resolution is recorded for this input." : "No extraction is recorded for this input." : condition?.outcome.replaceAll("_", " "))}
       </p>

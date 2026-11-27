@@ -127,6 +127,7 @@ def _fixture_context(benchmark):
 
 
 def register_benchmark_browser_fixture(root):
+    from private_client_graph.research.evidence_grounded import project_quality
     from private_client_graph.workbench.benchmark_contracts import BenchmarkRun, condition_relationship_outcomes
     from private_client_graph.workbench.benchmark_v3_import import register_offline_fixture_for_tests
     from private_client_graph.workbench.execution_contracts import FrozenPlan, Preview, Proposal
@@ -157,6 +158,7 @@ def register_benchmark_browser_fixture(root):
             id=identity, experiment_id=FIXTURE_EXPERIMENT, plan=plan,
             lifecycle='incomplete' if arm == 'treatment' else 'complete',
             evaluation=RunEvaluation(run_id=identity, aggregate=RunAggregate(), cost=RunCost()), benchmark=benchmark, observations=observations,
+            quality=project_quality(verified.protocol.conditions.values()),
             family_context=_fixture_context(benchmark), provenance={'fixture_arm': arm}, artifact_digest=value_digest(arm),
             authorized_invocations=[], attempts=[],
         ))

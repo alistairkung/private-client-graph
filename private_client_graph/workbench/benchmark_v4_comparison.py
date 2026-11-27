@@ -1,5 +1,5 @@
 """Descriptive comparison across identical Benchmark v4 reference commitments."""
-from .run_evaluation_contracts import BenchmarkV4Comparison, RunComparison, ObservationPair
+from .run_evaluation_contracts import BenchmarkV4Comparison, RunComparison, ObservationPair, QualityDelta
 from .run_inspection import RunDetail
 
 
@@ -24,6 +24,8 @@ def compare_benchmark_v4_runs(left: RunDetail, right: RunDetail) -> RunCompariso
     right_origin = right.pipeline_usage.origin_run_id if right.pipeline_usage else None
     paired = (left_origin or left.id) == (right_origin or right.id)
     output.benchmark_v4 = BenchmarkV4Comparison(left=first, right=second,
+        left_quality=left.quality, right_quality=right.quality,
+        quality_delta=_quality_delta(left, right) if first.state == second.state == 'complete' else None,
         left_proofs=left.benchmark.cohort if left.benchmark else None,
         right_proofs=right.benchmark.cohort if right.benchmark else None,
         left_usage=left.pipeline_usage, right_usage=right.pipeline_usage,
@@ -39,3 +41,12 @@ def compare_benchmark_v4_runs(left: RunDetail, right: RunDetail) -> RunCompariso
     if first.state != 'complete' or second.state != 'complete':
         output.reasons.append('A comparison includes a Run with incomplete coverage.')
     return output
+
+
+def _quality_delta(left: RunDetail, right: RunDetail) -> QualityDelta | None:
+    a, b = left.quality, right.quality
+    if a is None or b is None or a.version != b.version:
+        return None
+    assert a.graph and b.graph and a.qualified_graph and b.qualified_graph and a.grounded and b.grounded
+    return QualityDelta(graph=b.graph.f1 - a.graph.f1, qualified_graph=b.qualified_graph.f1 - a.qualified_graph.f1,
+                        grounded=b.grounded.f1 - a.grounded.f1)

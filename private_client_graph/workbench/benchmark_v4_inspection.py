@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 from benchmark_v3.evaluation_protocol import ConditionResult
 from private_client_graph.research.artifacts import Bundle
 from private_client_graph.research.benchmark_v4 import BenchmarkWorkload, EvaluationInput
+from private_client_graph.research.benchmark_v4_reporting import report_quality
 from private_client_graph.research.benchmark_v4_run import evaluate_retained_run
 from private_client_graph.research.benchmark_v4_operations import benchmark_v4_operations
 from private_client_graph.research.results import ResearchResult
@@ -24,6 +25,8 @@ def attach_benchmark_v4(detail: 'RunDetail', bundle: Bundle) -> None:
     retained = evaluate_retained_run(bundle, workload, attempts=detail.attempts)
     mixed, results = retained.evaluation, retained.results
     detail.benchmark_v4 = mixed.summary
+    quality = report_quality(bundle, retained, detail.attempts)
+    detail.quality = quality
     detail.pipeline_usage = benchmark_v4_operations(retained, detail.attempts, bundle.plan.pricing,
                                                    live=bundle.plan.kind == 'live_experiment')
     detail.evaluation.full_pipeline_cost = detail.pipeline_usage.full_pipeline.estimated_cost
@@ -40,7 +43,7 @@ def attach_benchmark_v4(detail: 'RunDetail', bundle: Bundle) -> None:
         outcome = mixed.consensus if consensus else mixed.qualified.conditions[condition.condition]
         observation.sources = template.sources
         observation.benchmark = condition
-        observation.status = condition.outcome
+        observation.status = quality.input_outcomes[condition.condition]
         observation.reason = condition.failure_detail
         observation.relationships = condition_relationship_outcomes(condition, outcome.graph,
             observation.result.state if observation.result else None, score_provenance=not consensus)

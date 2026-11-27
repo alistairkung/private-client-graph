@@ -27,6 +27,7 @@ export function RunChart({
       runs={values}
       selected={selected}
       select={select}
+      metricSelector={runs.some((run) => !!run.quality)}
     />
   );
 }
@@ -52,10 +53,12 @@ function verifiedBenchmarkCost(run: RunDetail) {
 }
 
 function performanceRun(run: RunDetail): PerformanceRun {
-  const { benchmark, benchmark_v4: mixed, evaluation } = run;
+  const { benchmark, benchmark_v4: mixed, evaluation, quality } = run;
+  const measures = quality ? qualityMeasures(quality, !!mixed) : undefined;
   if (mixed) {
     const pipeline = run.pipeline_usage?.full_pipeline;
-    const cost = mixed.observation_origin === "live" && pipeline?.estimated_cost != null && pipeline.currency
+    const cost = mixed.observation_origin === "live" && pipeline?.estimated_cost != null &&
+      pipeline.unpriced_attempts === 0 && pipeline.attempts > 0 && pipeline.currency
       ? { total: pipeline.estimated_cost, currency: pipeline.currency }
       : null;
     const score = mixed.combined;
@@ -67,6 +70,8 @@ function performanceRun(run: RunDetail): PerformanceRun {
       model: run.plan.preview.proposal.model,
       recorded: mixed.observation_origin === "offline_fixture",
       f1: score?.f1 ?? null,
+      measures,
+      costLabel: "Estimated full pipeline cost · {currency} {amount}",
       metricLabel: "Benchmark v4 graph micro-F1 · mixed references",
       coverageLabel: "valid graphs / planned inputs",
       scoreState: mixed.state === "unmeasured" ? "unavailable" : mixed.state,
@@ -75,10 +80,11 @@ function performanceRun(run: RunDetail): PerformanceRun {
       costBasis: cost ? "verified_provider_estimate" : undefined,
       scopeIdentity: `${mixed.scope_sha256}:${mixed.scoring_sha256}:${mixed.observation_origin}`,
       eligibility: {
-        f1_by_run: mixed.state === "complete",
+        f1_by_run: quality ? quality.graph !== null : mixed.state === "complete",
         f1_vs_cost: mixed.state === "complete" && cost !== null,
         f1_reasons: mixed.state === "complete" ? [] : ["Benchmark v4 coverage is incomplete."],
-        cost_reasons: cost ? [] : ["Verified provider cost is unavailable."],
+        cost_reasons: !cost ? ["Verified provider cost is unavailable."]
+          : mixed.state !== "complete" ? ["Cost points require a complete Run."] : [],
       },
     };
   }
@@ -94,6 +100,7 @@ function performanceRun(run: RunDetail): PerformanceRun {
     f1: benchmark
       ? benchmark.cohort.all_condition_micro_f1
       : (evaluation?.aggregate.f1 ?? null),
+    measures,
     metricLabel: benchmark ? "All-condition micro-F1 · Protocol v1" : undefined,
     coverageLabel: benchmark ? "valid graphs / planned Conditions" : undefined,
     scoreState: benchmark
@@ -132,5 +139,30 @@ function performanceRun(run: RunDetail): PerformanceRun {
           f1_reasons: ["Evaluation unavailable"],
           cost_reasons: ["Evaluation unavailable"],
         }),
+  };
+}
+
+function qualityMeasures(quality: NonNullable<RunDetail["quality"]>, mixed: boolean): PerformanceRun["measures"] {
+  const scope = `${quality.qualified_inputs} qualified Conditions`;
+  const qualified = { scored: quality.observed_qualified_inputs, planned: quality.qualified_inputs };
+  return {
+    graph: {
+      value: quality.graph?.f1 ?? null,
+      label: mixed ? `Graph micro-F1 · ${quality.planned_inputs} inputs · mixed references` : `Graph micro-F1 · ${scope}`,
+      coverage: { scored: quality.observed_inputs, planned: quality.planned_inputs },
+      coverageLabel: "observed / planned inputs",
+    },
+    grounded: {
+      value: quality.grounded?.f1 ?? null,
+      label: `Evidence-Grounded micro-F1 · ${scope}`,
+      coverage: qualified,
+      coverageLabel: "observed / planned Conditions",
+    },
+    proof: {
+      value: quality.complete_proof.rate,
+      label: `Complete Proof Rate · ${scope}`,
+      coverage: { scored: quality.complete_proof.complete, planned: quality.complete_proof.targets },
+      coverageLabel: "complete / observed proof targets",
+    },
   };
 }

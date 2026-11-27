@@ -162,3 +162,8 @@ def test_exact_v4_owner_workbench_freezes_authorizes_starts_and_indexes(database
         summary = json.loads((root / paired['id'] / 'summary.json').read_text())
         assert summary['pipeline_usage'] == usage
         assert summary['benchmark_v4'] == resolved['benchmark_v4']
+        assert summary['quality'] == resolved['quality'] == comparison['benchmark_v4']['right_quality']
+        assert summary['quality']['grounded']['counts'] == {'tp': 0, 'fp': 0, 'fn': 113}
+        assert summary['quality']['graph']['counts']['fn'] == 119
+        assert summary['quality']['observed_qualified_inputs'] == 34
+        assert comparison['benchmark_v4']['quality_delta'] == {'graph': 0, 'qualified_graph': 0, 'grounded': 0}

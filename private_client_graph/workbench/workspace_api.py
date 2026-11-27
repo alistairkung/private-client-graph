@@ -5,6 +5,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
 from private_client_graph.research.benchmark_v4_scoring import BenchmarkV4Summary
+from private_client_graph.research.evidence_grounded import QualityProjection
 
 from private_client_graph.persistence.database import database_engine
 from private_client_graph.research.artifacts import Bundle
@@ -28,6 +29,7 @@ PREFIX = '/api/research/v2'
 class BenchmarkV4Aggregate(BaseModel):
     benchmark_v4: BenchmarkV4Summary
     qualified_protocol: BenchmarkRun
+    quality: QualityProjection
 
 
 def mount_workspace_reads(app: FastAPI, root: Path, refresh=None) -> None:
@@ -79,8 +81,9 @@ def mount_workspace_reads(app: FastAPI, root: Path, refresh=None) -> None:
     def aggregate(experiment_id: str, run_id: str):
         detail = read_run(root, experiment_id, run_id)
         if detail.benchmark_v4 is not None:
-            assert detail.benchmark is not None
-            return BenchmarkV4Aggregate(benchmark_v4=detail.benchmark_v4, qualified_protocol=detail.benchmark)
+            assert detail.benchmark is not None and detail.quality is not None
+            return BenchmarkV4Aggregate(benchmark_v4=detail.benchmark_v4,
+                qualified_protocol=detail.benchmark, quality=detail.quality)
         return detail.benchmark if detail.benchmark is not None else detail.evaluation
 
     @app.get(f'{PREFIX}/experiments/{{experiment_id}}/runs/{{run_id}}/observations/{{observation_id}}', response_model=RunObservation)

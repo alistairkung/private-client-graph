@@ -54,6 +54,7 @@ def _summarize_v4(bundle: Bundle) -> dict[str, Any]:
     from .benchmark_v4 import configured_custody, load_workload
     from .benchmark_v4_operations import benchmark_v4_operations
     from .benchmark_v4_run import evaluate_retained_run
+    from .benchmark_v4_reporting import report_quality
     from .live_accounting import retained_run_attempts
     custody = configured_custody()
     if custody is None:
@@ -70,6 +71,7 @@ def _summarize_v4(bundle: Bundle) -> dict[str, Any]:
         'run_id': getattr(bundle.plan, 'run_id', None) or bundle.manifest['experiment_id'],
         'configuration': bundle.plan.model_dump(mode='json', exclude={'inputs'}),
         'benchmark_v4': retained.evaluation.summary.model_dump(mode='json'),
+        'quality': report_quality(bundle, retained, attempts).model_dump(mode='json'),
         'qualified_protocol': {'scope': asdict(protocol.scope), 'cohort': asdict(protocol.cohort),
                                'families': {name: asdict(metrics) for name, metrics in protocol.families.items()}},
         'operations': {**operations, 'authority_reasons': authority_reasons},

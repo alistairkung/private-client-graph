@@ -6,6 +6,7 @@ from pathlib import Path
 from uuid import NAMESPACE_URL, uuid5
 
 from benchmark_v3.batch.artifacts import read_bytes, write_bytes
+from private_client_graph.research.evidence_grounded import project_quality
 from benchmark_v3.retained_evaluation import (
     BASELINE_INVENTORY_SHA256, verify_first_live_baseline, verify_first_live_custody,
 )
@@ -195,6 +196,7 @@ def _detail(experiment_id, run_id, verified, benchmark, archive: Path) -> RunDet
         id=run_id, experiment_id=experiment_id, plan=frozen, lifecycle=lifecycle,
         evaluation=evaluate_run(bundle),
         benchmark=benchmark, observations=observations,
+        quality=project_quality(verified.protocol.conditions.values()),
         provenance={'origin': 'live', 'benchmark_protocol': verified.protocol.scope.protocol_version,
                     'archive_inventory_sha256': BASELINE_INVENTORY_SHA256,
                     'git_sha': provenance.get('git_sha'), 'prompt_hashes': provenance.get('prompt_hashes'),

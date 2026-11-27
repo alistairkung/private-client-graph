@@ -1,5 +1,6 @@
 import type { BenchmarkV4Operations, BenchmarkV4Summary as Summary, DeliveredGraphMetrics, Metrics, RunDetail } from "../shared/contracts";
 import { metric, money } from "./RunChart";
+import { QualityDiagnostics, RunQuality } from "./RunQuality";
 
 export function BenchmarkV4Summary({ run }: { run: RunDetail }) {
   const summary = run.benchmark_v4!;
@@ -7,13 +8,16 @@ export function BenchmarkV4Summary({ run }: { run: RunDetail }) {
     <section className="benchmark-run-summary" aria-label="Benchmark v4 results">
       <p>{run.pipeline_usage?.origin_run_id ? "Extractor v1 candidates + Generative Resolver" : "Extractor v1 only"} · 35 evaluation inputs</p>
       {summary.observation_origin === "offline_fixture" && <p>Synthetic fixture results.</p>}
-      {summary.state === "unmeasured" ? (
-        <p role="status">Graph metrics will appear after the first retained observation.</p>
-      ) : (
-        <>
-          {summary.state === "provisional" && <p role="status">Provisional. Unobserved inputs contribute their expected edges to the combined missing count.</p>}
+      {run.quality && <RunQuality quality={run.quality} mixed provisional={summary.state === "provisional"} />}
+      {summary.combined && (
+        <p>{summary.combined.valid_graphs}/{summary.combined.inputs} graphs constructed · {summary.combined.exact_graphs} exact graphs</p>
+      )}
+      {summary.state !== "unmeasured" && (
+        <details>
+          <summary>Evaluation diagnostics</summary>
+          {run.quality && <QualityDiagnostics quality={run.quality} />}
           <GraphMetrics summary={summary} />
-        </>
+        </details>
       )}
       <details>
         <summary>U revision 8 evidence adjudication</summary>
@@ -39,8 +43,9 @@ export function GraphMetrics({ summary }: { summary: Summary }) {
   ];
   return (
     <div className="table-scroll">
+      {summary.state === "provisional" && <p>The original planned-input score counts expected edges from inputs awaiting observation as missing.</p>}
       <table>
-        <caption>Graph delivery across planned inputs</caption>
+        <caption>Graph delivery on planned inputs · historical scoring</caption>
         <thead>
           <tr>
             <th scope="col">Reference scope</th><th scope="col">Precision</th><th scope="col">Recall</th>

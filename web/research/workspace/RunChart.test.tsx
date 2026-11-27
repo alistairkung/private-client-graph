@@ -256,3 +256,36 @@ it("keeps the historical cost axis and uses the visible Benchmark currency after
     screen.getByRole("button", { name: /Protocol v1 0.850/ }),
   ).toBeVisible();
 });
+
+it("shares the metric across plot modes and omits missing evidence and cost points", () => {
+  const first = run("first", 0.9, 0.04);
+  const unpriced = run("unpriced", 0.95, null);
+  const empty = run("empty", null, 0);
+  const score = (f1: number) => ({ counts: { tp: 1, fp: 1, fn: 1 }, precision: 0.5, recall: 0.5, f1 });
+  first.quality = {
+    version: "evidence_grounded_f1_v1",
+    planned_inputs: 35, observed_inputs: 35, qualified_inputs: 34, observed_qualified_inputs: 34,
+    outcomes: { scored: 35 }, input_outcomes: {},
+    graph: score(0.9), qualified_graph: score(0.88), grounded: score(0.1),
+    complete_proof: { complete: 1, targets: 4, rate: 0.25 },
+    joint_only_proof: { complete: 0, targets: 1, rate: 0 },
+  };
+  unpriced.quality = { ...first.quality, grounded: score(0.2) };
+  const select = vi.fn();
+  const { container } = render(<RunChart workspace={workspace} runs={[first, unpriced, empty]} selected="first" select={select} />);
+  const metric = screen.getByRole("combobox", { name: "Metric" });
+  fireEvent.change(metric, { target: { value: "grounded" } });
+  expect(screen.getByRole("heading", { name: "Evidence-Grounded F1 by Run" })).toBeVisible();
+  expect(container.querySelectorAll(".chart-point")).toHaveLength(2);
+  expect(screen.getByRole("button", { name: /Run 2, Evidence-Grounded.*20\.00%/ })).toBeVisible();
+  fireEvent.click(screen.getByRole("tab", { name: "F1 vs Cost" }));
+  expect(metric).toHaveValue("grounded");
+  expect(screen.getByRole("heading", { name: "Evidence-Grounded F1 vs Cost" })).toBeVisible();
+  expect(container.querySelectorAll(".chart-point")).toHaveLength(1);
+  expect(screen.queryByRole("button", { name: /Run 2, Evidence-Grounded/ })).not.toBeInTheDocument();
+  fireEvent.change(metric, { target: { value: "proof" } });
+  expect(screen.getByRole("button", { name: /Run 1, Complete Proof Rate.*25\.00%.*1\/4/ })).toBeVisible();
+  fireEvent.click(screen.getByRole("tab", { name: "F1 by Run" }));
+  expect(screen.getByRole("heading", { name: "Complete Proof Rate by Run" })).toBeVisible();
+  expect(metric).toHaveValue("proof");
+});

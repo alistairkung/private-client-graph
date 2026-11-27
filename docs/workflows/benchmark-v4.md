@@ -141,7 +141,8 @@ Both Runs use the same v4 scorer and private roster. Freeze A and B on this
 revision to share the same scorer commitment.
 
 Use `uv run python -m private_client_graph.research summarize RUN_DIRECTORY`
-to regenerate the metrics without raw provider requests or responses. Keep the
+to print the derived metrics as JSON without writing into Run custody or
+including raw provider requests or responses. Keep the
 parent Run, child Run and original task ledger in private custody so the
 candidate lineage and receipts remain verifiable.
 
@@ -161,3 +162,32 @@ Compare pooled counts, construction outcomes, both reference slices, formal
 proofs, U8 citation overlap and observed provider usage. Keep the v3 baseline
 as historical context and establish the v4 baseline from newly measured
 results.
+
+## Evidence-Grounded F1 replay
+
+The [versioned methodology](evidence-grounded-f1-v1.md) derives grounded
+counts and observed coverage from verified retained results. Workbench and CLI
+JSON expose the same `quality` object. The historic `benchmark_v4` and
+`qualified_protocol` fields retain their original Graph and proof scoring.
+For a read-only JSON export outside Run custody, use:
+
+```sh
+uv run python -m private_client_graph.research inspect RUN_DIRECTORY > RUN_REPORT.json
+```
+
+Provider-free replay of the retained paired live Runs produced:
+
+| Configuration | Combined Graph F1 (TP/FP/FN) | Qualified Graph F1 | Qualified Evidence-Grounded F1 (TP/FP/FN) | Complete proofs |
+| --- | --- | --- | --- | --- |
+| Extractor v1 | 92.50% (111/10/8) | 92.11% | 9.65% (11/104/102) | 11/71 |
+| Extractor v1 + Generative Resolver | 91.74% (111/12/8) | 91.30% | 9.57% (11/106/102) | 11/71 |
+
+Both Runs completed 0/30 joint-only proofs. Grounded recall is 11/113
+(9.73%) for both Runs. Combined Graph F1 includes U8. Qualified metrics use
+only the original 34 Conditions.
+
+The verification checked the Resolver's frozen lineage against the retained
+Extractor Run. Each Run had 35 retained provider attempts. The Resolver's
+full pipeline usage includes the inherited extraction. The frozen plans have
+token usage and no committed pricing, so these Runs have no verified USD
+points. Their by-Run measurements remain available.
