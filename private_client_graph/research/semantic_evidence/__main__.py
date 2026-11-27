@@ -7,8 +7,8 @@ from decimal import Decimal
 from pathlib import Path
 
 from .assessment import MAX_USD, PRICING, execute, open_plan, prepare, upper_cost, frozen_rates
-from .comparison import compare
-from .reporting import report
+from .comparison import compare_reports
+from .reporting import report, report_run
 from .store import entry, initialize, require, task_root
 
 
@@ -29,7 +29,9 @@ def main() -> None:
     run.add_argument('--approve-plan-sha256', required=True)
     run.add_argument('--approval-reference', required=True)
     run.add_argument('--verified-peak-rates', type=Decimal, nargs=2, metavar=('INPUT', 'OUTPUT'), required=True)
-    commands.add_parser('report', help='Regenerate the private assessment report offline').add_argument('directory', type=Path)
+    read = commands.add_parser('report', help='Regenerate a PCG Evaluation report offline')
+    read.add_argument('directory', type=Path)
+    read.add_argument('--run-id', help='Read a Benchmark v4 Run using the given artifact root')
     comparison = commands.add_parser('compare', help='Compare two Workbench Run assessments offline')
     comparison.add_argument('artifact_root', type=Path)
     comparison.add_argument('left')
@@ -45,8 +47,10 @@ def main() -> None:
         execute(args.directory, approved_digest=args.approve_plan_sha256, approval_reference=args.approval_reference,
                 verified_rates=(input_rate, output_rate), api_key=os.getenv('DEEPSEEK_API_KEY', ''))
     else:
-        result = (compare(require(args.artifact_root, args.left), require(args.artifact_root, args.right))
-                  if args.command == 'compare' else report(args.directory))
+        if args.command == 'compare':
+            result = compare_reports(report_run(args.artifact_root, args.left), report_run(args.artifact_root, args.right))
+        else:
+            result = report_run(args.directory, args.run_id) if args.run_id else report(args.directory)
         print(json.dumps(result, indent=2, ensure_ascii=False, allow_nan=False))
 
 

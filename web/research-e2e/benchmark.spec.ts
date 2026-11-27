@@ -226,7 +226,7 @@ test("compatible imports compare the full roster and changed order withholds del
   await expect(page.getByText(/deltas withheld/i)).toBeVisible();
 });
 
-test("evidence quality controls and comparison fit the viewport and retain keyboard selection", async ({ page }, testInfo) => {
+test("unified evaluation shows four metrics and compares only completed matching assessments", async ({ page }, testInfo) => {
   const graph = (inputs: number) => ({
     inputs, valid_graphs: inputs, without_graph: 0, exact_graphs: 0,
     precision: 1, recall: 0.5, f1: 2 / 3, counts: { tp: 2, fp: 0, fn: 2 }, outcomes: {},
@@ -271,7 +271,7 @@ test("evidence quality controls and comparison fit the viewport and retain keybo
   });
 
   const assessment: SemanticEvidenceReport = {
-    status: "AI-assisted, unverified", run_id: control, plan_sha256: "fixture",
+    methodology: "Ground-Truth-Aligned Evidence Evaluation", state: "complete", run_id: control, plan_sha256: "fixture", graph_f1: graph(34),
     scope_note: "Approved members define the comparison. Preserve stated dates, timing and authority.",
     evaluator: { version: "pcg-semantic-evidence-equivalence", prompt_sha256: "prompt", model: "deepseek-v4-pro",
       observation_origin: "offline_fixture",
@@ -282,7 +282,7 @@ test("evidence quality controls and comparison fit the viewport and retain keybo
       evidence_support: { count: 21, targets: 71, rate: 21 / 71 },
       proof_completion: { count: 12, targets: 71, rate: 12 / 71 },
       multi_source_evidence_coverage: { targets: 30, matched_target_equivalents: 13, mean: 13 / 30 },
-      targets_with_added_matches: 1, additional_matched_members: 1, newly_completed_proofs: 1 },
+      exact_matched_members: 25, unmatched_required_members: 100, targets_with_added_matches: 1, additional_matched_members: 1, newly_completed_proofs: 1 },
     operations: { planned_attempts: 2, reserved_attempts: 2, reused_judgments: 0,
       known_estimated_peak_usd: 0.013, reserved_attempts_without_usage: 0, mean_latency_seconds: 2.5 },
     targets: [
@@ -314,110 +314,132 @@ test("evidence quality controls and comparison fit the viewport and retain keybo
         error: "Invalid equivalence judgment schema", invalid_response: '{"verdict":"Supported"}', provider: null, reuse: null },
     ],
   };
-  let semanticReads = 0;
-  await page.route(`**/semantic-evidence/runs/${control}`, async (route) => {
-    semanticReads += 1;
-    await route.fulfill({ json: assessment });
+  let evaluationReads = 0;
+  let selectedState: SemanticEvidenceReport["state"] = "exact_only";
+  function selectedReport(): SemanticEvidenceReport {
+    if (selectedState === "complete") return {
+      ...assessment,
+      targets: [assessment.targets[0]],
+      target_summary: { ...assessment.target_summary, candidate_pairs: 2,
+        semantic_outcomes: { judged: 1, deterministic_delivery_failure: 4, no_eligible_comparison: 66 },
+      },
+    };
+    const exact = selectedState === "exact_only";
+    return {
+      ...assessment, state: selectedState, plan_sha256: exact ? null : assessment.plan_sha256,
+      operations: exact ? null : assessment.operations,
+      target_summary: {
+        ...assessment.target_summary,
+        evidence_support: { count: 16, targets: 71, rate: 16 / 71 },
+        proof_completion: { count: 11, targets: 71, rate: 11 / 71 },
+        multi_source_evidence_coverage: { targets: 30, matched_target_equivalents: 12, mean: 0.4 },
+      },
+    };
+  }
+
+  await page.route(`**/semantic-evidence/runs/${control}`, (route) => {
+    evaluationReads += 1;
+    return route.fulfill({ json: selectedReport() });
   });
-  const semantic: SemanticComparison = {
-    status: assessment.status, scope_note: assessment.scope_note,
-    evaluator: assessment.evaluator, formal_targets: 71, paired_valid_targets: 1,
-    left: { ...assessment, run_id: treatment, target_summary: {
-      ...assessment.target_summary, evidence_support: { count: 20, targets: 71, rate: 20 / 71 },
-    } }, right: assessment,
-    transitions: [{ id: "first", condition: "F0", edge: assessment.targets[0].edge,
-      left: { status: "judged", exact_outcome: "incomplete", complete: false, reused: false },
-      right: { status: "judged", exact_outcome: "incomplete", complete: true, reused: false },
-      changed_members: [{ member_id: "M2", source_id: "deed", quotation: "The appointment took effect on 1 June.",
-        left: "unmatched", right: "semantic" }],
-    }],
-  };
-  await page.route("**/semantic-evidence/comparison?*", (route) => route.fulfill({ json: semantic }));
+  await page.route("**/semantic-evidence/comparison?*", (route) => {
+    const comparable = selectedState === "complete";
+    const semantic: SemanticComparison = {
+      methodology: assessment.methodology, scope_note: assessment.scope_note, comparable,
+      evaluator: assessment.evaluator, formal_targets: 71, paired_valid_targets: 1,
+      left: { ...assessment, run_id: treatment, target_summary: {
+        ...assessment.target_summary, evidence_support: { count: 20, targets: 71, rate: 20 / 71 },
+      } }, right: selectedReport(),
+      transitions: comparable ? [{ id: "first", condition: "F0", edge: assessment.targets[0].edge,
+        left: { status: "judged", exact_outcome: "incomplete", complete: false, reused: false },
+        right: { status: "judged", exact_outcome: "incomplete", complete: true, reused: false },
+        changed_members: [{ member_id: "M2", source_id: "deed", quotation: "The appointment took effect on 1 June.",
+          left: "unmatched", right: "semantic" }],
+      }] : [],
+    };
+    return route.fulfill({ json: semantic });
+  });
 
   await page.goto(`/#workspace=${experiment}&run=${control}`);
   await page.getByText("Run history and selection", { exact: true }).click();
   const metric = page.getByRole("combobox", { name: "Performance metric" });
-  await metric.selectOption("joint_only_coverage");
-  const coveragePoint = page.getByRole("tabpanel", { name: "By Run" }).getByRole("button", {
-    name: /^Run \d+, Multi-Source Evidence Coverage/,
-    pressed: true,
+  await metric.selectOption("qualified_graph");
+  const graphPoint = page.getByRole("tabpanel", { name: "By Run" }).getByRole("button", {
+    name: /^Run \d+, Qualified Graph F1/, pressed: true,
   });
-  await coveragePoint.focus();
-  await expect(coveragePoint).toBeFocused();
-  await expect(coveragePoint).toHaveAccessibleDescription(/Average percentage of required evidence recovered for relationships that need multiple Sources\. Uses the best-matching approved proof route\./);
-
-  const runTab = page.getByRole("tab", { name: "By Run" });
-  await runTab.press("ArrowRight");
+  await graphPoint.focus();
+  await expect(graphPoint).toBeFocused();
+  await page.getByRole("tab", { name: "By Run" }).press("ArrowRight");
   await expect(page.getByRole("tab", { name: "Vs Cost" })).toBeFocused();
-  await expect(metric).toHaveValue("joint_only_coverage");
-  await expect(metric).toHaveAccessibleDescription("30 multi-Source proof targets · qualified cohort");
-  await expect(page.getByRole("heading", { name: "Multi-Source Evidence Coverage vs Cost" })).toBeVisible();
+  await expect(metric).toHaveValue("qualified_graph");
+  await expect(page.getByRole("heading", { name: "Qualified Graph F1 vs Cost" })).toBeVisible();
   await expect(page).toHaveURL(new RegExp(control + "$"));
 
-  await page.getByRole("combobox", { name: "Compare with verified Run" }).selectOption(treatment);
-  const table = page.getByRole("table", { name: "Evidence quality comparison" });
-  await expect(table.getByRole("row", { name: /Proof Completion.*qualified cohort/ })).toBeVisible();
-  await expect(table.getByRole("row", { name: /Multi-Source Evidence Coverage/ })).toBeVisible();
-  for (const element of [metric, table]) {
-    expect(await element.evaluate((node) => {
-      const { left, right } = node.getBoundingClientRect();
-      return left >= 0 && right <= window.innerWidth + 1;
-    })).toBe(true);
-  }
+  const evaluation = page.getByRole("region", { name: "PCG Evaluation", exact: true });
+  await expect(evaluation.getByRole("heading", { name: "PCG Evaluation" })).toBeVisible();
+  await expect(evaluation.getByText("Exact-only baseline · combined evaluation pending", { exact: true })).toBeVisible();
+  const cards = evaluation.locator("dl[aria-label='Evaluation metrics']");
+  await expect(cards.locator("dt")).toHaveText(["Graph F1", "Evidence Support", "Proof Completion", "Multi-Source Evidence Coverage"]);
+  await expect(cards.getByText("66.67%", { exact: true })).toBeVisible();
+  await expect(cards.getByText("22.54%", { exact: true })).toBeVisible();
+  await expect(cards.getByText("15.49%", { exact: true })).toBeVisible();
+  await expect(cards.getByText("40.00%", { exact: true })).toBeVisible();
+  await expect(evaluation.getByRole("table", { name: /Relationship confusion matrix/ })).toBeVisible();
 
-  const protocol = page.getByRole("region", { name: "Evaluation Protocol v1 results" });
-  await expect(protocol.getByText("15.49%", { exact: true })).toBeVisible();
-  await expect(protocol.getByText("11 of 71 formal targets", { exact: false })).toBeVisible();
-  await expect(protocol.getByText("1 / 30", { exact: true })).toBeVisible();
-  await expect(protocol.getByText("40.00%", { exact: true })).toBeVisible();
-  const semanticSummary = protocol.getByRole("region", { name: "Semantic Evidence — AI-assisted, unverified" });
-  await expect(semanticSummary.getByText("Evidence Support", { exact: true })).toBeVisible();
-  await expect(semanticSummary.getByText("29.58%", { exact: true })).toBeVisible();
-  await expect(semanticSummary.getByText("21/71 formal targets", { exact: true })).toBeVisible();
-  await expect(semanticSummary.getByText("16.90%", { exact: true })).toBeVisible();
-  await expect(semanticSummary.getByText("43.33%", { exact: true })).toBeVisible();
-  await expect(semanticSummary.getByText("13/30 target-equivalents")).toBeVisible();
-  await expect(semanticSummary.getByText("Judgment Coverage", { exact: true })).toBeVisible();
-  await expect(semanticSummary.getByText(/2\/3 eligible pairs judged · 1 partially equivalent.*1 invalid judgment.*4 delivery failures/)).toBeVisible();
-  await expect(semanticSummary.getByText("1 added member across 1 target · 1 newly completed proof")).toBeVisible();
-  await expect(semanticSummary.getByText(/2.5s mean latency/)).toBeVisible();
-  await expect(semanticSummary.getByText(assessment.scope_note)).toBeVisible();
-  await expect(semanticSummary.getByText("Inspect formal targets (2)")).not.toBeVisible();
-  expect(semanticReads).toBe(1);
-  const exactCoverage = (await protocol.getByText("40.00%", { exact: true }).boundingBox())!;
-  const semanticCoverage = (await semanticSummary.getByText("43.33%", { exact: true }).boundingBox())!;
-  expect(semanticCoverage.y).toBeGreaterThan(exactCoverage.y + exactCoverage.height);
-  if (testInfo.project.name === "research-desktop") {
-    expect(Math.abs(semanticCoverage.x - exactCoverage.x)).toBeLessThan(1);
-  }
+  const comparator = page.getByRole("combobox", { name: "Compare with verified Run" });
+  await comparator.selectOption(treatment);
+  const table = page.getByRole("table", { name: "PCG Evaluation comparison" });
+  await expect(table.getByRole("row", { name: /Evidence Support/ })).toContainText("22.54%");
+  await expect(table.getByRole("columnheader", { name: /Selected Run.*Exact-only baseline/ })).toBeVisible();
+  await expect(table.getByRole("columnheader", { name: "Change" })).toHaveCount(0);
 
-  await semanticSummary.getByText("Inspect semantic assessment", { exact: true }).press("Enter");
-  await semanticSummary.getByText("Inspect formal targets (2)").press("Enter");
-  expect(semanticReads).toBe(1);
-  const filter = page.getByRole("combobox", { name: "Filter formal targets" });
+  selectedState = "pending";
+  await evaluation.getByText("Evidence diagnostics", { exact: true }).press("Enter");
+  await evaluation.getByRole("button", { name: "Refresh evaluation" }).click();
+  await expect(evaluation.getByText("Exact-only baseline · combined evaluation pending or interrupted")).toBeVisible();
+  await expect(cards.getByText("15.49%", { exact: true })).toBeVisible();
+  await expect(cards.getByText("16.90%", { exact: true })).toHaveCount(0);
+
+  await evaluation.getByText("Evidence diagnostics", { exact: true }).press("Enter");
+  await expect(evaluation.getByText(/2\/3 eligible pairs judged · 1 partially equivalent.*1 invalid judgment.*4 delivery failures/)).toBeVisible();
+  await expect(evaluation.getByText(/25 exact · 1 equivalent added · 100 unmatched/)).toBeVisible();
+  await expect(evaluation.getByText(/2.5s mean latency/)).toBeVisible();
+  await evaluation.getByText("Inspect formal targets (2)").press("Enter");
+  const filter = evaluation.getByRole("combobox", { name: "Filter formal targets" });
   await filter.selectOption("added");
-  await page.getByText(/F0 · Morgan Example.*Complete proof/).press("Enter");
-  await expect(page.getByText("The appointment took effect on 1 June.", { exact: true })).toBeVisible();
-  await expect(page.getByText("The appointment had effect from the first of June.", { exact: true })).toBeVisible();
-  await expect(page.getByText("Exact match · actual PCG quotation · Q1")).toBeVisible();
-  await expect(page.getByText("No effective date in the quoted text.")).toBeVisible();
-  await expect(page.getByText(/Complete · 2\/2 members matched/)).toBeVisible();
-  await page.getByText("Other attached quotations (1)").press("Enter");
-  await expect(page.getByText("An unrelated memorandum mentions Morgan.")).toBeVisible();
+  await evaluation.getByText(/F0 · Morgan Example.*Complete proof/).press("Enter");
+  await expect(evaluation.getByText("The appointment took effect on 1 June.", { exact: true })).toBeVisible();
+  await expect(evaluation.getByText("The appointment had effect from the first of June.", { exact: true })).toBeVisible();
+  await expect(evaluation.getByText("Exact match · actual PCG quotation · Q1")).toBeVisible();
+  await expect(evaluation.getByText("No effective date in the quoted text.")).toBeVisible();
+  await expect(evaluation.getByText(/Complete · 2\/2 members matched/)).toBeVisible();
+  await evaluation.getByText("Other attached quotations (1)").press("Enter");
+  await expect(evaluation.getByText("An unrelated memorandum mentions Morgan.")).toBeVisible();
   await filter.selectOption("invalid_judgment");
-  await page.getByText(/F1 · Dana Example.*Incomplete proof/).press("Enter");
-  await page.getByText("Retained invalid response", { exact: true }).press("Enter");
-  await expect(page.getByText('{"verdict":"Supported"}', { exact: true })).toBeVisible();
+  await evaluation.getByText(/F1 · Dana Example.*Incomplete proof/).press("Enter");
+  await evaluation.getByText("Retained invalid response", { exact: true }).press("Enter");
+  await expect(evaluation.getByText('{"verdict":"Supported"}', { exact: true })).toBeVisible();
 
-  await page.getByText("Semantic Evidence comparison", { exact: true }).press("Enter");
-  const semanticTable = page.getByRole("table", { name: "Semantic Evidence metrics" });
-  const supportRow = semanticTable.getByRole("row", { name: /Evidence Support/ });
+  selectedState = "complete";
+  await evaluation.getByRole("button", { name: "Refresh evaluation" }).click();
+  await expect(evaluation.getByText("Combined evaluation complete", { exact: true })).toBeVisible();
+  await expect(cards.getByText("66.67%", { exact: true })).toBeVisible();
+  await expect(cards.getByText("29.58%", { exact: true })).toBeVisible();
+  await expect(cards.getByText("16.90%", { exact: true })).toBeVisible();
+  await expect(cards.getByText("43.33%", { exact: true })).toBeVisible();
+  expect(evaluationReads).toBe(3);
+  if (testInfo.project.name === "research-desktop") {
+    const tops = await cards.locator("dt").evaluateAll((items) => items.map((item) => item.getBoundingClientRect().top));
+    expect(new Set(tops).size).toBe(1);
+  }
+
+  await page.getByRole("button", { name: "Refresh comparison" }).click();
+  const supportRow = table.getByRole("row", { name: /Evidence Support/ });
+  await expect(table.getByRole("columnheader", { name: "Change" })).toBeVisible();
   await expect(supportRow.getByRole("cell").nth(0)).toContainText("28.17%");
   await expect(supportRow.getByRole("cell").nth(1)).toContainText("29.58%");
-  await expect(semanticTable.getByRole("row", { name: /Multi-Source Evidence Coverage/ })).toContainText("43.33%");
-  await expect(page.getByText("1/71 formal targets have valid judgments in both Runs.")).toBeVisible();
+  await expect(supportRow.getByRole("cell").nth(2)).toContainText("+1.41 pp");
+  await page.getByText("Evidence comparison diagnostics").press("Enter");
   await page.getByText("F0 · Morgan Example · trustee of · North Example Trust", { exact: true }).press("Enter");
   await expect(page.getByText("M2 · unmatched → semantic")).toBeVisible();
-  await expect(page.getByText(assessment.scope_note)).toHaveCount(2);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
 });

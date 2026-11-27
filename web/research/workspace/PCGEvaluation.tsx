@@ -1,17 +1,21 @@
 import { useCallback, useState, type ReactNode } from "react";
 import { percentMetric } from "../../src/shared/research/presentation";
 import type {
-  SemanticEvidenceReport, SemanticOperations, SemanticOutcome, SemanticQuotation, SemanticSummary,
+  RunDetail, SemanticEvidenceReport, SemanticOperations, SemanticOutcome, SemanticQuotation, SemanticRunSummary, SemanticSummary,
   SemanticTarget, SemanticTransition,
 } from "../shared/contracts";
 import { ReadState } from "../shared/presentation";
 import { useRead } from "../shared/useRead";
-import { compareSemanticEvidence, getSemanticEvidence } from "./api";
+import { compareEvaluations, getEvaluation } from "./api";
 import { evidenceMetricLabels } from "./benchmark-metrics";
 import "./semantic-evidence.css";
 
-const title = "Semantic Evidence";
-const subtitle = "AI-assisted, unverified";
+const stateLabels = {
+  exact_only: "Exact-only baseline · combined evaluation pending",
+  pending: "Exact-only baseline · combined evaluation pending or interrupted",
+  complete: "Combined evaluation complete",
+  complete_with_failures: "Combined evaluation finished with failures",
+};
 const verdicts = ["Equivalent", "Partially Equivalent", "Not Equivalent", "Uncertain"] as const;
 const statuses = {
   judged: "Judged",
@@ -37,72 +41,88 @@ function Disclosure({ label, children }: { label: string; children: ReactNode })
   );
 }
 
-export function SemanticEvidencePanel({ run }: { run: string }) {
-  const load = useCallback((signal: AbortSignal) => getSemanticEvidence(run, signal), [run]);
-  const { data, error, retry } = useRead(load);
-  const summary = data?.target_summary;
+export function PCGEvaluation({ run, children }: { run: RunDetail; children: ReactNode }) {
   return (
-    <section className="semantic-overview" aria-label={`${title} — ${subtitle}`}>
-      <div className="semantic-overview-row">
-        <div className="semantic-overview-heading">
-          <h3>{title}</h3>
-          <span>{subtitle}</span>
-        </div>
-        {summary && <SemanticMetricCards summary={summary} />}
-      </div>
-      {data === undefined ? <ReadState error={error} retry={retry} /> : !data ? (
+    <>
+      <h3>PCG Evaluation</h3>
+      {run.benchmark_v4?.state === "complete" ? <CompletedRunEvaluation run={run}>{children}</CompletedRunEvaluation> : (
         <>
-          <p>No semantic assessment is recorded for this Run.</p>
-          <button className="secondary" onClick={retry}>Refresh assessment</button>
-        </>
-      ) : (
-        <>
-          <SupportDiagnostics summary={data.target_summary} />
-          <ExecutionUsage operations={data.operations} />
-          <p className="semantic-note">{data.scope_note}</p>
-          <Disclosure label="Inspect semantic assessment">
-            <AssessmentDetails assessment={data} />
-            <button className="secondary" onClick={retry}>Refresh assessment</button>
-          </Disclosure>
+          <p role="status">Evaluation is provisional until the Benchmark Run finishes.</p>
+          <MetricCards metrics={evaluationMetrics(undefined, run)} />
+          {children}
         </>
       )}
-    </section>
+    </>
   );
 }
 
-function semanticMetrics(summary: SemanticSummary) {
-  const { evidence_support: support, proof_completion: completion, multi_source_evidence_coverage: coverage } = summary;
+function CompletedRunEvaluation({ run, children }: { run: RunDetail; children: ReactNode }) {
+  const load = useCallback((signal: AbortSignal) => getEvaluation(run.id, signal), [run.id]);
+  const { data, error, retry } = useRead(load);
+  return (
+    <>
+      <p role="status" className="evaluation-state">
+        {data ? stateLabels[data.state] : error ? "Evaluation unavailable" : "Loading evaluation"}
+      </p>
+      <MetricCards metrics={evaluationMetrics(data, run)} />
+      {error && <ReadState error={error} retry={retry} />}
+      {children}
+      {data && <Disclosure label="Evidence diagnostics">
+        <AssessmentDetails assessment={data} />
+        <button className="secondary" onClick={retry}>Refresh evaluation</button>
+      </Disclosure>}
+    </>
+  );
+}
+
+function evaluationMetrics(evaluation?: SemanticRunSummary, run?: RunDetail) {
+  const graph = evaluation ? evaluation.graph_f1 : run?.quality ? run.quality.qualified_graph : run?.benchmark_v4?.qualified;
+  const summary = evaluation?.target_summary;
+  const support = summary?.evidence_support;
+  const completion = summary?.proof_completion;
+  const coverage = summary?.multi_source_evidence_coverage;
+  const exactProof = run?.quality?.complete_proof;
+  const exactCoverage = run?.quality?.joint_only_coverage;
   return [
     {
-      label: "Evidence Support", rate: support.rate, basis: `${support.count}/${support.targets} formal targets`,
-      description: "At least one exact or equivalent required member",
+      label: "Graph F1", rate: graph?.f1 ?? null, basis: graph ? `${graph.inputs} qualified Conditions` : "",
+      description: "Relationship correctness",
     },
     {
-      label: evidenceMetricLabels.complete_proof, rate: completion.rate, basis: `${completion.count}/${completion.targets} formal targets`,
-      description: "Every member of an approved proof alternative matched",
+      label: "Evidence Support", rate: support?.rate ?? null,
+      basis: support ? `${support.count}/${support.targets} formal targets` : "",
+      description: "At least one required member matched",
     },
     {
-      label: evidenceMetricLabels.joint_only_coverage, rate: coverage.mean, basis: `${number.format(coverage.matched_target_equivalents)}/${coverage.targets} target-equivalents`,
-      description: "Mean matched-member fraction of the best approved alternative",
+      label: evidenceMetricLabels.complete_proof, rate: completion?.rate ?? exactProof?.rate ?? null,
+      basis: completion ? `${completion.count}/${completion.targets} formal targets`
+        : exactProof?.rate != null ? `${exactProof.complete}/${exactProof.targets} formal targets` : "",
+      description: "All members of an approved alternative matched",
+    },
+    {
+      label: evidenceMetricLabels.joint_only_coverage, rate: coverage?.mean ?? exactCoverage?.mean ?? null,
+      basis: coverage ? `${number.format(coverage.matched_target_equivalents)}/${coverage.targets} target-equivalents`
+        : exactCoverage ? `${exactCoverage.targets} Multi-Source targets` : "",
+      description: "Mean best-alternative coverage",
     },
   ];
 }
 
-function SemanticMetricCards({ summary }: { summary: SemanticSummary }) {
+function MetricCards({ metrics }: { metrics: ReturnType<typeof evaluationMetrics> }) {
   return (
-    <dl className="quality-card-grid semantic-overview-metrics">
-      {semanticMetrics(summary).map(({ label, rate, basis, description }) => (
+    <dl className="quality-card-grid" aria-label="Evaluation metrics">
+      {metrics.map(({ label, rate, basis, description }) => (
         <div key={label}>
           <dt>{label}</dt>
           <dd>{percentMetric(rate)}</dd>
-          <dd className="quality-scope">{description}<small>{basis}</small></dd>
+          <dd className="quality-scope">{description}{basis && <small>{basis}</small>}</dd>
         </div>
       ))}
     </dl>
   );
 }
 
-function SupportDiagnostics({ summary }: { summary: SemanticSummary }) {
+function EvidenceCounts({ summary }: { summary: SemanticSummary }) {
   const judgedPairs = Object.values(summary.pair_verdicts).reduce((total, count) => total + count, 0);
   const gaps = assessmentGaps(summary.semantic_outcomes);
   const pairCoverage = summary.candidate_pairs
@@ -116,8 +136,8 @@ function SupportDiagnostics({ summary }: { summary: SemanticSummary }) {
           {gaps && ` · ${gaps}`}</dd>
       </div>
       <div>
-        <dt>Beyond Exact Matching</dt>
-        <dd>{countLabel(summary.additional_matched_members, "added member")} across {countLabel(summary.targets_with_added_matches, "target")}
+        <dt>Required evidence members</dt>
+        <dd>{summary.exact_matched_members} exact · {summary.additional_matched_members} equivalent added · {summary.unmatched_required_members} unmatched
           {" · "}{countLabel(summary.newly_completed_proofs, "newly completed proof")}</dd>
       </div>
     </dl>
@@ -128,16 +148,21 @@ function AssessmentDetails({ assessment }: { assessment: SemanticEvidenceReport 
   const { target_summary: summary, evaluator } = assessment;
   return (
     <>
-      <p>Exact credit is retained across all {summary.formal_targets} formal targets. Only Equivalent earns additional member credit.</p>
+      <p className="semantic-note">{assessment.scope_note}</p>
+      {assessment.state === "pending" && <p>Retained decisions are shown below. The headline scores still use exact matches.</p>}
+      {assessment.state === "complete_with_failures" && <p>Invalid responses and provider failures earned no additional evidence credit.</p>}
+      <EvidenceCounts summary={summary} />
+      {assessment.operations && <ExecutionUsage operations={assessment.operations} />}
       <VerdictCounts verdictCounts={summary.pair_verdicts} />
       <Targets targets={assessment.targets} />
       <details>
         <summary>Evaluator and execution record</summary>
         <dl className="semantic-metadata">
-          <dt>Evaluator</dt><dd>{evaluator.version}</dd>
-          <dt>Judge</dt><dd>{evaluator.model} · temperature {evaluator.settings.temperature} · {evaluator.settings.max_retries} retries</dd>
+          <dt>Methodology</dt><dd>{assessment.methodology}</dd>
+          <dt>Matching contract</dt><dd>{evaluator.version}</dd>
+          <dt>Judge</dt><dd>DeepSeek · {evaluator.model} · temperature {evaluator.settings.temperature} · {evaluator.settings.max_retries} retries</dd>
           <dt>Prompt SHA-256</dt><dd>{evaluator.prompt_sha256}</dd>
-          <dt>Plan SHA-256</dt><dd>{assessment.plan_sha256}</dd>
+          <dt>Plan SHA-256</dt><dd>{assessment.plan_sha256 ?? "Evaluation plan not prepared"}</dd>
         </dl>
       </details>
     </>
@@ -207,6 +232,10 @@ function Target({ row }: { row: SemanticTarget }) {
       {open && <div className="semantic-target-content">
         <p>Exact outcome · {readable(row.deterministic.exact_outcome)} · {statuses[row.status]}</p>
         {row.reuse && <p>Reused from Run <code>{row.reuse.origin_run}</code></p>}
+        {row.provider && <p className="semantic-usage">
+          {row.provider.returned_model ?? "Provider response"} · {row.provider.latency_seconds.toFixed(1)}s
+          {row.provider.status_code != null && ` · HTTP ${row.provider.status_code}`}
+        </p>}
         {row.error && <p>{row.error}</p>}
         {row.invalid_response != null && <details>
           <summary>Retained invalid response</summary>
@@ -238,9 +267,10 @@ function OtherQuotations({ row }: { row: SemanticTarget }) {
 function RequiredMember({ member, row }: { member: SemanticQuotation; row: SemanticTarget }) {
   const exact = row.quotations.find((quote) => quote.id === row.exact_matches[member.id]);
   const pairs = row.candidate_pairs.filter((pair) => pair.member_id === member.id);
+  const credited = !!exact || row.semantic_members.includes(member.id);
   return (
     <section className="semantic-member">
-      <Quotation quote={member} label="Required evidence" />
+      <Quotation quote={member} label={credited ? "Required evidence" : "Required evidence · Unmatched"} />
       {exact ? <Quotation quote={exact} label="Exact match · actual PCG quotation" /> :
         pairs.length === 0 ? <p>No attached quotation from this Source.</p> :
           pairs.map((pair) => {
@@ -264,74 +294,87 @@ function Quotation({ quote, label }: { quote: SemanticQuotation; label: string }
   </blockquote>;
 }
 
-export function SemanticEvidenceComparison({ left, right }: { left: string; right: string }) {
-  return <Disclosure label={`${title} comparison`}><Comparison key={`${left}/${right}`} left={left} right={right} /></Disclosure>;
-}
-
-function Comparison({ left, right }: { left: string; right: string }) {
+export function PCGEvaluationComparison({ left, right }: { left: string; right: string }) {
   const [all, setAll] = useState(false);
-  const load = useCallback((signal: AbortSignal) => compareSemanticEvidence(left, right, signal), [left, right]);
+  const load = useCallback((signal: AbortSignal) => compareEvaluations(left, right, signal), [left, right]);
   const { data, error, retry } = useRead(load);
-  if (data === undefined) return <ReadState error={error} retry={retry} />;
-  if (!data) return <p>Both Runs need a recorded semantic assessment to compare their formal targets.</p>;
+  if (!data) return <ReadState error={error} retry={retry} />;
   const rows = all ? data.transitions : data.transitions.filter(changed);
   return (
     <>
-      <p className="semantic-note">{subtitle}</p>
-      <p className="semantic-note">{data.scope_note}</p>
-      <p><strong>{data.paired_valid_targets}/{data.formal_targets} formal targets have valid judgments in both Runs.</strong>{" "}
-        Exact matches count across all targets.</p>
-      <SemanticMetricComparison left={data.left.target_summary} right={data.right.target_summary} />
-      <div className="semantic-comparison">
-        <div>
-          <h4>Comparison Run diagnostics</h4>
-          <SupportDiagnostics summary={data.left.target_summary} />
-          <ExecutionUsage operations={data.left.operations} />
+      <EvaluationComparisonTable left={data.left} right={data.right} comparable={data.comparable} />
+      {!data.comparable && <p>Changes are available after both combined evaluations complete without invalid responses or provider failures.</p>}
+      <button className="secondary" onClick={retry}>Refresh comparison</button>
+      <Disclosure label="Evidence comparison diagnostics">
+        <div className="semantic-comparison">
+          <div>
+            <h4>Comparison Run</h4>
+            <EvidenceCounts summary={data.left.target_summary} />
+            {data.left.operations && <ExecutionUsage operations={data.left.operations} />}
+          </div>
+          <div>
+            <h4>Selected Run</h4>
+            <EvidenceCounts summary={data.right.target_summary} />
+            {data.right.operations && <ExecutionUsage operations={data.right.operations} />}
+          </div>
         </div>
-        <div>
-          <h4>Selected Run diagnostics</h4>
-          <SupportDiagnostics summary={data.right.target_summary} />
-          <ExecutionUsage operations={data.right.operations} />
-        </div>
-      </div>
-      <label className="semantic-filter"><input type="checkbox" checked={all} onChange={(event) => setAll(event.target.checked)} />
-        Show every formal target
-      </label>
-      <p role="status">{rows.length} of {data.formal_targets} formal targets</p>
-      {rows.map((row) => (
-        <details className="semantic-target" key={row.id}>
-          <summary>{row.condition} · {relationship(row.edge)}</summary>
-          <p>{outcome(row.left)} → {outcome(row.right)}</p>
-          <p>Exact outcome · {readable(row.left.exact_outcome)} → {readable(row.right.exact_outcome)}</p>
-          {row.changed_members.length > 0 && <ul>{row.changed_members.map((member) => (
-            <li key={member.member_id}><strong>{member.member_id} · {member.left} → {member.right}</strong> · Source <code>{member.source_id}</code><br />
-              {member.quotation}</li>
-          ))}</ul>}
-        </details>
-      ))}
+        {data.comparable && <>
+          <p>{data.paired_valid_targets}/{data.formal_targets} formal targets have valid judgments in both Runs.</p>
+          <label className="semantic-filter"><input type="checkbox" checked={all} onChange={(event) => setAll(event.target.checked)} />
+            Show every formal target
+          </label>
+          <p role="status">{rows.length} of {data.formal_targets} formal targets</p>
+          {rows.map((row) => (
+            <details className="semantic-target" key={row.id}>
+              <summary>{row.condition} · {relationship(row.edge)}</summary>
+              <p>{outcome(row.left)} → {outcome(row.right)}</p>
+              {row.changed_members.length > 0 && <ul>{row.changed_members.map((member) => (
+                <li key={member.member_id}><strong>{member.member_id} · {member.left} → {member.right}</strong> · Source <code>{member.source_id}</code><br />
+                  {member.quotation}</li>
+              ))}</ul>}
+            </details>
+          ))}
+        </>}
+      </Disclosure>
     </>
   );
 }
 
-function SemanticMetricComparison({ left, right }: { left: SemanticSummary; right: SemanticSummary }) {
-  const comparisonMetrics = semanticMetrics(left);
-  const selectedMetrics = semanticMetrics(right);
+function EvaluationComparisonTable({ left, right, comparable }: {
+  left: SemanticRunSummary; right: SemanticRunSummary; comparable: boolean;
+}) {
+  const comparisonMetrics = evaluationMetrics(left);
   return (
     <div className="table-scroll semantic-metric-comparison">
       <table>
-        <caption>Semantic Evidence metrics</caption>
-        <thead><tr><th scope="col">Metric</th><th scope="col">Comparison Run</th><th scope="col">Selected Run</th></tr></thead>
-        <tbody>{selectedMetrics.map((metric, index) => (
-          <tr key={metric.label}>
-            <th scope="row">{metric.label}<small>{metric.description}</small></th>
-            {[comparisonMetrics[index], metric].map(({ rate, basis }, side) => (
-              <td key={side}><strong>{percentMetric(rate)}</strong><small>{basis}</small></td>
-            ))}
-          </tr>
-        ))}</tbody>
+        <caption>PCG Evaluation comparison</caption>
+        <thead><tr>
+          <th scope="col">Metric</th>
+          <th scope="col">Comparison Run<small>{stateLabels[left.state]}</small></th>
+          <th scope="col">Selected Run<small>{stateLabels[right.state]}</small></th>
+          {comparable && <th scope="col">Change</th>}
+        </tr></thead>
+        <tbody>{evaluationMetrics(right).map((metric, index) => {
+          const before = comparisonMetrics[index];
+          return (
+            <tr key={metric.label}>
+              <th scope="row">{metric.label}</th>
+              {[before, metric].map(({ rate, basis }, side) => (
+                <td key={side}><strong>{percentMetric(rate)}</strong><small>{basis}</small></td>
+              ))}
+              {comparable && <td>{percentagePointChange(before.rate, metric.rate)}</td>}
+            </tr>
+          );
+        })}</tbody>
       </table>
     </div>
   );
+}
+
+function percentagePointChange(before: number | null, after: number | null) {
+  if (before === null || after === null) return "Unavailable";
+  const change = 100 * (after - before);
+  return `${change > 0 ? "+" : ""}${change.toFixed(2)} pp`;
 }
 
 function outcome(value: SemanticOutcome) {

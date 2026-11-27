@@ -989,10 +989,11 @@ export type ScopeInput = {
 };
 
 export type SemanticComparison = {
-  status: "AI-assisted, unverified";
+  methodology: string;
   scope_note: string;
   evaluator: SemanticEvaluator;
   formal_targets: number;
+  comparable: boolean;
   paired_valid_targets: number;
   left: SemanticRunSummary;
   right: SemanticRunSummary;
@@ -1009,10 +1010,12 @@ export type SemanticEvaluator = {
 
 export type SemanticEvidenceReport = {
   run_id: string;
-  plan_sha256: string;
+  plan_sha256: string | null;
+  state: "exact_only" | "pending" | "complete" | "complete_with_failures";
+  graph_f1: DeliveredGraphMetrics | null;
   target_summary: SemanticSummary;
-  operations: SemanticOperations;
-  status: "AI-assisted, unverified";
+  operations: SemanticOperations | null;
+  methodology: string;
   scope_note: string;
   evaluator: SemanticEvaluator;
   targets: Array<SemanticTarget>;
@@ -1079,9 +1082,11 @@ export type SemanticRoute = {
 
 export type SemanticRunSummary = {
   run_id: string;
-  plan_sha256: string;
+  plan_sha256: string | null;
+  state: "exact_only" | "pending" | "complete" | "complete_with_failures";
+  graph_f1: DeliveredGraphMetrics | null;
   target_summary: SemanticSummary;
-  operations: SemanticOperations;
+  operations: SemanticOperations | null;
 };
 
 export type SemanticSummary = {
@@ -1092,6 +1097,8 @@ export type SemanticSummary = {
   evidence_support: SemanticTargetRate;
   proof_completion: SemanticTargetRate;
   multi_source_evidence_coverage: SemanticMultiSourceEvidenceCoverage;
+  exact_matched_members: number;
+  unmatched_required_members: number;
   targets_with_added_matches: number;
   additional_matched_members: number;
   newly_completed_proofs: number;

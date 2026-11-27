@@ -17,8 +17,8 @@ from private_client_graph.research.semantic_evidence.inputs import (
     AssessmentInputs, Baseline, ExactOutcome, Item, _verify_quotations,
 )
 from private_client_graph.research.semantic_evidence.judging import Quotation, make_packet, parse_judgment
-from private_client_graph.research.semantic_evidence.reporting import report
-from private_client_graph.research.semantic_evidence.comparison import compare
+from private_client_graph.research.semantic_evidence.reporting import exact_report, report
+from private_client_graph.research.semantic_evidence.comparison import compare, compare_reports
 
 RATES = (Decimal('1.32'), Decimal('3.96'))
 
@@ -27,7 +27,10 @@ RATES = (Decimal('1.32'), Decimal('3.96'))
 def inputs():
     quality = EvidenceQuality.model_validate({
         'state': 'complete', 'scope_sha256': 'fixture', 'qualified_reference_sha256': 'fixture',
-        'scoring_sha256': 'fixture', 'combined_graph': None, 'qualified_graph': None,
+        'scoring_sha256': 'fixture', 'combined_graph': None,
+        'qualified_graph': {'inputs': 34, 'valid_graphs': 32, 'without_graph': 2, 'exact_graphs': 20,
+                            'counts': {'tp': 105, 'fp': 10, 'fn': 8}, 'f1': 210 / 228,
+                            'precision': 105 / 115, 'recall': 105 / 113, 'outcomes': {} },
         'observation_origin': 'live', 'planned_inputs': 35, 'observed_inputs': 35,
         'qualified_inputs': 34, 'observed_qualified_inputs': 34, 'expected_relationships': 113,
         'observed_proof_targets': 71, 'observed_joint_targets': 30,
@@ -102,6 +105,9 @@ def test_fixed_targets_and_source_matched_request_boundary(tmp_path, inputs):
     directory = tmp_path / 'assessment'
     digest = freeze(directory, inputs)
     offline = report(directory)
+    assert offline['state'] == 'pending'
+    assert offline['graph_f1']['counts'] == {'tp': 105, 'fp': 10, 'fn': 8}
+    assert offline['graph_f1']['f1'] == pytest.approx(0.9210526)
     assert offline['target_summary']['semantic_outcomes'] == {
         'unattempted': 56, 'no_eligible_comparison': 11, 'deterministic_delivery_failure': 4,
     }
@@ -140,6 +146,8 @@ def test_fixed_targets_and_source_matched_request_boundary(tmp_path, inputs):
 
     result = report(directory)
     assert len(requests) == 56
+    assert result['state'] == 'complete_with_failures'
+    assert result['graph_f1'] == offline['graph_f1']
     summary = result['target_summary']
     assert summary['semantic_outcomes'] == {
         'no_eligible_comparison': 11, 'provider_failed': 1, 'judged': 55, 'deterministic_delivery_failure': 4,
@@ -400,7 +408,7 @@ def test_reuse_binds_packet_source_target_and_keeps_invalid_in_comparison(tmp_pa
     pending = compare(donor, recipient)
     assert pending['formal_targets'] == 71
     assert pending['paired_valid_targets'] == 52
-    assert len(pending['transitions']) == 71
+    assert not pending['comparable'] and pending['transitions'] == []
 
     packets = []
 
@@ -424,14 +432,53 @@ def test_reuse_binds_packet_source_target_and_keeps_invalid_in_comparison(tmp_pa
         assert summary['multi_source_evidence_coverage']['targets'] == 30
     assert after['right']['operations']['reused_judgments'] == 52
     assert after['right']['operations']['reserved_attempts'] == 4
-    rows = {row['id']: row for row in after['transitions']}
-    assert rows[inputs.targets[15].id]['left']['status'] == 'invalid_judgment'
-    assert rows[inputs.targets[12].id]['changed_members'] == [{
+    assert after['left']['state'] == 'complete_with_failures'
+    assert after['right']['state'] == 'complete'
+    assert not after['comparable'] and after['transitions'] == []
+    right_rows = {row['id']: row for row in report(recipient)['targets']}
+    assert right_rows[inputs.targets[12].id]['decisions'][0]['verdict'] == 'Partially Equivalent'
+    assert right_rows[inputs.targets[13].id]['status'] == 'deterministic_delivery_failure'
+    assert report(recipient)['deterministic_baseline'] == original_summary
+
+
+def test_only_compatible_completed_evaluations_expose_transitions(tmp_path, inputs):
+    donor, recipient = tmp_path / 'donor', tmp_path / 'recipient'
+    digest = freeze(donor, inputs)
+
+    def equivalent(request):
+        packet = json.loads(json.loads(request.content)['messages'][1]['content'])
+        return _response(packet)
+
+    with httpx.Client(transport=httpx.MockTransport(equivalent)) as client:
+        _run(donor, digest, client)
+    changed = inputs.targets[12]
+    reworded = changed.quotations[0].model_copy(update={'text': 'The attachment gives no relationship.'})
+    targets = (*inputs.targets[:12], changed.model_copy(update={'quotations': (reworded,)}), *inputs.targets[13:])
+    other = inputs.model_copy(update={'extractor_run': 'a' * 32, 'targets': targets})
+    baseline = exact_report(other)
+    assert baseline['state'] == 'exact_only' and baseline['plan_sha256'] is None
+    assert baseline['operations'] is None
+    assert baseline['target_summary']['proof_completion']['count'] == 11
+    mixed = compare_reports(report(donor), baseline)
+    assert not mixed['comparable'] and mixed['transitions'] == []
+
+    retry_digest = freeze(recipient, other, donors=(donor,))
+    assert not compare(donor, recipient)['comparable']
+
+    def partial(request):
+        packet = json.loads(json.loads(request.content)['messages'][1]['content'])
+        return _response(packet, verdict='Partially Equivalent')
+
+    with httpx.Client(transport=httpx.MockTransport(partial)) as client:
+        _run(recipient, retry_digest, client)
+    comparison = compare(donor, recipient)
+    assert comparison['left']['state'] == comparison['right']['state'] == 'complete'
+    assert comparison['comparable'] and len(comparison['transitions']) == 71
+    assert comparison['left']['graph_f1'] == comparison['right']['graph_f1'] == baseline['graph_f1']
+    assert comparison['transitions'][12]['changed_members'] == [{
         'member_id': 'M1', 'source_id': 'private source ID S1',
         'quotation': 'Parent 12 is a parent of Child 12.', 'left': 'semantic', 'right': 'unmatched',
     }]
-    assert rows[inputs.targets[13].id]['right']['status'] == 'deterministic_delivery_failure'
-    assert report(recipient)['deterministic_baseline'] == original_summary
 
 
 def test_fully_reused_plan_can_report_without_paid_authority(tmp_path, inputs):
@@ -455,7 +502,7 @@ def test_private_workbench_reads_allow_owner_only(tmp_path, inputs, monkeypatch)
     from fastapi import FastAPI
     from fastapi.testclient import TestClient
 
-    from private_client_graph.workbench import semantic_evidence_api
+    from private_client_graph.research.semantic_evidence import reporting
     from private_client_graph.workbench.benchmark_v4_api import mount_benchmark_v4
 
     assessment = tmp_path / 'assessment'
@@ -463,7 +510,7 @@ def test_private_workbench_reads_allow_owner_only(tmp_path, inputs, monkeypatch)
     monkeypatch.setenv('PCG_BENCHMARK_V4_CUSTODY', str(tmp_path))
     token = 'semantic-evidence-private-test-token'
     monkeypatch.setenv('PCG_BENCHMARK_V4_OWNER_TOKEN', token)
-    monkeypatch.setattr(semantic_evidence_api, 'find',
+    monkeypatch.setattr(reporting, 'find',
         lambda root, identity: assessment if identity == inputs.extractor_run else None)
     app = FastAPI()
     assert mount_benchmark_v4(app, tmp_path, '/api/research/v2')
@@ -474,7 +521,7 @@ def test_private_workbench_reads_allow_owner_only(tmp_path, inputs, monkeypatch)
         assert response.status_code == 200
         assert response.headers['cache-control'] == 'no-store'
         assert len(response.json()['targets']) == 71
-        assert 'cutoff absent' in response.json()['scope_note']
+        assert response.json()['methodology'] == 'Ground-Truth-Aligned Evidence Evaluation'
         assert client.post(path, auth=('owner', token)).status_code == 405
     with TestClient(app, client=('192.0.2.1', 1234)) as client:
         assert client.get(path, auth=('owner', token)).status_code == 403

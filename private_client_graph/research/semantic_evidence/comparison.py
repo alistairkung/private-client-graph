@@ -6,24 +6,28 @@ from .reporting import report
 
 
 def compare(left: Path, right: Path) -> dict[str, Any]:
-    first, second = report(left), report(right)
+    return compare_reports(report(left), report(right))
+
+
+def compare_reports(first: dict[str, Any], second: dict[str, Any]) -> dict[str, Any]:
     if first['run_id'] == second['run_id']:
         raise ValueError('Select two different Benchmark v4 Runs')
     left_targets, right_targets = _index(first), _index(second)
     if (_scope(first) != _scope(second) or left_targets.keys() != right_targets.keys()
             or any(_reference(row) != _reference(right_targets[identity]) for identity, row in left_targets.items())):
         raise ValueError('Semantic Evidence comparison requires the same frozen target scope and judge contract')
-    transitions = [_transition(row, right_targets[identity]) for identity, row in left_targets.items()]
+    paired = [(row, right_targets[identity]) for identity, row in left_targets.items()]
+    comparable = first['state'] == second['state'] == 'complete'
     return {
-        'status': first['status'],
+        'methodology': first['methodology'],
         'scope_note': first['scope_note'],
         'evaluator': first['evaluator'],
-        'formal_targets': len(transitions),
-        'paired_valid_targets': sum(row['left']['status'] == row['right']['status'] == 'judged'
-                                    for row in transitions),
+        'formal_targets': len(paired),
+        'comparable': comparable,
+        'paired_valid_targets': sum(left['status'] == right['status'] == 'judged' for left, right in paired),
         'left': _side(first),
         'right': _side(second),
-        'transitions': transitions,
+        'transitions': [_transition(left, right) for left, right in paired] if comparable else [],
     }
 
 
@@ -44,7 +48,7 @@ def _reference(row: dict) -> tuple:
 
 
 def _side(data: dict[str, Any]) -> dict:
-    return {key: data[key] for key in ('run_id', 'plan_sha256', 'target_summary', 'operations')}
+    return {key: data[key] for key in ('run_id', 'plan_sha256', 'state', 'graph_f1', 'target_summary', 'operations')}
 
 
 def _transition(left: dict, right: dict) -> dict:

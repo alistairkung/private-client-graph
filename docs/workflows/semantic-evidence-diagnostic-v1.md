@@ -1,8 +1,10 @@
-# Semantic Evidence
+# Ground-Truth-Aligned Evidence Evaluation
 
-Semantic Evidence compares the quotations attached to a retained Benchmark v4
-relationship with the approved evidence members for that relationship. It is an
-**AI-assisted, unverified** diagnostic alongside the deterministic benchmark.
+PCG Evaluation uses one frozen Benchmark v4 population to assess whether PCG
+found the expected relationships and recovered their approved supporting evidence.
+Graph F1 uses the existing scorer and all 34 qualified Conditions. The mixed
+35-input score remains available as a diagnostic. Evidence uses 71 formal proof
+targets, including 30 Multi-Source targets.
 
 ## Matching contract
 
@@ -35,20 +37,33 @@ relationship with the approved evidence members for that relationship. It is an
 
 | Metric | Calculation |
 | --- | --- |
+| Graph F1 | Existing qualified Graph F1, computed from TP, FP and FN, including delivery failures. |
 | Evidence Support | Targets with at least one matched required member divided by 71. |
 | Proof Completion | Targets with a fully matched approved alternative divided by 71. |
 | Multi-Source Evidence Coverage | For each Multi-Source target, take the highest matched-member fraction of its approved alternatives. Sum those fractions and divide by 30, giving equal weight to each target. |
 
-Missing relationships and unavailable graphs contribute zero. Failed or absent
-judgments retain all exact credit. Proof Completion and Multi-Source Evidence
-Coverage therefore cannot fall below their deterministic counterparts. The
-previous independent sufficiency percentages do not apply to these measures.
+Missing relationships and unavailable graphs contribute zero. Exact credit
+survives all review outcomes. Before a plan exists the report shows an exact-only
+baseline. A pending assessment also shows that baseline, even if some pairs
+already have decisions. Interrupted or unsealed attempts keep the assessment
+pending. After all eligible targets have retained outcomes, the report combines
+exact and Equivalent matches. Invalid responses and provider failures add no
+credit and are identified separately.
 
-Workbench Run inspection and comparison show the exact baseline alongside
-the additional matches. Inspect required quotations, attached quotations and
-Source IDs, differences identified by the judge, and route completion.
-Diagnostics retain execution coverage, invalid results, partial equivalence,
-and estimated cost and latency.
+Only completed evaluations free of invalid responses and provider failures
+are eligible for evidence change comparisons. Comparisons also require the
+same frozen populations, approved routes, scoring scope, model settings and
+prompt. Exact-only and pending values remain visible with their state and
+no change is inferred from them. A committed plan with no eligible pairs
+completes without provider access.
+
+The Workbench shows the four headline metrics, a confusion matrix and expandable
+evidence diagnostics. Inspect approved and actual Source-attributed quotations,
+exact and model-assessed matches, material differences, proof routes,
+judgment coverage, invalid responses, costs and latency. The configured judge is
+DeepSeek V4 Pro (`deepseek-v4-pro`). Reports retain its settings and prompt
+commitment and record the returned model and token usage. Model-assessed
+equivalence has no independent verification.
 
 ## Plan, approve, and inspect
 
@@ -65,7 +80,7 @@ uv run python -m private_client_graph.research.semantic_evidence initialize-task
 uv run python -m private_client_graph.research.semantic_evidence plan \
   ARTIFACT_ROOT RUN_ID --peak-rates INPUT OUTPUT \
   --usd-ceiling APPROVAL_CEILING --task-call-ceiling APPROVAL_ATTEMPTS
-uv run python -m private_client_graph.research.semantic_evidence report ASSESSMENT_DIRECTORY
+uv run python -m private_client_graph.research.semantic_evidence report ARTIFACT_ROOT --run-id RUN_ID
 uv run python -m private_client_graph.research.semantic_evidence compare ARTIFACT_ROOT LEFT_RUN_ID RIGHT_RUN_ID
 ```
 

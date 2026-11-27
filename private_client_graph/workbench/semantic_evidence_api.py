@@ -6,12 +6,12 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
 from private_client_graph.models.evaluation_result import SemanticEdge
+from private_client_graph.research.benchmark_v4_scoring import DeliveredGraphMetrics
 from private_client_graph.research.provider import ModelSettings, TokenUsage
-from private_client_graph.research.semantic_evidence.comparison import compare
+from private_client_graph.research.semantic_evidence.comparison import compare_reports
 from private_client_graph.research.semantic_evidence.inputs import Baseline, ExactOutcome
 from private_client_graph.research.semantic_evidence.judging import CandidatePair, PairDecision, Quotation, Verdict
-from private_client_graph.research.semantic_evidence.reporting import report
-from private_client_graph.research.semantic_evidence.store import find
+from private_client_graph.research.semantic_evidence.reporting import EvaluationState, report_run
 
 SemanticStatus = Literal['judged', 'invalid_judgment', 'deterministic_delivery_failure', 'no_eligible_comparison',
                          'unattempted', 'awaiting_receipt', 'interrupted', 'provider_failed']
@@ -54,6 +54,8 @@ class SemanticSummary(BaseModel):
     evidence_support: SemanticTargetRate
     proof_completion: SemanticTargetRate
     multi_source_evidence_coverage: SemanticMultiSourceEvidenceCoverage
+    exact_matched_members: int
+    unmatched_required_members: int
     targets_with_added_matches: int
     additional_matched_members: int
     newly_completed_proofs: int
@@ -106,13 +108,15 @@ class SemanticTarget(BaseModel):
 
 class SemanticRunSummary(BaseModel):
     run_id: str
-    plan_sha256: str
+    plan_sha256: str | None
+    state: EvaluationState
+    graph_f1: DeliveredGraphMetrics | None
     target_summary: SemanticSummary
-    operations: SemanticOperations
+    operations: SemanticOperations | None
 
 
 class SemanticEvidenceReport(SemanticRunSummary):
-    status: Literal['AI-assisted, unverified']
+    methodology: str
     scope_note: str
     evaluator: SemanticEvaluator
     targets: list[SemanticTarget]
@@ -146,10 +150,11 @@ class SemanticTransition(BaseModel):
 
 
 class SemanticComparison(BaseModel):
-    status: Literal['AI-assisted, unverified']
+    methodology: str
     scope_note: str
     evaluator: SemanticEvaluator
     formal_targets: int
+    comparable: bool
     paired_valid_targets: int
     left: SemanticRunSummary
     right: SemanticRunSummary
@@ -158,20 +163,18 @@ class SemanticComparison(BaseModel):
 
 def mount_semantic_evidence(app: FastAPI, root: Path, prefix: str) -> None:
     """Mount only behind the Benchmark v4 owner middleware."""
-    @app.get(f'{prefix}/semantic-evidence/runs/{{run_id}}', response_model=SemanticEvidenceReport | None)
-    def assessment(run_id: str) -> SemanticEvidenceReport | None:
+    @app.get(f'{prefix}/semantic-evidence/runs/{{run_id}}', response_model=SemanticEvidenceReport)
+    def assessment(run_id: str) -> SemanticEvidenceReport:
         try:
-            path = find(root, run_id)
-            return SemanticEvidenceReport.model_validate(report(path)) if path else None
+            return SemanticEvidenceReport.model_validate(report_run(root, run_id))
         except (ValueError, OSError, KeyError):
-            raise HTTPException(409, 'The retained Semantic Evidence assessment could not be verified.') from None
+            raise HTTPException(409, 'The retained PCG Evaluation could not be verified.') from None
 
-    @app.get(f'{prefix}/semantic-evidence/comparison', response_model=SemanticComparison | None)
-    def comparison(left: str, right: str) -> SemanticComparison | None:
+    @app.get(f'{prefix}/semantic-evidence/comparison', response_model=SemanticComparison)
+    def comparison(left: str, right: str) -> SemanticComparison:
         if left == right:
             raise HTTPException(422, 'Select two distinct Benchmark v4 Runs.')
         try:
-            first, second = find(root, left), find(root, right)
-            return SemanticComparison.model_validate(compare(first, second)) if first and second else None
+            return SemanticComparison.model_validate(compare_reports(report_run(root, left), report_run(root, right)))
         except (ValueError, OSError, KeyError):
-            raise HTTPException(409, 'Semantic Evidence comparison requires verified assessments with the same target scope.') from None
+            raise HTTPException(409, 'PCG Evaluation comparison requires verified Runs with the same frozen scope and matching contract.') from None

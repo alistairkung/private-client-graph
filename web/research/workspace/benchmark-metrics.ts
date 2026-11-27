@@ -6,9 +6,6 @@ export const evidenceMetricLabels = {
 } as const;
 
 export const multiSourceProofCompletionLabel = "Multi-Source Proof Completion";
-export const multiSourceEvidenceCoverageDescription =
-  "Average percentage of required evidence recovered for relationships that need multiple Sources. Uses the best-matching approved proof route.";
-
 export function formatF1Basis(tp: number, fp: number, fn: number) {
   const numerator = 2 * tp;
   const denominator = numerator + fp + fn;

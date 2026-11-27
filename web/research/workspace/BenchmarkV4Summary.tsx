@@ -1,12 +1,11 @@
-import type { BenchmarkV4Operations, BenchmarkV4Summary as Summary, DeliveredGraphMetrics, EvidenceQuality, Metrics, RunDetail } from "../shared/contracts";
+import type { BenchmarkV4Operations, BenchmarkV4Summary as Summary, DeliveredGraphMetrics, EvidenceQuality, RunDetail } from "../shared/contracts";
 import { metric, money } from "./RunChart";
-import { evidenceMetricLabels, multiSourceProofCompletionLabel } from "./benchmark-metrics";
 
 export function BenchmarkV4Summary({ run }: { run: RunDetail }) {
   const summary = run.benchmark_v4!;
   return (
-    <section className="benchmark-run-summary" aria-label="Benchmark v4 results">
-      <p>{run.pipeline_usage?.origin_run_id ? "Extractor v1 candidates + Generative Resolver" : "Extractor v1 only"} · 35 evaluation inputs</p>
+    <>
+      <p>Mixed reference scope · 35 evaluation inputs</p>
       {summary.observation_origin === "offline_fixture" && <p>Synthetic fixture results.</p>}
       {run.quality && summary.state !== "unmeasured" ? (
         <details>
@@ -34,7 +33,7 @@ export function BenchmarkV4Summary({ run }: { run: RunDetail }) {
           <PipelineUsage usage={run.pipeline_usage} complete={summary.state === "complete"} />
         </details>
       )}
-    </section>
+    </>
   );
 }
 
@@ -70,14 +69,10 @@ export function GraphMetrics({ summary, quality }: { summary: Summary; quality?:
   );
 }
 
-export function BenchmarkEvidence({ summary, proofs }: { summary: Summary; proofs?: Metrics | null }) {
+export function BenchmarkEvidence({ summary }: { summary: Summary }) {
   const evidence = summary.consensus_evidence;
   return (
     <>
-      {proofs && summary.state !== "unmeasured" && (
-        <p>{evidenceMetricLabels.complete_proof} {proofs.complete_proofs} / {proofs.planned_proofs} ·
-          {multiSourceProofCompletionLabel} {proofs.complete_joint_proofs} / {proofs.planned_joint_proofs}.</p>
-      )}
       <p>U8 exact adjudicated citation matches {evidence.assessed
         ? `${evidence.matched_citations} / ${evidence.reference_citations}`
         : "unavailable until graph construction succeeds"}.</p>
