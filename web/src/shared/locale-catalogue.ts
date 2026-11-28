@@ -76,5 +76,6 @@ export const catalogue: Record<string,string> = {
  "Curated examples": "精选案例",
  "Curated example": "精选案例",
  "Choose a synthetic case": "选择合成案例",
+ "Curated ideal fixture · Synthetic demonstration, not a measured model result.": "精选理想样例 · 合成演示，并非模型实测结果。",
  "Curated ideal fixtures, not live extraction or accepted Matter state.": "精选理想样例，并非实时提取结果或已接受的事项状态。"
 };

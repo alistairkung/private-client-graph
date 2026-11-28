@@ -41,7 +41,7 @@ export function ProposalDecision({
       if (confirm) navigate(await confirmProposal(record.id));
       else {
         await discardProposal(record.id);
-        navigate("/app");
+        navigate("/app/review", { replace: true });
       }
     } catch (failure) {
       onError(failure);

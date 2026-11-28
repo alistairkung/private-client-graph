@@ -48,6 +48,18 @@ describe("interruptible source reveal", () => {
     update(700);
     expect(reader.scrollTop).toBe(240);
   });
+  it("reveals complete lead-in lines when the source has a fixed line height", () => {
+    const { reader, target } = fixture();
+    reader.style.lineHeight = "28px";
+    const first = new DOMRect(0, 900, 200, 20);
+    const second = new DOMRect(0, 928, 200, 20);
+    target.getClientRects = () => Object.assign([first, second], {
+      item: (index: number) => [first, second][index] ?? null,
+    });
+    const cancel = revealSource(reader, target, true, false);
+    expect(reader.scrollTop).toBe(738);
+    cancel();
+  });
   it.each(["wheel", "touchstart", "pointerdown", "keydown"])(
     "lets %s input cancel movement",
     (type) => {

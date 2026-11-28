@@ -6,9 +6,10 @@ import {
 } from "motion/react";
 import { useLocale } from "../shared/locale";
 import { Icon } from "../shared/Icon";
-import { signOut } from "../shared/api";
+import { getProposals, signOut } from "../shared/api";
 import { ErrorNotice } from "../shared/Feedback";
-import { Ledger } from "../features/matters/Ledger";
+import { MatterLedger, ProposalLedger } from "../features/matters/Ledger";
+import { useRecordCollection } from "../features/matters/useRecordCollection";
 import { Intake } from "../features/matter-proposals/Intake";
 import { ReviewPage } from "../features/review/ReviewPage";
 import { clearSessionState } from "../shared/session-state";
@@ -25,123 +26,121 @@ function Shell() {
   const { t, locale, setLocale } = useLocale();
   const [menu, setMenu] = useState(false);
   const path = useAppPath();
+  const queue = useRecordCollection(getProposals, path);
+  const pending = queue.result.status === "ready" ? queue.result.records.length : 0;
   const exampleId = path === "/app" ? new URLSearchParams(window.location.search).get("example") : null;
   const reduced = useReducedMotion();
-  const compact = useCompactLayout();
+  const compact = useCompactLayout("(max-width: 900px)");
+  const compactNav = useCompactLayout("(max-width: 380px)");
   const menuTrigger = useRef<HTMLButtonElement>(null);
+  const utilities = useRef<HTMLDivElement>(null);
   useEffect(() => {
     setMenu(false);
   }, [path, exampleId]);
   useEffect(() => {
-    if (!menu) return;
+    if (!menu || !compact) return;
     const close = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return;
       setMenu(false);
       menuTrigger.current?.focus();
     };
+    const dismissOutside = (event: PointerEvent) => {
+      const target = event.target as Node;
+      if (!utilities.current?.contains(target) && !menuTrigger.current?.contains(target)) {
+        setMenu(false);
+      }
+    };
     document.addEventListener("keydown", close);
-    return () => document.removeEventListener("keydown", close);
-  }, [menu]);
+    document.addEventListener("pointerdown", dismissOutside);
+    return () => {
+      document.removeEventListener("keydown", close);
+      document.removeEventListener("pointerdown", dismissOutside);
+    };
+  }, [compact, menu]);
   const review = path.match(/^\/app\/(matters|matter-proposals)\/([^/]+)$/);
   const isNew = path === "/app/matter-proposals/new";
+  const isQueue = path === "/app/review";
+  const isMatters = path === "/app" && !exampleId;
+  const currentMatters = isMatters ? "page" : review?.[1] === "matters" ? "location" : undefined;
+  const currentReview = isQueue ? "page" : !isNew && review?.[1] === "matter-proposals" ? "location" : undefined;
+  const title = isNew ? "New proposal" : isQueue ? "Review proposals" : exampleId ? "Curated examples" : "Matters";
+  const count = new Intl.NumberFormat(locale).format(pending);
+  const reviewLabel = pending > 0
+    ? t(pending === 1 ? "Review, 1 proposal awaiting confirmation" : "Review, {count} proposals awaiting confirmation", { count })
+    : t("Review");
   useEffect(() => {
     if (review && !isNew) return;
-    document.title = `${t(isNew ? "New proposal" : exampleId ? "Curated examples" : "Matters")} · Private Client Graph`;
-  }, [path, isNew, exampleId, t]);
+    document.title = `${t(title)} · Private Client Graph`;
+  }, [path, isNew, title, t]);
+  const examplesLink = (
+    <a className="curated-link" href="/app?example=case-01" aria-current={exampleId ? "page" : undefined}>
+      {t("Curated examples")}
+    </a>
+  );
   return (
     <div className="atlas">
       <a className="skip-link" href="#main">
         {t("Skip to content")}
       </a>
-      <AnimatePresence initial={false}>
-        {compact && menu && (
-          <motion.button
-            key="shade"
-            className="rail-shade"
-            aria-label={t("Close menu")}
-            onClick={() => setMenu(false)}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.12 }}
-          />
-        )}
-        {(!compact || menu) && (
-          <motion.aside
-            key="rail"
-            className={"rail " + (menu ? "rail-open" : "")}
-            inert={compact && !menu}
-            initial={compact ? { x: reduced ? 0 : -16, opacity: 0 } : false}
-            animate={{ x: 0, opacity: 1 }}
-            exit={{ x: reduced ? 0 : -16, opacity: 0 }}
-            transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
-          >
-            <a href="/app" className="brand">
-              <Icon name="atlas" />
-              <span>
-                Private Client
-                <br />
-                Graph
-              </span>
-            </a>
-            <nav aria-label={t("Practitioner application")}>
-              <a
-                href="/app"
-                aria-current={path === "/app" && !exampleId ? "page" : undefined}
-              >
-                <Icon name="atlas" />
-                {t("Matters")}
-              </a>
-              <a
-                href="/app/matter-proposals/new"
-                aria-current={isNew ? "page" : undefined}
-              >
-                <Icon name="plus" />
-                {t("New proposal")}
-              </a>
-              <a href="/app?example=case-01" aria-current={exampleId ? "page" : undefined}>{t("Curated examples")}</a>
-            </nav>
-            <div className="rail-bottom">
-              <div className="utilities">
-                <label className="language">
-                  <span className="sr-only">{t("Language")}</span>
-                  <select
-                    value={locale}
-                    onChange={(event) =>
-                      setLocale(event.target.value as "en" | "zh-CN")
-                    }
-                  >
-                    <option value="en">English</option>
-                    <option value="zh-CN">简体中文</option>
-                  </select>
-                </label>
-                <Account />
-              </div>
-            </div>
-          </motion.aside>
-        )}
-      </AnimatePresence>
-      <div className="app-body">
-        <header className="topbar">
+      <header className="practitioner-masthead">
+        <div className="masthead-inner">
+          <a href="/app" className="brand">
+            <strong>Private Client Graph</strong>
+            <span>{t("Practitioner application")}</span>
+          </a>
           <button
             ref={menuTrigger}
             className="mobile-menu icon-button"
             aria-label={t("Menu")}
             aria-expanded={menu}
+            aria-controls="practitioner-utilities"
             onClick={() => setMenu(!menu)}
           >
             <Icon name={menu ? "close" : "menu"} />
           </button>
-          <a href="/app">{t("Matters")}</a>
-          <span className="topbar-end">{t("Synthetic environment")}</span>
-        </header>
-        <div className="synthetic-banner">
-          <span className="synthetic-dot" />
-          {t(
-            "Synthetic or fictional material only. Do not upload real client or personal information.",
-          )}
+          <nav className="workflow-nav" aria-label={t("Practitioner application")}>
+            <a href="/app" aria-current={currentMatters}>
+              {t("Matters")}
+            </a>
+            <a
+              className="review-nav-link"
+              href="/app/review"
+              aria-current={currentReview}
+              aria-label={reviewLabel}
+            >
+              {t("Review")}
+              {pending > 0 && (
+                <span className="review-count" aria-hidden="true">{pending > 99 ? "99+" : count}</span>
+              )}
+            </a>
+            <a href="/app/matter-proposals/new" aria-current={isNew ? "page" : undefined}>
+              {t("New proposal")}
+            </a>
+            {!compactNav && examplesLink}
+          </nav>
+          <div className="utilities" id="practitioner-utilities" ref={utilities} hidden={compact && !menu}>
+            {compactNav && examplesLink}
+            <label className="language">
+              <span className="sr-only">{t("Language")}</span>
+              <select value={locale} onChange={(event) => setLocale(event.target.value as "en" | "zh-CN")}>
+                <option value="en">English</option>
+                <option value="zh-CN">简体中文</option>
+              </select>
+            </label>
+            <Account />
+          </div>
         </div>
-        <p className="public-source-notice">{t("Sources, Matter Proposals and Matters are publicly readable, including proposals awaiting confirmation.")}</p>
+      </header>
+      <div className="app-body">
+        <div className="practitioner-disclosures">
+          <p className="synthetic-banner">
+            <span className="synthetic-dot" aria-hidden="true" />
+            {t(
+              "Synthetic or fictional material only. Do not upload real client or personal information.",
+            )}
+          </p>
+          <p className="public-source-notice">{t("Sources, Matter Proposals and Matters are publicly readable, including proposals awaiting confirmation.")}</p>
+        </div>
         <motion.main
           id="main"
           tabIndex={-1}
@@ -153,6 +152,8 @@ function Shell() {
           <AccessNotice />
           {isNew ? (
             <Intake />
+          ) : isQueue ? (
+            <ProposalLedger collection={queue} />
           ) : exampleId ? (
             <CuratedExamples id={exampleId} />
           ) : review ? (
@@ -161,7 +162,7 @@ function Shell() {
               id={decodeURIComponent(review[2])}
             />
           ) : path === "/app" || path === "" ? (
-            <Ledger />
+            <MatterLedger />
           ) : (
             <section className="empty">
               <h1>{t("Page not found")}</h1>
@@ -173,16 +174,16 @@ function Shell() {
     </div>
   );
 }
-function useCompactLayout() {
+function useCompactLayout(query: string) {
   const [compact, setCompact] = useState(
-    () => window.matchMedia("(max-width: 900px)").matches,
+    () => window.matchMedia(query).matches,
   );
   useEffect(() => {
-    const media = window.matchMedia("(max-width: 900px)");
+    const media = window.matchMedia(query);
     const update = () => setCompact(media.matches);
     media.addEventListener("change", update);
     return () => media.removeEventListener("change", update);
-  }, []);
+  }, [query]);
   return compact;
 }
 function Account() {

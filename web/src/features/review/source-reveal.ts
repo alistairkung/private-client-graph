@@ -9,14 +9,15 @@ export function revealSource(
   remember: (position: number) => void = () => {},
   onInterrupt: () => void = () => {},
 ) {
+  const firstLine = target.getClientRects()[0] ?? target.getBoundingClientRect();
   const destination = Math.max(
     0,
     Math.min(
       Math.max(0, reader.scrollHeight - reader.clientHeight),
       reader.scrollTop +
-        target.getBoundingClientRect().top -
+        firstLine.top -
         reader.getBoundingClientRect().top -
-        Math.min(72, reader.clientHeight * 0.2),
+        contextOffset(reader, target, firstLine.height),
     ),
   );
   let stopped = false;
@@ -75,4 +76,14 @@ export function revealSource(
     reader.removeEventListener("keydown", key);
     document.removeEventListener("visibilitychange", visibility);
   };
+}
+
+function contextOffset(reader: HTMLElement, target: HTMLElement, firstLineHeight: number) {
+  const available = Math.min(72, reader.clientHeight * 0.2);
+  const lineHeight = Number.parseFloat(getComputedStyle(target.parentElement ?? target).lineHeight);
+  if (!Number.isFinite(lineHeight) || lineHeight <= 0) return available;
+
+  // Start before a complete context line, allowing for the leading around the inline mark.
+  const leading = Math.max(0, (lineHeight - firstLineHeight) / 2);
+  return Math.floor(available / lineHeight) * lineHeight + leading + 2;
 }

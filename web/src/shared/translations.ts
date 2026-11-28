@@ -40,7 +40,19 @@ export const chinese: Record<string, string> = {
   "Sign out": "退出登录",
   "Your relationships, grounded in their sources.":
     "以来源资料为依据，审阅关系。",
+  "Review": "审阅",
+  "Review proposals": "审阅提案",
+  "Review, 1 proposal awaiting confirmation": "审阅，1 项提案等待确认",
+  "Review, {count} proposals awaiting confirmation": "审阅，{count} 项提案等待确认",
+  "Back to Review": "返回审阅",
+  "Search proposals": "搜索提案",
+  "{count} accepted": "{count} 项已确认",
+  "{count} awaiting confirmation": "{count} 项等待确认",
+  "{shown} of {total}": "{total} 项中显示 {shown} 项",
+  "This proposal may have been confirmed or discarded. Return to Review to see what is still awaiting confirmation.":
+    "此提案可能已确认或丢弃。请返回审阅，查看仍在等待确认的提案。",
   "Search Matters": "搜索事项",
+  "Reference or title": "编号或标题",
   "Search by reference or title": "按编号或标题搜索",
   "Awaiting confirmation": "等待确认",
   "Review the complete proposal before accepting it as current Matter state.":
@@ -79,8 +91,6 @@ export const chinese: Record<string, string> = {
   "This record may no longer be available. Return to Matters to check its current state.":
     "此记录可能已不可用。请返回事项查看当前状态。",
   "Close dialog": "关闭对话框",
-  "Bring synthetic sources together. Review the relationships before accepting a Matter.":
-    "汇集合成来源资料，审阅关系后再确认事项。",
   "Matter identity": "事项信息",
   "External Matter reference": "外部事项编号",
   "Use the reference from your existing Matter system.":

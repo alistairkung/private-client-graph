@@ -1,191 +1,122 @@
-import { useEffect, useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
-import { getMatters, getProposals } from "../../shared/api";
+import { getMatters } from "../../shared/api";
 import type { MatterSummary, ProposalSummary } from "../../shared/contracts";
 import { ErrorNotice, Loading } from "../../shared/Feedback";
 import { Icon } from "../../shared/Icon";
 import { useLocale } from "../../shared/locale";
 import { useSessionState } from "../../shared/session-state";
+import { type RecordCollection, useRecordCollection } from "./useRecordCollection";
+import "./ledger.css";
 
-export function Ledger() {
-  const { t } = useLocale();
-  const [matters, setMatters] = useState<MatterSummary[]>();
-  const [proposals, setProposals] = useState<ProposalSummary[]>();
-  const [errors, setErrors] = useState<{
-    matters?: unknown;
-    proposals?: unknown;
-  }>({});
-  const [query, setQuery] = useSessionState("ledger:query", "");
-  const [attempt, setAttempt] = useState(0);
-  useEffect(() => {
-    let active = true;
-    setErrors({});
-    getMatters()
-      .then((data) => {
-        if (active) setMatters(data);
-      })
-      .catch((error) => {
-        if (active) setErrors((previous) => ({ ...previous, matters: error }));
-      });
-    getProposals()
-      .then((data) => {
-        if (active) setProposals(data);
-      })
-      .catch((error) => {
-        if (active)
-          setErrors((previous) => ({ ...previous, proposals: error }));
-      });
-    return () => {
-      active = false;
-    };
-  }, [attempt]);
-  const matches = (reference: string, title: string) =>
-    (reference + " " + title)
-      .toLocaleLowerCase()
-      .includes(query.trim().toLocaleLowerCase());
-  const current = matters?.filter((item) =>
-    matches(item.external_reference, item.title),
+export function MatterLedger() {
+  const collection = useRecordCollection(getMatters);
+  return <RecordIndex kind="matters" collection={collection} />;
+}
+
+export function ProposalLedger({ collection }: { collection: RecordCollection<ProposalSummary> }) {
+  return <RecordIndex kind="matter-proposals" collection={collection} />;
+}
+
+function RecordIndex({ kind, collection }: {
+  kind: "matters" | "matter-proposals";
+  collection: RecordCollection<MatterSummary | ProposalSummary>;
+}) {
+  const { t, locale } = useLocale();
+  const proposals = kind === "matter-proposals";
+  const [query, setQuery] = useSessionState(proposals ? "proposal-queue:query" : "ledger:query", "");
+  const { result, retry } = collection;
+  const search = query.trim().toLocaleLowerCase(locale);
+  const records = result.status === "ready" ? result.records : [];
+  const emptyQueue = proposals && result.status === "ready" && !records.length;
+  const matches = records.filter((record) =>
+    `${record.external_reference} ${recordTitle(record)}`.toLocaleLowerCase(locale).includes(search),
   );
-  const pending = proposals?.filter((item) =>
-    matches(item.external_reference, item.matter_title),
-  );
+  const format = new Intl.NumberFormat(locale);
+  const total = format.format(records.length);
+  const emptyMessage = proposals
+    ? records.length ? "No matching proposals." : "No proposals awaiting confirmation."
+    : records.length ? "No matching Matters." : "No accepted Matters yet. Start with a synthetic proposal.";
+  const count = search
+    ? t("{shown} of {total}", { shown: format.format(matches.length), total })
+    : t(proposals ? "{count} awaiting confirmation" : "{count} accepted", { count: total });
+
   return (
     <div className="ledger page">
       <div className="page-heading">
         <div>
-          <h1>{t("Matters")}</h1>
-          <p>{t("Your relationships, grounded in their sources.")}</p>
+          <h1>{t(proposals ? "Review proposals" : "Matters")}</h1>
+          {proposals && <p className="ledger-description">
+            {t("Review the complete proposal before accepting it as current Matter state.")}
+          </p>}
         </div>
-        <a className="button primary" href="/app/matter-proposals/new">
-          <Icon name="plus" />
-          {t("New proposal")}
-        </a>
+        {!proposals && <NewProposalLink />}
       </div>
-      <label className="search-field">
-        <Icon name="search" />
-        <span className="sr-only">{t("Search Matters")}</span>
-        <input
-          type="search"
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder={t("Search by reference or title")}
-        />
-      </label>
-      {pending?.length === 0 && !errors.proposals ? (
-        <p className="pending-empty">
-          {t(
-            query
-              ? "No matching proposals."
-              : "No proposals awaiting confirmation.",
-          )}
-        </p>
-      ) : (
-        <section className="ledger-section">
-          <div className="section-heading">
-            <h2>{t("Awaiting confirmation")}</h2>
-            {proposals && <span className="count">{pending?.length}</span>}
+      <div className="matter-index">
+        {!emptyQueue && (
+          <div className="ledger-toolbar">
+            <label className="search-field">
+              <Icon name="search" />
+              <span className="sr-only">{t(proposals ? "Search proposals" : "Search Matters")}</span>
+              <input
+                type="search"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder={t("Reference or title")}
+              />
+            </label>
+            {records.length > 0 && <p className="ledger-count">{count}</p>}
           </div>
-          <p className="section-description">
-            {t(
-              "Review the complete proposal before accepting it as current Matter state.",
-            )}
-          </p>
-          {errors.proposals ? (
-            <ErrorNotice
-              error={errors.proposals}
-              retry={() => setAttempt(attempt + 1)}
-            />
-          ) : !pending ? (
-            <Loading />
-          ) : pending.length ? (
-            <RecordList
-              records={pending.map((item) => ({
-                ...item,
-                title: item.matter_title,
-              }))}
-              proposal
-            />
+        )}
+        <div className="ledger-body">
+          {result.status === "loading" ? <Loading /> : result.status === "error" ? (
+            <ErrorNotice error={result.error} retry={retry} />
+          ) : matches.length ? (
+            <RecordList records={matches} kind={kind} />
           ) : (
-            <div className="empty-row">
-              {t(
-                query
-                  ? "No matching proposals."
-                  : "No proposals awaiting confirmation.",
-              )}
+            <div className="empty-row ledger-empty">
+              <p>{t(emptyMessage)}</p>
+              {proposals && !records.length && <NewProposalLink />}
             </div>
           )}
-        </section>
-      )}
-      <section className="ledger-section">
-        <div className="section-heading">
-          <h2>{t("Accepted Matters")}</h2>
-          {matters && <span className="count">{current?.length}</span>}
         </div>
-        <p className="section-description">
-          {t("Revisit accepted relationships and the Evidence behind them.")}
-        </p>
-        {errors.matters ? (
-          <ErrorNotice
-            error={errors.matters}
-            retry={() => setAttempt(attempt + 1)}
-          />
-        ) : !current ? (
-          <Loading />
-        ) : current.length ? (
-          <RecordList records={current} />
-        ) : (
-          <div className="empty-row">
-            {t(
-              query
-                ? "No matching Matters."
-                : "No accepted Matters yet. Start with a synthetic proposal.",
-            )}
-          </div>
-        )}
-      </section>
-      <p className="ledger-footnote">
-        {t(
-          "Proposals become current Matter state only after your explicit confirmation.",
-        )}
-      </p>
+      </div>
     </div>
   );
 }
 
-function RecordList({
-  records,
-  proposal = false,
-}: {
-  records: MatterSummary[];
-  proposal?: boolean;
-}) {
+function NewProposalLink() {
   const { t } = useLocale();
   return (
-    <div className="record-list">
-      <AnimatePresence initial={false}>
-        {records.map((item) => (
-          <motion.a
-            layout="position"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0, transition: { duration: 0.08 } }}
-            transition={{ duration: 0.14 }}
-            className="record-row"
-            href={`/app/${proposal ? "matter-proposals" : "matters"}/${encodeURIComponent(item.id)}`}
-            key={item.id}
-          >
+    <a className="button primary" href="/app/matter-proposals/new">
+      <Icon name="plus" />
+      {t("New proposal")}
+    </a>
+  );
+}
+
+function recordTitle(record: MatterSummary | ProposalSummary) {
+  return "matter_title" in record ? record.matter_title : record.title;
+}
+
+function RecordList({ records, kind }: {
+  records: (MatterSummary | ProposalSummary)[];
+  kind: "matters" | "matter-proposals";
+}) {
+  return (
+    <ul className="record-list" role="list">
+      {records.map((record) => (
+        <li key={record.id}>
+          <a className="record-row" href={`/app/${kind}/${encodeURIComponent(record.id)}`}>
             <span className="record-icon">
-              <Icon name={proposal ? "file" : "atlas"} />
+              <Icon name={kind === "matter-proposals" ? "file" : "atlas"} />
             </span>
             <span className="record-identity">
-              <strong>{item.external_reference}</strong>
-              <span>{item.title}</span>
+              <strong>{record.external_reference}</strong>
+              <span>{recordTitle(record)}</span>
             </span>
-            {proposal && <span className="status">{t("Proposal")}</span>}
             <Icon name="arrow" />
-          </motion.a>
-        ))}
-      </AnimatePresence>
-    </div>
+          </a>
+        </li>
+      ))}
+    </ul>
   );
 }

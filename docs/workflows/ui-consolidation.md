@@ -11,7 +11,8 @@ their original checkout remain untouched.
 | Destination | Production surface |
 | --- | --- |
 | `/` | Approved document montage, scroll-drawn graph and full-source Evidence landing story |
-| `/app` | Public persisted Matter and pending-proposal collections |
+| `/app` | Public index of accepted Matters |
+| `/app/review` | Public queue of Matter Proposals awaiting confirmation |
 | `/app/matters/{uuid}` | Accepted Matter graph/list, Sources and Evidence |
 | `/app/matter-proposals/{uuid}` | Public pending review; protected confirmation/discard |
 | `/app/matter-proposals/new` | Sign-in-gated synthetic PDF intake |
@@ -77,11 +78,12 @@ Use the existing combined local environment:
 docker compose --profile practitioner up --build application
 ```
 
-Open `https://localhost:8443/` for the landing, `/app` for public Matters, and
-`/research-results` for the publication. Accept the development certificate
-warning manually. The existing local Google/model substitutes require no paid
-provider credentials. See [application setup](application-setup.md) for migration,
-explicit Evergreen seeding and lower-level development.
+Open `https://localhost:8443/` for the landing, `/app` for public Matters,
+`/app/review` for the public queue, and `/research-results` for the publication.
+Accept the development certificate warning manually. The existing local
+Google/model substitutes require no paid provider credentials. See
+[application setup](application-setup.md) for migration, explicit Evergreen
+seeding and lower-level development.
 
 ```bash
 uv run pytest

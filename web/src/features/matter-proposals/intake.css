@@ -1,8 +1,8 @@
-.intake-page {
-  max-width: 940px;
+.page.intake-page {
+  max-width: 1040px;
 }
 .intake-page > .back-link {
-  margin: -12px 0 12px;
+  margin: -10px 0 10px;
 }
 .intake-layout {
   min-width: 0;
@@ -13,8 +13,14 @@
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 8px 24px;
-  padding: 16px 0;
+  margin-bottom: 16px;
   font-size: 14px;
+}
+.intake-access:not(:has(.intake-session-ended)) {
+  padding: 14px 20px;
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+  border-radius: var(--workspace-radius);
 }
 .intake-access > a {
   font-weight: 600;
@@ -36,32 +42,45 @@
 }
 .intake-form .primary:disabled {
   color: var(--muted);
-  background: var(--surface-muted);
-  border-color: var(--border);
+  background: #dde6df;
+  border-color: transparent;
   opacity: 1;
 }
 .intake-form {
+  --form-padding: 28px;
   background: var(--surface);
-  padding: 28px 32px;
   border: 1px solid var(--border);
+  border-radius: var(--workspace-radius);
+}
+.intake-form > :is(fieldset, .notice) {
+  margin-inline: var(--form-padding);
+}
+.intake-form > fieldset:first-child {
+  margin-top: 24px;
 }
 .intake-form fieldset {
   border: 0;
-  margin: 0;
+  margin-block: 0;
   padding: 0;
   min-width: 0;
 }
 .intake-form fieldset + fieldset {
-  margin-top: 28px;
-  padding-top: 24px;
-  border-top: 1px solid var(--border);
+  margin-top: 24px;
+}
+.intake-section-title,
+.intake-form legend {
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.5;
+  letter-spacing: normal;
 }
 .intake-form legend {
-  font-weight: 600;
-  font-size: 17px;
-  margin-bottom: 18px;
-  padding: 0;
+  width: 100%;
+  margin-bottom: 16px;
+  padding: 12px 0 0;
+  border-top: 1px solid var(--border);
 }
+.intake-form > fieldset:first-child legend { padding-top: 0; border: 0; }
 .intake-form fieldset > label + label {
   margin-top: 20px;
 }
@@ -84,7 +103,7 @@
   position: relative;
   padding: 20px;
   border: 1px dashed var(--control-border);
-  border-radius: 6px;
+  border-radius: var(--workspace-control-radius);
   background: var(--surface-subtle);
   margin-bottom: 8px;
   cursor: pointer;
@@ -162,20 +181,40 @@
   align-items: flex-start;
   padding: 16px;
   background: var(--surface-muted);
+  border-radius: var(--workspace-control-radius);
   font-size: 13px;
   font-weight: 400;
 }
 .consent > input {
   margin: 2px 0 0;
 }
+.intake-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px 24px;
+  margin-top: 22px;
+  padding: 14px var(--form-padding);
+  border-top: 1px solid var(--border);
+  border-radius: 0 0 calc(var(--workspace-radius) - 1px) calc(var(--workspace-radius) - 1px);
+  background: var(--surface-muted);
+}
+.intake-footer .field-help {
+  margin: 0;
+  font-size: 12px;
+}
 .form-actions {
   display: flex;
-  gap: 24px;
   align-items: center;
-  margin-top: 24px;
+  gap: 14px;
+  flex: 0 0 auto;
+  max-width: 100%;
 }
 .form-actions > a {
-  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: 13px;
 }
 .draft-note {
   color: var(--muted);
@@ -184,22 +223,18 @@
   max-width: 70ch;
 }
 @media (max-width: 600px) {
-  .intake-form {
-    padding: 22px 16px;
-  }
+  .intake-form { --form-padding: 16px; }
   .file-drop {
     padding: 16px;
   }
   .consent {
     padding: 14px;
   }
-  .form-actions {
-    flex-wrap: wrap;
-    gap: 16px;
+  .intake-footer {
+    flex-direction: column-reverse;
+    align-items: stretch;
   }
-  .form-actions > .button {
-    width: 100%;
-  }
+  .form-actions > .button { flex: 1; }
 }
 
 .source-method {
@@ -227,7 +262,7 @@
   padding: 14px 18px;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--workspace-control-radius);
   cursor: pointer;
 }
 .source-method-option:has(:checked) {
@@ -248,9 +283,9 @@
   place-items: center;
   background: var(--surface-muted);
   color: var(--muted);
-  border-radius: 8px;
+  border-radius: var(--workspace-control-radius);
 }
-.source-method-option:has(:checked) .source-method-icon { color: var(--rail-text); background: var(--rail); }
+.source-method-option:has(:checked) .source-method-icon { color: white; background: var(--accent); }
 .source-method-copy { display: grid; gap: 2px; }
 .source-method-copy strong { font-size: 16px; }
 .source-method-copy > span { font-size: 13px; color: var(--muted); }
@@ -276,7 +311,7 @@
   gap: 8px 16px;
   padding: clamp(16px, 3vw, 24px);
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--workspace-radius);
   background: var(--surface);
 }
 .session-lock {

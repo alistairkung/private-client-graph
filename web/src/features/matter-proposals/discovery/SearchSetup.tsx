@@ -22,7 +22,7 @@ export function SearchSetup({
         start(terms, first, last);
       }}
     >
-      <h2 className="discovery-title">{t("Search Workspace")}</h2>
+      <h2 className="intake-section-title">{t("Search Workspace")}</h2>
       <section className="discovery-locations">
         <h3>{t("Where you’re searching")}</h3>
         <dl className="discovery-scope">
@@ -69,7 +69,7 @@ export function SearchSetup({
             </label>
           </div>
         </details>
-        <p>
+        <p className="discovery-caption">
           {t(
             "Search up to 50 matching emails and PDFs in these locations. Emails are checked for leads as results arrive. Nothing is published until you approve.",
           )}

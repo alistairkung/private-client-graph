@@ -1,9 +1,5 @@
-.discovery-page {
-  max-width: 1220px;
-}
 .workspace-connection,
 .discovery {
-  font-family: "Public Sans", system-ui, sans-serif;
   overflow-wrap: anywhere;
 }
 .workspace-connection,
@@ -12,7 +8,7 @@
 .discovery-papers article {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--workspace-radius);
   min-width: 0;
 }
 .workspace-connection {
@@ -90,9 +86,9 @@
   font-weight: 600;
 }
 .discovery-stages [aria-current] span {
-  background: var(--rail);
+  background: var(--accent);
   color: white;
-  border-color: var(--rail);
+  border-color: var(--accent);
 }
 .discovery-controls,
 .discovery-group {
@@ -116,8 +112,8 @@
   overflow: hidden;
 }
 .discovery-summary-top {
-  background: var(--rail);
-  color: var(--rail-text);
+  background: var(--surface-muted);
+  border-block-end: 1px solid var(--border);
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -128,13 +124,10 @@
 .discovery .discovery-title,
 .discovery-papers h3 {
   font:
-    500 clamp(26px, 3vw, 40px)/1.1 "Newsreader",
-    Georgia,
-    serif;
+    500 34px/1.1 var(--workspace-display);
   letter-spacing: -0.025em;
 }
 .discovery-summary .discovery-caption {
-  color: var(--rail-muted);
   margin-bottom: 5px;
 }
 .discovery-counts {
@@ -146,19 +139,17 @@
 .discovery-counts > div {
   display: flex;
   flex-direction: column-reverse;
-  border-left: 1px solid var(--rail-border);
+  border-inline-start: 1px solid var(--control-border);
   padding-left: 16px;
 }
 .discovery-counts dt {
-  color: var(--rail-muted);
+  color: var(--muted);
   font-size: 13px;
 }
 .discovery-counts dd {
   margin: 0;
   font:
-    500 28px/1.1 "Newsreader",
-    Georgia,
-    serif;
+    500 28px/1.1 var(--workspace-display);
 }
 .discovery-inspection {
   display: flex;
@@ -198,9 +189,6 @@
 .discovery-papers article {
   padding: clamp(16px, 2vw, 26px);
 }
-.discovery-panel > h2 {
-  font-size: 21px;
-}
 .discovery-leads {
   padding: 0;
   margin: 18px 0 0;
@@ -227,7 +215,7 @@
 .discovery-leads figure {
   margin: 12px 0;
   padding: 12px 16px;
-  border-left: 3px solid var(--selection-border);
+  border-inline-start: 1px solid var(--selection-border);
   background: var(--surface-subtle);
 }
 .discovery-leads blockquote {
@@ -397,7 +385,7 @@
   gap: 12px;
   padding: 16px;
   background: var(--surface-muted);
-  border-left: 3px solid var(--accent);
+  border-inline-start: 1px solid var(--accent);
 }
 .discovery-consent input {
   margin-top: 2px;
@@ -435,9 +423,6 @@
   .discovery-counts > div {
     padding-left: 8px;
   }
-  .discovery input:not([type="checkbox"]) {
-    font-size: 16px;
-  }
   .discovery-dates {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -459,8 +444,6 @@
 }
 .connection-intro { grid-area: intro; }
 .connection-intro h2 {
-  font: 500 clamp(26px, 3vw, 36px)/1.15 "Newsreader", Georgia, serif;
-  letter-spacing: -.025em;
   margin: 0 0 10px;
 }
 .connection-setup p { max-width: 55ch; }

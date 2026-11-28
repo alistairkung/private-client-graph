@@ -28,7 +28,7 @@ export function PublicationReview({
   return (
     <>
       <div className="discovery-review-heading">
-        <h2 ref={heading} tabIndex={-1} className="discovery-title">
+        <h2 ref={heading} tabIndex={-1} className="intake-section-title">
           {t("Review exact Sources")}
         </h2>
         <button onClick={edit}>{t("Edit selection")}</button>
@@ -49,7 +49,7 @@ export function PublicationReview({
           ))}
         </section>
         <section className="discovery-panel discovery-publication">
-          <h2>{t("Publication details")}</h2>
+          <h2 className="intake-section-title">{t("Publication details")}</h2>
           <label>
             {t("External Matter reference")}
             <input
