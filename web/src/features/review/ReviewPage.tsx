@@ -187,11 +187,11 @@ export function Workspace({
     setFocusRequest({ index: selected, view: selectionView });
   }
   return (
-    <div className="review-page">
+    <div className={proposal ? "review-page proposal-workspace" : "review-page"}>
       <header className="matter-heading">
         <div className="matter-identity">
-          <a className="back-link" href="/app">
-            {t("Back to Matters")}
+          <a className="back-link" href={proposal ? "/app/review" : "/app"}>
+            {t(proposal ? "Back to Review" : "Back to Matters")}
           </a>
           <div className="matter-reference">
             {record.external_reference}

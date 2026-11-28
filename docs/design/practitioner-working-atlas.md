@@ -17,17 +17,24 @@ shared tokens and the public landing and research directions.
 
 ## Composition and interaction
 
-The horizontal masthead keeps Matters, New proposal and Curated examples visible
-at phone widths. On compact screens, a disclosure holds the language and account
-controls. The notices below the masthead state that only synthetic or fictional
-material is allowed and that Sources, Matter Proposals and Matters are publicly
-readable, including proposals awaiting confirmation.
+The horizontal masthead keeps Matters, Review and New proposal visible at
+phone widths. On compact screens, a disclosure holds the language and account
+controls. At 380px and below, it also holds Curated examples. The notices below
+the masthead state that only synthetic or fictional material is allowed and
+that Sources, Matter Proposals and Matters are publicly readable, including
+proposals awaiting confirmation.
 
-The ledger is a divided list with pending proposals first, collapsing an empty
-pending section to one line. The review workspace keeps Graph or List and the
-Evidence inspector beside an independently scrolling Sources reader in a
-single paper frame. Canonical Person nodes use circular notation; Trust nodes
-use a full-size triangle with its name below.
+Matters (`/app`) lists accepted Matters. Review (`/app/review`) lists proposals
+awaiting confirmation. Each page uses a divided paper list with its own search
+by reference or title. The Review badge counts pending proposals across the
+shared queue, independent of search. The count refreshes on practitioner path
+changes. An empty queue offers New proposal. Search and the badge appear when
+proposals are available.
+
+The review workspace keeps Graph or List and the Evidence inspector beside an
+independently scrolling Sources reader in a single paper frame. Canonical
+Person nodes use circular notation. Trust nodes use a full-size triangle with
+its name below.
 One-Trust layout places settlors above, beneficiaries below, trustees beside the
 Trust and direct family context near its role holder. These are presentation
 preferences without additional domain meaning. Separate polylines preserve each
@@ -88,10 +95,10 @@ opacity feedback. Direct reader input cancels scrolling; a new selection
 retargets from the current position.
 
 Application links retain native URLs while navigating without a document reload.
-Tab-memory retains ledger search, review context and intake fields/PDFs, including
-terminal recovery messages. Reload/close clears this presentation state; sign-out
-also resets mounted values and removes the draft unload warning. In-flight
-submissions keep their current workflow open. No review state is persisted to
+Tab-memory retains the separate Matters and Review searches, review context,
+intake fields/PDFs and terminal recovery messages. Reload/close clears this
+presentation state. Sign-out also resets mounted values and removes the draft
+unload warning. In-flight submissions keep their current workflow open. No review state is persisted to
 the backend or browser storage.
 
 ## Workflow boundaries
@@ -106,9 +113,10 @@ sources.
 Source IDs survive local title edits and removal of other sources. The frontend
 checks count, total size and obvious filename type; the unchanged backend owns
 actual PDF acquisition and validation. Confirm/discard applies to the entire
-proposal with an explicit decision dialog. Unknown mutation outcomes retain
-context and direct the practitioner to check Matters. Safe mapped errors never
-render provider diagnostics.
+proposal with an explicit decision dialog. Proposal details link back to Review.
+Discard returns there, and confirmation opens the accepted Matter. Unknown
+mutation outcomes retain context and direct the practitioner to check Matters.
+Safe mapped errors never render provider diagnostics.
 
 English and Simplified Chinese cover the visible workflow; language preference
 switches preserve in-memory intake and review state. There are no live provider

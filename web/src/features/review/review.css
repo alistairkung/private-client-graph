@@ -474,7 +474,7 @@
     font-size: 34px;
     margin-top: 6px;
   }
-  .matter-identity .back-link {
+  .review-page:not(.proposal-workspace) .matter-identity .back-link {
     display: none;
   }
   .matter-reference {

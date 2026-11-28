@@ -67,7 +67,13 @@ test("a real pending proposal exposes its full Source publicly while decisions s
   const proposal = await created.json();
   await context.clearCookies();
   expect((await context.request.get(`/api/matter-proposals/${proposal.id}`)).status()).toBe(200);
-  await page.goto(`/app/matter-proposals/${proposal.id}`);
+  await page.goto("/app/review");
+  await expect(page.getByRole("heading", { name: "Review proposals", exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: /^Review, \d+ proposals? awaiting confirmation$/ })).toHaveAttribute("aria-current", "page");
+  await page.getByRole("searchbox", { name: "Search proposals" }).fill(proposal.external_reference);
+  await page.getByRole("link", { name: new RegExp(proposal.external_reference) }).click();
+  await expect(page).toHaveURL(`/app/matter-proposals/${proposal.id}`);
+  await expect(page.getByRole("link", { name: "Back to Review" })).toHaveAttribute("href", "/app/review");
   await expect(page.getByRole("heading", { name: "Fictional public proposal", exact: true })).toBeVisible();
   await page.getByRole("tab", { name: "List", exact: true }).click();
   await page.locator("#relationship-0").click();

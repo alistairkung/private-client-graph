@@ -104,7 +104,7 @@ describe("whole-proposal decision safeguards", () => {
         }),
       ).toBeDisabled();
       await userEvent.click(
-        screen.getByRole("link", { name: /Back to Matters/ }),
+        screen.getByRole("link", { name: /Back to Review/ }),
       );
       expect(window.location.pathname).toBe("/app/matter-proposals/proposal");
       await act(async () => {
@@ -119,7 +119,7 @@ describe("whole-proposal decision safeguards", () => {
       await act(async () => finish());
       await waitFor(() =>
         expect(screen.getByTestId("route")).toHaveTextContent(
-          decision === "confirm" ? "/app/matters/created" : "/app",
+          decision === "confirm" ? "/app/matters/created" : "/app/review",
         ),
       );
       expect(screen.queryByRole("dialog")).not.toBeInTheDocument();

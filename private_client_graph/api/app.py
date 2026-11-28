@@ -155,6 +155,7 @@ def create_app(web_dist: Path = WEB_DIST, *, discovery_router: APIRouter | None 
 
         application.add_api_route("/app", practitioner_shell, include_in_schema=False)
         application.add_api_route("/app/", practitioner_shell, include_in_schema=False)
+        application.add_api_route("/app/review", practitioner_shell, include_in_schema=False)
         application.add_api_route(
             "/app/matters/{internal_id}", practitioner_shell, include_in_schema=False
         )

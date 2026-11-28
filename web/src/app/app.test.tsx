@@ -28,8 +28,9 @@ it.each(["/app", "/app/"])("%s composes public collections and account actions w
   window.history.replaceState(null, "", path);
   const fetch = mockReads({ can_write: false, sign_in_available: true });
   render(<PractitionerApp />);
-  expect(await screen.findByText("No proposals awaiting confirmation.")).toBeVisible();
-  expect(screen.getByRole("heading", { name: "Accepted Matters" })).toBeVisible();
+  expect(await screen.findByText(/No accepted Matters yet/)).toBeVisible();
+  expect(screen.getByRole("heading", { name: "Matters" })).toBeVisible();
+  expect(screen.getByRole("link", { name: "Review" })).toHaveAttribute("href", "/app/review");
   expect(screen.getByText(/publicly readable, including proposals awaiting confirmation/)).toBeVisible();
   expect(screen.getAllByRole("link", { name: "New proposal" })).toHaveLength(2);
   await userEvent.click(screen.getByRole("button", { name: "Account menu" }));
@@ -46,12 +47,15 @@ it("reads a persisted pending Source directly while anonymous and gates whole-pr
   expect(screen.queryByRole("button", { name: "Confirm proposal" })).not.toBeInTheDocument();
   expect(screen.queryByRole("button", { name: "Discard proposal" })).not.toBeInTheDocument();
   expect(screen.getByRole("link", { name: "Sign in to make changes" })).toBeVisible();
-  expect(fetch.mock.calls.map(call => call[0]).sort()).toEqual(["/api/access", "/api/matter-proposals/proposal-42"]);
+  expect(fetch.mock.calls.map(call => call[0]).sort()).toEqual(["/api/access", "/api/matter-proposals", "/api/matter-proposals/proposal-42"]);
 });
 it("shows intake while access loads and enables it only after write capability is confirmed", async () => {
   window.history.replaceState(null, "", "/app/matter-proposals/new");
   let resolveAccess: (response: Response) => void = () => {};
-  vi.spyOn(globalThis, "fetch").mockImplementation(() => new Promise(resolve => { resolveAccess = resolve; }));
+  vi.spyOn(globalThis, "fetch").mockImplementation(async (url) => {
+    if (url === "/api/matter-proposals") return new Response("[]");
+    return new Promise(resolve => { resolveAccess = resolve; });
+  });
   render(<PractitionerApp />);
   expect(screen.getByRole("status")).toHaveTextContent("Checking sign-in");
   expect(screen.getByRole("heading", { name: "New proposal" })).toBeVisible();
@@ -86,7 +90,7 @@ it.each(["anonymous", "unavailable", "error"])("keeps the intake preview public 
   });
   expect(screen.queryByText("synthetic.pdf")).not.toBeInTheDocument();
   fireEvent.submit(submit.closest("form")!);
-  expect(fetch.mock.calls.map(call => call[0])).toEqual(["/api/access"]);
+  expect(fetch.mock.calls.map(call => call[0]).sort()).toEqual(["/api/access", "/api/matter-proposals"]);
 });
 it("retains readable pending Sources after sign-out and removes mutation actions without redirecting", async () => {
   window.history.replaceState(null, "", "/app/matter-proposals/proposal-42");
@@ -127,7 +131,7 @@ it.each([false, true])("uses the existing app route for curated selection and Ba
     return new Response("[]");
   });
   render(<PractitionerApp />);
-  await screen.findByText("No proposals awaiting confirmation.");
+  await screen.findByText(/No accepted Matters yet/);
   if (compact) await userEvent.click(screen.getByRole("button", { name: "Menu" }));
   await userEvent.click(screen.getByRole("link", { name: "Curated examples" }));
   if (compact) expect(screen.getByRole("button", { name: "Menu" })).toHaveAttribute("aria-expanded", "false");
@@ -144,9 +148,63 @@ it.each([false, true])("uses the existing app route for curated selection and Ba
   await userEvent.click(screen.getByRole("button", { name: "Next example" }));
   expect(await screen.findByRole("heading", { name: "Case 04 · Hillcrest" })).toBeVisible();
   act(() => window.history.back());
-  expect(await screen.findByRole("heading", { name: "Accepted Matters" })).toBeVisible();
+  expect(await screen.findByRole("heading", { name: "Matters" })).toBeVisible();
   if (!compact) expect(screen.getByRole("link", { name: "Curated examples" })).not.toHaveAttribute("aria-current");
   act(() => window.history.forward());
   expect(await screen.findByRole("heading", { name: "Case 04 · Hillcrest" })).toBeVisible();
   expect(screen.getByLabelText("Choose a synthetic case")).toHaveValue("case-04");
+});
+
+it("keeps the Review count global and preserves independent searches across both indexes", async () => {
+  window.history.replaceState(null, "", "/app");
+  vi.spyOn(window, "scrollTo").mockImplementation(() => {});
+  const pending = [
+    { id: "one", external_reference: "P/01", matter_title: "Larch proposal" },
+    { id: "two", external_reference: "P/02", matter_title: "Cedar proposal" },
+  ];
+  vi.spyOn(globalThis, "fetch").mockImplementation(async (url) => {
+    if (url === "/api/access")
+      return new Response(JSON.stringify({ can_write: false, sign_in_available: true }));
+    if (url === "/api/matters")
+      return new Response(JSON.stringify([{ id: "accepted", external_reference: "M/01", title: "Accepted example" }]));
+    return new Response(JSON.stringify(pending));
+  });
+  render(<PractitionerApp />);
+
+  const reviewLink = await screen.findByRole("link", { name: "Review, 2 proposals awaiting confirmation" });
+  const matterSearch = screen.getByRole("searchbox", { name: "Search Matters" });
+  expect(await screen.findByRole("link", { name: /Accepted example/ })).toBeVisible();
+  expect(screen.queryByRole("link", { name: /Larch proposal/ })).not.toBeInTheDocument();
+  await userEvent.type(matterSearch, "M/01");
+  await userEvent.click(reviewLink);
+  const proposalSearch = screen.getByRole("searchbox", { name: "Search proposals" });
+  expect(proposalSearch).toHaveValue("");
+  expect(await screen.findByRole("link", { name: /Larch proposal/ })).toBeVisible();
+  await userEvent.type(proposalSearch, "Larch");
+  expect(screen.queryByRole("link", { name: /Cedar proposal/ })).not.toBeInTheDocument();
+  expect(await screen.findByRole("link", { name: "Review, 2 proposals awaiting confirmation" })).toHaveAttribute("aria-current", "page");
+
+  pending.pop();
+  await userEvent.click(screen.getByRole("link", { name: "Matters" }));
+  expect(screen.getByRole("searchbox", { name: "Search Matters" })).toHaveValue("M/01");
+  await userEvent.click(await screen.findByRole("link", { name: "Review, 1 proposal awaiting confirmation" }));
+  expect(screen.getByRole("searchbox", { name: "Search proposals" })).toHaveValue("Larch");
+});
+
+it("keeps Review available when the proposal read fails and recovers to the empty queue", async () => {
+  window.history.replaceState(null, "", "/app/review");
+  let attempts = 0;
+  vi.spyOn(globalThis, "fetch").mockImplementation(async (url) => {
+    if (url === "/api/access")
+      return new Response(JSON.stringify({ can_write: false, sign_in_available: true }));
+    if (++attempts === 1) throw new TypeError("offline");
+    return new Response("[]");
+  });
+  render(<PractitionerApp />);
+  expect(screen.getByRole("link", { name: "Review" })).toHaveAttribute("aria-current", "page");
+  await userEvent.click(await screen.findByRole("button", { name: "Try again" }));
+  expect(await screen.findByText("No proposals awaiting confirmation.")).toBeVisible();
+  expect(screen.queryByRole("searchbox", { name: "Search proposals" })).not.toBeInTheDocument();
+  expect(screen.getByRole("link", { name: "Review" })).toHaveAttribute("href", "/app/review");
+  expect(attempts).toBe(2);
 });

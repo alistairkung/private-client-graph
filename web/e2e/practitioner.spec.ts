@@ -210,8 +210,10 @@ test("multi-PDF proposal retains each Source and can be explicitly discarded", a
     .getByRole("dialog")
     .getByRole("button", { name: "Discard entire proposal", exact: true })
     .click();
-  await expect(page).toHaveURL(/\/app$/);
-  await page.getByRole("searchbox").fill(reference);
+  await expect(page).toHaveURL("/app/review");
+  await expect(
+    page.locator(".record-list").or(page.getByText("No proposals awaiting confirmation.")),
+  ).toBeVisible();
   await expect(
     page.getByRole("link", { name: new RegExp(reference) }),
   ).toHaveCount(0);

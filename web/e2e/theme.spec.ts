@@ -117,6 +117,9 @@ test("the Workbench-inspired theme keeps navigation, forms and account surfaces 
   ]);
   await matters.focus();
   await matters.press("Tab");
+  const review = page.getByRole("link", { name: /^Review/ });
+  await expect(review).toBeFocused();
+  await review.press("Tab");
   const next = page.locator('.workflow-nav a[href="/app/matter-proposals/new"]');
   await expect(next).toBeFocused();
   await expect(next).toHaveCSS("outline-width", "2px");

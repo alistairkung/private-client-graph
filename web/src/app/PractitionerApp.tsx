@@ -6,9 +6,10 @@ import {
 } from "motion/react";
 import { useLocale } from "../shared/locale";
 import { Icon } from "../shared/Icon";
-import { signOut } from "../shared/api";
+import { getProposals, signOut } from "../shared/api";
 import { ErrorNotice } from "../shared/Feedback";
-import { Ledger } from "../features/matters/Ledger";
+import { MatterLedger, ProposalLedger } from "../features/matters/Ledger";
+import { useRecordCollection } from "../features/matters/useRecordCollection";
 import { Intake } from "../features/matter-proposals/Intake";
 import { ReviewPage } from "../features/review/ReviewPage";
 import { clearSessionState } from "../shared/session-state";
@@ -25,9 +26,12 @@ function Shell() {
   const { t, locale, setLocale } = useLocale();
   const [menu, setMenu] = useState(false);
   const path = useAppPath();
+  const queue = useRecordCollection(getProposals, path);
+  const pending = queue.result.status === "ready" ? queue.result.records.length : 0;
   const exampleId = path === "/app" ? new URLSearchParams(window.location.search).get("example") : null;
   const reduced = useReducedMotion();
-  const compact = useCompactLayout();
+  const compact = useCompactLayout("(max-width: 900px)");
+  const compactNav = useCompactLayout("(max-width: 380px)");
   const menuTrigger = useRef<HTMLButtonElement>(null);
   const utilities = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -55,11 +59,24 @@ function Shell() {
   }, [compact, menu]);
   const review = path.match(/^\/app\/(matters|matter-proposals)\/([^/]+)$/);
   const isNew = path === "/app/matter-proposals/new";
-  const currentMatters = exampleId || isNew ? undefined : path === "/app" ? "page" : review ? "location" : undefined;
+  const isQueue = path === "/app/review";
+  const isMatters = path === "/app" && !exampleId;
+  const currentMatters = isMatters ? "page" : review?.[1] === "matters" ? "location" : undefined;
+  const currentReview = isQueue ? "page" : !isNew && review?.[1] === "matter-proposals" ? "location" : undefined;
+  const title = isNew ? "New proposal" : isQueue ? "Review proposals" : exampleId ? "Curated examples" : "Matters";
+  const count = new Intl.NumberFormat(locale).format(pending);
+  const reviewLabel = pending > 0
+    ? t(pending === 1 ? "Review, 1 proposal awaiting confirmation" : "Review, {count} proposals awaiting confirmation", { count })
+    : t("Review");
   useEffect(() => {
     if (review && !isNew) return;
-    document.title = `${t(isNew ? "New proposal" : exampleId ? "Curated examples" : "Matters")} · Private Client Graph`;
-  }, [path, isNew, exampleId, t]);
+    document.title = `${t(title)} · Private Client Graph`;
+  }, [path, isNew, title, t]);
+  const examplesLink = (
+    <a className="curated-link" href="/app?example=case-01" aria-current={exampleId ? "page" : undefined}>
+      {t("Curated examples")}
+    </a>
+  );
   return (
     <div className="atlas">
       <a className="skip-link" href="#main">
@@ -85,14 +102,24 @@ function Shell() {
             <a href="/app" aria-current={currentMatters}>
               {t("Matters")}
             </a>
+            <a
+              className="review-nav-link"
+              href="/app/review"
+              aria-current={currentReview}
+              aria-label={reviewLabel}
+            >
+              {t("Review")}
+              {pending > 0 && (
+                <span className="review-count" aria-hidden="true">{pending > 99 ? "99+" : count}</span>
+              )}
+            </a>
             <a href="/app/matter-proposals/new" aria-current={isNew ? "page" : undefined}>
               {t("New proposal")}
             </a>
-            <a href="/app?example=case-01" aria-current={exampleId ? "page" : undefined}>
-              {t("Curated examples")}
-            </a>
+            {!compactNav && examplesLink}
           </nav>
           <div className="utilities" id="practitioner-utilities" ref={utilities} hidden={compact && !menu}>
+            {compactNav && examplesLink}
             <label className="language">
               <span className="sr-only">{t("Language")}</span>
               <select value={locale} onChange={(event) => setLocale(event.target.value as "en" | "zh-CN")}>
@@ -125,6 +152,8 @@ function Shell() {
           <AccessNotice />
           {isNew ? (
             <Intake />
+          ) : isQueue ? (
+            <ProposalLedger collection={queue} />
           ) : exampleId ? (
             <CuratedExamples id={exampleId} />
           ) : review ? (
@@ -133,7 +162,7 @@ function Shell() {
               id={decodeURIComponent(review[2])}
             />
           ) : path === "/app" || path === "" ? (
-            <Ledger />
+            <MatterLedger />
           ) : (
             <section className="empty">
               <h1>{t("Page not found")}</h1>
@@ -145,16 +174,16 @@ function Shell() {
     </div>
   );
 }
-function useCompactLayout() {
+function useCompactLayout(query: string) {
   const [compact, setCompact] = useState(
-    () => window.matchMedia("(max-width: 900px)").matches,
+    () => window.matchMedia(query).matches,
   );
   useEffect(() => {
-    const media = window.matchMedia("(max-width: 900px)");
+    const media = window.matchMedia(query);
     const update = () => setCompact(media.matches);
     media.addEventListener("change", update);
     return () => media.removeEventListener("change", update);
-  }, []);
+  }, [query]);
   return compact;
 }
 function Account() {

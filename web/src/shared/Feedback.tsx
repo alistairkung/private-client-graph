@@ -81,11 +81,13 @@ export function NotFound({ proposal = false }: { proposal?: boolean }) {
       <h1>{t(proposal ? "Matter Proposal not found" : "Matter not found")}</h1>
       <p>
         {t(
-          "This record may no longer be available. Return to Matters to check its current state.",
+          proposal
+            ? "This proposal may have been confirmed or discarded. Return to Review to see what is still awaiting confirmation."
+            : "This record may no longer be available. Return to Matters to check its current state.",
         )}
       </p>
-      <a className="button" href="/app">
-        {t("Back to Matters")}
+      <a className="button" href={proposal ? "/app/review" : "/app"}>
+        {t(proposal ? "Back to Review" : "Back to Matters")}
       </a>
     </section>
   );
