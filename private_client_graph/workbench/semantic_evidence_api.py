@@ -1,6 +1,6 @@
 """Read-only projections for the private Benchmark v4 Workbench."""
 from pathlib import Path
-from typing import Literal
+from typing import Literal, TypeVar
 
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
@@ -177,14 +177,25 @@ class SemanticComparison(BaseModel):
     transitions: list[SemanticTransition]
 
 
+_AssessmentProjection = TypeVar('_AssessmentProjection', bound=SemanticRunSummary)
+
+
+def _read_assessment(root: Path, run_id: str, projection: type[_AssessmentProjection]) -> _AssessmentProjection:
+    try:
+        return projection.model_validate(report_run(root, run_id))
+    except (ValueError, OSError, KeyError):
+        raise HTTPException(409, 'The retained PCG Evaluation could not be verified.') from None
+
+
 def mount_semantic_evidence(app: FastAPI, root: Path, prefix: str) -> None:
     """Mount only behind the Benchmark v4 owner middleware."""
     @app.get(f'{prefix}/semantic-evidence/runs/{{run_id}}', response_model=SemanticEvidenceReport)
     def assessment(run_id: str) -> SemanticEvidenceReport:
-        try:
-            return SemanticEvidenceReport.model_validate(report_run(root, run_id))
-        except (ValueError, OSError, KeyError):
-            raise HTTPException(409, 'The retained PCG Evaluation could not be verified.') from None
+        return _read_assessment(root, run_id, SemanticEvidenceReport)
+
+    @app.get(f'{prefix}/semantic-evidence/runs/{{run_id}}/summary', response_model=SemanticRunSummary)
+    def assessment_summary(run_id: str) -> SemanticRunSummary:
+        return _read_assessment(root, run_id, SemanticRunSummary)
 
     @app.get(f'{prefix}/semantic-evidence/comparison', response_model=SemanticComparison)
     def comparison(left: str, right: str) -> SemanticComparison:

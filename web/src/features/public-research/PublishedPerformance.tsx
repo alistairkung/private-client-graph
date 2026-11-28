@@ -9,7 +9,7 @@ export function PublishedPerformance({ runs }: { runs: PublicRun[] }) {
   const [selected, select] = useState<string | null>(null);
   return <div className="research-figure">
     <RunPerformanceChart
-      tactile
+      tactile showRunIdentifiers
       experiment={{ name: t("Published A / A′ / B experiment"), runIds: runs.map(run => run.run_id) }}
       runs={publishedPerformanceRuns(runs, t)} selected={selected} select={select} t={t}
     />

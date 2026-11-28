@@ -1,9 +1,12 @@
+import { useCallback } from "react";
 import {
   RunPerformanceChart,
   type PerformanceRun,
   type PerformanceMetricOptions,
 } from "../../src/shared/research/RunPerformanceChart";
-import type { BenchmarkStageUsage, RunDetail, WorkspaceDetail } from "../shared/contracts";
+import type { BenchmarkStageUsage, RunDetail, SemanticRunSummary, WorkspaceDetail } from "../shared/contracts";
+import { useRead } from "../shared/useRead";
+import { getEvaluationSummary } from "./api";
 import { evidenceMetricLabels } from "./benchmark-metrics";
 export { metric } from "../../src/shared/research/RunPerformanceChart";
 export const money = (value: number | null, currency: string | null) =>
@@ -11,25 +14,56 @@ export const money = (value: number | null, currency: string | null) =>
     ? "Unavailable"
     : `${currency ?? "Currency unavailable"} ${value.toFixed(4)}`;
 
-export function RunChart({
-  workspace,
-  runs,
-  selected,
-  select,
-}: {
+type RunChartProps = {
   workspace: WorkspaceDetail;
   runs: RunDetail[];
   selected: string | null;
   select: (id: string) => void;
+  selectInPlace?: (id: string) => void;
+};
+
+export function RunChart(props: RunChartProps) {
+  const { workspace, runs, selected, select } = props;
+  const experiment = { name: workspace.name, runIds: workspace.run_ids, runNumbers: workspace.run_numbers };
+  const metrics = metricOptions(runs);
+  return metrics
+    ? <BenchmarkPerformance {...props} metrics={metrics} />
+    : <RunPerformanceChart experiment={experiment} runs={runs.map(run => performanceRun(run))} selected={selected} select={select} />;
+}
+
+function BenchmarkPerformance({ workspace, runs, selected, select, selectInPlace, metrics }: RunChartProps & {
+  metrics: PerformanceMetricOptions;
 }) {
-  const values = runs.map(performanceRun);
+  // Run details poll while the workspace is open. Read retained assessments only
+  // when the set of completed Runs changes or the reader refreshes the scores.
+  const completed = runs.filter(run => run.benchmark_v4?.state === "complete").map(run => run.id).join(" ");
+  const load = useCallback(async (signal: AbortSignal) => {
+    const ids = completed ? completed.split(" ") : [];
+    const reports = await Promise.allSettled(ids.map(id => getEvaluationSummary(id, signal)));
+    return new Map(ids.map((id, index) => {
+      const report = reports[index];
+      return [id, report.status === "fulfilled" && report.value.run_id === id ? report.value : null];
+    }));
+  }, [completed]);
+  const { data, retry } = useRead(load);
+  const scores = runs.map(run => performanceRun(run, data?.get(run.id)));
+  const needsRefresh = data && [...data.values()].some(report => report?.state !== "complete");
   return (
     <RunPerformanceChart
       experiment={{ name: workspace.name, runIds: workspace.run_ids, runNumbers: workspace.run_numbers }}
-      runs={values}
+      runs={scores}
       selected={selected}
-      select={select}
-      metrics={metricOptions(runs)}
+      select={selectInPlace ?? select}
+      comparison={{
+        metrics,
+        evidence: {
+          key: "evidence_adjusted",
+          label: evidenceMetricLabels.evidence_adjusted,
+          description: "Relationship correctness with a penalty for incomplete proof",
+        },
+        loadingEvidence: !!completed && !data,
+        refreshEvidence: needsRefresh ? retry : undefined,
+      }}
     />
   );
 }
@@ -54,7 +88,7 @@ function verifiedBenchmarkCost(run: RunDetail) {
   return { total: cost.total, currency: cost.currency };
 }
 
-function performanceRun(run: RunDetail): PerformanceRun {
+function performanceRun(run: RunDetail, assessment?: SemanticRunSummary | null): PerformanceRun {
   const { benchmark, benchmark_v4: mixed, evaluation, quality } = run;
   if (mixed) {
     const frozenCost = mixed.observation_origin === "live"
@@ -72,7 +106,10 @@ function performanceRun(run: RunDetail): PerformanceRun {
       model: run.plan.preview.proposal.model,
       recorded: mixed.observation_origin === "offline_fixture",
       f1: score?.f1 ?? null,
-      measures: quality ? qualityMeasures(quality) : undefined,
+      measures: quality ? {
+        ...qualityMeasures(quality),
+        ...evidenceMeasure(assessment),
+      } : undefined,
       metricLabel: "Benchmark v4 Graph F1 · mixed references",
       coverageLabel: "valid graphs / planned inputs",
       scoreState: state === "unmeasured" ? "unavailable" : state,
@@ -153,7 +190,7 @@ function verifiedFullPipelineCost(usage: BenchmarkStageUsage | undefined) {
   return { total: usage.estimated_cost, currency: usage.currency };
 }
 
-const graphMetrics = ["qualified_graph", "combined_graph"] as const;
+const graphMetrics = ["combined_graph", "qualified_graph"] as const;
 type GraphScope = typeof graphMetrics[number];
 type RunQuality = NonNullable<RunDetail["quality"]>;
 
@@ -191,4 +228,25 @@ function qualityMeasures(quality: RunQuality): PerformanceRun["measures"] {
     coverage: coverage[key],
     coverageLabel: coverageLabels[key],
   }]));
+}
+
+function evidenceMeasure(assessment?: SemanticRunSummary | null): PerformanceRun["measures"] {
+  const graph = assessment?.graph_f1;
+  const adjusted = assessment?.evidence_adjusted_f1;
+  if (!assessment || !graph || !adjusted) return undefined;
+  const qualifier = {
+    exact_only: "Exact-only",
+    pending: "Exact-only · Evaluation pending",
+    complete: "Exact and equivalent",
+    complete_with_failures: "Combined evaluation finished with failures",
+  }[assessment.state];
+  return {
+    evidence_adjusted: {
+      value: adjusted.f1,
+      label: `${evidenceMetricLabels.evidence_adjusted} · ${graph.inputs} qualified Conditions`,
+      coverage: { scored: graph.valid_graphs, planned: graph.inputs },
+      coverageLabel: "valid graphs",
+      qualifier,
+    },
+  };
 }

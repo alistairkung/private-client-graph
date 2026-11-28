@@ -182,23 +182,215 @@
 .research-visual.run-chart[data-tactile] .chart-point > span { position: relative; }
 .research-visual.run-chart[data-tactile] .chart-point[aria-pressed="true"] { border-color: transparent; background: transparent; }
 
-.research-visual .chart-metric-filter {
-  max-width: 325px;
-  margin: 0 0 12px;
+.run-chart-comparison {
+  container: performance-chart / inline-size;
 }
-.research-visual .chart-metric-filter select {
-  min-width: 0;
+.run-chart-comparison .section-heading {
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+}
+.run-chart-comparison .comparison-controls {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--rule);
+}
+.run-chart-comparison .chart-tabs {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.run-chart-comparison .comparison-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 12px;
+}
+.run-chart-comparison .chart-filter {
+  margin: 0;
+  max-width: 100%;
+}
+.run-chart-comparison .chart-filter select { width: auto; }
+.run-chart-comparison .comparison-legend {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  margin: 14px 0 16px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.comparison-legend > span,
+.performance-run-table button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.performance-marker {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border: 1.5px solid var(--ink);
+  border-radius: 50%;
+  background: var(--ink);
+}
+.performance-marker.baseline {
+  border-color: var(--error);
+  border-radius: 0;
+  transform: rotate(45deg);
+  background: white;
+}
+.performance-marker.provisional {
+  background: white;
+  border-style: dashed;
+}
+.run-chart-comparison .comparison-plots {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+}
+.run-chart-comparison .performance-plot { margin: 0; }
+.run-chart-comparison .performance-plot + .performance-plot {
+  border-inline-start: 1px solid var(--rule);
+  padding-inline-start: 24px;
+}
+.run-chart-comparison h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+.run-chart-comparison .performance-plot p {
+  margin: 3px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+.run-chart-comparison figcaption { min-height: 58px; }
+.run-chart-comparison .plot-area {
+  height: 148px;
+  margin: 3px 23px 26px 42px;
+  font-variant-numeric: tabular-nums;
+}
+.run-chart-comparison .plot-axis {
+  margin: 0;
+  color: var(--muted);
+}
+.run-chart-comparison .plot-tick { white-space: nowrap; }
+.run-chart-comparison .plot-status {
+  display: grid;
+  min-height: 170px;
+  place-content: center;
+  text-align: center;
+}
+.run-chart-comparison .chart-point[aria-pressed="true"],
+.run-chart-comparison .chart-point:hover {
+  z-index: 1;
+  border-color: transparent;
+  background: transparent;
+}
+.run-chart-comparison .chart-point::before {
+  position: absolute;
+  content: "";
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--ink);
+  border-radius: 50%;
+  background: #eef1e9;
+  visibility: hidden;
+}
+.run-chart-comparison .chart-point[aria-pressed="true"]::before,
+.run-chart-comparison .chart-point:hover::before { visibility: visible; }
+.run-chart-comparison .chart-point span { position: relative; width: 10px; height: 10px; }
+.run-chart-comparison .chart-point-value {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  margin-top: -23px;
+  padding: 0 2px;
+  pointer-events: none;
+  background: white;
+  font-size: 12px;
+  font-weight: 600;
+}
+.run-chart-comparison .chart-point-value[data-below] { margin-top: 23px; }
+.run-chart-comparison .chart-cost-note {
+  margin: 14px 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+.performance-run-table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  margin-top: 16px;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+.performance-run-table :is(th, td) {
+  border-bottom: 1px solid var(--rule);
+  padding: 6px 10px;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+.performance-run-table th:first-child { width: 31%; text-align: left; }
+.performance-run-table th:last-child { width: 20%; }
+.performance-run-table thead th {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+}
+.performance-run-table td { font-weight: 600; }
+.performance-run-table tr:has(button[aria-pressed="true"]) { background: #eef1e9; }
+.performance-run-table button,
+.performance-run-table button:hover {
+  padding: 0;
+  text-align: left;
+  color: var(--ink);
+  background: transparent;
+  border: 0;
+  font-weight: 600;
+}
+.performance-run-table button:hover > span { text-decoration: underline; }
+.performance-run-table small { font-weight: 400; margin-top: 0; }
+.performance-unavailable { color: var(--muted); }
+.performance-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  clip-path: inset(50%);
+  overflow: hidden;
+}
+.performance-cost-exclusions {
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.performance-cost-exclusions summary {
+  width: fit-content;
   min-height: 44px;
+  align-content: center;
+  cursor: pointer;
 }
+.performance-cost-exclusions ul { margin: 0; }
+.run-chart-comparison .comparison-refresh { margin-top: 12px; }
 
-.research-visual .chart-plot-title {
-  margin: 0 0 6px;
-  font-size: 1rem;
+@container performance-chart (width < 600px) {
+  .run-chart-comparison .comparison-plots { grid-template-columns: 1fr; gap: 16px; }
+  .run-chart-comparison .performance-plot + .performance-plot {
+    border-inline-start: 0;
+    border-top: 1px solid var(--rule);
+    padding: 14px 0 0;
+  }
+  .run-chart-comparison figcaption { min-height: auto; margin-bottom: 14px; }
+  .run-chart-comparison .plot-area { height: 120px; }
+  .run-chart-comparison .plot-status { min-height: 100px; }
 }
-
-.research-visual .chart-metric-filter label {
-  margin-bottom: 6px;
-}
-.research-visual .chart-metric-filter small {
-  font-weight: 400;
+@container performance-chart (width < 380px) {
+  .run-chart-comparison .comparison-filters { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.28fr); }
+  .run-chart-comparison .plot-area { margin-inline-end: 17px; }
+  .performance-run-table :is(th, td) { padding-inline: 4px; }
+  .performance-run-table button .performance-marker { display: none; }
+  .performance-run-table :is(thead th, td, small) { font-size: 11px; }
 }

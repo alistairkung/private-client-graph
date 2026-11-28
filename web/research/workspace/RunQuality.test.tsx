@@ -1,9 +1,25 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
-import { expect, it, vi } from "vitest";
-import type { BenchmarkV4Summary, DeliveredGraphMetrics, EvidenceQuality, RunDetail, WorkspaceDetail } from "../shared/contracts";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { beforeEach, expect, it, vi } from "vitest";
+import type { BenchmarkV4Summary, DeliveredGraphMetrics, EvidenceQuality, RunDetail, SemanticRunSummary, WorkspaceDetail } from "../shared/contracts";
 import { GraphMetrics } from "./BenchmarkV4Summary";
 import { RunChart } from "./RunChart";
 import { PCGEvaluation } from "./PCGEvaluation";
+import { getEvaluationSummary } from "./api";
+
+vi.mock("./api", () => ({ getEvaluationSummary: vi.fn() }));
+const readSummary = vi.mocked(getEvaluationSummary);
+beforeEach(() => readSummary.mockReset());
+
+function scoreSummary(runId: string, f1: number, state: SemanticRunSummary["state"] = "complete"): SemanticRunSummary {
+  return {
+    run_id: runId, state,
+    graph_f1: graph(34, 0.75),
+    evidence_adjusted_f1: {
+      f1, incomplete_recovered_proofs: 10, penalty_units: 6.28,
+      weight_numerator: 71, weight_denominator: 113, proofs_completed_by_equivalence: 0,
+    },
+  } as SemanticRunSummary;
+}
 
 const graph = (inputs: number, f1: number): DeliveredGraphMetrics => ({
   inputs, valid_graphs: inputs, without_graph: 0, exact_graphs: 0,
@@ -42,6 +58,7 @@ function qualityRun(
     observations: [],
     benchmark_v4: {
       state: value.state, observation_origin: live ? "live" : "offline_fixture",
+      scope_sha256: "private-scope-hash", scoring_sha256: "private-scoring-hash",
       combined: value.combined_graph,
     },
     quality: value,
@@ -49,16 +66,17 @@ function qualityRun(
   } as unknown as RunDetail;
 }
 
-it("plots reference-rate estimates with the selected quality metric and original Run number", () => {
-  const retained = qualityRun("retained", quality, { live: true, unpriced: 1 });
+it("plots both scores against a reference-rate estimate with the original Run number", async () => {
+  const retained = qualityRun("private-run-id", quality, { live: true, unpriced: 1 });
   retained.reference_cost = {
     total: 0.04, currency: "USD", source_url: "https://example.test/pricing", retrieved_at: "2026-11-27",
   };
+  readSummary.mockResolvedValue(scoreSummary(retained.id, 0.62, "exact_only"));
   const workspace: WorkspaceDetail = {
     api_version: "2", id: "experiment", name: "Synthetic comparison",
     created_at: "2026-11-27", description: null, hypothesis: null,
     draft: { revision: 0, configuration: retained.plan.preview.proposal, copied_from_run: null },
-    run_ids: [retained.id], run_numbers: { retained: 3 },
+    run_ids: [retained.id], run_numbers: { [retained.id]: 3 },
     metadata_available: true, read_only_import: false,
   };
   render(
@@ -67,49 +85,84 @@ it("plots reference-rate estimates with the selected quality metric and original
       runs={[retained]} selected={retained.id} select={vi.fn()}
     />,
   );
-  fireEvent.change(screen.getByRole("combobox", { name: "Performance metric" }), {
+  fireEvent.change(screen.getByRole("combobox", { name: "Graph metric" }), {
     target: { value: "qualified_graph" },
   });
   fireEvent.click(screen.getByRole("tab", { name: "Vs Cost" }));
   expect(screen.getByRole("button", {
     name: /Run 3, Qualified Graph F1.*75\.00%/,
   })).toHaveAttribute("aria-pressed", "true");
-  expect(screen.getByText("Reference-rate estimate · USD 0.0400")).toBeVisible();
+  const adjusted = await screen.findByRole("button", { name: /Run 3, Evidence-Adjusted F1.*62\.00%.*Exact-only/ });
+  expect(adjusted).toHaveAttribute("aria-pressed", "true");
+  expect(adjusted.style.left).toBe(screen.getByRole("button", { name: /Run 3, Qualified Graph F1/ }).style.left);
+  const chart = screen.getByRole("region", { name: "Run history and performance" });
+  expect(within(chart).getByText(/Reference-rate estimates use retained token usage/)).toBeVisible();
+  expect(chart).not.toHaveTextContent(/private-(run-id|scope-hash|scoring-hash)/);
+  const row = within(screen.getByRole("table", { name: "Run scores and cost estimates" })).getByRole("row", { name: /Run 3/ });
+  expect(within(row).getAllByRole("cell").map(cell => cell.textContent)).toEqual(["75.00%", "62.00%Exact-only", "0.0400"]);
 });
 
-it("shares the selected quality metric across plots and leaves missing scores and unverifiable costs off the plot", () => {
+it("keeps both plots in sync while filtering, changing axes and switching graph metrics", async () => {
   const runs = [
     qualityRun("priced", quality, { live: true }),
     qualityRun("provisional", provisional, { live: true }),
     qualityRun("offline", quality),
     qualityRun("unpriced", { ...quality, joint_only_coverage: { targets: 30, mean: 0 } }, { live: true, unpriced: 1 }),
   ];
+  runs[2].plan.preview.proposal.input_mode = "saved";
+  readSummary.mockImplementation(async (id) => {
+    if (id === "offline") throw new Error("Cannot read the retained assessment");
+    return scoreSummary(id, id === "priced" ? 0 : 0.62, id === "priced" ? "complete" : "pending");
+  });
   const select = vi.fn();
-  const { container } = render(
+  const { rerender } = render(
     <RunChart
       workspace={{ name: "Synthetic comparison", run_ids: runs.map((run) => run.id) } as WorkspaceDetail}
       runs={runs} selected="provisional" select={select}
     />,
   );
-  const metric = screen.getByRole("combobox", { name: "Performance metric" });
+  const metric = screen.getByRole("combobox", { name: "Graph metric" });
   expect(within(metric).getAllByRole("option").map((option) => option.textContent)).toEqual([
-    "Qualified Graph F1", "Combined Graph F1",
+    "Combined Graph F1", "Qualified Graph F1",
   ]);
-  fireEvent.change(metric, { target: { value: "combined_graph" } });
+  expect(metric).toHaveValue("combined_graph");
   expect(screen.getByRole("button", { name: /Run 2, Combined Graph F1 · 35 evaluation inputs.*provisional/ })).toHaveAttribute("aria-pressed", "true");
+  const evidence = within(screen.getByRole("figure", { name: "Evidence-Adjusted F1" }));
+  const adjusted = await evidence.findByRole("button", { name: /Run 1, Evidence-Adjusted F1.*0\.00%/ });
+  expect(evidence.getByRole("button", { name: /Run 4, Evidence-Adjusted F1.*62\.00%.*Evaluation pending/ })).toBeVisible();
+  expect(evidence.queryByRole("button", { name: /^Run [23],/ })).not.toBeInTheDocument();
+  expect(readSummary.mock.calls.map(([id]) => id)).toEqual(["priced", "offline", "unpriced"]);
+
   fireEvent.change(metric, { target: { value: "qualified_graph" } });
-  expect(screen.getByRole("heading", { name: "Qualified Graph F1 by Run" })).toBeVisible();
-  expect(screen.getByText("Qualified Graph F1 (%)", { exact: true })).toBeVisible();
-  expect(container.querySelectorAll(".chart-point")).toHaveLength(3);
-  expect(screen.getByRole("button", { name: /Run 2 · No resolver/ })).toHaveAttribute("aria-pressed", "true");
+  const graphPlot = within(screen.getByRole("figure", { name: "Qualified Graph F1" }));
+  expect(graphPlot.getAllByRole("button")).toHaveLength(3);
   fireEvent.keyDown(screen.getByRole("tab", { name: "By Run" }), { key: "ArrowRight" });
   expect(screen.getByRole("tab", { name: "Vs Cost" })).toHaveFocus();
   expect(metric).toHaveValue("qualified_graph");
-  expect(screen.getByRole("heading", { name: "Qualified Graph F1 vs Cost" })).toBeVisible();
-  expect(screen.getByText(/Estimated full pipeline cost \(USD\)/)).toBeVisible();
-  expect(container.querySelectorAll(".chart-point")).toHaveLength(1);
-  expect(screen.getByRole("button", { name: /Run 1, Qualified Graph F1.*75.00%/ })).toBeVisible();
   expect(select).not.toHaveBeenCalled();
+  expect(screen.getAllByText("Estimated full pipeline cost (USD)")).toHaveLength(2);
+  expect(graphPlot.getAllByRole("button")).toHaveLength(1);
+  expect(evidence.getAllByRole("button")).toHaveLength(1);
+  expect(screen.getByText("Cost exclusions")).toBeVisible();
+  expect(screen.getByText(/Run 4 · F1 vs Cost needs complete provider token usage/)).not.toBeVisible();
+  fireEvent.click(adjusted);
+  expect(select).toHaveBeenCalledWith("priced");
+  rerender(<RunChart workspace={{ name: "Synthetic comparison", run_ids: runs.map((run) => run.id) } as WorkspaceDetail}
+    runs={[...runs]} selected="priced" select={select} />);
+  expect(graphPlot.getByRole("button", { pressed: true })).toBeVisible();
+  expect(evidence.getByRole("button", { pressed: true })).toBeVisible();
+  const table = within(screen.getByRole("table", { name: "Run scores and cost estimates" }));
+  expect(table.getByRole("button", { name: /Run 1 No resolver/, pressed: true })).toBeVisible();
+  expect(readSummary).toHaveBeenCalledTimes(3);
+
+  fireEvent.change(screen.getByRole("combobox", { name: "Input mode" }), { target: { value: "saved" } });
+  expect(table.getAllByRole("row")).toHaveLength(2);
+  expect(table.getByRole("row", { name: /Run 3/ })).toHaveTextContent("Unavailable");
+  expect(evidence.getByRole("status")).toHaveTextContent("No Evidence-Adjusted F1 scores");
+  readSummary.mockResolvedValue(scoreSummary("offline", 0.71));
+  fireEvent.click(screen.getByRole("button", { name: "Refresh evidence scores" }));
+  await waitFor(() => expect(table.getByRole("row", { name: /Run 3/ })).toHaveTextContent("71.00%"));
+  expect(evidence.queryByRole("button")).not.toBeInTheDocument();
 });
 
 it("shows one provisional evaluation with five unavailable values before qualified observations", () => {

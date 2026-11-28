@@ -96,7 +96,7 @@ function evaluationMetrics(evaluation?: SemanticRunSummary, run?: RunDetail) {
       description: "Relationship correctness",
     },
     {
-      label: "Evidence-Adjusted F1", rate: adjusted?.f1 ?? null,
+      label: evidenceMetricLabels.evidence_adjusted, rate: adjusted?.f1 ?? null,
       basis: adjusted && evaluation
         ? `${countLabel(adjusted.incomplete_recovered_proofs, "incomplete recovered proof")} · ${adjustmentBasis(evaluation.state)}`
         : "",
