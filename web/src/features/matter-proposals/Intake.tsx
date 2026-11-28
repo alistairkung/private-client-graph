@@ -107,7 +107,7 @@ export function Intake() {
     }
   }
   return (
-    <div className={"page intake-page" + (canChooseMethod ? " discovery-page" : "")}>
+    <div className={"page intake-page" + (canChooseMethod && discover ? " discovery-page" : "")}>
       <a className="back-link" href="/app">
         {t("Back to Matters")}
       </a>
@@ -307,48 +307,50 @@ export function Intake() {
             </label>
           </fieldset>
           {error !== undefined && <ErrorNotice error={error} />}
-          <div className="form-actions">
-            <button
-              className="button primary"
-              type="submit"
-              disabled={
-                busy ||
-                !canWrite ||
-                !confirmed ||
-                !sources.length ||
-                !!admission ||
-                detail?.retryable === false
-              }
-            >
+          <div className="intake-footer">
+            <p className="field-help" role={busy ? "status" : undefined}>
               {t(
                 busy
-                  ? "Uploading and analysing…"
+                  ? "Keep this page open while the proposal is prepared. Do not submit again."
                   : detail?.outcome_unknown
-                    ? "Check reference and retry"
-                    : detail?.retryable
-                      ? "Retry analysis"
-                      : "Upload and analyse",
-              )}
-            </button>
-            <a href="/app">{t("Cancel")}</a>
-          </div>
-          <p className="field-help" role={busy ? "status" : undefined}>
-            {t(
-              busy
-                ? "Keep this page open while the proposal is prepared. Do not submit again."
-                : detail?.outcome_unknown
-                  ? "Your entries and selected PDFs are preserved. A retry checks for an existing reference before another analysis."
-                  : "A proposal is saved only after analysis succeeds. Keep this page open during analysis.",
-            )}
-          </p>
-          {!busy && (
-            <p className="draft-note">
-              {t(
-                "Your entries and PDFs stay in this tab when you visit another page. Closing or reloading the tab clears them.",
+                    ? "Your entries and selected PDFs are preserved. A retry checks for an existing reference before another analysis."
+                    : "A proposal is saved only after analysis succeeds. Keep this page open during analysis.",
               )}
             </p>
-          )}
+            <div className="form-actions">
+              <a href="/app">{t("Cancel")}</a>
+              <button
+                className="button primary"
+                type="submit"
+                disabled={
+                  busy ||
+                  !canWrite ||
+                  !confirmed ||
+                  !sources.length ||
+                  !!admission ||
+                  detail?.retryable === false
+                }
+              >
+                {t(
+                  busy
+                    ? "Uploading and analysing…"
+                    : detail?.outcome_unknown
+                      ? "Check reference and retry"
+                      : detail?.retryable
+                        ? "Retry analysis"
+                        : "Upload and analyse",
+                )}
+              </button>
+            </div>
+          </div>
         </form>
+        {!busy && (
+          <p className="draft-note">
+            {t(
+              "Your entries and PDFs stay in this tab when you visit another page. Closing or reloading the tab clears them.",
+            )}
+          </p>
+        )}
       </div>}
       <AnimatePresence>
         {prompt && <FictionalPrompt onClose={() => setPrompt(false)} />}

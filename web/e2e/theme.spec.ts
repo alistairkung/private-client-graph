@@ -91,7 +91,7 @@ async function checkContrast(page: Page, targets: ContrastTarget[]) {
   }).toPass({ timeout: 10_000 });
 }
 
-test("Forest & Chalk keeps navigation, forms and account surfaces readable", async ({
+test("the Workbench-inspired theme keeps navigation, forms and account surfaces readable", async ({
   page,
 }, info) => {
   await page.goto("/auth/login?next=/app");
@@ -109,27 +109,30 @@ test("Forest & Chalk keeps navigation, forms and account surfaces readable", asy
     },
     { selector: "a.button.primary", label: "primary action" },
   ]);
-  if (info.project.name === "phone")
-    await page.getByRole("button", { name: "Menu", exact: true }).click();
+  const matters = page.locator(".workflow-nav a[aria-current=page]");
+  await expect(matters).toBeVisible();
   await checkContrast(page, [
-    { selector: ".brand", label: "rail brand" },
-    { selector: ".rail nav a[aria-current=page]", label: "active navigation" },
-    { selector: ".rail .language select", label: "language control" },
-    { selector: ".rail .icon-button", label: "account icon", minimum: 3 },
+    { selector: ".practitioner-masthead .brand", label: "masthead identity" },
+    { selector: ".workflow-nav a[aria-current=page]", label: "active navigation" },
   ]);
-  const matters = page.locator(".rail nav a[aria-current=page]");
   await matters.focus();
   await matters.press("Tab");
-  const next = page.locator('.rail nav a[href="/app/matter-proposals/new"]');
+  const next = page.locator('.workflow-nav a[href="/app/matter-proposals/new"]');
   await expect(next).toBeFocused();
   await expect(next).toHaveCSS("outline-width", "2px");
   await checkContrast(page, [
     {
-      selector: '.rail nav a[href="/app/matter-proposals/new"]',
-      label: "rail focus ring",
+      selector: '.workflow-nav a[href="/app/matter-proposals/new"]',
+      label: "navigation focus ring",
       part: "outline",
       minimum: 3,
     },
+  ]);
+  if (info.project.name === "phone")
+    await page.getByRole("button", { name: "Menu", exact: true }).click();
+  await checkContrast(page, [
+    { selector: ".utilities .language select", label: "language control" },
+    { selector: ".utilities .icon-button", label: "account icon", minimum: 3 },
   ]);
   await page.getByRole("button", { name: "Account menu", exact: true }).click();
   await expect(page.locator(".account-panel")).toHaveCSS("opacity", "1");
@@ -140,6 +143,9 @@ test("Forest & Chalk keeps navigation, forms and account surfaces readable", asy
   ]);
   await page.keyboard.press("Escape");
   await next.click();
+  await expect(next).toHaveAttribute("aria-current", "page");
+  if (info.project.name === "phone")
+    await expect(page.getByRole("button", { name: "Menu", exact: true })).toHaveAttribute("aria-expanded", "false");
   await expect(page.locator("main")).toHaveCSS("opacity", "1");
   await page
     .locator('input[name="external_reference"]')

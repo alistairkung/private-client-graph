@@ -1,0 +1,17 @@
+/* Visual foundations shared by the Workbench home and practitioner tools. */
+:root {
+  --workspace-sans: "Public Sans", Arial, sans-serif;
+  --workspace-display: "Newsreader", Georgia, serif;
+  --workspace-ink: #173e38;
+  --workspace-muted: #52665f;
+  --workspace-frame: #ecefec;
+  --workspace-chrome: #f4f6f2;
+  --workspace-paper: #f9fbf8;
+  --workspace-band: #eff4ed;
+  --workspace-segments: #e3e8e3;
+  --workspace-rule: #d7dfd8;
+  --workspace-action: #15584d;
+  --workspace-action-hover: #0c473d;
+  --workspace-radius: 16px;
+  --workspace-control-radius: 10px;
+}

@@ -81,11 +81,11 @@ function ExampleToolbar({ cases, selectedId, notice, onChoose }: {
   const index = cases?.findIndex(item => item.id === selectedId) ?? -1;
   const previous = index > 0 ? cases?.[index - 1] : undefined;
   const next = index >= 0 ? cases?.[index + 1] : undefined;
-  return <>
+  return (
     <div className="curated-toolbar">
       <div className="curated-intro">
         <h2 id="curated-heading">{t("Curated examples")}</h2>
-        <p>{t("Curated ideal fixtures, not live extraction or accepted Matter state.")}</p>
+        <p>{t(notice ?? "Curated ideal fixtures, not live extraction or accepted Matter state.")}</p>
       </div>
       <div className="curated-picker">
         <label htmlFor="curated-case">{t("Choose a synthetic case")}</label>
@@ -128,14 +128,5 @@ function ExampleToolbar({ cases, selectedId, notice, onChoose }: {
         </div>
       </div>
     </div>
-    {notice && <motion.p
-      className="curated-notice"
-      key={selectedId}
-      initial={{ opacity: reduced ? 1 : 0.65 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: reduced ? 0 : 0.16 }}
-    >
-      {t(notice)}
-    </motion.p>}
-  </>;
+  );
 }

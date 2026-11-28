@@ -6,6 +6,7 @@ import { ErrorNotice, Loading } from "../../shared/Feedback";
 import { Icon } from "../../shared/Icon";
 import { useLocale } from "../../shared/locale";
 import { useSessionState } from "../../shared/session-state";
+import "./ledger.css";
 
 export function Ledger() {
   const { t } = useLocale();
@@ -52,102 +53,95 @@ export function Ledger() {
   return (
     <div className="ledger page">
       <div className="page-heading">
-        <div>
-          <h1>{t("Matters")}</h1>
-          <p>{t("Your relationships, grounded in their sources.")}</p>
-        </div>
+        <h1>{t("Matters")}</h1>
         <a className="button primary" href="/app/matter-proposals/new">
           <Icon name="plus" />
           {t("New proposal")}
         </a>
       </div>
-      <label className="search-field">
-        <Icon name="search" />
-        <span className="sr-only">{t("Search Matters")}</span>
-        <input
-          type="search"
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder={t("Search by reference or title")}
-        />
-      </label>
-      {pending?.length === 0 && !errors.proposals ? (
-        <p className="pending-empty">
-          {t(
-            query
-              ? "No matching proposals."
-              : "No proposals awaiting confirmation.",
-          )}
-        </p>
-      ) : (
-        <section className="ledger-section">
-          <div className="section-heading">
-            <h2>{t("Awaiting confirmation")}</h2>
-            {proposals && <span className="count">{pending?.length}</span>}
-          </div>
-          <p className="section-description">
+      <div className="matter-index">
+        <label className="search-field">
+          <Icon name="search" />
+          <span className="sr-only">{t("Search Matters")}</span>
+          <input
+            type="search"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder={t("Search by reference or title")}
+          />
+        </label>
+        {pending?.length === 0 && !errors.proposals ? (
+          <p className="pending-empty">
             {t(
-              "Review the complete proposal before accepting it as current Matter state.",
+              query
+                ? "No matching proposals."
+                : "No proposals awaiting confirmation.",
             )}
           </p>
-          {errors.proposals ? (
+        ) : (
+          <section className="ledger-section">
+            <header className="ledger-section-header">
+              <div className="section-heading">
+                <h2>{t("Awaiting confirmation")}</h2>
+                {proposals && <span className="count">{pending?.length}</span>}
+              </div>
+              <p className="section-description">
+                {t("Review the complete proposal before accepting it as current Matter state.")}
+              </p>
+            </header>
+            {errors.proposals ? (
+              <ErrorNotice
+                error={errors.proposals}
+                retry={() => setAttempt(attempt + 1)}
+              />
+            ) : !pending ? (
+              <Loading />
+            ) : (
+              <RecordList
+                records={pending.map((item) => ({
+                  ...item,
+                  title: item.matter_title,
+                }))}
+                proposal
+              />
+            )}
+          </section>
+        )}
+        <section className="ledger-section">
+          <header className="ledger-section-header">
+            <div className="section-heading">
+              <h2>{t("Accepted Matters")}</h2>
+              {matters && <span className="count">{current?.length}</span>}
+            </div>
+            <p className="section-description">
+              {t("Revisit accepted relationships and the Evidence behind them.")}
+            </p>
+          </header>
+          {errors.matters ? (
             <ErrorNotice
-              error={errors.proposals}
+              error={errors.matters}
               retry={() => setAttempt(attempt + 1)}
             />
-          ) : !pending ? (
+          ) : !current ? (
             <Loading />
-          ) : pending.length ? (
-            <RecordList
-              records={pending.map((item) => ({
-                ...item,
-                title: item.matter_title,
-              }))}
-              proposal
-            />
+          ) : current.length ? (
+            <RecordList records={current} />
           ) : (
             <div className="empty-row">
               {t(
                 query
-                  ? "No matching proposals."
-                  : "No proposals awaiting confirmation.",
+                  ? "No matching Matters."
+                  : "No accepted Matters yet. Start with a synthetic proposal.",
               )}
             </div>
           )}
         </section>
-      )}
-      <section className="ledger-section">
-        <div className="section-heading">
-          <h2>{t("Accepted Matters")}</h2>
-          {matters && <span className="count">{current?.length}</span>}
-        </div>
-        <p className="section-description">
-          {t("Revisit accepted relationships and the Evidence behind them.")}
+        <p className="ledger-footnote">
+          {t(
+            "Proposals become current Matter state only after your explicit confirmation.",
+          )}
         </p>
-        {errors.matters ? (
-          <ErrorNotice
-            error={errors.matters}
-            retry={() => setAttempt(attempt + 1)}
-          />
-        ) : !current ? (
-          <Loading />
-        ) : current.length ? (
-          <RecordList records={current} />
-        ) : (
-          <div className="empty-row">
-            {t(
-              query
-                ? "No matching Matters."
-                : "No accepted Matters yet. Start with a synthetic proposal.",
-            )}
-          </div>
-        )}
-      </section>
-      <p className="ledger-footnote">
-        {t(
-          "Proposals become current Matter state only after your explicit confirmation.",
-        )}
-      </p>
+      </div>
     </div>
   );
 }
