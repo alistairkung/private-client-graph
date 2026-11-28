@@ -19,7 +19,7 @@ import {
 } from "./api";
 import { SearchSetup } from "./SearchSetup";
 import { PublicationReview } from "./PublicationReview";
-import { DiscoveryResults, SearchSummary } from "./DiscoveryResults";
+import { SearchSummary } from "./DiscoveryResults";
 import { EmailReader, type EmailReading } from "./EmailReader";
 import { useOriginalSearch } from "./useOriginalSearch";
 import { SourceSelection } from "./SourceSelection";
@@ -51,15 +51,28 @@ export function WorkspaceDiscovery({
   const [bulkSeen, setBulkSeen] = useState<Set<string>>();
   const [progress, setProgress] = useState<PreviewProgress>();
   const [preview, setPreview] = useState<Preview>();
+  const [publicationUncertain, setPublicationUncertain] = useState(false);
+  const [needsFreshPreview, setNeedsFreshPreview] = useState(false);
+  const uncertainNotice = useRef<HTMLParagraphElement>(null);
+  useEffect(() => {
+    if (publicationUncertain) uncertainNotice.current?.focus();
+  }, [publicationUncertain]);
   const [reading, setReading] = useState<EmailReading>();
   const [operationLabel, setOperationLabel] = useState("");
   const busy = Boolean(operationLabel);
   const [reference, setReference] = useState("");
   const [title, setTitle] = useState("");
+  const discovery = useRef<HTMLDivElement>(null);
   const resultsHeading = useRef<HTMLHeadingElement>(null);
+  const freshPreviewNotice = useRef<HTMLParagraphElement>(null);
   useEffect(() => {
-    if (session) resultsHeading.current?.focus();
+    if (!session) return;
+    resultsHeading.current?.focus({ preventScroll: true });
+    discovery.current?.scrollIntoView?.({ block: "start" });
   }, [session]);
+  useEffect(() => {
+    if (needsFreshPreview) freshPreviewNotice.current?.focus();
+  }, [needsFreshPreview]);
   const selectionHeading = useRef<HTMLHeadingElement>(null);
   const restoreSelectionFocus = useRef(false);
   useEffect(() => {
@@ -98,7 +111,7 @@ export function WorkspaceDiscovery({
   }
   const original = useOriginalSearch(session, active ? view : undefined, receiveOriginal, recoverSession);
 
-  async function run(label: string, operation: () => Promise<void>) {
+  async function run(label: string, operation: () => Promise<void>, onFailure?: (failure: unknown) => void) {
     if (busy) return;
     setOperationLabel(label);
     onBusy(true);
@@ -108,7 +121,7 @@ export function WorkspaceDiscovery({
     } catch (failure) {
       if (!mounted.current) return;
       if (!recoverSession(failure)) {
-        if (preview) setPreview(undefined);
+        onFailure?.(failure);
         setError(failure);
       }
     } finally {
@@ -169,18 +182,40 @@ export function WorkspaceDiscovery({
         session, continuation: result.continuation,
       });
     }
-    if (mounted.current && "token" in result) setPreview(result);
+    if (mounted.current && "token" in result) {
+      setPreview(result);
+      setNeedsFreshPreview(false);
+    }
   }
   async function publish(external_reference: string, matter_title: string) {
     if (!preview) return;
-    const proposal = await action<{ id: string }>("import", {
-      session,
-      preview: preview.token,
-      publish_synthetic: true,
-      metadata: { external_reference, matter_title },
-    });
+    let proposal: { id: string };
+    try {
+      proposal = await action<{ id: string }>("import", {
+        session,
+        preview: preview.token,
+        publish_synthetic: true,
+        metadata: { external_reference, matter_title },
+      });
+      if (typeof proposal?.id !== "string" || !proposal.id) {
+        throw new Error("Invalid proposal response");
+      }
+    } catch (failure) {
+      if (failure instanceof RequestFailure) throw failure;
+      throw new RequestFailure(0, { code: "outcome_unknown", message: "", retryable: false, outcome_unknown: true });
+    }
     if (mounted.current)
       navigate("/app/matter-proposals/" + encodeURIComponent(proposal.id));
+  }
+
+  function publishFailed(failure: unknown) {
+    if (!(failure instanceof RequestFailure) || failure.detail?.outcome_unknown ||
+        failure.detail?.code === "provider_outcome_unknown") {
+      setPublicationUncertain(true);
+      return;
+    }
+    setPreview(undefined);
+    setNeedsFreshPreview(true);
   }
   const folder = scope?.folder_name ?? "folder-1";
   const label = scope?.label_name ?? "alder-label";
@@ -203,16 +238,14 @@ export function WorkspaceDiscovery({
     setError(undefined);
   }
   const latestFollowUp = followups.at(-1);
+  const added = latestFollowUp ? options.filter(item => item.followUp === latestFollowUp.query).length : 0;
   const searchStatus = latestFollowUp
-    ? t("{query} returned {mail} email hits and {pdf} PDF hits.", {
-        query: latestFollowUp.query,
-        mail: latestFollowUp.messages.length,
-        pdf: latestFollowUp.files.length,
-      })
+    ? t(added === 1 ? "{query}: 1 new Source found." : "{query}: {count} new Sources found.", { query: latestFollowUp.query, count: added })
     : "";
+  const duplicateReference = error instanceof RequestFailure && error.detail?.code === "duplicate_reference";
   const stage = preview ? 2 : view ? 1 : 0;
   return (
-    <div className="discovery">
+    <div className="discovery" ref={discovery}>
       <ol className="discovery-stages" aria-label={t("Discovery progress")}>
         {["Search scope", "Find Sources", "Review and publish"].map(
           (step, i) => (
@@ -232,16 +265,26 @@ export function WorkspaceDiscovery({
         {busy ? operationStatus : !preview && searchStatus}
       </p>
       {error != null && <ErrorNotice error={error} />}
+      {publicationUncertain && (
+        <p className="discovery-recovery" ref={uncertainNotice} tabIndex={-1}>
+          {t("Check the Review queue and Matters for this external reference before starting another proposal.")}
+          {" "}<a href="/app/review">{t("Open Review queue")}</a>
+        </p>
+      )}
+      {needsFreshPreview && (
+        <p className="discovery-recovery" ref={freshPreviewNotice} tabIndex={-1}>
+          {t("Your selection, order and Matter details are kept. Prepare a fresh preview and approve it before publishing.")}
+          {duplicateReference && <> {t("Enter a different External Matter reference in Publication details.")}</>}
+        </p>
+      )}
       {affected && failedNumber && (
         <p>{t("Check Source {number} · {title}", { number: failedNumber, title: affected.title })}</p>
       )}
-      {scope &&
-        error instanceof RequestFailure &&
-        error.detail?.code === "source_unavailable" && (
-          <button onClick={() => selectionHeading.current?.focus()}>
-            {t("Review selection")}
-          </button>
-        )}
+      {affected && !preview && (
+        <button onClick={() => selectionHeading.current?.focus()}>
+          {t("Review selection")}
+        </button>
+      )}
       <fieldset
         className="discovery-controls"
         disabled={busy}
@@ -267,41 +310,32 @@ export function WorkspaceDiscovery({
               restoreSelectionFocus.current = true;
               setPreview(undefined);
             }}
+            uncertain={publicationUncertain}
             publish={() =>
-              run("Creating proposal…", () => publish(reference, title))
+              run("Creating proposal…", () => publish(reference, title), publishFailed)
             }
           />
         ) : (
           <>
             <SearchSummary view={view} folder={folder} label={label} headingRef={resultsHeading} {...original} />
-            <button
-              className="discovery-jump"
-              onClick={() => selectionHeading.current?.focus()}
-            >
-              {t("Jump to Source selection")}
-            </button>
-            <div className="discovery-columns">
-              <DiscoveryResults
-                view={view}
-                followups={followups}
-                approve={(revision, query) =>
-                  run("Searching Workspace…", () => follow(revision, query))
-                }
-              />
-              <SourceSelection
-                headingRef={selectionHeading}
-                options={options}
-                selected={selected}
-                change={changeSelection}
-                bulkSeen={bulkSeen}
-                onBulk={(items) => {
-                  setBulkSeen(new Set(options.map(candidateKey)));
-                  changeSelection([...selected, ...items]);
-                }}
-                openEmail={openEmail}
-                read={() => run("Preparing exact preview…", read)}
-              />
-            </div>
+            <SourceSelection
+              headingRef={selectionHeading}
+              options={options}
+              selected={selected}
+              change={changeSelection}
+              bulkSeen={bulkSeen}
+              onBulk={(items) => {
+                setBulkSeen(new Set(options.map(candidateKey)));
+                changeSelection([...selected, ...items]);
+              }}
+              openEmail={openEmail}
+              read={() => run("Preparing exact preview…", read)}
+              view={view}
+              followups={followups}
+              approve={(revision, query) =>
+                run("Searching Workspace…", () => follow(revision, query))
+              }
+            />
           </>
         )}
       </fieldset>
