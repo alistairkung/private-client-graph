@@ -7,10 +7,11 @@ export type PlotTick = { at: number; label: string };
 export type PlotPoint = { run: PerformanceRun; number: number; x: number };
 
 export function RunPerformancePlot({
-  title, description, message, points, ticks, axis, selected, select, inspect, tooltipId, tactile, t,
+  title, description, note, message, points, ticks, axis, selected, select, inspect, tooltipId, tactile, t,
 }: {
   title?: string;
   description?: string;
+  note?: string;
   message?: string;
   points: PlotPoint[];
   ticks: PlotTick[];
@@ -85,6 +86,7 @@ export function RunPerformancePlot({
       <figcaption>
         <h3 id={headingId}>{title}</h3>
         <p>{description}</p>
+        {note && <p className="plot-evaluation-basis">{note}</p>}
       </figcaption>
       {message ? <p role="status" className="plot-status">{message}</p> : plot}
     </figure>
@@ -94,8 +96,9 @@ export function RunPerformancePlot({
 function pointLabel(run: PerformanceRun, number: number, score: string, t: ResearchText) {
   if (run.metricLabel) {
     const name = run.displayName ?? t("Run {run}", { run: number });
+    const basis = run.scoreBasis ?? (run.coverageLabel ? `${run.coverage.scored}/${run.coverage.planned} ${run.coverageLabel}` : "");
     const qualifier = run.scoreQualifier ? `, ${run.scoreQualifier}` : "";
-    return `${name}, ${run.metricLabel} ${score}, ${t(run.scoreState)}, ${run.coverage.scored}/${run.coverage.planned} ${run.coverageLabel ?? ""}${qualifier}`;
+    return `${name}, ${run.metricLabel} ${score}, ${t(run.scoreState)}${basis ? `, ${basis}` : ""}${qualifier}`;
   }
   const values = { f1: score, state: t(run.scoreState), scored: run.coverage.scored, planned: run.coverage.planned };
   return run.displayName

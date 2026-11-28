@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, expect, it, vi } from "vitest";
-import type { BenchmarkV4Summary, DeliveredGraphMetrics, EvidenceQuality, RunDetail, SemanticRunSummary, WorkspaceDetail } from "../shared/contracts";
+import type { BenchmarkV4Summary, DeliveredGraphMetrics, EvidenceQuality, RunDetail, SemanticRunSummary, SemanticSummary, WorkspaceDetail } from "../shared/contracts";
 import { GraphMetrics } from "./BenchmarkV4Summary";
 import { RunChart } from "./RunChart";
 import { PCGEvaluation } from "./PCGEvaluation";
@@ -10,15 +10,29 @@ vi.mock("./api", () => ({ getEvaluationSummary: vi.fn() }));
 const readSummary = vi.mocked(getEvaluationSummary);
 beforeEach(() => readSummary.mockReset());
 
-function scoreSummary(runId: string, f1: number, state: SemanticRunSummary["state"] = "complete"): SemanticRunSummary {
+function scoreSummary(
+  runId: string,
+  f1: number,
+  state: SemanticRunSummary["state"] = "complete",
+  targets: Partial<SemanticSummary> = {},
+): SemanticRunSummary {
   return {
-    run_id: runId, state,
+    run_id: runId, state, plan_sha256: null, operations: null,
     graph_f1: graph(34, 0.75),
     evidence_adjusted_f1: {
       f1, incomplete_recovered_proofs: 10, penalty_units: 6.28,
       weight_numerator: 71, weight_denominator: 113, proofs_completed_by_equivalence: 0,
     },
-  } as SemanticRunSummary;
+    target_summary: {
+      formal_targets: 71, semantic_outcomes: {}, pair_verdicts: {}, candidate_pairs: 0,
+      evidence_support: { count: 20, targets: 71, rate: 20 / 71 },
+      proof_completion: { count: 15, targets: 71, rate: 15 / 71 },
+      multi_source_evidence_coverage: { matched_target_equivalents: 0.8, targets: 30, mean: 0.8 / 30 },
+      exact_matched_members: 0, unmatched_required_members: 0, targets_with_added_matches: 0,
+      additional_matched_members: 0, newly_completed_proofs: 0,
+      ...targets,
+    },
+  };
 }
 
 const graph = (inputs: number, f1: number): DeliveredGraphMetrics => ({
@@ -163,6 +177,58 @@ it("keeps both plots in sync while filtering, changing axes and switching graph 
   fireEvent.click(screen.getByRole("button", { name: "Refresh evidence scores" }));
   await waitFor(() => expect(table.getByRole("row", { name: /Run 3/ })).toHaveTextContent("71.00%"));
   expect(evidence.queryByRole("button")).not.toBeInTheDocument();
+});
+
+it("plots retained evidence rates and their bases across tabs without resetting the comparison", async () => {
+  const fresh = qualityRun("fresh", quality, { live: true });
+  const saved = qualityRun("saved", quality, { live: true });
+  saved.plan.preview.proposal.input_mode = "saved";
+  readSummary.mockImplementation(async id => id === fresh.id
+    ? scoreSummary(id, 0.62, "exact_only", {
+      evidence_support: { count: 0, targets: 71, rate: 0 },
+      proof_completion: { count: 0, targets: 71, rate: null },
+    })
+    : scoreSummary(id, 0.66, "complete"));
+
+  render(<RunChart workspace={{ name: "Synthetic comparison", run_ids: [fresh.id, saved.id] } as WorkspaceDetail}
+    runs={[fresh, saved]} selected={fresh.id} select={vi.fn()} />);
+  const tabs = within(screen.getByRole("tablist", { name: "Performance metrics" }));
+  const f1 = tabs.getByRole("tab", { name: "F1 scores" });
+  expect(f1).toHaveAttribute("aria-selected", "true");
+  fireEvent.change(screen.getByRole("combobox", { name: "Graph metric" }), { target: { value: "qualified_graph" } });
+  fireEvent.click(screen.getByRole("tab", { name: "Vs Cost" }));
+  fireEvent.keyDown(f1, { key: "ArrowRight" });
+  expect(tabs.getByRole("tab", { name: "Evidence Support" })).toHaveFocus();
+  const support = within(screen.getByRole("figure", { name: "Evidence Support" }));
+  expect(await support.findByRole("button", { name: /Run 1.*0\.00%.*0 of 71 formal targets.*Exact-only/ }))
+    .toHaveAttribute("aria-pressed", "true");
+  expect(support.getByRole("button", { name: /Run 2.*28\.17%.*20 of 71.*Exact and equivalent/ })).toBeVisible();
+  expect(screen.queryByRole("combobox", { name: "Graph metric" })).not.toBeInTheDocument();
+  expect(screen.getByRole("tab", { name: "Vs Cost" })).toHaveAttribute("aria-selected", "true");
+  const table = within(screen.getByRole("table", { name: "Run scores and cost estimates" }));
+  expect(table.getByRole("row", { name: /Run 2/ })).toHaveTextContent("20 of 71 formal targets");
+
+  fireEvent.keyDown(tabs.getByRole("tab", { name: "Evidence Support" }), { key: "ArrowRight" });
+  const proof = within(screen.getByRole("figure", { name: "Proof Completion" }));
+  expect(proof.queryByRole("button", { name: /Run 1/ })).not.toBeInTheDocument();
+  expect(proof.getByRole("button", { name: /Run 2.*21\.13%.*15 of 71/ })).toBeVisible();
+  expect(table.getByRole("row", { name: /Run 1/ })).toHaveTextContent("Unavailable");
+
+  fireEvent.change(screen.getByRole("combobox", { name: "Input mode" }), { target: { value: "fresh" } });
+  expect(proof.getByRole("status")).toHaveTextContent("No Proof Completion scores are available to plot.");
+  fireEvent.keyDown(tabs.getByRole("tab", { name: "Proof Completion" }), { key: "End" });
+  const coverage = within(screen.getByRole("figure", { name: "Multi-Source Evidence Coverage" }));
+  expect(coverage.getByRole("button", { name: /Run 1.*2\.67%.*0\.8 of 30 target-equivalents/ })).toBeVisible();
+  expect(coverage.getByText("Exact-only evaluation")).toBeVisible();
+  expect(table.getByRole("row", { name: /Run 1/ })).not.toHaveTextContent("Exact-only");
+  expect(table.queryByRole("row", { name: /Run 2/ })).not.toBeInTheDocument();
+
+  fireEvent.keyDown(tabs.getByRole("tab", { name: "Multi-Source Evidence Coverage" }), { key: "Home" });
+  expect(f1).toHaveFocus();
+  expect(screen.getByRole("combobox", { name: "Graph metric" })).toHaveValue("qualified_graph");
+  expect(screen.getByRole("combobox", { name: "Input mode" })).toHaveValue("fresh");
+  expect(screen.getByRole("tab", { name: "Vs Cost" })).toHaveAttribute("aria-selected", "true");
+  expect(readSummary).toHaveBeenCalledTimes(2);
 });
 
 it("shows one provisional evaluation with five unavailable values before qualified observations", () => {

@@ -408,6 +408,24 @@ test("unified evaluation shows both F1 scores and compares completed evidence as
   if (testInfo.project.name === "research-desktop") expect(adjustedBox.y).toBe(graphBox.y);
   if (testInfo.project.name === "research-narrow") expect(adjustedBox.y).toBeGreaterThan(graphBox.y);
   await expect(page).toHaveURL(new RegExp(control + "$"));
+  const historyTabs = history.getByRole("tablist", { name: "Performance metrics" });
+  const supportTab = historyTabs.getByRole("tab", { name: "Evidence Support" });
+  await supportTab.click();
+  const supportPlot = history.getByRole("figure", { name: "Evidence Support" });
+  await expect(supportPlot.getByRole("button", { name: /22\.54%.*16 of 71/, pressed: true })).toBeVisible();
+  await expect(supportPlot.getByText("Exact-only evaluation")).toBeVisible();
+  await expect(history.getByRole("tab", { name: "Vs Cost" })).toHaveAttribute("aria-selected", "true");
+  await supportTab.press("ArrowRight");
+  const proofTab = historyTabs.getByRole("tab", { name: "Proof Completion" });
+  await expect(proofTab).toBeFocused();
+  await expect(history.getByRole("figure", { name: "Proof Completion" })
+    .getByRole("button", { name: /15\.49%.*11 of 71/, pressed: true })).toBeVisible();
+  await proofTab.press("ArrowRight");
+  await expect(history.getByRole("figure", { name: "Multi-Source Evidence Coverage" })
+    .getByRole("button", { name: /40\.00%.*12 of 30 target-equivalents/, pressed: true })).toBeVisible();
+  await historyTabs.getByRole("tab", { name: "F1 scores" }).click();
+  await expect(metric).toHaveValue("qualified_graph");
+  await expect(graphPlot.getByRole("button", { pressed: true })).toBeVisible();
 
   const evaluation = page.getByRole("region", { name: "PCG Evaluation", exact: true });
   await expect(evaluation.getByRole("heading", { name: "PCG Evaluation" })).toBeVisible();

@@ -2,6 +2,7 @@ export const evidenceMetricLabels = {
   combined_graph: "Combined Graph F1",
   qualified_graph: "Qualified Graph F1",
   evidence_adjusted: "Evidence-Adjusted F1",
+  evidence_support: "Evidence Support",
   complete_proof: "Proof Completion",
   joint_only_coverage: "Multi-Source Evidence Coverage",
 } as const;

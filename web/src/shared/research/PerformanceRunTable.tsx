@@ -1,21 +1,20 @@
 import { percentMetric } from "./presentation";
 import type { PerformanceRun } from "./RunPerformanceChart";
 
-type RunRow = {
+export type PerformanceTableRun = {
   run: PerformanceRun;
   number: number;
-  graph: PerformanceRun;
-  evidence: PerformanceRun;
   costIssue: string;
 };
 
+type RunScore = { key: string; value: number | null; basis?: string; qualifier?: string; loading: boolean };
+type RunRow = PerformanceTableRun & { scores: RunScore[] };
+
 export function PerformanceRunTable({
-  rows, graphLabel, evidenceLabel, loadingEvidence, selected, select,
+  rows, columns, selected, select,
 }: {
   rows: RunRow[];
-  graphLabel: string;
-  evidenceLabel: string;
-  loadingEvidence: boolean;
+  columns: { key: string; label: string }[];
   selected: string | null;
   select: (id: string) => void;
 }) {
@@ -28,13 +27,12 @@ export function PerformanceRunTable({
         <thead>
           <tr>
             <th scope="col">Run</th>
-            <th scope="col">{graphLabel}</th>
-            <th scope="col">{evidenceLabel}</th>
+            {columns.map(column => <th key={column.key} scope="col">{column.label}</th>)}
             <th scope="col">Est. cost{currency && <small>({currency})</small>}</th>
           </tr>
         </thead>
         <tbody>
-          {rows.map(({ run, number, graph, evidence }) => (
+          {rows.map(({ run, number, scores }) => (
             <tr key={run.id}>
               <th scope="row">
                 <button type="button" aria-pressed={selected === run.id} onClick={() => select(run.id)}>
@@ -47,13 +45,14 @@ export function PerformanceRunTable({
                   </span>
                 </button>
               </th>
-              <td>{displayScore(graph.f1)}</td>
-              <td>
-                {loadingEvidence && evidence.f1 === null && run.scoreState === "complete"
-                  ? "Loading…"
-                  : displayScore(evidence.f1)}
-                {evidence.scoreQualifier && <small>{evidence.scoreQualifier}</small>}
-              </td>
+              {scores.map(({ key, value, basis, qualifier, loading }) => {
+                const available = value !== null && Number.isFinite(value);
+                return <td key={key}>
+                  {loading && !available ? "Loading…" : percentMetric(available ? value : null)}
+                  {available && basis && <small>{basis}</small>}
+                  {available && qualifier && <small>{qualifier}</small>}
+                </td>;
+              })}
               <td>
                 {run.cost.total !== null && run.cost.currency && Number.isFinite(run.cost.total)
                   ? <>{!currency && <small>{run.cost.currency}</small>}{run.cost.total.toFixed(4)}</>
@@ -75,8 +74,4 @@ export function PerformanceRunTable({
       )}
     </>
   );
-}
-
-function displayScore(value: number | null) {
-  return percentMetric(value !== null && Number.isFinite(value) ? value : null);
 }

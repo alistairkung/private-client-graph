@@ -1,16 +1,18 @@
-import { useId, useState } from "react";
+import { useId, useState, type ComponentProps, type ReactNode } from "react";
 import { LayoutGroup, motion, useReducedMotion } from "motion/react";
 import { metric, researchText, type ResearchText } from "./presentation";
-import { RunPerformancePlot, type PlotTick } from "./RunPerformancePlot";
-import { PerformanceRunTable } from "./PerformanceRunTable";
+import { RunPerformancePlot, type PlotPoint, type PlotTick } from "./RunPerformancePlot";
+import { PerformanceRunTable, type PerformanceTableRun } from "./PerformanceRunTable";
 import "./run-performance-chart.css";
 
 export { metric } from "./presentation";
 export type PerformanceMetricOptions = Record<string, { label: string; scope?: string }>;
 
+type MetricDefinition = { key: string; label: string; description?: string };
 type Comparison = {
   metrics: PerformanceMetricOptions;
-  evidence: { key: string; label: string; description: string };
+  adjusted: MetricDefinition;
+  supporting: readonly MetricDefinition[];
   loadingEvidence: boolean;
   refreshEvidence?: () => void;
 };
@@ -18,8 +20,9 @@ type Comparison = {
 type PerformanceMeasure = {
   value: number | null;
   label: string;
-  coverage: PerformanceRun["coverage"];
-  coverageLabel: string;
+  coverage?: PerformanceRun["coverage"];
+  coverageLabel?: string;
+  basis?: string;
   qualifier?: string;
 };
 
@@ -37,6 +40,7 @@ export type PerformanceRun = {
   coverageLabel?: string;
   scoreState: string;
   scoreQualifier?: string;
+  scoreBasis?: string;
   coverage: { scored: number; planned: number };
   cost: { total: number | null; currency: string | null };
   costBasis?: "verified_provider_estimate" | "reference_rate_estimate";
@@ -51,6 +55,13 @@ export type PerformanceRun = {
 };
 export type PerformanceExperiment = { name: string; runIds: string[]; runNumbers?: Record<string, number> };
 type ChartView = "run" | "cost";
+type ComparisonSeries = {
+  definition: MetricDefinition;
+  scores: PerformanceRun[];
+  points: PlotPoint[];
+  loading: boolean;
+  empty: string;
+};
 
 export function RunPerformanceChart({
   experiment, runs, selected, select, tactile = false, showRunIdentifiers = false, comparison, t = researchText,
@@ -68,21 +79,18 @@ export function RunPerformanceChart({
   const [inspected, setInspected] = useState<string | null>(null);
   const [inputMode, setInputMode] = useState("all");
   const [metricKey, setMetricKey] = useState<string | null>(null);
+  const [metricTab, setMetricTab] = useState("f1");
   const chartId = useId();
-  const graphKey = comparison ? metricKey ?? Object.keys(comparison.metrics)[0] : undefined;
+  const graphKey = metricKey ?? (comparison && Object.keys(comparison.metrics)[0]);
   const graphMetric = graphKey ? comparison?.metrics[graphKey] : undefined;
+  const supportingMetric = comparison?.supporting.find(metric => metric.key === metricTab);
   const visible = runs.filter(run => inputMode === "all" || run.inputMode === inputMode);
-  const graphRuns = graphKey ? visible.map(run => withMetric(run, graphKey)) : visible;
-  const evidenceRuns = comparison ? visible.map(run => withMetric(run, comparison.evidence.key)) : [];
-
-  const graphCandidates = graphRuns.filter(run => isEligible(run, tab));
-  const evidenceCandidates = evidenceRuns.filter(run => isEligible(run, tab));
+  const legacyCandidates = comparison ? [] : visible.filter(run => isEligible(run, tab));
   const pricedRuns = comparison && tab === "cost"
     ? visible.filter(run => run.measures && run.eligibility.f1_vs_cost && hasCost(run))
-    : graphCandidates;
+    : legacyCandidates;
   const costs = costScale(pricedRuns, tab);
-  const graphEligible = graphCandidates.filter(run => !costs.incompatible(run));
-  const evidenceEligible = evidenceCandidates.filter(run => !costs.incompatible(run));
+  const legacyEligible = legacyCandidates.filter(run => !costs.incompatible(run));
   const positionForRun = (id: string) => (experiment.runIds.indexOf(id) + 1) / (experiment.runIds.length + 1);
   const runNumber = (id: string) => experiment.runNumbers?.[id] ?? experiment.runIds.indexOf(id) + 1;
   const costTicks = comparison && tab === "cost" ? costAxisTicks(costs.max) : undefined;
@@ -91,17 +99,40 @@ export function RunPerformanceChart({
     ? t("Run number within this experiment")
     : comparison
       ? `Estimated full pipeline cost (${costs.currency})`
-      : legacyCostAxis(graphEligible, costs.currency, costs.max, t);
-  const points = (items: PerformanceRun[]) => items.map(run => ({
+      : legacyCostAxis(legacyEligible, costs.currency, costs.max, t);
+  const points = (items: PerformanceRun[]): PlotPoint[] => items.map(run => ({
     run, number: runNumber(run.id),
     x: tab === "run" ? positionForRun(run.id) :
       costTicks ? (run.cost.total ?? 0) / costTicks.max : 0.05 + 0.9 * (run.cost.total ?? 0) / costs.max,
   }));
   const plotProps = { ticks, axis, selected, select, t };
-  const references = tab === "cost" && [...graphEligible, ...evidenceEligible].some(run => run.costBasis === "reference_rate_estimate");
+  const empty = t("No Runs are eligible for this chart yet. Inspect their status below.");
+  const activeMetrics = supportingMetric ? [supportingMetric] : comparison && graphKey && graphMetric
+    ? [{ key: graphKey, label: graphMetric.label, description: graphMetric.scope }, comparison.adjusted]
+    : [];
+  const series = activeMetrics.map(definition => {
+    const scores = visible.map(run => withMetric(run, definition.key));
+    const eligible = scores.filter(run => isEligible(run, tab) && !costs.incompatible(run));
+    return {
+      definition, scores, points: points(eligible),
+      loading: definition.key !== graphKey && !!comparison?.loadingEvidence,
+      empty: definition.key === graphKey ? empty : `No ${definition.label} scores are available to plot.`,
+    };
+  });
+  const plottedRuns = comparison ? series.flatMap(item => item.points.map(point => point.run)) : legacyEligible;
+  const references = tab === "cost" && plottedRuns.some(run => run.costBasis === "reference_rate_estimate");
   const scopesDiffer = new Set(runs.map(run => run.scopeIdentity).filter(Boolean)).size > 1;
   const tooltip = runs.find(run => run.id === (inspected ?? selected));
-  const empty = t("No Runs are eligible for this chart yet. Inspect their status below.");
+  const axisTabs: ChartTab<ChartView>[] = [
+    { key: "run", label: comparison ? "By Run" : t("F1 by Run") },
+    { key: "cost", label: comparison ? "Vs Cost" : t("F1 vs Cost") },
+  ];
+  const metricTabs = comparison ? [{ key: "f1", label: "F1 scores" }, ...comparison.supporting] : [];
+  const metricTabId = `${chartId}-metric`;
+  const metricPanelId = `${metricTabId}-panel`;
+  const metricPanel = comparison ? {
+    id: metricPanelId, role: "tabpanel", "aria-labelledby": `${metricTabId}-${metricTab}`,
+  } : {};
 
   const inputFilter = <label className="chart-filter">
     {t("Input mode")}
@@ -122,144 +153,197 @@ export function RunPerformanceChart({
         {scopesDiffer && <p className="scope-notice">
           {t("These Runs use different benchmark scopes. Inspect scope differences before comparing outcomes.")}
         </p>}
-        <div className={comparison ? "comparison-controls" : undefined}>
-          <ChartTabs id={chartId} tab={tab} changeTab={setTab} tactile={tactile} comparison={!!comparison} t={t} />
-          {comparison && <div className="comparison-filters">
-            {inputFilter}
-            <label className="chart-filter">
-              {t("Graph metric")}
-              <select value={graphKey} onChange={event => setMetricKey(event.target.value)}>
-                {Object.entries(comparison.metrics).map(([key, { label }]) => <option key={key} value={key}>{label}</option>)}
-              </select>
-            </label>
-          </div>}
-        </div>
-        <div id={`${chartId}-plot`} role="tabpanel" aria-labelledby={`${chartId}-${tab}`}>
-          {!comparison && inputFilter}
-          {comparison && graphMetric ? (
-            visible.length ? <>
-              <div className="comparison-legend" aria-label="Resolver configurations">
-                <span><i className="performance-marker baseline" aria-hidden="true" />{t("No resolver")}</span>
-                <span><i className="performance-marker" aria-hidden="true" />{t("Generative resolver")}</span>
-                {graphEligible.some(run => run.scoreState === "provisional") &&
-                  <span><i className="performance-marker provisional" aria-hidden="true" />{t("Provisional")}</span>}
-              </div>
-              <div className="comparison-plots">
-                <RunPerformancePlot
-                  {...plotProps}
-                  title={graphMetric.label}
-                  description={graphMetric.scope}
-                  points={points(graphEligible)}
-                  message={graphEligible.length ? undefined : empty}
+        {comparison && <ChartTabs
+          id={metricTabId} panelId={metricPanelId} label="Performance metrics"
+          className="performance-metric-tabs" tabs={metricTabs} selected={metricTab} select={setMetricTab}
+        />}
+        <div {...metricPanel}>
+          <div className={comparison ? "comparison-controls" : undefined}>
+            <ChartTabs
+              id={chartId} panelId={`${chartId}-plot`} label={t("Performance chart")}
+              className="chart-tabs" tabs={axisTabs} selected={tab} select={setTab} tactile={tactile}
+            />
+            {comparison && <div className="comparison-filters">
+              {inputFilter}
+              {!supportingMetric && <label className="chart-filter">
+                {t("Graph metric")}
+                <select value={graphKey} onChange={event => setMetricKey(event.target.value)}>
+                  {Object.entries(comparison.metrics).map(([key, { label }]) => <option key={key} value={key}>{label}</option>)}
+                </select>
+              </label>}
+            </div>}
+          </div>
+          <div id={`${chartId}-plot`} role="tabpanel" aria-labelledby={`${chartId}-${tab}`}>
+            {!comparison && inputFilter}
+            {comparison ? (
+              visible.length ? <>
+                <div className="comparison-legend" aria-label="Resolver configurations">
+                  <span><i className="performance-marker baseline" aria-hidden="true" />{t("No resolver")}</span>
+                  <span><i className="performance-marker" aria-hidden="true" />{t("Generative resolver")}</span>
+                  {plottedRuns.some(run => run.scoreState === "provisional") &&
+                    <span><i className="performance-marker provisional" aria-hidden="true" />{t("Provisional")}</span>}
+                </div>
+                <ComparisonResults
+                  series={series}
+                  showSharedQualifier={!!supportingMetric}
+                  plotProps={plotProps}
+                  costNote={references && <CostNote t={t} />}
+                  rows={visible.map(run => ({
+                    run, number: runNumber(run.id),
+                    costIssue: tab === "cost" ? exclusionReason(run, tab, costs.incompatible(run), costs.currency, t) : "",
+                  }))}
                 />
-                <RunPerformancePlot
-                  {...plotProps}
-                  title={comparison.evidence.label}
-                  description={comparison.evidence.description}
-                  points={points(evidenceEligible)}
-                  message={evidenceEligible.length ? undefined : comparison.loadingEvidence
-                    ? "Loading Evidence-Adjusted F1 scores…"
-                    : "No Evidence-Adjusted F1 scores are available to plot."}
+                {comparison.refreshEvidence && <button className="secondary comparison-refresh" onClick={comparison.refreshEvidence}>
+                  Refresh evidence scores
+                </button>}
+              </> : <p className="chart-empty" role="status">No Runs match this input mode.</p>
+            ) : (
+              <>
+                <div className="chart-legend">
+                  <span>{legacyEligible.find(run => run.metricLabel)?.metricLabel ?? t("F1 · 0–1")}</span>
+                  <span>◇ {t("No resolver")}　● {t("Generative resolver")}　○ {t("Provisional")}</span>
+                </div>
+                {references && <CostNote t={t} />}
+                {!runs.length ? <p className="chart-empty">{t("Run your first configuration to begin comparing results.")}</p> : <>
+                  <RunPerformancePlot
+                    {...plotProps}
+                    points={points(legacyEligible)}
+                    inspect={setInspected}
+                    tooltipId={`${chartId}-tooltip`}
+                    tactile={tactile}
+                  />
+                  {!legacyEligible.length && <p>{empty}</p>}
+                </>}
+                <p className="chart-footnote">
+                  {t("{plotted}/{total} Runs plotted · Discrete points; no trend or improvement is implied across different scopes.", {
+                    plotted: legacyEligible.length, total: experiment.runIds.length,
+                  })}
+                </p>
+                <RunInspection
+                  id={`${chartId}-tooltip`} run={tooltip} name={experiment.name}
+                  number={tooltip ? runNumber(tooltip.id) : 0} tab={tab} showRunIdentifiers={showRunIdentifiers} t={t}
                 />
-              </div>
-              {references && <CostNote t={t} />}
-              <PerformanceRunTable
-                rows={visible.map((run, index) => ({
-                  run, number: runNumber(run.id), graph: graphRuns[index], evidence: evidenceRuns[index],
-                  costIssue: tab === "cost" ? exclusionReason(run, tab, costs.incompatible(run), costs.currency, t) : "",
-                }))}
-                graphLabel={graphMetric.label}
-                evidenceLabel={comparison.evidence.label}
-                loadingEvidence={comparison.loadingEvidence}
-                selected={selected}
-                select={select}
-              />
-              {comparison.refreshEvidence && <button className="secondary comparison-refresh" onClick={comparison.refreshEvidence}>
-                Refresh evidence scores
-              </button>}
-            </> : <p className="chart-empty" role="status">No Runs match this input mode.</p>
-          ) : (
-            <>
-              <div className="chart-legend">
-                <span>{graphEligible.find(run => run.metricLabel)?.metricLabel ?? t("F1 · 0–1")}</span>
-                <span>◇ {t("No resolver")}　● {t("Generative resolver")}　○ {t("Provisional")}</span>
-              </div>
-              {references && <CostNote t={t} />}
-              {!runs.length ? <p className="chart-empty">{t("Run your first configuration to begin comparing results.")}</p> : <>
-                <RunPerformancePlot
-                  {...plotProps}
-                  points={points(graphEligible)}
-                  inspect={setInspected}
-                  tooltipId={`${chartId}-tooltip`}
-                  tactile={tactile}
-                />
-                {!graphEligible.length && <p>{empty}</p>}
-              </>}
-              <p className="chart-footnote">
-                {t("{plotted}/{total} Runs plotted · Discrete points; no trend or improvement is implied across different scopes.", {
-                  plotted: graphEligible.length, total: experiment.runIds.length,
-                })}
-              </p>
-              <RunInspection
-                id={`${chartId}-tooltip`} run={tooltip} name={experiment.name}
-                number={tooltip ? runNumber(tooltip.id) : 0} tab={tab} showRunIdentifiers={showRunIdentifiers} t={t}
-              />
-              {!!runs.length && <div className="run-history-list" aria-label={t("All Runs")}>
-                {runs.map(run => (
-                  <div key={run.id}>
-                    <button className="secondary" aria-pressed={selected === run.id} onClick={() => select(run.id)}>
-                      {run.displayName ?? <>{t("Run {run}", { run: runNumber(run.id) })} · {t(run.resolver ? "Generative resolver" : "No resolver")}</>}
-                      <small>{run.lifecycle && <>{t(run.lifecycle)} · </>}F1 {metric(run.f1)} · {t(run.scoreState)}</small>
-                    </button>
-                    {(!isEligible(run, tab) || costs.incompatible(run)) &&
-                      <small>{exclusionReason(run, tab, costs.incompatible(run), costs.currency, t)}</small>}
-                  </div>
-                ))}
-              </div>}
-            </>
-          )}
+                {!!runs.length && <div className="run-history-list" aria-label={t("All Runs")}>
+                  {runs.map(run => (
+                    <div key={run.id}>
+                      <button className="secondary" aria-pressed={selected === run.id} onClick={() => select(run.id)}>
+                        {run.displayName ?? <>{t("Run {run}", { run: runNumber(run.id) })} · {t(run.resolver ? "Generative resolver" : "No resolver")}</>}
+                        <small>{run.lifecycle && <>{t(run.lifecycle)} · </>}F1 {metric(run.f1)} · {t(run.scoreState)}</small>
+                      </button>
+                      {(!isEligible(run, tab) || costs.incompatible(run)) &&
+                        <small>{exclusionReason(run, tab, costs.incompatible(run), costs.currency, t)}</small>}
+                    </div>
+                  ))}
+                </div>}
+              </>
+            )}
+          </div>
         </div>
       </section>
     </LayoutGroup>
   );
 }
 
-function ChartTabs({ id, tab, changeTab, tactile, comparison, t }: {
-  id: string; tab: ChartView; changeTab: (tab: ChartView) => void;
-  tactile: boolean; comparison: boolean; t: ResearchText;
+function ComparisonResults({ series, showSharedQualifier, plotProps, rows, costNote }: {
+  series: ComparisonSeries[];
+  showSharedQualifier: boolean;
+  plotProps: Pick<ComponentProps<typeof RunPerformancePlot>, "ticks" | "axis" | "selected" | "select" | "t">;
+  rows: PerformanceTableRun[];
+  costNote: ReactNode;
+}) {
+  const sharedQualifier = showSharedQualifier ? commonQualifier(series[0]?.scores ?? []) : undefined;
+  return (
+    <>
+      <div className="comparison-plots" data-paired={series.length > 1 || undefined}>
+        {series.map(({ definition, points, loading, empty }) => (
+          <RunPerformancePlot
+            key={definition.key}
+            {...plotProps}
+            title={definition.label}
+            description={definition.description}
+            note={sharedQualifier === "Exact-only" ? "Exact-only evaluation" : sharedQualifier}
+            points={points}
+            message={points.length ? undefined : loading ? `Loading ${definition.label} scores…` : empty}
+          />
+        ))}
+      </div>
+      {costNote}
+      <PerformanceRunTable
+        columns={series.map(({ definition }) => ({ key: definition.key, label: definition.label }))}
+        rows={rows.map((row, index) => ({
+          ...row,
+          scores: series.map(({ definition, scores, loading }) => {
+            const score = scores[index];
+            return {
+              key: definition.key,
+              value: score.f1,
+              basis: score.scoreBasis,
+              qualifier: sharedQualifier ? undefined : score.scoreQualifier,
+              loading: loading && row.run.scoreState === "complete",
+            };
+          }),
+        }))}
+        selected={plotProps.selected}
+        select={plotProps.select}
+      />
+    </>
+  );
+}
+
+function commonQualifier(scores: PerformanceRun[]) {
+  const qualifiers = new Set(scores.filter(run => run.f1 !== null).map(run => run.scoreQualifier));
+  return qualifiers.size === 1 ? qualifiers.values().next().value : undefined;
+}
+
+type ChartTab<Key extends string> = { key: Key; label: string };
+
+function ChartTabs<Key extends string>({ id, panelId, label, className, tabs, selected, select, tactile = false }: {
+  id: string; panelId: string; label: string; className: string;
+  tabs: ChartTab<Key>[]; selected: Key; select: (tab: Key) => void; tactile?: boolean;
 }) {
   const reducedMotion = useReducedMotion();
-  const labels = comparison ? { run: "By Run", cost: "Vs Cost" } : { run: t("F1 by Run"), cost: t("F1 vs Cost") };
   return (
-    <div className="chart-tabs" role="tablist" aria-label={t("Performance chart")}>
-      {(["run", "cost"] as const).map(value => (
+    <div className={className} role="tablist" aria-label={label}>
+      {tabs.map(({ key, label: tabLabel }, index) => (
         <button
-          key={value}
-          id={`${id}-${value}`}
+          key={key}
+          type="button"
+          id={`${id}-${key}`}
           role="tab"
-          aria-selected={tab === value}
-          aria-controls={`${id}-plot`}
-          tabIndex={tab === value ? 0 : -1}
+          aria-selected={selected === key}
+          aria-controls={panelId}
+          tabIndex={selected === key ? 0 : -1}
           onKeyDown={event => {
-            if (!["ArrowLeft", "ArrowRight"].includes(event.key)) return;
+            const nextIndex = nextTabIndex(event.key, index, tabs.length);
+            if (nextIndex === null) return;
             event.preventDefault();
-            const next = value === "run" ? "cost" : "run";
-            changeTab(next);
+            const next = tabs[nextIndex].key;
+            select(next);
             document.getElementById(`${id}-${next}`)?.focus();
           }}
-          onClick={() => changeTab(value)}
+          onClick={() => select(key)}
         >
-          {tactile && tab === value && <motion.i
+          {tactile && selected === key && <motion.i
             className="chart-tab-surface" aria-hidden="true"
             layoutId={reducedMotion ? undefined : "chart-tab"}
             initial={false}
             transition={{ type: "spring", stiffness: 1218, damping: 70 }}
           />}
-          <span className="chart-tab-label">{labels[value]}</span>
+          <span className="chart-tab-label">{tabLabel}</span>
         </button>
       ))}
     </div>
   );
+}
+
+function nextTabIndex(key: string, index: number, count: number) {
+  switch (key) {
+    case "ArrowLeft": return (index + count - 1) % count;
+    case "ArrowRight": return (index + 1) % count;
+    case "Home": return 0;
+    case "End": return count - 1;
+    default: return null;
+  }
 }
 
 function RunInspection({ id, run, name, number, tab, showRunIdentifiers, t }: {
@@ -309,6 +393,7 @@ function withMetric(run: PerformanceRun, key: string): PerformanceRun {
     coverage: measure?.coverage ?? { scored: 0, planned: 0 },
     coverageLabel: measure?.coverageLabel,
     scoreQualifier: measure?.qualifier,
+    scoreBasis: measure?.basis,
     scoreState: measure ? run.scoreState : "unavailable",
   };
 }

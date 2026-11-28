@@ -103,7 +103,7 @@ function evaluationMetrics(evaluation?: SemanticRunSummary, run?: RunDetail) {
       description: "Relationship correctness with a penalty for incomplete proof",
     },
     {
-      label: "Evidence Support", rate: support?.rate ?? null,
+      label: evidenceMetricLabels.evidence_support, rate: support?.rate ?? null,
       basis: support ? `${support.count}/${support.targets} formal targets` : "",
       description: "At least one required member matched",
     },

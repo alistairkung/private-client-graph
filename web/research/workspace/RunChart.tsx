@@ -14,6 +14,25 @@ export const money = (value: number | null, currency: string | null) =>
     ? "Unavailable"
     : `${currency ?? "Currency unavailable"} ${value.toFixed(4)}`;
 
+const supportingMetrics = [
+  {
+    key: "evidence_support",
+    label: evidenceMetricLabels.evidence_support,
+    description: "Formal targets with at least one required evidence member matched",
+  },
+  {
+    key: "complete_proof",
+    label: evidenceMetricLabels.complete_proof,
+    description: "Formal targets with every required member of an approved proof matched",
+  },
+  {
+    key: "joint_only_coverage",
+    label: evidenceMetricLabels.joint_only_coverage,
+    description: "Average share of required members matched across multi-source targets, using the best approved proof for each target",
+  },
+] as const;
+const targetEquivalents = new Intl.NumberFormat("en", { maximumFractionDigits: 3 });
+
 type RunChartProps = {
   workspace: WorkspaceDetail;
   runs: RunDetail[];
@@ -56,11 +75,12 @@ function BenchmarkPerformance({ workspace, runs, selected, select, selectInPlace
       select={selectInPlace ?? select}
       comparison={{
         metrics,
-        evidence: {
+        adjusted: {
           key: "evidence_adjusted",
           label: evidenceMetricLabels.evidence_adjusted,
           description: "Relationship correctness with a penalty for incomplete proof",
         },
+        supporting: supportingMetrics,
         loadingEvidence: !!completed && !data,
         refreshEvidence: needsRefresh ? retry : undefined,
       }}
@@ -108,7 +128,7 @@ function performanceRun(run: RunDetail, assessment?: SemanticRunSummary | null):
       f1: score?.f1 ?? null,
       measures: quality ? {
         ...qualityMeasures(quality),
-        ...evidenceMeasure(assessment),
+        ...assessmentMeasures(assessment),
       } : undefined,
       metricLabel: "Benchmark v4 Graph F1 · mixed references",
       coverageLabel: "valid graphs / planned inputs",
@@ -230,22 +250,44 @@ function qualityMeasures(quality: RunQuality): PerformanceRun["measures"] {
   }]));
 }
 
-function evidenceMeasure(assessment?: SemanticRunSummary | null): PerformanceRun["measures"] {
-  const graph = assessment?.graph_f1;
-  const adjusted = assessment?.evidence_adjusted_f1;
-  if (!assessment || !graph || !adjusted) return undefined;
+function assessmentMeasures(assessment?: SemanticRunSummary | null): PerformanceRun["measures"] {
+  if (!assessment) return undefined;
+  const { graph_f1: graph, evidence_adjusted_f1: adjusted, target_summary: targets } = assessment;
   const qualifier = {
     exact_only: "Exact-only",
     pending: "Exact-only · Evaluation pending",
     complete: "Exact and equivalent",
     complete_with_failures: "Combined evaluation finished with failures",
   }[assessment.state];
+  const support = targets.evidence_support;
+  const completion = targets.proof_completion;
+  const coverage = targets.multi_source_evidence_coverage;
   return {
-    evidence_adjusted: {
-      value: adjusted.f1,
-      label: `${evidenceMetricLabels.evidence_adjusted} · ${graph.inputs} qualified Conditions`,
-      coverage: { scored: graph.valid_graphs, planned: graph.inputs },
-      coverageLabel: "valid graphs",
+    ...(graph && adjusted && {
+      evidence_adjusted: {
+        value: adjusted.f1,
+        label: `${evidenceMetricLabels.evidence_adjusted} · ${graph.inputs} qualified Conditions`,
+        coverage: { scored: graph.valid_graphs, planned: graph.inputs },
+        coverageLabel: "valid graphs",
+        qualifier,
+      },
+    }),
+    evidence_support: {
+      value: support.rate,
+      label: evidenceMetricLabels.evidence_support,
+      basis: `${support.count} of ${support.targets} formal targets`,
+      qualifier,
+    },
+    complete_proof: {
+      value: completion.rate,
+      label: evidenceMetricLabels.complete_proof,
+      basis: `${completion.count} of ${completion.targets} formal targets`,
+      qualifier,
+    },
+    joint_only_coverage: {
+      value: coverage.mean,
+      label: evidenceMetricLabels.joint_only_coverage,
+      basis: `${targetEquivalents.format(coverage.matched_target_equivalents)} of ${coverage.targets} target-equivalents`,
       qualifier,
     },
   };

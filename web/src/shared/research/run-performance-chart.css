@@ -190,19 +190,49 @@
   flex-wrap: wrap;
   gap: 4px 16px;
 }
+.run-chart-comparison .performance-metric-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 20px;
+  border-bottom: 1px solid var(--rule);
+}
+.run-chart-comparison .performance-metric-tabs button {
+  border: 0;
+  border-bottom: 3px solid transparent;
+  border-radius: 0;
+  padding: 8px 0;
+  text-align: left;
+  line-height: 1.25;
+  color: var(--ink);
+  background: transparent;
+}
+.run-chart-comparison .performance-metric-tabs button[aria-selected="true"] {
+  border-bottom-color: var(--ink);
+  font-weight: 600;
+}
 .run-chart-comparison .comparison-controls {
   display: flex;
   align-items: end;
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 12px 24px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--rule);
+  padding: 14px 0 4px;
 }
 .run-chart-comparison .chart-tabs {
   margin: 0;
-  padding: 0;
+  padding: 2px;
+  gap: 1px;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+}
+.run-chart-comparison .chart-tabs button {
+  padding: 6px 12px;
   border: 0;
+  border-radius: 4px;
+  font-size: 13px;
+}
+.run-chart-comparison .chart-tabs button[aria-selected="true"] {
+  background: #eef1e9;
 }
 .run-chart-comparison .comparison-filters {
   display: flex;
@@ -250,8 +280,11 @@
 }
 .run-chart-comparison .comparison-plots {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: 24px;
+}
+.run-chart-comparison .comparison-plots[data-paired] {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 .run-chart-comparison .performance-plot { margin: 0; }
 .run-chart-comparison .performance-plot + .performance-plot {
@@ -268,7 +301,8 @@
   color: var(--muted);
   font-size: 12px;
 }
-.run-chart-comparison figcaption { min-height: 58px; }
+.run-chart-comparison figcaption { margin-bottom: 16px; }
+.run-chart-comparison .comparison-plots[data-paired] figcaption { min-height: 58px; margin-bottom: 0; }
 .run-chart-comparison .plot-area {
   height: 148px;
   margin: 3px 23px 26px 42px;
@@ -377,13 +411,15 @@
 .run-chart-comparison .comparison-refresh { margin-top: 12px; }
 
 @container performance-chart (width < 600px) {
-  .run-chart-comparison .comparison-plots { grid-template-columns: 1fr; gap: 16px; }
+  .run-chart-comparison .performance-metric-tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 12px; }
+  .run-chart-comparison .performance-metric-tabs button { padding-inline: 3px; }
+  .run-chart-comparison .comparison-plots[data-paired] { grid-template-columns: 1fr; gap: 16px; }
   .run-chart-comparison .performance-plot + .performance-plot {
     border-inline-start: 0;
     border-top: 1px solid var(--rule);
     padding: 14px 0 0;
   }
-  .run-chart-comparison figcaption { min-height: auto; margin-bottom: 14px; }
+  .run-chart-comparison .comparison-plots[data-paired] figcaption { min-height: auto; margin-bottom: 14px; }
   .run-chart-comparison .plot-area { height: 120px; }
   .run-chart-comparison .plot-status { min-height: 100px; }
 }
