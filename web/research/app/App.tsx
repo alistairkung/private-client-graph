@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { Capabilities, Proposal } from "../shared/contracts";
 import { capabilities } from "../configuration/api";
 import { Configuration } from "../configuration/Configuration";
@@ -8,15 +8,20 @@ import { Results } from "../results/Results";
 import { HistoricalComparison } from "../results/HistoricalComparison";
 
 import { Sidebar } from "./Sidebar";
+import { WorkbenchNavigation, type WorkbenchPage } from "./WorkbenchNavigation";
+import { ReadState } from "../shared/presentation";
 import { useRead } from "../shared/useRead";
 import { exploratoryManifest } from "../exploratory/api";
 import { ExploratoryWorkload } from "../exploratory/ExploratoryWorkload";
 import { LegacyMetadata } from "../workspace/LegacyMetadata";
 import { BenchmarkV4Catalogue } from "../workspace/BenchmarkV4Catalogue";
-import { benchmarkV4Roster } from "../workspace/api";
+import { benchmarkV4Roster, listWorkspaces } from "../workspace/api";
 import { Workspace } from "../workspace/Workspace";
 import { CreateExperiment } from "../workspace/CreateExperiment";
+import { ExperimentIndex } from "../workspace/ExperimentIndex";
+import { NewRunHome } from "../workspace/NewRunHome";
 import "./workspace.css";
+import "./workbench-home.css";
 import "../workspace/persistent.css";
 
 export function App() {
@@ -51,7 +56,23 @@ export function App() {
   const params = new URLSearchParams(location.replace(/^#/, ""));
   const workspaceId = params.get("workspace");
   const { data: benchmark, error: benchmarkError, retry: retryBenchmark } = useRead(benchmarkV4Roster);
-  const showBenchmark = params.has("benchmark") || ((!location || location === "#") && !!benchmark);
+  const root = !location || location === "#";
+  const showRunHome = params.has("new-run") || (root && !!available);
+  const showIndex = params.has("experiments");
+  const showBenchmark = params.has("benchmark") || params.has("library") || (root && available === null && !!benchmark);
+  const page: WorkbenchPage | undefined = showRunHome ? "run"
+    : showIndex ? "experiments"
+    : params.has("library") ? "benchmark"
+    : params.has("legacy-history") ? "history"
+    : undefined;
+  const showMasthead = !workspaceId && !!available && !!page;
+  const listNeeded = showIndex || (!!available && showRunHome);
+  const loadWorkspaces = useCallback((signal: AbortSignal) => listNeeded
+    ? listWorkspaces(signal) : Promise.resolve(null), [listNeeded, sidebarRevision]);
+  const index = useRead(loadWorkspaces);
+  useEffect(() => {
+    if (showMasthead) window.scrollTo(0, 0);
+  }, [location, showMasthead]);
   const showExploratory = params.get("exploratory") === "1";
   const { data: exploratory } = useRead(exploratoryManifest);
   const id = params.get("experiment");
@@ -63,6 +84,11 @@ export function App() {
     "exploratory",
     "benchmark",
     "new",
+    "new-run",
+    "experiments",
+    "target",
+    "review",
+    "library",
     "experiment",
     "left",
     "right",
@@ -76,8 +102,7 @@ export function App() {
   ].forEach((key) => historyParams.delete(key));
   historyParams.set("browse", "1");
   const historyLink = `#${historyParams}`;
-  const showNew =
-    params.has("new") || ((!location || location === "#") && !!available);
+  const showNew = params.has("new");
   return (
     <>
       <a
@@ -90,7 +115,9 @@ export function App() {
       >
         Skip to workspace
       </a>
-      <Sidebar
+      {showMasthead && page ? (
+        <WorkbenchNavigation page={page} benchmark={!!benchmark} saving={draftSaving} />
+      ) : <Sidebar
         selected={workspaceId}
         benchmarkAvailable={!!benchmark}
         benchmarkSelected={showBenchmark}
@@ -106,9 +133,9 @@ export function App() {
             return !value;
           })
         }
-      />
+      />}
       <main
-        className={`continuous-workspace ${collapsed ? "sidebar-collapsed" : ""}`}
+        className={showMasthead ? "workbench-home" : `continuous-workspace ${collapsed ? "sidebar-collapsed" : ""}`}
         id="workspace"
         tabIndex={-1}
       >
@@ -125,6 +152,7 @@ export function App() {
             key={workspaceId}
             id={workspaceId}
             selected={params.get("run")}
+            openFrozenReview={params.get("review") === "1"}
             select={(run) => {
               window.location.hash = run ? `workspace=${workspaceId}&run=${run}` : `workspace=${workspaceId}`;
             }}
@@ -133,6 +161,25 @@ export function App() {
             saving={setDraftSaving}
             changed={() => setSidebarRevision((value) => value + 1)}
           />
+        ) : available && showRunHome ? (
+          index.data ? <NewRunHome
+            key={params.get("target")}
+            items={index.data.items}
+            initialExperiment={params.get("target")}
+            capabilities={available}
+            benchmark={benchmark}
+            benchmarkLoading={benchmark === undefined && !benchmarkError}
+            saving={setDraftSaving}
+            frozen={(experiment, run) => {
+              setSidebarRevision(value => value + 1);
+              window.location.hash = new URLSearchParams({ workspace: experiment, run, review: "1" }).toString();
+            }}
+          /> : <ReadState error={index.error} retry={index.retry} />
+        ) : showIndex ? (
+          index.data ? <ExperimentIndex items={index.data.items} executable={!!available} />
+            : <ReadState error={index.error} retry={index.retry} />
+        ) : root && available === undefined ? (
+          capabilityError ? null : <p role="status">Loading Workbench…</p>
         ) : showBenchmark ? (
           benchmark ? <BenchmarkV4Catalogue roster={benchmark} executable={!!available} /> :
             <p role="status">
@@ -141,7 +188,8 @@ export function App() {
             </p>
         ) : showExploratory ? (
           <ExploratoryWorkload />
-        ) : (params.has("new") ||
+        ) : (params.has("new-run") ||
+            params.has("new") ||
             params.has("plan") ||
             params.has("legacy-new")) &&
           !available ? (

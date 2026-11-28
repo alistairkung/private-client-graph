@@ -150,7 +150,7 @@ test("explicit approval, checkpoint, continuation and exact Evidence with substi
 test("workspace authorizes before separate start and explicitly continues provisional coverage", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto("/#new=1");
   await page
     .getByLabel("Experiment name", { exact: true })
     .fill("Bounded resolver investigation");

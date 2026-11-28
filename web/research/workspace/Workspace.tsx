@@ -18,10 +18,12 @@ import { DraftEditor } from "./DraftEditor";
 import { RunChart } from "./RunChart";
 import { RunInspection } from "./RunInspection";
 import { RunExecution } from "./RunExecution";
+import { benchmarkExtractors } from "./run-presets";
 
 export function Workspace({
   id,
   selected,
+  openFrozenReview = false,
   select,
   capabilities,
   benchmark,
@@ -30,6 +32,7 @@ export function Workspace({
 }: {
   id: string;
   selected: string | null;
+  openFrozenReview?: boolean;
   select: (id: string | null) => void;
   capabilities: Capabilities | null;
   benchmark?: BenchmarkRoster | null;
@@ -47,7 +50,7 @@ export function Workspace({
   const [draftKey, setDraftKey] = useState(0);
   const [draftBusy, setDraftBusy] = useState(true);
   const [copying, setCopying] = useState(false);
-  const [executionId, setExecutionId] = useState<string | null>(null);
+  const [executionId, setExecutionId] = useState<string | null>(() => openFrozenReview ? selected : null);
   const evaluation = useRef<HTMLDivElement>(null);
   const draftArea = useRef<HTMLDivElement>(null);
   const focusRun = useRef<string | null>(null);
@@ -199,9 +202,7 @@ export function Workspace({
                 draft={workspace.draft}
                 runIds={workspace.run_ids}
                 runNumbers={workspace.run_numbers}
-                extractorRuns={runs.filter((item) => item.benchmark_v4?.state === "complete"
-                  && item.plan.preview.proposal.input_mode === "fresh"
-                  && item.plan.preview.proposal.resolver === "none")}
+                extractorRuns={benchmarkExtractors(runs)}
                 benchmark={benchmark}
                 cases={cases}
                 capabilities={editCapabilities}

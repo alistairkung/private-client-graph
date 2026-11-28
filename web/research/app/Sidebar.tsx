@@ -129,6 +129,14 @@ export function Sidebar({
         </nav>
       )}
       <nav className="research-reference-links" aria-label="Research references">
+        {executable && <a href="#new-run=1" onClick={(event) => {
+          if (saving) event.preventDefault();
+          else if (narrow) close();
+        }}>New run</a>}
+        <a href="#experiments=1" onClick={(event) => {
+          if (saving) event.preventDefault();
+          else if (narrow) close();
+        }}>Experiments</a>
         <a href="#browse=1"
           onClick={(event) => {
             if (saving) event.preventDefault();

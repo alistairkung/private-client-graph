@@ -218,3 +218,9 @@ test("retained Issue 92 opens directly into the comparison bench and exact Evide
     }),
   ).toHaveCount(0);
 });
+
+test("read-only Workbench does not expose the New run form", async ({ page }) => {
+  await page.goto("/#new-run=1");
+  await expect(page.getByText(/This composition is read-only/)).toBeVisible();
+  await expect(page.getByRole("form", { name: "New run setup" })).toHaveCount(0);
+});
