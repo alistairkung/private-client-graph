@@ -596,6 +596,12 @@ def test_private_workbench_reads_allow_owner_only(tmp_path, inputs, monkeypatch)
         assert len(response.json()['targets']) == 71
         assert response.json()['methodology'] == 'Ground-Truth-Aligned Evidence Evaluation'
         assert client.post(path, auth=('owner', token)).status_code == 405
+        assert client.get(f'{path}/summary').status_code == 401
+        summary = client.get(f'{path}/summary', auth=('owner', token)).raise_for_status()
+        assert summary.headers['cache-control'] == 'no-store'
+        assert summary.json() == {key: response.json()[key] for key in (
+            'run_id', 'plan_sha256', 'state', 'graph_f1', 'evidence_adjusted_f1', 'target_summary', 'operations'
+        )}
     with TestClient(app, client=('192.0.2.1', 1234)) as client:
         assert client.get(path, auth=('owner', token)).status_code == 403
 

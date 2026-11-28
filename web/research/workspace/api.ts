@@ -19,6 +19,7 @@ import type {
   RunStatus,
   SemanticComparison,
   SemanticEvidenceReport,
+  SemanticRunSummary,
   WorkspaceDetail,
   WorkspaceHistory,
 } from "../shared/contracts";
@@ -120,6 +121,10 @@ export const benchmarkV4Input = (id: string, signal: AbortSignal) =>
 export const getEvaluation = (run: string, signal?: AbortSignal) =>
   request<SemanticEvidenceReport>(
     `/semantic-evidence/runs/${encodeURIComponent(run)}`, undefined, undefined, signal,
+  );
+export const getEvaluationSummary = (run: string, signal: AbortSignal) =>
+  request<SemanticRunSummary>(
+    `/semantic-evidence/runs/${encodeURIComponent(run)}/summary`, undefined, undefined, signal,
   );
 export const compareEvaluations = (left: string, right: string, signal?: AbortSignal) =>
   request<SemanticComparison>(

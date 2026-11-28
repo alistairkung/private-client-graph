@@ -234,7 +234,7 @@ test("unified evaluation shows both F1 scores and compares completed evidence as
   const quality: EvidenceQuality = {
     version: "deterministic_evidence_quality_v1", state: "complete",
     scope_sha256: "fixture", scoring_sha256: "fixture", qualified_reference_sha256: "fixture",
-    observation_origin: "offline_fixture",
+    observation_origin: "live",
     planned_inputs: 35, observed_inputs: 35, qualified_inputs: 34, observed_qualified_inputs: 34,
     expected_relationships: 113, observed_proof_targets: 71, observed_joint_targets: 30,
     combined_graph: graph(35), qualified_graph: graph(34),
@@ -257,7 +257,10 @@ test("unified evaluation shows both F1 scores and compares completed evidence as
       await route.fulfill({ response });
       return;
     }
-    await route.fulfill({ response, json: { ...await response.json(), benchmark_v4: summary, quality } });
+    const runId = new URL(route.request().url()).pathname.split("/").at(-1);
+    const reference_cost = { total: runId === control ? 0.0157 : 0.0369, currency: "USD",
+      source_url: "https://example.test/pricing", retrieved_at: "2026-11-27" };
+    await route.fulfill({ response, json: { ...await response.json(), benchmark_v4: summary, quality, reference_cost } });
   });
   await page.route(`**${workspace}/comparison?*`, async (route) => {
     const response = await route.fetch();
@@ -352,6 +355,14 @@ test("unified evaluation shows both F1 scores and compares completed evidence as
     evaluationReads += 1;
     return route.fulfill({ json: selectedReport() });
   });
+  await page.route("**/semantic-evidence/runs/*/summary", route => {
+    const runId = new URL(route.request().url()).pathname.split("/").at(-2);
+    const { graph_f1, plan_sha256, state, target_summary, operations } = selectedReport();
+    return route.fulfill({ json: {
+      run_id: runId, graph_f1, plan_sha256, state, target_summary, operations,
+      evidence_adjusted_f1: runId === control ? exactAdjustment : assessment.evidence_adjusted_f1,
+    } });
+  });
   await page.route("**/semantic-evidence/comparison?*", (route) => {
     const comparable = selectedState === "complete";
     const semantic: SemanticComparison = {
@@ -373,7 +384,9 @@ test("unified evaluation shows both F1 scores and compares completed evidence as
 
   await page.goto(`/#workspace=${experiment}&run=${control}`);
   await page.getByText("Run history and selection", { exact: true }).click();
-  const metric = page.getByRole("combobox", { name: "Performance metric" });
+  const history = page.getByRole("region", { name: "Run history and performance" });
+  const metric = history.getByRole("combobox", { name: "Graph metric" });
+  await expect(metric).toHaveValue("combined_graph");
   await metric.selectOption("qualified_graph");
   const graphPoint = page.getByRole("tabpanel", { name: "By Run" }).getByRole("button", {
     name: /^Run \d+, Qualified Graph F1/, pressed: true,
@@ -383,8 +396,36 @@ test("unified evaluation shows both F1 scores and compares completed evidence as
   await page.getByRole("tab", { name: "By Run" }).press("ArrowRight");
   await expect(page.getByRole("tab", { name: "Vs Cost" })).toBeFocused();
   await expect(metric).toHaveValue("qualified_graph");
-  await expect(page.getByRole("heading", { name: "Qualified Graph F1 vs Cost" })).toBeVisible();
+  const graphPlot = history.getByRole("figure", { name: "Qualified Graph F1" });
+  const adjustedPlot = history.getByRole("figure", { name: "Evidence-Adjusted F1" });
+  await expect(graphPlot.getByRole("button", { pressed: true })).toBeVisible();
+  await expect(adjustedPlot.getByRole("button", { name: /79\.79%.*Exact-only/, pressed: true })).toBeVisible();
+  await expect(history.getByRole("table", { name: "Run scores and cost estimates" })).toBeVisible();
+  await expect(history).not.toContainText(control);
+  await expect(history).not.toContainText("fixture:fixture:live");
+  const [graphBox, adjustedBox] = await Promise.all([graphPlot.boundingBox(), adjustedPlot.boundingBox()]);
+  if (!graphBox || !adjustedBox) throw new Error("Expected both performance plots");
+  if (testInfo.project.name === "research-desktop") expect(adjustedBox.y).toBe(graphBox.y);
+  if (testInfo.project.name === "research-narrow") expect(adjustedBox.y).toBeGreaterThan(graphBox.y);
   await expect(page).toHaveURL(new RegExp(control + "$"));
+  const historyTabs = history.getByRole("tablist", { name: "Performance metrics" });
+  const supportTab = historyTabs.getByRole("tab", { name: "Evidence Support" });
+  await supportTab.click();
+  const supportPlot = history.getByRole("figure", { name: "Evidence Support" });
+  await expect(supportPlot.getByRole("button", { name: /22\.54%.*16 of 71/, pressed: true })).toBeVisible();
+  await expect(supportPlot.getByText("Exact-only evaluation")).toBeVisible();
+  await expect(history.getByRole("tab", { name: "Vs Cost" })).toHaveAttribute("aria-selected", "true");
+  await supportTab.press("ArrowRight");
+  const proofTab = historyTabs.getByRole("tab", { name: "Proof Completion" });
+  await expect(proofTab).toBeFocused();
+  await expect(history.getByRole("figure", { name: "Proof Completion" })
+    .getByRole("button", { name: /15\.49%.*11 of 71/, pressed: true })).toBeVisible();
+  await proofTab.press("ArrowRight");
+  await expect(history.getByRole("figure", { name: "Multi-Source Evidence Coverage" })
+    .getByRole("button", { name: /40\.00%.*12 of 30 target-equivalents/, pressed: true })).toBeVisible();
+  await historyTabs.getByRole("tab", { name: "F1 scores" }).click();
+  await expect(metric).toHaveValue("qualified_graph");
+  await expect(graphPlot.getByRole("button", { pressed: true })).toBeVisible();
 
   const evaluation = page.getByRole("region", { name: "PCG Evaluation", exact: true });
   await expect(evaluation.getByRole("heading", { name: "PCG Evaluation" })).toBeVisible();

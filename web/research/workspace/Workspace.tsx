@@ -128,6 +128,11 @@ export function Workspace({
     setExecutionId(null);
     select(id);
   }
+  function selectRunInPlace(id: string) {
+    focusRun.current = null;
+    setExecutionId(null);
+    select(id);
+  }
   async function useRunConfiguration(runId: string) {
     if (!workspace || copyLock.current) return;
     copyLock.current = true;
@@ -160,7 +165,7 @@ export function Workspace({
     changed();
   }
   const runChart = workspace && (
-    <RunChart workspace={workspace} runs={runs} selected={run?.id ?? null} select={selectEvaluation} />
+    <RunChart workspace={workspace} runs={runs} selected={run?.id ?? null} select={selectEvaluation} selectInPlace={selectRunInPlace} />
   );
   return (
     <>

@@ -1,9 +1,12 @@
+import { useCallback } from "react";
 import {
   RunPerformanceChart,
   type PerformanceRun,
   type PerformanceMetricOptions,
 } from "../../src/shared/research/RunPerformanceChart";
-import type { BenchmarkStageUsage, RunDetail, WorkspaceDetail } from "../shared/contracts";
+import type { BenchmarkStageUsage, RunDetail, SemanticRunSummary, WorkspaceDetail } from "../shared/contracts";
+import { useRead } from "../shared/useRead";
+import { getEvaluationSummary } from "./api";
 import { evidenceMetricLabels } from "./benchmark-metrics";
 export { metric } from "../../src/shared/research/RunPerformanceChart";
 export const money = (value: number | null, currency: string | null) =>
@@ -11,25 +14,76 @@ export const money = (value: number | null, currency: string | null) =>
     ? "Unavailable"
     : `${currency ?? "Currency unavailable"} ${value.toFixed(4)}`;
 
-export function RunChart({
-  workspace,
-  runs,
-  selected,
-  select,
-}: {
+const supportingMetrics = [
+  {
+    key: "evidence_support",
+    label: evidenceMetricLabels.evidence_support,
+    description: "Formal targets with at least one required evidence member matched",
+  },
+  {
+    key: "complete_proof",
+    label: evidenceMetricLabels.complete_proof,
+    description: "Formal targets with every required member of an approved proof matched",
+  },
+  {
+    key: "joint_only_coverage",
+    label: evidenceMetricLabels.joint_only_coverage,
+    description: "Average share of required members matched across multi-source targets, using the best approved proof for each target",
+  },
+] as const;
+const targetEquivalents = new Intl.NumberFormat("en", { maximumFractionDigits: 3 });
+
+type RunChartProps = {
   workspace: WorkspaceDetail;
   runs: RunDetail[];
   selected: string | null;
   select: (id: string) => void;
+  selectInPlace?: (id: string) => void;
+};
+
+export function RunChart(props: RunChartProps) {
+  const { workspace, runs, selected, select } = props;
+  const experiment = { name: workspace.name, runIds: workspace.run_ids, runNumbers: workspace.run_numbers };
+  const metrics = metricOptions(runs);
+  return metrics
+    ? <BenchmarkPerformance {...props} metrics={metrics} />
+    : <RunPerformanceChart experiment={experiment} runs={runs.map(run => performanceRun(run))} selected={selected} select={select} />;
+}
+
+function BenchmarkPerformance({ workspace, runs, selected, select, selectInPlace, metrics }: RunChartProps & {
+  metrics: PerformanceMetricOptions;
 }) {
-  const values = runs.map(performanceRun);
+  // Run details poll while the workspace is open. Read retained assessments only
+  // when the set of completed Runs changes or the reader refreshes the scores.
+  const completed = runs.filter(run => run.benchmark_v4?.state === "complete").map(run => run.id).join(" ");
+  const load = useCallback(async (signal: AbortSignal) => {
+    const ids = completed ? completed.split(" ") : [];
+    const reports = await Promise.allSettled(ids.map(id => getEvaluationSummary(id, signal)));
+    return new Map(ids.map((id, index) => {
+      const report = reports[index];
+      return [id, report.status === "fulfilled" && report.value.run_id === id ? report.value : null];
+    }));
+  }, [completed]);
+  const { data, retry } = useRead(load);
+  const scores = runs.map(run => performanceRun(run, data?.get(run.id)));
+  const needsRefresh = data && [...data.values()].some(report => report?.state !== "complete");
   return (
     <RunPerformanceChart
       experiment={{ name: workspace.name, runIds: workspace.run_ids, runNumbers: workspace.run_numbers }}
-      runs={values}
+      runs={scores}
       selected={selected}
-      select={select}
-      metrics={metricOptions(runs)}
+      select={selectInPlace ?? select}
+      comparison={{
+        metrics,
+        adjusted: {
+          key: "evidence_adjusted",
+          label: evidenceMetricLabels.evidence_adjusted,
+          description: "Relationship correctness with a penalty for incomplete proof",
+        },
+        supporting: supportingMetrics,
+        loadingEvidence: !!completed && !data,
+        refreshEvidence: needsRefresh ? retry : undefined,
+      }}
     />
   );
 }
@@ -54,7 +108,7 @@ function verifiedBenchmarkCost(run: RunDetail) {
   return { total: cost.total, currency: cost.currency };
 }
 
-function performanceRun(run: RunDetail): PerformanceRun {
+function performanceRun(run: RunDetail, assessment?: SemanticRunSummary | null): PerformanceRun {
   const { benchmark, benchmark_v4: mixed, evaluation, quality } = run;
   if (mixed) {
     const frozenCost = mixed.observation_origin === "live"
@@ -72,7 +126,10 @@ function performanceRun(run: RunDetail): PerformanceRun {
       model: run.plan.preview.proposal.model,
       recorded: mixed.observation_origin === "offline_fixture",
       f1: score?.f1 ?? null,
-      measures: quality ? qualityMeasures(quality) : undefined,
+      measures: quality ? {
+        ...qualityMeasures(quality),
+        ...assessmentMeasures(assessment),
+      } : undefined,
       metricLabel: "Benchmark v4 Graph F1 · mixed references",
       coverageLabel: "valid graphs / planned inputs",
       scoreState: state === "unmeasured" ? "unavailable" : state,
@@ -153,7 +210,7 @@ function verifiedFullPipelineCost(usage: BenchmarkStageUsage | undefined) {
   return { total: usage.estimated_cost, currency: usage.currency };
 }
 
-const graphMetrics = ["qualified_graph", "combined_graph"] as const;
+const graphMetrics = ["combined_graph", "qualified_graph"] as const;
 type GraphScope = typeof graphMetrics[number];
 type RunQuality = NonNullable<RunDetail["quality"]>;
 
@@ -191,4 +248,47 @@ function qualityMeasures(quality: RunQuality): PerformanceRun["measures"] {
     coverage: coverage[key],
     coverageLabel: coverageLabels[key],
   }]));
+}
+
+function assessmentMeasures(assessment?: SemanticRunSummary | null): PerformanceRun["measures"] {
+  if (!assessment) return undefined;
+  const { graph_f1: graph, evidence_adjusted_f1: adjusted, target_summary: targets } = assessment;
+  const qualifier = {
+    exact_only: "Exact-only",
+    pending: "Exact-only · Evaluation pending",
+    complete: "Exact and equivalent",
+    complete_with_failures: "Combined evaluation finished with failures",
+  }[assessment.state];
+  const support = targets.evidence_support;
+  const completion = targets.proof_completion;
+  const coverage = targets.multi_source_evidence_coverage;
+  return {
+    ...(graph && adjusted && {
+      evidence_adjusted: {
+        value: adjusted.f1,
+        label: `${evidenceMetricLabels.evidence_adjusted} · ${graph.inputs} qualified Conditions`,
+        coverage: { scored: graph.valid_graphs, planned: graph.inputs },
+        coverageLabel: "valid graphs",
+        qualifier,
+      },
+    }),
+    evidence_support: {
+      value: support.rate,
+      label: evidenceMetricLabels.evidence_support,
+      basis: `${support.count} of ${support.targets} formal targets`,
+      qualifier,
+    },
+    complete_proof: {
+      value: completion.rate,
+      label: evidenceMetricLabels.complete_proof,
+      basis: `${completion.count} of ${completion.targets} formal targets`,
+      qualifier,
+    },
+    joint_only_coverage: {
+      value: coverage.mean,
+      label: evidenceMetricLabels.joint_only_coverage,
+      basis: `${targetEquivalents.format(coverage.matched_target_equivalents)} of ${coverage.targets} target-equivalents`,
+      qualifier,
+    },
+  };
 }

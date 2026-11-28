@@ -96,14 +96,14 @@ function evaluationMetrics(evaluation?: SemanticRunSummary, run?: RunDetail) {
       description: "Relationship correctness",
     },
     {
-      label: "Evidence-Adjusted F1", rate: adjusted?.f1 ?? null,
+      label: evidenceMetricLabels.evidence_adjusted, rate: adjusted?.f1 ?? null,
       basis: adjusted && evaluation
         ? `${countLabel(adjusted.incomplete_recovered_proofs, "incomplete recovered proof")} · ${adjustmentBasis(evaluation.state)}`
         : "",
       description: "Relationship correctness with a penalty for incomplete proof",
     },
     {
-      label: "Evidence Support", rate: support?.rate ?? null,
+      label: evidenceMetricLabels.evidence_support, rate: support?.rate ?? null,
       basis: support ? `${support.count}/${support.targets} formal targets` : "",
       description: "At least one required member matched",
     },
