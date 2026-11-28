@@ -12,7 +12,8 @@ export function Icon({
     | "file"
     | "close"
     | "menu"
-    | "search";
+    | "search"
+    | "grip";
 }) {
   const paths = {
     mail: "M3 5h18v14H3z M3 6l9 7 9-7",
@@ -25,6 +26,7 @@ export function Icon({
     file: "M6 3h8l4 4v14H6V3Zm8 0v5h4M9 12h6m-6 4h6",
     close: "m6 6 12 12M6 18 18 6",
     menu: "M4 6h16M4 12h16M4 18h16",
+    grip: "M9 5h.01M15 5h.01M9 12h.01M15 12h.01M9 19h.01M15 19h.01",
     search: "m16 16 5 5M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z",
   };
   return (

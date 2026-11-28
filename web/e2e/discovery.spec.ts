@@ -1,4 +1,4 @@
-import { expect, test, type Locator } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 
 // Private search responses and review tokens must stay out of recorded traces.
 test.use({ trace: "off", screenshot: "off", video: "off" });
@@ -10,14 +10,40 @@ function typography(locator: Locator) {
   });
 }
 
+async function dragSource(page: Page, handle: Locator, destination: Locator, viaTouch: boolean) {
+  await handle.scrollIntoViewIfNeeded();
+  await destination.scrollIntoViewIfNeeded();
+  const [origin, target] = await Promise.all([handle.boundingBox(), destination.boundingBox()]);
+  if (!origin || !target) throw new Error("The drag handle and destination must be visible");
+  const x = origin.x + origin.width / 2;
+  const startY = origin.y + origin.height / 2;
+  const endY = target.y + target.height / 2;
+  if (viaTouch) {
+    const touch = await page.context().newCDPSession(page);
+    try {
+      await touch.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x, y: startY }] });
+      await touch.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [{ x, y: endY }] });
+      await touch.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+    } finally {
+      await touch.detach();
+    }
+  } else {
+    await page.mouse.move(x, startY);
+    await page.mouse.down();
+    await page.mouse.move(x, endY, { steps: 8 });
+    await page.mouse.up();
+  }
+}
+
 test("sixth original email leads to an approved PDF and publicly reopened Evidence", async ({
   page,
   browser,
+  baseURL,
 }, info) => {
   const reference = "ALDER/" + info.project.name + "/" + crypto.randomUUID();
   const reader = await browser.newContext({
     ignoreHTTPSErrors: true,
-    baseURL: "https://127.0.0.1:4173",
+    baseURL,
   });
   try {
     await page.goto("/auth/login?next=/app/matter-proposals/new");
@@ -65,6 +91,12 @@ test("sixth original email leads to an approved PDF and publicly reopened Eviden
     await expect(page.getByRole("heading", { name: "Alder Trust", exact: true })).toBeFocused();
     await expect(page.getByText("Still searching emails and PDFs…")).toBeVisible();
     await expect(page.getByText("Checked 5 of 5 emails for leads.")).toBeVisible();
+    await expect(page.getByRole("button", { name: "All results" })).toBeInViewport();
+    const suggestions = page.getByRole("button", { name: /Suggested follow-up searches/ });
+    if (info.project.name === "phone") {
+      await expect(page.getByRole("button", { name: "Search for Alice Reed" })).toBeHidden();
+      await suggestions.click();
+    }
     await page.getByRole("button", { name: "Search for Alice Reed" }).click();
     const uninspected = page.getByRole("button", { name: "Read Uninspected email 6" });
     await uninspected.click();
@@ -78,7 +110,7 @@ test("sixth original email leads to an approved PDF and publicly reopened Eviden
     await page.keyboard.press("Escape");
     await expect(email).toHaveCount(0);
     await expect(uninspected).toBeFocused();
-    await expect(page.getByRole("button", { name: "Preview exact Sources" })).toBeDisabled();
+    await expect(page.getByRole("button", { name: /^Preview \d+ Sources?$/ })).toBeDisabled();
     await expect(page.getByRole("button", { name: "Search for Mara Voss" })).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Search for Cora Patel" })).toHaveCount(0);
     await page.getByRole("button", { name: "Select all 6 results" }).click();
@@ -90,17 +122,47 @@ test("sixth original email leads to an approved PDF and publicly reopened Eviden
       "Mara Voss will circulate the executed appointment separately.",
     );
     await page.getByRole("button", { name: "Search for Mara Voss" }).click();
+    await page.getByRole("button", { name: "Show results for Mara Voss" }).click();
+    await expect(page.getByRole("heading", { name: "Found via Mara Voss" })).toBeFocused();
     await page.getByRole("button", { name: "Add 4 new results" }).click();
     await page.getByLabel("Alder Trust parking minutes · PDF").uncheck();
     await expect(page.getByText("8 selected", { exact: true })).toBeVisible();
-    await page.locator("summary").filter({ hasText: "Preview order" }).click();
-    await page.getByRole("button", { name: "Move Mara Voss appointment up" }).click();
-    await page.getByRole("button", { name: "Preview exact Sources" }).click();
-    const articles = page.locator(".discovery article");
-    await expect(articles).toHaveCount(8);
-    const titles = await articles.locator("h3").allTextContents();
-    const preview = await articles.locator("pre").allTextContents();
+    await page.getByRole("button", { name: "Selected (8)" }).click();
+    const moveUp = page.getByRole("button", { name: "Move Mara Voss appointment up" });
+    const appointmentRow = page.locator(".discovery-row").filter({ has: moveUp });
+    const originalPosition = Number(await appointmentRow.getAttribute("data-source-position"));
+    await moveUp.press("Enter");
+    await expect(moveUp).toBeFocused();
+    await expect(appointmentRow).toHaveAttribute("data-source-position", String(originalPosition - 1));
+    await page.getByRole("button", { name: "Move Mara Voss appointment down" }).click();
+    await expect(appointmentRow).toHaveAttribute("data-source-position", String(originalPosition));
+
+    const order = page.getByRole("list", { name: "Publication order" });
+    const precedingRow = order.locator(".discovery-row").nth(originalPosition - 1);
+    await dragSource(page, appointmentRow.locator(".discovery-grip"), precedingRow, info.project.name === "phone");
+    await expect(appointmentRow).toHaveAttribute("data-source-position", String(originalPosition - 1));
+    await expect(page.getByText(/Mara Voss appointment moved to position/)).toBeAttached();
+    const previewButton = page.getByRole("button", { name: "Preview 8 Sources" });
+    await page.getByRole("heading", { name: "Select Sources" }).evaluate(heading => heading.scrollIntoView());
+    await expect(previewButton).toBeInViewport();
+    await previewButton.click();
+    const readerIndex = page.getByRole("list", { name: "Publication order" });
+    const indexButtons = readerIndex.getByRole("button");
+    const article = page.locator(".discovery article");
+    await expect(indexButtons).toHaveCount(8);
+    await expect(article).toHaveCount(1);
+    await expect(page.getByRole("button", { name: "Previous Source" })).toBeDisabled();
+    const titles: string[] = [];
+    const preview: string[] = [];
+    for (let index = 0; index < 8; index++) {
+      if (index) await page.getByRole("button", { name: "Next Source" }).click();
+      await expect(indexButtons.nth(index)).toHaveAttribute("aria-pressed", "true");
+      titles.push(await article.locator("h3").innerText());
+      preview.push((await article.locator("pre").textContent()) ?? "");
+    }
+    await expect(page.getByRole("button", { name: "Next Source" })).toBeDisabled();
     const appointment = titles.indexOf("Mara Voss appointment");
+    expect(appointment).toBe(originalPosition - 1);
     expect(appointment).toBeGreaterThanOrEqual(5);
     expect(preview[appointment]).toBe("Alice Example is the parent of Ben Example.");
     await page.getByLabel("External Matter reference").fill(reference);
@@ -117,7 +179,7 @@ test("sixth original email leads to an approved PDF and publicly reopened Eviden
           p.external_reference === reference,
       ),
     ).toBe(false);
-    await page.getByLabel(/I approve publishing/).check();
+    await page.getByLabel("I approve publishing these 8 synthetic Sources in this order.").check();
     await page.getByRole("button", { name: "Create public proposal" }).click();
     await expect(page).toHaveURL(/\/app\/matter-proposals\/[a-f0-9-]+$/);
     const proposal = await (
@@ -220,7 +282,7 @@ test("inline reconnection after expiry opens a fresh search", async ({
   await page.getByRole("button", { name: "Start private discovery" }).click();
   const deed = page.getByRole("checkbox", { name: /· PDF/ }).first();
   await deed.check();
-  await page.getByRole("button", { name: "Preview exact Sources" }).click();
+  await page.getByRole("button", { name: /^Preview \d+ Sources?$/ }).click();
   await expect(page.getByLabel(/I approve publishing/)).toBeVisible();
 
   const workspace = page.getByRole("radio", { name: "Search Workspace" });

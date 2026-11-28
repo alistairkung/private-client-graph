@@ -108,11 +108,15 @@ it("retains a follow-up's email and PDF rows while an open email gains its inspe
   vi.spyOn(globalThis, "fetch")
     .mockResolvedValueOnce(Response.json({ session: "local", view: first }))
     .mockImplementationOnce(() => new Promise(resolve => { deliverBatch = resolve; }))
-    .mockResolvedValueOnce(Response.json({ messages: ["shared"], files: [{ id: "shared", title: "Old PDF title" }] }))
+    .mockResolvedValueOnce(Response.json({ messages: ["same", "shared"], files: [view.files[0], { id: "shared", title: "Old PDF title" }] }))
     .mockResolvedValueOnce(Response.json({ title: "Appointment email", text: "Private message" }));
   render(<WorkspaceDiscovery onBusy={() => {}} />);
   await user.click(screen.getByText("Start private discovery"));
+  await user.click(screen.getByRole("button", { name: "Selected (0)" }));
   await user.click(screen.getByText("Search for Mara Voss"));
+  expect(screen.getByText("2 new Sources found.")).toBeVisible();
+  await user.click(screen.getByRole("button", { name: "Show results for Mara Voss" }));
+  expect(screen.getByRole("heading", { name: "Found via Mara Voss" })).toHaveFocus();
   const group = within(screen.getByRole("group", { name: "Found via Mara Voss" }));
   const trigger = group.getByRole("button", { name: "Read Uninspected email 2" });
   await user.click(trigger);
@@ -178,7 +182,7 @@ it("closing a loading email discards its late body and leaves selection alone", 
   await act(async () => finish(new Response(JSON.stringify({ title: "Letter", text: "Late private body" }))));
   expect(screen.queryByText("Late private body")).toBeNull();
   expect(screen.getByLabelText("Letter · Email")).not.toBeChecked();
-  expect(screen.getByText("Preview exact Sources")).toBeDisabled();
+  expect(screen.getByRole("button", { name: /^Preview \d+ Sources?$/ })).toBeDisabled();
 });
 
 it("reordering invalidates approval and a failed import requires another exact preview", async () => {
@@ -195,11 +199,12 @@ it("reordering invalidates approval and a failed import requires another exact p
     post.mockResolvedValueOnce(
       result({
         token,
-        sources: [{ id: "source_001", title: "Reviewed", text: "Full text" }],
+        sources: (token === "one" ? ["Letter", "Deed"] : ["Deed", "Letter"])
+          .map((title, index) => ({ id: String(index), title, text: title + " exact text" })),
       }),
     );
-    await user.click(screen.getByText("Preview exact Sources"));
-    await screen.findByText("Full text");
+    await user.click(screen.getByRole("button", { name: /^Preview \d+ Sources?$/ }));
+    await screen.findByText(token === "one" ? "Letter exact text" : "Deed exact text");
   }
   await preview("one");
   await user.type(screen.getByLabelText("Matter title"), "Example");
@@ -208,8 +213,15 @@ it("reordering invalidates approval and a failed import requires another exact p
   expect(screen.queryByRole("heading", { name: "Select Sources" })).toBeNull();
   await user.click(screen.getByRole("button", { name: "Edit selection" }));
   expect(screen.getByRole("heading", { name: "Select Sources" })).toHaveFocus();
-  await user.click(screen.getByText("Preview order"));
-  await user.click(screen.getByRole("button", { name: "Move Deed up" }));
+  await user.click(screen.getByRole("button", { name: "Selected (2)" }));
+  const moveUp = screen.getByRole("button", { name: "Move Deed up" });
+  moveUp.focus();
+  await user.keyboard("{Enter}");
+  expect(moveUp).toHaveFocus();
+  expect(moveUp).toHaveAttribute("aria-disabled", "true");
+  expect(screen.getByText("Deed moved to position 1 of 2.")).toBeInTheDocument();
+  expect(within(screen.getByRole("list", { name: "Publication order" })).getAllByRole("checkbox")[0])
+    .toHaveAccessibleName("Deed · PDF");
   expect(screen.queryByText("Create public proposal")).toBeNull();
   await preview("two");
   expect(screen.getByText("Create public proposal")).toBeDisabled();
@@ -224,10 +236,18 @@ it("reordering invalidates approval and a failed import requires another exact p
   expect(await screen.findByRole("alert")).toHaveTextContent(
     "Preview the selected Sources again",
   );
-  expect(screen.queryByText("Full text")).toBeNull();
+  expect(screen.queryByText("Deed exact text")).toBeNull();
+  expect(screen.getByText(/Your selection, order and Matter details are kept/)).toHaveFocus();
+  expect(screen.getByLabelText("Deed · PDF")).toBeChecked();
   await preview("three");
+  expect(post.mock.calls.at(-1)?.[1]?.body).toBe(JSON.stringify({
+    session: "local", candidates: [{ kind: "pdf", id: "same" }, { kind: "email", id: "same" }],
+  }));
   expect(screen.getByText("Create public proposal")).toBeDisabled();
   expect(screen.getByLabelText("Matter title")).toHaveValue("Example");
+  expect(screen.getByLabelText("External Matter reference")).toHaveValue("REF");
+  expect(screen.getByLabelText(/I approve publishing/)).not.toBeChecked();
+  expect(screen.getByLabelText(/I approve publishing/)).toHaveAccessibleDescription(/immediately makes the Matter title and reference, full Source titles and texts.*public.*cannot retract/);
 });
 
 it("retiring a Workspace grant removes private results and offers a fresh connection", async () => {
@@ -295,7 +315,7 @@ it("keeps the selection editable when a single Source becomes unavailable", asyn
       409,
     ),
   );
-  await user.click(screen.getByText("Preview exact Sources"));
+  await user.click(screen.getByRole("button", { name: /^Preview \d+ Sources?$/ }));
   expect(await screen.findByText("Check Source 2 · Deed")).toBeVisible();
   await user.click(
     await screen.findByRole("button", { name: "Review selection" }),
@@ -304,7 +324,7 @@ it("keeps the selection editable when a single Source becomes unavailable", asyn
   await user.click(screen.getByLabelText("Deed · PDF"));
   expect(screen.getByLabelText("Letter · Email")).toBeChecked();
   expect(screen.getByLabelText("Deed · PDF")).not.toBeChecked();
-  expect(screen.getByText("Preview exact Sources")).toBeEnabled();
+  expect(screen.getByRole("button", { name: /^Preview \d+ Sources?$/ })).toBeEnabled();
   expect(grantLost).not.toHaveBeenCalled();
 });
 
@@ -395,7 +415,7 @@ it("clears a private preview and offers sign-in after the server forgets the log
     }),
   );
   await user.click(
-    screen.getByRole("button", { name: "Preview exact Sources" }),
+    screen.getByRole("button", { name: /^Preview \d+ Sources?$/ }),
   );
   await user.click(screen.getByLabelText(/I approve publishing/));
   expect(screen.getByText("Reviewed private text")).toBeVisible();
@@ -495,13 +515,51 @@ it("reports private batch progress and only presents the completed preview for a
   render(<WorkspaceDiscovery onBusy={() => {}} />);
   await user.click(screen.getByText("Start private discovery"));
   await user.click(screen.getByText("Select all 6 results"));
-  await user.click(screen.getByText("Preview exact Sources"));
+  await user.click(screen.getByRole("button", { name: /^Preview \d+ Sources?$/ }));
   expect(screen.getByText("Prepared 5 of 6 Sources…")).toBeVisible();
   expect(screen.queryByLabelText(/I approve publishing/)).toBeNull();
   expect(post.mock.calls[2][1]?.body).toBe(JSON.stringify({ session: "local", continuation: "next" }));
   await act(async () => finish(Response.json({
     token: "reviewed", sources: files.map(file => ({ ...file, text: file.title + " text" })),
   })));
+  const index = within(screen.getByRole("list", { name: "Publication order" }));
+  expect(index.getAllByRole("button")).toHaveLength(6);
+  expect(screen.queryByText("File 5 text")).toBeNull();
+  await user.click(index.getByRole("button", { name: "6 File 5" }));
   expect(screen.getByText("File 5 text")).toBeVisible();
+  const next = screen.getByRole("button", { name: "Next Source" });
+  await user.click(next);
+  expect(next).toHaveFocus();
+  expect(screen.getByText("File 5 text")).toBeVisible();
+  await user.click(screen.getByRole("button", { name: "Previous Source" }));
+  expect(screen.getByText("File 4 text")).toBeVisible();
+  expect(index.getByRole("button", { name: "5 File 4" })).toHaveAttribute("aria-pressed", "true");
   expect(screen.getByLabelText(/I approve publishing/)).not.toBeChecked();
+});
+
+it("blocks resubmission when the public save outcome cannot be verified", async () => {
+  const user = userEvent.setup();
+  const post = vi.spyOn(globalThis, "fetch")
+    .mockResolvedValueOnce(Response.json({ session: "local", view }))
+    .mockResolvedValueOnce(Response.json({
+      token: "used", sources: [{ id: "source_001", title: "Deed", text: "Exact deed" }],
+    }))
+    .mockRejectedValueOnce(new TypeError("Connection lost after dispatch"));
+  render(<WorkspaceDiscovery onBusy={() => {}} />);
+  await user.click(screen.getByText("Start private discovery"));
+  await user.click(screen.getByLabelText("Deed · PDF"));
+  await user.click(screen.getByRole("button", { name: "Preview 1 Source" }));
+  await user.type(screen.getByLabelText("External Matter reference"), "REF");
+  await user.type(screen.getByLabelText("Matter title"), "Example");
+  await user.click(screen.getByLabelText(/I approve publishing/));
+  const publish = screen.getByRole("button", { name: "Create public proposal" });
+  await user.click(publish);
+  expect(screen.getByText(/Check the Review queue and Matters for this external reference/)).toHaveFocus();
+  expect(screen.getByRole("link", { name: "Open Review queue" })).toHaveAttribute("href", "/app/review");
+  expect(screen.getByLabelText("External Matter reference")).toHaveValue("REF");
+  expect(screen.getByLabelText(/I approve publishing/)).not.toBeChecked();
+  expect(screen.getByRole("button", { name: "Edit selection" })).toBeDisabled();
+  expect(publish).toBeDisabled();
+  await user.click(publish);
+  expect(post.mock.calls.filter(([path]) => String(path).endsWith("/import"))).toHaveLength(1);
 });
