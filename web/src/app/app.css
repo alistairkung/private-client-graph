@@ -313,11 +313,6 @@ body:has(.atlas) { margin: 0; }
   gap: 24px;
   margin-bottom: 24px;
 }
-.page-heading p {
-  margin-top: 10px;
-  color: var(--muted);
-  max-width: 65ch;
-}
 .button {
   min-height: 44px;
   padding: 10px 18px;

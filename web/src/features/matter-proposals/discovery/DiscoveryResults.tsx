@@ -110,7 +110,7 @@ export function DiscoveryResults({
   );
   return (
     <section className="discovery-panel">
-      <h2>{t("Suggested follow-up searches")}</h2>
+      <h2 className="intake-section-title">{t("Suggested follow-up searches")}</h2>
       <p className="discovery-caption">
         {t("{used} of 3 searches used", { used: followups.length })}
       </p>

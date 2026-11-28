@@ -35,7 +35,7 @@ export function SourceSelection({
   }
   return (
     <section className="discovery-panel">
-      <h2 ref={headingRef} tabIndex={-1}>
+      <h2 className="intake-section-title" ref={headingRef} tabIndex={-1}>
         {t("Select Sources")}
       </h2>
       <div className="discovery-selection-tools">

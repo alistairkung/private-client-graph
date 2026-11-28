@@ -79,8 +79,6 @@ export const chinese: Record<string, string> = {
   "This record may no longer be available. Return to Matters to check its current state.":
     "此记录可能已不可用。请返回事项查看当前状态。",
   "Close dialog": "关闭对话框",
-  "Bring synthetic sources together. Review the relationships before accepting a Matter.":
-    "汇集合成来源资料，审阅关系后再确认事项。",
   "Matter identity": "事项信息",
   "External Matter reference": "外部事项编号",
   "Use the reference from your existing Matter system.":

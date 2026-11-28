@@ -1,7 +1,14 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Locator } from "@playwright/test";
 
 // Private search responses and review tokens must stay out of recorded traces.
 test.use({ trace: "off", screenshot: "off", video: "off" });
+
+function typography(locator: Locator) {
+  return locator.evaluate((element) => {
+    const { fontFamily, fontSize, fontWeight, lineHeight } = getComputedStyle(element);
+    return { fontFamily, fontSize, fontWeight, lineHeight };
+  });
+}
 
 test("sixth original email leads to an approved PDF and publicly reopened Evidence", async ({
   page,
@@ -16,11 +23,33 @@ test("sixth original email leads to an approved PDF and publicly reopened Eviden
     await page.goto("/auth/login?next=/app/matter-proposals/new");
     const upload = page.getByRole("radio", { name: "Upload PDFs" });
     const workspace = page.getByRole("radio", { name: "Search Workspace" });
+    const sourceMethods = page.getByRole("group", {
+      name: "How would you like to add Sources?",
+    });
     await expect(upload).toBeChecked();
-    await page.getByLabel("External Matter reference", { exact: true }).fill(reference);
+    await page.evaluate(() => document.fonts.ready);
+    const methodBounds = await sourceMethods.boundingBox();
+    const pdfBounds = await page.locator(".intake-form").boundingBox();
+    const pdfHeading = await typography(page.getByText("Matter identity", { exact: true }));
+    const pdfReference = page.getByLabel("External Matter reference", { exact: true });
+    const pdfField = await typography(pdfReference);
+    await pdfReference.fill(reference);
     await upload.focus();
     await page.keyboard.press("ArrowRight");
     await expect(workspace).toBeChecked();
+    const searchHeading = page.getByRole("heading", { name: "Search Workspace" });
+    await expect(searchHeading).toBeVisible();
+    expect(await typography(searchHeading)).toEqual(pdfHeading);
+    expect(await typography(page.getByLabel("Initial search terms"))).toEqual(pdfField);
+    expect(await sourceMethods.boundingBox()).toMatchObject({
+      x: methodBounds?.x,
+      width: methodBounds?.width,
+      height: methodBounds?.height,
+    });
+    expect(await page.locator(".discovery-setup").boundingBox()).toMatchObject({
+      x: pdfBounds?.x,
+      width: pdfBounds?.width,
+    });
     await workspace.press("ArrowLeft");
     await expect(upload).toBeChecked();
     await expect(page.getByLabel("External Matter reference", { exact: true })).toHaveValue(reference);

@@ -96,10 +96,13 @@ the backend or browser storage.
 
 ## Workflow boundaries
 
-The centered PDF intake uses a paper form with Matter identity, source upload
-and synthetic-material confirmation. Workspace Source discovery uses a wider
-layout for connection setup, scope and results. Intake accepts only explicitly
-confirmed synthetic or fictional PDF sources.
+The proposal page starts with the source method when both methods are available.
+PDF intake and Workspace Source discovery use the same centered width and
+Public Sans scale for form headings and fields. The PDF form collects Matter
+identity, Sources and synthetic-material confirmation.
+Workspace discovery uses the available width for connection setup, scope and
+results. Intake accepts only explicitly confirmed synthetic or fictional PDF
+sources.
 Source IDs survive local title edits and removal of other sources. The frontend
 checks count, total size and obvious filename type; the unchanged backend owns
 actual PDF acquisition and validation. Confirm/discard applies to the entire

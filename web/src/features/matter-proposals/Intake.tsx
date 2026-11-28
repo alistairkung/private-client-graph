@@ -107,20 +107,11 @@ export function Intake() {
     }
   }
   return (
-    <div className={"page intake-page" + (canChooseMethod && discover ? " discovery-page" : "")}>
+    <div className="page intake-page">
+      <h1 className="sr-only">{t("New proposal")}</h1>
       <a className="back-link" href="/app">
         {t("Back to Matters")}
       </a>
-      <div className="page-heading">
-        <div>
-          <h1>{t("New proposal")}</h1>
-          <p>
-            {t(
-              "Bring synthetic sources together. Review the relationships before accepting a Matter.",
-            )}
-          </p>
-        </div>
-      </div>
       {(!canWrite || recoverDiscovery) && <div className="intake-access" id="intake-access">
         {recoverDiscovery ? (
           <div className="intake-session-ended" role="alert">

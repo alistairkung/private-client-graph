@@ -203,7 +203,7 @@ export function WorkspaceConnection({
           status && (
             <>
               <div className="connection-intro">
-                <h2>{t("Connect your Workspace")}</h2>
+                <h2 className="intake-section-title">{t("Connect your Workspace")}</h2>
                 <p>
                   {t(
                     "Use the synthetic account shown here to grant read-only access to Gmail and Drive for this session.",
