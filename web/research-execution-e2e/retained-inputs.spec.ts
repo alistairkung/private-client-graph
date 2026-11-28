@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 
 test("retained fresh outputs become a zero-call saved replay in the same Experiment", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/#new=1");
   const origin = new URL(page.url()).origin;
   const headers = { Origin: origin };
   const workspace = await (await page.request.post("/api/research/v2/experiments", {

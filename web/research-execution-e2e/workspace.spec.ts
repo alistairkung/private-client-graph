@@ -3,7 +3,7 @@ import { test, expect } from "@playwright/test";
 test("persistent Experiment: changed and repeated Runs retain frozen Evidence and independent draft", async ({
   page,
 }, info) => {
-  await page.goto("/");
+  await page.goto("/#new=1");
   await page
     .getByLabel("Experiment name", { exact: true })
     .fill("Does alias resolution improve identity consistency?");
@@ -229,7 +229,7 @@ test("sidebar preserves wide preference and traps focus in narrow drawer", async
   page,
 }) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
-  await page.goto("/");
+  await page.goto("/#new=1");
   await page.getByRole("button", { name: "Collapse experiments" }).click();
   await expect(page.locator("#experiment-sidebar")).not.toBeVisible();
   await page.setViewportSize({ width: 390, height: 844 });
@@ -262,7 +262,7 @@ test("sidebar preserves wide preference and traps focus in narrow drawer", async
 test("compact insertion preserves rail height and keeps its option visible", async ({
   page,
 }, info) => {
-  await page.goto("/");
+  await page.goto("/#new=1");
   await page
     .getByLabel("Experiment name", { exact: true })
     .fill("Compact insertion review");
@@ -296,7 +296,7 @@ test("compact insertion preserves rail height and keeps its option visible", asy
 test("opens the frozen Run review when polling arrives before its freeze response", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto("/#new=1");
   await page
     .getByLabel("Experiment name", { exact: true })
     .fill("Freeze response ordering");
